@@ -1,7 +1,8 @@
-@page "/candidate/profile"
+@page "/candidate/profile/bewerken/legacy"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ProfileSections
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
@@ -13,13 +14,17 @@
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 @inject CandidateProfileEditor Editor
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Features
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Components.Shared
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate">
+<div class="panel-page profile-page profile-page--candidate profile-page--illustrated">
+    <CandidateKompasGreetingBand FirstName="@Editor.FirstName" />
     <header class="saved-gate__header profile-page__header">
         <h1>@Culture["Profile.Title"]</h1>
         @if (!string.IsNullOrWhiteSpace(_returnUrl))
@@ -35,6 +40,16 @@
                          WideViewportChanged="OnKompasWideChanged">
             <ProfileTab>
         <p class="login-lead">@Culture["Profile.Lead"]</p>
+        <FeatureVisible Feature="PlatformFeature.ReferenceVerification">
+            @if (_refVerificationEligible)
+            {
+                <ReferenceVerificationTipCard ScreenKey="profile"
+                                              Eligible="true"
+                                              UserId="@_profileUserId"
+                                              FirstEntryId="_firstWorkEntryId"
+                                              HasConfirmedReference="_hasConfirmedReference" />
+            }
+        </FeatureVisible>
         @if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
         {
             <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
@@ -130,7 +145,7 @@
 
         @if (!_loading)
         {
-            <DeleteAccountSection />
+            <ProfileDangerZoneSection />
         }
             </ProfileTab>
             <Side>
@@ -149,6 +164,10 @@
         </CascadingValue>
 </div>
 
+<CandidateProfileResetDialog IsOpen="Editor.ProfileResetOpen"
+                             ShowResearchNote="@(Editor.ResearchConsent?.HasConsent == true)"
+                             OnClose="Editor.CloseProfileReset" />
+
 <UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
                    OnClose="Editor.CloseUnsubscribe"
                    OnCompleted="Editor.OnUnsubscribeCompleted" />
@@ -157,6 +176,9 @@
 @code {
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "section")]
+    public string? Section { get; set; }
 
     private bool _loading = true;
     private string? _returnUrl;
@@ -176,6 +198,10 @@
     private double? _pendingGeocodeLng;
     private const string DnaPersistKey = "candidateProfileDna";
     private bool _restored;
+    private bool _refVerificationEligible;
+    private bool _hasConfirmedReference;
+    private string? _profileUserId;
+    private Guid? _firstWorkEntryId;
     private PersistingComponentStateSubscription _persistSubscription;
 
     private bool IsSectionOpen(string id)
@@ -212,26 +238,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ApiCalls.SetPath("/candidate/profile");
+        ApiCalls.SetPath("/candidate/profile/bewerken");
         _returnUrl = SanitizeReturnUrl(ReturnUrl);
         Editor.ReturnUrl = _returnUrl;
-
-        try
+        if (!string.IsNullOrWhiteSpace(Section))
         {
-            var flags = await FeatureFlags.GetAsync();
-            if (flags.CandidatePassportEnabled)
+            var section = Section.Trim().ToLowerInvariant();
+            if (section is "personal" or "preferences" or "availability" or "experience")
             {
-                var target = PassportRedirects.TryToPassportUrl(Navigation.Uri);
-                if (target is not null)
-                {
-                    Navigation.NavigateTo(target, replace: true);
-                    return;
-                }
+                _openSection = section;
             }
-        }
-        catch
-        {
-            // Fall through to classic profile on flag lookup failure.
         }
 
         try
@@ -281,6 +297,27 @@
         }
     }
 
+    private async Task LoadReferenceVerificationTipAsync(MeProfile profile)
+    {
+        _profileUserId = profile.Id.ToString();
+        Editor.EnsureEmployerEntryIds();
+        _firstWorkEntryId = Editor.Employers
+            .FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.EmployerName))?.EntryId;
+        var flags = await FeatureFlags.GetAsync();
+        _refVerificationEligible = flags.ReferenceVerificationEnabled
+                                   && await Api.GetReferenceVerificationEligibleAsync();
+        if (_refVerificationEligible)
+        {
+            var rows = await Api.GetReferenceVerificationListAsync();
+            _hasConfirmedReference = rows.Any(r =>
+                r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase));
+        }
+        else
+        {
+            _hasConfirmedReference = false;
+        }
+    }
+
     private async Task ApplyKompasAsync(CandidateKompasState? kompas, bool allowGeocode)
     {
         var profile = kompas?.Profile;
@@ -292,6 +329,7 @@
         }
 
         Editor.ApplyFromProfile(profile);
+        await LoadReferenceVerificationTipAsync(profile);
         await Editor.LoadResearchConsentAsync();
         _insightsStatus = kompas?.InsightsStatus ?? "Ready";
         if (_isWideViewport && kompas?.TopMatches is { Count: > 0 } matches)

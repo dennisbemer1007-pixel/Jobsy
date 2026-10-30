@@ -28,6 +28,90 @@ public static partial class PageSeoCatalog
             return exact;
         }
 
+        if (p.Contains("/after-match/pick-slot-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen04.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/after-match/confirmed-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen05.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/after-match/bevestiging-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen06.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.StartsWith("/preview/na-de-match/06", StringComparison.OrdinalIgnoreCase)
+            || p.StartsWith("/preview/na-de-match/6", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen06.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/after-match/herinneringen-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen07.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.StartsWith("/preview/na-de-match/07", StringComparison.OrdinalIgnoreCase)
+            || p.StartsWith("/preview/na-de-match/7", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen07.PageTitle", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/reschedule-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen09.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/after-match/reschedule-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen08.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/messages-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen11.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/after-match/messages-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen10.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/propose-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen03.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/cancel-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen08.SideTitle.Cancel", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/outcome-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen12.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/werkgever/", StringComparison.OrdinalIgnoreCase)
+            && p.Contains("/after-match/panel-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen02.Hero.Title", "Seo.PrivateDescription");
+        }
+
+        if (p.Contains("/after-match/outcome-ssr", StringComparison.OrdinalIgnoreCase)
+            || p.Contains("/after-match/panel-ssr", StringComparison.OrdinalIgnoreCase))
+        {
+            return Private("AfterMatch.Screen13.PageTitle", "Seo.PrivateDescription");
+        }
+
         foreach (var (prefix, entry) in Prefixes)
         {
             if (p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
@@ -156,6 +240,8 @@ public static partial class PageSeoCatalog
             ["/algemene-voorwaarden"] = Public("Legal.Terms", "Seo.TermsDescription"),
             ["/gebruiksvoorwaarden"] = Public("Legal.Usage", "Seo.UsageDescription"),
             ["/wie-zijn-wij"] = Public("Seo.AboutTitle", "Seo.AboutDescription"),
+            ["/contact"] = Public("Contact.Seo.Title", "About.Contact.Lead"),
+            ["/info/onderzoek"] = Public("Research.Info.Title", "Research.Info.Lead"),
             ["/toegankelijkheid"] = Public("A11y.Seo.Title", "A11y.Seo.Description"),
             ["/bronnen"] = Public("Seo.SourcesTitle", "Seo.SourcesDescription"),
             ["/westland"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),
@@ -288,11 +374,13 @@ public static partial class PageSeoCatalog
             ["/leerling/dit-ben-jij"] = Private("LeerlingStory.Title", "Seo.PrivateDescription"),
             ["/leerling/droombaan"] = Private("LeerlingDroom.Title", "Seo.PrivateDescription"),
             ["/leerling/pdf"] = Private("LeerlingStory.Pdf", "Seo.PrivateDescription"),
+            ["/ouder"] = Private("Ouder.Seo.Title", "Seo.PrivateDescription"),
         };
 
     private static readonly (string Prefix, PageSeoEntry Entry)[] Prefixes =
     [
         ("/referentie", Private("Referee.Seo.Title", "Referee.Seo.Description")),
+        ("/werk-referentie", Private("RefVerif.Public.Seo.Title", "RefVerif.Public.Seo.Description")),
         ("/status/", Private("Status.NotFound.Title", "Seo.PrivateDescription")),
         ("/vacancies/", Public("Vacancy.Title", "Seo.VacancyFallbackDescription", "article")),
         ("/partner/", Public("Partner.Title", "Seo.PartnerDescription", index: false, CanonicalPath: "/partner")),
@@ -311,6 +399,7 @@ public static partial class PageSeoCatalog
         ("/school/", Private("School.DashboardTitle", "Seo.PrivateDescription")),
         ("/leraar/", Private("Leraar.DashboardTitle", "Seo.PrivateDescription")),
         ("/leerling/", Private("Leerling.LoginTitle", "Seo.PrivateDescription")),
+        ("/ouder", Private("Ouder.Seo.Title", "Seo.PrivateDescription")),
         ("/intermediary/", Private("Seo.DashboardTitle", "Seo.PrivateDescription")),
         ("/tokens/", Private("Seo.SiteName", "Seo.PrivateDescription")),
     ];

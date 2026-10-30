@@ -5,6 +5,7 @@ using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,9 +17,17 @@ public static class DemoSchoolIds
 {
     public static readonly Guid SchoolId = Guid.Parse("99999999-1111-1111-1111-111111111111");
     public static readonly Guid Class1AId = Guid.Parse("99999999-2222-2222-2222-222222222222");
+    /// <summary>Demo groep 7/8 klas (apart van VMBO 2A).</summary>
+    public static readonly Guid ClassGroep78Id = Guid.Parse("99999999-3333-3333-3333-333333333333");
+    public const string ClassGroep78Name = "8B";
     public static readonly Guid SchoolAdminUserId = Guid.Parse("bbbbbbbb-2222-2222-2222-222222222222");
     public static readonly Guid TeacherUserId = Guid.Parse("bbbbbbbb-3333-3333-3333-333333333333");
     public static readonly Guid WerkcoachUserId = Guid.Parse("bbbbbbbb-4444-4444-4444-444444444444");
+}
+
+public static class DemoCandidateIds
+{
+    public static readonly Guid OnboardingE2eUserId = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444");
 }
 
 public static class DemoGemeenteIds
@@ -32,6 +41,14 @@ internal static class DemoUsersSeeder
     /// <summary>Documented public-demo password for every @jobsy.local seed account.</summary>
     public const string DemoPassword = "Jobsy123!";
 
+    private const string OnboardingE2eEmail = "onboarding.e2e@jobsy.local";
+
+    /// <summary>Haaglanden demo home for banenkaart/match UAT (aligned with vacancy stub).</summary>
+    private const string OnboardingE2eHomeAddress = "Kasweg 12, 2671 AB Naaldwijk";
+
+    private static readonly string OnboardingE2ePreferencesJson =
+        $$"""{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20,"preferredTransport":"Fiets","homeAddress":"{{OnboardingE2eHomeAddress}}"}""";
+
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -41,11 +58,22 @@ internal static class DemoUsersSeeder
     {
         var added = 0;
 
+        try
+        {
+            await PassportPdfMartaDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Passport PDF Marta demo seed failed; continuing.");
+        }
+
         added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
-            Email = "kandidaat@jobsy.local",
-            FullName = "Demo Kandidaat",
+            Email = "sanne@jobsy.local",
+            FullName = KandidaatDemoProfileEnsurer.DemoFullName,
+            FirstName = KandidaatDemoProfileEnsurer.DemoFirstName,
+            LastName = KandidaatDemoProfileEnsurer.DemoLastName,
             Role = UserRole.Candidate,
             CompanyId = null,
             DateOfBirth = new DateOnly(1998, 4, 12),
@@ -88,12 +116,15 @@ internal static class DemoUsersSeeder
         // without altering the public candidate demo profile.
         added += await EnsureUserAsync(db, new User
         {
-            Id = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444"),
-            Email = "onboarding.e2e@jobsy.local",
+            Id = DemoCandidateIds.OnboardingE2eUserId,
+            Email = OnboardingE2eEmail,
             FullName = "Onboarding E2E",
             Role = UserRole.Candidate,
             CompanyId = null,
+            DateOfBirth = new DateOnly(2000, 3, 1),
             OpenForWork = true,
+            HomeLocation = new GeoPoint(51.9930, 4.2150),
+            PreferencesJson = OnboardingE2ePreferencesJson,
             IsActive = true
         });
 
@@ -114,6 +145,17 @@ internal static class DemoUsersSeeder
                 IsActive = true
             },
             password: "Lobsy123!");
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = ReferenceVerificationDemoIds.UserId,
+            Email = ReferenceVerificationDemoIds.Email,
+            FirstName = "Sanne",
+            FullName = "Sanne de Vries",
+            Role = UserRole.Candidate,
+            OpenForWork = true,
+            IsActive = true
+        });
 
         // Named test candidate Valentine (Acceptatie login).
         added += await EnsureUserAsync(db, new User
@@ -158,7 +200,7 @@ internal static class DemoUsersSeeder
         {
             Id = enterpriseManagerId,
             Email = "enterprise@jobsy.local",
-            FullName = "Bedrijfsmanager Lobsy Retail",
+            FullName = "Linda de Wit",
             Role = UserRole.EnterpriseManager,
             CompanyId = SupermarketId,
             IsActive = true
@@ -225,6 +267,15 @@ internal static class DemoUsersSeeder
         await EnsureMembershipAsync(db, intermediaryId, CafeId);
         await EnsureMembershipAsync(db, intermediaryId, SupermarketId);
 
+        // Playwright + docs still sign in as kandidaat@jobsy.local (same user as sanne@jobsy.local).
+        await EnsureLoginEmailAliasAsync(
+            db,
+            KandidaatDemoProfileEnsurer.PrimaryDemoCandidateId,
+            KandidaatDemoProfileEnsurer.DemoLoginEmail);
+        await KandidaatDemoProfileEnsurer.EnsureAsync(db, logger);
+
+        await OnboardingE2eProfileEnsurer.EnsureAsync(db, logger);
+
         if (added > 0 || db.ChangeTracker.HasChanges())
         {
             await db.SaveChangesAsync();
@@ -233,6 +284,15 @@ internal static class DemoUsersSeeder
         if (added > 0)
         {
             logger.LogInformation("Ensured {Count} demo role user(s) (candidates, managers, intermediary, admin).", added);
+        }
+
+        try
+        {
+            await ExternalVacancyDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "External vacancy demo seed failed; continuing.");
         }
     }
 
@@ -274,6 +334,30 @@ internal static class DemoUsersSeeder
                 existing.FullName = template.FullName;
             }
 
+            if (template.HomeLocation is not null && existing.HomeLocation is null)
+            {
+                existing.HomeLocation = template.HomeLocation;
+            }
+
+            if (!string.IsNullOrWhiteSpace(template.PreferencesJson)
+                && string.IsNullOrWhiteSpace(existing.PreferencesJson))
+            {
+                existing.PreferencesJson = template.PreferencesJson;
+            }
+
+            if (ShouldForceRefreshOnboardingE2e(email))
+            {
+                existing.OpenForWork = true;
+                existing.FullName = template.FullName;
+                existing.HomeLocation = template.HomeLocation ?? existing.HomeLocation;
+                existing.PreferencesJson = template.PreferencesJson;
+            }
+
+            if (template.DateOfBirth is not null && existing.DateOfBirth is null)
+            {
+                existing.DateOfBirth = template.DateOfBirth;
+            }
+
             // Demo accounts stay on the current consent version so version bumps don't block the public demo.
             StampDemoConsent(existing);
             await EnsurePasswordAsync(db, existing, password);
@@ -290,6 +374,43 @@ internal static class DemoUsersSeeder
         db.Users.Add(template);
         await EnsurePasswordAsync(db, template, password);
         return 1;
+    }
+
+    private static bool ShouldForceRefreshOnboardingE2e(string normalizedEmail)
+        => string.Equals(normalizedEmail, OnboardingE2eEmail, StringComparison.Ordinal);
+
+    private static async Task EnsureLoginEmailAliasAsync(JobsyDbContext db, Guid userId, string aliasEmail)
+    {
+        var email = aliasEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return;
+        }
+
+        var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.Email == email);
+        if (credential is null)
+        {
+            db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Email = email,
+                PasswordHash = JobsyPasswordHasher.Hash(DemoPassword)
+            });
+            return;
+        }
+
+        credential.UserId = userId;
+        if (!JobsyPasswordHasher.Verify(DemoPassword, credential.PasswordHash)
+            || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
+        {
+            credential.PasswordHash = JobsyPasswordHasher.Hash(DemoPassword);
+        }
+
+        credential.FailedLoginCount = 0;
+        credential.LockoutUntil = null;
+        credential.LockoutCount = 0;
     }
 
     private static async Task EnsurePasswordAsync(JobsyDbContext db, User user, string password)
@@ -510,18 +631,50 @@ internal static class DemoUsersSeeder
             added++;
         }
 
+        var groep78 = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == DemoSchoolIds.ClassGroep78Id);
+        if (groep78 is null)
+        {
+            groep78 = new SchoolClass
+            {
+                Id = DemoSchoolIds.ClassGroep78Id,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = DemoSchoolIds.ClassGroep78Name,
+                Level = SchoolLevel.Groep78,
+                QuestionSet = PupilQuestionSet.Groep78,
+                Year = 8,
+                SchoolYearStart = yearStart,
+                PupilCount = 10,
+                TestWindow = TestWindowState.Open,
+                IsTestData = true,
+                CreatedAtUtc = now
+            };
+            db.SchoolClasses.Add(groep78);
+            added++;
+        }
+        else
+        {
+            groep78.Name = DemoSchoolIds.ClassGroep78Name;
+            groep78.Level = SchoolLevel.Groep78;
+            groep78.QuestionSet = PupilQuestionSet.Groep78;
+            groep78.PupilCount = Math.Max(groep78.PupilCount, 10);
+            groep78.TestWindow = TestWindowState.Open;
+        }
+
         foreach (var uid in new[] { teacherId, coachId })
         {
-            if (!await db.TeacherClassAssignments.AnyAsync(
-                    a => a.TeacherUserId == uid && a.SchoolClassId == DemoSchoolIds.Class1AId))
+            foreach (var classId in new[] { DemoSchoolIds.ClassGroep78Id, DemoSchoolIds.Class1AId })
             {
-                db.TeacherClassAssignments.Add(new TeacherClassAssignment
+                if (!await db.TeacherClassAssignments.AnyAsync(
+                        a => a.TeacherUserId == uid && a.SchoolClassId == classId))
                 {
-                    TeacherUserId = uid,
-                    SchoolClassId = DemoSchoolIds.Class1AId,
-                    CreatedAtUtc = now
-                });
-                added++;
+                    db.TeacherClassAssignments.Add(new TeacherClassAssignment
+                    {
+                        TeacherUserId = uid,
+                        SchoolClassId = classId,
+                        CreatedAtUtc = now
+                    });
+                    added++;
+                }
             }
         }
 

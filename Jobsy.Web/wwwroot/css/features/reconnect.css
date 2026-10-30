@@ -1,18 +1,8 @@
-/*
-  Blazor reconnect toast. Linked from App.razor on every document, including
-  [NoBlazorRuntime] pages. The #components-reconnect-modal markup is part of the
-  static shell; if this file is skipped, all three state messages render as
-  ordinary paragraphs under the footer.
-
-  .NET 10 sets one state class on #components-reconnect-modal:
-  show, retrying, failed, rejected, paused, hide.
-*/
-
 .reconnect-toast {
     display: none;
     position: fixed;
     left: 50%;
-    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-clearance, 5.5rem) + 0.35rem + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 10001;
     width: min(22rem, calc(100vw - 1.5rem));
@@ -22,14 +12,13 @@
     transition: opacity 0.2s ease, visibility 0s linear 0.5s;
 }
 
-/* Brief blips (<1.5s) stay invisible; failed/rejected/paused stay immediate. */
 .reconnect-toast.components-reconnect-show,
 .reconnect-toast.components-reconnect-retrying {
     display: block;
     visibility: visible;
     opacity: 1;
-    pointer-events: auto;
-    transition: opacity 0.2s ease 1.5s, visibility 0s linear 1.5s;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0s linear 0s;
 }
 
 .reconnect-toast.components-reconnect-failed,
@@ -48,10 +37,10 @@
 
 .reconnect-toast__panel {
     padding: 0.7rem 0.9rem;
-    border-radius: 12px;
+    border-radius: var(--r-md);
     border: 1px solid var(--border, #ddd5cc);
     background: var(--surface, #fffcfa);
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    box-shadow: var(--shadow-pop);
     color: var(--text, #122033);
     font-size: 0.9rem;
     font-weight: 650;
@@ -71,6 +60,23 @@
     display: block;
 }
 
+.reconnect-toast.components-reconnect-rejected.reconnect-toast--auth-pending .reconnect-toast__msg--rejected,
+.reconnect-toast.components-reconnect-rejected.reconnect-toast--auth-pending .reconnect-toast__msg--session-expired {
+    display: none;
+}
+
+.reconnect-toast.components-reconnect-rejected.reconnect-toast--auth-pending .reconnect-toast__msg--show {
+    display: block;
+}
+
+.reconnect-toast.reconnect-toast--session-expired.components-reconnect-rejected .reconnect-toast__msg--rejected {
+    display: none;
+}
+
+.reconnect-toast.reconnect-toast--session-expired.components-reconnect-rejected .reconnect-toast__msg--session-expired {
+    display: block;
+}
+
 .reconnect-toast__action {
     margin-left: 0.35rem;
     border: none;
@@ -80,4 +86,126 @@
     font-weight: 800;
     text-decoration: underline;
     cursor: pointer;
+}
+
+html[data-lobsy-reconnect-active] {
+    --reconnect-toast-reserve: 3.25rem;
+}
+
+/* Keep the current page visible while the circuit reconnects (no full-screen blank). */
+html[data-lobsy-reconnect-active] body,
+html[data-lobsy-reconnect-active] .app-shell,
+html[data-lobsy-reconnect-active] .app-main,
+html[data-lobsy-reconnect-active] .jobsy-discovery,
+html[data-lobsy-reconnect-active] .map-pane,
+html[data-lobsy-reconnect-active] .map-stage {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+html[data-lobsy-reconnect-active] .app-shell.has-bottom-nav {
+    padding-bottom: calc(
+        var(--bottom-nav-clearance, 7rem)
+        + var(--reconnect-toast-reserve, 0px)
+        + env(safe-area-inset-bottom, 0px)
+    );
+}
+
+.lobsy-app-update {
+    display: none;
+    position: fixed;
+    left: max(1rem, env(safe-area-inset-left, 0px));
+    bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+    top: auto;
+    transform: none;
+    z-index: 10002;
+    width: min(22rem, calc(100vw - 2rem));
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+}
+
+.lobsy-app-update.is-visible {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lobsy-app-update__panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border, #ddd5cc);
+    background: var(--surface, #fffcfa);
+    box-shadow: 0 8px 28px rgb(18 32 51 / 12%);
+    color: var(--text, #122033);
+    font-size: 0.88rem;
+    font-weight: 650;
+    text-align: start;
+}
+
+.lobsy-app-update__text {
+    flex: 1 1 auto;
+    min-width: 8rem;
+}
+
+.lobsy-app-update__action {
+    flex: 0 0 auto;
+    margin: 0;
+    border: none;
+    background: transparent;
+    color: var(--brand, #0f2d5c);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.lobsy-app-update__dismiss {
+    flex: 0 0 auto;
+    margin: 0;
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #5a6578);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.15rem;
+}
+
+@media (max-width: 639px) {
+    .reconnect-toast {
+        left: max(0.75rem, env(safe-area-inset-left, 0px));
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        width: auto;
+        transform: none;
+    }
+
+    .reconnect-toast__panel {
+        padding: 0.5rem 0.65rem;
+        font-size: 0.82rem;
+        text-align: start;
+    }
+
+    .lobsy-app-update {
+        left: max(0.75rem, env(safe-area-inset-left, 0px));
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        bottom: calc(
+            var(--bottom-nav-clearance, 5.5rem)
+            + env(safe-area-inset-bottom, 0px)
+            + 0.5rem
+        );
+        top: auto;
+        width: min(20rem, calc(100vw - 1.5rem));
+    }
+
+    .lobsy-app-update__panel {
+        padding: 0.5rem 0.65rem;
+        font-size: 0.8rem;
+    }
 }

@@ -28,6 +28,7 @@ public static class UiStringsExternalVacancy
         Add("ExtVac.Promo.Link", "Vacature van een andere site?", "Vacancy from another site?", "Oferta z innej strony?", "Job de pe alt site?", "وظيفة من موقع آخر؟");
 
         Add("ExtVac.Detail.Saved", "Bewaard", "Saved", "Zapisane", "Salvat", "محفوظ");
+        Add("ExtVac.Detail.Untitled", "Vacature zonder titel", "Untitled vacancy", "Oferta bez tytułu", "Job fără titlu", "وظيفة بدون عنوان");
         Add("ExtVac.Detail.Requirements", "Wat ze vragen", "What they ask for", "Czego oczekują", "Ce cer", "ما يطلبونه");
         Add("ExtVac.Detail.Facts", "Feiten", "Facts", "Fakty", "Date", "حقائق");
         Add("ExtVac.Detail.Unknown", "Dat weet ik niet", "I don't know", "Nie wiem", "Nu știu", "لا أعرف");
@@ -42,6 +43,18 @@ public static class UiStringsExternalVacancy
         Add("ExtVac.Detail.DismissedLead", "Deze vacature staat niet meer in je Bewaard-lijst.", "This vacancy is no longer in your Saved list.", "Ta oferta nie jest już na liście Zapisane.", "Acest job nu mai e în lista Salvate.", "لم تعد هذه الوظيفة في قائمة المحفوظات.");
         Add("ExtVac.Detail.DismissUndoToast", "Verwijderd. Ongedaan maken?", "Removed. Undo?", "Usunięto. Cofnąć?", "Eliminat. Anulezi?", "أُزيل. تراجع؟");
         Add("ExtVac.Detail.DismissUndo", "Ongedaan maken", "Undo", "Cofnij", "Anulează", "تراجع");
+        Add("ExtVac.Detail.TravelKnown",
+            "Reistijd: ongeveer {0} min",
+            "Travel time: about {0} min",
+            "Czas dojazdu: ok. {0} min",
+            "Timp de drum: circa {0} min",
+            "وقت التنقل: حوالي {0} د");
+        Add("ExtVac.Detail.TravelNeedAddress",
+            "Vul je adres in om reistijd te zien.",
+            "Add your address to see travel time.",
+            "Podaj adres, aby zobaczyć czas dojazdu.",
+            "Completează adresa ca să vezi timpul de drum.",
+            "أضف عنوانك لرؤية وقت التنقل.");
 
         Add("ExtVac.Apply.Title", "Solliciteren", "Apply", "Aplikuj", "Aplică", "تقديم");
         Add("ExtVac.Apply.Email", "E-mailadres werkgever", "Employer email address", "E-mail pracodawcy", "E-mail angajator", "بريد صاحب العمل");
@@ -66,7 +79,7 @@ public static class UiStringsExternalVacancy
         Add("ExtVac.Employer.StepVacancy", "Vacature", "Vacancy", "Oferta", "Job", "الوظيفة");
         Add("ExtVac.Employer.StepDone", "Klaar", "Done", "Gotowe", "Gata", "تم");
         Add("ExtVac.Employer.Preview", "Sollicitatie van {0}", "Application from {0}", "Aplikacja od {0}", "Candidatură de la {0}", "تقديم من {0}");
-        Add("ExtVac.Employer.AcceptHint", "Accepteren kan na registratie. Eerste vacature kan gratis; daarna betaal je tokens voor publiceren.", "Accept after registration. First vacancy may be free; then you pay tokens to publish.", "Akceptacja po rejestracji. Pierwsza oferta może być gratis; potem płacisz tokenami.", "Acceptă după înregistrare. Primul job poate fi gratuit; apoi plătești tokenuri.", "القبول بعد التسجيل. قد تكون الأولى مجانية؛ ثم تدفع رموزاً للنشر.");
+        Add("ExtVac.Employer.AcceptHint", "Accepteren kan na registratie. Tijdens acties (zoals Westland vóór 18 november) kan publiceren gratis zijn; daarna gebruik je tokens per vacature.", "Accept after registration. During campaigns (e.g. Westland before 18 November) publishing may be free; afterwards you use tokens per vacancy.", "Akceptacja po rejestracji. W akcjach (np. Westland przed 18 listopada) publikacja może być gratis; potem płacisz tokenami.", "Acceptă după înregistrare. În campanii (ex. Westland înainte de 18 noiembrie) publicarea poate fi gratuită; apoi plătești tokenuri.", "القبول بعد التسجيل. في الحملات قد يكون النشر مجانياً؛ بعدها تدفع برموز لكل وظيفة.");
         Add("ExtVac.Employer.RegisterCta", "Account aanmaken en accepteren", "Create account and accept", "Załóż konto i akceptuj", "Creează cont și acceptă", "أنشئ حساباً واقبل");
         Add("ExtVac.Employer.Invalid", "Deze uitnodiging is ongeldig of verlopen.", "This invite is invalid or expired.", "Zaproszenie jest nieprawidłowe lub wygasło.", "Invitația este invalidă sau expirată.", "هذه الدعوة غير صالحة أو منتهية.");
         Add("ExtVac.Employer.EmployersOff", "Werkgevers staan uit. Je kunt de uitnodiging bekijken; registreren kan zodra werkgevers weer aan staan.", "Employers are off. You can view the invite; registration opens when employers are on again.", "Pracodawcy wyłączeni. Możesz zobaczyć zaproszenie; rejestracja wróci, gdy włączą.", "Angajatorii sunt opriți. Poți vedea invitația; înregistrarea revine când sunt porniți.", "أصحاب العمل متوقفون. يمكنك عرض الدعوة؛ التسجيل يعود عند التفعيل.");

@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Reports.TestReflection;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services.Careers;
@@ -532,6 +533,41 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<TestReflectionState?> GetTestReflectionAsync(string kind, string? lang, CancellationToken ct = default)
+    {
+        var url = $"api/me/test-reflection/{Uri.EscapeDataString(kind)}";
+        if (!string.IsNullOrWhiteSpace(lang))
+        {
+            url += $"?lang={Uri.EscapeDataString(lang)}";
+        }
+
+        try
+        {
+            return await GetApiJsonAsync<TestReflectionState>(url, ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task SaveTestReflectionFeedbackAsync(
+        string kind,
+        TestReflectionFeedback feedback,
+        TestDepthLevel level = TestDepthLevel.Full,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/me/test-reflection/{Uri.EscapeDataString(kind)}/feedback",
+            new { feedback = feedback.ToString(), level },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Feedback opslaan mislukt.");
+        }
+    }
+
     public async Task<AssessmentAdjustmentState?> GetAssessmentAdjustmentsAsync(
         string kind,
         string variant = "quick",
@@ -746,11 +782,15 @@ public sealed partial class JobsyApiClient
 
     public async Task<AssistantChatReply> SendAssistantChatAsync(
         IReadOnlyList<AssistantChatMessage> messages,
+        string? pagePath = null,
+        string? pageContextLine = null,
         CancellationToken ct = default)
     {
         var response = await _http.PostAsJsonAsync("api/assistant/chat", new
         {
-            messages = messages.Select(m => new { role = m.Role, content = m.Content })
+            messages = messages.Select(m => new { role = m.Role, content = m.Content }),
+            pagePath,
+            pageContextLine
         }, ct);
         if (!response.IsSuccessStatusCode)
         {

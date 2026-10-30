@@ -1,21 +1,60 @@
+using Jobsy.Infrastructure.Data.Migrations;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Data;
 
 public static class JobsyDbSeeder
 {
+    /// <summary>
+    /// Ensures <see cref="PlatformFeatureSettings.PassportPdfDnaBlocksEnabled"/> exists before the API
+    /// serves feature-gated public reads (banenkaart pins, partner catalog). Idempotent on Postgres.
+    /// </summary>
+    public static async Task EnsurePassportPdfDnaBlocksColumnAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(PlatformFeatureSchemaIdempotentSql.EnsurePassportPdfDnaBlocksEnabled);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Passport PDF DNA blocks column ensure failed; migrate may repair.");
+        }
+    }
+
     public static async Task SeedAsync(IServiceProvider services)
     {
         await MigrateAsync(services);
         await SeedDataAsync(services);
     }
 
+    public static async Task EnsureFeatureFlagAdminOverrideColumnsAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(PlatformFeatureSchemaIdempotentSql.EnsureFeatureFlagAdminOverrides);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Feature flag admin override columns ensure failed; migrate may repair.");
+        }
+    }
+
     public static async Task MigrateAsync(IServiceProvider services)
     {
+        await EnsurePassportPdfDnaBlocksColumnAsync(services);
+        await EnsureFeatureFlagAdminOverrideColumnsAsync(services);
+
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
@@ -24,6 +63,17 @@ public static class JobsyDbSeeder
         if (knownMigrations.Count > 0)
         {
             await db.Database.MigrateAsync();
+            await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
+            await db.Database.ExecuteSqlRawAsync(Migrations.JobSearchActivitySchemaIdempotentSql.EnsureSchema);
+            try
+            {
+                var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+                await AcceptatiePlatformFeatureEnsurer.EnsureAcceptatieFeatureFlagsAsync(db, configuration, logger);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "Acceptatie ActivityLog feature sync failed; continuing.");
+            }
         }
         else
         {
@@ -96,6 +146,24 @@ public static class JobsyDbSeeder
         {
             logger.LogWarning(ex, "Company verification backfill PlatformLog failed; continuing.");
         }
+
+        try
+        {
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+            var allowBedrijvenkaartDemo = environment.IsDevelopment()
+                                          || configuration.GetValue("Seed:Enabled", false);
+            if (allowBedrijvenkaartDemo && await db.Companies.AnyAsync())
+            {
+                await DemoUsersSeeder.SeedUsersAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Bedrijvenkaart demo ensure after migrate failed; continuing.");
+        }
     }
 
     public static async Task SeedDataAsync(IServiceProvider services)
@@ -111,7 +179,25 @@ public static class JobsyDbSeeder
             // Users first so salesmanager demo account exists even if later seeders fail.
             await DemoUsersSeeder.SeedUsersAsync(db, logger);
 
+            try
+            {
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Bakkerij De Korenaar demo branding ensure failed; continuing.");
+            }
+
             // Hierarchy / salary-table demo fixes before wage sync.
+            try
+            {
+                await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Reference verification demo seed failed; continuing.");
+            }
+
             try
             {
                 await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
@@ -139,7 +225,10 @@ public static class JobsyDbSeeder
                 await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+                await AfterMatchDemoSeeder.EnsureAsync(db, logger);
                 await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
             }
             catch (Exception ex)
             {
@@ -151,6 +240,17 @@ public static class JobsyDbSeeder
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
+        await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+        await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
+        try
+        {
+            await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Reference verification demo seed failed; continuing.");
+        }
+
         try
         {
             await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);
@@ -169,12 +269,31 @@ public static class JobsyDbSeeder
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+            await AfterMatchDemoSeeder.EnsureAsync(db, logger);
             await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Partial seed failure after companies/users; continuing.");
+        }
+    }
+
+    /// <summary>Idempotent werkgever after-match demo apps (77777771-0001 … 0006) for acceptatie E2E.</summary>
+    public static async Task EnsureAfterMatchDemoApplicationsAsync(JobsyDbContext db, ILogger logger)
+    {
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                await AfterMatchDemoSeeder.EnsureAsync(db, logger);
+                return;
+            }
+            catch (DbUpdateConcurrencyException ex) when (attempt < 3)
+            {
+                logger.LogWarning(ex, "After-match demo seed concurrency (attempt {Attempt}); retrying.", attempt);
+                db.ChangeTracker.Clear();
+            }
         }
     }
 }

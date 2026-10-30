@@ -38,6 +38,7 @@ public class SettingsController : ControllerBase
     private readonly AiOptions _ai;
     private readonly MistralOptions _mistral;
     private readonly OpenAiOptions _openAi;
+    private readonly SessionAuthOptions _sessionAuth;
     private readonly MailOptions _mail;
     private readonly LettermintOptions _lettermint;
     private readonly WhatsAppReminderOptions _whatsApp;
@@ -58,9 +59,11 @@ public class SettingsController : ControllerBase
         IOptions<WhatsAppReminderOptions>? whatsAppOptions = null,
         IOptions<OpenAiOptions>? openAiOptions = null,
         IOptions<MailOptions>? mailOptions = null,
-        IOptions<LettermintOptions>? lettermintOptions = null)
+        IOptions<LettermintOptions>? lettermintOptions = null,
+        IOptions<SessionAuthOptions>? sessionAuthOptions = null)
     {
         _db = db;
+        _sessionAuth = sessionAuthOptions?.Value ?? new SessionAuthOptions();
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
@@ -486,7 +489,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidatePassportEnabled: request.CandidatePassportEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
+                    PassportPdfDnaBlocksEnabled: request.PassportPdfDnaBlocksEnabled,
                     TestsV2Enabled: request.TestsV2Enabled,
+                    TestItemExamplesEnabled: request.TestItemExamplesEnabled,
+                    TestProgressInsightEnabled: request.TestProgressInsightEnabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
@@ -496,10 +502,27 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     EmployerPhase2Enabled: request.EmployerPhase2Enabled,
                     CandidateExternalVacanciesEnabled: request.CandidateExternalVacanciesEnabled,
                     ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
+                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled,
+                    EmployerFitQuestionnairesEnabled: request.EmployerFitQuestionnairesEnabled,
+                    KandidatenkaartEnabled: request.KandidatenkaartEnabled,
+                    CompanyMapInitiativeEnabled: request.CompanyMapInitiativeEnabled,
+                    AfterMatchEnabled: request.AfterMatchEnabled,
+                    SensitiveExperienceEnabled: request.SensitiveExperienceEnabled,
+                    TrainingPartnersEnabled: request.TrainingPartnersEnabled,
+                    UwvFeaturesEnabled: request.UwvFeaturesEnabled,
+                    ActivityLogEnabled: request.ActivityLogEnabled,
+                    ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
+                    TestJourneyIllustrationEnabled: request.TestJourneyIllustrationEnabled,
+                    OnboardingFinaleV2Enabled: request.OnboardingFinaleV2Enabled,
+                    OccupationDayInLifeEnabled: request.OccupationDayInLifeEnabled,
+                    ResearchConsentEnabled: request.ResearchConsentEnabled,
+                    TestEditModeEnabled: request.TestEditModeEnabled,
+                    SamplePdfEnabled: request.SamplePdfEnabled,
+                    TestDepthValueMockupEnabled: request.TestDepthValueMockupEnabled,
+                    ClearAdminFlagOverrideKeys: request.ClearAdminFlagOverrideKeys,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
-                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit,
-                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled),
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -543,9 +566,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                 new
                 {
                     message =
-                        "Platforminstellingen konden niet worden opgeslagen. Waarschijnlijk loopt de productie-database achter op de API (ontbrekende migratie). "
-                        + "Deploy de nieuwste API naar main en voer database-migraties uit, of neem contact op met beheer. "
-                        + $"Technisch: {ex.InnerException?.Message ?? ex.Message}"
+                        "Platforminstellingen konden niet worden opgeslagen (database-schema loopt achter). "
+                        + "Voer de nieuwste EF-migraties uit op de database en herstart de API. "
+                        + "Technisch: "
+                        + (ex.InnerException?.Message ?? ex.Message)
                 });
         }
     }
@@ -583,7 +607,12 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("PupilPassportV2Enabled", before.PupilPassportV2Enabled.ToString(), after.PupilPassportV2Enabled.ToString());
+        Add("StudentPassportEnabled", before.StudentPassportEnabled.ToString(), after.StudentPassportEnabled.ToString());
+        Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
         Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
+        Add("TestItemExamplesEnabled", before.TestItemExamplesEnabled.ToString(), after.TestItemExamplesEnabled.ToString());
+        Add("TestProgressInsightEnabled", before.TestProgressInsightEnabled.ToString(), after.TestProgressInsightEnabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
@@ -593,7 +622,25 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
+        Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
+        Add("CompanyMapInitiativeEnabled", before.CompanyMapInitiativeEnabled.ToString(), after.CompanyMapInitiativeEnabled.ToString());
+        Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
+        Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
+        Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
+        Add("UwvFeaturesEnabled", before.UwvFeaturesEnabled.ToString(), after.UwvFeaturesEnabled.ToString());
+        Add("ActivityLogEnabled", before.ActivityLogEnabled.ToString(), after.ActivityLogEnabled.ToString());
+        Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
+        Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
+        Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
+        Add("TestDepthValueMockupEnabled", before.TestDepthValueMockupEnabled.ToString(), after.TestDepthValueMockupEnabled.ToString());
+        Add("OccupationDayInLifeEnabled", before.OccupationDayInLifeEnabled.ToString(), after.OccupationDayInLifeEnabled.ToString());
+        Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
+        Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
         Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
         Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
@@ -625,7 +672,26 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             employerPhase2Enabled = snap.EmployerPhase2Enabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
             proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
-            testsV2Enabled = snap.TestsV2Enabled
+            testsV2Enabled = snap.TestsV2Enabled,
+            testItemExamplesEnabled = snap.TestItemExamplesEnabled,
+            testProgressInsightEnabled = snap.TestProgressInsightEnabled,
+            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
+            kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
+            companyMapInitiativeEnabled = snap.CompanyMapInitiativeEnabled,
+            afterMatchEnabled = snap.AfterMatchEnabled,
+            referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
+            sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
+            trainingPartnersEnabled = snap.TrainingPartnersEnabled,
+            uwvFeaturesEnabled = snap.UwvFeaturesEnabled,
+            activityLogEnabled = snap.ActivityLogEnabled,
+            pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
+            studentPassportEnabled = snap.StudentPassportEnabled,
+            testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,
+            onboardingFinaleV2Enabled = snap.OnboardingFinaleV2Enabled,
+            occupationDayInLifeEnabled = snap.OccupationDayInLifeEnabled,
+            testEditModeEnabled = snap.TestEditModeEnabled,
+            samplePdfEnabled = snap.SamplePdfEnabled,
+            testDepthValueMockupEnabled = snap.TestDepthValueMockupEnabled
         });
     }
 
@@ -652,7 +718,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     public async Task<ActionResult<SessionSecurityDto>> GetSessionSecurity(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
-        return Ok(new SessionSecurityDto(snap.SessionInactivityTimeoutMinutes));
+        var minutes = SessionTimeoutResolver.ResolveInactivityMinutes(
+            _sessionAuth,
+            snap.SessionInactivityTimeoutMinutes);
+        return Ok(new SessionSecurityDto(minutes));
     }
 
     [HttpGet("company")]
@@ -930,7 +999,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CandidatePassportEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
+            snap.PassportPdfDnaBlocksEnabled,
             snap.TestsV2Enabled,
+            snap.TestItemExamplesEnabled,
+            snap.TestProgressInsightEnabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,
@@ -942,6 +1014,21 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CandidateExternalVacanciesEnabled,
             snap.ProactiveMatchingEnabled,
             snap.MatchCalibrationV1Enabled,
+            snap.EmployerFitQuestionnairesEnabled,
+            snap.KandidatenkaartEnabled,
+            snap.SensitiveExperienceEnabled,
+            snap.TrainingPartnersEnabled,
+            snap.UwvFeaturesEnabled,
+            snap.ActivityLogEnabled,
+            snap.ReferenceVerificationEnabled,
+            snap.TestJourneyIllustrationEnabled,
+            snap.OnboardingFinaleV2Enabled,
+            snap.OccupationDayInLifeEnabled,
+            snap.ResearchConsentEnabled,
+            snap.TestEditModeEnabled,
+            snap.SamplePdfEnabled,
+            snap.TestDepthValueMockupEnabled,
+            snap.AdminOverriddenFlagKeys,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,
             snap.CandidateApplyPerDayLimit);

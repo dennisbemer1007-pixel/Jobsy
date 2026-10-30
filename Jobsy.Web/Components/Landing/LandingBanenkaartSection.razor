@@ -1,0 +1,106 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<section class="pub-landing__section pub-landing__section--tight pub-landing__band-b" id="banenkaart">
+    <div class="pub-landing__wrap">
+        @if (ComboLayout)
+        {
+            <div class="pub-landing__kaart-ill">
+                <div class="pub-landing__kaart-ill-copy">
+                    <div class="pub-landing__eyebrow">@LandingText.For("Landing.Map.Eyebrow", Variant)</div>
+                    <h2 class="pub-landing__h2">@IllustratedTitle</h2>
+                    <p>@LandingText.For("Landing.Map.IllustratedLead", Variant)</p>
+                    <div class="pub-landing__kaart-ill-modes" aria-hidden="true">
+                        <span class="is-on">@LandingText.For("Landing.Map.Bike", Variant)</span>
+                        <span>@LandingText.For("Landing.Map.Ov", Variant)</span>
+                        <span>@LandingText.For("Landing.Map.Car", Variant)</span>
+                    </div>
+                    <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Banenkaart" data-kpi="LandingCtaMap">
+                        @LandingText.For("Landing.Map.Cta", Variant)
+                    </a>
+                </div>
+                <div class="pub-landing__kaart-ill-art" aria-hidden="true">
+                    <img src="@CandidateIllustratedImages.VervoerBlok" alt="" width="720" height="420" decoding="async" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="pub-landing__map-block pub-landing__map-block--balanced">
+                <div class="pub-landing__map-col">
+                    <div class="pub-landing__map-frame pub-landing__lift pub-landing__card-calm" aria-hidden="true">
+                        <div class="pub-landing__map-toolbar">
+                            <div class="pub-landing__map-seg">
+                                <span class="is-on">@LandingText.For("Landing.Map.Bike", Variant)</span>
+                                <span>@LandingText.For("Landing.Map.Ov", Variant)</span>
+                                <span>@LandingText.For("Landing.Map.Car", Variant)</span>
+                            </div>
+                            <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
+                        </div>
+                        <div class="pub-landing__map-canvas">
+                            <svg class="pub-landing__map-svg" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid slice">
+                                <rect width="600" height="320" fill="#F3EEE4"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="pub-landing__stat-grid">
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
+                <b>@VacancyStat</b>
+                <span>@LandingText.For("Landing.Stats.Vacancies", Variant)</span>
+            </div>
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
+                <b>20 <small>@LandingText.For("Landing.Stats.QuestionsShort", Variant)</small></b>
+                <span>@LandingText.For("Landing.Stats.Questions", Variant)</span>
+            </div>
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
+                <b>@LandingText.For("Landing.Stats.LangsShortDisplay", Variant)</b>
+                <span>@LandingText.For("Landing.Stats.Langs", Variant)</span>
+            </div>
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
+                <b>@LandingText.For("Landing.Stats.FreeLabel", Variant)</b>
+                <span>@LandingText.For("Landing.Stats.FreeBody", Variant)</span>
+            </div>
+        </div>
+
+        @if (!ComboLayout)
+        {
+            <p class="pub-landing__map-note">
+                <a href="@PublicRoutes.Banenkaart" data-kpi="LandingCtaMap">@LandingText.For("Landing.Map.Cta", Variant)</a>
+            </p>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+    [Parameter] public int? VacancyCount { get; set; }
+    [Parameter] public bool ComboLayout { get; set; }
+
+    private System.Globalization.CultureInfo CultureInfo =>
+        System.Globalization.CultureInfo.GetCultureInfo(Culture.Language switch
+        {
+            "en" => "en-GB",
+            "pl" => "pl-PL",
+            "ro" => "ro-RO",
+            "ar" => "ar",
+            _ => "nl-NL"
+        });
+
+    private string VacancyStat =>
+        VacancyCount is int n and >= 25
+            ? string.Format(System.Globalization.CultureInfo.InvariantCulture, LandingText.For("Landing.Stats.VacanciesValue", Variant), n.ToString("N0", CultureInfo))
+            : LandingText.For("Landing.Stats.VacanciesFallback", Variant);
+
+    private string IllustratedTitle =>
+        VacancyCount is int n and >= 25
+            ? string.Format(CultureInfo, LandingText.For("Landing.Map.IllustratedTitle", Variant), n.ToString("N0", CultureInfo))
+            : string.Format(CultureInfo, LandingText.For("Landing.Map.IllustratedTitle", Variant), "320");
+}

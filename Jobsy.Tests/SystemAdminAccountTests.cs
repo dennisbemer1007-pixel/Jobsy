@@ -216,10 +216,12 @@ public class SystemAdminAccountTests
             new MfaChallengeService(new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings { RequireTwoFactor = requireTwoFactor },
             notifier,
-            NullLogger<AuthController>.Instance)
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()))
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };

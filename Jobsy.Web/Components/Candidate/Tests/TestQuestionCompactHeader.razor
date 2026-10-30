@@ -1,0 +1,8 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Onboarding
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Slug { get; set; } = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
+}

@@ -42,7 +42,7 @@
         position: relative;
     }
 
-    .map-pane.is-cluster-open .highlight-carousel--map {
+    .map-pane.is-cluster-open .map-pane__top-chrome {
         visibility: hidden;
         pointer-events: none;
         height: 0 !important;
@@ -261,6 +261,11 @@
     padding: 0 0.75rem 0.75rem;
 }
 
+.map-cluster-card .map-popup__main {
+    max-height: none;
+    overflow: visible;
+}
+
 .map-cluster-card__viewport {
     position: relative;
     min-height: 0;
@@ -388,8 +393,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(160deg, #0f2d5c 0%, #163a6b 55%, #0a2044 100%);
-    color: #fff;
+    background: color-mix(in srgb, var(--coral) 8%, var(--gold-soft));
+    color: var(--brand);
+}
+
+.map-popup--calm .map-popup__media--illustrated .map-popup__photo--illustrated {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    padding: 4px;
 }
 
 .map-cluster-card .map-popup__media--empty svg,
@@ -611,9 +624,48 @@
 }
 
 /* Isochrone ring label pills (HTML markers) */
+.app-shell--banenkaart-shell .job-map,
+.jobsy-discovery[data-banenkaart-ssr="1"] .job-map {
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
+}
+
+.app-shell--banenkaart-shell .job-map .maplibregl-canvas-container,
+.jobsy-discovery[data-banenkaart-ssr="1"] .job-map .maplibregl-canvas-container {
+    height: 100% !important;
+}
+
+.job-map-locate__message {
+    position: absolute;
+    left: 50%;
+    top: 0.65rem;
+    transform: translateX(-50%);
+    width: min(22rem, calc(100% - 1.5rem));
+    margin: 0;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--warn-soft, #fff8e7) 94%, var(--surface));
+    color: var(--warn, #a65b00);
+    font-size: 0.82rem;
+    font-weight: 600;
+    z-index: 2;
+    pointer-events: none;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: opacity 280ms ease;
+}
+
+.job-map-locate__message[hidden] {
+    opacity: 0;
+}
+
 .map-iso-label {
     pointer-events: none;
     white-space: nowrap;
+    max-width: calc(100% - 1rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 0.2rem 0.45rem;
     border-radius: 999px;
     border: 1.5px solid var(--map-iso-line);
@@ -641,6 +693,32 @@
 /* The shared coach dock sits bottom-inline-end. On a phone it covers zoom and 3D.
    --lobsy-coach-clear-inline is set by jobsyCoachDock.syncClearance; 80px matches
    the 56px lobster plus its 12px inset and a 12px gap before JS runs. */
+/* Mobile banenkaart: keep +/− adjacent — park compact attribution on the bottom-left. */
+@media (max-width: 899px) {
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib {
+        position: absolute;
+        left: calc(8px - 100vw + 100%);
+        right: auto;
+        top: auto;
+        bottom: 0;
+        margin: 0;
+        float: none;
+        z-index: 4;
+        width: 24px;
+        height: 24px;
+        min-height: 24px;
+        max-width: 24px;
+        padding: 0;
+    }
+
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib.maplibregl-compact-show {
+        width: auto;
+        height: auto;
+        max-width: min(70vw, 16rem);
+        padding: 2px 28px 2px 8px;
+    }
+}
+
 @media (max-width: 639px) {
     .app-shell:has([data-lobsy-coach]) .job-map .maplibregl-ctrl-bottom-right,
     .app-shell:has([data-lobsy-coach]) .job-map .maplibregl-ctrl-top-right,
@@ -680,5 +758,53 @@
         height: auto;
         max-width: min(70vw, 16rem);
         padding: 2px 28px 2px 8px;
+    }
+}
+
+/* Candidate banenkaart shell: map toggle is a sibling above .jobsy-discovery — give the grid remaining height. */
+@media (max-width: 899px) {
+    .app-shell--banenkaart-shell.app-shell.has-bottom-nav {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell--banenkaart-shell .app-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell--banenkaart-shell .app-main__content {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .app-shell--banenkaart-shell .bk-map-toggle--banen {
+        flex: 0 0 auto;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+    }
+}
+
+/* SSR banenkaart: hero strip row 1, filter toolbar row 2 (see banenkaart-page.css). */
+@media (min-width: 900px) {
+    .jobsy-discovery[data-banenkaart-ssr="1"] > .kb-nearby-banner--strip {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .jobsy-discovery[data-banenkaart-ssr="1"] > .jobsy-chrome {
+        display: block;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        min-width: 0;
     }
 }

@@ -1,0 +1,19 @@
+@page "/candidate/passport"
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@inject IHttpContextAccessor HttpContextAccessor
+
+@code {
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        var qs = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
+        http.Response.StatusCode = StatusCodes.Status308PermanentRedirect;
+        http.Response.Headers.Location = "/candidate/paspoort" + qs;
+    }
+}

@@ -77,6 +77,8 @@ public static class UiStringsWerkgever
         Add("WgNav.Signals", "Signalen", "Signals", "Sygnały", "Semnale", "إشارات");
         Add("WgNav.Vacancies", "Vacatures", "Vacancies", "Oferty", "Posturi", "الوظائف");
         Add("WgNav.Applications", "Sollicitaties", "Applications", "Aplikacje", "Aplicații", "الطلبات");
+        Add("WgNav.Notifications", "Meldingen", "Notifications", "Powiadomienia", "Notificări", "الإشعارات");
+        Add("WgNotifications.Lead", "Updates over sollicitaties, vacatures en je account.", "Updates on applications, vacancies and your account.", "Aktualizacje o aplikacjach, ofertach i koncie.", "Actualizări despre aplicații, posturi și cont.", "تحديثات حول الطلبات والوظائف وحسابك.");
         Add("WgNav.Talentpool", "Talentpool", "Talent pool", "Pula talentów", "Baza de talente", "مجموعة المواهب");
         Add("WgNav.CandidateInsights", "Kandidaatinzichten", "Candidate insights", "Wnioski o kandydatach", "Perspective candidați", "رؤى المرشحين");
         Add("WgNav.BranchesRegions", "Vestigingen & regio's", "Branches & regions", "Placówki i regiony", "Filiale și regiuni", "الفروع والمناطق");
@@ -310,6 +312,7 @@ public static class UiStringsWerkgever
         Add("WgVac.ClosedOn", "Gesloten {0}", "Closed {0}", "Zamknięta {0}", "Închis {0}", "مغلق {0}");
         Add("WgVac.Deactivated", "gedeactiveerd", "deactivated", "dezaktywowana", "dezactivat", "مُلغى");
         Add("WgVac.Create.VmPublishNote", "Plaatsen kost geen tokens. Je vestiging heeft {0} tokens voor betaalde opties (uitlichten, pushbericht).", "Posting costs no tokens. Your branch has {0} tokens for paid options (highlight, push message).", "Publikacja jest bezpłatna. Placówka ma {0} tokenów na opcje płatne (wyróżnienie, powiadomienie).", "Publicarea nu costă tokenuri. Filiala are {0} tokenuri pentru opțiuni plătite (evidențiere, notificare).", "النشر مجاني. فرعك لديه {0} رمزاً للخيارات المدفوعة (تمييز، إشعار).");
+        Add("WgVac.Wizard.DescriptionCharCount", "{0} van {1} tekens", "{0} of {1} characters", "{0} z {1} znaków", "{0} din {1} caractere", "{0} من {1} حرفاً");
         Add("WgVac.Paid.Publish", "Betaling gelukt — vacature is gepubliceerd.", "Payment succeeded — vacancy published.", "Płatność OK — oferta opublikowana.", "Plată reușită — post publicat.", "تم الدفع — نُشرت الوظيفة.");
         Add("WgVac.Paid.Highlight", "Betaling gelukt — vacature is uitgelicht.", "Payment succeeded — vacancy featured.", "Płatność OK — oferta wyróżniona.", "Plată reușită — post evidențiat.", "تم الدفع — مُيِّزت الوظيفة.");
         Add("WgVac.Paid.PushBom", "Betaling gelukt — pushbericht is verstuurd.", "Payment succeeded — push message sent.", "Płatność OK — powiadomienie wysłane.", "Plată reușită — notificare trimisă.", "تم الدفع — أُرسل الإشعار.");
@@ -364,6 +367,16 @@ public static class UiStringsWerkgever
         Add("WgApp.Action.Invite", "Uitnodigen", "Invite", "Zaproś", "Invită", "دعوة");
         Add("WgApp.Action.Hire", "Aannemen", "Hire", "Zatrudnij", "Angajează", "تعيين");
         Add("WgApp.Action.Cv", "Lobsy-cv", "Lobsy CV", "CV Lobsy", "CV Lobsy", "سيرة Lobsy");
+        Add("WgApp.Action.PassportPdf", "Lobsy-paspoort", "Lobsy passport", "Paszport Lobsy", "Pașaport Lobsy", "جواز Lobsy");
+        Add("WgApp.Attached.LobsyCv", "Bijlage: Lobsy-CV", "Attachment: Lobsy CV", "Załącznik: CV Lobsy", "Anex: CV Lobsy", "مرفق: سيرة Lobsy");
+        Add("WgApp.Attached.Passport", "Bijlage: Lobsy-paspoort", "Attachment: Lobsy passport", "Załącznik: paszport Lobsy", "Anex: pașaport Lobsy", "مرفق: جواز Lobsy");
+        Add(
+            "WgApp.Attached.PassportFollows",
+            "Paspoort volgt zodra de kandidaat de tests heeft afgerond.",
+            "The passport will follow once the candidate completes the tests.",
+            "Paszport pojawi się, gdy kandydat ukończy testy.",
+            "Pașaportul urmează după ce candidatul finalizează testele.",
+            "يُرفق الجواز بعد أن يُكمل المرشح الاختبارات.");
         Add("WgApp.Action.BulkReject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
         Add("WgApp.HireConfirmTitle", "Vacature als vervuld markeren?", "Mark vacancy as filled?", "Oznaczyć ofertę jako obsadzoną?", "Marchezi postul ca ocupat?", "تعليم الوظيفة كمشغولة؟");
         Add("WgApp.HireConfirmBody", "Je neemt {0} aan voor “{1}”. De vacature wordt als vervuld gemarkeerd.", "You hire {0} for “{1}”. The vacancy will be marked filled.", "Zatrudniasz {0} na “{1}”. Oferta zostanie oznaczona jako obsadzona.", "Angajezi {0} pentru “{1}”. Postul va fi marcat ca ocupat.", "تعيّن {0} لـ “{1}”. ستُعلَّم الوظيفة كمشغولة.");
@@ -414,6 +427,8 @@ public static class UiStringsWerkgever
         Add("WgPhase2.AcceptFree", "Accepteren is gratis.", "Accepting is free.", "Akceptacja jest bezpłatna.", "Acceptarea este gratuită.", "القبول مجاني.");
         Add("WgPhase2.AcceptCta", "Accepteren", "Accept", "Akceptuj", "Acceptă", "قبول");
         Add("WgPhase2.AcceptFailed", "Accepteren is niet gelukt.", "Accepting failed.", "Akceptacja nie powiodła się.", "Acceptarea a eșuat.", "فشل القبول.");
+        Add("WgPhase2.LoadFailed", "De volgende stap kon niet worden geladen. Vernieuw de pagina of probeer het later opnieuw.", "Could not load the next step. Refresh the page or try again later.", "Nie udało się załadować kolejnego kroku. Odśwież stronę lub spróbuj później.", "Pasul următor nu s-a putut încărca. Reîmprospătează pagina sau încearcă mai târziu.", "تعذّر تحميل الخطوة التالية. حدّث الصفحة أو حاول لاحقًا.");
+        Add("WgPhase2.UsePanelHint", "Gebruik Accepteren in het paneel hierboven. Daarna kies je Maqqie of zelf in dienst.", "Use Accept in the panel above. Then choose Maqqie or direct hire.", "Użyj Akceptuj w panelu powyżej. Potem wybierz Maqqie lub bezpośrednio.", "Folosește Acceptă în panoul de mai sus. Apoi alege Maqqie sau angajare directă.", "استخدم قبول في اللوحة أعلاه. ثم اختر Maqqie أو التوظيف المباشر.");
         Add("WgPhase2.ChoiceTitle", "Hoe wil je laten werken?", "How will they work?", "Jak chcesz, żeby pracował?", "Cum va lucra?", "كيف سيعمل؟");
         Add("WgPhase2.ChoiceLead", "Kies zelf in dienst of via Maqqie. Via Maqqie krijg je na week 1 je token terug.", "Choose direct hire or via Maqqie. With Maqqie you get your token back after week 1.", "Wybierz bezpośrednio lub przez Maqqie.", "Alege direct sau prin Maqqie.", "اختر مباشرة أو عبر Maqqie.");
         Add("WgPhase2.Mode.Self", "Zelf in dienst", "Direct hire", "Bezpośrednio", "Angajare directă", "توظيف مباشر");
@@ -490,6 +505,7 @@ public static class UiStringsWerkgever
         Add("WgTeam.Active.Never", "Nog niet ingelogd", "Not logged in yet", "Jeszcze nie zalogowany", "Niciodată autentificat", "لم يسجّل الدخول بعد");
         Add("WgTeam.Active.Minutes", "{0} min geleden", "{0} min ago", "{0} min temu", "acum {0} min", "منذ {0} د");
         Add("WgTeam.Active.Hours", "{0} uur geleden", "{0} h ago", "{0} godz. temu", "acum {0} h", "منذ {0} س");
+        Add("WgTeam.Active.DaysOne", "{0} dag geleden", "{0} day ago", "{0} dzień temu", "acum {0} zi", "منذ {0} يوم");
         Add("WgTeam.Active.Days", "{0} dagen geleden", "{0} days ago", "{0} dni temu", "acum {0} zile", "منذ {0} يوم");
         Add("WgTeam.Action.EditRoleScope", "Rol of bereik wijzigen", "Change role or scope", "Zmień rolę lub zakres", "Schimbă rolul sau domeniul", "تغيير الدور أو النطاق");
         Add("WgTeam.Action.Deactivate", "Deactiveren", "Deactivate", "Dezaktywuj", "Dezactivează", "تعطيل");

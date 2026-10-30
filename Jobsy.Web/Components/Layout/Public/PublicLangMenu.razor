@@ -9,7 +9,7 @@
         <span class="pub-lang__caret" aria-hidden="true">▾</span>
     </summary>
     <ul class="pub-lang__menu" role="listbox" aria-label="@Culture["PublicNav.ChooseLanguage"]">
-        @foreach (var lang in JobsyLanguages.All)
+        @foreach (var lang in JobsyLanguages.Enabled)
         {
             var href = $"/taal/{lang.Code}?returnUrl={Uri.EscapeDataString(EffectiveReturn)}";
             <li role="option" aria-selected="@(lang.Code == Culture.Language ? "true" : "false")">

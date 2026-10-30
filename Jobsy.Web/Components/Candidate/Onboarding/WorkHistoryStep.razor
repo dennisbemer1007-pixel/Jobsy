@@ -1,75 +1,201 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Careers
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.Sensitive
 @using Jobsy.Web.Models
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
-@if (ShowHeading)
+@if (_sensitiveExperience)
+{
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-finale-v2.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/gevoelig-werkervaring.css")" />
+}
+@if (ShowStepTitle && ShowHeading && !Illustrated)
 {
     <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
     <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
     <p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p>
+    @if (_sensitiveExperience)
+    {
+        <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
+    }
 }
+<div class="ob-wizard__card @(Illustrated ? "ob-wizard__card--illustrated" : null)">
+@if (!RustigPersonal)
+{
 <label class="ob-wizard__check">
-    <input type="checkbox" @bind="Draft.NoWork" @bind:after="NotifyAsync" />
+    <input type="checkbox" checked="@Draft.NoWork" @onchange="OnNoWorkChangedAsync" />
     @Culture["Onboarding.NoWorkExperience"]
 </label>
-@if (!Draft.NoWork)
+}
+@if (!Draft.NoWork || RustigPersonal)
 {
     @foreach (var job in Draft.Jobs)
     {
         var item = job;
-        <article class="ob-wizard__job">
-            <button type="button" class="icon-btn"
-                    aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
-                    @onclick="() => RemoveJob.InvokeAsync(item)">×</button>
+        var canRemove = Draft.Jobs.Count > 1 || !item.IsBlank();
+        var dutyChips = OccupationDutySuggestions.ForRole(item.Role, Culture.Language);
+        <article class="ob-wizard__job ob-job-card" data-testid="onboarding-work-job">
+            @if (canRemove)
+            {
+                <button type="button" class="icon-btn"
+                        aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
+                        @onclick="() => RemoveJob.InvokeAsync(item)">×</button>
+            }
             <label>
                 @Culture["Profile.Role"]
-                <input @bind="item.Role" @bind:event="oninput" @bind:after="NotifyAsync" />
+                <input @bind="item.Role" @bind:event="oninput" @bind:after="OnRoleChangedAsync" />
             </label>
+            @if (!RustigPersonal)
+            {
             <label>
                 @Culture["Profile.Employer"]
                 <input @bind="item.EmployerName" @bind:event="oninput" @bind:after="NotifyAsync" />
             </label>
-            <div class="ob-wizard__field-row">
-                <label>
+            }
+            <div class="ob-job-dates">
+                <label class="ob-job-dates__from">
                     @Culture["Profile.EmployerFrom"]
                     <MonthYearInput Value="@item.StartMonth"
                                     ValueChanged="value => SetJobStart.InvokeAsync((item, value))" />
                 </label>
-                <label class="ob-wizard__check">
+                <label class="ob-job-dates__to">
+                    @Culture["Profile.EmployerTo"]
+                    @if (item.ShowsAsCurrent)
+                    {
+                        <input class="ob-job-dates__present-input"
+                               type="text"
+                               readonly
+                               disabled
+                               value="@Culture["Profile.EmployerPresent"]"
+                               aria-label="@Culture["Profile.EmployerPresent"]" />
+                    }
+                    else
+                    {
+                        <MonthYearInput Value="@item.EndMonth"
+                                        ReferenceMonth="@item.StartMonth"
+                                        ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
+                    }
+                </label>
+                @if (!RustigPersonal)
+                {
+                <label class="ob-job-dates__current">
                     <input type="checkbox"
                            checked="@item.ShowsAsCurrent"
                            @onchange="e => SetCurrentJob(item, e.Value is true)" />
-                    @Culture["Profile.CurrentJob"]
+                    <span>@Culture["Profile.CurrentJob"]</span>
                 </label>
-                @if (!item.ShowsAsCurrent)
-                {
-                    <label>
-                        @Culture["Profile.EmployerTo"]
-                        <MonthYearInput Value="@item.EndMonth"
-                                        ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
-                    </label>
                 }
             </div>
+            @if (!RustigPersonal)
+            {
+            <label class="ob-job-duties">
+                <span>@Culture["Onboarding.Work.DutiesLabel"] <small class="ob-job-duties__optional">@Culture["Onboarding.Optional"]</small></span>
+                <textarea rows="3"
+                          maxlength="1000"
+                          placeholder="@Culture["Onboarding.Work.DutiesPlaceholder"]"
+                          @bind="item.Description"
+                          @bind:event="oninput"
+                          @bind:after="NotifyAsync"></textarea>
+            </label>
+            @if (dutyChips.Count > 0)
+            {
+                <div class="ob-job-duty-pills" role="group" aria-label="@Culture["Onboarding.Work.DutyChipsAria"]">
+                    @foreach (var chip in dutyChips)
+                    {
+                        var text = chip;
+                        <button type="button"
+                                class="ob-job-duty-pill"
+                                @onclick="() => AppendDuty(item, text)">
+                            @text
+                        </button>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(item.EmployerName)
+                 && string.IsNullOrWhiteSpace(item.Description)
+                 && !Draft.NoWork)
+            {
+                <p class="ob-job-duties__hint">@Culture["Onboarding.Work.DutiesHint"]</p>
+            }
+            }
+            @if (_sensitiveExperience && !item.IsBlank())
+            {
+                <div class="@(item.OnlyForMe ? "gev-private-panel" : null)" style="margin-top:0.75rem">
+                    <SensitiveOnlyForMeSwitch Checked="@item.OnlyForMe"
+                                                CheckedChanged="value => ToggleOnlyForMe(item, value)" />
+                </div>
+            }
         </article>
     }
-    @if (Draft.Jobs.Count < 3)
+    @if (ShowAddJobButton)
     {
-        <button type="button" class="ob-wizard__add-job" @onclick="AddJob">
-            @Culture["Onboarding.AddJob"]
+        <button type="button"
+                class="ob-wizard__add-job"
+                data-testid="onboarding-add-job"
+                @onclick="AddJob">
+            @AddJobLabel
         </button>
     }
 }
+</div>
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public bool ShowStepTitle { get; set; } = true;
+    [Parameter] public bool Illustrated { get; set; }
+    [Parameter] public bool RustigPersonal { get; set; }
     [Parameter] public EventCallback AddJob { get; set; }
     [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
 
+    private bool _sensitiveExperience;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _sensitiveExperience = flags.IsEnabled(PlatformFeature.SensitiveExperience);
+    }
+
+    protected override void OnParametersSet()
+    {
+        Draft.EnsureFirstJobSlot();
+    }
+
+    private bool ShowAddJobButton =>
+        !Draft.NoWork
+        && Draft.Jobs.Count < 3
+        && (RustigPersonal || Draft.HasEngagedJob());
+
+    private string AddJobLabel =>
+        RustigPersonal ? $"+ {Culture["Onboarding.AddAnotherJob"]}" : Culture["Onboarding.AddAnotherJob"];
+
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
+
+    private Task OnRoleChangedAsync()
+    {
+        StateHasChanged();
+        return NotifyAsync();
+    }
+
+    private async Task OnNoWorkChangedAsync(ChangeEventArgs args)
+    {
+        Draft.NoWork = args.Value is true;
+        if (Draft.NoWork)
+        {
+            Draft.Jobs.Clear();
+        }
+        else
+        {
+            Draft.EnsureFirstJobSlot();
+        }
+
+        await NotifyAsync();
+    }
 
     private Task SetCurrentJob(CandidateEmployerHistory item, bool current)
     {
@@ -77,5 +203,23 @@
         return current
             ? SetJobEnd.InvokeAsync((item, null))
             : Draft.NotifyChangedAsync();
+    }
+
+    private async Task ToggleOnlyForMe(CandidateEmployerHistory item, bool value)
+    {
+        item.OnlyForMe = value;
+        await NotifyAsync();
+    }
+
+    private async Task AppendDuty(CandidateEmployerHistory item, string chip)
+    {
+        var existing = item.Description?.Trim() ?? "";
+        if (existing.Contains(chip, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        item.Description = string.IsNullOrWhiteSpace(existing) ? chip : $"{existing.TrimEnd('.', ';')}; {chip}";
+        await NotifyAsync();
     }
 }

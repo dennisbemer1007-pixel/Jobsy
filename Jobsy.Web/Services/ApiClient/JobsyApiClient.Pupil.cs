@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 
 namespace Jobsy.Web.Services;
 
@@ -44,6 +45,19 @@ public sealed partial class JobsyApiClient
         throw new HttpRequestException(body, null, response.StatusCode);
     }
 
+    public async Task<PupilPuzzleResponse?> SavePupilPuzzleAsync(
+        string puzzleKey,
+        PupilPuzzleRequest request,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync(
+            $"api/pupil/progress/puzzles/{Uri.EscapeDataString(puzzleKey)}",
+            request,
+            ct);
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<PupilPuzzleResponse>(response.Content, ct);
+    }
+
     public async Task<PupilResultPageDto?> GetPupilResultAsync(CancellationToken ct = default)
         => await GetApiJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
 
@@ -51,9 +65,9 @@ public sealed partial class JobsyApiClient
     public Task<HttpResponseMessage> GetPupilResultResponseAsync(CancellationToken ct = default)
         => _http.GetAsync("api/pupil/result", ct);
 
-    public async Task<PupilDreamJobResponse?> SavePupilDreamJobAsync(string key, CancellationToken ct = default)
+    public async Task<PupilDreamJobResponse?> SavePupilDreamJobAsync(string key, string? displayTitle = null, CancellationToken ct = default)
     {
-        using var response = await PutApiJsonAsync("api/pupil/dreamjob", new PupilDreamJobRequest(key), ct);
+        using var response = await PutApiJsonAsync("api/pupil/dreamjob", new PupilDreamJobRequest(key, displayTitle), ct);
         if (!response.IsSuccessStatusCode)
         {
             return null;
@@ -62,14 +76,54 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
     }
 
+    public async Task<PupilG78PassportWebDto?> GetPupilG78PassportAsync(
+        string? displayName = null,
+        string? language = null,
+        CancellationToken ct = default)
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(displayName))
+        {
+            query.Add($"naam={Uri.EscapeDataString(displayName)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(language))
+        {
+            query.Add($"lang={Uri.EscapeDataString(language)}");
+        }
+
+        var q = query.Count == 0
+            ? "api/pupil/passport/g78"
+            : $"api/pupil/passport/g78?{string.Join("&", query)}";
+        return await GetApiJsonAsync<PupilG78PassportWebDto>(q, ct);
+    }
+
+    public async Task<PupilVoPassportDto?> GetPupilVoPassportAsync(CancellationToken ct = default)
+        => await GetApiJsonAsync<PupilVoPassportDto>("api/pupil/vo-passport", ct);
+
+    public async Task<PupilVoPassportDto?> SavePupilVoPassportAsync(
+        PupilVoPassportSaveRequest request,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync("api/pupil/vo-passport", request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilVoPassportDto>(response.Content, ct);
+    }
+
     /// <summary>
     /// Story PDF from the API (<c>GET /leerling/pdf</c>). The web host proxies this
     /// so the pupil link does not 404 on the web origin.
     /// </summary>
     public async Task<(byte[]? Bytes, string FileName, int StatusCode)> GetPupilStoryPdfAsync(
+        string? queryString = null,
         CancellationToken ct = default)
     {
-        using var response = await _http.GetAsync("leerling/pdf", ct);
+        var path = string.IsNullOrWhiteSpace(queryString) ? "leerling/pdf" : $"leerling/pdf{queryString}";
+        using var response = await _http.GetAsync(path, ct);
         if (!response.IsSuccessStatusCode)
         {
             return (null, "lobsy-verhaal.pdf", (int)response.StatusCode);

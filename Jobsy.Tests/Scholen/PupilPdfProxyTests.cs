@@ -28,6 +28,7 @@ public class PupilPdfProxyTests
     {
         Assert.True(JobsyApiAuthHandler.ForwardsPupilCookie("/api/pupil/progress"));
         Assert.True(JobsyApiAuthHandler.ForwardsPupilCookie("/leerling/pdf"));
+        Assert.True(JobsyApiAuthHandler.NeedsStoredPupilTicket("/api/pupil/passport/g78"));
         Assert.False(JobsyApiAuthHandler.ForwardsPupilCookie("/api/school/classes"));
         Assert.False(JobsyApiAuthHandler.ForwardsPupilCookie("/leerling"));
     }
@@ -57,6 +58,21 @@ public class PupilPdfProxyTests
         Assert.Contains("verhaal.pdf", response.Content.Headers.ContentDisposition?.FileName, StringComparison.Ordinal);
         Assert.Equal(PdfBytes, await response.Content.ReadAsByteArrayAsync());
         Assert.Equal("/leerling/pdf", app.Services.GetRequiredService<PdfHandler>().Path);
+    }
+
+    [Fact]
+    public async Task Pdf_proxy_forwards_lang_query_to_api()
+    {
+        await using var app = await StartAsync(schoolsEnabled: true);
+        var client = app.GetTestClient();
+        var cookie = await SignInAsync(client);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/leerling/pdf?lang=en&naam=Alex");
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("/leerling/pdf?lang=en&naam=Alex", app.Services.GetRequiredService<PdfHandler>().RequestPath);
     }
 
     [Fact]
@@ -167,11 +183,19 @@ public class PupilPdfProxyTests
     {
         public string? Path { get; private set; }
 
+        public string? RequestPath =>
+            string.IsNullOrEmpty(Path)
+                ? null
+                : Path + (string.IsNullOrEmpty(Query) ? "" : Query);
+
+        public string? Query { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             Path = request.RequestUri!.AbsolutePath;
+            Query = request.RequestUri.Query;
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new ByteArrayContent(PdfBytes)

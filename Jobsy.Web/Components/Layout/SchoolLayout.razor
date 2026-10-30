@@ -12,11 +12,11 @@
 @inject IFeatureFlags Features
 @inject JobsyApiClient Api
 
-<div class="sch-shell" lang="nl">
+<div class="sch-shell" lang="@Culture.Language">
     <header class="sch-topbar">
         <a class="sch-topbar__brand" href="@HomeHref">@Culture["School.ProductLabel"]</a>
         <div class="sch-topbar__scope">
-            @if (_isTeacher && _assigned.Count > 0)
+            @if (_shellKind == SchShellKind.Teacher && _assigned.Count > 0)
             {
                 <EntScopeChip Label="@_scopeLabel"
                               SubLabel="@_roleLabel"
@@ -26,7 +26,10 @@
             }
             else
             {
-                <EntScopeChip Label="@_scopeLabel" SubLabel="@_roleLabel" />
+                <div class="sch-topbar__scope-text">
+                    <span class="sch-topbar__scope-name">@_scopeLabel</span>
+                    <span class="sch-topbar__scope-role">@_roleLabel</span>
+                </div>
             }
         </div>
         <div class="sch-topbar__account">
@@ -36,35 +39,45 @@
     </header>
 
     <div class="sch-body">
-        <aside class="sch-sidebar" aria-label="@Culture["Nav.Main"]">
-            @foreach (var group in _groups)
-            {
-                var visible = group.Items.Where(i => i.IsAvailable).ToList();
-                if (visible.Count == 0)
+        @if (_shellKind != SchShellKind.Unknown)
+        {
+            <aside class="sch-sidebar" aria-label="@Culture["Nav.Main"]">
+                @foreach (var group in _groups)
                 {
-                    continue;
-                }
-                <p class="sch-sidebar__group">@Culture[group.LabelKey]</p>
-                <ul class="sch-sidebar__list">
-                    @foreach (var item in visible)
+                    var visible = group.Items.Where(i => i.IsAvailable).ToList();
+                    if (visible.Count == 0)
                     {
-                        var active = IsActive(item.Href);
-                        var label = !string.IsNullOrEmpty(item.FixedLabel)
-                            ? item.FixedLabel
-                            : Culture[item.LabelKey];
-                        <li>
-                            <a class="sch-sidebar__link @(active ? "is-active" : null)"
-                               href="@item.Href"
-                               aria-current="@(active ? "page" : null)">@label</a>
-                        </li>
+                        continue;
                     }
-                </ul>
-            }
-            <div class="sch-sidebar__footer">
-                <p class="sch-sidebar__help">@Culture["School.Nav.Help"]</p>
-                <p class="sch-sidebar__note">@Culture["School.Footer.NoNames"]</p>
-            </div>
-        </aside>
+                    <p class="sch-sidebar__group">@Culture[group.LabelKey]</p>
+                    <ul class="sch-sidebar__list">
+                        @foreach (var item in visible)
+                        {
+                            var active = IsActive(item.Href);
+                            var label = !string.IsNullOrEmpty(item.FixedLabel)
+                                ? item.FixedLabel
+                                : Culture[item.LabelKey];
+                            <li>
+                                <a class="sch-sidebar__link @(active ? "is-active" : null)"
+                                   href="@item.Href"
+                                   aria-current="@(active ? "page" : null)">@label</a>
+                            </li>
+                        }
+                    </ul>
+                }
+                <div class="sch-sidebar__footer">
+                    @if (_shellKind == SchShellKind.Teacher)
+                    {
+                        <p class="sch-sidebar__note">@Culture["School.Footer.NoNames"]</p>
+                    }
+                    else
+                    {
+                        <p class="sch-sidebar__help">@Culture["School.Nav.Help"]</p>
+                        <p class="sch-sidebar__note">@Culture["School.Footer.NoNames"]</p>
+                    }
+                </div>
+            </aside>
+        }
 
         <main class="sch-main">
             @if (_featureOff)
@@ -78,13 +91,60 @@
         </main>
     </div>
 
-    <nav class="sch-bottom-nav" aria-label="@Culture["Nav.Main"]">
-        @foreach (var item in _bottom)
-        {
-            var active = IsActive(item.Href);
-            <a class="sch-bottom-nav__item @(active ? "is-active" : null)" href="@item.Href">@Culture[item.LabelKey]</a>
-        }
-    </nav>
+    @if (_shellKind != SchShellKind.Unknown)
+    {
+        <nav class="sch-bottom-nav" aria-label="@Culture["Nav.Main"]">
+            @foreach (var item in _bottom)
+            {
+                var active = IsBottomNavActive(item.LabelKey, item.Href);
+                if (_shellKind == SchShellKind.Teacher
+                    && string.Equals(item.LabelKey, "Leraar.Nav.More", StringComparison.Ordinal))
+                {
+                    <button type="button"
+                            class="sch-bottom-nav__item sch-bottom-nav__item--btn @(active || _teacherMoreOpen ? "is-active" : null)"
+                            aria-haspopup="dialog"
+                            aria-expanded="@_teacherMoreOpen"
+                            aria-controls="sch-teacher-meer-panel"
+                            @onclick="() => _teacherMoreOpen = true">
+                        @BottomNavLabel(item.LabelKey)
+                    </button>
+                }
+                else
+                {
+                    <a class="sch-bottom-nav__item @(active ? "is-active" : null)"
+                       href="@item.Href"
+                       aria-current="@(active ? "page" : null)">@BottomNavLabel(item.LabelKey)</a>
+                }
+            }
+        </nav>
+    }
+
+    @if (_teacherMoreOpen && _shellKind == SchShellKind.Teacher)
+    {
+        <div class="sch-drawer-backdrop" @onclick="() => _teacherMoreOpen = false"></div>
+        <aside id="sch-teacher-meer-panel"
+               class="ent-drawer ent-drawer--start ent-drawer--sheet sch-teacher-meer"
+               role="dialog"
+               aria-modal="true"
+               aria-label="@Culture["Leraar.Nav.MoreSheet"]">
+            <header class="ent-drawer__header">
+                <h2 class="ent-drawer__title">@Culture["Leraar.Nav.MoreSheet"]</h2>
+                <button type="button" class="ent-drawer__close" @onclick="() => _teacherMoreOpen = false"
+                        aria-label="@Culture["EntUi.CloseDrawer"]">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <nav class="sch-teacher-meer__list">
+                @foreach (var item in _teacherMoreItems)
+                {
+                    <a class="sch-teacher-meer__link @(IsActive(item.Href) ? "is-active" : null)"
+                       href="@item.Href"
+                       @onclick="() => _teacherMoreOpen = false">@Culture[item.LabelKey]</a>
+                }
+            </nav>
+        </aside>
+    }
+
     <footer class="sch-legal">
         <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
         <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
@@ -92,36 +152,42 @@
 </div>
 
 @code {
+    private enum SchShellKind { Unknown, SchoolAdmin, Teacher }
+
     private static readonly Regex ClassIdInPath = new(
         @"^/leraar/klas/([0-9a-fA-F-]{36})",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-    private IReadOnlyList<ScholenNav.ScholenNavGroup> _groups = ScholenNav.SchoolGroups;
-    private (string LabelKey, string Href)[] _bottom = ScholenNav.SchoolBottomNav;
+    private SchShellKind _shellKind = SchShellKind.Unknown;
+    private IReadOnlyList<ScholenNav.ScholenNavGroup> _groups = [];
+    private (string LabelKey, string Href)[] _bottom = [];
+    private (string LabelKey, string Href)[] _teacherMoreItems = [];
     private string HomeHref = "/school";
     private string _scopeLabel = "";
     private string _roleLabel = "";
     private bool _featureOff;
-    private bool _isTeacher;
+    private bool _teacherMoreOpen;
     private Guid? _currentClassId;
     private IReadOnlyList<TeacherAssignedClassDto> _assigned = [];
     private IReadOnlyList<EntScopeChip.ScopeOption> _scopeOptions = [];
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
+        await Culture.InitializeAsync();
         _featureOff = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         var state = await AuthState.GetAuthenticationStateAsync();
         var user = state.User;
-        _isTeacher = RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
-                     || RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin);
-        // SchoolLayout is used for both; prefer teacher chrome when on /leraar*
         var path = CurrentPath();
         var onTeacherRoute = path.StartsWith("/leraar", StringComparison.OrdinalIgnoreCase);
-        if (onTeacherRoute)
+        var teacherOnly = RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
+                          && !RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin);
+
+        if (onTeacherRoute || teacherOnly)
         {
+            _shellKind = SchShellKind.Teacher;
             HomeHref = "/leraar";
             _roleLabel = Culture["Leraar.RoleChip"];
+            _currentClassId = ExtractClassId(path);
             if (!_featureOff)
             {
                 try
@@ -134,20 +200,19 @@
                 }
             }
 
-            _currentClassId = ExtractClassId(path) ?? _assigned.FirstOrDefault()?.Id;
+            _currentClassId ??= _assigned.FirstOrDefault()?.Id;
             RefreshTeacherNav();
-        }
-        else if (RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
-                 && !RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin))
-        {
-            _groups = ScholenNav.TeacherGroups;
-            _bottom = ScholenNav.TeacherBottomNav;
-            HomeHref = "/leraar";
-            _roleLabel = Culture["Leraar.RoleChip"];
-            _scopeLabel = ScopeName(user) ?? _roleLabel;
+            if (path.Equals("/leraar", StringComparison.OrdinalIgnoreCase) && _assigned.Count > 0)
+            {
+                Nav.NavigateTo($"/leraar/klas/{_assigned[0].Id:D}", replace: true);
+            }
         }
         else
         {
+            _shellKind = SchShellKind.SchoolAdmin;
+            _groups = ScholenNav.SchoolGroups;
+            _bottom = ScholenNav.SchoolBottomNav;
+            HomeHref = "/school";
             _roleLabel = Culture["School.RoleChip"];
             _scopeLabel = ScopeName(user) ?? _roleLabel;
         }
@@ -155,7 +220,8 @@
 
     protected override void OnParametersSet()
     {
-        if (!_isTeacher || !CurrentPath().StartsWith("/leraar", StringComparison.OrdinalIgnoreCase))
+        ApplyRouteShellBeforeAuth();
+        if (_shellKind != SchShellKind.Teacher)
         {
             return;
         }
@@ -166,6 +232,32 @@
         {
             _currentClassId = id ?? _assigned.FirstOrDefault()?.Id;
             RefreshTeacherNav();
+        }
+    }
+
+    private void ApplyRouteShellBeforeAuth()
+    {
+        var path = CurrentPath();
+        if (!path.StartsWith("/leraar", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _shellKind = SchShellKind.Teacher;
+        HomeHref = "/leraar";
+        _currentClassId = ExtractClassId(path);
+        if (_currentClassId is Guid cid)
+        {
+            var pairs = _assigned.Select(c => (c.Id, c.ClassName)).ToList();
+            _groups = ScholenNav.TeacherGroupsForClass(cid, pairs);
+            _bottom = ScholenNav.TeacherBottomNavForClass(cid);
+            RefreshTeacherMoreItems(cid);
+        }
+        else
+        {
+            _groups = ScholenNav.TeacherGroups;
+            _bottom = ScholenNav.TeacherBottomNav;
+            _teacherMoreItems = [];
         }
     }
 
@@ -182,6 +274,7 @@
         {
             _groups = ScholenNav.TeacherGroupsForClass(cid, pairs);
             _bottom = ScholenNav.TeacherBottomNavForClass(cid);
+            RefreshTeacherMoreItems(cid);
             var cls = _assigned.FirstOrDefault(c => c.Id == cid);
             _scopeLabel = cls is null ? Culture["Leraar.RoleChip"] : $"Klas {cls.ClassName}";
         }
@@ -189,6 +282,7 @@
         {
             _groups = ScholenNav.TeacherGroups;
             _bottom = ScholenNav.TeacherBottomNav;
+            _teacherMoreItems = [];
             _scopeLabel = Culture["Leraar.RoleChip"];
         }
 
@@ -198,6 +292,17 @@
                 $"Klas {c.ClassName}",
                 SchoolLevelRules.YearLabel(c.Level, c.Year)))
             .ToList();
+    }
+
+    private void RefreshTeacherMoreItems(Guid classId)
+    {
+        var basePath = $"/leraar/klas/{classId:D}";
+        _teacherMoreItems =
+        [
+            ("Leraar.Nav.DreamJobs", $"{basePath}/droombanen"),
+            ("Leraar.Nav.TestWindow", $"{basePath}/testvenster"),
+            ("Leraar.Nav.Materials", $"{basePath}/materiaal"),
+        ];
     }
 
     private void OnClassSelected(EntScopeChip.ScopeOption opt)
@@ -220,6 +325,13 @@
         }
     }
 
+    private string BottomNavLabel(string labelKey)
+    {
+        var shortKey = labelKey + ".Short";
+        var shortLabel = Culture[shortKey];
+        return string.Equals(shortLabel, shortKey, StringComparison.Ordinal) ? Culture[labelKey] : shortLabel;
+    }
+
     private string CurrentPath()
     {
         var relative = Nav.ToBaseRelativePath(Nav.Uri).Split('?', 2)[0].Trim('/');
@@ -240,7 +352,22 @@
             path = HomeHref;
         }
 
-        return string.Equals(path, href, StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+        return ScholenNavRouting.IsNavActive(path, href);
+    }
+
+    private bool IsBottomNavActive(string labelKey, string href)
+    {
+        var path = CurrentPath();
+        if (path == "/")
+        {
+            path = HomeHref;
+        }
+
+        if (_shellKind == SchShellKind.Teacher)
+        {
+            return ScholenNavRouting.IsTeacherBottomNavActive(path, labelKey, href, _currentClassId);
+        }
+
+        return ScholenNavRouting.IsSchoolBottomNavActive(path, labelKey, href);
     }
 }

@@ -1,0 +1,82 @@
+@page "/candidate/kompas"
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Onboarding
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Kompas.Title"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-finale-v2.css")" />
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+}
+else
+{
+    <div class="panel-page profile-page profile-page--candidate">
+        @((MarkupString)_bodyHtml)
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private string _bodyHtml = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var data = await OnboardingKompasSsrData.LoadAsync(Api, FeatureFlags);
+            if (data is null)
+            {
+                RedirectTo(FeatureRoutes.CandidateProfilePath);
+                return;
+            }
+
+            var model = new OnboardingKompasSsrShells.HubModel(
+                data.FirstName,
+                data.Impression,
+                data.MatchCount,
+                data.MaxTravelMinutes,
+                data.HomeLabel,
+                data.CardsInput,
+                data.Flags.CandidatePassportEnabled,
+                FeatureRoutes.CandidateProfilePath,
+                FeatureRoutes.CandidatePassportPath);
+            _bodyHtml = OnboardingKompasSsrShells.BuildHubBody(Culture, model);
+        }
+        catch
+        {
+            RedirectTo(FeatureRoutes.CandidateProfilePath);
+            return;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RedirectTo(string url)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Redirect(url);
+    }
+}

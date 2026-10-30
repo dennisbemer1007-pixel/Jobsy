@@ -250,6 +250,12 @@ projects:
                 value: "true"
               - key: Seed__Enabled
                 value: "true"
+              - key: Jobsy__PupilPassportV2Enabled
+                value: "true"
+              - key: Jobsy__StudentPassportEnabled
+                value: "true"
+              - key: Jobsy__SensitiveExperienceEnabled
+                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey
@@ -264,6 +270,10 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              - key: JobsyAuth__Session__InactivityTimeoutOverrideMinutes
+                value: "480"
+              - key: JobsyAuth__Session__RememberDeviceLifetimeDays
+                value: "30"
               # Same value on API and Web of this environment. Dashboard only — never commit a value.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
@@ -283,6 +293,12 @@ projects:
                 value: "https://acceptatie.lobsy.nl"
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
+              - key: Training__SeedDemoProviders
+                value: "true"
+              - key: Jobsy__TrainingPartnersEnabled
+                value: "true"
+              - key: Jobsy__ReferenceVerificationEnabled
+                value: "true"
               # Dennis sets true in Dashboard after passwords are configured.
               - key: TestAccounts__Enabled
                 sync: false
@@ -323,7 +339,7 @@ projects:
               - key: Cors__AllowedOrigins__1
                 value: "https://acceptatie.lobsy.nl"
               # Acceptatie mail: Lettermint. Without the key, mail is not sent (no Resend fallback).
-              # Only test-*@lobsy.nl (and one extra address) may receive mail.
+              # test-*@lobsy.nl, E2E grokbot inboxes (+tags), and one extra address may receive mail.
               - key: Mail__Provider
                 value: Lettermint
               - key: Mail__ResendApiKey
@@ -333,7 +349,7 @@ projects:
               - key: Lettermint__ApiKey
                 sync: false
               - key: Mail__AllowedRecipientPattern
-                value: '^test-[^@]+@lobsy\.nl$'
+                value: '^(test-[^@]+@lobsy\.nl|.+@mail\.grokbot\.com)$'
               - key: Mail__AllowedRecipientAddresses__0
                 sync: false
               # AI provider for Acceptatie. Leave unset to stay on OpenAI.
@@ -416,6 +432,11 @@ projects:
                 sync: false
               - key: Circuit__DetailedErrors
                 value: "true"
+              # Host override: Acceptatie DB may still store 30m admin idle; use 8h sliding for demos.
+              - key: JobsyAuth__Session__InactivityTimeoutOverrideMinutes
+                value: "480"
+              - key: JobsyAuth__Session__RememberDeviceLifetimeDays
+                value: "30"
               - key: ApiBaseUrl
                 fromService:
                   name: lobsy-acc-api
@@ -427,8 +448,19 @@ projects:
                   property: connectionString
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
+              - key: Jobsy__ReferenceVerificationEnabled
+                value: "true"
               - key: PublicWebBaseUrl
                 value: "https://acceptatie.lobsy.nl"
+              # Combo homepage (On) at / for acceptatie preview; production has no override.
+              - key: Landing__ForceVariant
+                value: on
+              - key: Onboarding__FinaleV2Enabled
+                value: "true"
+              - key: TestJourneyIllustrationEnabled
+                value: "true"
+              - key: ChatContextGreetingEnabled
+                value: "true"
               - key: TestAccounts__Enabled
                 sync: false
               # Same provider and key presence as the API, so the privacy page drops Resend when Lettermint sends.

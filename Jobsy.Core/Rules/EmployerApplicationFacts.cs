@@ -69,6 +69,12 @@ public static class EmployerApplicationFacts
 
                     return rows;
                 }
+
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    rows.AddRange(ParsePreferenceObject(doc.RootElement));
+                    return rows;
+                }
             }
             catch (JsonException)
             {
@@ -82,6 +88,58 @@ public static class EmployerApplicationFacts
             if (idx > 0)
             {
                 rows.Add(new Row(line[..idx].Trim(), line[(idx + 1)..].Trim(), true));
+            }
+        }
+
+        return rows;
+    }
+
+    private static IEnumerable<Row> ParsePreferenceObject(JsonElement root)
+    {
+        var rows = new List<Row>();
+
+        if (root.TryGetProperty("roles", out var roles) && roles.ValueKind == JsonValueKind.Array)
+        {
+            var list = roles.EnumerateArray()
+                .Select(r => r.GetString())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Take(5)
+                .ToArray();
+            if (list.Length > 0)
+            {
+                rows.Add(new Row("Rollen", string.Join(", ", list), true));
+            }
+        }
+
+        var hours = ApplicationPreferenceRedaction.ToHoursReadable(root.GetRawText());
+        if (!string.IsNullOrWhiteSpace(hours) && hours != "—")
+        {
+            rows.Add(new Row("Uren per week", hours, true));
+        }
+
+        if (root.TryGetProperty("maxTravelMinutes", out var m)
+            && m.ValueKind == JsonValueKind.Number
+            && m.TryGetInt32(out var mins)
+            && mins > 0)
+        {
+            rows.Add(new Row("Reistijd", $"max {mins} min", true));
+        }
+
+        if (root.TryGetProperty("preferredTransport", out var t))
+        {
+            var transport = t.GetString()?.Trim();
+            if (!string.IsNullOrWhiteSpace(transport))
+            {
+                rows.Add(new Row("Vervoer", transport, true));
+            }
+        }
+
+        if (rows.Count == 0)
+        {
+            var readable = ApplicationPreferenceRedaction.ToHumanReadable(root.GetRawText());
+            if (!string.IsNullOrWhiteSpace(readable))
+            {
+                rows.Add(new Row("Voorkeur", readable, true));
             }
         }
 

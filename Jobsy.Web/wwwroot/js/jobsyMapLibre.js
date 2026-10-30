@@ -1,7 +1,11 @@
 window.jobsyMapLibre = (function () {
     "use strict";
 
+    /** OpenFreeMap planet vector tiles (liberty style source maxzoom). */
+    var BASEMAP_MAX_ZOOM = 14;
+
     var LIBERTY_URL = "https://tiles.openfreemap.org/styles/liberty";
+    var LIBERTY_SAME_ORIGIN_URL = "/map/basemap/liberty/style.json";
     var STORAGE_KEY = "jobsy.mapStyle";
     var BUILDINGS_LAYER = "jobsy-3d-buildings";
 
@@ -112,16 +116,50 @@ window.jobsyMapLibre = (function () {
                 } else {
                     list[i] = "Noto Sans Regular";
                 }
+            } else if (/noto\s*sans/i.test(name) && /italic|oblique/i.test(name)) {
+                changed = true;
+                list[i] = /bold|black|semi|heavy/i.test(name) ? "Noto Sans Bold" : "Noto Sans Regular";
+            } else if (/arial unicode/i.test(name)) {
+                changed = true;
+                list[i] = "Noto Sans Regular";
             }
         }
         return changed ? list : null;
     }
 
+    function rewriteGlyphUrl(url) {
+        if (!url || url.indexOf("tiles.openfreemap.org/fonts/") === -1) {
+            return url;
+        }
+        var next = url;
+        if (/Open%20Sans|Open\+Sans|Open%20Sans%20Regular|Open%20Sans%20Bold/i.test(next)) {
+            next = next.replace(/Open%20Sans(?:%20(?:Regular|Bold|Italic|SemiBold))?[^/]*/gi, function (match) {
+                return /bold|semi|black|heavy/i.test(match) ? "Noto%20Sans%20Bold" : "Noto%20Sans%20Regular";
+            });
+        }
+        if (/Arial%20Unicode/i.test(next)) {
+            next = next.replace(/Arial%20Unicode%20MS%20Regular,?\/?/gi, "");
+            next = next.replace(/,,/g, ",").replace(/fonts\/,/g, "fonts/Noto%20Sans%20Regular/");
+        }
+        return next;
+    }
+
     var OSM_ATTRIBUTION =
         '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 
-    /** Desktop (≥1025px): expanded credit always visible. Mobile: compact "i" toggle. */
+    function isLagenBanenkaartPage() {
+        try {
+            return !!document.querySelector(".jobsy-discovery--lagen[data-banenkaart-ssr=\"1\"]");
+        } catch (ePage) {
+            return false;
+        }
+    }
+
+    /** Desktop (≥1025px): expanded credit — except lagen banenkaart mockup (always compact). */
     function preferCompactAttribution() {
+        if (isLagenBanenkaartPage()) {
+            return true;
+        }
         try {
             return !(window.matchMedia && window.matchMedia("(min-width: 1025px)").matches);
         } catch (e) {
@@ -141,7 +179,14 @@ window.jobsyMapLibre = (function () {
         var compact = preferCompactAttribution();
         if (compact) {
             attrib.classList.add("maplibregl-compact");
-            attrib.classList.remove("maplibregl-compact-show");
+            if (isLagenBanenkaartPage()) {
+                if (attrib.dataset.jobsyCompactInit !== "1") {
+                    attrib.classList.remove("maplibregl-compact-show");
+                    attrib.dataset.jobsyCompactInit = "1";
+                }
+            } else {
+                attrib.classList.remove("maplibregl-compact-show");
+            }
         } else {
             attrib.classList.remove("maplibregl-compact");
             attrib.classList.add("maplibregl-compact-show");
@@ -205,14 +250,14 @@ window.jobsyMapLibre = (function () {
                     "fill-extrusion-color": "#d6d2cc",
                     "fill-extrusion-height": [
                         "coalesce",
-                        ["get", "render_height"],
-                        ["get", "height"],
+                        ["to-number", ["get", "render_height"]],
+                        ["to-number", ["get", "height"]],
                         12
                     ],
                     "fill-extrusion-base": [
                         "coalesce",
-                        ["get", "render_min_height"],
-                        ["get", "min_height"],
+                        ["to-number", ["get", "render_min_height"]],
+                        ["to-number", ["get", "min_height"]],
                         0
                     ],
                     "fill-extrusion-opacity": 0.72
@@ -337,6 +382,16 @@ window.jobsyMapLibre = (function () {
         }
     }
 
+    function resolveInitialStyle(spec) {
+        if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.getCachedStyle === "function") {
+            var cached = window.jobsyBasemapWarm.getCachedStyle();
+            if (cached && cached.version) {
+                return cached;
+            }
+        }
+        return spec.url;
+    }
+
     function createMap(container, options) {
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
@@ -344,15 +399,29 @@ window.jobsyMapLibre = (function () {
         options = options || {};
         var styleKey = options.styleKey || readStoredStyle();
         var spec = styleSpec(styleKey);
+        var dpr = 1;
+        try {
+            dpr = Math.min(2, window.devicePixelRatio || 1);
+        } catch (eDpr) { }
+
         var map = new maplibregl.Map({
             container: container,
-            style: spec.url,
+            style: options.style || resolveInitialStyle(spec),
             center: options.center,
             zoom: options.zoom,
-            attributionControl: {
-                compact: preferCompactAttribution(),
-                customAttribution: OSM_ATTRIBUTION
+            pixelRatio: dpr,
+            transformRequest: function (url, resourceType) {
+                if (resourceType === "Glyphs") {
+                    return { url: rewriteGlyphUrl(url) };
+                }
+                return { url: url };
             },
+            attributionControl: options.attributionControl === false
+                ? false
+                : {
+                    compact: options.compactAttribution === true || preferCompactAttribution(),
+                    customAttribution: OSM_ATTRIBUTION
+                },
             maplibreLogo: false,
             cooperativeGestures: false,
             fadeDuration: 0,
@@ -366,8 +435,8 @@ window.jobsyMapLibre = (function () {
             dragPan: true,
             touchZoomRotate: options.touchZoomRotate !== false,
             renderWorldCopies: false,
-            maxZoom: 19,
-            minZoom: 4,
+            maxZoom: options.maxZoom != null ? options.maxZoom : BASEMAP_MAX_ZOOM,
+            minZoom: options.minZoom != null ? options.minZoom : 4,
             locale: {
                 "AttributionControl.ToggleAttribution": "Kaartbronnen tonen",
                 "Map.Title": "Kaart"
@@ -375,6 +444,7 @@ window.jobsyMapLibre = (function () {
         });
 
         map._jobsyStyleKey = spec.key;
+        map._jobsyBasemapMaxZoom = BASEMAP_MAX_ZOOM;
         lockTouch(map.getContainer());
         hideChrome(map);
         if (options.controls !== false) {
@@ -418,6 +488,7 @@ window.jobsyMapLibre = (function () {
     }
 
     return {
+        BASEMAP_MAX_ZOOM: BASEMAP_MAX_ZOOM,
         STYLES: {
             liberty: LIBERTY_URL,
             bright: LIBERTY_URL

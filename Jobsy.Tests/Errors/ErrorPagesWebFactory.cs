@@ -1,4 +1,5 @@
 using Jobsy.Core.Features;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -20,7 +21,7 @@ namespace Jobsy.Tests.Errors;
 /// Web host for the status / error pages. Every outbound dependency is replaced by one that
 /// throws, so a green test proves the pages render without the API (errors 01 success criteria).
 /// </summary>
-public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class ErrorPagesWebFactory : WebWebApplicationFactory
 {
     public const string ThrowPath = "/__test/throw";
 
@@ -37,6 +38,9 @@ public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAs
 
     /// <summary>Mirrors <c>Seo:NoIndex</c> / <c>Seo__NoIndex</c> on Acceptatie.</summary>
     public bool NoIndex { get; init; }
+
+    /// <summary>When set, overrides <c>Localization:EnabledCultures</c> for this host.</summary>
+    public string? EnabledCultures { get; init; }
 
     public RecordingLoggerProvider Logs { get; } = new();
 
@@ -60,8 +64,18 @@ public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAs
                 // Development keeps the developer exception page; opt in to the production handler.
                 [ErrorPagesExtensions.ForceHandlerConfigKey] = "true",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
-                ["Seo:NoIndex"] = NoIndex ? "true" : "false"
+                ["Seo:NoIndex"] = NoIndex ? "true" : "false",
+                ["Localization:EnabledCultures"] = EnabledCultures ?? "nl,en,pl,ro,ar"
             });
+        });
+
+        builder.ConfigureServices((context, _) =>
+        {
+            var enabled = context.Configuration["Localization:EnabledCultures"];
+            if (!string.IsNullOrWhiteSpace(enabled))
+            {
+                JobsyLanguages.ConfigureEnabledCultures(enabled);
+            }
         });
 
         builder.ConfigureTestServices(services =>

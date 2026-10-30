@@ -94,11 +94,11 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Culture.Q22"] = "Kleine tegenslagen op het werk raken me lang.",
         ["AssessmentV2.Culture.Q23"] = "Ik wil graag begrijpen hoe dingen werken, ook buiten mijn vak.",
         ["AssessmentV2.Culture.Q24"] = "Nieuwe software of werkwijzen leer ik liever niet.",
-        ["AssessmentV2.Transparency.HumanOversight"] = "Resultaten worden niet automatisch gebruikt voor afwijzing; een recruiter kijkt altijd mee.",
+        ["AssessmentV2.Transparency.HumanOversight"] = "Je antwoorden blijven van jou. Lobsy gebruikt ze om passend werk voor te stellen.",
         ["AssessmentV2.Transparency.Lead"] = "Meer vragen per schaal geven een stabieler beeld. Jij blijft eigenaar van je antwoorden.",
-        ["AssessmentV2.Transparency.MatchIndicative"] = "Matchscores zijn een hulpmiddel; jij beslist welke vacatures je volgt.",
+        ["AssessmentV2.Transparency.MatchIndicative"] = "Hoe goed je past is een hulpmiddel; jij beslist welke vacatures je volgt.",
         ["AssessmentV2.Transparency.NotDiagnosis"] = "Dit is geen medische of psychologische diagnose — wel een indicatie voor passend werk.",
-        ["AssessmentV2.Transparency.Title"] = "Over deze Quick-Scan (v2)",
+        ["AssessmentV2.Transparency.Title"] = "Over deze test",
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -166,11 +166,11 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Culture.Q22"] = "Small setbacks at work affect me for a long time.",
         ["AssessmentV2.Culture.Q23"] = "I want to understand how things work, even outside my field.",
         ["AssessmentV2.Culture.Q24"] = "I prefer not to learn new software or ways of working.",
-        ["AssessmentV2.Transparency.HumanOversight"] = "Results are not used to reject you automatically; a recruiter always reviews them.",
+        ["AssessmentV2.Transparency.HumanOversight"] = "Your answers stay yours. Lobsy uses them to suggest fitting work.",
         ["AssessmentV2.Transparency.Lead"] = "More items per scale give a steadier picture. You stay in control of your answers.",
         ["AssessmentV2.Transparency.MatchIndicative"] = "Match scores are a guide; you choose which jobs to pursue.",
         ["AssessmentV2.Transparency.NotDiagnosis"] = "This is not a medical or psychological diagnosis — it indicates fit for work.",
-        ["AssessmentV2.Transparency.Title"] = "About this Quick-Scan (v2)",
+        ["AssessmentV2.Transparency.Title"] = "About this test",
     };
 
     private static Dictionary<string, string> Pl() => new(StringComparer.OrdinalIgnoreCase)
@@ -242,7 +242,7 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Transparency.Lead"] = "Więcej pytań na skalę daje stabilniejszy obraz. Ty decydujesz o swoich odpowiedziach.",
         ["AssessmentV2.Transparency.MatchIndicative"] = "Wynik dopasowania to wskazówka; to ty wybierasz oferty.",
         ["AssessmentV2.Transparency.NotDiagnosis"] = "To nie diagnoza medyczna ani psychologiczna — wskazuje dopasowanie do pracy.",
-        ["AssessmentV2.Transparency.Title"] = "O tym Quick-Scanie (v2)",
+        ["AssessmentV2.Transparency.Title"] = "O tym teście",
     };
 
     private static Dictionary<string, string> Ro() => new(StringComparer.OrdinalIgnoreCase)
@@ -314,7 +314,7 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Transparency.Lead"] = "Mai multe itemi pe scală oferă o imagine mai stabilă. Tu controlezi răspunsurile.",
         ["AssessmentV2.Transparency.MatchIndicative"] = "Scorul de potrivire este orientativ; tu alegi joburile.",
         ["AssessmentV2.Transparency.NotDiagnosis"] = "Nu este un diagnostic medical sau psihologic — indică potrivirea pentru muncă.",
-        ["AssessmentV2.Transparency.Title"] = "Despre acest Quick-Scan (v2)",
+        ["AssessmentV2.Transparency.Title"] = "Despre acest test",
     };
 
     private static Dictionary<string, string> Ar() => new(StringComparer.OrdinalIgnoreCase)
@@ -386,7 +386,7 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Transparency.Lead"] = "المزيد من الأسئلة لكل مقياس يعطي صورة أوضح. أنت تتحكم بإجاباتك.",
         ["AssessmentV2.Transparency.MatchIndicative"] = "درجة المطابقة إرشادية؛ أنت تختار الوظائف.",
         ["AssessmentV2.Transparency.NotDiagnosis"] = "هذا ليس تشخيصاً طبياً أو نفسياً — بل مؤشر لملاءمة العمل.",
-        ["AssessmentV2.Transparency.Title"] = "حول المسح السريع (v2)",
+        ["AssessmentV2.Transparency.Title"] = "حول هذا الاختبار",
     };
 
 }

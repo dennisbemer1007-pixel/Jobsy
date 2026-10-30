@@ -26,7 +26,7 @@
             {
                 <p>@Culture["Report.Success.Email"]</p>
             }
-            <p><a href="/banenkaart">@Culture["Report.Success.Back"]</a></p>
+            <p><a class="auth-link" href="/banenkaart">@Culture["Report.Success.Back"]</a></p>
         }
         else
         {
@@ -43,7 +43,7 @@
                 <p class="login-error" role="alert">@_errorMessage</p>
             }
 
-            <form method="post" action="/melden/verstuur" class="login-form" data-enhance="false">
+            <form method="post" action="/melden/verstuur" class="pp-report-form" data-enhance="false">
                 <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
                 <input type="hidden" name="type" value="@_type" />
                 <input type="hidden" name="id" value="@_id" />
@@ -52,39 +52,44 @@
                     <legend>@Culture["Report.ReasonLegend"]</legend>
                     @foreach (var reason in Reasons)
                     {
-                        <label>
+                        <label class="pp-report__option">
                             <input type="radio"
                                    name="reason"
                                    value="@reason"
                                    required
                                    checked="@(_selectedReason == reason)" />
-                            @Culture[$"Report.Reason.{reason}"]
+                            <span>@Culture[$"Report.Reason.{reason}"]</span>
                         </label>
                     }
                 </fieldset>
 
-                <label for="melden-details">@Culture["Report.Details"]</label>
+                <label class="pp-report__field" for="melden-details">@Culture["Report.Details"]</label>
                 <textarea id="melden-details"
+                          class="pp-report__textarea"
                           name="details"
                           rows="4"
                           maxlength="@ContentReportRules.DetailsMaxLength"></textarea>
                 <p class="pp-report__hint">@Culture["Report.Details.Hint"]</p>
 
-                <label for="melden-email">@Culture["Report.Email"]</label>
-                <input id="melden-email" type="email" name="email" autocomplete="email" />
+                <label class="pp-report__field" for="melden-email">@Culture["Report.Email"]</label>
+                <input id="melden-email"
+                       class="pp-report__input"
+                       type="email"
+                       name="email"
+                       autocomplete="email" />
                 <p class="pp-report__hint">@Culture["Report.Email.Hint"]</p>
 
                 <p class="pp-report__hint">@Culture["Report.FalseWarning"]</p>
                 <p class="pp-report__hint">@Culture["Report.Privacy"]</p>
 
                 <button type="submit"
-                        class="login-submit"
+                        class="pub-btn pub-btn--primary pp-report__submit"
                         disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
                     @Culture["Report.Submit"]
                 </button>
             </form>
 
-            <p><a href="/gebruiksvoorwaarden#melden">@Culture["Report.Rules"]</a></p>
+            <p><a class="auth-link" href="/gebruiksvoorwaarden#melden">@Culture["Report.Rules"]</a></p>
         }
     </div>
 </section>

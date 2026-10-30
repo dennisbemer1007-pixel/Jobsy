@@ -1,4 +1,4 @@
-@page "/candidate/match"
+@page "/candidate/match/blazor"
 @* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
@@ -19,12 +19,14 @@
 
 <PageTitle>@Culture["Match.DialogTitle"] · Lobsy</PageTitle>
 
-<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null :"match-page--locked")"
+<div class="match-page match-page--shell match-page--illustrated @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null :"match-page--locked")"
      data-testid="match-page">
     <header class="match-page__top">
         <div class="match-page__brand">
             <img class="match-page__mascot"
-                 src="/images/brand/mascot-128.png?v=20261004-13"
+                 src="@("/" + Jobsy.Web.Media.BrandImages.Png128)"
+                 srcset="@Jobsy.Web.Media.BrandImages.SrcSet56"
+                 sizes="56px"
                  width="40"
                  height="40"
                  alt=""
@@ -102,29 +104,34 @@
         }
         else
         {
-            <div class="swipe-stack">
-                @if (PeekNext is not null)
-                {
-                    <SwipeCard Model="PeekNext"
-                               IsBackdrop="true"
-                               AnimationDurationMs="0" />
-                }
+            <div class="match-page__grid">
+                <div class="match-page__grid-main">
+                    <div class="swipe-stack">
+                        @if (PeekNext is not null)
+                        {
+                            <SwipeCard Model="PeekNext"
+                                       IsBackdrop="true"
+                                       AnimationDurationMs="0" />
+                        }
 
-                <SwipeCard @key="Current.VacancyId ?? Guid.Empty"
-                           Model="Current"
-                           AnimationDurationMs="280"
-                           OnReject="HandleReject"
-                           OnInterest="HandleInterest"
-                           OnMoreInfo="HandleMoreInfo"
-                           OnSwipeComplete="HandleSwipeComplete" />
+                        <SwipeCard @key="Current.VacancyId ?? Guid.Empty"
+                                   Model="Current"
+                                   AnimationDurationMs="280"
+                                   OnReject="HandleReject"
+                                   OnInterest="HandleInterest"
+                                   OnMoreInfo="HandleMoreInfo"
+                                   OnSwipeComplete="HandleSwipeComplete" />
+                    </div>
+
+                    <p class="match-page__swipe-hint">@Culture["Kb.Match.SwipeHint"]</p>
+
+                    @if (PeekAfterNext?.ImageUrl is { Length: > 0 } prefetchUrl)
+                    {
+                        <img class="match-page__prefetch" src="@prefetchUrl" alt="" aria-hidden="true" />
+                    }
+                </div>
+                <MatchDesktopSide Model="Current" />
             </div>
-
-            <p class="match-page__swipe-hint">@Culture["Kb.Match.SwipeHint"]</p>
-
-            @if (PeekAfterNext?.ImageUrl is { Length: > 0 } prefetchUrl)
-            {
-                <img class="match-page__prefetch" src="@prefetchUrl" alt="" aria-hidden="true" />
-            }
         }
 
         @if (!string.IsNullOrWhiteSpace(_toast))

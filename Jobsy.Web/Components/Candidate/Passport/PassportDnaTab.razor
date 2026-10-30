@@ -28,7 +28,7 @@
                     @foreach (var h in Highlights.Take(3))
                     {
                         <li class="passport-dna__highlight">
-                            <span class="passport-dna__highlight-icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                            <span class="passport-dna__highlight-icon" aria-hidden="true">@((MarkupString)HighlightIcon(h.LabelKey))</span>
                             <div>
                                 <p class="passport-dna__highlight-title">@h.Value</p>
                                 <p class="passport-dna__highlight-sub">@Culture[h.LabelKey]</p>
@@ -44,7 +44,9 @@
                 <h3 id="passport-dna-story-title" class="passport-dna__h">@Culture["Dna.StoryTitle"]</h3>
                 @if (!string.IsNullOrWhiteSpace(Story))
                 {
-                    <ReadAloudButton Text="@Story" SpeechKey="passport-dna-story" />
+                    <ReadAloudButton Text="@Story"
+                                     SpeechKey="passport-dna-story"
+                                     PlayAria="@Culture["ReadAloud.Play"]" />
                 }
             </div>
             @if (string.IsNullOrWhiteSpace(Story))
@@ -170,4 +172,12 @@
 
     private static IEnumerable<string> StoryParagraphs(string story)
         => story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static string HighlightIcon(string labelKey) => labelKey switch
+    {
+        "Dna.HighlightStrongest" => NavIcons.Target,
+        "Dna.HighlightWork" => NavIcons.Match,
+        "Dna.HighlightImportant" => NavIcons.HomeHeart,
+        _ => NavIcons.Antenna
+    };
 }

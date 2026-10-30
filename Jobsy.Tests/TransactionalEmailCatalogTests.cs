@@ -18,7 +18,8 @@ public class TransactionalEmailCatalogTests
 
     private static readonly string[] RequiredKeys =
     [
-        "ApplicationConfirmation", "ApplicationVerificationCode", "EmployerReactionAccepted",
+        "ApplicationConfirmation", "ApplicationVerificationCode", "ApplicationCvViewed", "ApplicationMutualYes",
+        "EmployerReactionAccepted",
         "EmployerReactionRejected", "EmployerContacting", "ApplicationHired", "ApplicationFilledElsewhere",
         "PushBom", "AccountUnsubscribeVerification", "ParentalConsent", "EmployerNewApplication",
         "CandidateWithdrawn", "CandidateWithdrawnOtherJob", "PendingApproval", "VacancyEngagementReminder",

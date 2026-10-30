@@ -4,9 +4,12 @@
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Rules
 @using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject UserFacingError UserFacing
 
 <section class="proactive-shortlist @(Layout == "full" ? "proactive-shortlist--page" : "proactive-shortlist--inline")"
          aria-labelledby="proactive-shortlist-title"
@@ -44,11 +47,12 @@
                         <span class="proactive-shortlist-card__rank">
                             @Culture.Format("ProactiveMatching.Employer.Shortlist.Rank", entry.Rank)
                         </span>
+                        @{
+                            var entryBand = CandidateMatchDisplay.FitBandLabel(Culture, entry.MatchPercent);
+                        }
                         <span class="proactive-match-badge proactive-match-badge--strong"
-                              aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", entry.MatchPercent)">
-                            <span class="proactive-match-badge__value">@entry.MatchPercent</span>
-                            <span class="proactive-match-badge__suffix">%</span>
-                            <span class="proactive-match-badge__label">match</span>
+                              aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", entryBand)">
+                            <span class="proactive-match-badge__label">@entryBand</span>
                         </span>
                     </div>
                     <p class="proactive-shortlist-card__anon">@Culture["ProactiveMatching.Employer.Shortlist.Anonymous"]</p>
@@ -145,7 +149,8 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             _entries = [];
         }
         finally
@@ -180,7 +185,8 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

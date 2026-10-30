@@ -13,6 +13,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Security;
@@ -47,6 +48,8 @@ public partial class MeController : ControllerBase
     private readonly ITranslationService _translation;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly PassportPdfDownload _passportPdf;
+    private readonly IPassportDnaReader _dna;
+    private readonly IStudentPassportPdfService _studentPassportPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
     private readonly ICandidateInsightsQueue _insightsQueue;
@@ -66,6 +69,8 @@ public partial class MeController : ControllerBase
         ITranslationService translation,
         ILobsyCvPdfService lobsyCvPdf,
         PassportPdfDownload passportPdf,
+        IPassportDnaReader dna,
+        IStudentPassportPdfService studentPassportPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
         ICandidateInsightsQueue insightsQueue,
@@ -83,6 +88,8 @@ public partial class MeController : ControllerBase
         _translation = translation;
         _lobsyCvPdf = lobsyCvPdf;
         _passportPdf = passportPdf;
+        _dna = dna;
+        _studentPassportPdf = studentPassportPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
         _insightsQueue = insightsQueue;
@@ -138,7 +145,7 @@ public partial class MeController : ControllerBase
         {
             return BadRequest(new
             {
-                message = "Ongeldige taal. Ondersteund: nl, en, pl, ro, ar."
+                message = "Ongeldige taal. Ondersteund: " + JobsyLanguages.EnabledCodesList() + "."
             });
         }
 
@@ -154,7 +161,7 @@ public partial class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        var language = JobsyLanguages.Normalize(request.Language);
+        var language = JobsyLanguages.ResolveActive(request.Language);
         var existing = ParsePreferences(user.PreferencesJson);
         user.PreferencesJson = SerializePreferences(existing with { Language = language });
 
@@ -191,10 +198,6 @@ public partial class MeController : ControllerBase
             }
 
             user.DateOfBirth = request.DateOfBirth;
-        }
-        else if (user.DateOfBirth is null)
-        {
-            return BadRequest(new { message = "Vul eerst je geboortedatum in. Die hebben we nodig voor veilige leeftijdschecks." });
         }
 
         if (request.OpenForWork is not null)
@@ -277,7 +280,7 @@ public partial class MeController : ControllerBase
             {
                 return BadRequest(new
                 {
-                    message = "Ongeldige taal. Ondersteund: nl, en, pl, ro, ar."
+                    message = "Ongeldige taal. Ondersteund: " + JobsyLanguages.EnabledCodesList() + "."
                 });
             }
 
@@ -296,7 +299,7 @@ public partial class MeController : ControllerBase
             var existing = ParsePreferences(user.PreferencesJson);
             var language = request.Preferences.Language is null
                 ? existing.Language
-                : JobsyLanguages.Normalize(request.Preferences.Language);
+                : JobsyLanguages.ResolveActive(request.Preferences.Language);
 
             var merged = new CandidatePreferencesDto(
                 roles,
@@ -331,7 +334,8 @@ public partial class MeController : ControllerBase
                 request.Preferences.ShareEmployerPreferences ?? existing.ShareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(request.Preferences.WorkRegion, existing.WorkRegion),
                 request.Preferences.HasOwnCar ?? existing.HasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences));
+                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences),
+                request.Preferences.WorkStatuses ?? existing.WorkStatuses);
 
             user.PreferencesJson = SerializePreferences(merged);
         }
@@ -482,6 +486,116 @@ public partial class MeController : ControllerBase
                 row.VacancyStatus != VacancyStatus.Active);
         }).ToList();
 
+        var featureSnap = await _features.GetAsync(cancellationToken);
+        if (featureSnap.AfterMatchEnabled && items.Count > 0)
+        {
+            var eligibleIds = rows
+                .Where(r => AfterMatchInterviewRules.ApplicationEligible(r.Status))
+                .Select(r => r.Id)
+                .ToList();
+            if (eligibleIds.Count > 0)
+            {
+                var interviews = await _db.Interviews.AsNoTracking()
+                    .Include(i => i.Slots)
+                    .Include(i => i.ChosenSlot)
+                    .Where(i => eligibleIds.Contains(i.ApplicationId))
+                    .ToListAsync(cancellationToken);
+                var interviewByApp = interviews.ToDictionary(i => i.ApplicationId);
+
+                var unreadRows = await _db.ApplicationMessages.AsNoTracking()
+                    .Where(m => eligibleIds.Contains(m.ApplicationId)
+                                && m.SenderUserId != user.Id
+                                && m.ReadAtUtc == null)
+                    .GroupBy(m => m.ApplicationId)
+                    .Select(g => new { ApplicationId = g.Key, Count = g.Count() })
+                    .ToListAsync(cancellationToken);
+                var unreadByApp = unreadRows.ToDictionary(x => x.ApplicationId, x => x.Count);
+
+                var messageRows = await _db.ApplicationMessages.AsNoTracking()
+                    .Where(m => eligibleIds.Contains(m.ApplicationId))
+                    .OrderByDescending(m => m.CreatedAtUtc)
+                    .ToListAsync(cancellationToken);
+                var lastMessageByApp = messageRows
+                    .GroupBy(m => m.ApplicationId)
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                var interviewIds = interviews.Select(i => i.Id).ToList();
+                var cancelRows = await _db.InterviewChanges.AsNoTracking()
+                    .Where(c => interviewIds.Contains(c.InterviewId) && c.Kind == InterviewChangeKind.Cancel)
+                    .OrderByDescending(c => c.CreatedAtUtc)
+                    .ToListAsync(cancellationToken);
+                var latestCancelByInterview = cancelRows
+                    .GroupBy(c => c.InterviewId)
+                    .ToDictionary(g => g.Key, g => g.First());
+
+                for (var i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    if (!interviewByApp.TryGetValue(item.Id, out var interview))
+                    {
+                        continue;
+                    }
+
+                    var openSlots = AfterMatchCandidateSlotRules.MayPickOpenSlots(interview.Status)
+                        ? interview.Slots.Count(s => !s.IsSelected && s.StartUtc > DateTime.UtcNow)
+                        : 0;
+                    DateTime? start = interview.ChosenSlot?.StartUtc;
+                    DateTime? end = interview.ChosenSlot?.EndUtc;
+                    if (start is null && interview.Status == InterviewStatus.Scheduled)
+                    {
+                        start = interview.Slots.FirstOrDefault(s => s.Id == interview.ChosenSlotId)?.StartUtc;
+                        end = interview.Slots.FirstOrDefault(s => s.Id == interview.ChosenSlotId)?.EndUtc;
+                    }
+
+                    unreadByApp.TryGetValue(item.Id, out var unread);
+                    var acceptedAt = item.RespondedAt
+                                     ?? historyLookup[item.Id]
+                                         .FirstOrDefault(h => h.ToStatus == ApplicationStatus.Accepted)
+                                         ?.OccurredAtUtc;
+
+                    string? lastPreview = null;
+                    var lastFromCandidate = false;
+                    DateTime? lastAt = null;
+                    if (lastMessageByApp.TryGetValue(item.Id, out var lastMsg))
+                    {
+                        lastPreview = TruncateMessagePreview(lastMsg.Body);
+                        lastFromCandidate = lastMsg.SenderUserId == user.Id;
+                        lastAt = lastMsg.CreatedAtUtc;
+                    }
+
+                    string? lastCancelReason = null;
+                    bool? lastCancelByEmployer = null;
+                    if (latestCancelByInterview.TryGetValue(interview.Id, out var cancelChange)
+                        && !string.IsNullOrWhiteSpace(cancelChange.Reason)
+                        && interview.Status == InterviewStatus.Proposing
+                        && openSlots == 0)
+                    {
+                        lastCancelReason = cancelChange.Reason.Trim();
+                        lastCancelByEmployer = string.Equals(
+                            cancelChange.ActorRole,
+                            "Employer",
+                            StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    items[i] = item with
+                    {
+                        AfterMatch = new ApplicationAfterMatchSummaryDto(
+                            interview.Status.ToString(),
+                            unread,
+                            openSlots,
+                            start,
+                            end,
+                            acceptedAt,
+                            lastPreview,
+                            lastFromCandidate,
+                            lastAt,
+                            lastCancelReason,
+                            lastCancelByEmployer)
+                    };
+                }
+            }
+        }
+
         var lang = await ResolveTargetLanguageAsync(user, cancellationToken);
         if (!JobsyLanguages.AreSame(VacancySourceLanguage, lang) && items.Count > 0)
         {
@@ -497,6 +611,17 @@ public partial class MeController : ControllerBase
         }
 
         return Ok(items);
+    }
+
+    private static string TruncateMessagePreview(string body)
+    {
+        var trimmed = body.Trim();
+        if (trimmed.Length <= 120)
+        {
+            return trimmed;
+        }
+
+        return trimmed[..117] + "…";
     }
 
     [HttpPost("candidate-how-to-completed")]
@@ -771,7 +896,8 @@ public partial class MeController : ControllerBase
         var preferred = ParsePreferences(user.PreferencesJson).Language;
         if (!string.IsNullOrWhiteSpace(preferred))
         {
-            return Task.FromResult(JobsyLanguages.Normalize(preferred));
+            var accept = Request.Headers.AcceptLanguage.ToString();
+            return Task.FromResult(JobsyLanguages.ResolveActive(preferred, accept));
         }
 
         return Task.FromResult(JobsyLanguages.Default);
@@ -802,11 +928,35 @@ public partial class MeController : ControllerBase
         var features = await _features.GetAsync(cancellationToken);
         if (features.PassportPdfV2Enabled)
         {
-            var passport = await _passportPdf.ForCandidateAsync(
-                user,
-                features.PhoneVerificationEnabled,
-                cancellationToken);
-            return File(passport.Pdf, "application/pdf", passport.FileName);
+            try
+            {
+                var prefsForStudent = ParsePreferences(user.PreferencesJson);
+                if (features.StudentPassportEnabled && StudentPassportRules.Qualifies(prefsForStudent))
+                {
+                    var student = await _studentPassportPdf.RenderForCandidateAsync(
+                        user,
+                        features.PhoneVerificationEnabled,
+                        cancellationToken);
+                    return File(student.Pdf, "application/pdf", student.FileName);
+                }
+
+                var language = JobsyLanguages.Normalize(prefsForStudent.Language);
+                var dnaLayers = await _dna.ReadAsync(user.Id, language, cancellationToken);
+                if (PassportDnaCompletion.AllLayersCompleted(dnaLayers))
+                {
+                    var passport = await _passportPdf.ForCandidateAsync(
+                        user,
+                        features.PhoneVerificationEnabled,
+                        features.PassportPdfDnaBlocksEnabled,
+                        cancellationToken);
+                    return File(passport.Pdf, "application/pdf", passport.FileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DNA-paspoort PDF genereren mislukt voor kandidaat {UserId}", user.Id);
+                return StatusCode(500, new { message = "DNA-paspoort kon niet worden gemaakt. Probeer het later opnieuw." });
+            }
         }
 
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
@@ -1337,7 +1487,14 @@ public partial class MeController : ControllerBase
             .Where(r => r.UserId == user.Id)
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.CreatedAtUtc)
-            .Select(r => new CandidateReferenceDto(r.Id, r.EmployerName, r.ContactName, r.Email, r.Phone))
+            .Select(r => new CandidateReferenceDto(
+                r.Id,
+                r.EmployerName,
+                r.ContactName,
+                r.Email,
+                r.Phone,
+                r.ReferenceType,
+                r.RelationshipContext))
             .ToListAsync(cancellationToken);
 
         var diplomaEvaluations = await LoadDiplomaEvaluationFactsAsync(user.Id, cancellationToken);
@@ -1357,8 +1514,8 @@ public partial class MeController : ControllerBase
             user.ConsentVersion,
             PrivacyConstants.RequiresAccountConsentReaccept(user.Role, user.ConsentVersion),
             PrivacyConstants.CurrentConsentVersion,
-            CandidateNameRules.DisplayFirstName(user.FirstName, user.FullName),
-            CandidateNameRules.DisplayLastName(user.LastName, user.FullName),
+            CandidateNameRules.DisplayFirstName(user.FirstName, user.FullName, user.Email),
+            CandidateNameRules.DisplayLastName(user.LastName, user.FullName, user.Email),
             user.PhoneNumber,
             user.WhatsAppContactAllowed,
             cv,
@@ -1424,7 +1581,9 @@ public partial class MeController : ControllerBase
                 Employer: CandidateReferenceRules.NormalizeName(r.EmployerName),
                 Contact: CandidateReferenceRules.NormalizeName(r.ContactName),
                 Email: CandidateReferenceRules.NormalizeEmail(r.Email),
-                Phone: CandidatePhoneRules.Normalize(r.Phone)))
+                Phone: CandidatePhoneRules.Normalize(r.Phone),
+                ReferenceType: ReferenceTypeCatalog.Normalize(r.ReferenceType),
+                RelationshipContext: NormalizeRelationshipContext(r.RelationshipContext)))
             .Where(r => !string.IsNullOrWhiteSpace(r.Employer)
                         || !string.IsNullOrWhiteSpace(r.Contact)
                         || !string.IsNullOrWhiteSpace(r.Email)
@@ -1469,6 +1628,8 @@ public partial class MeController : ControllerBase
                 ContactName = row.Contact!,
                 Email = row.Email!,
                 Phone = row.Phone!,
+                ReferenceType = row.ReferenceType,
+                RelationshipContext = row.RelationshipContext,
                 SortOrder = order++,
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -1612,15 +1773,15 @@ public partial class MeController : ControllerBase
                                && employerNameEl.ValueKind == JsonValueKind.String
                         ? employerNameEl.GetString()
                         : null;
-                    if (string.IsNullOrWhiteSpace(name))
-                    {
-                        continue;
-                    }
 
                     var role = item.TryGetProperty("role", out var roleEl)
                                && roleEl.ValueKind == JsonValueKind.String
                         ? roleEl.GetString()
                         : null;
+                    if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(role))
+                    {
+                        continue;
+                    }
                     int? years = null;
                     if (item.TryGetProperty("years", out var yearsEl)
                         && yearsEl.ValueKind == JsonValueKind.Number
@@ -1680,15 +1841,72 @@ public partial class MeController : ControllerBase
                         }
                     }
 
+                    Guid? entryId = null;
+                    if (item.TryGetProperty("entryId", out var entryIdEl)
+                        && entryIdEl.ValueKind == JsonValueKind.String
+                        && Guid.TryParse(entryIdEl.GetString(), out var parsedEntry))
+                    {
+                        entryId = parsedEntry;
+                    }
+
+                    bool? onlyForMe = null;
+                    if (item.TryGetProperty("onlyForMe", out var onlyEl)
+                        && onlyEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    {
+                        onlyForMe = onlyEl.GetBoolean();
+                    }
+
+                    IReadOnlyList<string>? skills = null;
+                    if (item.TryGetProperty("skills", out var skillsEl)
+                        && skillsEl.ValueKind == JsonValueKind.Array)
+                    {
+                        skills = skillsEl.EnumerateArray()
+                            .Where(x => x.ValueKind == JsonValueKind.String)
+                            .Select(x => x.GetString()?.Trim())
+                            .Where(x => !string.IsNullOrWhiteSpace(x))
+                            .Select(x => x!.Length > 40 ? x[..40] : x)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .Take(NeutralRoleSuggestions.MaxSkills)
+                            .ToList();
+                    }
+
                     employers.Add(new CandidateEmployerHistoryDto(
-                        name.Trim(),
+                        string.IsNullOrWhiteSpace(name) ? string.Empty : name.Trim(),
                         string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
                         years,
                         description,
                         startMonth,
                         endMonth,
                         isCurrent,
-                        escoId));
+                        escoId,
+                        entryId,
+                        onlyForMe,
+                        skills));
+                }
+            }
+
+            var timelineGaps = new List<CandidateTimelineGapDto>();
+            if (root.TryGetProperty("timelineGaps", out var gapsEl) && gapsEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var gap in gapsEl.EnumerateArray())
+                {
+                    if (gap.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    var gapStart = ReadEmployerMonth(gap, "startMonth", "startDate");
+                    var gapEnd = ReadEmployerMonth(gap, "endMonth", "endDate");
+                    if (gapStart is null || gapEnd is null)
+                    {
+                        continue;
+                    }
+
+                    var choice = gap.TryGetProperty("choice", out var choiceEl)
+                                 && choiceEl.ValueKind == JsonValueKind.String
+                        ? SensitiveExperienceRules.NormalizeGapChoice(choiceEl.GetString())
+                        : null;
+                    timelineGaps.Add(new CandidateTimelineGapDto(gapStart, gapEnd, choice));
                 }
             }
 
@@ -1901,7 +2119,11 @@ public partial class MeController : ControllerBase
                     ReadOptionalString(workEl, "indoor"),
                     ReadOptionalString(workEl, "outdoor"),
                     ReadOptionalString(workEl, "physicalWork"),
-                    ReadOptionalString(workEl, "pace"));
+                    ReadOptionalString(workEl, "pace"),
+                    ReadOptionalString(workEl, "teamMode"),
+                    ReadOptionalString(workEl, "structure"),
+                    ReadOptionalString(workEl, "customerContact"),
+                    ReadOptionalString(workEl, "shiftsPreference"));
             }
 
             var shareEmployerPreferences = ReadOptionalBool(root, "shareEmployerPreferences");
@@ -1912,6 +2134,13 @@ public partial class MeController : ControllerBase
                 && contractEl.ValueKind == JsonValueKind.Array)
             {
                 contractPreferences = ReadStringArray(contractEl);
+            }
+
+            List<string>? workStatuses = null;
+            if (root.TryGetProperty("workStatuses", out var workStatusEl)
+                && workStatusEl.ValueKind == JsonValueKind.Array)
+            {
+                workStatuses = ReadStringArray(workStatusEl);
             }
 
             var parsed = new CandidatePreferencesDto(
@@ -1945,7 +2174,9 @@ public partial class MeController : ControllerBase
                 shareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(workRegion, null),
                 hasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null));
+                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null),
+                workStatuses,
+                timelineGaps);
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -1975,6 +2206,17 @@ public partial class MeController : ControllerBase
         }
 
         return el.GetBoolean();
+    }
+
+    private static string? NormalizeRelationshipContext(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length > 200 ? trimmed[..200] : trimmed;
     }
 
     private static List<string> ReadStringArray(JsonElement arrayEl)
@@ -2078,7 +2320,7 @@ public partial class MeController : ControllerBase
             preferredTransport = sanitized.PreferredTransport,
             language = string.IsNullOrWhiteSpace(sanitized.Language)
                 ? null
-                : JobsyLanguages.Normalize(sanitized.Language),
+                : JobsyLanguages.ResolveActive(sanitized.Language),
             ageYears = sanitized.AgeYears,
             aboutMe = string.IsNullOrWhiteSpace(sanitized.AboutMe) ? null : sanitized.AboutMe.Trim(),
             defaultMotivation = trimmedMotivation,
@@ -2089,7 +2331,7 @@ public partial class MeController : ControllerBase
                 .ToArray(),
             availability = sanitized.Availability,
             employers = sanitized.Employers?
-                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
                 .Select(e =>
                 {
                     var description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim();
@@ -2097,6 +2339,13 @@ public partial class MeController : ControllerBase
                     {
                         description = description[..1000];
                     }
+
+                    var skills = e.Skills?
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .Select(s => s.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Take(NeutralRoleSuggestions.MaxSkills)
+                        .ToArray();
 
                     return new
                     {
@@ -2109,9 +2358,20 @@ public partial class MeController : ControllerBase
                         isCurrent = e.IsCurrent,
                         escoId = string.IsNullOrWhiteSpace(e.Role) || string.IsNullOrWhiteSpace(e.EscoId)
                             ? null
-                            : e.EscoId.Trim()
+                            : e.EscoId.Trim(),
+                        onlyForMe = e.OnlyForMe == true ? true : (bool?)null,
+                        skills = skills is { Length: > 0 } ? skills : null
                     };
                 })
+                .ToArray(),
+            timelineGaps = sanitized.TimelineGaps?
+                .Select(g => new
+                {
+                    startMonth = LobsyCvModelFactory.NormalizeMonth(g.StartMonth),
+                    endMonth = LobsyCvModelFactory.NormalizeMonth(g.EndMonth),
+                    choice = SensitiveExperienceRules.NormalizeGapChoice(g.Choice)
+                })
+                .Where(g => g.startMonth is not null && g.endMonth is not null)
                 .ToArray(),
             educations = sanitized.Educations?
                 .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -2172,7 +2432,8 @@ public partial class MeController : ControllerBase
             shareEmployerPreferences = sanitized.ShareEmployerPreferences,
             workRegion = sanitized.WorkRegion,
             hasOwnCar = sanitized.HasOwnCar,
-            contractPreferences = sanitized.ContractPreferences
+            contractPreferences = sanitized.ContractPreferences,
+            workStatuses = sanitized.WorkStatuses
         }, JsonOptions);
     }
 

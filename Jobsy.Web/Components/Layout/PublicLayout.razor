@@ -14,7 +14,7 @@
      lang="@Culture.Language">
     <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    <PublicHeader Variant="_variant" Compact="_compact" AuthShell="_authShell" />
+    <PublicHeader Variant="_variant" Compact="_compact" AuthShell="_authShell" HideLangMenu="_hideLangMenu" />
     <main id="main" class="pub-main @(_compact ? "pub-main--test" : null)">
         @Body
     </main>
@@ -30,6 +30,12 @@
     private CookieConsentBanner.CookieConsentMode _cookieMode = CookieConsentBanner.CookieConsentMode.Interactive;
     private bool _compact;
     private bool _authShell;
+    private bool _hideLangMenu;
+
+    protected override void OnInitialized()
+    {
+        Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -39,6 +45,7 @@
         _variant = await VariantResolver.GetAsync();
         _compact = IsTestPath(Navigation.Uri, http);
         _authShell = IsAuthShellPath(Navigation.Uri, http);
+        _hideLangMenu = IsUwvAdviseurDeelPath(Navigation.Uri, http);
         var interactive = http?.AcceptsInteractiveRouting() == true;
         _cookieMode = interactive
             ? CookieConsentBanner.CookieConsentMode.Interactive
@@ -92,8 +99,31 @@
         return IsAuthPath(http?.Request.Path.Value);
     }
 
+    private static bool IsUwvAdviseurDeelPath(string navigationUri, HttpContext? http)
+    {
+        try
+        {
+            var path = new Uri(navigationUri).AbsolutePath;
+            if (IsUwvAdviseurDeelPathValue(path))
+            {
+                return true;
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        return IsUwvAdviseurDeelPathValue(http?.Request.Path.Value);
+    }
+
+    private static bool IsUwvAdviseurDeelPathValue(string? path)
+        => path?.StartsWith("/deel/uwv-adviseur/", StringComparison.OrdinalIgnoreCase) == true;
+
     private static bool IsAuthPath(string? path)
         => string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, PublicRoutes.CreateAccount, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, PublicRoutes.CreateAccountCode, StringComparison.OrdinalIgnoreCase)
            || string.Equals(path, "/wachtwoord-vergeten", StringComparison.OrdinalIgnoreCase)
            || (path?.StartsWith("/account/mfa", StringComparison.OrdinalIgnoreCase) ?? false)
            || string.Equals(path, "/account/wachtwoord-instellen", StringComparison.OrdinalIgnoreCase);

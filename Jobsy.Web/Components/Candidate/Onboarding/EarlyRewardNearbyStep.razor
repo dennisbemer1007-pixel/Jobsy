@@ -1,0 +1,161 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<section class="ob-vroeg ob-vroeg--nearby" data-testid="early-reward-nearby">
+    <h1 class="ob-vroeg__title">
+        @if (Signal?.Count > 0)
+        {
+            @((MarkupString)Culture.Format("Onboarding.Early.Nearby.TitleWithCount", Signal.Count))
+        }
+        else
+        {
+            @Culture["Onboarding.Early.Nearby.TitleZero"]
+        }
+    </h1>
+    <p class="ob-wizard__lead">@LeadText</p>
+
+    @if (Signal?.Count > 0)
+    {
+        <div class="ob-vroeg__banner ob-vroeg__banner--time">
+            <p>@((MarkupString)Culture["Onboarding.Early.Nearby.TimeBanner"])</p>
+        </div>
+
+        @if (Signal.Examples.Count > 0)
+        {
+            <div class="ob-vroeg__card ob-vroeg__card--jobs">
+                <p class="ob-vroeg__stat">@Culture.Format("Onboarding.Early.Nearby.Examples", Signal.Examples.Count)</p>
+                <ul class="ob-vroeg__job-list">
+                    @foreach (var job in Signal.Examples)
+                    {
+                        <li class="ob-vroeg__job-card">
+                            <div class="ob-vroeg__job-icon" aria-hidden="true">@Initial(job.Title)</div>
+                            <div>
+                                <p class="ob-vroeg__job-title">@job.Title</p>
+                                <p class="ob-vroeg__job-meta">@FormatJobMeta(job)</p>
+                            </div>
+                            <p class="ob-vroeg__job-match">@job.WhyLine</p>
+                        </li>
+                    }
+                </ul>
+                <p class="ob-vroeg__fineprint">@Culture["Onboarding.Early.Nearby.Fineprint"]</p>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="ob-vroeg__banner ob-vroeg__banner--warm">
+            <p>@FallbackLead</p>
+        </div>
+        @if (Signal?.WiderRadiusCount is > 0)
+        {
+            <p class="ob-vroeg__hint">@Culture.Format("Onboarding.Early.Nearby.WiderHint", Signal.WiderRadiusCount.Value)</p>
+        }
+        <div class="ob-vroeg__fallback-cta">
+            <p class="ob-vroeg__fallback-cta-lead">@Culture["Onboarding.Early.Nearby.FallbackCtaLead"]</p>
+            <a class="btn btn-secondary ob-vroeg__fallback-cta-btn"
+               href="@Jobsy.Web.KandidaatBanen.KbRoutes.Map">@Culture["Onboarding.Early.Nearby.Banenkaart"]</a>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter] public OnboardingNearbySignal? Signal { get; set; }
+    [Parameter] public string TransportLabel { get; set; } = "";
+
+    private string TransportShort => TransportLabels.SplitMany(TransportLabel).FirstOrDefault() ?? "reizen";
+
+    private string LeadText
+    {
+        get
+        {
+            if (Signal is null || Signal.MissingHomeLocation)
+            {
+                return Culture["Onboarding.Early.Nearby.LeadNoLocation"];
+            }
+
+            if (Signal.EmployersFeatureOff)
+            {
+                return Culture["Onboarding.Early.Nearby.LeadEmployersOff"];
+            }
+
+            return Culture.Format(
+                "Onboarding.Early.Nearby.Lead",
+                Signal.MaxTravelMinutes,
+                TransportShort);
+        }
+    }
+
+    private string FallbackLead
+    {
+        get
+        {
+            if (Signal?.EmployersFeatureOff == true)
+            {
+                return Culture["Onboarding.Early.Nearby.FallbackEmployersOff"];
+            }
+
+            if (Signal?.MissingHomeLocation == true)
+            {
+                return Culture["Onboarding.Early.Nearby.FallbackNoLocation"];
+            }
+
+            return Culture["Onboarding.Early.Nearby.FallbackZero"];
+        }
+    }
+
+    private static string Initial(string title)
+        => string.IsNullOrWhiteSpace(title) ? "?" : char.ToUpperInvariant(title.Trim()[0]).ToString();
+
+    private static string FormatKm(double km) => km.ToString("0.0", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")).Replace('.', ',') + " km";
+
+    private string FormatJobMeta(OnboardingNearbyVacancyCard job)
+    {
+        var parts = new List<string> { FormatKm(job.DistanceKm) };
+
+        if (job.TravelMinutes is > 0)
+        {
+            parts.Add(FormatTravel(job.TravelMinutes));
+        }
+
+        if (TryFormatHours(job.HoursLabel, out var hoursPart))
+        {
+            parts.Add(hoursPart);
+        }
+
+        if (!string.IsNullOrWhiteSpace(job.ScheduleHint))
+        {
+            parts.Add(job.ScheduleHint);
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private string FormatTravel(int minutes)
+    {
+        var mode = TravelReach.Fastest(TransportLabels.ParseMany(TransportLabel));
+        var key = mode switch
+        {
+            TransportMode.Walking => "Onboarding.Early.Nearby.JobTravelWalk",
+            TransportMode.Car => "Onboarding.Early.Nearby.JobTravelCar",
+            TransportMode.PublicTransport => "Onboarding.Early.Nearby.JobTravelTransit",
+            TransportMode.Bike => "Onboarding.Early.Nearby.JobTravelBike",
+            _ => "Onboarding.Early.Nearby.JobTravelGeneric",
+        };
+        return Culture.Format(key, minutes);
+    }
+
+    private bool TryFormatHours(string hoursLabel, out string formatted)
+    {
+        formatted = "";
+        if (string.IsNullOrWhiteSpace(hoursLabel) || hoursLabel is "—" or "-")
+        {
+            return false;
+        }
+
+        formatted = Culture.Format("Onboarding.Early.Nearby.JobHours", hoursLabel);
+        return true;
+    }
+}

@@ -194,7 +194,9 @@ public record EmployerApplicationDto(
     string? AvailabilitySummary = null,
     /// <summary>True when employer may download the candidate-uploaded CV (post-Accept snapshot).</summary>
     bool UploadedCvAvailable = false,
-    int CandidateReferenceCount = 0);
+    int CandidateReferenceCount = 0,
+    /// <summary>lobsy-cv or passport — set at apply; null = legacy.</summary>
+    string? AttachedDocumentKind = null);
 
 public record FulfillVacancyRequest(
     bool RejectOtherApplications = true,

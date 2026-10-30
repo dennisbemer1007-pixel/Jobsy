@@ -170,4 +170,52 @@ public static class TransportLabels
         var selected = Parse(selectedLabel);
         return requiredTransport.Any(required => Parse(required) == selected);
     }
+
+    /// <summary>
+    /// Whether the candidate's chosen commute mode can satisfy at least one vacancy transport requirement.
+    /// (Auto can reach fiets/lopend jobs; exact mode match is not required for discover travel filtering.)
+    /// </summary>
+    public static bool CandidateCanReach(string[] requiredTransport, string selectedLabel)
+    {
+        if (requiredTransport is not { Length: > 0 })
+        {
+            return true;
+        }
+
+        var selected = Parse(selectedLabel);
+        foreach (var required in requiredTransport)
+        {
+            if (RequiredReachableWith(Parse(required), selected))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool RequiredReachableWith(TransportMode required, TransportMode selected)
+    {
+        if (selected.HasFlag(required))
+        {
+            return true;
+        }
+
+        if (selected.HasFlag(TransportMode.Car))
+        {
+            return required is TransportMode.Walking or TransportMode.Bike or TransportMode.PublicTransport;
+        }
+
+        if (selected.HasFlag(TransportMode.PublicTransport))
+        {
+            return required is TransportMode.Walking or TransportMode.Bike;
+        }
+
+        if (selected.HasFlag(TransportMode.Bike))
+        {
+            return required == TransportMode.Walking;
+        }
+
+        return false;
+    }
 }

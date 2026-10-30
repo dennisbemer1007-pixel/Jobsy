@@ -1,4 +1,4 @@
-@page "/werkgever/sollicitaties"
+@page "/werkgever/sollicitaties/pipeline"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Features
@@ -14,7 +14,9 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
+@using Jobsy.Web.Components.Bedrijvenkaart
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
@@ -262,6 +264,7 @@
                         @MobileCards(ListFiltered)
                     </div>
                 }
+
             </div>
         }
 
@@ -279,7 +282,8 @@
                                     Tab="@_drawerTab"
                                     TabChanged="OnDrawerTabChanged"
                                     CanWritePhase2="CanWrite"
-                                    OnPhase2Changed="ReloadSelectedAsync" />
+                                    OnPhase2Changed="ReloadSelectedAsync"
+                                    OnPhase2AcceptUiChanged="OnPhase2AcceptUiChanged" />
     </ChildContent>
     <Footer>
         <ApplicationCandidateActions Item="_selected"
@@ -376,16 +380,19 @@
     private bool _hireCloseVacancy = true;
     private bool _bulkRejectOpen;
     private bool _phase2Enabled;
-
+    private bool _phase2AcceptUi;
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
     private DateTime UtcNow => DateTime.UtcNow;
 
     private IEnumerable<(Guid Id, string Title, string CompanyName)> VacancyOptions =>
         _vacancies
+            .Where(v => ManagedVacancyMapFilter.IsPublishedOpen(v.Status, v.FulfilledByApplicationId))
             .Where(v => string.IsNullOrWhiteSpace(_vacancySearch)
                         || v.Title.Contains(_vacancySearch, StringComparison.CurrentCultureIgnoreCase)
                         || (v.CompanyName?.Contains(_vacancySearch, StringComparison.CurrentCultureIgnoreCase) ?? false))
+            .GroupBy(v => $"{(v.CompanyName ?? "").Trim()}|{v.Title.Trim()}", StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(v => v.Id).First())
             .Select(v => (v.Id, v.Title, v.CompanyName ?? ""))
             .OrderBy(v => v.Title, StringComparer.CurrentCultureIgnoreCase);
 
@@ -569,12 +576,17 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var q = QueryHelpers.ParseQuery(uri.Query);
-        if (q.TryGetValue("view", out var view) && !string.IsNullOrWhiteSpace(view))
+        if (q.TryGetValue("view", out var view) && !string.IsNullOrWhiteSpace(view)
+            && string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase))
         {
-            _view = string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase)
-                ? ApplicationPipelineRules.ViewList
-                : ApplicationPipelineRules.ViewPipeline;
+            Navigation.NavigateTo(
+                EmployerApplicationsListSsrQuery.BuildListPath(
+                    EmployerApplicationsListSsrQuery.Parse(new QueryCollection(q))),
+                forceLoad: true);
+            return;
         }
+
+        _view = ApplicationPipelineRules.ViewPipeline;
 
         if (q.TryGetValue("filter", out var filter)
             && string.Equals(filter, ApplicationPipelineRules.FilterOverdue, StringComparison.OrdinalIgnoreCase))
@@ -600,13 +612,20 @@
         {
             OpenCandidate(appId);
         }
+
     }
 
     private bool Phase2HidesPrimary(EmployerApplicationItem? item)
-        => _phase2Enabled
+        => _phase2AcceptUi
            && CanWrite
            && item is not null
            && ApplicationPipelineRules.StatusOf(item) == ApplicationStatus.Pending;
+
+    private Task OnPhase2AcceptUiChanged(bool available)
+    {
+        _phase2AcceptUi = available;
+        return InvokeAsync(StateHasChanged);
+    }
 
     private async Task ReloadSelectedAsync()
     {
@@ -675,24 +694,25 @@
 
     private Task SetViewAsync(string view)
     {
-        _view = view;
+        if (string.Equals(view, ApplicationPipelineRules.ViewList, StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo(BuildListViewUrlFromState(), forceLoad: true);
+            return Task.CompletedTask;
+        }
+
+        _view = ApplicationPipelineRules.ViewPipeline;
         SyncQuery();
         return Task.CompletedTask;
     }
 
     private void ShowAllInList()
     {
-        _view = ApplicationPipelineRules.ViewList;
-        SyncQuery();
+        Navigation.NavigateTo(BuildListViewUrlFromState(), forceLoad: true);
     }
 
     private void SyncQuery()
     {
         var parts = new List<string>();
-        if (_view == ApplicationPipelineRules.ViewList)
-        {
-            parts.Add("view=lijst");
-        }
 
         if (_overdueOnly)
         {
@@ -709,8 +729,29 @@
             parts.Add($"kandidaat={_selected.Id:D}");
         }
 
-        var url = "/werkgever/sollicitaties" + (parts.Count == 0 ? "" : "?" + string.Join('&', parts));
+        var url = "/werkgever/sollicitaties/pipeline" + (parts.Count == 0 ? "" : "?" + string.Join('&', parts));
         Navigation.NavigateTo(url, replace: true);
+    }
+
+    private string BuildListViewUrlFromState()
+    {
+        var parts = new List<string> { $"view={ApplicationPipelineRules.ViewList}" };
+        if (_overdueOnly)
+        {
+            parts.Add("filter=overdue");
+        }
+
+        if (Guid.TryParse(_vacancyId, out var vacancyId))
+        {
+            parts.Add($"vacancyId={vacancyId:D}");
+        }
+
+        if (_selected is not null && _drawerOpen)
+        {
+            parts.Add($"kandidaat={_selected.Id:D}");
+        }
+
+        return "/werkgever/sollicitaties?" + string.Join('&', parts);
     }
 
     private void OpenCandidate(Guid id)
@@ -725,7 +766,22 @@
         _drawerTab = "profiel";
         _drawerOpen = true;
         SyncQuery();
+        _ = RefreshPhase2FlagAsync();
         _ = MarkViewedBestEffortAsync(id);
+    }
+
+    private async Task RefreshPhase2FlagAsync()
+    {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Keep cached flag when refresh fails.
+        }
     }
 
     private async Task MarkViewedBestEffortAsync(Guid id)
@@ -760,9 +816,22 @@
 
     private void OpenRejectedList()
     {
-        _listStatusFilter = "rejected";
-        _view = ApplicationPipelineRules.ViewList;
-        SyncQuery();
+        var parts = new List<string>
+        {
+            $"view={ApplicationPipelineRules.ViewList}",
+            "status=rejected"
+        };
+        if (_overdueOnly)
+        {
+            parts.Add("filter=overdue");
+        }
+
+        if (Guid.TryParse(_vacancyId, out var vacancyId))
+        {
+            parts.Add($"vacancyId={vacancyId:D}");
+        }
+
+        Navigation.NavigateTo("/werkgever/sollicitaties?" + string.Join('&', parts), forceLoad: true);
     }
 
     private void ToggleSort(string key)
@@ -864,6 +933,37 @@
         switch (ApplicationPipelineRules.StatusOf(a))
         {
             case ApplicationStatus.Pending:
+                if (_phase2Enabled && CanWrite && _phase2AcceptUi)
+                {
+                    _busyId = a.Id;
+                    try
+                    {
+                        var result = await Api.AcceptEmployerPhase2Async(a.Id);
+                        if (result is { Succeeded: false })
+                        {
+                            _message = result.UserMessage ?? Culture["WgPhase2.AcceptFailed"];
+                            _messageIsError = true;
+                            return;
+                        }
+
+                        await ReloadSelectedAsync();
+                        _message = Culture["WgApp.AcceptedToast"];
+                        _messageIsError = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        var uf = UserFacing.From(ex);
+                        _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+                        _messageIsError = true;
+                    }
+                    finally
+                    {
+                        _busyId = null;
+                    }
+
+                    break;
+                }
+
                 await ReactAsync(a.Id, "Accepted");
                 break;
             case ApplicationStatus.Accepted:

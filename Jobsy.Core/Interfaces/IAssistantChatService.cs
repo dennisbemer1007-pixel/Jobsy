@@ -14,7 +14,9 @@ public sealed record AssistantChatContext(
     Guid UserId,
     string Role,
     string Language,
-    IReadOnlyCollection<Guid>? AccessibleCompanyIds);
+    IReadOnlyCollection<Guid>? AccessibleCompanyIds,
+    string? PagePath = null,
+    string? PageContextLine = null);
 
 public sealed record AssistantChatResult(
     string Reply,

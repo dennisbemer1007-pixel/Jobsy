@@ -1,11 +1,15 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Features
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
 
 <AuthorizeView>
     <Authorized>
@@ -52,9 +56,17 @@
                         </div>
                     </div>
 
-                    @if (_loading)
+                    @if (_loading || !_listReady)
                     {
                         <p class="muted notification-bell__empty">Berichten laden…</p>
+                    }
+                    else if (_listLoadFailed)
+                    {
+                        <div class="notification-bell__empty-state">
+                            <p class="notification-bell__empty-title">Berichten laden mislukt</p>
+                            <p class="muted">Probeer opnieuw of open Alle meldingen.</p>
+                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="LoadListAsync">Opnieuw</button>
+                        </div>
                     }
                     else if (_items.Count == 0)
                     {
@@ -93,6 +105,12 @@
                             }
                         </ul>
                     }
+                    @if (!_loading)
+                    {
+                        <p class="notification-bell__footer-link">
+                            <a href="@_allNotificationsHref" @onclick="Close">Alle meldingen</a>
+                        </p>
+                    }
                 </div>
         </div>
     </Authorized>
@@ -101,33 +119,78 @@
 @code {
     private bool _open;
     private bool _forceClosed;
-    private bool _loading;
+    private bool _loading = true;
+    private bool _listReady;
     private bool _busy;
     private int _unread;
     private List<UserNotificationItem> _items = [];
+    private string _allNotificationsHref = "/notifications";
+    private bool _noBlazorRuntime;
+    private bool _listLoadFailed;
+    private bool _listPrefetched;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
+        var http = HttpContextAccessor.HttpContext;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null
+            || AfterMatchWerkgeverSsrPaths.ShouldDisableBlazorAndEnhancedNav(http?.Request.Path);
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _allNotificationsHref = RoleNavCatalog.NotificationsHrefFor(state.User);
         UnreadStore.Changed += OnUnreadChanged;
-        UnreadStore.EnsureStarted();
-        _unread = UnreadStore.Unread;
+        if (_noBlazorRuntime)
+        {
+            await LoadListAsync();
+        }
+        else
+        {
+            _loading = false;
+            UnreadStore.EnsureStarted();
+            try
+            {
+                await UnreadStore.RefreshOnceAsync();
+            }
+            catch
+            {
+                // keep last known count from store
+            }
+
+            _unread = UnreadStore.Unread;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_noBlazorRuntime && !_listPrefetched)
+        {
+            _listPrefetched = true;
+            await LoadListAsync();
+            StateHasChanged();
+        }
     }
 
     private void OnUnreadChanged()
         => InvokeAsync(() =>
         {
-            _unread = UnreadStore.Unread;
-            StateHasChanged();
+            if (!_open)
+            {
+                _unread = UnreadStore.Unread;
+                StateHasChanged();
+            }
         });
 
     private async Task ToggleAsync()
     {
         _open = !_open;
         _forceClosed = !_open;
-        if (_open)
+        if (_open && !_listReady)
         {
             await LoadListAsync();
+        }
+        else if (_open && _listReady)
+        {
+            _ = LoadListAsync();
         }
     }
 
@@ -148,19 +211,39 @@
     private async Task LoadListAsync()
     {
         _loading = true;
+        _listLoadFailed = false;
         try
         {
-            _items = (await Api.GetNotificationsAsync()).ToList();
-            _unread = _items.Count(n => !n.IsRead);
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                try
+                {
+                    _items = (await Api.GetNotificationsAsync(take: 120)).ToList();
+                    _unread = await Api.GetUnreadNotificationCountAsync();
+                    UnreadStore.SetUnread(_unread);
+                    return;
+                }
+                catch when (attempt < 2)
+                {
+                    await Task.Delay(400 * (attempt + 1));
+                }
+            }
+
+            _listLoadFailed = true;
+            _items = [];
+            _unread = await Api.GetUnreadNotificationCountAsync();
             UnreadStore.SetUnread(_unread);
         }
         catch
         {
+            _listLoadFailed = true;
             _items = [];
+            _unread = UnreadStore.Unread;
         }
         finally
         {
             _loading = false;
+            _listReady = true;
         }
     }
 
@@ -168,9 +251,10 @@
     {
         await MarkReadQuietAsync(n);
         _open = false;
-        if (!string.IsNullOrWhiteSpace(n.DeepLink))
+        var target = !string.IsNullOrWhiteSpace(n.DeepLink) ? n.DeepLink : n.ActionUrl;
+        if (!string.IsNullOrWhiteSpace(target))
         {
-            Navigation.NavigateTo(n.DeepLink);
+            NotificationNavigation.Go(Navigation, target);
         }
     }
 

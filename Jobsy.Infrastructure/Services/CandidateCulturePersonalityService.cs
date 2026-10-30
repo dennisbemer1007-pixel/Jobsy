@@ -252,7 +252,9 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 null,
                 [],
                 null,
-                price);
+                price,
+                PreviewScores: null,
+                QuickScanVersion: 0);
         }
 
         var version = AssessmentTestVersions.Normalize(row.QuickScanVersion);

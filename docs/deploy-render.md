@@ -247,13 +247,24 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 
 | Keuze | Reden |
 |-------|--------|
-| `plan: starter` op api + web | Always-on; geen 15-min spin-down. Eén web-instance = geen sticky sessions voor Blazor/SignalR |
+| `plan: starter` op api + web | Always-on; geen 15-min spin-down. **Eén** web-instance (geen autoscaling in `render.yaml`) = geen sticky sessions nodig. Bij **>1 instance** is session affinity verplicht: Blazor-circuits zitten alleen in het geheugen van de pod die de WebSocket opende; reconnect op een andere pod → `components-reconnect-rejected` terwijl de login-cookie nog geldig is. |
 | `plan: basic-256mb` op DB | Blijvende Postgres (geen free 30-dagen expiry) |
 | Alles `frankfurt` | Zelfde private network voor Postgres |
 | `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |
 | `ConnectionStrings__JobsyDb` op **web én api** | Data Protection-keys in Postgres (antiforgery/auth cookies na redeploy) |
 | `JobsyAuth__AllowDevelopmentAuth` | Altijd `false` op Render (demo-login is sowieso 404 in Production) |
 | `lobsy-acc-*` namen | Render vereist unieke servicenamen over de hele workspace |
+
+## Blazor reconnect op Acceptatie (ops)
+
+`components-reconnect-rejected` betekent: de server kent het circuit-id niet meer (geheugen weg), **niet** automatisch dat `Jobsy.Auth` verlopen is. Typische oorzaken:
+
+1. **Deploy / pod restart** — `autoDeployTrigger: commit` op `lobsy-acc-web` (`branch: acceptatie`). Vergelijk tijdstip met `git log origin/acceptatie` en Render **Events** (Deploy live / Instance failed).
+2. **Health check restart** — `render.yaml` zet `healthCheckPath: /healthz` (lichtgewicht). Als het Dashboard nog `/` gebruikt (zware prerender + API), kunnen trage checks restarts geven tot Blueprint sync.
+3. **Tweede instance zonder sticky sessions** — zie tabel hierboven; reconnect landt op een andere pod → rejected terwijl cookies geldig blijven.
+4. **Mobiel** — korte WebSocket-drop hoort binnen `DisconnectedCircuitRetentionPeriod` (15 min) te herstellen; rejected binnen ~1 min na login wijst meestal op (1)–(3), niet op idle logout.
+
+Web tuning staat in `Jobsy.Web/Program.cs`: hub keep-alive 15 s, client timeout 90 s, retention 15 min, `blazor-boot.js` reconnect backoff (max 60 retries). Logs: `CircuitExceptionLogger` (connection down/up) + Render deploy times.
 
 ## Database backups (productie)
 
@@ -274,7 +285,7 @@ See also [email-deliverability.md](email-deliverability.md) for the Dennis check
 - Zonder die sleutel gaat er geen mail via Resend. Lobsy logt één fout: Mail: niet ingesteld. Resend (`POST https://api.resend.com/emails`) geldt alleen als `Mail__Provider=Resend`.
 - SMTP is alleen fallback. Open- en klikmeting sturen we niet mee.
 
-Acceptatie zet `Mail__AllowedRecipientPattern` op `^test-[^@]+@lobsy\.nl$`. Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
+Acceptatie zet `Mail__AllowedRecipientPattern` op `^(test-[^@]+@lobsy\.nl|.+@mail\.grokbot\.com)$` (staat in `render.yaml`; sync niet uit). Andere adressen worden overgeslagen. Het log toont alleen een afgeschermd adres. `Mail__AllowedRecipientAddresses__0` is het extra adres van de beheerder. Productie laat het patroon leeg: daar gaat elke mail eruit.
 
 Zet `Mail__Provider` en `Lettermint__ApiKey` ook op de **web**-service. De privacyzin leest dezelfde config. De web-service verstuurt geen mail; hij kijkt alleen of de sleutel er is.
 
@@ -294,7 +305,7 @@ Zet op `jobsy-api` (en provider + Lettermint-sleutel ook op `jobsy-web`):
 | `Mail__ReplyTo` | `support@lobsy.nl` |
 | `Mail__SupportAddress` | `support@lobsy.nl` |
 | `Mail__LegalName` / `Mail__LegalAddress` / `Mail__KvkNumber` | Footer legal line (address + KvK still pending from Dennis) |
-| `Mail__AllowedRecipientPattern` | leeg in productie. Acceptatie: `^test-[^@]+@lobsy\.nl$` |
+| `Mail__AllowedRecipientPattern` | leeg in productie. Acceptatie: `^(test-[^@]+@lobsy\.nl\|.+@mail\.grokbot\.com)$` |
 | `Mail__AllowedRecipientAddresses__0` | leeg, of het eigen adres van de beheerder |
 
 **B. Admin UI**

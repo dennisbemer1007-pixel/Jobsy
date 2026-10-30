@@ -6,9 +6,11 @@ using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -76,8 +78,10 @@ public static class CandidateJourneyE2e
 
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             EmployersEnabled: true,
+            CandidatePassportEnabled: true,
             PassportPdfV2Enabled: true,
             CandidateExternalVacanciesEnabled: true,
+            EmployerPhase2Enabled: true,
             AmbassadorsEnabled: true,
             SchoolsEnabled: true));
         await Task.Delay(35_000);
@@ -95,7 +99,8 @@ public static class CandidateJourneyE2e
                 var root = doc.RootElement;
                 if (root.GetProperty("employersEnabled").GetBoolean()
                     && root.GetProperty("passportPdfV2Enabled").GetBoolean()
-                    && root.GetProperty("candidateExternalVacanciesEnabled").GetBoolean())
+                    && root.GetProperty("candidateExternalVacanciesEnabled").GetBoolean()
+                    && root.GetProperty("employerPhase2Enabled").GetBoolean())
                 {
                     return true;
                 }
@@ -368,13 +373,19 @@ public static class CandidateJourneyE2e
             Roles: ["horeca", "retail"],
             MaxTravelMinutes: 30,
             PreferredTransport: "Fiets",
-            AboutMe: "Demo kandidaat (usability3 apply).",
-            DefaultMotivation: "Ik solliciteer graag via Lobsy.",
             Availability: new Dictionary<string, string[]> { ["ma"] = ["ochtend"] },
+            HomeAddress: "Demo straat 1, 1234 AB Den Haag",
+            MinHoursPerWeek: 8,
+            MaxHoursPerWeek: 24,
+            WorkStatuses: ["zoekend"],
             Employers:
             [
                 new CandidateEmployerHistoryDto("Demo Winkel Westland", "Medewerker", 2)
             ]);
+        user.FirstName ??= "E2e";
+        user.LastName ??= "Apply";
+        user.DateOfBirth ??= new DateOnly(2000, 6, 15);
+        user.HomeLocation ??= new Jobsy.Core.ValueObjects.GeoPoint(52.07, 4.3);
         user.PreferencesJson = JsonSerializer.Serialize(
             prefs,
             new JsonSerializerOptions
@@ -433,6 +444,587 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Seeds employers flag + demo match profile so Kompas finale shows the vacatures bar (Playwright).</summary>
+    public static async Task EnsureKompasLiveMatchesForE2eAsync(string candidateEmail, string baseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var api = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        var url = $"{api}/api/e2e/fixture/kompas-finale?email={Uri.EscapeDataString(candidateEmail.Trim())}";
+        _ = await SeedFreshVacancyFixtureAsync(baseUrl, candidateEmail, "KompasAudit");
+
+        using var response = await http.PostAsync(url, null);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Kompas finale fixture failed ({(int)response.StatusCode}): {body}");
+        }
+    }
+
+    /// <summary>Enables onboarding finale v2 so rustig Kompas renders on /candidate/start (CI Playwright).</summary>
+    public static async Task EnsureOnboardingFinaleV2EnabledForE2eAsync()
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync();
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee") };
+            db.PlatformFeatureSettings.Add(row);
+        }
+
+        row.OnboardingFinaleV2Enabled = true;
+        row.AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(
+            row.AdminFlagOverridesJson,
+            nameof(PlatformFeatureSettings.OnboardingFinaleV2Enabled));
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Ensures seeded demo users can open discovery mini-tests (Playwright / local screenshots).</summary>
+    public static async Task EnsureTestAiConsentForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        user.TestAiConsentAt ??= DateTime.UtcNow;
+        user.TestAiConsentVersion = PrivacyConstants.CurrentConsentVersion;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears career (step 8) Quick-Scan answers so the journey question UI shows open likert items.</summary>
+    public static async Task ResetDemoCareerInterestsForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCareerInterests.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateCareerInterests.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Career)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears culture (step 9) Quick-Scan answers for open likert screenshots.</summary>
+    public static async Task ResetDemoCultureProfileForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateCulturePersonalityProfiles.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Culture)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears values (step 10) Quick-Scan answers for open likert screenshots.</summary>
+    public static async Task ResetDemoValuesProfileForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateValuesProfiles.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateValuesProfiles.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Values)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Seeds all questions for a test so overview tiles show &quot;Klaar&quot; (Playwright overview route).</summary>
+    public static Task SeedFullTestBlockForE2eAsync(string candidateEmail, AssessmentKind kind)
+        => SeedTestBlockForE2eAsync(
+            candidateEmail,
+            kind,
+            TestDepthRules.FullCount(kind, AssessmentTestVersions.V3),
+            AssessmentTestVersions.V3);
+
+    private static async Task SeedTestBlockForE2eAsync(
+        string candidateEmail,
+        AssessmentKind kind,
+        int targetCount,
+        int quickScanVersion)
+    {
+        var ids = TestDepthRules.QuestionIdsUpTo(kind, targetCount, quickScanVersion).ToArray();
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        var answers = ids.ToDictionary(id => id.ToString(), _ => 3);
+        var json = JsonSerializer.Serialize(answers);
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        switch (kind)
+        {
+            case AssessmentKind.Competence:
+                {
+                    var row = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCompetency
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCompetencies.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.Status = CandidateCompetencyStatuses.Completed;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Career:
+                {
+                    var row = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCareerInterest
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCareerInterests.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Culture:
+                {
+                    var row = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCulturePersonalityProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCulturePersonalityProfiles.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Values:
+                {
+                    var row = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateValuesProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateValuesProfiles.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Marks a discovery mini-block answered so wizard routing stays on later steps (Playwright rustig evidence).</summary>
+    public static async Task SeedMiniBlockCompleteForE2eAsync(
+        string candidateEmail,
+        AssessmentKind kind,
+        int quickScanVersion = AssessmentTestVersions.V3)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var ids = TestDepthRules.MiniIds(kind, quickScanVersion);
+        var answers = ids.ToDictionary(id => id.ToString(), _ => 3);
+        var json = JsonSerializer.Serialize(answers);
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        switch (kind)
+        {
+            case AssessmentKind.Competence:
+                {
+                    var row = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCompetency
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCompetencies.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Career:
+                {
+                    var row = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCareerInterest
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCareerInterests.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Culture:
+                {
+                    var row = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateCulturePersonalityProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCulturePersonalityProfiles.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            case AssessmentKind.Values:
+                {
+                    var row = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
+                    {
+                        row = new CandidateValuesProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateValuesProfiles.Add(row);
+                    }
+
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = quickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unsupported mini-block kind.");
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Sets onboarding step events so the rail shows honest completion up to <paramref name="completedThrough"/>.</summary>
+    public static async Task SetDiscoveryJourneyStepsForE2eAsync(
+        string candidateEmail,
+        int completedThrough,
+        int currentStep)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        completedThrough = Math.Clamp(completedThrough, 0, OnboardingWizardCatalog.V3StepCount);
+        currentStep = Math.Clamp(currentStep, 1, OnboardingWizardCatalog.V3StepCount);
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        User? user = null;
+        for (var attempt = 0; attempt < 40; attempt++)
+        {
+            user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+            if (user is not null)
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+
+        if (user is null)
+        {
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL")))
+            {
+                throw new InvalidOperationException(
+                    $"E2E onboarding seed: user not found for '{normalized}' (ConnectionStrings__JobsyDb set).");
+            }
+
+            return;
+        }
+
+        var onboarding = await db.CandidateOnboardings.FirstOrDefaultAsync(o => o.UserId == user.Id);
+        if (onboarding is null)
+        {
+            onboarding = new CandidateOnboarding
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                WizardVersion = OnboardingWizardCatalog.WizardVersionV3,
+                StartedAtUtc = DateTime.UtcNow.AddDays(-1),
+                Source = "e2e-rail-fixture"
+            };
+            db.CandidateOnboardings.Add(onboarding);
+        }
+
+        var version = OnboardingWizardCatalog.WizardVersionV3;
+        var json = "[]";
+        var baseTime = DateTime.UtcNow.AddHours(-2);
+        for (var step = 1; step <= completedThrough; step++)
+        {
+            json = OnboardingStepAnalytics.MarkStarted(json, step, baseTime.AddMinutes(step), version);
+            json = OnboardingStepAnalytics.MarkCompleted(json, step, baseTime.AddMinutes(step + 1), version);
+        }
+
+        onboarding.StepsJson = json;
+        onboarding.CurrentStep = currentStep;
+        onboarding.WizardVersion = version;
+        onboarding.FinishReached = false;
+        onboarding.CompletedAtUtc = null;
+        if (currentStep > 1)
+        {
+            onboarding.Source = "welcome";
+        }
+
+        onboarding.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Marks v3 discovery onboarding complete so /ontdekkingsreis opens the overview (IsComplete).</summary>
+    public static async Task MarkDiscoveryJourneyCompleteForOverviewE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL")))
+            {
+                throw new InvalidOperationException(
+                    $"E2E overview seed: user not found for '{normalized}' (ConnectionStrings__JobsyDb set).");
+            }
+
+            return;
+        }
+
+        var onboarding = await db.CandidateOnboardings.FirstOrDefaultAsync(o => o.UserId == user.Id);
+        if (onboarding is null)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        onboarding.FinishReached = true;
+        onboarding.CompletedAtUtc ??= now;
+        onboarding.CurrentStep = OnboardingWizardCatalog.V3StepCount;
+        onboarding.UpdatedAtUtc = now;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Step 2 (Aan de kust): step 1 afgerond, rail toont ingeklapte fases.</summary>
+    public static async Task PrepareDiscoveryCoastStepForE2eAsync(string candidateEmail)
+    {
+        await SetDiscoveryJourneyStepsForE2eAsync(candidateEmail, completedThrough: 1, currentStep: 2);
+    }
+
+    /// <summary>Arbitrary onboarding step with honest prior-step completion for E2E screenshots.</summary>
+    public static Task PrepareDiscoveryStepForE2eAsync(string candidateEmail, int step)
+        => SetDiscoveryJourneyStepsForE2eAsync(
+            candidateEmail,
+            completedThrough: Math.Max(0, step - 1),
+            currentStep: Math.Clamp(step, 1, OnboardingWizardCatalog.V3StepCount));
+
+    /// <summary>Consent + cleared answers for discovery journey step 7–10 question screenshots.</summary>
+    public static async Task PrepareDiscoveryQuestionScreenForE2eAsync(string candidateEmail, int step = 8)
+    {
+        await EnsureTestAiConsentForE2eAsync(candidateEmail);
+        await SetDiscoveryJourneyStepsForE2eAsync(candidateEmail, completedThrough: step - 1, currentStep: step);
+        switch (step)
+        {
+            case 7:
+                await ResetDemoCompetencyForE2eAsync(candidateEmail);
+                break;
+            case 8:
+                await ResetDemoCareerInterestsForE2eAsync(candidateEmail);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(step), step, "Only steps 7–8 are supported for E2E question fixtures.");
+        }
+    }
+
     /// <summary>
     /// Completes the vacancy apply form via real UI (consent + submit + optional safety-net + email verify). No DB shortcuts.
     /// </summary>
@@ -443,6 +1035,9 @@ public static class CandidateJourneyE2e
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 90_000 });
+        await page.Locator("#apply").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await page.EvaluateAsync(
+            "() => document.getElementById('apply')?.scrollIntoView({ block: 'center', behavior: 'instant' })");
         await page.Locator("#apply").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await page.Locator("#apply[data-apply-interactive='true']").WaitForAsync(new() { Timeout = 120_000 });
 

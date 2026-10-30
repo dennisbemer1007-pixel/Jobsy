@@ -102,14 +102,15 @@ public class StatusPagesTests
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Contains("no-store", response.Headers.CacheControl?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Foutcode 404", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/melden\"", html, StringComparison.Ordinal);
+        Assert.Contains("Naar Mijn Lobsy", html, StringComparison.Ordinal);
         Assert.Single(Regex.Matches(html, "<h1", RegexOptions.IgnoreCase));
     }
 
     [Fact]
-    public async Task Status_page_swaps_banenkaart_for_paspoort_when_employers_are_off()
+    public async Task Status_404_keeps_kreeft_copy_when_employers_are_off()
     {
         await using var factory = new ErrorPagesWebFactory { EmployersEnabled = false };
         using var client = factory.CreateHtmlClient();
@@ -117,7 +118,8 @@ public class StatusPagesTests
         var response = await client.GetAsync("/status/404");
         var html = await response.Content.ReadAsStringAsync();
 
-        Assert.Contains("Naar home", html, StringComparison.Ordinal);
+        Assert.Contains("Naar Mijn Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains("Naar je reis", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
         Assert.DoesNotContain("href=\"/banenkaart\"", html, StringComparison.Ordinal);
     }

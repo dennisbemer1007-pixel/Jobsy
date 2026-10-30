@@ -2,44 +2,48 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using Jobsy.Web.Components.Media
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 
-<section class="pub-landing__hero" id="top">
-    <div class="pub-landing__wrap pub-landing__hero-grid">
+<section class="pub-landing__hero @(Variant == LandingVariant.On ? "pub-landing__hero--illustrated pub-landing__hero--kreeft-strip" : null)" id="top">
+    <div class="pub-landing__wrap @(Variant == LandingVariant.On ? (ReiskaartHtml is not null ? "pub-landing__hero-grid--reiskaart" : null) : $"pub-landing__hero-grid {HeroGridClass}")">
         <div class="pub-landing__hero-copy">
-            <span class="pub-pill pub-pill--dark">@LandingText.For("Landing.Hero.Eyebrow", Variant)</span>
-            <h1 class="pub-landing__h1">
-                @((MarkupString)string.Format(
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    LandingText.For("Landing.Hero.Title", Variant),
-                    $"<em class=\"pub-landing__accent\">{System.Net.WebUtility.HtmlEncode(LandingText.For("Landing.Hero.TitleAccent", Variant))}</em>"))
-            </h1>
-            <p class="pub-landing__lead">@LandingText.For("Landing.Hero.Sub", Variant)</p>
+            <div class="pub-landing__hero-head">
+                <span class="pub-pill pub-pill--green">@LandingText.For(HeroEyebrowKey, Variant)</span>
+                <h1 class="pub-landing__h1">
+                    @((MarkupString)string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        LandingText.For("Landing.Hero.Title", Variant),
+                        $"<em class=\"{AccentClass}\">{System.Net.WebUtility.HtmlEncode(LandingText.For("Landing.Hero.TitleAccent", Variant))}</em>"))
+                </h1>
+            </div>
+            <div class="pub-landing__hero-rest">
+            <p class="pub-landing__lead">@LandingText.For(HeroSubKey, Variant)</p>
             <div class="pub-landing__ctas">
                 <a class="pub-btn pub-btn--primary pub-btn--lg"
                    href="@PublicRoutes.Test"
                    data-kpi="LandingCtaTest">@LandingText.For("Landing.Hero.CtaTest", Variant)</a>
-                <a class="pub-btn pub-btn--ghost pub-btn--lg"
+                <a class="pub-btn pub-btn--ghost pub-btn--lg @LoginCtaClass"
                    href="@PublicRoutes.Login"
                    data-kpi="LandingCtaLogin">@LandingText.For("Landing.Hero.CtaLogin", Variant)</a>
             </div>
             <div class="pub-landing__micro">
-                <span>@LandingText.For("Landing.Hero.MetaTime", Variant)</span>
-                <span>@LandingText.For("Landing.Hero.MetaPrivacy", Variant)</span>
+                <span>@LandingText.For(MetaTimeKey, Variant)</span>
+                <span>@LandingText.For(MetaPrivacyKey, Variant)</span>
                 @if (Variant == LandingVariant.On)
                 {
                     @if (VacancyCount is int n)
                     {
                         <a href="@PublicRoutes.Banenkaart"
                            data-kpi="LandingCtaMap"
-                           data-kpi-target="count">@string.Format(CultureInfo, LandingText.For("Landing.Hero.MetaMapCount", Variant), n.ToString("N0", CultureInfo))</a>
+                           data-kpi-target="count">@string.Format(CultureInfo, LandingText.For("Landing.Hero.MetaMapCountPlain", Variant), n.ToString("N0", CultureInfo))</a>
                     }
                     else
                     {
                         <a href="@PublicRoutes.Banenkaart"
                            data-kpi="LandingCtaMap"
-                           data-kpi-target="fallback">@LandingText.For("Landing.Hero.MetaMap", Variant)</a>
+                           data-kpi-target="fallback">@LandingText.For("Landing.Hero.MetaMapPlain", Variant)</a>
                     }
                 }
                 else
@@ -47,29 +51,33 @@
                     <span>@LandingText.For("Landing.Hero.MetaPassport", Variant)</span>
                 }
             </div>
-            <div class="pub-landing__for">
-                <b>@LandingText.For("Landing.Hero.ForYou", Variant)</b>
-                <div class="pub-landing__chips">
-                    <a class="pub-chip" href="@(PublicRoutes.Test)?voor=werk" data-kpi="LandingCtaTest" data-kpi-target="werk">
-                        <PubEmoji Glyph="🔍" /> @LandingText.For("Landing.Hero.ChipWork", Variant)
-                    </a>
-                    <a class="pub-chip" href="@(PublicRoutes.Test)?voor=nieuw" data-kpi="LandingCtaTest" data-kpi-target="nieuw">
-                        <PubEmoji Glyph="✈️" /> @LandingText.For("Landing.Hero.ChipNew", Variant)
-                    </a>
-                    <a class="pub-chip" href="@(PublicRoutes.Test)?voor=school" data-kpi="LandingCtaTest" data-kpi-target="school">
-                        <PubEmoji Glyph="🎒" /> @LandingText.For("Landing.Hero.ChipSchool", Variant)
-                    </a>
-                    <a class="pub-chip" href="@(PublicRoutes.Test)?voor=vast" data-kpi="LandingCtaTest" data-kpi-target="vast">
-                        <PubEmoji Glyph="🧗" /> @LandingText.For("Landing.Hero.ChipStuck", Variant)
-                    </a>
+            @if (Variant == LandingVariant.Zw)
+            {
+                <div class="pub-landing__for">
+                    <b>@LandingText.For("Landing.Hero.ForYou", Variant)</b>
+                    <div class="pub-landing__chips">
+                        <a class="pub-chip" href="@(PublicRoutes.Test)?voor=werk" data-kpi="LandingCtaTest" data-kpi-target="werk">
+                            @LandingText.For("Landing.Hero.ChipWork", Variant)
+                        </a>
+                        <a class="pub-chip" href="@(PublicRoutes.Test)?voor=nieuw" data-kpi="LandingCtaTest" data-kpi-target="nieuw">
+                            @LandingText.For("Landing.Hero.ChipNew", Variant)
+                        </a>
+                        <a class="pub-chip" href="@(PublicRoutes.Test)?voor=school" data-kpi="LandingCtaTest" data-kpi-target="school">
+                            @LandingText.For("Landing.Hero.ChipSchool", Variant)
+                        </a>
+                        <a class="pub-chip" href="@(PublicRoutes.Test)?voor=vast" data-kpi="LandingCtaTest" data-kpi-target="vast">
+                            @LandingText.For("Landing.Hero.ChipStuck", Variant)
+                        </a>
+                    </div>
                 </div>
+            }
             </div>
         </div>
-        @if (Variant == LandingVariant.On)
+        @if (ReiskaartHtml is not null)
         {
-            <LandingHeroMapDisc Variant="Variant" />
+            @((MarkupString)ReiskaartHtml)
         }
-        else
+        @if (Variant == LandingVariant.Zw)
         {
             <LandingHeroPassport Variant="Variant" />
         }
@@ -79,6 +87,16 @@
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public int? VacancyCount { get; set; }
+    [Parameter] public string? ReiskaartHtml { get; set; }
+
+    private string HeroGridClass => Variant == LandingVariant.On ? "pub-landing__hero-grid--combo" : "";
+    private string AccentClass => Variant == LandingVariant.On ? "pub-landing__accent pub-landing__accent--green" : "pub-landing__accent";
+    private string HeroEyebrowKey => Variant == LandingVariant.On ? "Landing.Hero.EyebrowPlain" : "Landing.Hero.Eyebrow";
+    private string HeroSubKey => Variant == LandingVariant.Zw ? "Landing.Hero.Sub.Zw" : "Landing.Hero.Sub";
+    private string MetaTimeKey => Variant == LandingVariant.On ? "Landing.Hero.MetaTimePlain" : "Landing.Hero.MetaTime";
+    private string MetaPrivacyKey => Variant == LandingVariant.On ? "Landing.Hero.MetaPrivacyPlain" : "Landing.Hero.MetaPrivacy";
+
+    private string LoginCtaClass => Variant == LandingVariant.On ? "pub-landing__cta-login" : "";
 
     private System.Globalization.CultureInfo CultureInfo =>
         System.Globalization.CultureInfo.GetCultureInfo(Culture.Language switch

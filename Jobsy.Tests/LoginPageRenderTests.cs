@@ -35,6 +35,10 @@ public class LoginPageRenderTests
         Assert.Contains("Bedrijf registreren (KvK)", html, StringComparison.Ordinal);
         Assert.Contains("Maak gratis een account", html, StringComparison.Ordinal);
         Assert.Equal(1, CountOccurrences(html, "<h1"));
+        Assert.Contains("au-stage--illustrated", html, StringComparison.Ordinal);
+        Assert.Contains("au-card__strip", html, StringComparison.Ordinal);
+        Assert.Contains("login-links.jpg", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("au-card__mascot", html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -201,7 +205,7 @@ public class LoginHintCookieTests
     }
 }
 
-file sealed class LoginPageWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class LoginPageWebFactory : WebWebApplicationFactory
 {
     private readonly bool _entra;
     private readonly bool _google;

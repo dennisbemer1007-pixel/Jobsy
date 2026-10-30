@@ -53,7 +53,49 @@ public sealed record PassportPdfModel(
     IReadOnlyList<PassportReferenceQuote> Quotes,
     IReadOnlyList<PassportDirectionStep> Direction,
     bool ShowRadar,
-    IReadOnlyList<string> LearningLines);
+    IReadOnlyList<string> LearningLines,
+    bool ShowDnaBlocks = true,
+    IReadOnlyList<PassportStrengthCard> StrengthCards = null!,
+    IReadOnlyList<string> StrengthTags = null!,
+    IReadOnlyList<PassportSectorCard> Sectors = null!,
+    IReadOnlyList<PassportHowWorkLine> HowWorkLines = null!,
+    IReadOnlyList<string> BestOutTips = null!,
+    string? QrVerifyUrl = null,
+    string? QrValidUntilLabel = null,
+    string? ConversationFooter = null,
+    IReadOnlyList<PassportDnaLayerCard> DnaLayers = null!,
+    IReadOnlyList<string> VerifiedChecked = null!,
+    IReadOnlyList<string> VerifiedNotChecked = null!,
+    string? FirstName = null,
+    bool SinglePageLayout = false,
+    bool ShowHeroAvatar = true,
+    string? SparseCandidateNote = null,
+    string? FooterOmissionLine = null,
+    IReadOnlyList<string> SparseTodoLines = null!,
+    bool StudentLayout = false,
+    IReadOnlyList<PassportJobFit> StageVacancyMatches = null!,
+    string? StageVacanciesEmpty = null,
+    bool SingleSectorFullWidth = false,
+    IReadOnlyList<PassportEndorsedCompetence> EndorsedCompetences = null!);
+
+public sealed record PassportStrengthCard(string Title, string Subtitle);
+
+public sealed record PassportSectorCard(
+    int Rank,
+    string Title,
+    string? RankSubtitle,
+    string P1Teaser,
+    IReadOnlyList<string> WhyBullets,
+    string? ExampleRoles);
+
+public sealed record PassportHowWorkLine(string Lead, string? Tail);
+
+public sealed record PassportDnaLayerCard(
+    string Nickname,
+    string LayerLabel,
+    string Body,
+    string? CompletedLabel,
+    string CardTone);
 
 public sealed record PassportChip(string Text, string Tone);
 
@@ -62,6 +104,8 @@ public sealed record PassportGlossLine(string Label, string Gloss);
 public sealed record PassportJobFit(string Title, string Why);
 
 public sealed record PassportReferenceQuote(string Attribution, string Quote);
+
+public sealed record PassportEndorsedCompetence(string Label, string RecognitionLine);
 
 public sealed record PassportDirectionStep(string Title, string State);
 
@@ -83,7 +127,8 @@ public sealed record PassportExperienceLine(
     IReadOnlyList<string>? Duties = null,
     string? Period = null,
     string? Place = null,
-    string? Kind = null);
+    string? Kind = null,
+    string? DurationLabel = null);
 
 public sealed record PassportDnaCard(string Title, string Body, string? When, bool Present = true);
 

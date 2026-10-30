@@ -203,7 +203,7 @@ public class PassportFeatureReflectionTests
     [Fact]
     public void Passport_page_requires_CandidatePassport_feature()
     {
-        var page = typeof(Jobsy.Web.Components.Pages.Candidate.Passport);
+        var page = typeof(Jobsy.Web.Components.Pages.Candidate.CandidatePassportSsr);
         var attr = page.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
             .OfType<RequiresFeatureAttribute>()
             .Single(a => a.Feature == PlatformFeature.CandidatePassport);

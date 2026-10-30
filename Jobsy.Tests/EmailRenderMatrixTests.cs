@@ -81,7 +81,7 @@ public class EmailRenderMatrixTests
             Assert.False(string.IsNullOrWhiteSpace(logo.GetAttribute("height")));
         }
 
-        var mascots = doc.QuerySelectorAll("img[src*='mascot']");
+        var mascots = doc.QuerySelectorAll("img[src*='lobsy-mark-128']");
         if (def.GoodNews)
         {
             Assert.NotEmpty(mascots);

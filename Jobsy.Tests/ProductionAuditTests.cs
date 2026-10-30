@@ -67,6 +67,26 @@ public class ProductionAuditTests
     }
 
     [Fact]
+    public void TestEmployersEnabled_is_only_in_development_settings()
+    {
+        var root = FindRepoRoot();
+        var dev = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "appsettings.Development.json"));
+        var apiDev = File.ReadAllText(Path.Combine(root, "Jobsy.Api", "appsettings.Development.json"));
+        Assert.Contains("TestEmployersEnabled", dev, StringComparison.Ordinal);
+        Assert.Contains("TestEmployersEnabled", apiDev, StringComparison.Ordinal);
+
+        foreach (var path in new[]
+                 {
+                     Path.Combine(root, "Jobsy.Web", "appsettings.json"),
+                     Path.Combine(root, "Jobsy.Api", "appsettings.json")
+                 })
+        {
+            var text = File.ReadAllText(path);
+            Assert.DoesNotContain("TestEmployersEnabled", text, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public void Production_seed_is_not_tied_to_allow_development_auth_and_never_wipes()
     {
         var hosted = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Api", "Jobs", "DatabaseSeedHostedService.cs"));

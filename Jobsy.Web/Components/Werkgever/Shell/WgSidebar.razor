@@ -1,13 +1,21 @@
+@using Jobsy.Core.Features
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Http
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @inject NavigationManager Navigation
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject WerkgeverCountsState Counts
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <aside class="wg-sidebar" aria-label="@Culture["WgShell.MainNav"]">
+    <a class="wg-sidebar__brand" href="/werkgever" aria-label="Lobsy Werkgever">
+        <LobsyLogo Class="wg-sidebar__logo" Alt="" Variant="LobsyLogoVariant.HorizontalDark" />
+    </a>
     <nav class="wg-sidebar__nav">
         @foreach (var group in Groups)
         {
@@ -68,11 +76,15 @@
 @code {
     private bool _meerOpen;
     private bool _bootstrapped;
+    private bool _kandidatenkaartEnabled;
+    private bool _companyMapInitiativeEnabled;
 
-    private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
+    private EmployerRole Role => Scope.DisplayRole(HttpContextAccessor.HttpContext?.User);
     private WerkgeverNavContext Ctx => new(
         HasTakeovers: true,
         CandidateInsightsEnabled: true,
+        KandidatenkaartEnabled: _kandidatenkaartEnabled,
+        CompanyMapInitiativeEnabled: _companyMapInitiativeEnabled,
         InsightsLocked: Scope.InsightsLocked,
         HasMaqqieHours: Counts.MaqqieHoursNavVisible,
         Counts: Counts.Counts);
@@ -85,9 +97,9 @@
         Counts.Changed += OnCounts;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender || _bootstrapped)
+        if (_bootstrapped)
         {
             return;
         }
@@ -95,7 +107,9 @@
         _bootstrapped = true;
         await ScopeBootstrap.EnsureLoadedAsync();
         await Counts.RefreshIfStaleAsync();
-        StateHasChanged();
+        var flags = await FeatureFlags.GetAsync();
+        _kandidatenkaartEnabled = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
+        _companyMapInitiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
     }
 
     private void OnLoc(object? s, LocationChangedEventArgs e)
@@ -117,24 +131,7 @@
         => "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
 
     private bool IsActive(WerkgeverNavItem item)
-    {
-        var path = WerkgeverNav.Normalize(CurrentPath());
-        if (string.Equals(path, WerkgeverNav.Normalize(item.Href), StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        foreach (var alias in item.Aliases)
-        {
-            if (string.Equals(path, WerkgeverNav.Normalize(alias), StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        var href = WerkgeverNav.Normalize(item.Href);
-        return href is not "/" && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
-    }
+        => WerkgeverNav.IsNavItemActive(item, CurrentPath());
 
     private int CountFor(WerkgeverNavItem item)
     {

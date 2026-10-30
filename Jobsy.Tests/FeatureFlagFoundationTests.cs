@@ -51,6 +51,12 @@ public class FeatureFlagFoundationTests
     }
 
     [Fact]
+    public void PlatformFeatureSettings_employer_fit_questionnaires_default_off()
+    {
+        Assert.False(new PlatformFeatureSettings().EmployerFitQuestionnairesEnabled);
+    }
+
+    [Fact]
     public void PlatformFeatureSettings_external_vacancies_default_off()
     {
         Assert.False(new PlatformFeatureSettings().CandidateExternalVacanciesEnabled);
@@ -62,6 +68,7 @@ public class FeatureFlagFoundationTests
         var row = new PlatformFeatureSettings();
         Assert.False(row.EmployersEnabled);
         Assert.True(row.CandidatePassportEnabled);
+        Assert.False(row.ReferenceVerificationEnabled);
     }
 
     [Fact]

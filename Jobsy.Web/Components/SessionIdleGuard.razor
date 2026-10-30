@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthState
 @inject ISessionTimeoutProvider TimeoutProvider
-@inject IConfiguration Configuration
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
@@ -11,7 +10,6 @@
 @code {
     private bool _started;
     private bool _hooksAttached;
-    private CancellationTokenSource? _pollCts;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -54,23 +52,16 @@
             return;
         }
 
-        // Candidates with a remembered device skip the client idle logout.
+        // Remembered device (Entra/password "ingelogd blijven") uses refresh tokens, not idle logout.
         var hasDevice = state.User.HasClaim(c =>
             c.Type == Jobsy.Core.Authorization.JobsyClaimTypes.HasDeviceSession && c.Value == "1");
-        var isEmployerOrAdmin = state.User.IsInRole("Admin")
-            || state.User.IsInRole("BranchManager")
-            || state.User.IsInRole("RegionalManager")
-            || state.User.IsInRole("EnterpriseManager")
-            || state.User.IsInRole("Intermediary")
-            || state.User.IsInRole("SalesManager");
-        if (hasDevice && !isEmployerOrAdmin)
+        if (hasDevice)
         {
             return;
         }
 
         var minutes = await TimeoutProvider.GetInactivityTimeoutMinutesAsync();
         minutes = SessionSecurityRules.ClampTimeoutMinutes(minutes);
-        var apiBase = Configuration["ApiBaseUrl"] ?? "http://localhost:5200/";
         var userKey = SessionActivityCookie.ResolveSubject(state.User) ?? "user";
 
         try
@@ -79,7 +70,6 @@
             await Js.InvokeVoidAsync("lobsySessionIdle.start", new
             {
                 timeoutMinutes = minutes,
-                apiBaseUrl = apiBase,
                 userKey
             });
             _started = true;
@@ -89,54 +79,11 @@
                 _hooksAttached = true;
             }
 
-            _pollCts?.Cancel();
-            _pollCts = new CancellationTokenSource();
-            _ = PollSessionAsync(_pollCts.Token);
         }
         catch
         {
             // JS not ready / prerender — retry on a later render.
             _started = false;
-        }
-    }
-
-    private async Task PollSessionAsync(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(45), ct);
-                bool visible;
-                try
-                {
-                    visible = await Js.InvokeAsync<bool>("jobsyPageVisible");
-                }
-                catch
-                {
-                    visible = true;
-                }
-
-                if (!visible)
-                {
-                    continue;
-                }
-
-                var ok = await Js.InvokeAsync<bool>("lobsySessionIdle.checkSession");
-                if (!ok)
-                {
-                    return;
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-            catch
-            {
-                // Transient JS/circuit — keep polling / allow TryStart on next render.
-                _started = false;
-            }
         }
     }
 
@@ -155,13 +102,6 @@
         {
             Navigation.LocationChanged -= OnLocationChanged;
             _hooksAttached = false;
-        }
-
-        if (_pollCts is not null)
-        {
-            await _pollCts.CancelAsync();
-            _pollCts.Dispose();
-            _pollCts = null;
         }
 
         if (_started)

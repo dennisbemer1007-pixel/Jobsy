@@ -29,6 +29,13 @@ public static class CandidatePreferencesValidator
             onDropped,
             "LearningGoals");
         var hobbies = SanitizeHobbies(prefs.Hobbies, onDropped);
+        var workStatuses = SanitizeCodeList(
+            prefs.WorkStatuses,
+            WorkStatusCatalog.IsKnown,
+            WorkStatusCatalog.Canonical,
+            max: WorkStatusCatalog.MaxSelections,
+            label: "WorkStatuses",
+            onDropped);
 
         return prefs with
         {
@@ -36,7 +43,8 @@ public static class CandidatePreferencesValidator
             DutchLevel = dutch,
             EmployerPreferences = employers,
             LearningGoals = goals,
-            Hobbies = hobbies
+            Hobbies = hobbies,
+            WorkStatuses = workStatuses
         };
     }
 

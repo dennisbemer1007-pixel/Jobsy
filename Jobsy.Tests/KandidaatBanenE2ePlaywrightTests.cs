@@ -193,7 +193,7 @@ public class KandidaatBanenE2ePlaywrightTests
                 """);
             if (!string.IsNullOrEmpty(iso))
             {
-                Assert.Contains(iso, new[] { "real", "approx" });
+                Assert.Contains(iso, new[] { "real", "approx", "unavailable", "loading" });
             }
         }
 

@@ -1,10 +1,16 @@
 using System.Net;
 using System.Text;
 using Bunit;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
+using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Components.Pages.Candidate;
+using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Models;
 using Jobsy.Web.Services;
+using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,16 +33,39 @@ public sealed class JourneyShedEndBunitTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddLogging();
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
-        Services.AddSingleton(sp => new CultureState(
-            sp.GetRequiredService<IJSRuntime>(),
-            sp,
-            sp.GetRequiredService<AuthenticationStateProvider>()));
+        Services.AddSingleton(sp =>
+        {
+            var culture = new CultureState(
+                sp.GetRequiredService<IJSRuntime>(),
+                sp,
+                sp.GetRequiredService<AuthenticationStateProvider>());
+            culture.InitializeFromLanguage("nl");
+            return culture;
+        });
         Services.AddSingleton<IFeatureFlags>(new FixedFlags(employers: false, passport: true));
         Services.AddSingleton<IGeocodingClient>(new NoGeocoder());
         Services.AddSingleton<UserFacingError>();
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        Services.AddSingleton<MeGetCache>();
+        Services.AddSingleton<DiscoveryOverviewCache>();
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
+    }
+
+    [Fact]
+    public void Values_v3_mini_fixture_satisfies_step_10_gate()
+    {
+        var json = JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Values);
+        var state = JsonSerializer.Deserialize<CandidateValuesState>(
+            json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(state);
+        Assert.True(OnboardingMiniBlockCompletion.IsMiniBlockComplete(
+            10,
+            AssessmentTestVersions.V3,
+            OnboardingMiniBlockCompletion.ScopeToMiniIds(AssessmentKind.Values, AssessmentTestVersions.V3, state!.Answers
+                .ToDictionary(kv => int.Parse(kv.Key), kv => kv.Value))));
     }
 
     [Fact]
@@ -46,20 +75,26 @@ public sealed class JourneyShedEndBunitTests : BunitContext
         nav.NavigateTo("/candidate/ontdekkingsreis?stap=shed-10");
 
         var cut = Render<DiscoveryJourney>();
-        cut.WaitForAssertion(() => Assert.Contains("Naar het licht", cut.Markup, StringComparison.Ordinal));
+        cut.WaitForAssertion(() =>
+            Assert.Contains("Deze test heb je helemaal gedaan", cut.Markup, StringComparison.Ordinal));
 
         cut.Find("button.btn-primary").Click();
 
         cut.WaitForAssertion(() =>
         {
+            Assert.Contains("stap=klaar", nav.Uri, StringComparison.Ordinal);
             Assert.Contains("Dit ben jij, Sanne", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("Afmaken", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("Verbinding", cut.Markup, StringComparison.Ordinal);
-        });
+        }, TimeSpan.FromSeconds(15));
         Assert.DoesNotContain("Niet bewaard", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Er ging iets mis", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("stap=klaar", nav.Uri, StringComparison.Ordinal);
-        Assert.DoesNotContain(_handler.Calls, c => c.Contains("PUT api/me/values", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            _handler.Calls,
+            c => c.Contains("PUT", StringComparison.Ordinal)
+                 && c.Contains("/values", StringComparison.OrdinalIgnoreCase)
+                 && c.Contains("\"answers\":{}", StringComparison.Ordinal));
     }
 
     private sealed class RecordingHandler : HttpMessageHandler
@@ -85,7 +120,12 @@ public sealed class JourneyShedEndBunitTests : BunitContext
 
         private static string BodyFor(string path)
         {
-            if (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase))
+            if (JourneyBunitMiniResponses.IsDiscoveryOverviewPath(path))
+            {
+                return JourneyBunitMiniResponses.DiscoveryOverviewPanelJson(25, 25, 25, 25);
+            }
+
+            if (JourneyBunitMiniResponses.IsOnboardingStatePath(path))
             {
                 return """
                     {
@@ -123,15 +163,22 @@ public sealed class JourneyShedEndBunitTests : BunitContext
 
             if (path.Contains("/values", StringComparison.OrdinalIgnoreCase))
             {
-                var answers = string.Join(",", Enumerable.Range(1, 25).Select(id => $"\"{id}\":4"));
-                return "{\"status\":\"Completed\",\"answers\":{" + answers + "},\"completedAtUtc\":\"2026-10-03T12:00:00Z\"}";
+                return JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Values);
             }
 
-            if (path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
-                || path.Contains("career-interest", StringComparison.OrdinalIgnoreCase)
-                || path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
+            if (path.Contains("career-interest", StringComparison.OrdinalIgnoreCase))
             {
-                return "{\"status\":\"Completed\",\"answers\":{}}";
+                return JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Career);
+            }
+
+            if (path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
+            {
+                return JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Culture);
+            }
+
+            if (path.Contains("competenc", StringComparison.OrdinalIgnoreCase))
+            {
+                return JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Competence);
             }
 
             return "{}";
@@ -165,6 +212,7 @@ public sealed class JourneyShedEndBunitTests : BunitContext
             {
                 PlatformFeature.Employers => employers,
                 PlatformFeature.CandidatePassport => passport,
+                PlatformFeature.TestsV2 => true,
                 _ => false
             });
 

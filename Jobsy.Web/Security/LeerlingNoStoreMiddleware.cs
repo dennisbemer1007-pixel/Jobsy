@@ -36,6 +36,14 @@ public sealed class LeerlingNoStoreMiddleware
                 context.Items[PupilPrincipalItemKey] = pupil.Principal;
             }
         }
+        else if (context.Request.Path.StartsWithSegments("/ouder") && !context.Response.HasStarted)
+        {
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers.CacheControl = "no-store";
+                return Task.CompletedTask;
+            });
+        }
 
         await _next(context);
     }

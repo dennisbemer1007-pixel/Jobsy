@@ -90,8 +90,12 @@ public class RegisterWizardUiTests
     public void Production_asset_query_is_cache_busted_and_commit_is_exposed()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/app.min.css");
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/werkgever-aanmelding.css");
+        var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/app.min.css\")", catalog, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/werkgever-aanmelding.css\")", catalog, StringComparison.Ordinal);
+        Assert.Equal(
+            AssetVersions.Version("css/app.min.css"),
+            Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("css/app.min.css"));
         Assert.Contains("name=\"lobsy-commit\"", app);
         Assert.Contains("RENDER_GIT_COMMIT", app);
     }

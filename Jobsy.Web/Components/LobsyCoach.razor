@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -6,7 +7,7 @@
 @inject AssistantChatHost ChatHost
 @inject IJSRuntime Js
 
-<div @ref="_dock" class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null)" data-lobsy-coach>
+<div @ref="_dock" class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null) @(HasBottomNav ? "lobsy-coach-dock--has-nav" : null) @(ChatHost.IsOpen ? "lobsy-coach-dock--chat-open" : null)" data-lobsy-coach>
     @if (_showTip && !string.IsNullOrWhiteSpace(_tip))
     {
         <div class="lobsy-coach-dock__tip" role="status">
@@ -17,24 +18,29 @@
     }
     <button type="button"
             id="lobsy-coach-btn"
-            class="lobsy-coach-dock__btn"
+            class="lobsy-coach-dock__btn lobsy-coach-dock__btn--warm"
             @onclick="OpenChat"
             aria-haspopup="dialog"
             aria-expanded="@(ChatHost.IsOpen ? "true" : "false")"
             aria-controls="lobsy-assistant-panel">
-        <img src="/images/brand/mascot-coach.webp"
-             srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
-             alt=""
-             width="128"
-             height="128"
-             decoding="async" />
+        <span class="lobsy-coach-dock__medallion" aria-hidden="true">
+            <img src="@BrandImages.MarkSvg"
+                 srcset="@BrandImages.SrcSet56"
+                 sizes="56px"
+                 alt=""
+                 width="56"
+                 height="56"
+                 decoding="async" />
+        </span>
+        <span class="lobsy-coach-dock__label">@AskLabel</span>
         <span class="visually-hidden">@AskLabel</span>
     </button>
 </div>
 
 @code {
     [Parameter] public bool Compact { get; set; }
-    [Parameter] public string AskLabel { get; set; } = "Lobsy, je coach: stel een vraag";
+    [Parameter] public bool HasBottomNav { get; set; }
+    [Parameter] public string AskLabel { get; set; } = "Lobsy-hulp";
     [Parameter] public string CloseLabel { get; set; } = "Tip sluiten";
 
     private string? _tip;

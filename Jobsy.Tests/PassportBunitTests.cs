@@ -40,7 +40,7 @@ public class PassportBunitTests : BunitContext
         Assert.Contains("passport-dna-ring", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("role=\"img\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Dit ben jij", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("mascot-128.webp", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("lobsy-128.webp", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class PassportBunitTests : BunitContext
             .Add(x => x.Keywords, Array.Empty<string>())
             .Add(x => x.LookingFor, Array.Empty<string>()));
 
-        Assert.Contains("—", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Aanvullen", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("SE", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Deel mijn paspoort", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("<img", cut.Markup, StringComparison.OrdinalIgnoreCase);

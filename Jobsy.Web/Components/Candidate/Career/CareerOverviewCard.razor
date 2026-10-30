@@ -2,7 +2,9 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<section class="career-card career-card--overview" aria-labelledby="career-title">
+<section class="career-card career-card--overview @(Illustrated ? "career-card--overview-illustrated" : null)" aria-labelledby="career-title">
+    @if (!Illustrated)
+    {
     <div class="career-card__top">
         <p class="career-card__eyebrow">@EyebrowText</p>
         @if (!Plan.GoalReached)
@@ -41,6 +43,36 @@
     </div>
     <p class="career-card__lead career-only-desktop">@Culture["Career.Overview.Lead"]</p>
     <p class="career-card__lead career-card__lead--short career-only-mobile">@Culture["Career.Overview.LeadShort"]</p>
+    }
+    else
+    {
+        <h1 id="career-title" class="visually-hidden" tabindex="-1">@TitleText</h1>
+        @if (!Plan.GoalReached)
+        {
+            <div class="career-card__top career-card__top--hero-only">
+                <button type="button"
+                        class="career-card__edit career-only-desktop"
+                        disabled="@Busy"
+                        @onclick="OnChangeDream">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                    <span>@Culture["Career.EditDream"]</span>
+                </button>
+                <button type="button"
+                        class="career-card__edit career-card__edit--icon career-only-mobile"
+                        aria-label="@Culture["Career.EditDream"]"
+                        disabled="@Busy"
+                        @onclick="OnChangeDream">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                </button>
+            </div>
+        }
+    }
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))
     {
@@ -161,7 +193,7 @@
         </section>
     }
 
-    @if (!string.IsNullOrWhiteSpace(Plan.DreamTitle))
+    @if (!Illustrated && !string.IsNullOrWhiteSpace(Plan.DreamTitle))
     {
         <p class="career-card__actions">
             <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnClearDream">
@@ -190,6 +222,7 @@
 </section>
 
 @code {
+    [Parameter] public bool Illustrated { get; set; }
     [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
     [Parameter] public bool Busy { get; set; }
     [Parameter] public bool EmployersOn { get; set; } = true;

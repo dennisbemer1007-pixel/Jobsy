@@ -131,13 +131,13 @@ sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w")
             : $"pub-mascot--fb-{slug}";
 
         return new MascotSource(
-            Src: BrandImages.MascotWebp128,
-            SrcSet: BrandImages.MascotSrcSet56,
+            Src: BrandImages.Webp128,
+            SrcSet: BrandImages.SrcSet56,
             AvifSrcSet: null,
             IsVector: false,
             IsFallback: true,
             FallbackTransformClass: fbClass,
-            Version: BrandImages.MascotVersion);
+            Version: BrandImages.Version);
     }
 
     public static string PoseSlug(MascotPose pose) => pose switch

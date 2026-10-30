@@ -7,6 +7,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -73,6 +74,12 @@ public interface ITeacherPortalService
         Guid classId,
         Guid codeId,
         CancellationToken cancellationToken = default);
+
+    Task<PupilG78PassportWebDto?> GetG78PassportWebForCodeAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class TeacherPortalService : ITeacherPortalService
@@ -85,6 +92,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
     private readonly ISchoolPortalService _schoolPortal;
     private readonly IPupilStoryRenderer _story;
     private readonly IPupilReportPdfService _pdf;
+    private readonly IPupilPassportPdfService _passportV2;
+    private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly IPlatformFeatureService _features;
     private readonly IPupilQuestionSetRegistry _registry;
@@ -96,6 +105,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
         ISchoolPortalService schoolPortal,
         IPupilStoryRenderer story,
         IPupilReportPdfService pdf,
+        IPupilPassportPdfService passportV2,
+        PupilPassportPdfModelBuilder passportModelBuilder,
         IPersonalDataAccessLogger accessLog,
         IPlatformFeatureService features,
         IPupilQuestionSetRegistry registry)
@@ -106,6 +117,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
         _schoolPortal = schoolPortal;
         _story = story;
         _pdf = pdf;
+        _passportV2 = passportV2;
+        _passportModelBuilder = passportModelBuilder;
         _accessLog = accessLog;
         _features = features;
         _registry = registry;
@@ -129,7 +142,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
 
         var classes = await _db.SchoolClasses.AsNoTracking()
             .Where(c => classIds.Contains(c.Id) && c.SchoolYearStart == year)
-            .OrderBy(c => c.Name)
+            .OrderByDescending(c => c.Level == SchoolLevel.Groep78)
+            .ThenBy(c => c.Name)
             .ToListAsync(cancellationToken);
 
         return classes
@@ -447,25 +461,39 @@ public sealed class TeacherPortalService : ITeacherPortalService
             dislikes.Add(code.Progress!.DislikeOtherWord!);
         }
 
-        var model = new PupilReportPdfModel(
-            SchoolName: code.SchoolClass.School.Name,
-            ClassName: code.SchoolClass.Name,
-            DisplayCode: display,
-            Date: DateOnly.FromDateTime(code.Result.CompletedAtUtc),
-            StoryBody: story.Body,
-            Tiles: story.Tiles.Select(t => (t.KidLabel, t.Explanation)).ToList(),
-            Likes: likes,
-            Dislikes: dislikes,
-            JobIdeas: story.JobIdeas,
-            DreamJobTitle: string.IsNullOrWhiteSpace(dream.JobKey)
-                           || string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
-                ? null
-                : dream.JobTitle,
-            RouteSteps: dream.RouteSteps,
-            Encouragement: dream.Encouragement,
-            Footer: PupilVerhaalCopy.Get("LeerlingPdf.Footer", classContext));
-
-        var bytes = _pdf.Render(model);
+        var features = await _features.GetAsync(cancellationToken);
+        byte[] bytes;
+        if (features.PupilPassportV2Enabled)
+        {
+            var passportModel = _passportModelBuilder.Build(
+                code,
+                code.SchoolClass!,
+                code.SchoolClass.School.Name,
+                display,
+                displayNameOnPdf: null);
+            bytes = _passportV2.Render(passportModel);
+        }
+        else
+        {
+            var model = new PupilReportPdfModel(
+                SchoolName: code.SchoolClass.School.Name,
+                ClassName: code.SchoolClass.Name,
+                DisplayCode: display,
+                Date: DateOnly.FromDateTime(code.Result.CompletedAtUtc),
+                StoryBody: story.Body,
+                Tiles: story.Tiles.Select(t => (t.KidLabel, t.Explanation)).ToList(),
+                Likes: likes,
+                Dislikes: dislikes,
+                JobIdeas: story.JobIdeas,
+                DreamJobTitle: string.IsNullOrWhiteSpace(dream.JobKey)
+                               || string.Equals(dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase)
+                    ? null
+                    : dream.JobTitle,
+                RouteSteps: dream.RouteSteps,
+                Encouragement: dream.Encouragement,
+                Footer: PupilVerhaalCopy.Get("LeerlingPdf.Footer", classContext));
+            bytes = _pdf.Render(model);
+        }
         var safeClass = new string(code.SchoolClass.Name.Where(c => char.IsLetterOrDigit(c) || c is '-' or '_').ToArray());
         if (string.IsNullOrWhiteSpace(safeClass))
         {
@@ -474,6 +502,48 @@ public sealed class TeacherPortalService : ITeacherPortalService
 
         await LogPupilCodePdfAsync(user, codeId, cancellationToken);
         return (bytes, $"lobsy-ontdekkingsreis-{safeClass.ToLowerInvariant()}.pdf", null);
+    }
+
+    public async Task<PupilG78PassportWebDto?> GetG78PassportWebForCodeAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        Guid codeId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _scope.CanSeePerCodeDetailAsync(user, classId, cancellationToken))
+        {
+            return null;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        if (!features.PupilPassportV2Enabled)
+        {
+            return new PupilG78PassportWebDto(Enabled: false);
+        }
+
+        var code = await _db.PupilCodes.AsNoTracking()
+            .Include(c => c.Result)
+            .Include(c => c.Progress)
+            .Include(c => c.SchoolClass)!.ThenInclude(c => c!.School)
+            .FirstOrDefaultAsync(c => c.Id == codeId && c.SchoolClassId == classId, cancellationToken);
+        if (code?.SchoolClass?.School is null
+            || code.SchoolClass.QuestionSet != PupilQuestionSet.Groep78
+            || code.Status != PupilCodeStatus.Completed
+            || code.Result is null)
+        {
+            return null;
+        }
+
+        var display = _codes.Unprotect(code.CodeProtected) is { } raw
+            ? PupilCodeFormat.Display(raw)
+            : "******";
+        var passportModel = _passportModelBuilder.Build(
+            code,
+            code.SchoolClass,
+            code.SchoolClass.School.Name,
+            display,
+            displayNameOnPdf: null);
+        return PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true);
     }
 
     private static string ChipDutch(string key) => key switch

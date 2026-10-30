@@ -1,13 +1,15 @@
+using Jobsy.Core.Localization;
 using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Http;
+using JobsyLanguages = Jobsy.Core.Localization.JobsyLanguages;
 
 namespace Jobsy.Tests.Errors;
 
 public class ErrorCultureTests
 {
     [Theory]
-    [InlineData("ar", "ar")]
-    [InlineData("pl", "pl")]
+    [InlineData("en", "en")]
+    [InlineData("pl", "nl")]
     [InlineData("klingon", "nl")]
     [InlineData(null, "nl")]
     public void Cookie_wins_over_everything(string? cookie, string expected)
@@ -22,10 +24,10 @@ public class ErrorCultureTests
     }
 
     [Theory]
-    [InlineData("pl", "pl")]
-    [InlineData("ro-RO,ro;q=0.9,en;q=0.8", "ro")]
+    [InlineData("pl", "nl")]
+    [InlineData("ro-RO,ro;q=0.9,en;q=0.8", "en")]
     [InlineData("de-DE,de;q=0.9", "nl")]
-    [InlineData("en;q=0.4,ar;q=0.9", "ar")]
+    [InlineData("en;q=0.4,ar;q=0.9", "en")]
     [InlineData("", "nl")]
     public void Accept_language_is_the_fallback(string header, string expected)
     {
@@ -36,13 +38,23 @@ public class ErrorCultureTests
     }
 
     [Fact]
-    public void Cookie_beats_accept_language()
+    public void Cookie_beats_accept_language_when_enabled()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.Cookie = $"{CultureState.CookieName}=en";
+        http.Request.Headers.AcceptLanguage = "pl";
+
+        Assert.Equal("en", ErrorCulture.Resolve(http));
+    }
+
+    [Fact]
+    public void Disabled_cookie_yields_accept_language()
     {
         var http = new DefaultHttpContext();
         http.Request.Headers.Cookie = $"{CultureState.CookieName}=pl";
-        http.Request.Headers.AcceptLanguage = "ar";
+        http.Request.Headers.AcceptLanguage = "en";
 
-        Assert.Equal("pl", ErrorCulture.Resolve(http));
+        Assert.Equal("en", ErrorCulture.Resolve(http));
     }
 
     [Fact]
@@ -77,6 +89,7 @@ public class ErrorCultureTests
     }
 }
 
+[Collection("JobsyLanguagesState")]
 public class ErrorCultureRenderTests
 {
     private static async Task<string> ReadStatusPageAsync(HttpClient client)
@@ -87,7 +100,56 @@ public class ErrorCultureRenderTests
     }
 
     [Fact]
-    public async Task Arabic_cookie_renders_rtl_and_arabic_copy()
+    public async Task Arabic_cookie_renders_rtl_and_arabic_copy_when_catalog_enabled()
+    {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
+        {
+            await using var factory = new ErrorPagesWebFactory
+            {
+                EmployersEnabled = true,
+                EnabledCultures = "nl,en,pl,ro,ar"
+            };
+            using var client = factory.CreateHtmlClient();
+            client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
+
+            var html = await ReadStatusPageAsync(client);
+
+            Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
+            Assert.Contains("هذه الصفحة غير موجودة", html, StringComparison.Ordinal);
+        }
+        finally
+        {
+            JobsyLanguages.ResetEnabledForTests();
+        }
+    }
+
+    [Fact]
+    public async Task Polish_accept_language_renders_polish_copy_when_catalog_enabled()
+    {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
+        {
+            await using var factory = new ErrorPagesWebFactory
+            {
+                EmployersEnabled = true,
+                EnabledCultures = "nl,en,pl,ro,ar"
+            };
+            using var client = factory.CreateHtmlClient();
+            client.DefaultRequestHeaders.Add("Accept-Language", "pl");
+
+            var html = await ReadStatusPageAsync(client);
+
+            Assert.Contains("Ta strona nie istnieje", html, StringComparison.Ordinal);
+        }
+        finally
+        {
+            JobsyLanguages.ResetEnabledForTests();
+        }
+    }
+
+    [Fact]
+    public async Task Disabled_arabic_cookie_falls_back_to_dutch_copy()
     {
         await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
         using var client = factory.CreateHtmlClient();
@@ -95,20 +157,8 @@ public class ErrorCultureRenderTests
 
         var html = await ReadStatusPageAsync(client);
 
-        Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
-        Assert.Contains("هذه الصفحة غير موجودة", html, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Polish_accept_language_renders_polish_copy()
-    {
-        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
-        using var client = factory.CreateHtmlClient();
-        client.DefaultRequestHeaders.Add("Accept-Language", "pl");
-
-        var html = await ReadStatusPageAsync(client);
-
-        Assert.Contains("Ta strona nie istnieje", html, StringComparison.Ordinal);
+        Assert.Contains("Deze pagina bestaat niet", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("dir=\"rtl\"", html, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -5,21 +5,26 @@ using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Geo;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Media;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Media;
 using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Reminders;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.AfterMatch;
 using Jobsy.Infrastructure.Services.LenderRegistration;
 using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.AspNetCore.Authorization;
@@ -76,6 +81,7 @@ public static class DependencyInjection
                 "Default local postgres connection is not allowed outside Development.");
         }
 
+        services.Configure<SessionAuthOptions>(configuration.GetSection(SessionAuthOptions.SectionName));
         services.AddJobsyDataProtection(connectionString, isDev, configuration);
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
@@ -93,6 +99,8 @@ public static class DependencyInjection
         services.AddScoped<IPlatformErrorLog, PlatformErrorLog>();
         services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
         services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();
+        services.AddScoped<IStatusNotificationDispatchGate, StatusNotificationDispatchGate>();
+        services.AddScoped<ApplicationStatusNotifier>();
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
@@ -295,6 +303,11 @@ public static class DependencyInjection
         services.AddScoped<IExactRoutingService, OsrmRoutingService>();
         services.AddHttpClient(ValhallaIsochroneService.HttpClientName, client =>
             ValhallaIsochroneService.ConfigureClient(client, TimeSpan.FromSeconds(6)));
+        services.AddHttpClient(VacancyPublicPhotoBytesLoader.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(12);
+        });
+        services.AddSingleton<IVacancyPublicPhotoBytesLoader, VacancyPublicPhotoBytesLoader>();
         var isochroneBase = configuration["Routing:IsochroneBaseUrl"];
         if (string.Equals(isochroneBase, "mock", StringComparison.OrdinalIgnoreCase)
             || environment?.IsEnvironment("Testing") == true)
@@ -501,6 +514,7 @@ public static class DependencyInjection
         services.AddScoped<ISchoolCodeListPdfService, SchoolCodeListPdfService>();
         services.AddScoped<ISchoolPortalService, SchoolPortalService>();
         services.AddScoped<ITeacherPortalService, TeacherPortalService>();
+        services.AddScoped<IParentPassportService, ParentPassportService>();
         services.AddScoped<ISchoolAggregateSnapshotter, SchoolAggregateSnapshotter>();
         services.AddScoped<ISchoolRetentionService, SchoolRetentionService>();
         services.AddScoped<ISchoolReportingService, SchoolReportingService>();
@@ -511,7 +525,11 @@ public static class DependencyInjection
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();
         services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
+        services.AddSingleton<IPupilPassportPdfService, Scholen.Passport.PupilPassportPdfService>();
+        services.AddSingleton<IParentPassportAnswersPdfService, Scholen.Passport.ParentPassportAnswersPdfService>();
+        services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, ParentPassportSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
         services.AddHostedService<SchoolRetentionHostedService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
@@ -525,6 +543,7 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddScoped<IPassportPdfService, Jobsy.Infrastructure.Services.Passport.PassportPdfService>();
+        services.AddScoped<IStudentPassportPdfService, Jobsy.Infrastructure.Services.Passport.StudentPassportPdfService>();
         services.AddScoped<IPassportDnaReader, Jobsy.Infrastructure.Services.Passport.PassportDnaReader>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
@@ -572,6 +591,7 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
         services.AddSingleton<IUploadMalwareScanner, UploadMalwareScanner>();
+        services.AddSingleton<CandidateMatchScoreCache>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
         // KB-FALLBACK(D): paspoort 06 absent — no down-rank / "Staat lager".
@@ -626,6 +646,7 @@ public static class DependencyInjection
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
         services.AddScoped<CareerGenerationGuard>();
         services.AddScoped<ICandidateOnboardingService, CandidateOnboardingService>();
+        services.AddScoped<ICandidateDiscoveryOverviewService, CandidateDiscoveryOverviewService>();
         services.AddHttpClient(CareerPathPlanGenerationService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(60);
@@ -642,6 +663,8 @@ public static class DependencyInjection
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
         services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
+        services.AddScoped<Jobsy.Infrastructure.Training.TrainingPartnerFeedImporter>();
+        services.AddScoped<ITrainingPartnerService, TrainingPartnerService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
         services.AddSingleton<INormProvider, Johnson2014NormProvider>();
         services.AddHttpClient(OpenAiCompetenceDeepReportAiService.HttpClientName, client =>
@@ -651,6 +674,15 @@ public static class DependencyInjection
         {
             AllowAutoRedirect = false
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
+        services.AddHttpClient(OpenAiTestReflectionAiService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
+        services.AddScoped<ITestReflectionAiService, OpenAiTestReflectionAiService>();
+        services.AddScoped<ITestReflectionService, TestReflectionService>();
         services.AddScoped<ICompetenceDeepReportAiService, OpenAiCompetenceDeepReportAiService>();
         services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
         services.AddScoped<IKindDeepReportService, KindDeepReportService>();
@@ -659,11 +691,20 @@ public static class DependencyInjection
         services.AddScoped<ISampleAssessmentReportPdfService, SampleAssessmentReportPdfService>();
         services.AddHostedService<AssessmentNormSnapshotHostedService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.AddScoped<AfterMatchMailer>();
+        services.AddScoped<IAfterMatchService, AfterMatchService>();
+        services.AddScoped<IJobSearchActivityService, JobSearchActivityService>();
         services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
             configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
         services.AddScoped<IProactiveVacancyShortlistService, ProactiveVacancyShortlistService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
+        services.AddScoped<KandidatenkaartCandidateAggregator>();
+        services.AddScoped<KandidatenkaartMailService>();
+        services.AddScoped<IKandidatenkaartService, KandidatenkaartService>();
+        services.AddScoped<ICompanyMapInitiativeService, CompanyMapInitiativeService>();
+        services.AddHostedService<WorkInitiativeAutoDeclineHostedService>();
+        services.AddHostedService<KandidatenkaartHostedService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();
         services.AddScoped<IMaqqieHoursService, Jobsy.Infrastructure.Services.EmployerPhase2.MaqqieHoursService>();
@@ -717,9 +758,12 @@ public static class DependencyInjection
         services.AddScoped<IAssistantChatService, AssistantChatService>();
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
+        services.AddScoped<ICandidateProfileResetService, CandidateProfileResetService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ReferenceConfirmationService>();
+        services.AddScoped<ReferenceVerificationService>();
+        services.AddScoped<UwvCandidateToolkitService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();
@@ -755,6 +799,7 @@ public static class DependencyInjection
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
+        services.AddHostedService<Jobs.ReferenceVerificationReminderHostedService>();
         services.AddHostedService<Jobs.ProactiveMatchingHostedService>();
         services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();

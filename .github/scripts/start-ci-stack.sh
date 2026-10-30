@@ -6,11 +6,14 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 export ASPNETCORE_ENVIRONMENT=Development
+export Jobsy__TestEmployersEnabled=true
 export DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 export Seed__Enabled=true
 export Seed__BanenkaartPerfCount="${Seed__BanenkaartPerfCount:-0}"
 export JobsyAuth__AllowDevelopmentAuth=true
 export JobsyAuth__AllowStubPayments=true
+# Playwright suites reuse kandidaat@jobsy.local across many logins; do not lock shared demo accounts in CI.
+export JobsyAuth__DisableAccountLockout=true
 # Playwright WaitForFunctionAsync needs eval; Acc/prod CSP stays without unsafe-eval.
 export JOBSY_CSP_ALLOW_UNSAFE_EVAL=1
 export JOBSY_E2E_CAPTURE_EMAIL_CODES=1
@@ -29,13 +32,15 @@ export ApiBaseUrl=http://localhost:5200/
 
 mkdir -p /tmp/jobsy-ci-logs
 
+CI_LOCALIZATION="${Localization__EnabledCultures:-nl,en,pl,ro,ar}"
+
 echo "Starting Jobsy.Api on :5200 …"
-env JOBSY_E2E_CAPTURE_EMAIL_CODES=1 dotnet run --project Jobsy.Api/Jobsy.Api.csproj -c Release --no-build --urls http://127.0.0.1:5200 \
+env JOBSY_E2E_CAPTURE_EMAIL_CODES=1 Localization__EnabledCultures="$CI_LOCALIZATION" dotnet run --project Jobsy.Api/Jobsy.Api.csproj -c Release --no-build --urls http://127.0.0.1:5200 \
   >/tmp/jobsy-ci-logs/api.log 2>&1 &
 echo $! >/tmp/jobsy-ci-logs/api.pid
 
 echo "Starting Jobsy.Web on :5201 …"
-dotnet run --project Jobsy.Web/Jobsy.Web.csproj -c Release --no-build --urls http://127.0.0.1:5201 \
+env Onboarding__RustigEnabled="${Onboarding__RustigEnabled:-true}" Localization__EnabledCultures="$CI_LOCALIZATION" dotnet run --project Jobsy.Web/Jobsy.Web.csproj -c Release --no-build --urls http://127.0.0.1:5201 \
   >/tmp/jobsy-ci-logs/web.log 2>&1 &
 echo $! >/tmp/jobsy-ci-logs/web.pid
 

@@ -63,11 +63,12 @@ else
                 }
             </div>
         }
-        <button type="button" class="btn-primary" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+        <button type="button" class="btn-primary" @ref="_windowTrigger" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
     </section>
 }
 
-<TestWindowDialog @bind-Open="_windowOpen"
+<TestWindowDialog RestoreFocusTo="_windowTrigger"
+                  @bind-Open="_windowOpen"
                   State="@(_overview?.TestWindow ?? TestWindowState.NotOpen)"
                   ClosesOn="_overview?.TestWindowClosesOn"
                   Busy="_busy"
@@ -82,6 +83,7 @@ else
     private string? _loadError;
     private bool _busy;
     private bool _windowOpen;
+    private ElementReference _windowTrigger;
     private string? _windowError;
     private string? _pauseError;
     private TeacherClassOverviewDto? _overview;
@@ -102,7 +104,6 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (_disabled)
         {

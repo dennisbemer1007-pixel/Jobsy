@@ -1,0 +1,62 @@
+@page "/candidate/adviseur-werk"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IUwvFeaturesGate UwvGate
+@inject JobsyApiClient Api
+@inject IUwvKansberoepenCatalog KansberoepenCatalog
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@UwvMockupCopy.Adviseur.Title(Culture.Language) · Lobsy</PageTitle>
+<HeadContent>
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/uwv-adviseur-panel.js")}")" defer></script>
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="cards" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
+
+            var data = await AdviseurWerkSsrData.LoadAsync(UwvGate, Api, Culture.Language, default);
+            _bodyHtml = AdviseurWerkSsrShells.BuildBody(Culture, data, KansberoepenCatalog);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

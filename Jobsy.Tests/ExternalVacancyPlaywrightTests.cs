@@ -72,7 +72,7 @@ public sealed class ExternalVacancyPlaywrightTests : IAsyncLifetime
         Assert.True(await page.Locator("[data-testid=kb-ext-add-submit]").IsVisibleAsync());
     }
 
-    private sealed class ExternalVacancyWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class ExternalVacancyWebFactory : WebWebApplicationFactory
     {
         private IHost? _kestrel;
         private readonly bool _externalOn;

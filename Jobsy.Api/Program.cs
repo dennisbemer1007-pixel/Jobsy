@@ -7,8 +7,12 @@ using Jobsy.Api.Ops;
 using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
+using Jobsy.Core.Localization;
+using Jobsy.Infrastructure.Hosting;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Ops;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
@@ -26,6 +30,7 @@ if (args.Length > 0 && args[0] == "proactive-matching")
 }
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))
@@ -50,6 +55,9 @@ if (!builder.Environment.IsDevelopment()
 
 Jobsy.Core.Security.VerificationCodes.ConfigurePepper(otpPepper);
 
+builder.Services.Configure<Jobsy.Core.Options.AuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.AuthOptions.SectionName));
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -64,13 +72,15 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddJobsyApiPerformance();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MfaChallengeService>();
+builder.Services.AddSingleton<Jobsy.Api.Security.AccountLockoutPolicy>();
 builder.Services.AddSingleton(sp =>
 {
     var cfg = sp.GetRequiredService<IConfiguration>();
     var key = JobsyLocalSessionToken.ResolveSigningKey(
         cfg["JobsyAuth:LocalSessionSigningKey"],
         cfg["JobsyAuth:DevelopmentAuthSecret"]);
-    return new UnknownAccountLockoutTracker(key);
+    var lockout = sp.GetRequiredService<Jobsy.Api.Security.AccountLockoutPolicy>();
+    return new UnknownAccountLockoutTracker(key, lockout.FailedAttemptsBeforeLockout);
 });
 builder.Services.AddSingleton(sp =>
 {
@@ -84,10 +94,13 @@ builder.Services.AddScoped<Jobsy.Core.Interfaces.ITotpVerifier, Jobsy.Infrastruc
 builder.Services.AddSingleton(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
+    var deploymentLabel = config["Lobsy:DeploymentEnvironment"]
+                          ?? config["Lobsy__DeploymentEnvironment"]
+                          ?? config["Deployment:Label"];
     return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
         Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
             config["PublicWebBaseUrl"],
-            config["Deployment:Label"]));
+            deploymentLabel));
 });
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddScoped<Jobsy.Api.Admin.IAdminAuditContext, Jobsy.Api.Admin.AdminAuditContext>();
@@ -110,6 +123,7 @@ builder.Services.AddOpenApi(ExternalApiOpenApi.DocumentName, ExternalApiOpenApi.
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<DatabaseSeedHostedService>();
+builder.Services.AddHostedService<PlatformFeatureAcceptatieBootstrapHostedService>();
 builder.Services.AddHostedService<MinimumWageUpdateHostedService>();
 
 var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -133,6 +147,8 @@ builder.Services.AddRateLimiter(options =>
     var isProduction = builder.Environment.IsProduction();
     var publicReadLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicReadPermitLimit")
         ?? (isProduction ? 120 : 10_000);
+    var authenticatedMapReadLimit = builder.Configuration.GetValue<int?>("RateLimiting:AuthenticatedMapReadPermitLimit")
+        ?? (isProduction ? 600 : 10_000);
     var publicTravelLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicTravelPermitLimit")
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
@@ -269,6 +285,31 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Banenkaart pins/cards/map-view: generous bucket per signed-in candidate (normal nav refetches pins).
+    options.AddPolicy("map-read", httpContext =>
+    {
+        var userId = RateLimitPartitioning.ResolveUserId(httpContext.User);
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            return RateLimitPartition.GetFixedWindowLimiter(
+                "map-read:uid:" + userId,
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = authenticatedMapReadLimit,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
+                });
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicReadLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+    });
     options.AddPolicy("public-travel", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
@@ -330,6 +371,17 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Onboarding mini-test saves (many partial PUTs while clicking through steps 7–10).
+    options.AddPolicy("assessment-write", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 240,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
     // GET api/privacy/export: per signed-in user, same budget as the web download.
     options.AddPolicy("export", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -370,6 +422,7 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
 Jobsy.Core.Careers.OccupationCatalog.Configure(
     app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
     app.Environment.IsProduction());
@@ -395,8 +448,7 @@ app.Use(async (context, next) =>
         && context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.StatusCode = StatusCodes.Status200OK;
-        context.Response.ContentType = "application/json; charset=utf-8";
-        await context.Response.WriteAsync("""{"status":"ok"}""", context.RequestAborted);
+        await context.Response.WriteAsJsonAsync(ApiHealthEndpoints.BuildPayload(), context.RequestAborted);
         return;
     }
 
@@ -462,13 +514,7 @@ app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
 app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
 app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
-app.MapGet("/health", () => Results.Ok(new
-{
-    status = "ok",
-    commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
-            ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
-            ?? "local"
-}))
+app.MapGet("/health", () => Results.Ok(ApiHealthEndpoints.BuildPayload()))
     .AllowAnonymous();
 
 // Partner OpenAPI for the external vacancy API (X-API-Key). Development only —
@@ -484,6 +530,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+
+await JobsyDbSeeder.EnsurePassportPdfDnaBlocksColumnAsync(app.Services);
 
 app.Run();
 

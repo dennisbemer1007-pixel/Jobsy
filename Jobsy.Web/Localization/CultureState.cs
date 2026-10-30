@@ -1,4 +1,5 @@
 using System.Globalization;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -119,7 +120,8 @@ public sealed class CultureState
         try
         {
             var state = await _authState.GetAuthenticationStateAsync();
-            if (state.User.Identity?.IsAuthenticated == true)
+            if (state.User.Identity?.IsAuthenticated == true
+                && !JobsyApiAuthHandler.IsPupilPrincipal(state.User))
             {
                 api = _services.GetRequiredService<JobsyApiClient>();
                 var profile = await api.GetMyProfileAsync();
@@ -131,10 +133,14 @@ public sealed class CultureState
             // Profile may be unavailable during early circuit start; fall back to cookie.
         }
 
+        var accept = _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString();
         // An explicit language cookie wins over a stale profile, so the picker matches the page.
+        // Do not let Accept-Language override profile/default on signed-in circuits (avoids NL↔EN flips).
         var chosen = !string.IsNullOrWhiteSpace(cookie)
-            ? JobsyLanguages.Normalize(cookie)
-            : JobsyLanguages.Normalize(profileLanguage);
+            ? JobsyLanguages.ResolveActive(cookie, accept)
+            : !string.IsNullOrWhiteSpace(profileLanguage)
+                ? JobsyLanguages.ResolveActive(profileLanguage, null)
+                : JobsyLanguages.Default;
         var previous = Language;
         Apply(chosen);
         if (!JobsyLanguages.AreSame(previous, Language))
@@ -166,11 +172,20 @@ public sealed class CultureState
                 // Cookie still holds the choice.
             }
         }
+
+        if (jsOk && string.IsNullOrWhiteSpace(cookie) && string.IsNullOrWhiteSpace(requestCookie))
+        {
+            await PersistCookieAsync(Language);
+        }
     }
 
     public async Task SetLanguageAsync(string language)
     {
-        var normalized = JobsyLanguages.Normalize(language);
+        if (!JobsyLanguages.TryEnabledCode(language, out var normalized))
+        {
+            normalized = JobsyLanguages.ResolveActive(language, _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString());
+        }
+
         if (JobsyLanguages.AreSame(Language, normalized))
         {
             return;
@@ -180,7 +195,8 @@ public sealed class CultureState
         await PersistCookieAsync(Language);
 
         var auth = await _authState.GetAuthenticationStateAsync();
-        if (auth.User.Identity?.IsAuthenticated == true)
+        if (auth.User.Identity?.IsAuthenticated == true
+            && !JobsyApiAuthHandler.IsPupilPrincipal(auth.User))
         {
             try
             {
@@ -216,9 +232,16 @@ public sealed class CultureState
     /// <summary>Puts this circuit's language on the current thread only.</summary>
     public void Reapply() => Apply(Language);
 
-    private void Apply(string language)
+    private void Apply(string language, bool allowAcceptLanguageFallback = false)
     {
-        Language = JobsyLanguages.Normalize(language);
+        // Bunit and other unit tests construct CultureState without IHttpContextAccessor; pin the
+        // requested catalog code instead of launch EnabledCultures (typically nl,en only).
+        var accept = allowAcceptLanguageFallback
+            ? _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString()
+            : null;
+        Language = _http is null
+            ? JobsyLanguages.Normalize(language)
+            : JobsyLanguages.ResolveActive(language, accept);
         JobsyCultures.ApplyToCurrentThread(Language);
     }
 

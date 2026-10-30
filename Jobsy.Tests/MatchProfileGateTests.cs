@@ -19,6 +19,42 @@ public class MatchProfileGateTests
     }
 
     [Fact]
+    public void FitGateOpen_accepts_provisional_scores_after_wizard()
+    {
+        var gate = new MatchProfileGateViewModel
+        {
+            WizardCompleted = true,
+            HasProvisionalScores = true,
+            CultureCompleted = false,
+            ValuesCompleted = false
+        };
+        Assert.True(gate.FitGateOpen);
+    }
+
+    [Fact]
+    public void IsMatchBasicsFilled_requires_name_and_travel_preset()
+    {
+        Assert.True(MatchProfileCompleteness.IsMatchBasicsFilled(
+            fullName: null,
+            firstName: "Sanne",
+            lastName: "Test",
+            maxTravelMinutes: 30,
+            preferredTransport: "Fiets"));
+        Assert.False(MatchProfileCompleteness.IsMatchBasicsFilled(
+            fullName: null,
+            firstName: "",
+            lastName: "",
+            maxTravelMinutes: 30,
+            preferredTransport: "Fiets"));
+        Assert.False(MatchProfileCompleteness.IsMatchBasicsFilled(
+            fullName: null,
+            firstName: "Sanne",
+            lastName: "Test",
+            maxTravelMinutes: 0,
+            preferredTransport: "Fiets"));
+    }
+
+    [Fact]
     public void HasEducationLevel_accepts_geen_as_answered()
     {
         Assert.True(MatchProfileCompleteness.HasEducationLevel(["Geen"]));
@@ -81,17 +117,79 @@ public class MatchProfileGateTests
     }
 
     [Fact]
+    public void MatchVacancyService_OrderMatchDeck_prefers_within_travel_before_far_high_match()
+    {
+        var far = new VacancyListItem
+        {
+            Id = Guid.NewGuid(),
+            Title = "FarHighMatch",
+            TravelMinutes = 220,
+            FitPercent = 95
+        };
+        var near = new VacancyListItem
+        {
+            Id = Guid.NewGuid(),
+            Title = "NearGoodMatch",
+            TravelMinutes = 18,
+            FitPercent = 70
+        };
+
+        var ordered = MatchVacancyService.OrderMatchDeck([far, near], maxTravelMinutes: 20, take: 24);
+        Assert.Equal("NearGoodMatch", ordered[0].Title);
+        Assert.Equal("FarHighMatch", ordered[1].Title);
+    }
+
+    [Fact]
+    public void MatchVacancyService_FilterRelevant_keeps_outside_travel_when_discovery_widened()
+    {
+        var gate = new MatchProfileGateViewModel
+        {
+            IsProfileComplete = true,
+            Educations = ["MBO"],
+            MaxTravelMinutes = 20,
+            PreferredTransport = "Fiets"
+        };
+
+        var vacancies = new List<VacancyListItem>
+        {
+            new() { Id = Guid.NewGuid(), Title = "Reachable", RequiredEducation = "MBO", TravelMinutes = 55 },
+        };
+
+        var strict = MatchVacancyService.FilterRelevant(vacancies, gate, take: 24, outsideTravelFallback: false);
+        Assert.Empty(strict);
+
+        var widened = MatchVacancyService.FilterRelevant(vacancies, gate, take: 24, outsideTravelFallback: true);
+        Assert.Single(widened);
+        Assert.Equal("Reachable", widened[0].Title);
+    }
+
+    [Fact]
+    public void Onboarding_e2e_demo_seed_refreshes_home_and_travel_prefs()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var seeder = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/DemoUsersSeeder.cs"));
+        Assert.Contains("DemoCandidateIds.OnboardingE2eUserId", seeder, StringComparison.Ordinal);
+        Assert.Contains("ShouldForceRefreshOnboardingE2e", seeder, StringComparison.Ordinal);
+        Assert.Contains("preferredTransport", seeder, StringComparison.Ordinal);
+        Assert.Contains("homeAddress", seeder, StringComparison.Ordinal);
+        Assert.Contains("Kasweg 12", seeder, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Match_page_wires_unlock_gate_and_services()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/MatchPage.razor"));
-        Assert.Contains("MatchUnlockPanel", page, StringComparison.Ordinal);
-        Assert.Contains("IsProfileComplete", page, StringComparison.Ordinal);
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateMatchSsr.razor"));
+        var gateHtml = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Match/MatchSsrGateHtml.cs"));
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Match/MatchSsrShells.cs"));
         Assert.Contains("MatchVacancyService", page, StringComparison.Ordinal);
         Assert.Contains("CandidateMatchProfileService", page, StringComparison.Ordinal);
-        Assert.Contains("KbRoutes.Map", page, StringComparison.Ordinal);
-        Assert.Contains("MatchUnlockPanel", page, StringComparison.Ordinal);
-        Assert.Contains("FitGateOpen", page, StringComparison.Ordinal);
+        Assert.Contains("IsProfileComplete", shells, StringComparison.Ordinal);
+        Assert.Contains("FitGateOpen", shells, StringComparison.Ordinal);
+        Assert.Contains("Match.Gate.Check.BasicsTitle", gateHtml, StringComparison.Ordinal);
+        Assert.Contains("whoami-checklist", gateHtml, StringComparison.Ordinal);
+        Assert.Contains("KbRoutes.Map", gateHtml, StringComparison.Ordinal);
+        Assert.Contains("Match.Gate.AuthTitle", gateHtml, StringComparison.Ordinal);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("CandidateMatchProfileService", program, StringComparison.Ordinal);

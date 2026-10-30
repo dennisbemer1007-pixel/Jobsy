@@ -1,5 +1,3 @@
-/* Candidate "Mijn sollicitaties" — fotokaarten (variant B) */
-
 .apps-page {
     --text-2xl: 1.5rem;
     --text-xl: 1.25rem;
@@ -7,39 +5,25 @@
     --text-sm: 0.875rem;
     --text-xs: 0.75rem;
     --radius-pill: 999px;
-}
-
-.apps-page.panel-page {
+}.apps-page.panel-page {
     padding-inline: 1rem;
     padding-block-end: 1.25rem;
-}
-
-.apps-page .panel-header h1 {
+}.apps-page .panel-header h1 {
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--brand);
-}
-
-@media (max-width: 639px) {
-    .apps-page .panel-header h1 {
+}@media (max-width: 639px) {.apps-page .panel-header h1 {
         font-size: 1.5rem;
-    }
-}
-
-.apps-page__lead {
+    }}.apps-page__lead {
     font-size: var(--text-sm);
     color: var(--muted);
     margin-block-start: 0.35rem;
-}
-
-.application-counters {
+}.application-counters {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     margin-block: 16px;
-}
-
-.application-counters__btn {
+}.application-counters__btn {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -48,49 +32,46 @@
     min-block-size: 64px;
     padding: 10px 12px;
     border: 0;
-    border-radius: var(--radius);
-    background: var(--surface);
-    box-shadow: var(--shadow);
+    border-radius:var(--r-md);
+    background:var(--surface);
+    box-shadow:none;
     color: var(--text);
     cursor: pointer;
-}
-
-.application-counters__btn.is-selected {
-    box-shadow: inset 0 0 0 2px var(--brand), var(--shadow);
-}
-
-.application-counters__n {
+}.application-counters__btn.is-selected {
+    box-shadow:none;
+}.application-counters__n {
     font-size: var(--text-xl);
     font-weight: 600;
     color: var(--brand);
     line-height: 1.1;
-}
-
-.application-counters__btn--running .application-counters__n {
+}.application-counters__btn--running .application-counters__n {
     color: var(--success);
-}
-
-.application-counters__label {
+}.application-counters__label {
     font-size: var(--text-xs);
     color: var(--muted);
-}
-
-.application-counters__show-all {
+}.application-counters__show-all {
     display: inline-flex;
     align-items: center;
     min-block-size: 44px;
     margin-block-end: 8px;
     padding-inline: 4px;
     border: 0;
-    background: transparent;
+    background:transparent;
     color: var(--brand);
     font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
-}
-
-.application-card-list {
+}/* scope3: sollicitaties SSR must not inherit .apps-page 720px list cap. */
+.panel-page.sollicitaties-page .application-card-list,
+.sollicitaties-page .application-card-list,
+.panel-page.sollicitaties-page .sollicitaties-list,
+.panel-page.sollicitaties-page .sollic-card {
+    max-inline-size: none !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin-inline: 0 !important;
+}.apps-page .application-card-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -101,9 +82,7 @@
     overflow-x: clip;
     box-sizing: border-box;
     padding-inline: 0;
-}
-
-.application-card {
+}.application-card {
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -112,83 +91,55 @@
     flex-direction: row;
     gap: 12px;
     padding: 10px;
-    border-radius: 14px;
-    background: var(--surface);
-    box-shadow: var(--shadow), 0 1px 0 color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-/* Candidate applications put the timeline under the header so it stays inside the card at 1280px. */
-.application-card.kb-apps__card {
+    border-radius:var(--r-lg);
+    background:var(--surface);
+    box-shadow:none;
+}.application-card.kb-apps__card {
     flex-direction: column;
     align-items: stretch;
-}
-
-.application-card.kb-apps__card > .kb-timeline {
+}.application-card.kb-apps__card > .kb-timeline {
     width: 100%;
     min-width: 0;
     max-width: 100%;
-}
-
-.application-card.is-menu-open {
+}.application-card.is-menu-open {
     z-index: 5;
-}
-
-.application-card--hired {
-    box-shadow:
-        inset 0 0 0 1.5px color-mix(in srgb, var(--success) 45%, transparent),
-        0 6px 18px color-mix(in srgb, var(--success) 12%, transparent),
-        var(--shadow);
-}
-
-.application-card--closed .application-card__img {
+}.application-card--hired {
+    box-shadow:none;
+}.application-card--closed .application-card__img {
     filter: grayscale(1);
     opacity: 0.6;
-}
-
-.application-card--closed .application-card__title {
+}.application-card--closed .application-card__title {
     color: var(--muted);
-}
-
-.application-card__img-link {
+}.application-card__img-link {
     flex: 0 0 auto;
     display: block;
-    border-radius: var(--radius);
+    border-radius:var(--r-md);
     overflow: hidden;
-}
-
-.application-card__img {
+}.application-card__img {
     display: block;
     inline-size: 84px;
     block-size: 84px;
     object-fit: cover;
-    border-radius: var(--radius);
-    background: var(--pearl);
-}
-
-.application-card__img--logo {
+    border-radius:var(--r-md);
+    background:var(--pearl);
+}.application-card__img--logo {
     object-fit: contain;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--border);
+    background:var(--surface);
+    box-shadow:none;
     padding: 10px;
-}
-
-.application-card__body {
+}.application-card__body {
     flex: 1 1 auto;
     min-inline-size: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
     padding-inline-end: 32px;
-}
-
-.application-card__link {
+}.application-card__link {
     display: block;
     min-inline-size: 0;
     color: inherit;
     text-decoration: none;
-}
-
-.application-card__title {
+}.application-card__title {
     margin: 0;
     font-size: var(--text-md);
     font-weight: 600;
@@ -203,18 +154,14 @@
     text-overflow: ellipsis;
     white-space: normal;
     overflow-wrap: break-word;
-}
-
-.application-card__company {
+}.application-card__company {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.application-card__footer {
+}.application-card__footer {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -224,157 +171,115 @@
     margin-block-start: auto;
     padding-block-start: 6px;
     min-inline-size: 0;
-}
-
-.application-card__status {
+}.application-card__status {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     min-inline-size: 0;
     flex: 1 1 auto;
-}
-
-.application-card__pill {
+}.application-card__pill {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     block-size: 24px;
     padding-inline: 8px;
-    border-radius: var(--radius-pill);
+    border-radius:var(--radius-pill);
     font-size: var(--text-xs);
     font-weight: 600;
     /* Status label must stay fully readable — never truncate. */
     white-space: nowrap;
     flex: 0 0 auto;
     flex-shrink: 0;
-}
-
-.application-card__pill-dot {
+}.application-card__pill-dot {
     inline-size: 7px;
     block-size: 7px;
-    border-radius: 50%;
-    background: currentColor;
+    border-radius:var(--radius-pill);
+    background:currentColor;
     flex: 0 0 auto;
-}
-
-.application-card__pill--pending {
-    background: var(--pearl);
+}.application-card__pill--pending {
+    background:var(--pearl);
     color: var(--muted);
-}
-
-.application-card__pill--review {
-    background: var(--accent-soft);
+}.application-card__pill--review {
+    background:var(--accent-soft);
     color: var(--brand);
-}
-
-.application-card__pill--contact {
-    background: var(--brand);
+}.application-card__pill--contact {
+    background:var(--brand);
     color: #fff;
-}
-
-.application-card__pill--hired {
-    background: var(--success-soft);
+}.application-card__pill--hired {
+    background:var(--success-soft);
     color: var(--success);
-}
-
-.application-card__pill--closed {
-    background: transparent;
+}.application-card__pill--closed {
+    background:transparent;
     color: var(--muted);
-    box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.application-card__progress {
+    box-shadow:none;
+}.application-card__progress {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     /* Shrink before the status chip; date wraps to its own row when needed. */
     flex: 0 1 auto;
     min-inline-size: 0;
-}
-
-.application-card__seg {
+}.application-card__seg {
     display: block;
     inline-size: 14px;
     min-inline-size: 6px;
     block-size: 4px;
-    border-radius: 2px;
-    background: var(--pearl);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 70%, transparent);
+    border-radius:var(--r-sm);
+    background:var(--pearl);
+    box-shadow:none;
     flex: 0 1 14px;
-}
-
-.application-card__seg.is-done {
-    background: var(--brand);
-    box-shadow: none;
-}
-
-.application-card--closed .application-card__seg {
-    background: var(--border);
-    box-shadow: none;
-}
-
-.application-card__date {
+}.application-card__seg.is-done {
+    background:var(--brand);
+    box-shadow:none;
+}.application-card--closed .application-card__seg {
+    background:var(--border);
+    box-shadow:none;
+}.application-card__date {
     /* Own row when chip + dots leave no room (e.g. 360px); else trailing on row 1. */
     margin-inline-start: auto;
     font-size: var(--text-xs);
     color: var(--muted);
     white-space: nowrap;
     flex: 0 0 auto;
-}
-
-@media (max-width: 430px) {
-    .application-card__date {
+}@media (max-width: 430px) {.application-card__date {
         flex: 1 0 100%;
         margin-inline-start: 0;
         text-align: end;
-    }
-}
-
-.application-card__menu {
+    }}.application-card__menu {
     position: absolute;
     inset-block-start: 4px;
     inset-inline-end: 4px;
-}
-
-.application-card__menu-toggle {
+}.application-card__menu-toggle {
     inline-size: 44px;
     block-size: 44px;
     min-inline-size: 44px;
     min-block-size: 44px;
     border: 0;
-    border-radius: var(--radius);
-    background: transparent;
+    border-radius:var(--r-md);
+    background:transparent;
     color: var(--brand);
-}
-
-.application-card__menu-toggle.is-open {
-    background: var(--accent-soft);
-}
-
-.application-card__menu-backdrop {
+}.application-card__menu-toggle.is-open {
+    background:var(--accent-soft);
+}.application-card__menu-backdrop {
     position: fixed;
     inset: 0;
     z-index: 6;
     border: 0;
     padding: 0;
     margin: 0;
-    background: transparent;
+    background:transparent;
     cursor: default;
-}
-
-.application-card__menu-panel {
+}.application-card__menu-panel {
     position: absolute;
     inset-block-start: calc(100% + 2px);
     inset-inline-end: 0;
     z-index: 7;
     inline-size: 218px;
     padding: 6px;
-    border-radius: var(--radius);
-    background: var(--surface);
-    box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--pearl);
-}
-
-.application-card__menu-item {
+    border-radius:var(--r-md);
+    background:var(--surface);
+    box-shadow:var(--shadow-pop);
+}.application-card__menu-item {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -382,111 +287,79 @@
     min-block-size: 44px;
     padding: 8px 10px;
     border: 0;
-    border-radius: var(--radius-sm, 8px);
-    background: transparent;
+    border-radius:var(--r-sm);
+    background:transparent;
     color: var(--text);
     font-size: var(--text-sm);
     text-align: start;
     text-decoration: none;
     cursor: pointer;
-}
-
-.application-card__menu-item:hover,
+}.application-card__menu-item:hover,
 .application-card__menu-item:focus-visible {
-    background: var(--accent-soft);
+    background:var(--accent-soft);
     outline: none;
-}
-
-.application-card__menu-item--danger {
+}.application-card__menu-item--danger {
     color: var(--danger);
-}
-
-.application-card__menu-icon {
+}.application-card__menu-icon {
     display: inline-grid;
     place-items: center;
     inline-size: 18px;
     block-size: 18px;
     color: var(--brand);
     flex: 0 0 auto;
-}
-
-.application-card__menu-item--danger .application-card__menu-icon {
+}.application-card__menu-item--danger .application-card__menu-icon {
     color: var(--danger);
-}
-
-.application-card__menu-divider {
+}.application-card__menu-divider {
     border: 0;
     border-block-start: 1px solid var(--border);
     margin: 4px 6px;
-}
-
-.apps-empty {
+}.apps-page .apps-empty {
     max-inline-size: 720px;
     margin: 1.25rem auto 0;
     padding: 1.25rem 1rem;
-    border-radius: var(--radius);
-    background: var(--surface);
-    box-shadow: var(--shadow);
+    border-radius:var(--r-md);
+    background:var(--surface);
+    box-shadow:none;
     text-align: center;
-}
-
-.apps-empty .state-message {
+}.apps-empty .state-message {
     color: var(--muted);
     margin: 0;
-}
-
-.apps-page__message {
+}.apps-page .apps-page__message {
     max-inline-size: 720px;
     margin-inline: auto;
-}
-
-.application-withdraw-actions {
+}.application-withdraw-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.65rem;
     justify-content: flex-end;
     margin-block-start: 0.75rem;
-}
-
-.application-withdraw-actions__danger {
-    background: var(--danger);
+}.application-withdraw-actions__danger {
+    background:var(--danger);
     border-color: var(--danger);
     color: #fff;
-}
-
-.apps-page .page-skeleton--apps .page-skeleton__card {
+}.apps-page .page-skeleton--apps .page-skeleton__card {
     display: flex;
     flex-direction: row;
     gap: 12px;
     align-items: flex-start;
     padding: 10px;
-    border-radius: 14px;
-}
-
-.apps-page .page-skeleton--apps .page-skeleton__media {
+    border-radius:var(--r-lg);
+}.apps-page .page-skeleton--apps .page-skeleton__media {
     flex: 0 0 84px;
     inline-size: 84px;
     block-size: 84px;
-    border-radius: var(--radius);
-}
-
-.apps-page .page-skeleton--apps .page-skeleton__body {
+    border-radius:var(--r-md);
+}.apps-page .page-skeleton--apps .page-skeleton__body {
     flex: 1 1 auto;
     min-inline-size: 0;
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
-}
-
-@media (min-width: 900px) {
-    .application-card__img {
+}@media (min-width: 900px) {.application-card__img {
         inline-size: 96px;
         block-size: 96px;
-    }
-
-    .apps-page .page-skeleton--apps .page-skeleton__media {
+    }.apps-page .page-skeleton--apps .page-skeleton__media {
         flex-basis: 96px;
         inline-size: 96px;
         block-size: 96px;
-    }
-}
+    }}

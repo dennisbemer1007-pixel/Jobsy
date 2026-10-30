@@ -31,12 +31,13 @@ public class EmployerRun5FollowUpTests
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-paspoort.css"));
         Assert.Contains(".passport-proof__sheet", css, StringComparison.Ordinal);
         Assert.Contains(".passport-proof__backdrop", css, StringComparison.Ordinal);
-        Assert.Contains(".app-shell:has(.passport-proof__sheet) .app-main", css, StringComparison.Ordinal);
-        Assert.Contains(".app-shell:has(.passport-proof__sheet) .bottom-nav", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell:has(.passport-proof__sheet:not([hidden])) .app-main", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell:has(.passport-proof__sheet:not([hidden])) .bottom-nav", css, StringComparison.Ordinal);
         Assert.Contains("z-index: 100", css, StringComparison.Ordinal);
 
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".filter-sheet-backdrop,\n    .filter-sheet {\n        display: none !important;", app, StringComparison.Ordinal);
+        Assert.Contains(".jobsy-discovery:not(.filters-open) .filter-sheet-backdrop.kb-filter-drawer-backdrop", app, StringComparison.Ordinal);
+        Assert.Contains("transform: translate3d(0, 100%, 0)", app, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -138,6 +139,17 @@ public class EmployerRun5FollowUpTests
 
     private static PlatformFeatureSnapshot Clone(PlatformFeatureSnapshot source)
         => JsonSerializer.Deserialize<PlatformFeatureSnapshot>(JsonSerializer.Serialize(source))!;
+
+    [Fact]
+    public void Vacancy_apply_gate_waits_for_profile_load_before_blocked_panel()
+    {
+        var detail = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
+        var blockedAt = detail.IndexOf("data-testid=\"apply-profile-blocked\"", StringComparison.Ordinal);
+        Assert.True(blockedAt > 0);
+        var prefix = detail[..blockedAt];
+        Assert.Contains("_candidateApplyGateLoaded", prefix, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"apply-profile-gate-loading\"", detail, StringComparison.Ordinal);
+    }
 
     private static string FindRoot()
     {

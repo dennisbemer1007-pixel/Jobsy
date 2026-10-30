@@ -5,7 +5,7 @@
     "use strict";
 
     var STORAGE_PREFIX = "lobsy.sessionDraft:";
-    var DEFAULT_MINUTES = 30;
+    var DEFAULT_MINUTES = 480;
     var REFRESH_MS = 60 * 1000;
     var ACTIVITY_THROTTLE_MS = 5 * 1000;
     var SENSITIVE_RE = /(iban|password|passwd|secret|token|cvv|ssn|bsn|vat|btw|credit.?card|card.?number)/i;
@@ -165,7 +165,53 @@
         }
     }
 
+    function sessionActivityOk(r) {
+        return r && r.status !== 401 && r.headers.get("X-Jobsy-Session") !== "expired";
+    }
+
+    function fetchSessionActivity(method) {
+        return fetch("/account/session-activity", {
+            method: method || "GET",
+            credentials: "same-origin",
+            headers: { "Accept": "application/json" }
+        });
+    }
+
+    function reconnectUiActive() {
+        try {
+            if (window.lobsyIsReconnectActive && window.lobsyIsReconnectActive()) {
+                return true;
+            }
+        } catch (e) { }
+        var m = document.getElementById("components-reconnect-modal");
+        if (!m || !m.classList) {
+            return false;
+        }
+        return (
+            m.classList.contains("components-reconnect-show")
+            || m.classList.contains("components-reconnect-retrying")
+            || m.classList.contains("components-reconnect-failed")
+            || m.classList.contains("components-reconnect-rejected")
+            || m.classList.contains("components-reconnect-paused")
+        );
+    }
+
+    /** Avoid logout on a single transient 401 (mobile reconnect / token refresh). */
+    function confirmSessionExpiredThenLogout() {
+        if (reconnectUiActive()) {
+            return;
+        }
+        fetchSessionActivity("GET").then(function (r) {
+            if (!sessionActivityOk(r)) {
+                forceSessionExpiredLogout();
+            }
+        }).catch(function () { });
+    }
+
     function forceSessionExpiredLogout() {
+        if (reconnectUiActive()) {
+            return;
+        }
         if (expiring) {
             return;
         }
@@ -190,8 +236,21 @@
         }
     }
 
+    function circuitReadyForSessionBeacons() {
+        try {
+            if (window.lobsyCircuit && typeof window.lobsyCircuit.isReadyForAction === "function") {
+                return window.lobsyCircuit.isReadyForAction();
+            }
+        } catch (e) { }
+        return !reconnectUiActive();
+    }
+
     function onActivity() {
         if (!started || expiring) {
+            return;
+        }
+        if (!circuitReadyForSessionBeacons()) {
+            scheduleIdle();
             return;
         }
         var now = Date.now();
@@ -202,14 +261,9 @@
         lastActivityFlush = now;
         scheduleIdle();
         try {
-            fetch("/account/session-activity", {
-                method: "POST",
-                credentials: "same-origin",
-                headers: { "Accept": "application/json" },
-                keepalive: true
-            }).then(function (r) {
-                if (r.status === 401 || r.headers.get("X-Jobsy-Session") === "expired") {
-                    forceSessionExpiredLogout();
+            fetchSessionActivity("POST").then(function (r) {
+                if (!sessionActivityOk(r)) {
+                    confirmSessionExpiredThenLogout();
                 }
             }).catch(function () { });
         } catch (e) {
@@ -225,41 +279,30 @@
         if (document.visibilityState === "hidden") {
             return;
         }
-        var urls = ["/account/session-security"];
-        if (apiBaseUrl) {
-            urls.push(String(apiBaseUrl).replace(/\/?$/, "/") + "api/settings/session-security");
+        if (!circuitReadyForSessionBeacons()) {
+            return;
         }
-
-        function tryNext(index) {
-            if (index >= urls.length) {
-                return;
-            }
-            fetch(urls[index], { credentials: "same-origin" })
-                .then(function (r) {
-                    if (!r.ok) {
-                        throw new Error("timeout fetch failed");
-                    }
-                    return r.json();
-                })
-                .then(function (data) {
-                    var minutes = Number(data && data.inactivityTimeoutMinutes);
-                    if (!Number.isFinite(minutes) || minutes < 5) {
-                        minutes = DEFAULT_MINUTES;
-                    }
-                    if (minutes > 480) {
-                        minutes = 480;
-                    }
-                    if (minutes !== timeoutMinutes) {
-                        timeoutMinutes = minutes;
-                        scheduleIdle();
-                    }
-                })
-                .catch(function () {
-                    tryNext(index + 1);
-                });
-        }
-
-        tryNext(0);
+        fetch("/account/session-security", { credentials: "same-origin" })
+            .then(function (r) {
+                if (!r.ok) {
+                    throw new Error("timeout fetch failed");
+                }
+                return r.json();
+            })
+            .then(function (data) {
+                var minutes = Number(data && data.inactivityTimeoutMinutes);
+                if (!Number.isFinite(minutes) || minutes < 5) {
+                    minutes = DEFAULT_MINUTES;
+                }
+                if (minutes > 480) {
+                    minutes = 480;
+                }
+                if (minutes !== timeoutMinutes) {
+                    timeoutMinutes = minutes;
+                    scheduleIdle();
+                }
+            })
+            .catch(function () { });
     }
 
     function bindActivity() {
@@ -345,13 +388,12 @@
             if (document.visibilityState === "hidden") {
                 return Promise.resolve(true);
             }
-            return fetch("/account/session-activity", {
-                method: "GET",
-                credentials: "same-origin",
-                headers: { "Accept": "application/json" }
-            }).then(function (r) {
-                if (r.status === 401 || r.headers.get("X-Jobsy-Session") === "expired") {
-                    forceSessionExpiredLogout();
+            return fetchSessionActivity("GET").then(function (r) {
+                if (!sessionActivityOk(r)) {
+                    if (reconnectUiActive()) {
+                        return true;
+                    }
+                    confirmSessionExpiredThenLogout();
                     return false;
                 }
                 return true;
@@ -371,6 +413,49 @@ window.jobsyDownload = {
     document.body.appendChild(a);
     a.click();
     a.remove();
+  },
+  /** Same-origin authenticated PDF/file download without leaving the Blazor page (PWA/mobile safe). */
+  file: async function (href) {
+    const res = await fetch(href, { credentials: "include", cache: "no-store" });
+    if (!res.ok) {
+      let detail = "";
+      try {
+        detail = (await res.text()).slice(0, 160);
+      } catch (_) {
+        /* ignore */
+      }
+      throw new Error("download_failed:" + res.status + (detail ? ":" + detail : ""));
+    }
+    const blob = await res.blob();
+    if (!blob || blob.size < 32) {
+      throw new Error("download_empty");
+    }
+    let filename = "download.pdf";
+    const cd = res.headers.get("Content-Disposition") || "";
+    const star = /filename\*=UTF-8''([^;\n]+)/i.exec(cd);
+    if (star) {
+      try {
+        filename = decodeURIComponent(star[1].replace(/"/g, "").trim());
+      } catch (_) {
+        filename = star[1].trim();
+      }
+    } else {
+      const plain = /filename="?([^";\n]+)"?/i.exec(cd);
+      if (plain) {
+        filename = plain[1].trim();
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 60000);
   },
   text: function (filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType || "text/plain;charset=utf-8" });

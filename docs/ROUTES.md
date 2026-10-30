@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (260 routes)
+## Table (318 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -124,7 +124,9 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ambassadeur/payout-checkout` | `Pages/Ambassadeur/PayoutCheckoutStub.razor` | Ambassadeur |
 | `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
-| `/banenkaart` | `Pages/Banenkaart.razor` | anonymous |
+| `/banenkaart` | `Pages/BanenkaartSsr.razor` | anonymous |
+| `/bedrijvenkaart` | `Pages/Bedrijvenkaart.razor` | anonymous |
+| `/bedrijvenkaart/ssr` | `Pages/BedrijvenkaartSsr.razor` | anonymous |
 | `/branch` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/applicants` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/culture` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -134,7 +136,21 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/bronnen` | `Pages/Legal/Bronnen.razor` | anonymous |
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
-| `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/adviseur-werk` | `Pages/Candidate/AdviseurWerk.razor` | Candidate |
+| `/candidate/applications` | `Pages/Candidate/CandidateApplicationsSsr.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/applications/{ApplicationId:guid}/after-match/bevestiging` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/bevestiging-ssr` | `Pages/Candidate/CandidateAfterMatchBevestigingSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/blazor` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/cancelled-ssr` | `Pages/Candidate/CandidateAfterMatchCancelledSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/confirmed-ssr` | `Pages/Candidate/CandidateAfterMatchConfirmedSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/herinneringen` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/herinneringen-ssr` | `Pages/Candidate/CandidateAfterMatchHerinneringenSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/messages-ssr` | `Pages/Candidate/CandidateAfterMatchMessagesSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/outcome-ssr` | `Pages/Candidate/CandidateAfterMatchPanelSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/panel-ssr` | `Pages/Candidate/CandidateAfterMatchPanelSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/pick-slot-ssr` | `Pages/Candidate/CandidateAfterMatchPickSlotSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/reschedule-ssr` | `Pages/Candidate/CandidateAfterMatchRescheduleSsr.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/after-match/wait-ssr` | `Pages/Candidate/CandidateAfterMatchWaitSsr.razor` | Candidate |
 | `/candidate/beroep/{EscoId:guid}/dag` | `Pages/Candidate/OccupationDayPage.razor` | Candidate |
 | `/candidate/binnenkort` | `Pages/Candidate/CandidateBinnenkort.razor` | Candidate |
 | `/candidate/career` | `Pages/Candidate/CareerTest.razor` | Candidate |
@@ -144,29 +160,49 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/deep-analysis/checkout` | `Pages/Candidate/DeepAnalysisCheckout.razor` | Candidate |
 | `/candidate/deep-analysis/{Kind}` | `Pages/Candidate/DeepAnalysis.razor` | Candidate |
 | `/candidate/disc` | `Pages/Candidate/CultureScan.razor` | Candidate |
-| `/candidate/external/add` | `Pages/Candidate/ExternalVacancyAdd.razor` | Candidate |
-| `/candidate/external/{Id:guid}` | `Pages/Candidate/ExternalVacancyDetail.razor` | Candidate |
+| `/candidate/external/add` | `Pages/Candidate/CandidateExternalVacancyAddSsr.razor` | Candidate |
+| `/candidate/external/{Id:guid}` | `Pages/Candidate/CandidateExternalVacancyDetailSsr.razor` | Candidate |
 | `/candidate/external/{Id:guid}/apply` | `Pages/Candidate/ExternalVacancyApply.razor` | Candidate |
+| `/candidate/gevoelig-demo` | `Pages/Candidate/GevoeligDemo.razor` | Candidate |
+| `/candidate/gevoelig-demo/{Screen}` | `Pages/Candidate/GevoeligDemo.razor` | Candidate |
 | `/candidate/hoe-werkt-lobsy` | `Pages/Candidate/HowLobsyWorks.razor` | Candidate |
 | `/candidate/home` | `Pages/Candidate/CandidateHomeRedirect.razor` | Candidate |
-| `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
-| `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
-| `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
-| `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
+| `/candidate/kandidatenkaart-instellingen` | `Pages/Candidate/CandidateKandidatenkaartSettings.razor` | Candidate |
+| `/candidate/kompas` | `Pages/Candidate/CandidateKompasSsr.razor` | Candidate |
+| `/candidate/liked` | `Pages/Candidate/CandidateLikedSsr.razor` | anonymous |
+| `/candidate/match` | `Pages/Candidate/CandidateMatchSsr.razor` | anonymous |
+| `/candidate/match/blazor` | `Pages/Candidate/MatchPage.razor` | anonymous |
+| `/candidate/ondernemerscheck` | `Pages/Candidate/OndernemersCheck.razor` | Candidate |
+| `/candidate/ontdekkingsreis` | `Pages/Candidate/CandidateDiscoverySsr.razor` | Candidate |
+| `/candidate/paspoort` | `Pages/Candidate/CandidatePassportSsr.razor` | Candidate |
+| `/candidate/paspoort/referentie/vraag/{EntryId:guid}` | `Pages/Candidate/ReferenceVerificationRequestPage.razor` | Candidate |
+| `/candidate/paspoort/referenties/{RequestId:guid}` | `Pages/Candidate/ReferenceVerificationDetailPage.razor` | Candidate |
+| `/candidate/passport` | `Pages/Candidate/CandidatePassportRedirect.razor` | any (no Authorize attribute) |
 | `/candidate/privacy` | `Pages/Candidate/CandidatePrivacy.razor` | Candidate |
 | `/candidate/proactive-matching` | `Pages/Candidate/ProactiveMatching.razor` | Candidate |
-| `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
+| `/candidate/profile` | `Pages/Candidate/CandidateProfileSsr.razor` | Candidate |
+| `/candidate/profile/bewerken` | `Pages/Candidate/CandidateProfileBewerkenSsr.razor` | Candidate |
+| `/candidate/profile/bewerken/legacy` | `Pages/Candidate/Profile.razor` | Candidate |
 | `/candidate/research-consent` | `Pages/Candidate/ResearchConsentFinish.razor` | Candidate |
-| `/candidate/settings` | `Pages/Candidate/CandidateSettings.razor` | Candidate |
+| `/candidate/settings` | `Pages/Candidate/CandidateSettingsSsr.razor` | Candidate |
 | `/candidate/share-in` | `Pages/Candidate/ShareIn.razor` | anonymous |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
-| `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
+| `/candidate/start` | `Pages/Candidate/OnboardingStartSsr.razor` | Candidate |
+| `/candidate/start/kompas` | `Pages/Candidate/OnboardingKompasReadySsr.razor` | Candidate |
+| `/candidate/start/nearby` | `Pages/Candidate/OnboardingStartNearbyRedirect.razor` | any (no Authorize attribute) |
+| `/candidate/start/preview-strand` | `Pages/Candidate/OnboardingStartStrandPreviewSsr.razor` | Candidate |
+| `/candidate/start/wizard` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
 | `/candidate/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/candidate/uren` | `Pages/Candidate/MaqqieHours.razor` | Candidate |
 | `/candidate/vacancies` | `Pages/Candidate/Vacancies.razor` | Candidate |
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
-| `/carriere` | `Pages/Candidate/CareerDashboard.razor` | Candidate |
+| `/candidate/wat-drijft-jou` | `Pages/Candidate/WatDrijftJou.razor` | Candidate |
+| `/carriere` | `Pages/Candidate/CandidateCareerSsr.razor` | Candidate |
+| `/carriere/leren` | `Pages/Candidate/CareerLearnGrow.razor` | Candidate |
+| `/contact` | `Pages/Legal/Contact.razor` | anonymous |
+| `/deel/uwv-adviseur/{Token}` | `Pages/Public/UwvAdviseurDeel.razor` | anonymous |
+| `/dev/na-de-match/{ScreenId}` | `Pages/Dev/NaDeMatchPreview.razor` | any (no Authorize attribute) |
 | `/dna` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/employer/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/employer/company` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -191,18 +227,20 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/hoe-werkt-lobsy` | `Pages/HowLobsyWorks.razor` | anonymous |
 | `/home` | `Pages/RoleHome.razor` | authenticated |
 | `/home/metrics/{Key}` | `Pages/MetricDrilldownPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
-| `/info/onderzoek` | `Pages/Legal/Onderzoek.razor` | any (no Authorize attribute) |
+| `/info/onderzoek` | `Pages/Legal/Onderzoek.razor` | anonymous |
 | `/intermediary` | `Pages/Intermediary/IntermediaryDashboard.razor` | Intermediary |
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
 | `/koppeling/sleutel` | `Pages/Public/ApiKeyReveal.razor` | anonymous |
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
 | `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
-| `/leerling/droombaan` | `Pages/Leerling/LeerlingDroombaan.razor` | authenticated |
 | `/leerling/eiland` | `Pages/Leerling/LeerlingEiland.razor` | authenticated |
+| `/leerling/paspoort` | `Pages/Leerling/LeerlingPaspoort.razor` | authenticated |
+| `/leerling/puzzel/{Key}` | `Pages/Leerling/LeerlingPuzzel.razor` | authenticated |
 | `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
 | `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | authenticated |
 | `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
+| `/leerling/vo-paspoort` | `Pages/Leerling/LeerlingVoPaspoort.razor` | authenticated |
 | `/leraar` | `Pages/Leraar/LeraarDashboard.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}` | `Pages/Leraar/LeraarKlasOverview.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/code/{CodeId:guid}` | `Pages/Leraar/LeraarCodeDetail.razor` | Teacher, SchoolAdmin |
@@ -214,13 +252,18 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/login` | `Pages/Login.razor` | anonymous |
 | `/mail/afmelden` | `Pages/Public/MailUnsubscribe.razor` | anonymous |
 | `/melden` | `Pages/Public/Melden.razor` | anonymous |
+| `/notifications` | `Pages/Notifications.razor` | authenticated |
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
+| `/preview/bedrijvenkaart/{Screen}` | `Pages/__Preview/BedrijvenkaartScreens.razor` | anonymous |
+| `/preview/na-de-match/{ScreenId}` | `Pages/__Preview/NaDeMatchAccPreviewScreens.razor` | anonymous |
+| `/preview/uwv-mockups` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
+| `/preview/uwv-mockups/{Screen}` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
-| `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
+| `/profiel` | `Pages/Candidate/CandidateProfileSsr.razor` | Candidate |
 | `/profiel/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/profiel/tests/{TestKey}` | `Pages/Candidate/TestDetail.razor` | Candidate |
 | `/referentie/{Token}` | `Pages/Public/ReferenceConfirmationPage.razor` | anonymous |
@@ -269,9 +312,13 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
 | `/vestiging/{CompanyId:guid}` | `Pages/VestigingLanding.razor` | anonymous |
 | `/wachtwoord-vergeten` | `Pages/Account/ForgotPassword.razor` | anonymous |
+| `/werk-referentie/{Token}` | `Pages/Public/WorkExperienceReferencePublicPage.razor` | anonymous |
 | `/werkgever` | `Pages/Werkgever/WerkgeverDashboard.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/kandidaatinzichten` | `Pages/Werkgever/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
+| `/werkgever/kandidatenkaart` | `Pages/Werkgever/Kandidatenkaart.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/koppelingen` | `Pages/Werkgever/Koppelingen.razor` | EnterpriseManager, Admin |
+| `/werkgever/meldingen` | `Pages/Werkgever/Meldingen.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/open-voor-initiatief` | `Pages/Werkgever/OpenForInitiative.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/organisatie/profiel` | `Pages/Werkgever/CompanyProfile.razor` | BranchManager, EnterpriseManager, Admin, Intermediary |
 | `/werkgever/organisatie/salaristabellen` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/organisatie/salaristabellen/{TableId:guid}` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
@@ -280,8 +327,17 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/overnames` | `Pages/Werkgever/Takeovers.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/partner` | `Pages/Werkgever/PartnerSales.razor` | EnterpriseManager, Intermediary |
 | `/werkgever/partner/uitbetalen` | `Pages/Werkgever/PartnerSalesPayoutCheckoutStub.razor` | EnterpriseManager, Intermediary |
-| `/werkgever/sollicitaties` | `Pages/Werkgever/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties` | `Pages/Werkgever/WerkgeverSollicitatiesEntry.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/initiatieven` | `Pages/Werkgever/InitiativeApplications.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/pipeline` | `Pages/Werkgever/Applicants.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/sollicitaties/{ApplicationId:guid}` | `Pages/Werkgever/ApplicationCandidate.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/blazor` | `Pages/Werkgever/WerkgeverAfterMatch.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/cancel-ssr` | `Pages/Werkgever/WerkgeverAfterMatchCancelSsr.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/messages-ssr` | `Pages/Werkgever/WerkgeverAfterMatchMessagesSsr.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/outcome-ssr` | `Pages/Werkgever/WerkgeverAfterMatchOutcomeSsr.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/panel-ssr` | `Pages/Werkgever/WerkgeverAfterMatchPanelSsr.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/propose-ssr` | `Pages/Werkgever/WerkgeverAfterMatchProposeSsr.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/reschedule-ssr` | `Pages/Werkgever/WerkgeverAfterMatchRescheduleSsr.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/talentpool` | `Pages/Werkgever/TalentPool.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/te-doen` | `Pages/Werkgever/TeDoen.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/tokens` | `Pages/Werkgever/Tokens.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
@@ -291,12 +347,14 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/uren` | `Pages/Werkgever/MaqqieHoursApprove.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
-| `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | `Pages/Werkgever/ProactiveVacancyShortlistPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | `Pages/Werkgever/ProactiveVacancyShortlistPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/werkgevers/binnenkort` | `Pages/WerkgeversBinnenkort.razor` | anonymous |
 | `/werven/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/westland` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
+| `/__test/capture-test-block` | `Pages/__Test/CaptureTestBlockPreview.razor` | Candidate |
+| `/__test/pwa-vacancy-apply-success` | `Pages/__Test/PwaVacancyApplySuccessPreview.razor` | any (no Authorize attribute) |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 

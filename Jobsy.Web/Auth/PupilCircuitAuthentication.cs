@@ -40,6 +40,40 @@ public sealed class PupilApiTicketStore
 }
 
 /// <summary>
+/// Server-side copy of the opaque API parent passport ticket, keyed by pupil code id.
+/// The Blazor circuit has no request cookies, so <see cref="Jobsy.Web.Services.JobsyApiAuthHandler"/>
+/// reads the ticket from here after <see cref="PupilCircuitAuthenticationMiddleware"/> captured it
+/// on <c>/_blazor</c>.
+/// </summary>
+public sealed class ParentApiTicketStore
+{
+    private readonly ConcurrentDictionary<string, string> _byCode = new(StringComparer.Ordinal);
+
+    public void Set(string? pupilCodeId, string? ticket)
+    {
+        if (string.IsNullOrWhiteSpace(pupilCodeId) || string.IsNullOrWhiteSpace(ticket))
+        {
+            return;
+        }
+
+        _byCode[pupilCodeId] = ticket;
+    }
+
+    public string? Get(string? pupilCodeId)
+        => !string.IsNullOrWhiteSpace(pupilCodeId) && _byCode.TryGetValue(pupilCodeId, out var ticket)
+            ? ticket
+            : null;
+
+    public void Remove(string? pupilCodeId)
+    {
+        if (!string.IsNullOrWhiteSpace(pupilCodeId))
+        {
+            _byCode.TryRemove(pupilCodeId, out _);
+        }
+    }
+}
+
+/// <summary>
 /// <see cref="Microsoft.AspNetCore.Components.Server.ServerAuthenticationStateProvider"/> copies
 /// <see cref="HttpContext.User"/> from the <c>/_blazor</c> connection. That request authenticates
 /// only the staff cookie, so a pupil is anonymous in the circuit and
@@ -67,6 +101,19 @@ public sealed class PupilCircuitAuthenticationMiddleware
                 var codeId = pupil.Principal.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
                 var ticket = PupilApiSessionCookie.Read(context);
                 context.RequestServices.GetService<PupilApiTicketStore>()?.Set(codeId, ticket);
+            }
+            else
+            {
+                var parent = await context.AuthenticateAsync(ParentPassportAuthDefaults.Scheme);
+                if (parent.Succeeded
+                    && parent.Principal?.Identity?.IsAuthenticated == true
+                    && global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(parent.Principal))
+                {
+                    context.User = parent.Principal;
+                    var codeId = parent.Principal.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+                    var ticket = ParentApiSessionCookie.Read(context);
+                    context.RequestServices.GetService<ParentApiTicketStore>()?.Set(codeId, ticket);
+                }
             }
         }
 

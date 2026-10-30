@@ -52,6 +52,8 @@ public class HonestAdviceTests
     [Fact]
     public void Seed_is_grounded_and_avoids_forbidden_words()
     {
+        Jobsy.Core.Localization.JobsyLanguages.ResetEnabledForTests();
+        HonestAdviceService.ResetSharedForTests();
         Assert.True(HonestAdviceService.Shared.Ids.Count >= 5);
         foreach (var id in HonestAdviceService.Shared.Ids)
         {

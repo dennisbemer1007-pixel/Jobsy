@@ -46,7 +46,6 @@ else if (_empty && !_redirectSchoolAdmin)
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (_disabled)
         {
@@ -73,6 +72,7 @@ else if (_empty && !_redirectSchoolAdmin)
             }
 
             Nav.NavigateTo($"/leraar/klas/{classes[0].Id:D}", replace: true);
+            return;
         }
         catch (Exception ex)
         {

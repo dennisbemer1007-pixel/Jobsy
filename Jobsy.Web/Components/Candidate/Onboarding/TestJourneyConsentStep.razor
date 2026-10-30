@@ -1,0 +1,78 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="ob-journey" data-testid="test-journey-consent">
+    <p class="ob-journey__privacy">
+        <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+        @Culture["Passport.PrivacyPromise"]
+    </p>
+
+    <div class="ob-journey__art-block">
+        <div class="ob-journey__promise">
+            <h1 tabindex="-1" class="ob-journey__title">@Culture["Onboarding.Journey.Headline"]</h1>
+            <p class="ob-journey__lead">@Culture["Onboarding.Journey.Subline"]</p>
+        </div>
+        <div class="ob-journey__hero" aria-hidden="true">
+            <picture>
+                <source srcset="/images/onboarding/wie-ben-jij-reis-lobsy.webp" type="image/webp" />
+                <img class="ob-journey__art"
+                     src="/images/onboarding/wie-ben-jij-reis-lobsy.jpg"
+                     alt=""
+                     width="1280"
+                     height="720"
+                     decoding="async"
+                     aria-hidden="true" />
+            </picture>
+        </div>
+    </div>
+
+    <ol class="ob-journey__stations ob-journey__stations--grid" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
+        @foreach (var station in Stations)
+        {
+            @StationItem(station)
+        }
+    </ol>
+
+    <ol class="ob-journey__stations ob-journey__stations--mobile" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
+        @foreach (var station in Stations)
+        {
+            @StationItem(station)
+        }
+    </ol>
+</section>
+
+@code {
+    public sealed record Station(int Step, string TitleKey, string BenefitKey);
+
+    [Parameter, EditorRequired] public IReadOnlyList<int> CompletedSteps { get; set; } = [];
+    [Parameter] public int NextStep { get; set; } = 7;
+
+    private static readonly Station[] Stations =
+    [
+        new(7, "Onboarding.Test.Competency", "Onboarding.Journey.Benefit.Work"),
+        new(8, "Onboarding.Test.Career", "Onboarding.Journey.Benefit.Fun"),
+        new(9, "Onboarding.Test.Culture", "Onboarding.Journey.Benefit.Vibe"),
+        new(10, "Onboarding.Test.Values", "Onboarding.Journey.Benefit.Values")
+    ];
+
+    private RenderFragment StationItem(Station station) => __builder =>
+    {
+        var state = StationState(station.Step);
+        <li class="ob-journey__item ob-journey__item--@state.Css">
+            <p class="ob-journey__name">
+                <JourneyStationMark Status="@state.Css" />
+                <span class="ob-journey__name-text">@Culture[station.TitleKey]</span>
+            </p>
+            <p class="ob-journey__benefit">@Culture[station.BenefitKey]</p>
+        </li>;
+    };
+
+    private (bool Done, bool Next, string Css) StationState(int step)
+    {
+        var done = CompletedSteps.Contains(step);
+        var next = !done && step == NextStep;
+        var css = done ? "done" : next ? "next" : "todo";
+        return (done, next, css);
+    }
+}

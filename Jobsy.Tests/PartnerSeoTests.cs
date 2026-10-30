@@ -71,7 +71,7 @@ public class PartnerSeoTests
     }
 }
 
-file sealed class PartnerSeoWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class PartnerSeoWebFactory : WebWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

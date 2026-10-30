@@ -669,7 +669,9 @@ public class CompaniesController : ControllerBase
             company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod,
             company.RequireEmailVerificationForApplications,
-            company.VerificationStatus.ToString());
+            company.VerificationStatus.ToString(),
+            company.Location?.Latitude,
+            company.Location?.Longitude);
 
     /// <summary>
     /// Intermediaries may change or view billing/contact/email-check only on their own organisation,

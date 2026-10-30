@@ -1,0 +1,133 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Onboarding
+@using Microsoft.AspNetCore.Antiforgery
+@inject IJSRuntime Js
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@implements IAsyncDisposable
+
+<div class="ob-client-step ob-fields ob-fields--illustrated"
+     data-ob-client-step="@Step"
+     data-initial="@_initialJson"
+     data-ob-antiforgery-header="@_antiforgeryHeader"
+     data-ob-antiforgery-token="@_antiforgeryToken"
+     data-ob-ssr-values="1"
+     data-testid="@($"onboarding-step-{Step}-illustrated")"
+     @ref="_root">
+    @((MarkupString)OnboardingClientStepShells.Build(Step, Culture, Draft))
+</div>
+
+@code {
+    [Parameter] public int Step { get; set; }
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public IReadOnlyList<(string Code, string TitleKey, string LeadKey)> Presets { get; set; } = [];
+    [Parameter] public OnboardingClientStepSeed? Seed { get; set; }
+
+    private ElementReference _root;
+    private string _initialJson = "{}";
+    private string _antiforgeryHeader = "RequestVerificationToken";
+    private string _antiforgeryToken = "";
+    private bool _mounted;
+    private bool _markupLocked;
+    private bool _pendingUnmount;
+    private int _lastStep;
+
+    protected override void OnParametersSet()
+    {
+        if (_lastStep != Step)
+        {
+            if (_mounted)
+            {
+                _pendingUnmount = true;
+            }
+
+            _lastStep = Step;
+            _mounted = false;
+            _markupLocked = false;
+        }
+
+        _initialJson = OnboardingClientStepInitialState.Build(Step, Draft, Culture, Presets, Seed);
+
+        var http = HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryHeader = tokens.HeaderName ?? "RequestVerificationToken";
+            _antiforgeryToken = tokens.RequestToken ?? "";
+        }
+    }
+
+    /// <summary>Lock static shell after first paint so parent re-renders do not wipe client DOM before/during mount.</summary>
+    protected override bool ShouldRender() => !_markupLocked;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!_markupLocked)
+        {
+            _markupLocked = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingUnmount)
+        {
+            _pendingUnmount = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
+            }
+            catch (JSException)
+            {
+            }
+        }
+
+        if (_mounted)
+        {
+            return;
+        }
+
+        try
+        {
+            await WaitForClientScriptAsync();
+            await Js.InvokeVoidAsync("jobsyOnboardingClient.mount", _root, Step);
+            _mounted = true;
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    private async Task WaitForClientScriptAsync()
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            try
+            {
+                var ready = await Js.InvokeAsync<bool>("jobsyOnboardingClient.isReady");
+                if (ready)
+                {
+                    return;
+                }
+            }
+            catch (JSException)
+            {
+            }
+
+            await Task.Delay(50);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyOnboardingClient.unmount", _root);
+        }
+        catch
+        {
+        }
+    }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

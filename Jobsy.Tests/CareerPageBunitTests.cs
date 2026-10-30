@@ -15,6 +15,17 @@ namespace Jobsy.Tests;
 
 public class CareerPageBunitTests : BunitContext
 {
+    private readonly AmbientCultureScope _cultureScope = new();
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _cultureScope.Dispose();
+        }
+    }
+
     public CareerPageBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -276,7 +287,7 @@ public class CareerPageBunitTests : BunitContext
         Assert.DoesNotContain("career-mobile-bar", cut.Markup, StringComparison.Ordinal);
 
         var dashboard = File.ReadAllText(Path.Combine(
-            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CareerDashboard.razor"));
+            RepoRoot(), "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerSsr.razor"));
         Assert.DoesNotContain("career-mobile-bar", dashboard, StringComparison.Ordinal);
     }
 

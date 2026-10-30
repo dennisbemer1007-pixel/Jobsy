@@ -36,5 +36,6 @@ public sealed class SchoolsFeatureMiddleware
     private static bool IsGated(string path)
         => path.StartsWith("/api/school", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/api/teacher", StringComparison.OrdinalIgnoreCase)
-           || path.StartsWith("/api/pupil", StringComparison.OrdinalIgnoreCase);
+               || path.StartsWith("/api/pupil", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/api/parent", StringComparison.OrdinalIgnoreCase);
 }

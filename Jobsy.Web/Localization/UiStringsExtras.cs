@@ -33,6 +33,7 @@ internal static class UiStringsExtras
     private static Dictionary<string, string> Nl() => new(StringComparer.OrdinalIgnoreCase)
     {
         ["Common.Cancel"] = "Annuleren",
+        ["Common.Change"] = "Wijzigen",
         ["Common.Back"] = "Terug",
         ["Common.Next"] = "Verder",
         ["Common.Confirm"] = "Bevestigen",
@@ -159,8 +160,8 @@ internal static class UiStringsExtras
         ["Register.Activated"] = "Welkom, {0} — je account is actief.",
         ["Register.CelebrateTitle"] = "Geslaagd!",
         ["Register.CelebrateLead"] = "Hoi {0}, je kunt direct aan de slag.",
-        ["Register.CelebrateToken"] = "Je krijgt van ons je eerste token helemaal gratis — daarmee plaats je meteen je eerste vacature.",
-        ["Register.CelebrateFreePublish"] = "Vacatures plaatsen is gratis t/m {0}. Highlight en PushBom blijven betaald.",
+        ["Register.CelebrateToken"] = "Na verificatie kun je — als je in aanmerking komt — één welkomsttoken gebruiken voor je eerste vacature.",
+        ["Register.CelebrateFreePublish"] = "Vacatures plaatsen is gratis t/m {0}. Highlight en Push bom blijven betaald.",
         ["Register.CelebrateReady"] = "Je account is klaar — plaats je eerste vacature wanneer je wilt.",
         ["Register.WelcomeToken"] = "Je hebt 1 welkomsttoken ontvangen. Daarmee plaats je je eerste vacature gratis.",
         ["Register.Role"] = "Rol: {0}",
@@ -526,6 +527,7 @@ internal static class UiStringsExtras
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
     {
         ["Common.Cancel"] = "Cancel",
+        ["Common.Change"] = "Change",
         ["Common.Back"] = "Back",
         ["Common.Next"] = "Next",
         ["Common.Confirm"] = "Confirm",

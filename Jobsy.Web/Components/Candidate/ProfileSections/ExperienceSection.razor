@@ -6,8 +6,14 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
+@using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Models
+@using Jobsy.Web.Services
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject JobsyApiClient Api
 
                             <fieldset class="profile-employers">
                                 <legend>@Culture["Profile.Experience"]</legend>
@@ -41,20 +47,25 @@
                                                 <MonthYearInput Value="@Editor.Employers[idx].StartMonth"
                                                                 ValueChanged="value => Editor.SetEmployerStartMonth(idx, value)" />
                                             </label>
-                                            <label class="ob-wizard__check">
+                                            @if (Editor.Employers[idx].ShowsAsCurrent)
+                                            {
+                                                <p class="profile-employer-card__present">@Culture["Profile.EmployerPresent"]</p>
+                                            }
+                                            else
+                                            {
+                                                <label class="profile-employer-card__field profile-employer-card__field--end">
+                                                    <span>@Culture["Profile.EmployerTo"]</span>
+                                                    <MonthYearInput Value="@Editor.Employers[idx].EndMonth"
+                                                                    ReferenceMonth="@Editor.Employers[idx].StartMonth"
+                                                                    ValueChanged="value => Editor.SetEmployerEndMonth(idx, value)" />
+                                                </label>
+                                            }
+                                            <label class="profile-employer-card__current-inline">
                                                 <input type="checkbox"
                                                        checked="@Editor.Employers[idx].ShowsAsCurrent"
                                                        @onchange="e => Editor.SetEmployerCurrent(idx, e.Value is true)" />
                                                 @Culture["Profile.CurrentJob"]
                                             </label>
-                                            @if (!Editor.Employers[idx].ShowsAsCurrent)
-                                            {
-                                                <label class="profile-employer-card__field profile-employer-card__field--end">
-                                                    <span>@Culture["Profile.EmployerTo"]</span>
-                                                    <MonthYearInput Value="@Editor.Employers[idx].EndMonth"
-                                                                    ValueChanged="value => Editor.SetEmployerEndMonth(idx, value)" />
-                                                </label>
-                                            }
                                         </div>
                                         <label class="profile-employer-card__field profile-employer-card__field--description">
                                             <span>@Culture["Profile.WhatDidYouDo"]</span>
@@ -105,6 +116,11 @@
                                                 }
                                             }
                                         }
+                                        @if (_refVerificationEnabled && _refVerificationEligible
+                                             && !string.IsNullOrWhiteSpace(Editor.Employers[idx].EmployerName))
+                                        {
+                                            <WorkExperienceReferenceAskLink EntryId="Editor.Employers[idx].EntryId" />
+                                        }
                                     </div>
                                 }
                                 <button type="button" class="icon-btn icon-btn--add" title="@Culture["Profile.AddEmployer"]" aria-label="@Culture["Profile.AddEmployer"]" @onclick="Editor.AddEmployer">
@@ -117,6 +133,20 @@
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
     [CascadingParameter] public CandidateKompasState? Kompas { get; set; }
+
+    private bool _refVerificationEnabled;
+    private bool _refVerificationEligible;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _refVerificationEnabled = flags.ReferenceVerificationEnabled;
+        if (_refVerificationEnabled)
+        {
+            Editor.EnsureEmployerEntryIds();
+            _refVerificationEligible = await Api.GetReferenceVerificationEligibleAsync();
+        }
+    }
 
     private string? EducationLabel
         => Editor.SelectedEducations.Count == 0
@@ -164,5 +194,6 @@
             row.StartMonth,
             row.EndMonth,
             row.IsCurrent,
-            row.EscoId);
+            row.EscoId,
+            row.EntryId);
 }

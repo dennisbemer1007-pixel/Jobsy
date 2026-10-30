@@ -13,6 +13,11 @@ namespace Jobsy.Web.Services;
 
 public sealed partial class JobsyApiClient
 {
+    private static readonly JsonSerializerOptions LikeJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public async Task<IReadOnlyList<VacancyListItem>> DiscoverVacanciesAsync(
         double? originLat,
         double? originLng,
@@ -191,6 +196,72 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<VacancyListItem?> GetVacancyMatchExplainAsync(
+        Guid vacancyId,
+        double? originLat = null,
+        double? originLng = null,
+        string transport = "Fiets",
+        CancellationToken ct = default)
+    {
+        var qs = $"transport={Uri.EscapeDataString(transport)}";
+        if (originLat is not null && originLng is not null)
+        {
+            qs += $"&originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<VacancyListItem>(
+                $"api/vacancies/{vacancyId:D}/match-explain?{qs}",
+                ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<BanenkaartCatalogHttpResult?> GetBanenkaartCatalogAsync(CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "api/vacancies/banenkaart-catalog");
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(90));
+        HttpResponseMessage response;
+        try
+        {
+            response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+        }
+        catch
+        {
+            return null;
+        }
+
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.NotModified)
+            {
+                return new BanenkaartCatalogHttpResult(null, response.Headers.ETag?.Tag, NotModified: true);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var body = await response.Content.ReadAsByteArrayAsync(ct);
+            if (body.Length == 0)
+            {
+                return null;
+            }
+
+            var etag = response.Headers.ETag?.Tag ?? response.Headers.ETag?.ToString();
+            return new BanenkaartCatalogHttpResult(body, etag, NotModified: false);
+        }
+    }
+
+    public readonly record struct BanenkaartCatalogHttpResult(byte[]? Body, string? ETag, bool NotModified);
+
     public async Task<IReadOnlyList<VacancyPinBootItem>> GetVacancyPinsAsync(
         string transport,
         int maxMinutes,
@@ -206,7 +277,7 @@ public sealed partial class JobsyApiClient
         double? minLng = null,
         double? maxLat = null,
         double? maxLng = null,
-        int? zoom = null,
+        double? zoom = null,
         CancellationToken ct = default)
     {
         var qs = $"transport={Uri.EscapeDataString(transport)}&maxMinutes={maxMinutes}";
@@ -263,9 +334,10 @@ public sealed partial class JobsyApiClient
             qs += $"&maxLng={maxLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         }
 
-        if (zoom is int z)
+        if (zoom is double zRaw && double.IsFinite(zRaw))
         {
-            qs += $"&zoom={z}";
+            var z = Math.Clamp((int)Math.Round(zRaw, MidpointRounding.AwayFromZero), 0, 22);
+            qs += $"&zoom={z.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
         }
 
         try
@@ -710,7 +782,10 @@ public sealed partial class JobsyApiClient
 
     public async Task<bool> GetLikedAsync(Guid vacancyId, CancellationToken ct = default)
     {
-        var result = await _http.GetFromJsonAsync<LikeStatus>($"api/vacancies/{vacancyId}/like", ct);
+        var result = await _http.GetFromJsonAsync<LikeStatus>(
+            $"api/vacancies/{vacancyId}/like",
+            LikeJsonOptions,
+            ct);
         return result?.Liked == true;
     }
 
@@ -719,16 +794,35 @@ public sealed partial class JobsyApiClient
         HttpResponseMessage response;
         if (liked)
         {
-            response = await _http.PostAsync($"api/vacancies/{vacancyId}/like", null, ct);
+            response = await _http.PostAsJsonAsync($"api/vacancies/{vacancyId}/like", new { }, ct);
         }
         else
         {
             response = await _http.DeleteAsync($"api/vacancies/{vacancyId}/like", ct);
         }
 
-        response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<LikeStatus>(cancellationToken: ct);
-        return result?.Liked == true;
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"Like mutation failed with {(int)response.StatusCode}.",
+                inner: null,
+                statusCode: response.StatusCode);
+        }
+
+        try
+        {
+            if (response.Content.Headers.ContentLength == 0)
+            {
+                return liked;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<LikeStatus>(LikeJsonOptions, ct);
+            return result?.Liked ?? liked;
+        }
+        catch (Exception)
+        {
+            return liked;
+        }
     }
 
     public async Task ShareVacancyAsync(

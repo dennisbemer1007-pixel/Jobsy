@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Werkgever;
@@ -78,6 +79,10 @@ public sealed class EmployerScopeState
     public bool InsightsLocked { get; private set; } = true;
 
     public event Action? Changed;
+
+    /// <summary>Nav labels during SSR before <see cref="Initialize"/> (NoBlazor list, first paint).</summary>
+    public EmployerRole DisplayRole(ClaimsPrincipal? user)
+        => Role ?? WerkgeverNav.ResolveRole(user) ?? EmployerRole.Bedrijfsmanager;
 
     private IReadOnlyDictionary<string, IReadOnlyList<Guid>> _scopeCompanyMap =
         new Dictionary<string, IReadOnlyList<Guid>>(StringComparer.OrdinalIgnoreCase);

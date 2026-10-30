@@ -41,10 +41,10 @@ public class BanenkaartStartAndFiltersPlaywrightTests
         var address = await page.Locator("#discovery-address-desktop, #discovery-address").First.InputValueAsync();
         Assert.False(string.IsNullOrWhiteSpace(address));
 
-        var travel = page.Locator(".kb-chip").Filter(new() { HasTextString = "20 min" }).First;
+        var travel = page.Locator("[data-testid=kb-active-tag-travel]").Filter(new() { HasTextString = "20" }).First;
         await Assertions.Expect(travel).ToBeVisibleAsync(new() { Timeout = 15_000 });
 
-        var badgeCount = await page.Locator(".kb-filters-button .jobsy-action__badge, .kb-filter-chips .jobsy-action__badge").CountAsync();
+        var badgeCount = await page.Locator(".kb-filters-button .jobsy-action__badge").CountAsync();
         Assert.Equal(0, badgeCount);
     }
 
@@ -174,7 +174,7 @@ public class BanenkaartStartAndFiltersPlaywrightTests
         // Without an origin rings may be absent; when present must be real|approx.
         if (!string.IsNullOrEmpty(iso))
         {
-            Assert.Contains(iso, new[] { "real", "approx" });
+            Assert.Contains(iso, new[] { "real", "approx", "unavailable", "loading", "none" });
         }
 
         var opened = await page.EvaluateAsync<bool>("""

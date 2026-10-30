@@ -1,18 +1,25 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Localization;
+using Jobsy.Web.Hosting;
 using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
-using Jobsy.Web.Hosting;
+using Jobsy.Web.Discovery;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
 using Jobsy.Web.Seo;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))
@@ -46,6 +53,10 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Services.Configure<Jobsy.Core.Options.SessionAuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.SessionAuthOptions.SectionName));
+builder.Services.Configure<Jobsy.Core.Options.AuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.AuthOptions.SectionName));
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>
@@ -80,7 +91,9 @@ builder.Services.AddRazorComponents()
         options.MaximumReceiveMessageSize = 2 * 1024 * 1024;
         // Mobile networks / brief background pauses: keep the circuit warmer than defaults.
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-        options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+        // Android/iOS can suspend the tab >60s without killing the auth cookie; allow longer silence
+        // before the server drops the circuit (retained disconnects still reconnect for 15 min).
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(90);
     });
 
 var circuitDetailedErrors = builder.Environment.IsDevelopment()
@@ -89,7 +102,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
 {
     // DetailedErrors only in Development and Acceptatie (Circuit__DetailedErrors=true).
     options.DetailedErrors = circuitDetailedErrors;
-    // Acc 27-09 §4: keep backgrounded mobile tabs longer; cap retained circuits on Starter RAM.
+    // Keep backgrounded mobile tabs reconnectable (min ~3 min is far below this cap).
+    // Requires a single web instance or sticky sessions: circuits live in process memory only.
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(15);
     options.DisconnectedCircuitMaxRetained = 100;
 });
@@ -133,9 +147,17 @@ builder.Services.AddHttpClient(Jobsy.Web.Auth.AuthApiClient.HttpClientName, clie
 builder.Services.AddSingleton<Jobsy.Web.Auth.AuthApiClient>();
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IReferenceVerificationFeatureGate, Jobsy.Web.Features.ReferenceVerificationFeatureGate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.ITestJourneyIllustrationGate, Jobsy.Web.Features.TestJourneyIllustrationGate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IChatContextGreetingGate, Jobsy.Web.Features.ChatContextGreetingGate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IOnboardingFinaleV2Gate, Jobsy.Web.Features.OnboardingFinaleV2Gate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IOnboardingRustigGate, Jobsy.Web.Features.OnboardingRustigGate>();
+builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
+builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Pwa.PwaInstallSheetState>();
 builder.Services.AddScoped<Jobsy.Web.Services.ReadAloudCoordinator>();
 // E7: the only place that turns an exception into text a visitor may read.
 builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
@@ -146,6 +168,8 @@ builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
     Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
 builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.FeatureFlagEmployersSwitch>();
+builder.Services.AddScoped<Jobsy.Web.UwvFeatures.IUwvFeaturesGate, Jobsy.Web.UwvFeatures.UwvFeaturesGate>();
+builder.Services.AddSingleton<Jobsy.Web.UwvFeatures.IUwvKansberoepenCatalog, Jobsy.Web.UwvFeatures.UwvKansberoepenCatalog>();
 builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.Hosting.ErrorChromeProvider>();
 builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
 builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
@@ -183,9 +207,12 @@ builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.MeGetCache>();
+builder.Services.AddScoped<Jobsy.Web.Services.DiscoveryOverviewCache>();
+builder.Services.AddScoped<Jobsy.Web.Discovery.DiscoverySsrDepthStore>();
 builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
+builder.Services.AddScoped<Jobsy.Web.Services.RoleNavItemsState>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.CoachTipBus>();
 builder.Services.AddScoped<Jobsy.Web.Services.LeerlingCoachHint>();
@@ -241,6 +268,23 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.PrivacyDataExportEndpoints.Http
     client.Timeout = TimeSpan.FromSeconds(20);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateProfileResetEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient("JobsyWebSelf", client =>
+{
+    var publicBase = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["PublicBaseUrl"] ?? builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5100/");
+    client.BaseAddress = new Uri(publicBase);
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<Jobsy.Web.Security.ForwardCircuitCookiesHandler>();
 builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.HttpClientName, client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -305,10 +349,21 @@ builder.Services.AddScoped<IGeocodingClient, CompositeGeocodingClient>();
 // Scoped (circuit) registration — do not use IHttpClientFactory + message handler here.
 // That resolves AuthenticationStateProvider outside the Razor component scope.
 // JobsyApiClient is IAsyncDisposable so the circuit scope disposes the HttpClient.
-builder.Services.AddScoped(sp =>
-    new JobsyApiClient(
-        JobsyApiClientFactory.Create(sp, builder.Configuration),
-        sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+if (CaptureModeExtensions.IsEnabled(builder.Configuration))
+{
+    builder.Services.AddCaptureModeStubs(builder.Configuration);
+    builder.Services.AddScoped(sp =>
+        new JobsyApiClient(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient("capture"),
+            sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+}
+else
+{
+    builder.Services.AddScoped(sp =>
+        new JobsyApiClient(
+            JobsyApiClientFactory.Create(sp, builder.Configuration),
+            sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+}
 builder.Services.AddScoped<Jobsy.Web.Services.KvkSearchClient>();
 builder.Services.AddScoped<Jobsy.Web.Components.Registration.RegistrationWizardState>();
 builder.Services.AddScoped<IVacancyMapApiForwarder, VacancyMapApiForwarder>();
@@ -381,6 +436,16 @@ builder.Services.AddRateLimiter(options =>
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("parent-passport", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
@@ -463,6 +528,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
 Jobsy.Core.Careers.OccupationCatalog.Configure(
     app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
     app.Environment.IsProduction());
@@ -507,6 +573,9 @@ app.UseWebSockets(new WebSocketOptions
 });
 app.UseMiddleware<WwwCanonicalMiddleware>();
 app.UseAdminLegacyRedirects();
+app.UseCandidateLegacyRedirects();
+app.UseBedrijvenkaartSsrPreviewRedirect();
+app.UseAfterMatchPickSlotRouteRewrite();
 app.UseResponseCompression();
 
 // Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
@@ -533,13 +602,16 @@ app.UseHtmlStatusCodePages();
 // Explicit so it sits *after* the re-executing handlers above: both /Error and /status/{code}
 // need routing to run again on the rewritten path. WebApplication would otherwise add it first.
 app.UseRouting();
+app.UseCaptureMode();
 
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
-if (app.Environment.IsDevelopment())
+var skipHttpsRedirect = app.Configuration.GetValue("E2E:SkipHttpsRedirect", false);
+if (app.Environment.IsDevelopment() && !skipHttpsRedirect)
 {
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<PrecompressedStaticFileMiddleware>();
 app.UseStaticFiles(WebPerformanceExtensions.JobsyStaticFiles());
 app.UseMiddleware<VersionedAssetCacheMiddleware>();
 
@@ -551,6 +623,7 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseCandidateGuestRedirect();
 app.UseRateLimiter();
 app.UseLegacyAuthRouteRedirects();
 app.UseLoginProtection();
@@ -564,6 +637,7 @@ app.UseMiddleware<SchoolsFeatureMiddleware>();
 // Authentication has already run, so the pupil principal is available.
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseAuthorization();
+app.UseDiscoverySsrRedirect();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();
 app.UseMiddleware<SalesLegacyRoutesMiddleware>();
@@ -588,18 +662,46 @@ app.MapMailUnsubscribeEndpoints();
 app.MapReferenceConfirmationEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
+app.MapCandidateProfileResetEndpoints();
 app.MapCandidatePassportPdfEndpoints();
+app.MapMeCandidateProxyEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapParentPassportAuthEndpoints();
+app.MapPupilDroombaanFormEndpoints();
 app.MapPupilPdfEndpoints();
+app.MapParentPassportPdfEndpoints();
 app.MapAdminFrameEndpoints();
 app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
+app.MapOnboardingClientEndpoints();
+app.MapPassportClientEndpoints();
+app.MapCareerClientEndpoints();
+app.MapSavedClientEndpoints();
+app.MapKbExtClientEndpoints();
+app.MapSollicitatiesClientEndpoints();
+app.MapUwvClientEndpoints();
+app.MapAfterMatchMessagesClientEndpoints();
+app.MapAfterMatchPickSlotClientEndpoints();
+app.MapAfterMatchEmployerProposeClientEndpoints();
+app.MapAfterMatchConfirmedClientEndpoints();
+app.MapAfterMatchRescheduleClientEndpoints();
+app.MapAfterMatchEmployerRescheduleClientEndpoints();
+app.MapAfterMatchEmployerCancelClientEndpoints();
+app.MapWerkgeverClientEndpoints();
+app.MapAfterMatchEmployerOutcomeClientEndpoints();
+app.MapBanenkaartClientEndpoints();
+app.MapBedrijvenkaartClientEndpoints();
+app.MapAssistantClientEndpoints();
+app.MapMapBasemapEndpoints();
+app.MapOnboardingStartFormEndpoints();
+app.MapDiscoveryClientFormEndpoints();
 app.MapSeoEndpoints();
 app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));
+app.MapGet("/vacancies", () => Results.Redirect(KbRoutes.Map, permanent: false));
 app.UseE2eDevPaths();
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.
 app.MapVacancyMapProxyEndpoints();

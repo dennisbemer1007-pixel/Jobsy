@@ -1,4 +1,5 @@
 using System.Net;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Tests.Errors;
@@ -7,13 +8,30 @@ namespace Jobsy.Tests.Errors;
 /// errors 04 §04.3: the reconnect toast is part of the static App shell, so it must read the
 /// catalog with the request language instead of hard-coded Dutch.
 /// </summary>
-public class ReconnectToastTests
+[Collection("JobsyLanguagesState")]
+public class ReconnectToastTests : IDisposable
 {
+    public ReconnectToastTests() => JobsyLanguages.ResetEnabledForTests();
+
+    public void Dispose()
+    {
+        JobsyLanguages.ResetEnabledForTests();
+        GC.SuppressFinalize(this);
+    }
+
     private static readonly string[] Keys =
     [
         "Status.Reconnect.Trying",
         "Status.Reconnect.Failed",
         "Status.Reconnect.Rejected",
+        "Status.Reconnect.SessionExpired",
+        "Status.Reconnect.ReconnectButton",
+        "Status.Reconnect.SignInAgain"
+    ];
+
+    private static readonly string[] CatalogKeys =
+    [
+        ..Keys,
         "Status.Reconnect.Reload"
     ];
 
@@ -37,7 +55,12 @@ public class ReconnectToastTests
     [Fact]
     public async Task App_shell_renders_the_toast_in_arabic_when_the_culture_cookie_says_so()
     {
-        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        await using var factory = new ErrorPagesWebFactory
+        {
+            EmployersEnabled = true,
+            EnabledCultures = "nl,en,pl,ro,ar"
+        };
         using var client = factory.CreateHtmlClient();
         client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
 
@@ -85,7 +108,7 @@ public class ReconnectToastTests
     [Fact]
     public void The_toast_keys_exist_in_all_five_languages()
     {
-        foreach (var key in Keys)
+        foreach (var key in CatalogKeys)
         {
             foreach (var language in new[] { "nl", "en", "pl", "ro", "ar" })
             {

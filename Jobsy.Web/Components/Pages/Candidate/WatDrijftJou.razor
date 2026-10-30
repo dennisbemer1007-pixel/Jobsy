@@ -1,0 +1,57 @@
+@page "/candidate/wat-drijft-jou"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IUwvFeaturesGate UwvGate
+@inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@UwvMockupCopy.Drijfveren.ResultsTitle(Culture.Language) · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="cards" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
+
+            var data = await WatDrijftJouSsrData.LoadAsync(UwvGate, Api, default);
+            _bodyHtml = WatDrijftJouSsrShells.BuildBody(Culture, data);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

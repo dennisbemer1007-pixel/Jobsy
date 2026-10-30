@@ -100,29 +100,6 @@ public static class JourneySceneBuilder
             }
         }
 
-        if (depth is >= 7 and <= 10)
-        {
-            var k = depth - 7;
-            var count = width > 600 ? 45 + 15 * k : 26 + 6 * k;
-            for (var i = 0; i < count; i++)
-            {
-                e.Append(CultureInfo.InvariantCulture,
-                    $"<circle cx=\"{r.NextDouble() * width:0}\" cy=\"{r.NextDouble() * height:0}\" r=\"{0.8 + r.NextDouble() * 1.4:0.0}\" style=\"fill:var(--surface);opacity:{0.12 + r.NextDouble() * 0.38:0.00}\"/>");
-            }
-        }
-
-        if (depth is >= 3 and <= 10)
-        {
-            var by = height * 0.55;
-            var bubbles = depth >= 7 ? 5 : 3;
-            for (var j = 0; j < bubbles; j++)
-            {
-                var rr = 3 + j % 3 * 2.5;
-                e.Append(CultureInfo.InvariantCulture,
-                    $"<circle class=\"journey-bub journey-bub--{j % 3}\" cx=\"{lobsterX + 50 + j % 2 * 18 - j * 4}\" cy=\"{by - j * 46}\" r=\"{rr}\" />");
-            }
-        }
-
         var hAttr = width > 600 ? "100%" : $"{height}px";
         return $"<svg class=\"journey-scene__svg\" viewBox=\"0 0 {width} {height}\" preserveAspectRatio=\"none\" width=\"100%\" height=\"{hAttr}\" aria-hidden=\"true\">{e}</svg>";
     }

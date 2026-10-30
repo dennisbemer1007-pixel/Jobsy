@@ -39,7 +39,7 @@ public static class TravelReach
     public static double SpeedKmPerHour(TransportMode mode)
     {
         if (mode.HasFlag(TransportMode.Bike)) return 18.0;
-        if (mode.HasFlag(TransportMode.Car)) return 40.0;
+        if (mode.HasFlag(TransportMode.Car)) return 80.0;
         if (mode.HasFlag(TransportMode.PublicTransport)) return 25.0;
         if (mode.HasFlag(TransportMode.Walking)) return 5.0;
         return 18.0;

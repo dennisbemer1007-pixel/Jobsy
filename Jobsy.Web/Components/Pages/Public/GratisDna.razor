@@ -27,7 +27,7 @@
 <PageTitle>@Culture["GratisDna.Seo.Title"] · Lobsy</PageTitle>
 
 <HeadContent>
-    <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/gratis-dna.css")" />
 </HeadContent>
 
 <div class="gd-page gd-page--warm" dir="@(Culture.IsRightToLeft ? "rtl" : null)" data-gd-page>
@@ -122,7 +122,7 @@
 
                 <aside class="gd-side-scene" aria-hidden="true">
                     <div class="gd-bubble">@Culture["GratisDna.Landing.Bubble"]</div>
-                    <div class="gd-side-scene__art">
+                    <div class="gd-side-scene__art" aria-hidden="true">
                         <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" />
                     </div>
                     <div class="gd-after">

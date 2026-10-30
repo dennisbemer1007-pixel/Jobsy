@@ -475,10 +475,12 @@ public class MfaForcedEnrollmentTests : IClassFixture<RoleFunctionalWebAppFactor
             challenges,
             new StubFeatures(authenticatorEnabled: true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
-            NullLogger<AuthController>.Instance);
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()));
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;
     }
@@ -566,8 +568,9 @@ public class MfaWebSsrGuardTests
     {
         var root = FindRepoRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         Assert.Contains("AcceptsInteractiveRouting()", app, StringComparison.Ordinal);
-        Assert.Contains("account-mfa.css", app, StringComparison.Ordinal);
+        Assert.Contains("account-mfa.css", catalog, StringComparison.Ordinal);
 
         foreach (var file in Directory.GetFiles(
                      Path.Combine(root, "Jobsy.Web/Components/Pages/Account"), "Mfa*.razor"))

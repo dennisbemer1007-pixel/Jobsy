@@ -40,7 +40,7 @@
                 @foreach (var item in Sections)
                 {
                     <li>
-                        <a class="pp-toc__link" href="#@item.Id" data-pp-toc-link>@SectionHeading(item)</a>
+                        <a class="pp-toc__link" href="#@item.Id" data-pp-toc-link>@Culture[item.TitleKey]</a>
                     </li>
                 }
             </ol>
@@ -61,7 +61,7 @@
                 <ol class="pp-toc-mobile__list">
                     @foreach (var item in Sections)
                     {
-                        <li><a class="pp-toc__link" href="#@item.Id">@SectionHeading(item)</a></li>
+                        <li><a class="pp-toc__link" href="#@item.Id">@Culture[item.TitleKey]</a></li>
                     }
                 </ol>
             </details>

@@ -1,83 +1,390 @@
 @namespace Jobsy.Web.Components.Candidate.Discovery
-@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Microsoft.JSInterop
 @inject CultureState Culture
+@inject IJSRuntime Js
+@implements IAsyncDisposable
 
-<div class="journey-overview">
+<div class="journey-overview" data-testid="discovery-overview-route">
     <p class="journey-step__eyebrow">@Culture["Discovery.Eyebrow"]</p>
-    <h1 tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
+    @if (!HideTitle)
+    {
+        <h1 tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
+    }
     <p class="journey-step__lead">@Culture["Discovery.Overview.Lead"]</p>
+    <p class="journey-route__intro">@Culture["Discovery.Overview.RouteLead"]</p>
 
-    <ul class="journey-overview__list">
-        @foreach (var row in Rows)
-        {
-            <li class="journey-overview__row">
-                <div>
-                    <b>@Culture[row.TitleKey]</b>
-                    <small class="@(row.StatusClass)">@row.StatusText</small>
-                </div>
-                @if (!string.IsNullOrWhiteSpace(row.ActionLabel))
-                {
-                    <button type="button" class="btn btn-secondary" @onclick="() => OnRowAction.InvokeAsync(row)">
-                        @row.ActionLabel
-                    </button>
-                }
-            </li>
-        }
-    </ul>
-
-    <h2 class="journey-q">@Culture["Discovery.Overview.TestsHeading"]</h2>
-    <ul class="journey-overview__list">
-        @foreach (var test in Tests)
-        {
-            <li class="journey-overview__row journey-overview__row--test">
-                <div>
-                    <b>@Culture[test.TitleKey]</b>
-                    <small>@test.DepthText</small>
-                </div>
-                <div class="journey-overview__actions">
-                    @if (test.IsComplete)
-                    {
-                        <span class="status-pill status-pill--success">@Culture["Discovery.Overview.FullyDone"]</span>
-                        <a class="btn btn-secondary" href="@test.ReportHref">@Culture["Discovery.Overview.FullReport"]</a>
-                    }
-                    else
-                    {
-                        @foreach (var level in test.NextLevels)
+    @if (IsLoading)
+    {
+        <div class="journey-route journey-route--loading" aria-busy="true">
+            <div class="journey-route__skeleton"></div>
+        </div>
+    }
+    else
+    {
+        <div class="journey-route">
+            <div class="journey-route__desktop-only">
+                <div class="journey-route__canvas" @ref="_canvasRef" id="discovery-route-canvas" data-route-layout="desktop">
+                    <svg class="journey-route__svg" aria-hidden="true" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="discoveryRouteStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#c4a574" />
+                                <stop offset="45%" stop-color="#8fb8a8" />
+                                <stop offset="100%" stop-color="#d4b878" />
+                            </linearGradient>
+                        </defs>
+                        <path id="discovery-route-path" d="" fill="none" stroke="url(#discoveryRouteStroke)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.62" />
+                    </svg>
+                    <div class="journey-route__stops" role="list">
+                        @foreach (var stop in PhaseStops)
                         {
-                            <button type="button" class="btn btn-secondary" @onclick="() => OnDeepen.InvokeAsync((test.Step, level))">
-                                @level.Label
+                            var isActive = stop.PhaseId == ActivePhaseId;
+                            <div class="journey-route__stop @(isActive ? "is-current" : null)"
+                                 role="listitem"
+                                 data-phase="@stop.PhaseId">
+                                <button type="button"
+                                        class="journey-route__stop-btn"
+                                        aria-expanded="@(isActive && PanelOpen ? "true" : "false")"
+                                        @onclick="() => TogglePhaseAsync(stop.PhaseId)">
+                                    <div class="journey-route__vignette @(stop.ShowCheck ? "is-done" : null) @(isActive ? "is-current" : null)"
+                                         data-discovery-vignette>
+                                        <img src="@stop.VignetteUrl" alt="" width="120" height="120" loading="lazy" decoding="async" />
+                                    </div>
+                                    <div class="journey-route__label">
+                                        <p class="journey-route__title">@Culture[stop.TitleKey]</p>
+                                        <span class="journey-route__status @stop.StatusClass">@stop.StatusText</span>
+                                        @if (isActive && stop.ShowContinue)
+                                        {
+                                            <span class="btn btn-primary journey-route__cta" @onclick:stopPropagation="true" @onclick="OnContinueAsync">@Culture["Discovery.Overview.Continue"]</span>
+                                        }
+                                    </div>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (PanelOpen && ActivePanel is not null)
+                {
+                    <div class="journey-route__panel-wrap" style="--discovery-connector-x: 50%;">
+                        <div class="journey-route__connector" aria-hidden="true"></div>
+                        @RenderPhasePanel(ActivePanel)
+                    </div>
+                }
+            </div>
+
+            <div class="journey-route__mobile-only">
+                <p class="journey-route-mobile__label" id="discovery-route-mobile-label">@Culture["Discovery.Eyebrow"]</p>
+                <div class="journey-route-mobile__map"
+                     @ref="_mobileCanvasRef"
+                     id="discovery-route-canvas-mobile"
+                     data-route-layout="mobile"
+                     data-you-at-phase="@YouAreHerePhaseId"
+                     data-progress-frac="@YouAreHereProgressFrac.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     aria-labelledby="discovery-route-mobile-label">
+                    <div class="journey-route-mobile__trail" aria-hidden="true">
+                        <svg class="journey-route-mobile__svg" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="discoveryRouteStrokeMobile" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#c4a574" />
+                                    <stop offset="45%" stop-color="#8fb8a8" />
+                                    <stop offset="100%" stop-color="#d4b878" />
+                                </linearGradient>
+                            </defs>
+                            <path id="discovery-route-path-future" class="journey-route-mobile__path-future" d="" fill="none" stroke="#c9bfb0" stroke-width="8" stroke-dasharray="5 8" stroke-linecap="round" opacity="0.45" />
+                            <path id="discovery-route-path-done" class="journey-route-mobile__path-done" d="" fill="none" stroke="url(#discoveryRouteStrokeMobile)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+                        </svg>
+                    </div>
+                    <ol class="journey-route-mobile__stops" role="list">
+                        @for (var i = 0; i < PhaseStops.Count; i++)
+                        {
+                            var stop = PhaseStops[i];
+                            var isActive = stop.PhaseId == ActivePhaseId;
+                            var isYou = stop.PhaseId == YouAreHerePhaseId;
+                            var side = MobileSideClass(i);
+                            var panel = PhasePanels.TryGetValue(stop.PhaseId, out var p) ? p : null;
+                            var open = isActive && PanelOpen && panel is not null;
+                            <li class="journey-route__stop journey-route-mobile__stop @side @(isYou ? "is-you" : null) @(open ? "is-open" : null) @(i == PhaseStops.Count - 1 ? "is-dest" : null)"
+                                role="listitem"
+                                data-phase="@stop.PhaseId">
+                                <div class="journey-route-mobile__row">
+                                    <button type="button"
+                                            class="journey-route__stop-btn journey-route-mobile__hit"
+                                            aria-expanded="@(open ? "true" : "false")"
+                                            aria-controls="@($"discovery-panel-{stop.PhaseId}")"
+                                            @onclick="() => TogglePhaseAsync(stop.PhaseId)">
+                                        <span class="journey-route-mobile__horiz">
+                                            <span class="journey-route-mobile__vig-slot">
+                                                @if (isYou)
+                                                {
+                                                    <span class="journey-route-mobile__you" aria-label="@Culture["Discovery.Overview.YouAreHere"]">
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                            <circle cx="12" cy="7" r="3.5" fill="currentColor" />
+                                                            <path d="M6 20c0-4 2.7-6 6-6s6 2 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                                        </svg>
+                                                        @Culture["Discovery.Overview.YouAreHere"]
+                                                    </span>
+                                                }
+                                                <span class="journey-route__vignette journey-route-mobile__vignette @(stop.ShowCheck ? "is-done" : null) @(isYou ? "is-you" : null) @(isActive ? "is-current" : null)"
+                                                      data-discovery-vignette>
+                                                    <img src="@stop.VignetteUrl" alt="" width="56" height="56" loading="lazy" decoding="async" />
+                                                </span>
+                                            </span>
+                                            <span class="journey-route-mobile__caption">
+                                                @if (i == PhaseStops.Count - 1)
+                                                {
+                                                    <span class="journey-route-mobile__dest-flag">@Culture["Discovery.Overview.Destination"]</span>
+                                                }
+                                                <span class="journey-route-mobile__title-row">
+                                                    <span class="journey-route__title">@Culture[stop.TitleKey]</span>
+                                                    <span class="journey-route__status @stop.StatusClass">@stop.StatusText</span>
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                </div>
+                                @if (panel is not null)
+                                {
+                                    <div id="@($"discovery-panel-{stop.PhaseId}")"
+                                         class="journey-route-mobile__inline @(open ? null : "is-collapsed")"
+                                         role="region"
+                                         aria-label="@Culture[stop.TitleKey]"
+                                         hidden="@(!open)">
+                                        <header class="journey-route-mobile__inline-head">
+                                            <h3>@Culture[panel.TitleKey]</h3>
+                                            <div class="journey-route-mobile__inline-actions">
+                                                <span class="journey-route__status @stop.StatusClass">@stop.StatusText</span>
+                                                @if (stop.ShowContinue)
+                                                {
+                                                    <button type="button" class="btn btn-primary btn-sm" @onclick="OnContinueAsync">@Culture["Discovery.Overview.Continue"]</button>
+                                                }
+                                            </div>
+                                        </header>
+                                        <p class="journey-route-mobile__inline-lead">@Culture[panel.LeadKey]</p>
+                                        @RenderPhasePanel(panel, compact: true)
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="journey-q">@Culture["Discovery.Overview.TestsHeading"]</h2>
+        <div class="journey-route__tests">
+            @foreach (var test in Tests)
+            {
+                <div class="journey-route__test @(test.IsComplete ? null : "is-todo")">
+                    <img class="journey-route__test-art" src="@test.AccentUrl" alt="" width="64" height="64" loading="lazy" />
+                    <p class="journey-route__test-title">@Culture[test.TitleKey]</p>
+                    <div class="journey-route__test-meta">
+                        @if (test.IsComplete)
+                        {
+                            <span class="status-pill status-pill--success journey-route__test-status">@Culture["Discovery.Overview.Done"]</span>
+                            <a class="btn btn-secondary journey-route__test-report" href="@test.ReportHref">@Culture["Discovery.Overview.FullReport"]</a>
+                            <a class="journey-route__test-compact-link" href="@test.ReportHref">@Culture["Discovery.Overview.View"]</a>
+                        }
+                        else
+                        {
+                            <span class="status-pill journey-route__test-pill-todo journey-route__test-status">@Culture["Discovery.Overview.TestTodo"]</span>
+                            @if (!string.IsNullOrWhiteSpace(test.ProgressText))
+                            {
+                                <span class="status-pill journey-route__test-pill-progress">@test.ProgressText</span>
+                            }
+                            <button type="button" class="btn btn-primary journey-route__test-start" @onclick="() => OnStartTestAsync(test)">
+                                @Culture["Discovery.Overview.Start"]
+                            </button>
+                            <button type="button" class="journey-route__test-compact-start" @onclick="() => OnStartTestAsync(test)">
+                                @Culture["Discovery.Overview.Start"]
                             </button>
                         }
-                    }
+                    </div>
                 </div>
-            </li>
-        }
-    </ul>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    public sealed record OverviewRow(
-        int Step,
+    public sealed record PhaseStop(
+        string PhaseId,
         string TitleKey,
+        string VignetteUrl,
         string StatusText,
         string StatusClass,
-        string? ActionLabel,
-        bool IsConsent = false,
-        bool IsReview = true);
+        bool ShowCheck,
+        bool ShowContinue);
+
+    public sealed record PanelSection(
+        int Step,
+        string TitleKey,
+        string Summary,
+        bool IsConsent,
+        bool CanEdit);
+
+    public sealed record PhasePanel(
+        string TitleKey,
+        string LeadKey,
+        string VignetteUrl,
+        IReadOnlyList<PanelSection> Sections);
 
     public sealed record DepthButton(int TargetCount, string Label);
 
     public sealed record TestRow(
         int Step,
         string TitleKey,
-        string DepthText,
+        string AccentUrl,
         bool IsComplete,
+        string? ProgressText,
         string ReportHref,
         IReadOnlyList<DepthButton> NextLevels);
 
-    [Parameter] public IReadOnlyList<OverviewRow> Rows { get; set; } = [];
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public bool HideTitle { get; set; }
+    [Parameter] public IReadOnlyList<PhaseStop> PhaseStops { get; set; } = [];
+    [Parameter] public string ActivePhaseId { get; set; } = "light";
+    [Parameter] public string YouAreHerePhaseId { get; set; } = "kust";
+    [Parameter] public double YouAreHereProgressFrac { get; set; } = 0.45;
+    [Parameter] public bool PanelOpen { get; set; } = true;
+    [Parameter] public PhasePanel? ActivePanel { get; set; }
+    [Parameter] public IReadOnlyDictionary<string, PhasePanel> PhasePanels { get; set; } = new Dictionary<string, PhasePanel>();
     [Parameter] public IReadOnlyList<TestRow> Tests { get; set; } = [];
-    [Parameter] public EventCallback<OverviewRow> OnRowAction { get; set; }
-    [Parameter] public EventCallback<(int Step, DepthButton Level)> OnDeepen { get; set; }
+    [Parameter] public EventCallback<PanelSection> OnSectionAction { get; set; }
+    [Parameter] public EventCallback OnContinue { get; set; }
+    [Parameter] public EventCallback<TestRow> OnStartTest { get; set; }
+    [Parameter] public EventCallback<string> OnPhaseChanged { get; set; }
+
+    private ElementReference _canvasRef;
+    private ElementReference _mobileCanvasRef;
+    private IJSObjectReference? _routeModule;
+
+    private static string MobileSideClass(int index) => index switch
+    {
+        0 => "is-left",
+        1 => "is-right",
+        2 => "is-left",
+        3 => "is-right",
+        _ => "is-dest"
+    };
+
+    private RenderFragment RenderPhasePanel(PhasePanel panel, bool compact = false) => __builder =>
+    {
+        <article class="journey-route__panel @(compact ? "journey-route__panel--compact" : null)" aria-live="polite">
+            @if (!compact)
+            {
+                <header class="journey-route__panel-head">
+                    <img class="journey-route__panel-vig" src="@panel.VignetteUrl" alt="" width="48" height="48" />
+                    <div>
+                        <h3>@Culture[panel.TitleKey]</h3>
+                        <p>@Culture[panel.LeadKey]</p>
+                    </div>
+                </header>
+            }
+            <ul class="journey-route__sections">
+                @foreach (var panelSection in panel.Sections)
+                {
+                    <li>
+                        <div>
+                            <h4>@Culture[panelSection.TitleKey]</h4>
+                            <p>@panelSection.Summary</p>
+                        </div>
+                        @if (panelSection.CanEdit)
+                        {
+                            <button type="button" class="journey-route__adjust" @onclick="() => OnSectionAsync(panelSection)">
+                                @Culture["Discovery.Overview.Adjust"]
+                            </button>
+                        }
+                    </li>
+                }
+            </ul>
+        </article>
+    };
+
+    private async Task TogglePhaseAsync(string phaseId)
+    {
+        if (OnPhaseChanged.HasDelegate)
+        {
+            await OnPhaseChanged.InvokeAsync(phaseId);
+        }
+
+        await RefreshRouteAsync();
+    }
+
+    private Task OnSectionAsync(PanelSection section) => OnSectionAction.InvokeAsync(section);
+
+    private Task OnContinueAsync() => OnContinue.InvokeAsync();
+
+    private Task OnStartTestAsync(TestRow test) => OnStartTest.InvokeAsync(test);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        try
+        {
+            _routeModule ??= await Js.InvokeAsync<IJSObjectReference>(
+                "import",
+                $"./{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/discoveryJourneyRoute.js")}");
+            await _routeModule.InvokeVoidAsync("bindResize", _canvasRef);
+            await _routeModule.InvokeVoidAsync("bindResize", _mobileCanvasRef);
+            await _routeModule.InvokeVoidAsync("refreshById", "discovery-route-canvas-mobile");
+            await RefreshRouteAsync();
+            await Task.Delay(150);
+            await _routeModule.InvokeVoidAsync("refreshById", "discovery-route-canvas-mobile");
+            await RefreshRouteAsync();
+        }
+        catch (JSException)
+        {
+            // Non-fatal in prerender or test hosts without ES modules.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Left the overview route while the ES module was loading.
+        }
+    }
+
+    private bool _disposed;
+
+    private async Task RefreshRouteAsync()
+    {
+        if (_disposed || _routeModule is null || IsLoading)
+        {
+            return;
+        }
+
+        try
+        {
+            await _routeModule.InvokeVoidAsync("refresh", _canvasRef);
+            await _routeModule.InvokeVoidAsync("refresh", _mobileCanvasRef);
+        }
+        catch (JSException)
+        {
+            // ignore
+        }
+        catch (ObjectDisposedException)
+        {
+            // Navigated away while refresh was in flight.
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        if (_routeModule is not null)
+        {
+            try
+            {
+                await _routeModule.DisposeAsync();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
+            _routeModule = null;
+        }
+    }
 }

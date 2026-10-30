@@ -1,0 +1,185 @@
+@page "/candidate/start/kompas"
+@layout OnboardingStartSsrLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Onboarding
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IOnboardingRustigGate OnboardingRustig
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-finale-v2.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+</HeadContent>
+
+@if (_loading)
+{
+    <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+}
+else
+{
+    var pageTitle = Culture.Format("Onboarding.Finish.Title", _firstName);
+    var pageLead = Culture["Onboarding.FinaleV2.Lead"];
+    <div class="ob-wizard ob-wizard--richting-a ob-wizard--rustig">
+        <div class="ob-rustig" data-ob-rustig-screen="kompas">
+            <div class="ob-rustig__layout">
+                <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
+                    <img class="ob-rustig__logo-e"
+                         src="@BrandImages.MarkSvg"
+                         width="56"
+                         height="56"
+                         alt="Lobsy"
+                         decoding="async"
+                         data-logo-fallback="off"
+                         draggable="false" />
+                    @foreach (var item in OnboardingRustigSidebarNav.Items(10, activeSectionOverride: 5))
+                    {
+                        var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
+                        <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"
+                           href="@OnboardingRustigSidebarNav.LinkHref(section)">
+                            <span>@item.Number</span>
+                            <div>
+                                <strong>@item.Title</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.Sub))
+                                {
+                                    <small>@item.Sub</small>
+                                }
+                            </div>
+                        </a>
+                    }
+                </aside>
+
+                <div class="ob-rustig__main">
+                    <header class="ob-rustig__chrome">
+                        <div class="ob-rustig__mobile-brand">
+                            <img class="ob-rustig__logo-e"
+                                 src="@BrandImages.MarkSvg"
+                                 width="40"
+                                 height="40"
+                                 alt=""
+                                 decoding="async"
+                                 data-logo-fallback="off"
+                                 draggable="false" />
+                        </div>
+                        <div class="ob-rustig__chrome-row">
+                            <span class="ob-rustig__link ob-rustig__link--spacer" aria-hidden="true">‹</span>
+                            <div class="ob-rustig__segments"
+                                 role="progressbar"
+                                 aria-valuemin="1"
+                                 aria-valuemax="10"
+                                 aria-valuenow="10"
+                                 aria-label="@Culture.Format("Onboarding.ProgressAria", 10, 10)">
+                                @foreach (var phase in OnboardingWizardCatalog.Phases)
+                                {
+                                    <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(phase, 10) * 100)%"></i></span>
+                                }
+                            </div>
+                            <div class="ob-rustig__actions">
+                                <a class="ob-rustig__link" href="/candidate/profile">@Culture["Onboarding.Later"]</a>
+                                <a class="ob-rustig__link ob-rustig__link--underline"
+                                   href="/privacy/data"
+                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                            </div>
+                        </div>
+                        <div class="ob-rustig__meta">
+                            <span>
+                                <strong>@Culture["Onboarding.Rustig.Phase.Kompas"]</strong>
+                                <text> · @Culture.Format("Onboarding.StepLine", 10, OnboardingWizardCatalog.V3RemainingMinutes(10))</text>
+                            </span>
+                            <span class="ob-rustig__saved" aria-live="polite">@Culture["Onboarding.Rustig.Saved"]</span>
+                        </div>
+                    </header>
+
+                    <div class="ob-rustig__page-head">
+                        <h1 tabindex="-1">@pageTitle</h1>
+                        <p class="ob-rustig__lead">@pageLead</p>
+                    </div>
+
+                    <div class="ob-rustig__body ob-rustig__body--with-reiskaart">
+                        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 15))
+                        <div class="ob-rustig__body-main">
+                            @((MarkupString)_bodyHtml)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private string _firstName = "";
+    private string _bodyHtml = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!OnboardingRustig.Enabled)
+        {
+            RedirectTo(OnboardingRoutes.WizardStartPath);
+            return;
+        }
+
+        try
+        {
+            var data = await OnboardingKompasSsrData.LoadAsync(Api, FeatureFlags);
+            if (data is null)
+            {
+                RedirectTo(OnboardingRoutes.ClassicStartPath);
+                return;
+            }
+
+            if (!data.State.FinishReached)
+            {
+                RedirectTo(OnboardingRoutes.StepUrl(Math.Clamp(data.State.CurrentStep, 1, 10)));
+                return;
+            }
+
+            _firstName = data.FirstName;
+            var model = new OnboardingKompasSsrShells.ReadyModel(
+                _firstName,
+                data.Impression,
+                data.MatchCount,
+                data.MaxTravelMinutes,
+                data.HomeLabel,
+                data.CardsInput,
+                OnboardingRoutes.KompasHubPath,
+                OnboardingKompasSsrData.FullTestsUrl);
+            _bodyHtml = OnboardingKompasSsrShells.BuildReadyBody(Culture, model);
+        }
+        catch
+        {
+            RedirectTo(OnboardingRoutes.ClassicStartPath);
+            return;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RedirectTo(string url)
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Redirect(url);
+    }
+}

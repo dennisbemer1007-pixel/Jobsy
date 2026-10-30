@@ -1,0 +1,202 @@
+.ob-wizard--richting-a .ob-job-card.ob-wizard__job {
+  padding-inline: 12px;
+}.ob-wizard--richting-a .ob-job-card.ob-wizard__job:has(.icon-btn) {
+  padding-inline-end: 48px;
+}.ob-job-card label:not(.ob-job-dates__current) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+}.ob-job-card input,
+.ob-job-card textarea,
+.ob-job-card .jobsy-date-field,
+.ob-job-card .jobsy-date-field--localized,
+.ob-job-card .jobsy-date-field--typed,
+.ob-job-card .jobsy-date-field__display-btn,
+.ob-job-card .jobsy-date-field__text {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  width: 100%;
+}.ob-job-card .jobsy-date-field__error:empty {
+  display: none;
+  min-block-size: 0;
+  margin: 0;
+}.ob-job-card .ob-job-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-block: 12px 8px;
+}@media (min-width: 640px) {.ob-job-card .ob-job-dates {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+  }.ob-job-card .ob-job-dates__from {
+    grid-column: 1;
+    grid-row: 1;
+  }.ob-job-card .ob-job-dates__to {
+    grid-column: 2;
+    grid-row: 1;
+  }.ob-job-card .ob-job-dates__current {
+    grid-column: 2;
+    grid-row: 2;
+  }}.ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-job-dates__to {
+  margin-bottom: 0 !important;
+}.ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-job-dates__current {
+  margin-top: 4px !important;
+  margin-bottom: 0 !important;
+}.ob-wizard--richting-a .ob-job-card .ob-job-dates {
+  margin-bottom: 12px;
+}.ob-wizard--richting-a.ob-wizard .ob-wizard__content .ob-job-card label.ob-job-duties {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 639px) {
+  .ob-wizard--richting-a.ob-wizard .ob-wizard__content .ob-job-card label.ob-job-duties,
+  .ob-job-card label.ob-job-duties {
+    margin-top: 12px !important;
+  }
+}
+
+.ob-job-dates__to {
+  margin: 0;
+}.ob-job-dates__present-input {
+  min-block-size: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius:var(--r-sm);
+  background:color-mix(in srgb, var(--surface) 92%, var(--bg));
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+}.ob-job-card label.ob-job-dates__current,
+.ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-job-dates__current {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  align-self: flex-start !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0;
+  background:transparent;
+  min-block-size: auto !important;
+  min-height: auto !important;
+  font-size: var(--text-sm);
+  font-weight: 400 !important;
+  color: var(--text);
+  cursor: pointer;
+}.ob-job-dates__current input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  min-block-size: 16px !important;
+  min-height: 16px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 0 0 16px;
+}.ob-job-dates__current span {
+  line-height: 1.35;
+  font-weight: 400;
+}.ob-job-duties textarea {
+  min-block-size: 4.5rem;
+  resize: vertical;
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius:var(--r-sm);
+  background:var(--surface);
+}.ob-job-duties__optional {
+  font-weight: 500;
+  color: var(--muted);
+}.ob-job-duties__hint {
+  margin: 6px 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: 1.4;
+}.ob-job-duty-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block: 8px 4px;
+}.ob-job-duty-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius:var(--radius-pill);
+  background:var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  text-align: start;
+}.ob-job-duty-pill:hover {
+  border-color: var(--brand);
+  background:var(--accent-soft);
+  color: var(--brand);
+}.ob-job-duty-pill:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}.profile-employer-card__dates {
+  display: grid;
+  gap: 10px;
+}@media (min-width: 640px) {.profile-employer-card__dates {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+  }.profile-employer-card__dates .profile-employer-card__current-inline {
+    grid-column: 1 / -1;
+  }}.profile-employer-card__current-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--muted);
+}.passport-proof__job-desc {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--text-sm);
+  color: var(--text);
+  line-height: 1.4;
+}.profile-employer-card__present {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius:var(--r-sm);
+  background:color-mix(in srgb, var(--surface) 90%, var(--bg));
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}@media (max-width: 1023px) {.ob-wizard--richting-a .ob-wizard__card > .ob-job-card.ob-wizard__job {
+    padding: 0;
+    margin-block: 0.25rem 0;
+    box-shadow:none;
+    background:transparent;
+    border-radius:0;
+  }.ob-wizard--richting-a .ob-job-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }.ob-wizard--richting-a .ob-job-card label,
+  .ob-wizard--richting-a .ob-job-card .ob-job-dates,
+  .ob-wizard--richting-a .ob-job-card .ob-job-dates__from,
+  .ob-wizard--richting-a .ob-job-card .ob-job-dates__to,
+  .ob-wizard--richting-a .ob-job-card label.ob-job-dates__current,
+  .ob-wizard--richting-a .ob-job-card .ob-job-duties {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }.ob-wizard--richting-a .ob-wizard__content:has(.ob-wizard__education-grid) .ob-wizard__mascot-anchor {
+    margin-top: 1rem;
+    padding-bottom: calc(var(--sticky-footer-h, 6rem) + env(safe-area-inset-bottom, 0px) + 12px);
+  }}

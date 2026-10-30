@@ -1,0 +1,93 @@
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Layout
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Pwa
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IHttpContextAccessor HttpContextAccessor
+
+<header class="app-header" data-testid="app-shell-header">
+    <div class="app-header__brand">
+        <a class="brand" href="@HomeHref" aria-label="Lobsy">
+            <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
+            @if (!_hideCandidateBrandTagline)
+            {
+                <span class="brand__text">
+                    <span class="brand-tagline">@HeaderTagline</span>
+                </span>
+            }
+        </a>
+    </div>
+    @if (_showCandidatePrimaryNav)
+    {
+        <div class="candidate-header-nav-slot">
+            @if (_noBlazorRuntime)
+            {
+                <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Header" />
+            }
+            else if (_showGuestCandidateNav)
+            {
+                <CandidateHeaderNav />
+            }
+            else
+            {
+                <AuthorizeView Roles="@JobsyRoles.Candidate">
+                    <Authorized>
+                        <CandidateHeaderNav />
+                    </Authorized>
+                </AuthorizeView>
+            }
+        </div>
+    }
+    <div class="app-header__actions">
+        @if (ShowCandidatePwaInstall)
+        {
+            <AuthorizeView Roles="@JobsyRoles.Candidate">
+                <Authorized>
+                    <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallEntry />
+                </Authorized>
+            </AuthorizeView>
+        }
+        <PageHelp />
+        <NotificationBell />
+        <FeatureVisible Feature="PlatformFeature.Employers">
+            <TokenWalletChip />
+            <SalesWalletChipV2 />
+        </FeatureVisible>
+        <LanguageSelector />
+        <AuthHeader />
+    </div>
+</header>
+
+@code {
+    private bool _hideCandidateBrandTagline;
+    private bool _showCandidatePrimaryNav;
+    private bool _showGuestCandidateNav;
+    private bool _noBlazorRuntime;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        var user = http?.User;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+        var path = http?.Request.Path.Value?.TrimStart('/') ?? "";
+        _hideCandidateBrandTagline = user?.Identity?.IsAuthenticated == true
+            && (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
+                || MainLayout.IsBanenkaartPath(path));
+        var ouderGuest = MainLayout.IsOuderGuestShellPath(path);
+        _showCandidatePrimaryNav = ouderGuest
+            || (user?.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate));
+        _showGuestCandidateNav = ouderGuest && !_noBlazorRuntime;
+    }
+
+    [Parameter, EditorRequired]
+    public string HomeHref { get; set; } = "/";
+
+    [Parameter, EditorRequired]
+    public string HeaderTagline { get; set; } = "";
+
+    [Parameter]
+    public bool ShowCandidatePwaInstall { get; set; }
+}

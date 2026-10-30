@@ -47,14 +47,21 @@ public sealed class LandingRedirectMiddleware(RequestDelegate next)
             variant = await employers.VariantAsync(context.RequestAborted);
         }
 
+        var hostEnv = context.RequestServices.GetService<IHostEnvironment>();
+        var config = context.RequestServices.GetService<IConfiguration>();
+
         // Development ?_variant= override (LandingVariantResolver also reads this).
-        if (string.Equals(
-                context.RequestServices.GetService<IHostEnvironment>()?.EnvironmentName,
-                Environments.Development,
-                StringComparison.OrdinalIgnoreCase)
+        if (string.Equals(hostEnv?.EnvironmentName, Environments.Development, StringComparison.OrdinalIgnoreCase)
             && LandingVariantResolver.TryParse(context.Request.Query["_variant"], out var overrideVariant))
         {
             variant = overrideVariant;
+        }
+        else if (hostEnv is not null
+                 && config is not null
+                 && LandingVariantResolver.AllowsConfigOverride(hostEnv, config)
+                 && LandingVariantResolver.TryParse(config[LandingVariantResolver.ConfigKey], out var forcedVariant))
+        {
+            variant = forcedVariant;
         }
 
         context.Items[LandingVariantResolver.HttpContextItemsKey] = variant;

@@ -523,7 +523,7 @@ public class PupilStoryAndDreamJobTests
                 var dream = _renderer.RenderDreamRoute(result, progress, ctx);
                 Assert.NotEmpty(dream.RouteSteps);
                 Assert.StartsWith(
-                    "Nu: " + PupilDreamJobRoutes.NowLabel(ctx) + " — ",
+                    "Nu: " + PupilDreamJobRoutes.NowLabel(ctx) + " · ",
                     dream.RouteSteps[0],
                     StringComparison.Ordinal);
                 var blob = string.Join(" ", dream.RouteSteps.Concat(dream.HaveItems).Concat(dream.LearnItems)
@@ -541,6 +541,10 @@ public class PupilStoryAndDreamJobTests
     [Fact]
     public void Vo_copy_uses_docent_of_mentor_g78_keeps_leraar()
     {
+        Assert.Equal(
+            "Mbo Kok|Mbo niveau 2 tot 4, opleiding duurt 2 tot 4 jaar",
+            PupilVerhaalCopy.Get("LeerlingDroom.Route.kok.3"));
+
         Assert.Contains("leraar", PupilVerhaalCopy.Get("LeerlingDroom.UndecidedHint", PupilQuestionSet.Groep78), StringComparison.Ordinal);
         Assert.Contains("docent of mentor", PupilVerhaalCopy.Get("LeerlingDroom.UndecidedHint", PupilQuestionSet.Vo), StringComparison.Ordinal);
         Assert.DoesNotContain("leraar", PupilVerhaalCopy.Get("LeerlingDroom.UndecidedHint", PupilQuestionSet.Vo), StringComparison.Ordinal);

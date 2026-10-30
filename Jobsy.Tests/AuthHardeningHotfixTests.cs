@@ -291,10 +291,12 @@ public class AuthHardeningHotfixTests
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
-            NullLogger<AuthController>.Instance);
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()));
     }
 
     private static MfaController NewMfa(JobsyDbContext db, MfaChallengeService challenges)

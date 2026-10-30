@@ -33,7 +33,28 @@ public static class UiStringsPassport
             "Bewaard", "Saved", "Zapisane", "Salvate", "المحفوظات");
 
         Add("Passport.Title",
-            "Mijn Lobsy-paspoort", "My Lobsy passport", "Mój paszport Lobsy", "Pașaportul meu Lobsy", "جواز سفر لوبسي");
+            "Mijn paspoort", "My passport", "Mój paszport", "Pașaportul meu", "جواز سفري");
+        Add("Kompas.Greeting.Morning", "Goedemorgen, {0}", "Good morning, {0}", "Dzień dobry, {0}", "Bună dimineața, {0}", "صباح الخير، {0}");
+        Add("Kompas.Greeting.Afternoon", "Goedemiddag, {0}", "Good afternoon, {0}", "Dzień dobry, {0}", "Bună ziua, {0}", "مساء الخير، {0}");
+        Add("Kompas.Greeting.Evening", "Goedenavond, {0}", "Good evening, {0}", "Dobry wieczór, {0}", "Bună seara, {0}", "مساء الخير، {0}");
+        Add("Kompas.Greeting.PlainMorning", "Goedemorgen", "Good morning", "Dzień dobry", "Bună dimineața", "صباح الخير");
+        Add("Kompas.Greeting.PlainAfternoon", "Goedemiddag", "Good afternoon", "Dzień dobry", "Bună ziua", "مساء الخير");
+        Add("Kompas.Greeting.PlainEvening", "Goedenavond", "Good evening", "Dobry wieczór", "Bună seara", "مساء الخير");
+        Add("Kompas.Greeting.Lead",
+            "Hier zie je wie je bent, welke tests klaar zijn en welke banen bij je passen.",
+            "See who you are, which tests are done and which jobs fit you.",
+            "Zobacz, kim jesteś, które testy są gotowe i które oferty pasują.",
+            "Vezi cine ești, ce teste sunt gata și ce joburi ți se potrivesc.",
+            "اعرف من أنت وأي الاختبارات جاهزة وأي الوظائف تناسبك.");
+        Add("Kompas.Tip.Eyebrow", "Tip van Lobsy", "Tip from Lobsy", "Wskazówka od Lobsy", "Sfat de la Lobsy", "نصيحة من Lobsy");
+        Add("Kompas.Tip.Body",
+            "Vul je paspoort verder aan. Werkgevers zien pas iets als jij dat deelt.",
+            "Keep building your passport. Employers only see what you choose to share.",
+            "Uzupełniaj paszport. Pracodawcy widzą tylko to, czym się dzielisz.",
+            "Completează pașaportul. Angajatorii văd doar ce alegi să arăți.",
+            "أكمل جوازك. أصحاب العمل يرون فقط ما تشاركه.");
+        Add("Kompas.Tip.Cta", "Paspoort aanvullen", "Complete passport", "Uzupełnij paszport", "Completează pașaportul", "أكمل الجواز");
+        Add("Discovery.NearbyTitle", "Banen bij jou in de buurt", "Jobs near you", "Oferty w Twojej okolicy", "Joburi aproape de tine", "وظائف قربك");
         Add("Passport.Banner",
             "LOBSY PASPOORT", "LOBSY PASSPORT", "PASZPORT LOBSY", "PAȘAPORT LOBSY", "جواز لوبسي");
         Add("Passport.MemberNo",
@@ -41,11 +62,11 @@ public static class UiStringsPassport
         Add("Passport.StartedStamp",
             "GESTART {0}", "STARTED {0}", "START {0}", "ÎNCEPUT {0}", "بدأ {0}");
         Add("Passport.Layers",
-            "Profiel · {0} van {1}", "Profile · {0} of {1}", "Profil · {0} z {1}", "Profil · {0} din {1}", "الملف · {0} من {1}");
+            "Profiel {0} van {1}", "Profile {0} of {1}", "Profil {0} z {1}", "Profil {0} din {1}", "الملف {0} من {1}");
         Add("Passport.LayersAria",
             "Profiel {0} procent compleet", "Profile {0} percent complete", "Profil kompletny w {0} procent", "Profil complet în proporție de {0} la sută", "الملف مكتمل بنسبة {0} بالمئة");
         Add("Passport.Fill",
-            "aanvullen", "complete", "uzupełnij", "completează", "أكمل");
+            "Aanvullen", "Complete", "Uzupełnij", "Completează", "أكمل");
         Add("Passport.MyStory",
             "Mijn verhaal", "My story", "Moja historia", "Povestea mea", "قصتي");
         Add("Passport.MyStoryEmpty",
@@ -139,6 +160,10 @@ public static class UiStringsPassport
             "Bewijzen", "Proof", "Dowody", "Dovezi", "الإثباتات");
         Add("Passport.Tab.Data",
             "Mijn gegevens", "My details", "Moje dane", "Datele mele", "بياناتي");
+        Add("Passport.Tab.Fit.Compact",
+            "Past bij?", "Good fit?", "Pasuje?", "Se potrivește?", "هل يناسب؟");
+        Add("Passport.Tab.Data.Compact",
+            "Gegevens", "Details", "Dane", "Date", "بيانات");
 
         Add("Passport.Bubble.Dna",
             "Je hebt net een laag afgeworpen. Dit is wie eronder zat.",
@@ -193,7 +218,7 @@ public static class UiStringsPassport
             "Waarden op werk", "Values at work", "Wartości w pracy", "Valori la muncă", "قيم في العمل");
 
         Add("Passport.Shells.Title",
-            "Mijn schalen", "My shells", "Moje skorupy", "Cochiliile mele", "صدفاتي");
+            "Mijn schelpen", "My shells", "Moje skorupy", "Cochiliile mele", "صدفاتي");
         Add("Passport.Shells.Hint",
             "Stempels voor test, rapport en CV. De reis telt apart.",
             "Stamps for a test, a report and a CV. The journey counts separately.",
@@ -304,6 +329,12 @@ public static class UiStringsPassport
             "Nie największy kamień, lecz ten w twoim rozmiarze.",
             "Nu cea mai mare piatră, ci cea pe măsura ta.",
             "ليست أكبر صخرة، بل التي تناسب حجمك.");
+        Add("Passport.Fit.VacanciesEmpty",
+            "Nog geen passende vacatures in de buurt. Vul je locatie en voorkeuren aan; dan vullen we dit vanzelf aan.",
+            "No matching vacancies nearby yet. Add your location and preferences and this list will fill in.",
+            "Brak pasujących ofert w pobliżu. Uzupełnij lokalizację i preferencje.",
+            "Încă nu sunt joburi potrivite în apropiere. Completează locația și preferințele.",
+            "لا توجد وظائف مناسبة قريبة بعد. أضف موقعك وتفضيلاتك.");
         Add("Passport.Fit.Top10",
             "Top 10 ›", "See top 10 ›", "Zobacz top 10 ›", "Vezi top 10 ›", "أفضل 10 ›");
         Add("Passport.Fit.EmployersWant",

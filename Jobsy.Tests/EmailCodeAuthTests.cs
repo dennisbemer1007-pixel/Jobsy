@@ -395,10 +395,12 @@ public class EmailCodeAuthTests
             new MfaChallengeService(new MemoryCache(new MemoryCacheOptions())),
             features,
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
-            NullLogger<AuthController>.Instance);
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()));
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

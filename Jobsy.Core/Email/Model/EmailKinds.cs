@@ -33,7 +33,10 @@ public sealed record EmailCulture(string Language, bool IsRightToLeft)
 
     public static EmailCulture ForLanguage(string? language)
     {
-        var lang = JobsyLanguages.Normalize(language);
+        // Email catalogs exist for all five languages; honor stored preference even when a UI locale is disabled.
+        var lang = JobsyLanguages.IsCatalogLanguage(language)
+            ? JobsyLanguages.Normalize(language)
+            : JobsyLanguages.ResolveActive(language);
         var opt = JobsyLanguages.Get(lang);
         return new EmailCulture(opt.Code, opt.IsRightToLeft);
     }

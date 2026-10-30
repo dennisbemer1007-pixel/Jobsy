@@ -218,6 +218,11 @@ public static class TestAccountsCommand
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
 
+            await seeder.RepairCompleteCandidateAssessmentsAsync(cancellationToken: ct);
+            await db.SaveChangesAsync(ct);
+            await output.WriteLineAsync(
+                "Acceptatie seed-reset: external vacancy purge (+ assessment repair when catalog candidate exists).");
+
             try
             {
                 sp.GetService<IVacancyDiscoveryIndex>()?.Invalidate();

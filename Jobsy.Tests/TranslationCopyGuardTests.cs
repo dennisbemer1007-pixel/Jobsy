@@ -1,4 +1,6 @@
 using System.Reflection;
+using Jobsy.Core.Localization;
+using Jobsy.Core.Options;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Tests;
@@ -6,10 +8,13 @@ namespace Jobsy.Tests;
 /// <summary>
 /// Candidate-facing pl/ro/ar must not stay an English copy when Dutch differs.
 /// Brand names, numbers and tokens such as "OK" are allowlisted with a reason.
+/// At launch only <see cref="JobsyLanguages.Enabled"/> cultures are checked; set
+/// <c>JOBSY_I18N_COPYGUARD_ALL=1</c> or enable pl/ro/ar via config to run the full guard.
 /// </summary>
+[Collection("JobsyLanguagesState")]
 public sealed class TranslationCopyGuardTests
 {
-    private static readonly string[] Checked = ["pl", "ro", "ar"];
+    private static readonly string[] SecondaryCatalog = ["pl", "ro", "ar"];
 
     /// <summary>
     /// The everyday word is spelled the same in that language, so it is not an English copy.
@@ -49,11 +54,70 @@ public sealed class TranslationCopyGuardTests
     [Fact]
     public void Candidate_facing_pl_ro_ar_are_not_english_copies()
     {
+        var checkedLangs = CopyGuardLanguages().ToArray();
+        if (checkedLangs.Length == 0)
+        {
+            return;
+        }
+
+        var gaps = RunCopyGuard(checkedLangs, out var employer);
+        Assert.True(
+            gaps.Count == 0,
+            $"Candidate-facing {string.Join("/", checkedLangs)} still copy English ({gaps.Count}). First: {string.Join(" | ", gaps.Take(12))}");
+        _ = employer;
+    }
+
+    /// <summary>Opt-in via <c>JOBSY_I18N_COPYGUARD_ALL=1</c> when pl/ro/ar are re-enabled in config.</summary>
+    [Fact]
+    public void Candidate_facing_pl_ro_ar_are_not_english_copies_when_all_catalog_enabled()
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("JOBSY_I18N_COPYGUARD_ALL"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
+        {
+            var gaps = RunCopyGuard(SecondaryCatalog, out _);
+            Assert.True(
+                gaps.Count == 0,
+                $"Full-catalog copy guard: pl/ro/ar still copy English ({gaps.Count}). First: {string.Join(" | ", gaps.Take(12))}");
+        }
+        finally
+        {
+            JobsyLanguages.ResetEnabledForTests();
+        }
+    }
+
+    private static IEnumerable<string> CopyGuardLanguages()
+    {
+        if (string.Equals(Environment.GetEnvironmentVariable("JOBSY_I18N_COPYGUARD_ALL"), "1", StringComparison.Ordinal))
+        {
+            foreach (var lang in SecondaryCatalog)
+            {
+                yield return lang;
+            }
+
+            yield break;
+        }
+
+        foreach (var lang in SecondaryCatalog)
+        {
+            if (JobsyLanguages.IsEnabled(lang))
+            {
+                yield return lang;
+            }
+        }
+    }
+
+    private static List<string> RunCopyGuard(IReadOnlyList<string> checkedLangs, out List<string> employer)
+    {
         var catalog = LoadCatalog();
         var nl = catalog["nl"];
         var en = catalog["en"];
         var gaps = new List<string>();
-        var employer = new List<string>();
+        employer = new List<string>();
 
         foreach (var (key, nlValue) in nl.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
         {
@@ -62,7 +126,7 @@ public sealed class TranslationCopyGuardTests
                 continue;
             }
 
-            foreach (var lang in Checked)
+            foreach (var lang in checkedLangs)
             {
                 if (!catalog[lang].TryGetValue(key, out var value))
                 {
@@ -100,10 +164,7 @@ public sealed class TranslationCopyGuardTests
         Directory.CreateDirectory(Path.Combine(root, "artifacts"));
         File.WriteAllLines(Path.Combine(root, "artifacts", "i18n-gaps-candidate.tsv"), gaps);
         File.WriteAllLines(Path.Combine(root, "artifacts", "i18n-gaps-employer.tsv"), employer);
-
-        Assert.True(
-            gaps.Count == 0,
-            $"Candidate-facing pl/ro/ar still copy English ({gaps.Count}). First: {string.Join(" | ", gaps.Take(12))}");
+        return gaps;
     }
 
     private static bool IsEmployerOrAdmin(string key)

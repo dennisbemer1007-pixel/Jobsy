@@ -1,9 +1,10 @@
-@page "/candidate/external/{Id:guid}"
+@* Route moved to CandidateExternalVacancyDetailSsr (NoBlazor SSR). *@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Features
+@using Jobsy.Core.Rules
 @attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.KandidaatBanen
@@ -36,7 +37,7 @@
     else
     {
         <div class="kb-ext__header-row">
-            <div>
+            <div class="kb-ext__header-copy">
                 @if (_detail.IsOnSavedList)
                 {
                     <span class="kb-ext__badge">@Culture["ExtVac.Detail.Saved"]</span>
@@ -44,7 +45,9 @@
                 <h1 class="kb-ext__title">@_detail.Title</h1>
                 <p class="muted">@_detail.CompanyName · @_detail.Place</p>
             </div>
-            <ReadAloudButton Text="@ReadAloudText" SpeechKey="@($"ext-{_detail.Id}")" />
+            <ReadAloudButton Text="@ReadAloudText"
+                             SpeechKey="@($"ext-{_detail.Id}")"
+                             PlayAria="@Culture["ReadAloud.Play"]" />
         </div>
 
         @if (_detail.RequirementsBullets.Count > 0)
@@ -60,53 +63,77 @@
             </section>
         }
 
-        @if (_detail.TravelMinutesEstimate is int travel)
+        @if (_detail.TravelMinutesEstimate is int travel && travel > 0)
         {
-            <p class="muted">@string.Format(Culture["Discovery.TravelMinutes"], travel)</p>
+            <p class="kb-ext__travel" data-testid="kb-ext-travel">
+                @Culture.Format("ExtVac.Detail.TravelKnown", travel)
+            </p>
+        }
+        else
+        {
+            <p class="kb-ext__travel kb-ext__travel--hint muted" data-testid="kb-ext-travel-hint">
+                @Culture["ExtVac.Detail.TravelNeedAddress"]
+            </p>
         }
 
-        <section class="kb-ext__card">
-            <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Facts"]</h2>
-            <table class="kb-ext__facts">
-                <tbody>
-                    @foreach (var row in FactRows(_detail))
+        @if (FactRows(_detail).Any(static r => !r.Unknown))
+        {
+            <section class="kb-ext__card">
+                <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Facts"]</h2>
+                <table class="kb-ext__facts">
+                    <tbody>
+                        @foreach (var row in FactRows(_detail).Where(static r => !r.Unknown))
+                        {
+                            <tr>
+                                <th scope="row">@row.Label</th>
+                                <td>@row.Value</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
+
+        @if (_displayInsights.Strengths.Count > 0 || _displayInsights.Challenges.Count > 0)
+        {
+            <section class="kb-ext__card">
+                <div class="kb-ext__match">
+                    @if (_displayInsights.Strengths.Count > 0)
                     {
-                        <tr>
-                            <th scope="row">@row.Label</th>
-                            <td class="@(row.Unknown ? "is-unknown" : null)">@row.Value</td>
-                        </tr>
+                        <div class="kb-ext__match-panel kb-ext__match-panel--good">
+                            <h3>@Culture["ExtVac.Detail.Strengths"]</h3>
+                            <ul class="kb-ext__bullets">
+                                @foreach (var s in _displayInsights.Strengths)
+                                {
+                                    <li>@s</li>
+                                }
+                            </ul>
+                        </div>
                     }
-                </tbody>
-            </table>
-        </section>
-
-        <section class="kb-ext__card">
-            <div class="kb-ext__match">
-                <div class="kb-ext__match-panel kb-ext__match-panel--good">
-                    <h3>@Culture["ExtVac.Detail.Strengths"]</h3>
-                    <ul class="kb-ext__bullets">
-                        @foreach (var s in _detail.MatchInsights.Strengths)
-                        {
-                            <li>@s</li>
-                        }
-                    </ul>
+                    @if (_displayInsights.Challenges.Count > 0)
+                    {
+                        <div class="kb-ext__match-panel">
+                            <h3>@Culture["ExtVac.Detail.Challenges"]</h3>
+                            <ul class="kb-ext__bullets">
+                                @foreach (var c in _displayInsights.Challenges)
+                                {
+                                    <li>@c</li>
+                                }
+                            </ul>
+                        </div>
+                    }
                 </div>
-                <div class="kb-ext__match-panel">
-                    <h3>@Culture["ExtVac.Detail.Challenges"]</h3>
-                    <ul class="kb-ext__bullets">
-                        @foreach (var c in _detail.MatchInsights.Challenges)
-                        {
-                            <li>@c</li>
-                        }
-                    </ul>
-                </div>
-            </div>
-            <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
-        </section>
+                <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
+            </section>
+        }
 
-        <p class="muted">
-            <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@Culture["ExtVac.Detail.Source"]</a>
-        </p>
+        @if (!string.IsNullOrWhiteSpace(_detail.SourceUrl))
+        {
+            <p class="muted kb-ext__source" data-testid="kb-ext-source">
+                @Culture["ExtVac.Detail.Source"]:
+                <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@SourceLinkLabel(_detail.SourceUrl)</a>
+            </p>
+        }
 
         <div class="kb-ext__actions" data-testid="kb-ext-detail-actions">
             @if (_detail.CanApply)
@@ -151,6 +178,7 @@
     [Parameter] public Guid Id { get; set; }
 
     private ExternalVacancyDetailDto? _detail;
+    private ExternalVacancyMatchInsightsDto _displayInsights = new([], []);
     private bool _loading = true;
     private bool _engagementBusy;
     private bool _dismissToastVisible;
@@ -160,11 +188,36 @@
         ? ""
         : $"{_detail.Title}. {_detail.CompanyName}. {_detail.Place}.";
 
+    private static string SourceLinkLabel(string sourceUrl)
+    {
+        if (Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri))
+        {
+            var host = uri.Host;
+            if (host.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                host = host[4..];
+            }
+
+            return host;
+        }
+
+        return sourceUrl.Trim();
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
-        _detail = await Api.GetExternalVacancyAsync(Id);
-        _loading = false;
+        try
+        {
+            _detail = await Api.GetExternalVacancyAsync(Id);
+            _displayInsights = _detail is null
+                ? new ExternalVacancyMatchInsightsDto([], [])
+                : CandidateExternalVacancyRules.FilterMatchInsightsForDisplay(_detail.MatchInsights);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private IEnumerable<(string Label, string Value, bool Unknown)> FactRows(ExternalVacancyDetailDto detail)

@@ -54,7 +54,7 @@ else
             <button type="button" class="btn-compact" @onclick="DownloadPdf" disabled="@_busy">@Culture["School.CodeList.Pdf"]</button>
             <button type="button" class="btn-compact" @onclick="DownloadCsv" disabled="@_busy">@Culture["School.CodeList.Csv"]</button>
             <button type="button" class="btn-compact" @onclick="AddCodes" disabled="@_busy">@Culture["School.CodeList.Add"]</button>
-            <button type="button" class="btn-primary" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
+            <button type="button" class="btn-primary" @ref="_windowTrigger" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
         </div>
         @if (!string.IsNullOrEmpty(_actionError))
         {
@@ -109,11 +109,11 @@ else
                 @foreach (var codeRow in _detail.Codes)
                 {
                     <tr class="ent-data-table__row">
-                        <td class="tabular">@codeRow.Number</td>
-                        <td><span class="sch-code">@codeRow.DisplayCode</span></td>
-                        <td><span class="sch-pill @StatusPill(codeRow.Status)">@StatusLabel(codeRow)</span></td>
-                        <td>@(codeRow.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
-                        <td class="sch-row-actions">
+                        <td class="tabular" data-label="#">@codeRow.Number</td>
+                        <td data-label="@Culture["School.Col.Code"]"><span class="sch-code">@codeRow.DisplayCode</span></td>
+                        <td data-label="@Culture["School.Col.Status"]"><span class="sch-pill @StatusPill(codeRow.Status)">@StatusLabel(codeRow)</span></td>
+                        <td data-label="@Culture["School.Col.LastActive"]">@(codeRow.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
+                        <td class="sch-row-actions" data-label="">
                             <button type="button" class="btn-compact" @onclick="() => ReplaceCode(codeRow.Id)" disabled="@_busy">
                                 @Culture["School.Codes.Replace"]
                             </button>
@@ -139,7 +139,8 @@ else
     </section>
 }
 
-<TestWindowDialog @bind-Open="_windowOpen"
+<TestWindowDialog RestoreFocusTo="_windowTrigger"
+                  @bind-Open="_windowOpen"
                   State="@(_detail?.TestWindow ?? TestWindowState.NotOpen)"
                   ClosesOn="_detail?.TestWindowClosesOn"
                   Busy="_busy"
@@ -173,6 +174,7 @@ else
     private bool _loading = true;
     private bool _busy;
     private bool _windowOpen;
+    private ElementReference _windowTrigger;
     private bool _editOpen;
     private bool _parentsCheck;
     private string? _actionError;
@@ -187,7 +189,6 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (!_disabled)
         {

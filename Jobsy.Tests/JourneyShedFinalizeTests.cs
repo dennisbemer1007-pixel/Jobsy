@@ -2,9 +2,11 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Bunit;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Pages.Candidate;
+using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -39,12 +41,18 @@ public sealed class JourneyShedFinalizeTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        Services.AddSingleton<MeGetCache>();
+        Services.AddSingleton<DiscoveryOverviewCache>();
+        Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
     }
 
     [Fact]
     public void Fully_done_draft_competency_shed_posts_complete_true()
     {
-        foreach (var id in TestDepthRules.QuestionIdsUpTo(Jobsy.Core.Enums.AssessmentKind.Competence, 25))
+        foreach (var id in TestDepthRules.QuestionIdsUpTo(
+                     AssessmentKind.Competence,
+                     25,
+                     AssessmentTestVersions.V3))
         {
             _handler.CompetencyAnswers[id] = 4;
         }
@@ -54,7 +62,8 @@ public sealed class JourneyShedFinalizeTests : BunitContext
 
         var cut = Render<DiscoveryJourney>();
         cut.WaitForAssertion(() =>
-            Assert.Contains("Deze test heb je helemaal gedaan", cut.Markup, StringComparison.Ordinal));
+            Assert.Contains("Deze test heb je helemaal gedaan", cut.Markup, StringComparison.Ordinal),
+            TimeSpan.FromSeconds(15));
 
         cut.Find("button.btn-primary").Click();
 
@@ -102,7 +111,9 @@ public sealed class JourneyShedFinalizeTests : BunitContext
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
             }
 
-            var responseBody = path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
+            var responseBody = JourneyBunitMiniResponses.IsDiscoveryOverviewPath(path)
+                ? JourneyBunitMiniResponses.DiscoveryOverviewPanelJson(competencyAnswered: 25)
+                : JourneyBunitMiniResponses.IsOnboardingStatePath(path)
                 ? """
                   {"currentStep":7,"isComplete":false,"wizardVersion":3,"shouldShow":true,"steps":[],"impression":{"strengths":[],"riasec":[],"matchCards":[]}}
                   """
@@ -110,9 +121,15 @@ public sealed class JourneyShedFinalizeTests : BunitContext
                     ? """
                       {"id":"11111111-1111-1111-1111-111111111111","firstName":"Sanne","lastName":"Test","fullName":"Sanne Test","testAiConsentAt":"2026-10-01T00:00:00Z","preferences":{}}
                       """
-                    : path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
-                        ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "}}"
-                        : "{\"status\":\"Draft\",\"answers\":{}}";
+                    : path.Contains("career-interest", StringComparison.OrdinalIgnoreCase)
+                        ? JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Career)
+                        : path.Contains("/culture", StringComparison.OrdinalIgnoreCase)
+                            ? JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Culture)
+                            : path.Contains("/values", StringComparison.OrdinalIgnoreCase)
+                                ? JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Values)
+                                : path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
+                                    ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "},\"quickScanVersion\":" + AssessmentTestVersions.V3 + "}"
+                                    : "{\"status\":\"Draft\",\"answers\":{}}";
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -144,7 +161,7 @@ public sealed class JourneyShedFinalizeTests : BunitContext
             => ValueTask.FromResult(new FeatureFlagSnapshot(false, true));
 
         public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(feature == PlatformFeature.CandidatePassport);
+            => ValueTask.FromResult(feature is PlatformFeature.CandidatePassport or PlatformFeature.TestsV2);
 
         public void Invalidate()
         {

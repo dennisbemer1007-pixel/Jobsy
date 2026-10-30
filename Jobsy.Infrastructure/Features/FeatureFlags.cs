@@ -46,6 +46,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.CandidatePassportEnabled,
                 snap.PassportPartnersEnabled,
                 snap.PassportPdfV2Enabled,
+                snap.PupilPassportV2Enabled,
+                snap.StudentPassportEnabled,
                 snap.PhoneVerificationEnabled,
                 snap.SchoolsEnabled,
                 snap.AmbassadorsEnabled,
@@ -56,7 +58,24 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.EmployerPhase2Enabled,
                 snap.CandidateExternalVacanciesEnabled,
                 snap.ProactiveMatchingEnabled,
-                snap.TestsV2Enabled);
+                snap.TestsV2Enabled,
+                TestItemExamplesEnabled: snap.TestItemExamplesEnabled,
+                TestProgressInsightEnabled: snap.TestProgressInsightEnabled,
+                snap.EmployerFitQuestionnairesEnabled,
+                snap.KandidatenkaartEnabled,
+                snap.CompanyMapInitiativeEnabled,
+                snap.AfterMatchEnabled,
+                snap.ReferenceVerificationEnabled,
+                snap.SensitiveExperienceEnabled,
+                snap.TrainingPartnersEnabled,
+                snap.TestJourneyIllustrationEnabled,
+                snap.OnboardingFinaleV2Enabled,
+                snap.OccupationDayInLifeEnabled,
+                snap.TestEditModeEnabled,
+                snap.SamplePdfEnabled,
+                snap.TestDepthValueMockupEnabled,
+                snap.UwvFeaturesEnabled,
+                ActivityLogEnabled: snap.ActivityLogEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

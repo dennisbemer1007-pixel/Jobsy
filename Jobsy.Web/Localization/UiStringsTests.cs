@@ -52,7 +52,7 @@ public static class UiStringsTests
         Add("DeepPay.PaidTitle", "Betaald. Je kunt beginnen", "Paid. You can start", "Opłacone. Możesz zacząć", "Plătit. Poți începe", "تم الدفع. يمكنك البدء");
         Add("DeepPay.OpenedTitle", "Klaar om te beginnen", "Ready to start", "Możesz zaczynać", "Gata de început", "جاهز للبدء");
         Add("DeepPay.PriceFree", "Prijs: gratis (testaccount)", "Price: free (test account)", "Cena: za darmo (konto testowe)", "Preț: gratuit (cont de test)", "السعر: مجاناً (حساب تجريبي)");
-        Add("Coach.Ask", "Lobsy, je coach: stel een vraag", "Lobsy, your coach: ask a question", "Lobsy, twój coach: zadaj pytanie", "Lobsy, antrenorul tău: pune o întrebare", "لوبسي، مدربك: اطرح سؤالاً");
+        Add("Coach.Ask", "Lobsy-hulp", "Lobsy help", "Lobsy help", "Lobsy help", "Lobsy help");
         Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
         Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
         Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");
@@ -82,6 +82,7 @@ public static class UiStringsTests
         Add("TestFlow.Rail.Aria", "Jouw duik", "Your dive", "Twój dive", "Your dive", "‏Your dive");
         Add("TestFlow.Eyebrow.Intro", "Mijn tests · {0}", "My tests · {0}", "Moje testy · {0}", "Testele mele · {0}", "اختباراتي · {0}");
         Add("TestFlow.Eyebrow.Dive", "In de diepte · {0} · {1}", "Diving · {0} · {1}", "Nurkowanie · {0} · {1}", "Scufundare · {0} · {1}", "غوص · {0} · {1}");
+        Add("TestFlow.Eyebrow.QuickScan", "Snelle scan · {0} · {1}", "Quick-Scan · {0} · {1}", "Quick-Scan · {0} · {1}", "Quick-Scan · {0} · {1}", "Quick-Scan · {0} · {1}");
         Add("TestFlow.QuestionLead", "Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.", "How well does this sentence fit you? There are no wrong answers.", "Jak dobrze pasuje do ciebie to zdanie? Nie ma złych odpowiedzi.", "Cât de bine ți se potrivește această propoziție? Nu există răspunsuri greșite.", "ما مدى مناسبة هذه الجملة لك؟ لا توجد إجابات خاطئة.");
         Add("TestFlow.Lead.Competence", "25 korte zinnen over hoe je werkt. Zo zien we waar je sterk in bent.", "25 short sentences about how you work. We see where you are strong.", "25 krótkich zdań o tym, jak pracujesz. Widzimy, w czym jesteś mocny.", "25 de propoziții scurte despre cum lucrezi. Vedem unde ești puternic.", "25 جملة قصيرة عن طريقة عملك. نرى أين أنت قوي.");
         Add("TestFlow.Lead.Career", "25 korte zinnen over werk dat je leuk vindt. Zo vinden we beroepen die bij je passen.", "25 short sentences about work you like. We find careers that fit.", "25 krótkich zdań o pracy, którą lubisz. Szukamy zawodów, które do ciebie pasują.", "25 de propoziții scurte despre munca care îți place. Găsim meserii care ți se potrivesc.", "25 جملة قصيرة عن العمل الذي تحبه. نجد مهناً تناسبك.");
@@ -91,8 +92,33 @@ public static class UiStringsTests
         Add("TestFlow.Lead.Career.V2", "{0} korte zinnen over werk dat je leuk vindt. Zo vinden we beroepen die bij je passen.", "{0} short sentences about work you like. We find careers that fit.", "{0} krótkich zdań o pracy, którą lubisz. Szukamy zawodów, które do ciebie pasują.", "{0} propoziții scurte despre munca care îți place. Găsim meserii care ți se potrivesc.", "{0} جملة قصيرة عن العمل الذي تحبه. نجد مهناً تناسبك.");
         Add("TestFlow.Lead.Culture.V2", "{0} korte zinnen over waar je graag werkt. Zo vinden we werkplekken waar je je thuis voelt.", "{0} short sentences about where you like to work. We find places where you feel at home.", "{0} krótkich zdań o tym, gdzie lubisz pracować. Szukamy miejsc, w których czujesz się dobrze.", "{0} propoziții scurte despre unde îți place să lucrezi. Găsim locuri unde te simți bine.", "{0} جملة قصيرة عن المكان الذي تحب العمل فيه. نجد أماكن تشعر فيها بالراحة.");
         Add("TestFlow.Lead.Values.V2", "{0} korte zinnen over wat je belangrijk vindt in werk.", "{0} short sentences about what matters to you at work.", "{0} krótkich zdań o tym, co jest dla ciebie ważne w pracy.", "{0} propoziții scurte despre ce este important pentru tine la muncă.", "{0} جملة قصيرة عما يهمك في العمل.");
+        Add("TestFlow.Measures.Competence",
+            "Deze test meet hoe je werkt: samenwerken, resultaatgerichtheid, omgaan met druk, innovatie en contact met anderen. Je ziet geen scores — wel een beeld voor passend werk.",
+            "This test measures how you work: collaboration, getting things done, handling pressure, trying new things, and connecting with others. You will not see scores — only a picture to match you with fitting work.",
+            "Ten test mierzy, jak pracujesz: współpraca, realizacja celów, radzenie sobie z presją, innowacje i kontakt z innymi. Bez wyników liczbowych — obraz dopasowanej pracy.",
+            "Acest test măsoară cum lucrezi: colaborare, orientare spre rezultate, gestionarea presiunii, inovație și legătura cu ceilalți. Fără scoruri — doar o imagine pentru muncă potrivită.",
+            "يقيس هذا الاختبار طريقة عملك: التعاون، إنجاز المهام، التعامل مع الضغط، التجديد، والتواصل مع الآخرين. بدون درجات — صورة للعمل المناسب.");
+        Add("TestFlow.Measures.Career",
+            "De beroepentest meet welk soort werk en taken je energie geven (beroepsinteresses). Geen cijfers — wel richting naar beroepen die bij je passen.",
+            "The career test measures what kinds of work and tasks energize you (vocational interests). No numbers — just direction toward careers that fit you.",
+            "Test zawodów mierzy, jaki rodzaj pracy i zadań dodaje ci energii (zainteresowania zawodowe). Bez liczb — kierunek do pasujących zawodów.",
+            "Testul de carieră măsoară ce fel de muncă și sarcini îți dau energie (interese vocaționale). Fără cifre — direcție spre meserii potrivite.",
+            "يقيس اختبار المهنة أنواع العمل والمهام التي تمنحك طاقة (الاهتمامات المهنية). بدون أرقام — اتجاه نحو مهن تناسبك.");
+        Add("TestFlow.Measures.Culture",
+            "Cultuur & persoonlijkheid meet waar je je thuis voelt op de werkvloer: sfeer, structuur en omgang met anderen. Geen scores — wel wat voor werkplek bij je past.",
+            "Culture & personality measures where you feel at home at work: atmosphere, structure, and how you relate to others. No scores — just what kind of workplace suits you.",
+            "Kultura i osobowość mierzą, gdzie czujesz się dobrze w pracy: atmosferę, strukturę i relacje z innymi. Bez wyników — jaki typ miejsca pracy do ciebie pasuje.",
+            "Cultura și personalitatea măsoară unde te simți acasă la job: atmosferă, structură și relația cu ceilalți. Fără scoruri — ce fel de loc de muncă ți se potrivește.",
+            "يقيس ثقافة العمل والشخصية أين تشعر بالراحة في العمل: الأجواء والبنية وعلاقتك بالآخرين. بدون درجات — نوع مكان العمل الذي يناسبك.");
+        Add("TestFlow.Measures.Values",
+            "Waarden op werk meet wat jij belangrijk vindt in werk en met wie je samenwerkt. Geen scores — wel wat voor baan en werkgever bij je past.",
+            "Work values measures what matters to you at work and in teams. No scores — just what jobs and employers fit you.",
+            "Wartości w pracy mierzą, co jest dla ciebie ważne w pracy i w zespole. Bez wyników — jakie oferty i pracodawcy pasują.",
+            "Valorile la muncă măsoară ce contează pentru tine la job și în echipă. Fără scoruri — ce joburi și angajatori ți se potrivesc.",
+            "يقيس قيم العمل ما يهمك في العمل وفي الفريق. بدون درجات — الوظائف وأصحاب العمل المناسبين.");
         Add("TestFlow.DepthPick", "Hoe diep wil je duiken?", "How deep do you want to dive?", "Jak głęboko chcesz zejść?", "Cât de adânc vrei să te scufunzi?", "إلى أي عمق تريد أن تغوص؟");
         Add("TestFlow.DepthMeta", "{0} vragen · + {1} min", "{0} questions · + {1} min", "{0} pytania · + {1} min", "{0} întrebări · + {1} min", "{0} أسئلة · + {1} min");
+        Add("TestFlow.DepthMetaShort", "{0}", "{0}", "{0}", "{0}", "{0}");
         Add("TestFlow.ToMyTests", "Mijn tests", "My tests", "Moje testy", "Testele mele", "اختباراتي");
         Add("TestFlow.Begin", "Begin", "Start", "Start", "Începe", "ابدأ");
         Add("TestFlow.ContinueAt", "Ga verder bij vraag {0}", "Continue at question {0}", "Kontynuuj od pytania {0}", "Continuă de la întrebarea {0}", "تابع من السؤال {0}");
@@ -103,8 +129,18 @@ public static class UiStringsTests
         Add("TestFlow.Bubble.Question", "Er zijn geen foute antwoorden. Kies wat het eerst in je opkomt.", "There are no wrong answers. Choose what comes first.", "There are no wrong answers. Choose what comes first. ·", "There are no wrong answers. Choose what comes first.", "‏There are no wrong answers. Choose what comes first.");
         Add("TestDone.Title", "Weer een laag eraf", "Another layer off", "Kolejna warstwa spadła", "Încă un strat a căzut", "طبقة أخرى سقطت");
         Add("TestDone.Eyebrow", "In de diepte · {0} · {1} klaar", "Diving · {0} · {1} done", "Nurkowanie · {0} · {1} done", "Scufundare · {0} · {1} done", "غوص · {0} · {1} done");
-        Add("TestDone.LeadFull", "{0} is helemaal klaar. Dit staat nu in je paspoort:", "{0} is fully done. This is now in your passport:", "{0} is fully done. This is now in tyr passport:", "{0} is fully done. This is now in your passport:", "‏{0} is fully done. This is now in your passport:");
-        Add("TestDone.LeadLevel", "{0}: {1} is klaar. Dit staat nu in je paspoort:", "{0}: {1} is done. This is now in your passport:", "{0}: {1} is done. This is now in tyr passport:", "{0}: {1} is done. This is now in your passport:", "‏{0}: {1} is done. This is now in your passport:");
+        Add("TestDone.LeadFull",
+            "{0} is helemaal klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
+            "{0} is fully done. Your scores are in tyr passport; your personal mirror stays private.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
+            "‏{0} is fully done. Your scores are in your passport; your personal mirror stays private.");
+        Add("TestDone.LeadLevel",
+            "{0}: {1} is klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your scores are in tyr passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
+            "‏{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.");
         Add("TestDone.Live", "Weer een laag eraf. {0} {1} is klaar.", "Another layer off. {0} {1} is done.", "Another warstwa off. {0} {1} is done.", "Another layer off. {0} {1} is done.", "‏Another layer off. {0} {1} is done.");
         Add("TestDone.Back", "Terug naar Mijn tests", "Back to My tests", "Wstecz to Moje testy", "Înapoi to Testele mele", "رجوع to اختباراتي");
         Add("TestDone.ViewResult", "Bekijk je uitslag", "View your result", "View tyr result", "View your result", "‏View your result");
@@ -128,14 +164,30 @@ public static class UiStringsTests
         Add("TestDone.CareerMatches", "{0} vacatures passen goed bij wat je leuk vindt", "{0} vacancies fit well with what you like", "{0} vacancies fit well with what ty like", "{0} vacancies fit well with what you like", "‏{0} vacancies fit well with what you like");
         Add("TestDone.CareerMatchesLink", "Bekijk ze", "View them", "View them ·", "View them", "‏View them");
         Add("TestDepth.First", "Eerste indruk", "First look", "Pierwsze wrażenie", "Prima impresie", "انطباع أول");
+        Add("TestDepth.FirstShort", "Eerste", "First", "Pierwsze", "Prima", "أول");
+        Add("TestDepth.DeeperShort", "Dieper", "Deeper", "Głębiej", "Mai adânc", "أعمق");
+        Add("TestDepth.FullShort", "Heel diep", "Very deep", "B. głęboko", "F. adânc", "عميق");
         Add("TestDepth.Deeper", "Iets dieper", "A bit deeper", "Trochę głębiej", "Un pic mai adânc", "أعمق قليلًا");
         Add("TestDepth.Full", "Heel diep", "Very deep", "Bardzo głęboko", "Foarte adânc", "عميق جدًا");
         Add("TestDepth.Bottom", "De bodem", "The bottom", "Dno", "Fundul", "القاع");
         Add("TestFlow.QuestionOf", "Vraag {0} van {1}", "Question {0} of {1}", "Question {0} of {1} ·", "Question {0} of {1}", "‏Question {0} of {1}");
         Add("TestFlow.LevelDone", "{0} gedaan", "{0} done", "{0} done ·", "{0} done", "‏{0} done");
-        Add("TestFlow.LevelNext", "nog {0} tot {1}", "{0} left until {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
+        Add("TestFlow.LevelNext", "Nog {0} vragen tot je {1}", "{0} more questions to your {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
         Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice", "Example from practice ·", "Example from practice", "‏Example from practice");
         Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})", "Answered ({0}) ·", "Answered ({0})", "‏Answered ({0})");
+        Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");
+        Add("TestFlow.ProgressInsight.Title", "Jouw beeld tot nu toe", "Your picture so far", "Twój obraz dotąd", "Imaginea ta până acum", "صورتك حتى الآن");
+        Add("TestFlow.ProgressInsight.Lead", "Op basis van je antwoorden tot nu toe:", "Based on your answers so far:", "Na podstawie dotychczasowych odpowiedzi:", "Pe baza răspunsurilor tale de până acum:", "بناءً على إجاباتك حتى الآن:");
+        Add("TestFlow.ProgressInsight.Empty", "Na een paar antwoorden vullen we dit rustig aan.", "After a few answers we gently add to this.", "Po kilku odpowiedziach uzupełnimy to spokojnie.", "După câteva răspunsuri completăm treptat.", "بعد بعض الإجابات نملأ هذا تدريجياً.");
+        Add("TestFlow.ProgressInsight.Line", "{0}: {1}", "{0}: {1}", "{0}: {1}", "{0}: {1}", "{0}: {1}");
+        Add("TestFlow.ProgressInsight.Prefix.Competence", "Hoe je werkt", "How you work", "Jak pracujesz", "Cum lucrezi", "كيف تعمل");
+        Add("TestFlow.ProgressInsight.Prefix.Career", "Werk dat bij je past", "Work that fits you", "Praca dla ciebie", "Muncă potrivită", "عمل يناسبك");
+        Add("TestFlow.ProgressInsight.Prefix.Culture", "Sfeer op de werkvloer", "Workplace vibe", "Klimat w pracy", "Atmosfera la job", "أجواء العمل");
+        Add("TestFlow.ProgressInsight.Prefix.Values", "Belangrijk voor jou", "Important to you", "Ważne dla ciebie", "Important pentru tine", "مهم لك");
+        Add("TestFlow.ProgressInsight.Mobile", "Jouw beeld: {0}", "Your picture: {0}", "Twój obraz: {0}", "Imaginea ta: {0}", "صورتك: {0}");
+        Add("TestFlow.ProgressInsight.MobileNew", "+{0} nieuw", "+{0} new", "+{0} nowe", "+{0} nou", "+{0} جديد");
+        Add("TestFlow.ProgressInsight.Block", "Blok {0}", "Block {0}", "Część {0}", "Blocul {0}", "الكتلة {0}");
+        Add("TestFlow.JumpToQuestion", "Ga naar vraag {0}", "Go to question {0}", "Przejdź do pytania {0}", "Mergi la întrebarea {0}", "‏انتقل إلى السؤال {0}");
         Add("TestFlow.Adjust", "Aanpassen", "Adjust", "Adjust ·", "Adjust", "‏Adjust");
         Add("TestFlow.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
         Add("TestFlow.Later", "Later verder", "Continue later", "Później", "Mai târziu", "لاحقًا");
@@ -148,7 +200,7 @@ public static class UiStringsTests
         Add("TestFlow.Scale.Aria.3", "3", "3", "3 ·", "RO: 3", "عربي: 3");
         Add("TestFlow.Scale.Aria.4", "4", "4", "4 ·", "RO: 4", "عربي: 4");
         Add("TestFlow.Scale.Aria.5", "5, past heel goed", "5, fits very well", "5, fits very well ·", "5, fits very well", "‏5, fits very well");
-        Add("TestFlow.Saved", "Bewaard", "Saved", "Zapisano", "Salvat", "تم الحفظ");
+        Add("TestFlow.Saved", "Automatisch bewaard", "Saved automatically", "Zapisano automatycznie", "Salvat automat", "تم الحفظ تلقائياً");
         Add("TestFlow.SaveFailed", "Je laatste antwoord is nog niet bewaard", "Your last answer is not saved yet", "Twój last answer is not saved yet", "Your last answer is not saved yet", "‏Your last answer is not saved yet");
         Add("TestFlow.Consent.Title", "Eerst even toestemming", "Consent first", "Zgoda first", "Consimțământ first", "موافقة first");
         Add("TestFlow.Consent.Lead", "Voor de tests gebruiken we je antwoorden om te kijken welk werk bij je past. Werkgevers zien je antwoorden niet.", "We use your answers to see which work fits you. Employers do not see your answers.", "We use tyr answers to see which work fits ty. Employers do not see tyr answers.", "We use your answers to see which work fits you. Employers do not see your answers.", "‏We use your answers to see which work fits you. Employers do not see your answers.");
@@ -210,5 +262,7 @@ public static class UiStringsTests
         Add("Deep.Checkout.TileParts", "In 5 onderwerpen, met rustpunten.", "In 5 topics, with pause points.", "In 5 topics, with pause points. ·", "In 5 topics, with pause points.", "‏In 5 topics, with pause points.");
         Add("Deep.Checkout.TileStop", "Stoppen mag", "Stopping is fine", "Stopping is fine ·", "Stopping is fine", "‏Stopping is fine");
         Add("Deep.Checkout.TileStopLead", "Je gaat later verder waar je was.", "You’ll continue later where you left off.", "You’ll continue later where ty left off.", "You’ll continue later where you left off.", "‏You’ll continue later where you left off.");
+
+        UiStringsTestReflection.MergeAll(nl, en, pl, ro, ar);
     }
 }

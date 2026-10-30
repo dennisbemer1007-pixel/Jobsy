@@ -25,6 +25,22 @@
 .career-only-mobile { display: none; }
 .career-only-desktop { display: revert; }
 
+@media (max-width: 639px) {
+  /* Hero toont al Career.Empty.Title; geen dubbele h1 in de kaart. */
+  .career-page--illustrated:has(> .cand-hero) .career-card--empty #career-title,
+  .career-page--illustrated:has(> .cand-hero) .career-card--empty .career-card__lead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
 /* ---------------- scene (illustration layer) ---------------- */
 
 .career-scene {
@@ -1201,6 +1217,307 @@
   .career-done__top { flex-wrap: wrap; }
 }
 
+/* UWV showcase: segmented tabs (Carrière r2) */
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band::before,
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Desktop: profession-band strip is 150px elsewhere; UWV showcase h1 may wrap (e.g. “Van … naar …”). */
+@media (min-width: 640px) {
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band .cand-hero__copy {
+    height: auto !important;
+    min-height: 0 !important;
+    justify-content: flex-start !important;
+    padding-block: clamp(1rem, 2.2vw, 1.65rem) !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--profession-band .cand-hero__copy h1 {
+    line-height: 1.18;
+    text-wrap: balance;
+  }
+}
+
+.carriere-segmented.opl-wrap {
+  padding-top: 0 !important;
+}
+
+.career-page--compact-preview-c > header.uwv-carriere-showcase-hero + .carriere-segmented .carriere-segmented__empty-profile {
+  margin-top: 0.75rem;
+}
+
+.carriere-segmented__empty-profile {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+}
+
+.carriere-segmented__empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--brand);
+}
+
+.carriere-segmented__empty-lead {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.carriere-segmented__empty-cta {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+@media (min-width: 640px) {
+  .carriere-segmented__empty-cta {
+    width: auto;
+  }
+}
+
+.carriere-segmented__nav-wrap {
+  margin-bottom: var(--space-4);
+}
+
+.carriere-segmented__nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--gold-light) 22%, var(--surface));
+}
+
+.carriere-segmented__tab {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  padding: 10px 6px;
+  border-radius: calc(var(--radius-sm) + 1px);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.carriere-segmented__tab.is-active {
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+.carriere-segmented__group {
+  margin-bottom: var(--space-5);
+}
+
+.carriere-segmented__group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.carriere-segmented__group-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.carriere-segmented__meer {
+  flex: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent-hover);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.carriere-segmented__meer:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.carriere-segmented__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .carriere-segmented__cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.carriere-segmented__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--brand) 4%, transparent);
+}
+
+.carriere-segmented__card h3 {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: var(--brand);
+}
+
+.carriere-segmented__card p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.carriere-segmented__route {
+  margin-top: auto;
+  font-size: 0.72rem;
+}
+
+.carriere-segmented__card--rich {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.carriere-segmented__card-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.carriere-segmented__card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.carriere-segmented__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 var(--space-3);
+}
+
+.carriere-segmented__aside {
+  margin-top: var(--space-4);
+}
+
+.carriere-segmented__footnote {
+  margin: var(--space-5) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+@media (max-width: 639px) {
+  /* Segmented Carrière: copy-only compact showcase hero (no art band, no min-height). */
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
+    margin-bottom: 0 !important;
+    border-block-end: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background-color: transparent !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero::before,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-compact-hero::after,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art::before,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero.cand-hero--with-art::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__mob-figures-wrap,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-compact-hero__art,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__compact-c-art {
+    display: none !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__copy,
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-compact-hero__copy {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-inline: var(--space-4) !important;
+    padding-block: 0.55rem 0.25rem !important;
+    background: transparent !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero .cand-hero__lead {
+    margin-block-end: 0 !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero + .carriere-segmented,
+  .career-page--compact-preview-c .carriere-segmented.opl-wrap {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: var(--space-3) !important;
+  }
+
+  .career-page--compact-preview-c > header.uwv-carriere-showcase-hero + .carriere-segmented.career-uwv-sections {
+    margin-top: 0 !important;
+  }
+
+  .carriere-segmented__nav-wrap {
+    position: static;
+    margin-top: 0.25rem;
+    margin-bottom: var(--space-3);
+  }
+
+  .carriere-segmented__tab {
+    font-size: 0.74rem;
+    padding: 9px 4px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /*
     The growth moment has no fall and no move: the new shell and the new position are
@@ -1218,4 +1535,67 @@
   .career-scene__bubble--2 {
     animation: none;
   }
+}
+
+.carriere-segmented__nav {
+  overflow-x: auto;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.carriere-kans-layout {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .carriere-kans-layout {
+    grid-template-columns: minmax(0, 1fr) min(400px, 36%);
+  }
+}
+
+.carriere-kans-aside {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.carriere-kans-aside__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  color: var(--brand);
+}
+
+.carriere-kans-aside__lead {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.carriere-kans-aside__list {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.carriere-kans-aside__list li {
+  display: grid;
+  gap: 2px;
+}
+
+.carriere-kans-aside__adviseur {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.carriere-kans-aside__source {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.carriere-segmented__dream-coach {
+  margin: var(--space-4) 0 var(--space-5);
 }

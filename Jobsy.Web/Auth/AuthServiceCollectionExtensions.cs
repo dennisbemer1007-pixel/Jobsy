@@ -6,6 +6,7 @@ using System.Text.Json;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Security;
@@ -51,6 +52,9 @@ public static class AuthServiceCollectionExtensions
         services.AddSingleton<IExternalAuthCredentialSource, ExternalAuthCredentialSource>();
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+        var sessionAuth = configuration.GetSection(SessionAuthOptions.SectionName).Get<SessionAuthOptions>()
+                          ?? new SessionAuthOptions();
+        var authCookieMinutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(sessionAuth);
         var secureAlways = environment is not null && !environment.IsDevelopment();
 
         var authBuilder = services
@@ -63,7 +67,7 @@ public static class AuthServiceCollectionExtensions
                 // Sliding cookie ceiling; fine-grained inactivity is enforced by SessionInactivityMiddleware
                 // using the admin-configured SessionInactivityTimeoutMinutes value.
                 options.SlidingExpiration = true;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes);
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(authCookieMinutes);
                 options.Cookie.Name = "Jobsy.Auth";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
@@ -76,8 +80,10 @@ public static class AuthServiceCollectionExtensions
                     context.Properties.AllowRefresh = true;
                     if (context.Properties.ExpiresUtc is null)
                     {
-                        context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(
-                            SessionSecurityRules.MaxInactivityTimeoutMinutes);
+                        var opts = context.HttpContext.RequestServices
+                            .GetService<IOptions<SessionAuthOptions>>()?.Value;
+                        var minutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(opts);
+                        context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(minutes);
                     }
 
                     StampLastActivity(context.HttpContext);
@@ -156,6 +162,68 @@ public static class AuthServiceCollectionExtensions
                     PupilApiSessionCookie.Clear(http);
                     http.Response.Headers.CacheControl = "no-store";
                     http.Response.Redirect("/leerling?error=expired");
+                    return Task.CompletedTask;
+                };
+            })
+            .AddCookie(ParentPassportAuthDefaults.Scheme, options =>
+            {
+                options.Cookie.Name = ParentPassportAuthDefaults.CookieName;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SecurePolicy = secureAlways
+                    ? CookieSecurePolicy.Always
+                    : CookieSecurePolicy.SameAsRequest;
+                options.Cookie.Path = "/";
+                options.SlidingExpiration = false;
+                options.ExpireTimeSpan = ParentPassportAuthDefaults.AccessWindow;
+                options.LoginPath = "/ouder";
+                options.AccessDeniedPath = "/ouder";
+                options.Events.OnSigningIn = context =>
+                {
+                    context.Properties.IsPersistent = false;
+                    context.Properties.AllowRefresh = false;
+                    if (long.TryParse(
+                            context.Principal?.FindFirst(ParentPassportClaimTypes.AccessExpiresUtc)?.Value,
+                            out var expiresUnix))
+                    {
+                        context.Properties.ExpiresUtc = DateTimeOffset.FromUnixTimeSeconds(expiresUnix);
+                    }
+
+                    return Task.CompletedTask;
+                };
+                options.Events.OnValidatePrincipal = context =>
+                {
+                    var principal = context.Principal;
+                    if (principal?.Identity?.IsAuthenticated != true)
+                    {
+                        return Task.CompletedTask;
+                    }
+
+                    if (!long.TryParse(
+                            principal.FindFirst(ParentPassportClaimTypes.AccessExpiresUtc)?.Value,
+                            out var expiresUnix))
+                    {
+                        context.RejectPrincipal();
+                        var codeId = principal.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+                        context.HttpContext.RequestServices.GetService<ParentApiTicketStore>()?.Remove(codeId);
+                        ParentApiSessionCookie.Clear(context.HttpContext);
+                        return Task.CompletedTask;
+                    }
+
+                    if (DateTimeOffset.UtcNow >= DateTimeOffset.FromUnixTimeSeconds(expiresUnix))
+                    {
+                        context.RejectPrincipal();
+                        var codeId = principal.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+                        context.HttpContext.RequestServices.GetService<ParentApiTicketStore>()?.Remove(codeId);
+                        ParentApiSessionCookie.Clear(context.HttpContext);
+                    }
+
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.HttpContext.Response.Headers.CacheControl = "no-store";
+                    context.HttpContext.Response.Redirect("/ouder?error=expired");
                     return Task.CompletedTask;
                 };
             });
@@ -339,6 +407,7 @@ public static class AuthServiceCollectionExtensions
         });
 
         services.AddSingleton<PupilApiTicketStore>();
+        services.AddSingleton<ParentApiTicketStore>();
         services.AddAuthorization(ConfigureAuthorization);
         services.AddCascadingAuthenticationState();
         services.AddHttpContextAccessor();
@@ -362,7 +431,9 @@ public static class AuthServiceCollectionExtensions
     {
         options.DefaultPolicy = new AuthorizationPolicyBuilder()
             .RequireAuthenticatedUser()
-            .RequireAssertion(ctx => !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(ctx.User))
+            .RequireAssertion(ctx =>
+                !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(ctx.User)
+                && !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(ctx.User))
             .Build();
 
         options.AddPolicy(JobsyPolicies.PupilSession, policy =>
@@ -374,6 +445,14 @@ public static class AuthServiceCollectionExtensions
             policy.RequireClaim(PupilClaimTypes.SchoolId);
             policy.RequireClaim(PupilClaimTypes.SessionVersion);
             policy.RequireClaim(PupilClaimTypes.IssuedAt);
+        });
+
+        options.AddPolicy(JobsyPolicies.ParentPassportSession, policy =>
+        {
+            policy.AddAuthenticationSchemes(ParentPassportAuthDefaults.Scheme);
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim(ParentPassportClaimTypes.PupilCodeId);
+            policy.RequireClaim(ParentPassportClaimTypes.AccessExpiresUtc);
         });
     }
 
@@ -467,7 +546,7 @@ public static class AuthServiceCollectionExtensions
 
             if (allowDemoLogin && users.TryAuthenticate(email, password, out var user) && user is not null)
             {
-                principal = CreateLocalPrincipal(user);
+                principal = CreateLocalPrincipal(user, configuration);
             }
             else
             {
@@ -508,18 +587,22 @@ public static class AuthServiceCollectionExtensions
                 }
 
                 apiProfile = outcome.Profile;
-                if (apiProfile?.RequiresMfa == true
-                    && !string.IsNullOrWhiteSpace(apiProfile.MfaChallengeToken))
+                if (apiProfile is not null
+                    && MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                        configuration,
+                        email,
+                        apiProfile.RequiresMfa,
+                        apiProfile.MfaChallengeToken))
                 {
                     MfaTrustCookie.Clear(http);
-                    SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken, safeReturn);
+                    SetMfaChallengeCookies(http, apiProfile.MfaChallengeToken!, safeReturn);
                     var mfaPath = apiProfile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                     return Results.Redirect(mfaPath);
                 }
 
                 if (apiProfile is not null)
                 {
-                    principal = CreatePrincipalFromProfile(apiProfile, "local-registration");
+                    principal = CreatePrincipalFromProfile(configuration, apiProfile, "local-registration");
                 }
             }
 
@@ -658,9 +741,14 @@ public static class AuthServiceCollectionExtensions
                 rememberDevice,
                 http.Request.Headers.UserAgent.ToString());
 
-            if (profile?.RequiresMfa == true && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            if (profile is not null
+                && MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                    configuration,
+                    profile.Email,
+                    profile.RequiresMfa,
+                    profile.MfaChallengeToken))
             {
-                SetMfaChallengeCookies(http, profile.MfaChallengeToken, payload.ReturnUrl ?? safeReturn);
+                SetMfaChallengeCookies(http, profile.MfaChallengeToken!, payload.ReturnUrl ?? safeReturn);
                 EmailCodeCookie.Clear(http);
                 var mfaPath = profile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup";
                 return Results.Redirect(mfaPath);
@@ -689,7 +777,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             EmailCodeCookie.Clear(http);
-            var principal = CreatePrincipalFromProfile(profile, "email-code");
+            var principal = CreatePrincipalFromProfile(configuration, profile, "email-code");
             return await SignInFromApiProfileAsync(
                 http,
                 configuration,
@@ -768,7 +856,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             var profile = outcome.Profile!;
-            var principal = CreatePrincipalFromProfile(profile, "password+totp");
+            var principal = CreatePrincipalFromProfile(configuration, profile, "password+totp");
             if (principal.Identity is ClaimsIdentity identity)
             {
                 if (profile.DeviceSessionId is Guid deviceId
@@ -783,7 +871,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             ClearMfaChallengeCookies(http);
             StampLastActivity(http);
 
@@ -943,7 +1031,7 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect($"/login?error=invalid&returnUrl={Uri.EscapeDataString(safeReturn)}");
             }
 
-            var principal = CreateLocalPrincipal(user);
+            var principal = CreateLocalPrincipal(user, configuration);
             var showHowTo = principal.HasClaim(c =>
                 c.Type == "show_candidate_how_to" && c.Value == "1");
             if (showHowTo
@@ -966,7 +1054,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
@@ -1134,14 +1222,18 @@ public static class AuthServiceCollectionExtensions
                 return Results.Redirect("/login?error=retry");
             }
 
-            if (profile.RequiresMfa && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            if (MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                    configuration,
+                    profile.Email,
+                    profile.RequiresMfa,
+                    profile.MfaChallengeToken))
             {
                 var safeReturn = AuthRedirects.SafeLocalUrl(returnUrl ?? "/home");
-                SetMfaChallengeCookies(http, profile.MfaChallengeToken, safeReturn);
+                SetMfaChallengeCookies(http, profile.MfaChallengeToken!, safeReturn);
                 return Results.Redirect(profile.MfaEnrolled ? "/account/mfa" : "/account/mfa/setup");
             }
 
-            var principal = CreatePrincipalFromProfile(profile, "local-registration");
+            var principal = CreatePrincipalFromProfile(configuration, profile, "local-registration");
             if (principal.Identity is ClaimsIdentity identity)
             {
                 AuthPrincipalFactory.StampSessionVersion(identity, profile.SessionVersion);
@@ -1158,7 +1250,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl ?? "/home"));
@@ -1228,7 +1320,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             StampLastActivity(http);
             if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.DeviceExpiresAtUtc is DateTime exp)
             {
@@ -1269,7 +1361,11 @@ public static class AuthServiceCollectionExtensions
             }
 
             StampLastActivity(http);
-            await RefreshLocalSessionCookieAsync(http);
+            if (HttpMethods.IsPost(http.Request.Method))
+            {
+                await RefreshLocalSessionCookieAsync(http);
+            }
+
             return Results.Json(new { ok = true });
         }).AllowAnonymous().DisableAntiforgery();
 
@@ -1282,16 +1378,25 @@ public static class AuthServiceCollectionExtensions
         }).AllowAnonymous().DisableAntiforgery();
     }
 
-    public static AuthenticationProperties CreateSessionAuthPropertiesPublic()
-        => CreateSessionAuthProperties();
+    public static AuthenticationProperties CreateSessionAuthPropertiesPublic(HttpContext? http = null)
+        => CreateSessionAuthProperties(http);
 
-    private static AuthenticationProperties CreateSessionAuthProperties() =>
-        new()
+    private static AuthenticationProperties CreateSessionAuthProperties(HttpContext? http = null)
+    {
+        var minutes = SessionSecurityRules.MaxInactivityTimeoutMinutes;
+        if (http is not null)
+        {
+            var opts = http.RequestServices.GetService<IOptions<SessionAuthOptions>>()?.Value;
+            minutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(opts);
+        }
+
+        return new AuthenticationProperties
         {
             IsPersistent = true,
             AllowRefresh = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes)
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(minutes)
         };
+    }
 
     private static void StampLastActivity(HttpContext http)
         => SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
@@ -1303,6 +1408,11 @@ public static class AuthServiceCollectionExtensions
     private static async Task RefreshLocalSessionCookieAsync(HttpContext http)
     {
         if (http.User.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
+        {
+            return;
+        }
+
+        if (!AuthCookieRefreshThrottle.ShouldRefresh(http))
         {
             return;
         }
@@ -1342,17 +1452,23 @@ public static class AuthServiceCollectionExtensions
             return;
         }
 
-        var fresh = JobsyLocalSessionToken.Create(email, userId, key);
+        var sessionOpts = http.RequestServices.GetRequiredService<IOptions<SessionAuthOptions>>().Value;
+        var fresh = JobsyLocalSessionToken.Create(
+            email,
+            userId,
+            key,
+            SessionTimeoutResolver.ResolveLocalSessionLifetime(sessionOpts));
         foreach (var claim in identity.FindAll(JobsyClaimTypes.LocalSession).ToList())
         {
             identity.RemoveClaim(claim);
         }
 
         identity.AddClaim(new Claim(JobsyClaimTypes.LocalSession, fresh));
+        JobsyAuthCookieChunks.DeleteAll(http);
         await http.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             http.User,
-            CreateSessionAuthProperties());
+            CreateSessionAuthProperties(http));
     }
 
     private static bool IsDemoLoginEnabled(HttpContext http, IConfiguration configuration)
@@ -1368,7 +1484,7 @@ public static class AuthServiceCollectionExtensions
                || configuration.GetValue("JobsyAuth:AllowDevelopmentAuth", false);
     }
 
-    private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user)
+    private static ClaimsPrincipal CreateLocalPrincipal(DemoUserOptions user, IConfiguration configuration)
     {
         var role = NormalizeRole(user.Role);
         var subject = user.UserId is Guid uid && uid != Guid.Empty
@@ -1381,11 +1497,15 @@ public static class AuthServiceCollectionExtensions
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, role),
             new("auth_method", "password"),
-            new(JobsyClaimTypes.SessionVersion, "0"),
-            // Demo login is Development-only (never Production). The claim lets the
-            // CI admin smoke stay on /admin; real accounts still enroll at /account/mfa.
-            new(JobsyClaimTypes.MfaVerified, "1")
+            new(JobsyClaimTypes.SessionVersion, "0")
         };
+
+        if (MfaSeedAccountBypass.AppliesTo(configuration, user.Email)
+            || MfaPolicy.IsJobsyLocalSeedEmail(user.Email))
+        {
+            // DemoUser store is @jobsy.local only; Acceptatie uses Auth:SkipMfaForSeedAccounts.
+            claims.Add(new Claim(JobsyClaimTypes.MfaVerified, "1"));
+        }
 
         if (!string.IsNullOrWhiteSpace(user.CompanyId))
         {
@@ -1438,6 +1558,7 @@ public static class AuthServiceCollectionExtensions
 
         if (principal.Identity is ClaimsIdentity identity)
         {
+            MfaSeedAccountBypass.EnsureMfaVerifiedClaim(identity, configuration, email);
             if (apiProfile?.DeviceSessionId is Guid deviceId
                 && !string.IsNullOrWhiteSpace(apiProfile.DeviceRefreshToken)
                 && apiProfile.DeviceExpiresAtUtc is DateTime deviceExp)
@@ -1458,7 +1579,7 @@ public static class AuthServiceCollectionExtensions
         await http.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,
-            CreateSessionAuthProperties());
+            CreateSessionAuthProperties(http));
         StampLastActivity(http);
 
         return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
@@ -1987,11 +2108,16 @@ public static class AuthServiceCollectionExtensions
                 return;
             }
 
-            if (profile.RequiresMfa && !string.IsNullOrWhiteSpace(profile.MfaChallengeToken))
+            var configuration = http.RequestServices.GetRequiredService<IConfiguration>();
+            if (MfaSeedAccountBypass.ShouldRedirectToMfaStep(
+                    configuration,
+                    profile.Email,
+                    profile.RequiresMfa,
+                    profile.MfaChallengeToken))
             {
                 SetMfaChallengeCookies(
                     http,
-                    profile.MfaChallengeToken,
+                    profile.MfaChallengeToken!,
                     AuthRedirects.SafeLocalUrl(properties?.RedirectUri ?? "/home"));
                 if (properties is not null)
                 {
@@ -2002,6 +2128,7 @@ public static class AuthServiceCollectionExtensions
             }
 
             ApplyProfileClaims(identity, profile, $"external:{provider}");
+            MfaSeedAccountBypass.EnsureMfaVerifiedClaim(identity, configuration, profile.Email);
 
             var featureFlags = await ResolveFeatureFlagsAsync(
                 http.RequestServices.GetService<IFeatureFlags>(),
@@ -2071,7 +2198,10 @@ public static class AuthServiceCollectionExtensions
         }
     }
 
-    private static ClaimsPrincipal CreatePrincipalFromProfile(LocalApiLoginProfile profile, string authMethod)
+    private static ClaimsPrincipal CreatePrincipalFromProfile(
+        IConfiguration configuration,
+        LocalApiLoginProfile profile,
+        string authMethod)
     {
         var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
         var subject = profile.UserId is Guid uid && uid != Guid.Empty
@@ -2082,6 +2212,7 @@ public static class AuthServiceCollectionExtensions
         identity.AddClaim(new Claim(ClaimTypes.Name, profile.FullName));
         identity.AddClaim(new Claim("auth_method", authMethod));
         ApplyProfileClaims(identity, profile, authMethod);
+        MfaSeedAccountBypass.EnsureMfaVerifiedClaim(identity, configuration, profile.Email);
         return new ClaimsPrincipal(identity);
     }
 

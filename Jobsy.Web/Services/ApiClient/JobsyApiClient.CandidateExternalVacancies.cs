@@ -29,7 +29,16 @@ public sealed partial class JobsyApiClient
         => await GetApiJsonAsync<List<ExternalVacancyListItemDto>>("api/candidate/external-vacancies", ct) ?? [];
 
     public async Task<ExternalVacancyDetailDto?> GetExternalVacancyAsync(Guid id, CancellationToken ct = default)
-        => await GetApiJsonAsync<ExternalVacancyDetailDto>($"api/candidate/external-vacancies/{id:D}", ct);
+    {
+        using var response = await _http.GetAsync($"api/candidate/external-vacancies/{id:D}", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<ExternalVacancyDetailDto>(response.Content, ct);
+    }
 
     public async Task<ExternalVacancyDetailDto?> SetExternalVacancySavedAsync(
         Guid id,

@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace Jobsy.Core.Rules.KandidaatBanen;
 
 /// <summary>
@@ -64,6 +66,41 @@ public static class CandidateFitDisplay
             WhyKinds = whyKinds,
             Dimensions = dimensions
         };
+    }
+
+    /// <summary>Removes calibration confidence percentages from candidate-facing copy.</summary>
+    public static string? SanitizeWhyForDetail(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return line;
+        }
+
+        var trimmed = Regex.Replace(line, @"\(\s*\d+\s*%\s*\)", string.Empty).Trim();
+        var idx = trimmed.IndexOf("Betrouwbaarheid", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+        {
+            trimmed = trimmed[..idx].Trim().TrimEnd('·', '.', ' ');
+        }
+
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+    }
+
+    /// <summary>Strips scores and percentages from passport Fit copy for candidates.</summary>
+    public static string? SanitizePassportCandidateCopy(string? line)
+    {
+        line = SanitizeWhyForDetail(line);
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return line;
+        }
+
+        var trimmed = Regex.Replace(line, @"\d+\s*%", string.Empty);
+        trimmed = Regex.Replace(trimmed, @"\bscoor(t| je| jij)?\b", string.Empty, RegexOptions.IgnoreCase);
+        trimmed = Regex.Replace(trimmed, @"\bmatch(score)?\b", string.Empty, RegexOptions.IgnoreCase);
+        trimmed = trimmed.Replace(" — ", ", ", StringComparison.Ordinal);
+        trimmed = Regex.Replace(trimmed, @"\s{2,}", " ").Trim().TrimEnd('·', '.', ',', ' ');
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
     }
 
     public static KbFitBand BandFor(int percent)
@@ -141,6 +178,30 @@ public static class CandidateFitDisplay
         int? interests = match.InterestScore01 is double i01 ? ToPercent(i01) : null;
 
         return new CandidateFitDimensions(culture, values, competencies, interests);
+    }
+
+    /// <summary>
+    /// Travel, hours and day-parts only — shown when DNA fit gate is closed (honest practical match).
+    /// </summary>
+    public static IReadOnlyList<string> MapPracticalWhyKinds(ProfileVacancyMatch match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        var kinds = new List<string>(3);
+        foreach (var point in match.Why)
+        {
+            var mapped = MapWhyKind(point.Kind);
+            if (mapped is not ("travel" or "hours"))
+            {
+                continue;
+            }
+
+            if (!kinds.Contains(mapped, StringComparer.Ordinal))
+            {
+                kinds.Add(mapped);
+            }
+        }
+
+        return kinds;
     }
 
     /// <summary>

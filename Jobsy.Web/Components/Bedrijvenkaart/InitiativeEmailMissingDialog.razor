@@ -1,0 +1,27 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop bk-modal-backdrop--centered">
+        <div class="bk-modal bk-modal--sent" role="alertdialog" aria-modal="true" aria-labelledby="bk-email-missing-title">
+            <header class="bk-modal__header">
+                <h2 id="bk-email-missing-title">@Culture["Initiative.EmailMissing.Title"]</h2>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <div class="bk-modal__body">
+                <p class="bk-modal__lead">@Culture["Initiative.EmailMissing.Body"]</p>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--primary" @onclick="Close">@Culture["Common.Close"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+}

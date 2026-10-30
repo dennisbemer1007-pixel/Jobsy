@@ -1,16 +1,16 @@
 @using Jobsy.Core.Localization
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
 @inject NavigationManager Navigation
 
-<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null)">
+<header class="pub-header @(Compact ? "pub-header--compact" : null) @(AuthShell ? "pub-header--auth" : null) @(HideLangMenu ? "pub-header--no-lang" : null)">
     <div class="pub-header__inner">
         <a class="pub-header__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
-            <LobsyLogo Class="pub-header__logo" Alt="" Animate="false" />
-            <span class="pub-header__name">Lobsy</span>
+            <LobsyLogo Class="pub-header__logo" Alt="Lobsy" Animate="false" Variant="LobsyLogoVariant.Horizontal" />
         </a>
 
         @if (AuthShell)
@@ -22,6 +22,57 @@
             </div>
             <div class="pub-header__mobile pub-header__mobile--auth">
                 <PublicLangMenu ReturnPath="@ReturnPath" />
+            </div>
+        }
+        else if (TeaserCampaign)
+        {
+            <nav class="pub-nav pub-nav--teaser" aria-label="@Culture["PublicNav.QuickLinks"]">
+                <a class="pub-nav__link pub-nav__link--quiet" href="@PublicRoutes.Banenkaart">@Culture["PublicNav.JobMap"]</a>
+                <a class="pub-nav__link pub-nav__link--quiet" href="@PublicRoutes.About">@Culture["PublicFooter.About"]</a>
+            </nav>
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                <a class="pub-btn pub-btn--primary pub-header__cta" href="@PublicRoutes.CompanyRegister">@Culture["PublicNav.CreateAccount"]</a>
+            </div>
+            <div class="pub-header__mobile">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <details class="pub-menu pub-menu--sheet" id="pub-menu">
+                    <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
+                        <span class="pub-menu__icon" aria-hidden="true"></span>
+                    </summary>
+                    <div class="pub-menu__backdrop" data-pub-menu-close aria-hidden="true"></div>
+                    <div class="pub-menu__panel" role="dialog" aria-modal="true" aria-label="@Culture["PublicNav.Menu"]">
+                        <div class="pub-menu__grab" aria-hidden="true"></div>
+                        <div class="pub-menu__head">
+                            <button type="button" class="pub-menu__close" data-pub-menu-close aria-label="@Culture["PublicNav.Close"]">
+                                ×
+                            </button>
+                        </div>
+                        <div class="pub-menu__actions pub-menu__actions--pair">
+                            <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                            <a class="pub-btn pub-btn--secondary pub-menu__btn-outline" href="@PublicRoutes.CompanyRegister">@Culture["PublicNav.CreateAccount"]</a>
+                        </div>
+                        <nav class="pub-menu__nav pub-menu__nav--rows" aria-label="@Culture["PublicNav.QuickLinks"]">
+                            <a class="pub-menu__link pub-menu__link--row" href="@PublicRoutes.Banenkaart">@Culture["PublicNav.JobMap"]</a>
+                            <a class="pub-menu__link pub-menu__link--row" href="@PublicRoutes.About">@Culture["PublicFooter.About"]</a>
+                        </nav>
+                        <PublicLangMenuSegmented ReturnPath="@ReturnPath" />
+                    </div>
+                </details>
+            </div>
+        }
+        else if (EmployerWizard)
+        {
+            <p class="pub-header__ctx">@Culture["Wa.Layout.Title"]</p>
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <span class="pub-header__hint muted">@Culture["Wa.Layout.HaveAccount"]</span>
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Login">@Culture["Wa.Layout.Login"]</a>
+            </div>
+            <div class="pub-header__mobile pub-header__mobile--auth">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Login">@Culture["Wa.Layout.Login"]</a>
             </div>
         }
         else if (Compact)
@@ -58,19 +109,40 @@
             </div>
 
             <div class="pub-header__mobile">
-                <PublicHeaderAccount />
-                <details class="pub-menu" id="pub-menu">
+                @if (_signedIn)
+                {
+                    <PublicHeaderAccount />
+                }
+                <details class="pub-menu pub-menu--sheet" id="pub-menu">
                     <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
                         <span class="pub-menu__icon" aria-hidden="true"></span>
                     </summary>
-                    <div class="pub-menu__panel">
-                        <nav class="pub-menu__nav" aria-label="@Culture["PublicNav.MainNav"]">
+                    <div class="pub-menu__backdrop" data-pub-menu-close aria-hidden="true"></div>
+                    <div class="pub-menu__panel" role="dialog" aria-modal="true" aria-label="@Culture["PublicNav.Menu"]">
+                        <div class="pub-menu__grab" aria-hidden="true"></div>
+                        <div class="pub-menu__head">
+                            <button type="button" class="pub-menu__close" data-pub-menu-close aria-label="@Culture["PublicNav.Close"]">
+                                ×
+                            </button>
+                        </div>
+                        @if (!_signedIn)
+                        {
+                            <div class="pub-menu__actions pub-menu__actions--pair">
+                                <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                                <a class="pub-btn pub-btn--secondary pub-menu__btn-outline" href="@PublicRoutes.CreateAccount">@Culture["PublicNav.CreateAccount"]</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <PublicHeaderAccount />
+                        }
+                        <nav class="pub-menu__nav pub-menu__nav--rows" aria-label="@Culture["PublicNav.MainNav"]">
                             @foreach (var item in PublicNavCatalog.Header(Variant).Where(i => i.IsAvailable))
                             {
-                                <a class="pub-menu__link" href="@item.Href">@Culture[item.LabelKey]</a>
+                                <a class="pub-menu__link pub-menu__link--row" href="@item.Href">@Culture[item.LabelKey]</a>
                             }
                         </nav>
-                        <PublicLangMenu ReturnPath="@ReturnPath" />
+                        <PublicLangMenuSegmented ReturnPath="@ReturnPath" />
                         @if (!_signedIn)
                         {
                             <a class="pub-btn pub-btn--primary pub-menu__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
@@ -87,6 +159,12 @@
     [Parameter] public bool Compact { get; set; }
     /// <summary>Auth pages: logo + language + desktop "Account maken" only.</summary>
     [Parameter] public bool AuthShell { get; set; }
+    /// <summary>Westland / lancering campaign: public nav + register CTA.</summary>
+    [Parameter] public bool TeaserCampaign { get; set; }
+    /// <summary>Employer registration wizard (/register).</summary>
+    [Parameter] public bool EmployerWizard { get; set; }
+    /// <summary>UWV adviseur share deel page: no NL/EN switch in public header.</summary>
+    [Parameter] public bool HideLangMenu { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 

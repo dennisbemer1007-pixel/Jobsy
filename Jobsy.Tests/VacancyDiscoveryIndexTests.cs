@@ -374,6 +374,19 @@ public class VacancyMapViewCalculatorTests
     }
 
     [Fact]
+    public void Netherlands_opening_ignores_out_of_country_pins()
+    {
+        var view = VacancyMapViewCalculator.FromPointsNetherlandsOrFallback([
+            (52.011, 4.357),
+            (51.994, 4.210),
+            (40.26, -86.04),
+        ]);
+        Assert.InRange(view.CenterLat, 51.99, 52.02);
+        Assert.InRange(view.CenterLng, 4.20, 4.36);
+        Assert.True(view.Zoom >= 10);
+    }
+
+    [Fact]
     public void Westland_cluster_is_centroid_not_country_zoom()
     {
         var view = VacancyMapViewCalculator.FromPoints(
@@ -447,9 +460,9 @@ public class VacancyMapViewCalculatorTests
     }
 
     [Fact]
-    public void Opening_view_keeps_pin_centroid_without_address_or_region()
+    public void Opening_view_keeps_pin_centroid_without_address_or_region_when_zoom_is_regional()
     {
-        var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (53.0, 6.0)]);
+        var pins = VacancyMapViewCalculator.FromPoints([(52.0, 5.0), (52.4, 5.4)]);
         var view = VacancyMapViewCalculator.ResolveOpening(
             pins,
             originLat: null,
@@ -458,6 +471,23 @@ public class VacancyMapViewCalculatorTests
             regionLng: null,
             companyFocus: false);
         Assert.Equal(pins, view);
+    }
+
+    [Fact]
+    public void Opening_view_defaults_to_randstad_when_pins_span_the_country()
+    {
+        var pins = VacancyMapViewCalculator.FromPoints([(51.2, 3.2), (53.4, 7.1)]);
+        Assert.True(pins.Zoom < 10);
+        var view = VacancyMapViewCalculator.ResolveOpening(
+            pins,
+            originLat: null,
+            originLng: null,
+            regionLat: null,
+            regionLng: null,
+            companyFocus: false);
+        Assert.Equal(52.011, view.CenterLat);
+        Assert.Equal(4.357, view.CenterLng);
+        Assert.Equal(VacancyMapViewCalculator.FilledLocationZoom, view.Zoom);
     }
 
     [Fact]

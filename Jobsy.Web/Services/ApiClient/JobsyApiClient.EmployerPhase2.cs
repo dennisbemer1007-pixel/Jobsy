@@ -9,9 +9,17 @@ public sealed partial class JobsyApiClient
     public async Task<EmployerPhase2ApplicationContextItem?> GetEmployerPhase2ContextAsync(
         Guid applicationId,
         CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<EmployerPhase2ApplicationContextItem>(
+    {
+        using var response = await _http.GetAsync(
             $"api/employer-phase2/applications/{applicationId:D}/context",
             ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<EmployerPhase2ApplicationContextItem>(cancellationToken: ct);
+    }
 
     public async Task<EmployerPhase2AcceptResult?> AcceptEmployerPhase2Async(
         Guid applicationId,

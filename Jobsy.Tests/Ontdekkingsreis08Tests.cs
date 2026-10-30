@@ -139,7 +139,8 @@ public class Ontdekkingsreis08RoutesNavTests
             if (rel is "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"
                 or "Jobsy.Web/Navigation/OnboardingRoutes.cs"
                 or "Jobsy.Web/Auth/AuthRedirects.cs"
-                or "Jobsy.Web/Navigation/RoleNavCatalog.cs")
+                or "Jobsy.Web/Navigation/RoleNavCatalog.cs"
+                or "Jobsy.Web/Auth/CandidateGuestRedirectMiddleware.cs")
             {
                 continue;
             }
@@ -182,8 +183,32 @@ public class Ontdekkingsreis08RoutesNavTests
     {
         Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
         Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=7"));
+        Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=8"));
+        Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=3"));
+        Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=2"));
+        Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
+        Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=start"));
         Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=klaar"));
-        Assert.True(MainLayout.IsQuestionnairePath("candidate/start", "candidate/start"));
+        Assert.False(MainLayout.IsQuestionnairePath("candidate/start", "candidate/start"));
+    }
+
+    [Fact]
+    public void Illustrated_candidate_pages_show_floating_coach()
+    {
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("carriere"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/applications"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/paspoort"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/profile"));
+    }
+
+    [Fact]
+    public void Lobsy_coach_excluded_only_on_landing_login_and_account_flow()
+    {
+        Assert.True(MainLayout.IsLobsyCoachExcludedPath(""));
+        Assert.True(MainLayout.IsLobsyCoachExcludedPath("login"));
+        Assert.True(MainLayout.IsLobsyCoachExcludedPath("account-maken"));
+        Assert.False(MainLayout.IsLobsyCoachExcludedPath("candidate/kompas"));
+        Assert.False(MainLayout.IsLobsyCoachExcludedPath("banenkaart"));
     }
 
     [Fact]
@@ -351,7 +376,7 @@ public class Ontdekkingsreis08SourceTests
         Assert.Contains("PrepareShedAsync", src, StringComparison.Ordinal);
         Assert.Contains("JourneyTestFlow.ShedQuery", src, StringComparison.Ordinal);
         Assert.DoesNotContain("NavigateStep(\"shed\")", src, StringComparison.Ordinal);
-        Assert.Contains("DeclineConsentAndFinishAsync", src, StringComparison.Ordinal);
+        Assert.Contains("AcceptConsentAsync", src, StringComparison.Ordinal);
         Assert.Contains("OnboardingInstallPrompt",
             File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Discovery/JourneyEndScreen.razor")),
             StringComparison.Ordinal);

@@ -173,7 +173,7 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
             AuthenticatorEnabled: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
-            SessionInactivityTimeoutMinutes: 30));
+            SessionInactivityTimeoutMinutes: SessionSecurityRules.DefaultInactivityTimeoutMinutes));
         Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
     }
 
@@ -206,7 +206,7 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
     }
 }
 
-public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class CoreFunctionalFlowApiFactory : ApiWebApplicationFactory
 {
     public Guid CompanyId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000001");
     public Guid DraftVacancyId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000010");

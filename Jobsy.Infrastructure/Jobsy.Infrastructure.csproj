@@ -17,7 +17,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
     <PackageReference Include="QRCoder" />
     <PackageReference Include="QuestPDF" />
-    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="WebPush" />
   </ItemGroup>
@@ -26,6 +27,11 @@
     <EmbeddedResource Include="Assets\lobsy.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy.png" />
     <EmbeddedResource Include="Assets\Fonts\NotoSansArabic-Regular.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Regular.ttf" />
     <EmbeddedResource Include="Assets\Fonts\NotoSansArabic-Bold.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Bold.ttf" />
+    <EmbeddedResource Include="Assets\Fonts\Nunito-Regular.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.Nunito-Regular.ttf" />
+    <EmbeddedResource Include="Assets\Fonts\Nunito-Bold.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.Nunito-Bold.ttf" />
+    <EmbeddedResource Include="Assets\Fonts\Fredoka-SemiBold.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.Fredoka-SemiBold.ttf" />
+    <EmbeddedResource Include="Assets\Fonts\Caveat-Regular.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.Caveat-Regular.ttf" />
+    <EmbeddedResource Include="Assets\Brand\mascot-128.png" LogicalName="Jobsy.Infrastructure.Assets.Brand.mascot-128.png" />
   </ItemGroup>
 
   <ItemGroup>

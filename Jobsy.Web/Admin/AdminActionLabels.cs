@@ -29,6 +29,7 @@ public static partial class AdminActionLabels
             "user.unblock" => "AdminAudit.Action.Unblock",
             "tokens.goodwill.grant" => "AdminAudit.Action.Tokens",
             "privacy.account.deleted" => "AdminAudit.Action.Deleted",
+            "privacy.candidate-profile.reset" => "AdminAudit.Action.CandidateProfileReset",
             "privacy.retention.run" or "Data retention" => "AdminAudit.Action.Retention",
             "auth.admin.login-failed" => "AdminAudit.Action.LoginFailed",
             "auth.system-admin.login" => "AdminAudit.Action.SystemAdminLogin",

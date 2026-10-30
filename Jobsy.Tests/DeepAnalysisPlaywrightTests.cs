@@ -90,6 +90,8 @@ public sealed class DeepAnalysisPlaywrightTests : IAsyncLifetime
         await AcceptConsentIfNeededAsync(page);
         await page.Locator(".test-shell[data-mode=Question]").WaitForAsync(new() { Timeout = 60_000 });
         await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 30_000 });
+        Assert.Equal(0, await page.Locator(".test-shell[data-mode=Pause]").CountAsync());
+        await page.Locator("[data-testid=test-progress-insight-panel]").WaitForAsync(new() { Timeout = 15_000 });
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "deep-competence-question-desktop.png"),
@@ -153,7 +155,7 @@ public sealed class DeepAnalysisPlaywrightTests : IAsyncLifetime
         return Directory.GetCurrentDirectory();
     }
 
-    private sealed class DeepWebFactory(bool unlocked) : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class DeepWebFactory(bool unlocked) : WebWebApplicationFactory
     {
         private IHost? _kestrel;
         public string ServerAddress { get; private set; } = "";
@@ -229,7 +231,8 @@ public sealed class DeepAnalysisPlaywrightTests : IAsyncLifetime
             => ValueTask.FromResult(new FeatureFlagSnapshot(
                 EmployersEnabled: false,
                 CandidatePassportEnabled: true,
-                TestsV2Enabled: true));
+                TestsV2Enabled: true,
+                TestProgressInsightEnabled: true));
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
             => (await GetAsync(cancellationToken)).IsEnabled(feature);

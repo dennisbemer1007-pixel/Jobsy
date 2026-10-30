@@ -801,9 +801,8 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             var body = await vacancy.Content.ReadAsStringAsync();
             Assert.Equal(HttpStatusCode.OK, vacancy.StatusCode);
             using var doc = System.Text.Json.JsonDocument.Parse(body);
-            Assert.True(BoolProp(doc.RootElement, "openForWorkRequired"), body);
-            Assert.True(MissingOrNull(doc.RootElement, "fitPercent"), body);
-            Assert.True(MissingOrNull(doc.RootElement, "matchPercent"), body);
+            // Open-for-work off still blocks apply; match scores stay visible when availability is known.
+            Assert.False(BoolProp(doc.RootElement, "openForWorkRequired"), body);
 
             var apply = await client.PostAsJsonAsync("api/applications", new
             {
@@ -1650,21 +1649,6 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     private static bool BoolProp(System.Text.Json.JsonElement root, string name)
         => Prop(root, name).ValueKind == System.Text.Json.JsonValueKind.True;
 
-    private static bool MissingOrNull(System.Text.Json.JsonElement root, string name)
-    {
-        foreach (var prop in root.EnumerateObject())
-        {
-            if (!prop.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return prop.Value.ValueKind is System.Text.Json.JsonValueKind.Null
-                or System.Text.Json.JsonValueKind.Undefined;
-        }
-
-        return true;
-    }
     private HttpClient EmployerClient() => Authed(_factory.EmployerId);
     private HttpClient AdminClient() => Authed(_factory.AdminId);
 
@@ -1703,7 +1687,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 }
 
-public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class RoleFunctionalWebAppFactory : ApiWebApplicationFactory
 {
     public const string DevSecret = "role-functional-secret";
 
@@ -1881,6 +1865,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Ap
                 IsActive = true,
                 DateOfBirth = new DateOnly(1998, 6, 15),
                 OpenForWork = true,
+                TermsAcceptedAt = DateTime.UtcNow,
+                ConsentVersion = PrivacyConstants.CurrentConsentVersion,
                 TestAiConsentAt = DateTime.UtcNow,
                 TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion,
                 HomeLocation = new GeoPoint(52.09, 4.31),
@@ -1899,6 +1885,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Ap
                         ["Wo"] = new[] { "Middag" }
                     },
                     aboutMe = "Ervaren vulploegmedewerker.",
+                    workStatuses = new[] { "zoekend" },
                     employers = new[] { new { employerName = "Jumbo", role = "Vulploeg", years = 2 } },
                     educations = Array.Empty<string>(),
                     drivingLicenses = Array.Empty<string>()
@@ -2078,7 +2065,7 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Ap
                 LegalHandlesMoneyOrClosing = false,
                 LegalHeavyOrHazardousWork = false,
                 MaxApplications = 10,
-                CategoryId = VacancyCategoryDefaults.InternshipId
+                CategoryId = VacancyCategoryDefaults.RegulierId
             },
             new Vacancy
             {

@@ -1,0 +1,55 @@
+@page "/candidate/start/preview-strand"
+@layout OnboardingStartSsrLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Onboarding
+@using Jobsy.Web.Security
+@inject CultureState Culture
+@inject DeploymentEnvironmentLabel Env
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-kreeft-mockup.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-strand.css")" />
+</HeadContent>
+
+@if (!_allowed)
+{
+    <p class="state-message error" role="alert">@Culture["Common.Error.NotFound"]</p>
+}
+else
+{
+    @((MarkupString)_welcomeHtml)
+}
+
+@code {
+    private bool _allowed;
+    private string _welcomeHtml = "";
+
+    protected override void OnInitialized()
+    {
+        _allowed = AcceptatieDiagnosticHeaders.IsAcceptatie(Env);
+        if (!_allowed)
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null && !http.Response.HasStarted)
+            {
+                http.Response.StatusCode = StatusCodes.Status404NotFound;
+            }
+
+            return;
+        }
+
+        _welcomeHtml = OnboardingStartWelcomeSsrShell.Build(
+            Culture,
+            firstName: "Preview",
+            antiforgeryToken: "",
+            errorMessage: null);
+    }
+}

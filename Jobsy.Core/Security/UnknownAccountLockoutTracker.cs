@@ -14,13 +14,16 @@ public sealed class UnknownAccountLockoutTracker
 
     private readonly ConcurrentDictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     private readonly byte[] _hmacKey;
+    private readonly int _failedAttemptsBeforeLockout;
 
-    public UnknownAccountLockoutTracker(string? signingKey)
+    public UnknownAccountLockoutTracker(string? signingKey, int? failedAttemptsBeforeLockout = null)
     {
         var material = string.IsNullOrWhiteSpace(signingKey)
             ? "jobsy-dev-unknown-lockout"
             : signingKey.Trim();
         _hmacKey = SHA256.HashData(Encoding.UTF8.GetBytes(material));
+        _failedAttemptsBeforeLockout = failedAttemptsBeforeLockout
+            ?? LoginLockoutRules.FailedAttemptsBeforeLockout;
     }
 
     public string KeyForEmail(string normalizedEmail)
@@ -52,7 +55,7 @@ public sealed class UnknownAccountLockoutTracker
 
         var entry = _entries.AddOrUpdate(
             key,
-            _ => NewFailure(utcNow),
+            _ => ApplyFailure(new Entry(), utcNow),
             (_, existing) => ApplyFailure(existing, utcNow));
 
         return entry.LockoutUntilUtc is DateTime until && until > utcNow ? until : null;
@@ -60,10 +63,7 @@ public sealed class UnknownAccountLockoutTracker
 
     public void Clear(string key) => _entries.TryRemove(key, out _);
 
-    private static Entry NewFailure(DateTime utcNow)
-        => ApplyFailure(new Entry(), utcNow);
-
-    private static Entry ApplyFailure(Entry existing, DateTime utcNow)
+    private Entry ApplyFailure(Entry existing, DateTime utcNow)
     {
         // Pause over → reset counter (and lockout count after 24 h window).
         if (existing.LockoutUntilUtc is DateTime until && until <= utcNow)
@@ -84,7 +84,7 @@ public sealed class UnknownAccountLockoutTracker
 
         existing.FailedCount++;
         existing.TouchedAtUtc = utcNow;
-        if (existing.FailedCount >= LoginLockoutRules.FailedAttemptsBeforeLockout)
+        if (existing.FailedCount >= _failedAttemptsBeforeLockout)
         {
             existing.LockoutCount++;
             existing.LastLockoutAtUtc = utcNow;

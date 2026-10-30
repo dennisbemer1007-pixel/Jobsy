@@ -120,7 +120,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
         await page.Locator("input[name=firstName]").First.FillAsync(firstName);
-        await page.Locator("button.login-submit").First.ClickAsync();
+        await page.Locator("form.pub-signup__form button[type=submit], button.au-submit, button.login-submit").First.ClickAsync();
         await page.WaitForURLAsync("**/account-maken/code**", new() { Timeout = 60_000 });
 
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
@@ -222,7 +222,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
     private static async Task CaptureOnboardingProgressHeaderWhileScrolledAsync(IPage page, string tag)
     {
-        var scroll = page.Locator(".ob-wizard__content").First;
+        var scroll = page.Locator(".app-main, .ob-wizard__content").First;
         if (await scroll.CountAsync() == 0)
         {
             return;
@@ -296,7 +296,6 @@ public sealed class CandidateFullJourneyPlaywrightTests
                  {
                      ".ob-wizard__education-grid button:not(.is-selected)",
                      ".ob-wizard__mbo-levels button:not(.is-selected)",
-                     ".ob-wizard__direction-chips button:not(.is-selected)",
                      ".ob-wizard__dream-grid button:not(.is-selected)"
                  })
         {
@@ -305,6 +304,12 @@ public sealed class CandidateFullJourneyPlaywrightTests
             {
                 await pick.ClickAsync(new() { Timeout = 5_000 });
             }
+        }
+
+        var direction = page.Locator("#onboarding-education-direction").First;
+        if (await direction.CountAsync() > 0 && string.IsNullOrWhiteSpace(await direction.InputValueAsync()))
+        {
+            await direction.FillAsync("Techniek");
         }
 
         var dreamSearch = page.Locator(".ob-wizard__dream-search input").First;

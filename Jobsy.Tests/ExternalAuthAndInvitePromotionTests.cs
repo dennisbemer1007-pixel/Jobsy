@@ -1,5 +1,6 @@
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
+using Jobsy.Api.Security;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
@@ -245,10 +246,12 @@ public class ExternalAuthAndInvitePromotionTests
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
             new AlwaysOnFeatures(),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
-            NullLogger<AuthController>.Instance);
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()));
     }
 
     private sealed class StubHostEnvironment : IHostEnvironment

@@ -313,7 +313,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
 
     private static CandidateCompetencyStateDto ToDto(CandidateCompetency? row, decimal deepAnalysisPriceEuro)
     {
-        var version = AssessmentTestVersions.Normalize(row?.QuickScanVersion);
+        var version = row is null ? 0 : AssessmentTestVersions.Normalize(row.QuickScanVersion);
         var fullCount = QuickScanAssessmentBridge.FullCount(AssessmentKind.Competence, version);
         var answers = QuickScanAssessmentBridge.ParseAnswers(
             AssessmentKind.Competence, row?.AnswersJson, version);

@@ -1,4 +1,5 @@
 @using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
 @using Microsoft.AspNetCore.Components.Authorization
@@ -9,9 +10,8 @@
 <header class="wg-topbar">
     <div class="wg-topbar__start">
         <a class="wg-topbar__brand" href="/werkgever" aria-label="Lobsy Werkgever">
-            <LobsyLogo Class="wg-topbar__logo" Alt="Lobsy" />
+            <LobsyLogo Class="wg-topbar__logo" Alt="Lobsy" Variant="LobsyLogoVariant.HorizontalDark" />
             <span class="wg-topbar__brand-text">
-                <span class="wg-topbar__name">Lobsy</span>
                 <span class="wg-topbar__role-tag">@Culture["WgShell.Werkgever"]</span>
             </span>
         </a>

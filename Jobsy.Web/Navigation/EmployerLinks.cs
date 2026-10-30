@@ -22,8 +22,10 @@ public static class EmployerLinks
     public const string Branches = "/werkgever/organisatie/vestigingen";
     public const string Tokens = "/werkgever/tokens";
     public const string Applicants = "/werkgever/sollicitaties";
+    public const string Notifications = "/werkgever/meldingen";
     public const string Talent = "/werkgever/talentpool";
     public const string CandidateInsights = "/werkgever/kandidaatinzichten";
+    public const string Kandidatenkaart = "/werkgever/kandidatenkaart";
 
     public static string VacanciesForRole(bool isBranchManagerOnly)
     {

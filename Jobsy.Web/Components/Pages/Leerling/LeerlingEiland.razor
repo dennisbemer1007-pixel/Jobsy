@@ -43,10 +43,10 @@ else
 {
     <div class="ll-reis ll-island">
         <section class="ll-card ll-island-card">
-            <p class="ll-question__meta">
-                @string.Format(Culture["Leerling.Island.Progress"], _state.AnsweredCount, _state.TotalItems)
-                · @IslandBetween()
-            </p>
+            <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Island.ProgressLabel"]">
+                <span class="ll-progress-bar__fill" style="width:@IslandProgressPercent()"></span>
+            </div>
+            <p class="ll-question__meta ll-question__meta--muted">@IslandBetween()</p>
             <p class="ll-question__world">@Culture["Leerling.World.Island.Title"]</p>
             <h1 class="ll-question__text">@Culture["Leerling.Island.Lead"]</h1>
             <LeerlingCoachCue Text="@Culture["Leerling.Coach.Island"]" />
@@ -248,6 +248,17 @@ else
         _dislikeOther = state.DislikeOtherWord ?? "";
         _likeOtherOpen = !string.IsNullOrEmpty(_likeOther);
         _dislikeOtherOpen = !string.IsNullOrEmpty(_dislikeOther);
+    }
+
+    private string IslandProgressPercent()
+    {
+        if (_state is null || _state.TotalItems <= 0)
+        {
+            return "0%";
+        }
+
+        var pct = 100.0 * _state.AnsweredCount / _state.TotalItems;
+        return pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%";
     }
 
     private string IslandBetween()

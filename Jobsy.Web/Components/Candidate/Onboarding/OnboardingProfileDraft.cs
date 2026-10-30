@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -16,6 +17,8 @@ public sealed class OnboardingProfileDraft
     public bool WhatsAppAllowed { get; set; }
     public string Postcode { get; set; } = "";
     public string City { get; set; } = "";
+    /// <summary>Visible address line in autocomplete (banenkaart-style).</summary>
+    public string AddressQuery { get; set; } = "";
     public string BirthDay { get; set; } = "";
     public string BirthMonth { get; set; } = "";
     public string BirthYear { get; set; } = "";
@@ -29,6 +32,10 @@ public sealed class OnboardingProfileDraft
     public bool ShowCity { get; set; }
     public bool PostcodeMissing { get; set; }
     public bool PostcodeResolved { get; set; }
+    /// <summary>Geolocation prefill shown; user must confirm before save/validation passes.</summary>
+    public bool GeolocationPendingConfirm { get; set; }
+    public GeolocationPrefillMode? GeolocationPrefillMode { get; set; }
+    public int? GeolocationApproximateAccuracyMeters { get; set; }
     public bool HasConsent { get; set; }
     public bool ConsentRequested { get; set; }
     public int MaxTravel { get; set; } = 30;
@@ -48,6 +55,7 @@ public sealed class OnboardingProfileDraft
     public HashSet<string> Presets { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> DrivingLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> EmployerPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> WorkStatuses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Roles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Hobbies { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Dislikes { get; } = new(StringComparer.OrdinalIgnoreCase);

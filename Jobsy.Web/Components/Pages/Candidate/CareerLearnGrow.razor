@@ -1,0 +1,381 @@
+@page "/carriere/leren"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.Training
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.UwvFeatures
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IUwvFeaturesGate UwvGate
+
+<PageTitle>@Culture["Training.LearnGrow.NavLearn"] · Lobsy</PageTitle>
+
+@if (!_enabled && !_uwvOn)
+{
+    return;
+}
+
+<div class="opl-page panel-page--cand-ill @(_uwvOn ? "uwv-carriere-leren-mock" : null)">
+    <CandidateIllustratedHero Eyebrow="@Culture["Training.LearnGrow.NavLearn"]"
+                              CoralEyebrow="true"
+                              Title="@Culture["Training.LearnGrow.Title"]"
+                              Lead="@Culture["Training.LearnGrow.Lead"]"
+                              ArtUrl="@CandidateIllustratedImages.LearnGrowHero"
+                              ArtUrlDesktop="@CandidateIllustratedImages.LearnGrowHeroWide"
+                              ArtUrlMobileFigures="@CandidateIllustratedImages.LearnGrowHeroFiguresMobile"
+                              ArtUrlMobileAtmosphere="@CandidateIllustratedImages.LearnGrowHeroMobileAtmosphere"
+                              ArtPosition="68% center"
+                              ArtPositionDesktop="right center"
+                              CssClass="cand-hero--learn-grow" />
+
+    <main class="opl-wrap">
+        <form class="opl-search opl-search--below" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
+            <label class="opl-search__field">
+                <span class="visually-hidden">@Culture["Training.LearnGrow.SearchPlaceholder"]</span>
+                <input type="search"
+                       class="opl-only-mobile"
+                       @bind="_search"
+                       placeholder="@Culture["Training.LearnGrow.SearchPlaceholderMobile"]" />
+                <input type="search"
+                       class="opl-only-desktop"
+                       @bind="_search"
+                       placeholder="@Culture["Training.LearnGrow.SearchPlaceholder"]" />
+            </label>
+            <button type="submit" class="btn btn-primary">@Culture["Training.LearnGrow.Search"]</button>
+        </form>
+        <div class="opl-subnav">
+            <div class="opl-seg">
+                <a href="/carriere">@Culture["Training.LearnGrow.NavRoute"]</a>
+                <span class="is-on">
+                    @Culture["Training.LearnGrow.NavLearn"]
+                    @if (_page?.TotalCount > 0)
+                    {
+                        <i class="opl-seg__count">@_page.TotalCount</i>
+                    }
+                </span>
+            </div>
+            <span class="opl-subnav__note">@Culture["Training.LearnGrow.NavNote"]</span>
+        </div>
+
+        @if (_loading)
+        {
+            <p class="state-message">@Culture["Common.Loading"]</p>
+        }
+        else if (_page is null && !_uwvOn)
+        {
+            <p class="state-message">@Culture["Common.Error"]</p>
+        }
+        else if (_page is not null)
+        {
+            <div class="opl-layout">
+                <div class="opl-main">
+                    <section class="opl-filters">
+                        <div class="opl-filters__bar">
+                            <div class="opl-filters__head opl-only-mobile">
+                                <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterSubject"]</span>
+                                <button type="button"
+                                        class="opl-filters__toggle btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
+                                        aria-expanded="@(_filtersOpen ? "true" : "false")"
+                                        @onclick="() => _filtersOpen = !_filtersOpen">
+                                    @Culture["Training.LearnGrow.FilterPanel"]
+                                    @if (AdvancedFilterCount > 0)
+                                    {
+                                        <span class="opl-filters__badge">@AdvancedFilterCount</span>
+                                    }
+                                </button>
+                            </div>
+                            <span class="opl-filters__label opl-filters__label--desktop">@Culture["Training.LearnGrow.FilterSubject"]</span>
+                            <div class="opl-filters__chip-rail">
+                                <div class="opl-filters__subject-scroll">
+                                    @foreach (var chip in SubjectChips())
+                                    {
+                                        <button type="button"
+                                                class="opl-chip @(_subject == chip.Key ? "is-on" : null)"
+                                                @onclick="() => SetSubject(chip.Key)">
+                                            @chip.Label
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                            <button type="button"
+                                    class="opl-filters__toggle opl-filters__toggle--desktop btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
+                                    aria-expanded="@(_filtersOpen ? "true" : "false")"
+                                    @onclick="() => _filtersOpen = !_filtersOpen">
+                                @Culture["Training.LearnGrow.FilterPanel"]
+                                @if (AdvancedFilterCount > 0)
+                                {
+                                    <span class="opl-filters__badge">@AdvancedFilterCount</span>
+                                }
+                            </button>
+                        </div>
+                        @if (_filtersOpen)
+                        {
+                            <div class="opl-filters__advanced">
+                                <button type="button" class="opl-chip @(_freeOnly ? "is-on" : null)" @onclick="ToggleFree">
+                                    @Culture["Training.LearnGrow.FilterFreeOnly"]
+                                </button>
+                                <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterFormat"]</span>
+                                @foreach (var f in FormatChips())
+                                {
+                                    <button type="button"
+                                            class="opl-chip @(_format == f.Key ? "is-on" : null)"
+                                            @onclick="() => SetFormat(f.Key)">
+                                        @f.Label
+                                    </button>
+                                }
+                                <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterDuration"]</span>
+                                @foreach (var d in DurationChips())
+                                {
+                                    <button type="button"
+                                            class="opl-chip @(_duration == d.Key ? "is-on" : null)"
+                                            @onclick="() => SetDuration(d.Key)">
+                                        @d.Label
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </section>
+
+                    <p class="opl-result-count muted">@Culture.Format("Training.LearnGrow.Count", _page.TotalCount)</p>
+
+                    @OfferSection("next", Culture["Training.LearnGrow.SectionNext"], _page.NextStepSubtitle, _page.NextStep)
+                    @OfferSection("growth", Culture["Training.LearnGrow.SectionGrowth"], _page.GrowthSubtitle, _page.Growth)
+                </div>
+
+                <div class="opl-side">
+                    @if (_selected is not null)
+                    {
+                        <TrainingCourseDetailPanel Offer="_selected"
+                                                   Campaign="@TrainingTracking.CampaignCompass"
+                                                   OnClose="() => _selected = null"
+                                                   OnSavedChanged="OnSavedChanged" />
+                    }
+                    <TrainingProgressCard Summary="_progress" />
+                    <section class="opl-progress-card">
+                        <h3>@Culture["Training.LearnGrow.HowTitle"]</h3>
+                        <p class="muted">@Culture["Training.LearnGrow.HowBody"]</p>
+                    </section>
+                </div>
+            </div>
+        }
+
+        @if (_uwvOn)
+        {
+            <div class="uwv-carriere-leren-mock__blocks" data-testid="uwv-carriere-leren-sections">
+                <UwvOmscholenBlock />
+                <UwvWorkshopsPartnersBlock />
+            </div>
+        }
+    </main>
+</div>
+
+@code {
+    private const int SectionPreviewCount = 3;
+
+    private bool _enabled;
+    private bool _uwvOn;
+    private bool _loading = true;
+    private bool _busy;
+    private string _search = "";
+    private string _subject = "all";
+    private bool _freeOnly;
+    private string? _format;
+    private string? _duration;
+    private TrainingLearnGrowPageModel? _page;
+    private TrainingProgressSummaryModel? _progress;
+    private TrainingPartnerOfferModel? _selected;
+    private readonly HashSet<string> _expandedSections = [];
+    private bool _filtersOpen;
+    private int AdvancedFilterCount
+    {
+        get
+        {
+            var n = 0;
+            if (_freeOnly)
+            {
+                n++;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_format))
+            {
+                n++;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_duration))
+            {
+                n++;
+            }
+
+            return n;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _uwvOn = await UwvGate.IsEnabledAsync();
+        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners)
+                   || _uwvOn;
+        if (!_enabled)
+        {
+            return;
+        }
+
+        if (_uwvOn && !await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners))
+        {
+            _loading = false;
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private IEnumerable<(string Key, string Label)> SubjectChips()
+    =>
+    [
+        ("all", Culture["Training.LearnGrow.FilterAll"]),
+        (CompetencyTestCatalog.Stressbestendigheid, Culture[$"Competency.Cat.{CompetencyTestCatalog.Stressbestendigheid}"]),
+        (CompetencyTestCatalog.Samenwerken, Culture[$"Competency.Cat.{CompetencyTestCatalog.Samenwerken}"]),
+        (CompetencyTestCatalog.Extraversie, Culture["Training.LearnGrow.FilterExtraversieShort"]),
+        (CompetencyTestCatalog.Resultaatgerichtheid, Culture[$"Competency.Cat.{CompetencyTestCatalog.Resultaatgerichtheid}"]),
+        (CompetencyTestCatalog.Innovatie, Culture[$"Competency.Cat.{CompetencyTestCatalog.Innovatie}"])
+    ];
+
+    private IEnumerable<(string? Key, string Label)> FormatChips()
+    =>
+    [
+        (null, Culture["Training.LearnGrow.Format.All"]),
+        ("online", Culture["Training.LearnGrow.Format.Online"]),
+        ("klassikaal", Culture["Training.LearnGrow.Format.Classroom"])
+    ];
+
+    private IEnumerable<(string? Key, string Label)> DurationChips()
+    =>
+    [
+        (null, Culture["Training.LearnGrow.Duration.All"]),
+        ("kort", Culture["Training.LearnGrow.Duration.Short"]),
+        ("weken", Culture["Training.LearnGrow.Duration.Weeks"]),
+        ("opleiding", Culture["Training.LearnGrow.Duration.Programme"])
+    ];
+
+    private RenderFragment OfferSection(string key, string title, string? subtitle, IReadOnlyList<TrainingPartnerOfferModel> offers)
+        => __builder =>
+        {
+            if (offers.Count == 0)
+            {
+                return;
+            }
+
+            var expanded = _expandedSections.Contains(key);
+            var visible = expanded ? offers : offers.Take(SectionPreviewCount).ToList();
+
+            <section class="opl-section">
+                <div class="opl-section__head">
+                    <span class="opl-section__icon" aria-hidden="true">✦</span>
+                    <div>
+                        <h2>@title</h2>
+                        @if (!string.IsNullOrWhiteSpace(subtitle))
+                        {
+                            <p>@subtitle</p>
+                        }
+                    </div>
+                </div>
+                <div class="opl-grid opl-grid--2">
+                    @foreach (var offer in visible)
+                    {
+                        <TrainingCourseCard Offer="offer"
+                                            Selected="_selected?.OfferId == offer.OfferId"
+                                            Busy="_busy"
+                                            ShowDesktopHint="true"
+                                            RequireWrittenReason="true"
+                                            Campaign="@TrainingTracking.CampaignCompass"
+                                            OnSelect="SelectAsync"
+                                            OnToggleSave="ToggleSaveAsync"
+                                            OnSavedChanged="OnSavedChanged" />
+                    }
+                </div>
+                @if (offers.Count > SectionPreviewCount)
+                {
+                    <button type="button" class="btn btn-ghost opl-section__more" @onclick="() => ToggleSection(key)">
+                        @(expanded ? Culture["Training.LearnGrow.ShowLess"] : Culture["Training.LearnGrow.ShowMore"])
+                    </button>
+                }
+            </section>
+        };
+
+    private void ToggleSection(string key)
+    {
+        if (!_expandedSections.Add(key))
+        {
+            _expandedSections.Remove(key);
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _page = await Api.GetTrainingLearnGrowPageAsync(_search, _subject, _freeOnly, _format, _duration);
+            _progress = await Api.GetTrainingProgressAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SearchAsync() => await ReloadAsync();
+
+    private async Task SetSubject(string key)
+    {
+        _subject = key;
+        await ReloadAsync();
+    }
+
+    private async Task ToggleFree()
+    {
+        _freeOnly = !_freeOnly;
+        await ReloadAsync();
+    }
+
+    private async Task SetFormat(string? key)
+    {
+        _format = key;
+        await ReloadAsync();
+    }
+
+    private async Task SetDuration(string? key)
+    {
+        _duration = key;
+        await ReloadAsync();
+    }
+
+    private Task SelectAsync(TrainingPartnerOfferModel offer)
+    {
+        _selected = _selected?.OfferId == offer.OfferId ? null : offer;
+        return Task.CompletedTask;
+    }
+
+    private async Task ToggleSaveAsync(TrainingPartnerOfferModel offer)
+    {
+        _busy = true;
+        try
+        {
+            await Api.ToggleTrainingPartnerOfferSavedAsync(offer.OfferId);
+            offer.Saved = !offer.Saved;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task OnSavedChanged(TrainingPartnerOfferModel offer) => Task.CompletedTask;
+}

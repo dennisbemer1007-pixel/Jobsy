@@ -24,6 +24,8 @@ public class CompanySummary
     public string? ContactWhatsApp { get; set; }
     public string? PreferredPaymentMethod { get; set; }
     public bool RequireEmailVerificationForApplications { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }
 
 public class CompanyBillingHistoryItem
@@ -111,6 +113,25 @@ public class ApplicationItem
     public string? NextStepKey { get; set; }
     public bool LegacyNoHistory { get; set; }
     public bool VacancyClosed { get; set; }
+    public bool IsInitiative { get; set; }
+    public bool IsAutoDeclinedInitiative { get; set; }
+    public string? TimelineClosingKey { get; set; }
+    public ApplicationAfterMatchSummaryItem? AfterMatch { get; set; }
+}
+
+public class ApplicationAfterMatchSummaryItem
+{
+    public string InterviewStatus { get; set; } = string.Empty;
+    public int UnreadMessageCount { get; set; }
+    public int OpenSlotCount { get; set; }
+    public DateTime? ScheduledStartUtc { get; set; }
+    public DateTime? ScheduledEndUtc { get; set; }
+    public DateTime? AcceptedAtUtc { get; set; }
+    public string? LastMessagePreview { get; set; }
+    public bool LastMessageFromCandidate { get; set; }
+    public DateTime? LastMessageAtUtc { get; set; }
+    public string? LastCancelReason { get; set; }
+    public bool? LastCancelByEmployer { get; set; }
 }
 
 public class ApplicationTimelineStepItem
@@ -226,6 +247,7 @@ public class EmployerApplicationItem
     public string? AvailabilitySummary { get; set; }
     public bool UploadedCvAvailable { get; set; }
     public int CandidateReferenceCount { get; set; }
+    public string? AttachedDocumentKind { get; set; }
 }
 
 public class TokenPackItem

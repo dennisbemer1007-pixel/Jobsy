@@ -1,9 +1,12 @@
 @page "/account-maken/code"
 @attribute [AllowAnonymous]
 @attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
 @layout PublicLayout
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Components.Media
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.DataProtection
@@ -16,9 +19,12 @@
 
 <PageTitle>@Culture["Signup.Code.Title"] · Lobsy</PageTitle>
 
-<section class="pub-section pub-signup" aria-labelledby="signup-code-title">
-    <div class="pub-card pub-signup__card">
-        <h1 id="signup-code-title" class="pub-signup__title">@Culture["Signup.Code.Title"]</h1>
+<section class="au-stage au-stage--illustrated au-stage--kreeft-strip pub-signup"
+         aria-labelledby="signup-code-title">
+    <div class="au-col">
+    <div class="au-card au-card--illustrated pub-signup__card">
+        <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>
+        <h1 id="signup-code-title" class="au-title pub-signup__title">@Culture["Signup.Code.Title"]</h1>
         <p class="pub-signup__lead">@string.Format(Culture["Signup.Code.Lead"], _maskedEmail)</p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -71,6 +77,7 @@
                 <a class="auth-link" href="@BackHref">@Culture["Signup.Code.OtherEmail"]</a>
             </p>
         </div>
+    </div>
     </div>
 </section>
 

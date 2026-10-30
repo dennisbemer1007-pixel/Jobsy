@@ -40,7 +40,7 @@ public static class PageSeoResolver
 
         var canonical = CanonicalUrl(navigationUri, canonicalPath, configuration);
         var image = AbsoluteAssetUrl(
-            FirstNonEmpty(overlay?.ImageUrl, BrandImages.AbsoluteWebp256),
+            FirstNonEmpty(overlay?.ImageUrl, BrandImages.AbsoluteOgImage),
             canonical);
 
         var ogType = FirstNonEmpty(overlay?.OgType, entry.OgType, "website")!;

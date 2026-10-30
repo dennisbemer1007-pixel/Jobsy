@@ -1,0 +1,211 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match/panel-ssr"
+@page "/candidate/applications/{ApplicationId:guid}/after-match/outcome-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@_pageTitle · Lobsy</PageTitle>
+<PageSeo Title="@_pageTitle" />
+<HeadContent>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    @if (_includeOutcomeScript)
+    {
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-outcome.js")}")" defer></script>
+    }
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="2" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (_redirecting)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private bool _loading = true;
+    private bool _redirecting;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+    private string _pageTitle = "";
+    private bool _includeOutcomeScript;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Apps.Sollicitation.Gone"];
+                return;
+            }
+
+            http.Response.Headers.CacheControl = "no-store";
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("return", out var returnValues);
+            var returnUrl = returnValues.FirstOrDefault();
+            var panel = AfterMatchPanelRouting.ResolvePanel(http.Request.Query);
+
+            if (panel is "messages")
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.MessagesSsrSuffix);
+                return;
+            }
+
+            if (panel is "cancel")
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.RescheduleSsrSuffix);
+                return;
+            }
+
+            if (panel is "reschedule")
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.RescheduleSsrSuffix);
+                return;
+            }
+
+            var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+
+            if (thread is not null
+                && thread.RecentChanges.Any(c => c.Kind == InterviewChangeKind.Cancel))
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.CancelledSsrSuffix);
+                return;
+            }
+
+            if (panel is "pick-slot" or "propose-slot" or "propose")
+            {
+                if (thread?.InterviewStatus == InterviewStatus.Scheduled)
+                {
+                    RedirectToSsr(http, AfterMatchPanelRouting.ConfirmedSsrSuffix);
+                    return;
+                }
+
+                RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
+                return;
+            }
+
+            if (panel is "outcome" || AfterMatchSsrRouting.ShouldUseOutcomeScreen(thread))
+            {
+                await RenderOutcomeAsync(returnUrl);
+                return;
+            }
+
+            var dispatch = AfterMatchPanelRouting.DispatchSuffixForThread(thread);
+            if (dispatch is not null)
+            {
+                RedirectToSsr(http, dispatch);
+                return;
+            }
+
+            if (thread is not null
+                && AfterMatchCandidateSlotRules.MayPickOpenSlots(thread.InterviewStatus)
+                && thread.OpenSlots.Count > 0)
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.PickSlotSsrSuffix);
+                return;
+            }
+
+            if (thread?.InterviewStatus == InterviewStatus.RescheduleRequested)
+            {
+                RedirectToSsr(http, AfterMatchPanelRouting.WaitSsrSuffix);
+                return;
+            }
+
+            if (thread is null)
+            {
+                await RenderOutcomeAsync(returnUrl);
+                return;
+            }
+
+            _redirecting = true;
+            var blazorPath = $"/candidate/applications/{ApplicationId:D}/after-match/blazor";
+            if (http.Request.QueryString.HasValue)
+            {
+                blazorPath += http.Request.QueryString.Value;
+            }
+
+            http.Response.Redirect(blazorPath);
+        }
+        catch
+        {
+            await RenderOutcomeFallbackAsync();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static void RedirectToSsr(HttpContext http, string suffix)
+    {
+        var path = http.Request.Path.Value ?? "";
+        var prefix = path.Contains("/outcome-ssr", StringComparison.OrdinalIgnoreCase)
+            ? path.Replace("/outcome-ssr", "", StringComparison.OrdinalIgnoreCase)
+            : path.Replace("/panel-ssr", "", StringComparison.OrdinalIgnoreCase);
+        var target = prefix + suffix + (http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "");
+        http.Response.Redirect(target);
+    }
+
+    private async Task RenderOutcomeAsync(string? returnUrl)
+    {
+        _pageTitle = Culture["AfterMatch.Screen13.PageTitle"];
+        _includeOutcomeScript = true;
+        var data = await AfterMatchOutcomeSsrData.LoadAsync(
+            Api,
+            Culture,
+            ApplicationId,
+            returnUrl)
+            ?? AfterMatchOutcomeSsrData.BuildFallback(Culture, ApplicationId, returnUrl);
+        _bodyHtml = AfterMatchOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
+    }
+
+    private Task RenderOutcomeFallbackAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            _fatalMessage = Culture["Apps.Sollicitation.Gone"];
+            return Task.CompletedTask;
+        }
+
+        var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+        query.TryGetValue("return", out var returnValues);
+        var returnUrl = returnValues.FirstOrDefault();
+        _pageTitle = Culture["AfterMatch.Screen13.PageTitle"];
+        _includeOutcomeScript = true;
+        var data = AfterMatchOutcomeSsrData.BuildFallback(Culture, ApplicationId, returnUrl);
+        _bodyHtml = AfterMatchOutcomeSsrShells.BuildBody(Culture, data, ApplicationId);
+        return Task.CompletedTask;
+    }
+}

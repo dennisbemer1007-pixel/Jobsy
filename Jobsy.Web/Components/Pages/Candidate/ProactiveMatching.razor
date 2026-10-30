@@ -6,10 +6,13 @@
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @attribute [RequiresFeature(PlatformFeature.ProactiveMatching)]
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["ProactiveMatching.Title"] · Lobsy</PageTitle>
 
@@ -121,11 +124,12 @@
                                         <p class="proactive-tip__company">@tip.CompanyLabel</p>
                                     }
                                 </div>
+                                @{
+                                    var tipBand = CandidateMatchDisplay.FitBandLabel(Culture, tip.MatchPercent);
+                                }
                                 <span class="proactive-match-badge proactive-match-badge--candidate @(tip.MatchPercent >= 80 ? "proactive-match-badge--strong" : "")"
-                                      aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", tip.MatchPercent)">
-                                    <span class="proactive-match-badge__value">@tip.MatchPercent</span>
-                                    <span class="proactive-match-badge__suffix">%</span>
-                                    <span class="proactive-match-badge__label">match</span>
+                                      aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", tipBand)">
+                                    <span class="proactive-match-badge__label">@tipBand</span>
                                 </span>
                             </div>
                             @if (tip.SimilarVacancyCount > 1)
@@ -217,7 +221,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -253,7 +258,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -303,7 +309,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             ApplySettings(_settings);
         }
         finally
@@ -335,7 +342,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

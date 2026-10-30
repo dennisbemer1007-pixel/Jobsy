@@ -1,0 +1,156 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Core.Rules
+@implements IDisposable
+
+<div class="education-direction-input">
+    <input id="@InputId"
+           type="text"
+           role="combobox"
+           autocomplete="off"
+           maxlength="128"
+           aria-expanded="@(_open ? "true" : "false")"
+           aria-controls="@ListboxId"
+           aria-autocomplete="list"
+           placeholder="@Placeholder"
+           @bind="_text"
+           @bind:event="oninput"
+           @bind:after="OnTextChangedAsync"
+           @onfocus="OpenAsync"
+           @onblur="OnBlurAsync"
+           @onkeydown="OnKeyDown" />
+    @if (_open && _suggestions.Count > 0)
+    {
+        <ul id="@ListboxId" class="education-direction-input__list" role="listbox">
+            @for (var i = 0; i < _suggestions.Count; i++)
+            {
+                var index = i;
+                var item = _suggestions[index];
+                <li role="option" aria-selected="@(index == _activeIndex ? "true" : "false")">
+                    <button type="button"
+                            class="education-direction-input__option @(index == _activeIndex ? "is-active" : null)"
+                            @onmousedown="@(() => _suppressBlur = true)"
+                            @onmousedown:preventDefault
+                            @onclick="() => PickAsync(item)">
+                        @item
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string InputId { get; set; } = "education-direction";
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public EventCallback AfterChanged { get; set; }
+
+    private string ListboxId => $"{InputId}-suggestions";
+    private string _text = "";
+    private bool _open;
+    private bool _suppressBlur;
+    private int _activeIndex = -1;
+    private IReadOnlyList<string> _suggestions = [];
+    private CancellationTokenSource? _debounceCts;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.Equals(_text, Value, StringComparison.Ordinal))
+        {
+            _text = Value ?? "";
+        }
+    }
+
+    private Task OpenAsync()
+    {
+        RefreshSuggestions();
+        _open = _suggestions.Count > 0;
+        _activeIndex = _suggestions.Count > 0 ? 0 : -1;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnBlurAsync()
+    {
+        if (_suppressBlur)
+        {
+            _suppressBlur = false;
+            return;
+        }
+
+        await Task.Delay(120);
+        _open = false;
+        await CommitFreeTextAsync();
+    }
+
+    private async Task OnTextChangedAsync()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+        try
+        {
+            await Task.Delay(120, token);
+            RefreshSuggestions();
+            _open = _suggestions.Count > 0;
+            _activeIndex = _suggestions.Count > 0 ? 0 : -1;
+            await CommitFreeTextAsync();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void RefreshSuggestions() => _suggestions = EducationDirectionCatalog.Filter(_text, 8);
+
+    private async Task PickAsync(string item)
+    {
+        _text = item;
+        _open = false;
+        await ValueChanged.InvokeAsync(_text);
+        await AfterChanged.InvokeAsync();
+    }
+
+    private async Task CommitFreeTextAsync()
+    {
+        if (string.Equals(Value, _text, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await ValueChanged.InvokeAsync(_text);
+        await AfterChanged.InvokeAsync();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (!_open || _suggestions.Count == 0)
+        {
+            return;
+        }
+
+        if (e.Key is "ArrowDown")
+        {
+            _activeIndex = Math.Min(_activeIndex + 1, _suggestions.Count - 1);
+        }
+        else if (e.Key is "ArrowUp")
+        {
+            _activeIndex = Math.Max(_activeIndex - 1, 0);
+        }
+        else if (e.Key is "Enter" && _activeIndex >= 0 && _activeIndex < _suggestions.Count)
+        {
+            await PickAsync(_suggestions[_activeIndex]);
+        }
+        else if (e.Key is "Escape")
+        {
+            _open = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
+}

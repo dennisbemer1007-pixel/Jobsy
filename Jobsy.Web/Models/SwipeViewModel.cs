@@ -15,6 +15,7 @@ public sealed class SwipeViewModel
     public string? ImageUrl { get; set; }
 
     public string JobTitle { get; set; } = string.Empty;
+    public string? EscoId { get; set; }
     public string? ShortDescription { get; set; }
     /// <summary>Short inviting line explaining why this candidate fits the role.</summary>
     public string? WhyYouFit { get; set; }
@@ -105,7 +106,10 @@ public sealed class SwipeViewModel
 
     public string HoursSecondary => "uur";
 
-    public static SwipeViewModel FromVacancy(VacancyListItem item, bool showMatchPercentage = true)
+    public static SwipeViewModel FromVacancy(
+        VacancyListItem item,
+        bool showMatchPercentage = true,
+        string? candidatePreferredTransport = null)
     {
         ArgumentNullException.ThrowIfNull(item);
 
@@ -146,12 +150,15 @@ public sealed class SwipeViewModel
             CompanyLogoUrl = item.CompanyLogoUrl,
             ImageUrl = item.ImageUrl,
             JobTitle = string.IsNullOrWhiteSpace(item.Title) ? "Vacature" : item.Title,
+            EscoId = item.EscoId,
             ShortDescription = Truncate(item.Description, 140),
             WhyYouFit = item.FitWhyLine ?? BuildWhyYouFit(item),
             Location = FirstNonEmpty(item.CompanyAddress, item.OfferedByLabel),
             DistanceKm = item.DistanceKm,
             TravelTimeMinutes = item.TravelMinutes,
-            TransportMode = item.RequiredTransport.FirstOrDefault() ?? "Fiets",
+            TransportMode = !string.IsNullOrWhiteSpace(candidatePreferredTransport)
+                ? candidatePreferredTransport
+                : item.RequiredTransport.FirstOrDefault() ?? "Fiets",
             SalaryMin = salaryMin,
             SalaryMax = salaryMax,
             SalaryPeriod = period,

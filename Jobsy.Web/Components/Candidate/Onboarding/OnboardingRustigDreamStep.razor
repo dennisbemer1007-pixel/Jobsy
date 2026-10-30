@@ -1,0 +1,71 @@
+@using Jobsy.Core.Careers
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Onboarding
+
+<OnboardingRustigShell ScreenId="step-06"
+                       Step="6"
+                       PhaseLabel="@Culture["Onboarding.Rustig.Phase.Droom"]"
+                       Title="@Culture["Onboarding.Step6.Title"]"
+                       Lead="@Culture["Onboarding.Step6.Lead"]"
+                       SaveStatus="@SaveStatus"
+                       OnLater="OnLater">
+    <Hero>
+        <OnboardingRustigIllustratedHero DesktopUrl="@OnboardingRustigDreamIllustrationAssets.DesktopJpg"
+                                         MobileUrl="@OnboardingRustigDreamIllustrationAssets.MobileJpg" />
+    </Hero>
+    <ChildContent>
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <p class="state-message error">@Error</p>
+        }
+        <div class="ob-rustig__canvas" data-testid="onboarding-step-6-illustrated">
+            <OnboardingClientStepIsland Step="6"
+                                        Draft="Draft"
+                                        Seed="ClientSeed" />
+            <div class="ob-rustig__footer-actions">
+                <button type="button"
+                        class="ob-rustig__btn"
+                        data-testid="onboarding-back"
+                        disabled="@Busy"
+                        @onclick="OnBack">
+                    @Culture["Onboarding.Back"]
+                </button>
+                <button type="button"
+                        class="ob-rustig__btn"
+                        disabled="@Busy"
+                        @onclick="OnDreamUnknown">
+                    @Culture["Onboarding.DreamUnknown"]
+                </button>
+                <button type="button"
+                        class="ob-rustig__btn ob-rustig__btn--primary"
+                        data-testid="onboarding-next"
+                        disabled="@Busy"
+                        @onclick="OnNext">
+                    @Culture["Onboarding.Next"]
+                </button>
+            </div>
+        </div>
+    </ChildContent>
+</OnboardingRustigShell>
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public bool Young { get; set; }
+    [Parameter] public IReadOnlyList<string> RegionalVacancyTitles { get; set; } = [];
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? SaveStatus { get; set; }
+    [Parameter] public EventCallback<DreamJob> ChooseDream { get; set; }
+    [Parameter] public EventCallback<string> ChooseTitle { get; set; }
+    [Parameter] public EventCallback ChooseOwnDream { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> DreamKeyDown { get; set; }
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public EventCallback OnDreamUnknown { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public OnboardingClientStepSeed? ClientSeed { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

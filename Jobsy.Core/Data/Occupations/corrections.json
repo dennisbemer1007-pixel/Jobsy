@@ -2,7 +2,7 @@
  "version": "2026-10-05-concept",
  "description": "Westland-correcties op de officiële ESCO–O*NET-koppeling. Alleen O*NET-codes, nooit eigen cijfers: OI-waarden komen bij de build uit O*NET 31.0.",
  "statusValues": ["concept, wacht op akkoord", "goedgekeurd", "afgewezen"],
- "reviewers": ["Dennis", "Roland"],
+ "reviewers": ["Dennis", "Ruben"],
  "items": [
   {"escoId": "1a9d99ba-4c08-4864-8f6a-1b0f2b4cf883", "nl": "tuinbouwmedewerker", "kind": "change", "onet": ["45-2092.00"], "inOfficialCrosswalk": true, "confidence": "high", "reason": "Alleen kas/kwekerij-arbeid (Farmworkers ... Greenhouse), niet het gemiddelde met hoveniers.", "reviewRef": "westland-correcties.md #1", "status": "concept, wacht op akkoord", "approvedBy": null, "approvedOn": null, "note": null},
   {"escoId": "373db468-bd25-4b67-a6e0-4ac79d9a9e85", "nl": "plukker", "kind": "confirm", "confidence": "high", "reason": "Enige koppeling past; zekerheid handmatig bevestigd.", "reviewRef": "westland-correcties.md #2", "status": "concept, wacht op akkoord", "approvedBy": null, "approvedOn": null, "note": null},

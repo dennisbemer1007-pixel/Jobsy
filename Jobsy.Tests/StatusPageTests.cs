@@ -110,7 +110,7 @@ public class StatusPageTests
     }
 }
 
-file sealed class StatusPageWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class StatusPageWebFactory : WebWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

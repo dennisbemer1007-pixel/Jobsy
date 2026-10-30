@@ -5,6 +5,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Passport;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Passport;
@@ -17,22 +18,41 @@ public sealed class PassportPdfDownload
     private readonly JobsyDbContext _db;
     private readonly IPassportDnaReader _dna;
     private readonly IPassportPdfService _pdf;
+    private readonly ICandidateCompetencyService _competencies;
+    private readonly ReferenceVerificationService _referenceVerification;
+    private readonly IPlatformFeatureService _features;
 
-    public PassportPdfDownload(JobsyDbContext db, IPassportDnaReader dna, IPassportPdfService pdf)
+    public PassportPdfDownload(
+        JobsyDbContext db,
+        IPassportDnaReader dna,
+        IPassportPdfService pdf,
+        ICandidateCompetencyService competencies,
+        ReferenceVerificationService referenceVerification,
+        IPlatformFeatureService features)
     {
         _db = db;
         _dna = dna;
         _pdf = pdf;
+        _competencies = competencies;
+        _referenceVerification = referenceVerification;
+        _features = features;
     }
 
     public async Task<PassportPdfFile> ForCandidateAsync(
         User user,
         bool phoneVerificationRequired,
+        bool showDnaBlocks,
         CancellationToken cancellationToken)
     {
         var preferences = MeController.ParsePreferences(user.PreferencesJson);
         var language = JobsyLanguages.Normalize(preferences.Language);
         var layers = await _dna.ReadAsync(user.Id, language, cancellationToken);
+        if (!PassportDnaCompletion.AllLayersCompleted(layers))
+        {
+            throw new InvalidOperationException(
+                "DNA-paspoort requires all four DNA layers to be completed.");
+        }
+
         var facts = PassportPdfFactsFactory.FromUser(
             user,
             preferences,
@@ -41,6 +61,13 @@ public sealed class PassportPdfDownload
             phoneVerificationRequired,
             DateTime.UtcNow);
         facts = await WithShareFactsAsync(facts, user.Id, cancellationToken);
+        facts = facts with
+        {
+            ShowDnaBlocks = showDnaBlocks,
+            FirstName = string.IsNullOrWhiteSpace(user.FirstName) ? null : user.FirstName.Trim()
+        };
+        var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
+        facts = PassportPdfMatchCardCopy.AttachEmployerVacancyCards(facts, matches);
         return await RenderAsync(facts, cancellationToken);
     }
 
@@ -48,6 +75,7 @@ public sealed class PassportPdfDownload
         Application application,
         bool includeDirectContact,
         bool phoneVerificationRequired,
+        bool showDnaBlocks,
         CancellationToken cancellationToken)
     {
         User? user = null;
@@ -75,6 +103,13 @@ public sealed class PassportPdfDownload
             facts = await WithShareFactsAsync(facts, user.Id, cancellationToken);
         }
 
+        facts = facts with { ShowDnaBlocks = showDnaBlocks };
+        if (user is not null)
+        {
+            var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
+            facts = PassportPdfMatchCardCopy.AttachEmployerVacancyCards(facts, matches);
+        }
+
         return await RenderAsync(facts, cancellationToken);
     }
 
@@ -88,11 +123,30 @@ public sealed class PassportPdfDownload
             return facts;
         }
 
+        var endorsed = await LoadEndorsedCompetencesAsync(userId, facts.Language, cancellationToken);
         return facts with
         {
             DreamTitle = await LoadDreamTitleAsync(userId, cancellationToken),
-            ReferenceQuotes = await LoadQuotesAsync(userId, cancellationToken)
+            ReferenceQuotes = await LoadQuotesAsync(userId, cancellationToken),
+            EndorsedCompetences = endorsed
         };
+    }
+
+    private async Task<IReadOnlyList<PassportEndorsedCompetence>> LoadEndorsedCompetencesAsync(
+        Guid userId,
+        string language,
+        CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        if (!snap.ReferenceVerificationEnabled)
+        {
+            return [];
+        }
+
+        var facts = await _referenceVerification.VerifiedCompetencesForCandidateAsync(userId, language, cancellationToken);
+        return facts
+            .Select(f => new PassportEndorsedCompetence(f.Label, f.RecognitionLine))
+            .ToList();
     }
 
     private async Task<string?> LoadDreamTitleAsync(Guid userId, CancellationToken cancellationToken)

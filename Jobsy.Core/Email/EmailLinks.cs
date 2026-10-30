@@ -41,6 +41,12 @@ public sealed class EmailLinks
     }
 
     public string CandidateApplications => Absolute("/candidate/applications");
+
+    public string CandidateApplicationDetail(Guid applicationId)
+        => Absolute($"/candidate/applications?tab=sollicitaties&sel={applicationId:D}");
+
+    public string CandidateAfterMatch(Guid applicationId)
+        => Absolute($"/candidate/applications/{applicationId:D}/after-match");
     public string CandidateProactiveMatching => Absolute("/candidate/proactive-matching");
     public string CandidateTalentContacts => Absolute("/candidate/talent-contacts");
     public string Vacancy(Guid id) => Absolute($"/vacancies/{id}");
@@ -66,6 +72,9 @@ public sealed class EmailLinks
 
     public string ReferenceConfirmation(string token)
         => Absolute("/referentie/" + Uri.EscapeDataString(token));
+
+    public string WorkExperienceReference(string token)
+        => Absolute("/werk-referentie/" + Uri.EscapeDataString(token));
 
     // Dependencies B — WerkgeverNav targets
     public string EmployerHome => Absolute("/werkgever");

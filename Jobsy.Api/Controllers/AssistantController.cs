@@ -88,7 +88,14 @@ public sealed class AssistantController : ControllerBase
         }
 
         var language = ResolveLanguage();
-        var context = new AssistantChatContext(user.Id, role, language, companyIds);
+        var pagePath = NormalizePagePath(request.PagePath);
+        var context = new AssistantChatContext(
+            user.Id,
+            role,
+            language,
+            companyIds,
+            pagePath,
+            string.IsNullOrWhiteSpace(request.PageContextLine) ? null : request.PageContextLine.Trim());
         var history = request.Messages
             .Select(m => new AssistantChatMessage(m.Role, m.Content))
             .ToList();
@@ -116,5 +123,33 @@ public sealed class AssistantController : ControllerBase
         }
 
         return JobsyLanguages.Default;
+    }
+
+    private static string? NormalizePagePath(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        var trimmed = raw.Trim();
+        var q = trimmed.IndexOf('?', StringComparison.Ordinal);
+        if (q >= 0)
+        {
+            trimmed = trimmed[..q];
+        }
+
+        var hash = trimmed.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0)
+        {
+            trimmed = trimmed[..hash];
+        }
+
+        if (!trimmed.StartsWith('/'))
+        {
+            trimmed = "/" + trimmed;
+        }
+
+        return trimmed.TrimEnd('/').ToLowerInvariant();
     }
 }

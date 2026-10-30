@@ -191,7 +191,11 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
                 record = record with { EngagementItems = items };
             }
 
-            records.Add(record);
+            records.Add(record with
+            {
+                InferredCompetencies = VacancyCompetencyProfile.Infer(record),
+                InferredRiasecTags = VacancyRiasecProfile.InferTags(record)
+            });
         }
 
         return records;
@@ -287,6 +291,10 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
                 && (vacancy.IntermediaryCompanyId is null
                     || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)),
             IsTestData: vacancy.IsTestData,
+            VacancyWorkContextJson: vacancy.VacancyWorkContextJson,
+            VacancyCompetencyTargetsJson: vacancy.VacancyCompetencyTargetsJson,
+            VacancyCultureDeltaJson: vacancy.VacancyCultureDeltaJson,
+            VacancyUseInferredCompetencies: vacancy.VacancyUseInferredCompetencies,
             PublicMapRadiusKm: vacancy.IntermediaryCompanyId is not null
                 ? AcceptCandidatePricingRules.NormalizeAgencyRadiusKm(vacancy.PublicMapRadiusKm)
                 : null);

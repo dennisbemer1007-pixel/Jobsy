@@ -16,8 +16,25 @@ public class PupilProgress
     public string? DislikeOtherWord { get; set; }
     /// <summary>Set when the pupil confirms pauze-eiland chips (even if empty).</summary>
     public DateTime? ChipsSavedAtUtc { get; set; }
+    /// <summary>JSON map puzzle key → <see cref="Jobsy.Core.Scholen.QuestionSets.PupilPuzzleStatus"/> (int).</summary>
+    public string PuzzlesJson { get; set; } = "{}";
     public string? DreamJobKey { get; set; }
+    /// <summary>Exact text the pupil typed or picked (may differ from catalog title).</summary>
+    public string? DreamJobDisplayTitle { get; set; }
     public DateTime StartedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+
+    // VO-only optional fields (D3/D8: no names; wiped with progress after school year).
+    /// <summary>JSON array of subject chip keys (VO flow).</summary>
+    public string? VoFavoriteSubjectsJson { get; set; }
+    /// <summary>e.g. natuur-gezondheid, economie (VO flow).</summary>
+    public string? VoProfileKey { get; set; }
+    /// <summary>JSON side-job availability windows (VO flow).</summary>
+    public string? VoSideJobAvailabilityJson { get; set; }
+    /// <summary>fiets, ov, etc.</summary>
+    public string? VoTravelModeKey { get; set; }
+    public string? VoOwnWords { get; set; }
+    /// <summary>JSON array of learning-goal strings (VO flow).</summary>
+    public string? VoLearningGoalsJson { get; set; }
 }

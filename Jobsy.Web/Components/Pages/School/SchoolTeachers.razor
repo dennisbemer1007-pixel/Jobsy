@@ -58,15 +58,15 @@ else
             @foreach (var t in Filtered)
             {
                 <tr class="ent-data-table__row">
-                    <td>@t.DisplayName</td>
-                    <td>@t.Email</td>
-                    <td>
+                    <td data-label="@Culture["School.Teachers.Col.Name"]">@t.DisplayName</td>
+                    <td data-label="@Culture["School.Teachers.Col.Email"]">@t.Email</td>
+                    <td data-label="@Culture["School.Teachers.Col.Classes"]">
                         @foreach (var c in t.Classes)
                         {
                             <span class="sch-chip">@c.ClassName</span>
                         }
                     </td>
-                    <td>
+                    <td data-label="@Culture["School.Teachers.Col.Mfa"]">
                         @if (t.AuthenticatorEnabled)
                         {
                             <span class="sch-pill sch-pill--ok">@Culture["School.Teachers.MfaOn"]</span>
@@ -76,13 +76,13 @@ else
                             <span class="sch-pill sch-pill--warn">@Culture["School.Teachers.MfaOff"]</span>
                         }
                     </td>
-                    <td>
+                    <td data-label="@Culture["School.Teachers.Col.Status"]">
                         @(t.InvitePending
                             ? Culture["School.Teachers.StatusInvited"]
                             : Culture["School.Teachers.StatusActive"])
                     </td>
-                    <td>@(t.LastLoginAtUtc is DateTime seen ? LobsyTime.ToAmsterdam(seen).ToString("dd-MM") : "—")</td>
-                    <td class="sch-row-actions">
+                    <td data-label="@Culture["School.Teachers.Col.LastLogin"]">@(t.LastLoginAtUtc is DateTime seen ? LobsyTime.ToAmsterdam(seen).ToString("dd-MM") : "—")</td>
+                    <td class="sch-row-actions" data-label="">
                         <button type="button" class="btn-compact" @onclick="() => OpenAssign(t)">@Culture["School.Teachers.Assign"]</button>
                         <button type="button" class="btn-compact" @onclick="() => Resend(t.UserId)" disabled="@_busy">@Culture["School.Teachers.Resend"]</button>
                         <button type="button" class="btn-outline-danger" @onclick="() => Remove(t.UserId)" disabled="@_busy">@Culture["School.Teachers.Remove"]</button>
@@ -191,7 +191,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (!_disabled)
         {

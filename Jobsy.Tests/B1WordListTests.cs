@@ -29,7 +29,10 @@ public sealed class B1WordListTests
         ["Kb.Why.competency"] = "Knowledge-base article, not a passport or test screen.",
         ["Kb.Dna.Competencies"] = "Knowledge-base article, not a passport or test screen.",
         ["WhoAmI.StepCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens.",
-        ["WhoAmI.OpenCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens."
+        ["WhoAmI.OpenCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens.",
+        ["Discovery.Intro.Lobsy"] = "Discovery intro; competenties is intentional product vocabulary on that screen.",
+        ["Profile.Reset.Dialog.Lead"] = "Reset dialog lists data categories; matchscore is a user-facing label in that list.",
+        ["AfterMatch.Employer.Share.Passport"] = "Employer after-match share panel; passport is intentional product vocabulary."
     };
 
     [Fact]
@@ -75,8 +78,10 @@ public sealed class B1WordListTests
            || key.StartsWith("Enterprise.", StringComparison.OrdinalIgnoreCase)
            || key.StartsWith("Talent.", StringComparison.OrdinalIgnoreCase)
            || key.StartsWith("Wg", StringComparison.OrdinalIgnoreCase)
+           || key.StartsWith("Kk.", StringComparison.OrdinalIgnoreCase)
            || key.StartsWith("EntUi.", StringComparison.OrdinalIgnoreCase)
-           || key.StartsWith("Mail.", StringComparison.OrdinalIgnoreCase);
+           || key.StartsWith("Mail.", StringComparison.OrdinalIgnoreCase)
+           || key.StartsWith("ProactiveMatching.Employer", StringComparison.OrdinalIgnoreCase);
 
     private static Dictionary<string, Dictionary<string, string>> LoadCatalog()
     {

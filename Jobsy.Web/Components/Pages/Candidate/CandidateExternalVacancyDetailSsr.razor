@@ -1,0 +1,79 @@
+@page "/candidate/external/{Id:guid}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Errors
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@( _title ?? Culture["ExtVac.Add.Title"]) · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (_notFound)
+{
+    <NotFoundView Embedded="true" SignedInCandidate="true" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading = true;
+    private bool _notFound;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+    private string? _title;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
+
+            var detail = await Api.GetExternalVacancyAsync(Id);
+            if (detail is null)
+            {
+                if (http is not null)
+                {
+                    http.Response.StatusCode = StatusCodes.Status404NotFound;
+                }
+
+                _notFound = true;
+                return;
+            }
+
+            _title = detail.Title;
+            _bodyHtml = ExternalVacancyDetailSsrShells.BuildBody(Culture, detail);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

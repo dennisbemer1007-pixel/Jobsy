@@ -34,6 +34,16 @@ public class JobsyDbContext : DbContext
     public DbSet<ApplicationPlacement> ApplicationPlacements => Set<ApplicationPlacement>();
     public DbSet<MaqqieHoursWeek> MaqqieHoursWeeks => Set<MaqqieHoursWeek>();
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistories => Set<ApplicationStatusHistory>();
+    public DbSet<Interview> Interviews => Set<Interview>();
+    public DbSet<InterviewSlot> InterviewSlots => Set<InterviewSlot>();
+    public DbSet<InterviewChange> InterviewChanges => Set<InterviewChange>();
+    public DbSet<InterviewReminder> InterviewReminders => Set<InterviewReminder>();
+    public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
+    public DbSet<ApplicationOutcome> ApplicationOutcomes => Set<ApplicationOutcome>();
+    public DbSet<AfterMatchReminderPreference> AfterMatchReminderPreferences => Set<AfterMatchReminderPreference>();
+    public DbSet<JobSearchActivity> JobSearchActivities => Set<JobSearchActivity>();
+    public DbSet<ActivityAgreement> ActivityAgreements => Set<ActivityAgreement>();
+    public DbSet<JobSearchActivityAttachment> JobSearchActivityAttachments => Set<JobSearchActivityAttachment>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
@@ -41,6 +51,8 @@ public class JobsyDbContext : DbContext
     public DbSet<ReferenceConfirmationToken> ReferenceConfirmationTokens => Set<ReferenceConfirmationToken>();
     public DbSet<ReferenceConfirmationConsentLog> ReferenceConfirmationConsentLogs => Set<ReferenceConfirmationConsentLog>();
     public DbSet<ReferenceMisuseReport> ReferenceMisuseReports => Set<ReferenceMisuseReport>();
+    public DbSet<WorkExperienceReferenceRequest> WorkExperienceReferenceRequests => Set<WorkExperienceReferenceRequest>();
+    public DbSet<WorkExperienceReferenceToken> WorkExperienceReferenceTokens => Set<WorkExperienceReferenceToken>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<CandidateCulturePersonalityProfile> CandidateCulturePersonalityProfiles => Set<CandidateCulturePersonalityProfile>();
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
@@ -50,6 +62,9 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyEngagementReport> CompanyEngagementReports => Set<CompanyEngagementReport>();
     public DbSet<LenderRegistration> LenderRegistrations => Set<LenderRegistration>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
+    public DbSet<CandidateTestReflection> CandidateTestReflections => Set<CandidateTestReflection>();
+    public DbSet<CandidateUwvToolkitState> CandidateUwvToolkitStates => Set<CandidateUwvToolkitState>();
+    public DbSet<CandidateUwvAdviseurShare> CandidateUwvAdviseurShares => Set<CandidateUwvAdviseurShare>();
     public DbSet<CandidatePrivatePreferences> CandidatePrivatePreferences => Set<CandidatePrivatePreferences>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
@@ -60,11 +75,20 @@ public class JobsyDbContext : DbContext
     public DbSet<OccupationDayInLife> OccupationDayInLives => Set<OccupationDayInLife>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<CandidateProactiveMatchingSettings> CandidateProactiveMatchingSettings => Set<CandidateProactiveMatchingSettings>();
+    public DbSet<CandidateKandidatenkaartSettings> CandidateKandidatenkaartSettings => Set<CandidateKandidatenkaartSettings>();
+    public DbSet<KandidatenkaartInviteCampaign> KandidatenkaartInviteCampaigns => Set<KandidatenkaartInviteCampaign>();
+    public DbSet<KandidatenkaartInviteDelivery> KandidatenkaartInviteDeliveries => Set<KandidatenkaartInviteDelivery>();
+    public DbSet<CompanyInitiativeSettings> CompanyInitiativeSettings => Set<CompanyInitiativeSettings>();
+    public DbSet<InitiativeTeam> InitiativeTeams => Set<InitiativeTeam>();
+    public DbSet<WorkInitiative> WorkInitiatives => Set<WorkInitiative>();
+    public DbSet<WorkInitiativeDraft> WorkInitiativeDrafts => Set<WorkInitiativeDraft>();
+    public DbSet<WorkInitiativeAcceptance> WorkInitiativeAcceptances => Set<WorkInitiativeAcceptance>();
     public DbSet<ProactiveMatchSuggestion> ProactiveMatchSuggestions => Set<ProactiveMatchSuggestion>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
     public DbSet<TrainingOffer> TrainingOffers => Set<TrainingOffer>();
+    public DbSet<TrainingEnrollment> TrainingEnrollments => Set<TrainingEnrollment>();
     public DbSet<TrainingClick> TrainingClicks => Set<TrainingClick>();
     public DbSet<TrainingConversion> TrainingConversions => Set<TrainingConversion>();
     public DbSet<CandidateDeepAnalysis> CandidateDeepAnalyses => Set<CandidateDeepAnalysis>();
@@ -79,6 +103,7 @@ public class JobsyDbContext : DbContext
     public DbSet<ApplicationUploadedCv> ApplicationUploadedCvs => Set<ApplicationUploadedCv>();
     public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
     public DbSet<WebPushSubscription> WebPushSubscriptions => Set<WebPushSubscription>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<UserDeviceSession> UserDeviceSessions => Set<UserDeviceSession>();
     public DbSet<MfaTrustedDevice> MfaTrustedDevices => Set<MfaTrustedDevice>();
     public DbSet<DeviceLoginHandoff> DeviceLoginHandoffs => Set<DeviceLoginHandoff>();
@@ -375,6 +400,10 @@ public class JobsyDbContext : DbContext
             entity.HasIndex(e => new { e.Status, e.SuitableFor65Plus });
             entity.Property(e => e.CategoryFieldsJson).HasMaxLength(8000);
             entity.Property(e => e.CulturePillarsJson).HasMaxLength(2000);
+            entity.Property(e => e.VacancyWorkContextJson).HasMaxLength(512);
+            entity.Property(e => e.VacancyCompetencyTargetsJson).HasMaxLength(512);
+            entity.Property(e => e.VacancyCultureDeltaJson).HasMaxLength(1024);
+            entity.Property(e => e.VacancyUseInferredCompetencies).HasDefaultValue(true);
             entity.Property(e => e.BarrierRequirementsJson).HasMaxLength(4000);
             entity.Property(e => e.EngagementReminderTip).HasMaxLength(2000);
             entity.HasIndex(e => new { e.Status, e.EngagementReminderSentAtUtc, e.PublishedAtUtc });
@@ -582,6 +611,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ExclusivityValidationStatus).HasMaxLength(32);
             entity.Property(e => e.MatchBreakdownJson).HasMaxLength(4000);
             entity.Property(e => e.SnapshotWhoAmIJson).HasColumnType("text");
+            entity.Property(e => e.SnapshotAttachedDocument).HasMaxLength(16);
             entity.HasIndex(e => e.MatchPercent);
             entity.HasIndex(e => e.ViaSafetyNet)
                 .HasFilter("\"ViaSafetyNet\" = TRUE");
@@ -610,6 +640,131 @@ public class JobsyDbContext : DbContext
             entity.HasMany(e => e.StatusHistory)
                 .WithOne(h => h.Application)
                 .HasForeignKey(h => h.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Interview>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CalendarUid).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.LocationOrLink).HasMaxLength(512);
+            entity.Property(e => e.WithWhom).HasMaxLength(256);
+            entity.Property(e => e.Note).HasMaxLength(2000);
+            entity.HasIndex(e => e.ApplicationId).IsUnique();
+            entity.HasOne(e => e.Application)
+                .WithMany()
+                .HasForeignKey(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ChosenSlot)
+                .WithMany()
+                .HasForeignKey(e => e.ChosenSlotId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<InterviewSlot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.HasOne(e => e.Interview)
+                .WithMany(i => i.Slots)
+                .HasForeignKey(e => e.InterviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InterviewChange>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ActorRole).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(500).IsRequired();
+            entity.HasOne(e => e.Interview)
+                .WithMany(i => i.Changes)
+                .HasForeignKey(e => e.InterviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InterviewReminder>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.InterviewId, e.UserId, e.Moment, e.Channel }).IsUnique();
+            entity.HasOne(e => e.Interview)
+                .WithMany(i => i.Reminders)
+                .HasForeignKey(e => e.InterviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<JobSearchActivity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Employer).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.FunctionTitle).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ContactMethod).HasMaxLength(200);
+            entity.Property(e => e.Result).HasMaxLength(2000);
+            entity.Property(e => e.SourceEntityType).HasMaxLength(64);
+            entity.HasIndex(e => new { e.CandidateUserId, e.ActivityDate });
+            entity.HasIndex(e => new { e.CandidateUserId, e.Source, e.SourceEntityType, e.SourceEntityId })
+                .IsUnique()
+                .HasFilter("\"Source\" = 0 AND \"SourceEntityType\" IS NOT NULL AND \"SourceEntityId\" IS NOT NULL");
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ActivityAgreement>(entity =>
+        {
+            entity.HasKey(e => e.CandidateUserId);
+            entity.HasOne(e => e.CandidateUser)
+                .WithOne()
+                .HasForeignKey<ActivityAgreement>(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<JobSearchActivityAttachment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FileName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ContentType).HasMaxLength(100).IsRequired();
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationMessage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Body).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(e => new { e.ApplicationId, e.CreatedAtUtc });
+            entity.HasOne(e => e.Application)
+                .WithMany()
+                .HasForeignKey(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SenderUser)
+                .WithMany()
+                .HasForeignKey(e => e.SenderUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationOutcome>(entity =>
+        {
+            entity.HasKey(e => e.ApplicationId);
+            entity.Property(e => e.Reason).HasMaxLength(2000).IsRequired();
+            entity.HasOne(e => e.Application)
+                .WithOne()
+                .HasForeignKey<ApplicationOutcome>(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AfterMatchReminderPreference>(entity =>
+        {
+            entity.HasKey(e => e.UserId);
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<AfterMatchReminderPreference>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -774,6 +929,42 @@ public class JobsyDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<WorkExperienceReferenceRequest>(entity =>
+        {
+            entity.ToTable("WorkExperienceReferenceRequests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ReferentName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Relation).HasMaxLength(40).IsRequired();
+            entity.Property(e => e.ReferentEmail).HasMaxLength(254).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.EmployerName).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.RoleTitle).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.StartMonth).HasMaxLength(7);
+            entity.Property(e => e.EndMonth).HasMaxLength(7);
+            entity.Property(e => e.DutiesText).HasMaxLength(600);
+            entity.Property(e => e.ReferentComment).HasMaxLength(400);
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.EndorsedCompetenceCodesJson).HasMaxLength(500);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.WorkExperienceEntryId });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkExperienceReferenceToken>(entity =>
+        {
+            entity.ToTable("WorkExperienceReferenceTokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasOne(e => e.Request)
+                .WithMany()
+                .HasForeignKey(e => e.RequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<CandidateCompetency>(entity =>
         {
             entity.ToTable("CandidateCompetencies");
@@ -913,6 +1104,37 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateTestReflection>(entity =>
+        {
+            entity.ToTable("CandidateTestReflections");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Language).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.ContentJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.SourceHash).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Feedback).HasMaxLength(32);
+            entity.HasIndex(e => new { e.UserId, e.Kind, e.Level, e.Language }).IsUnique();
+        });
+
+        modelBuilder.Entity<CandidateUwvToolkitState>(entity =>
+        {
+            entity.ToTable("CandidateUwvToolkitStates");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.OndernemerAnswersJson).HasColumnType("text");
+            entity.Property(e => e.OndernemerOutcomeKey).HasMaxLength(32);
+            entity.Property(e => e.DrijfverenDriverKeysJson).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<CandidateUwvAdviseurShare>(entity =>
+        {
+            entity.ToTable("CandidateUwvAdviseurShares");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.SectionsJson).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Language).HasMaxLength(8).IsRequired();
+            entity.HasIndex(e => e.TokenHash);
+            entity.HasIndex(e => new { e.UserId, e.CreatedAtUtc });
         });
 
         modelBuilder.Entity<CandidatePrivatePreferences>(entity =>
@@ -1073,6 +1295,132 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateKandidatenkaartSettings>(entity =>
+        {
+            entity.ToTable("CandidateKandidatenkaartSettings");
+            entity.HasKey(e => e.UserId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CompanyInitiativeSettings>(entity =>
+        {
+            entity.ToTable("CompanyInitiativeSettings");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.RootCompanyId).IsUnique();
+            entity.Property(e => e.ContactEmail).HasMaxLength(320);
+            entity.HasOne(e => e.RootCompany)
+                .WithMany()
+                .HasForeignKey(e => e.RootCompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InitiativeTeam>(entity =>
+        {
+            entity.ToTable("InitiativeTeams");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(140);
+            entity.Property(e => e.ContactEmail).HasMaxLength(320);
+            entity.HasIndex(e => new { e.RootCompanyId, e.Name });
+            entity.HasOne(e => e.RootCompany)
+                .WithMany()
+                .HasForeignKey(e => e.RootCompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.BranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.BranchCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<WorkInitiative>(entity =>
+        {
+            entity.ToTable("WorkInitiatives");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Motivation).HasMaxLength(500);
+            entity.Property(e => e.CandidateDisplayName).HasMaxLength(200);
+            entity.Property(e => e.CandidateEmail).HasMaxLength(320);
+            entity.HasIndex(e => new { e.CandidateUserId, e.CreatedAtUtc });
+            entity.HasIndex(e => new { e.RootCompanyId, e.Status, e.CreatedAtUtc });
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.RootCompany)
+                .WithMany()
+                .HasForeignKey(e => e.RootCompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.BranchCompany)
+                .WithMany()
+                .HasForeignKey(e => e.BranchCompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.InitiativeTeam)
+                .WithMany()
+                .HasForeignKey(e => e.InitiativeTeamId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<WorkInitiativeDraft>(entity =>
+        {
+            entity.ToTable("WorkInitiativeDrafts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Motivation).HasMaxLength(500);
+            entity.HasIndex(e => new { e.CandidateUserId, e.RootCompanyId, e.InitiativeTeamId });
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.RootCompany)
+                .WithMany()
+                .HasForeignKey(e => e.RootCompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkInitiativeAcceptance>(entity =>
+        {
+            entity.ToTable("WorkInitiativeAcceptances");
+            entity.HasKey(e => e.InitiativeId);
+            entity.HasOne(e => e.Initiative)
+                .WithOne()
+                .HasForeignKey<WorkInitiativeAcceptance>(e => e.InitiativeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KandidatenkaartInviteCampaign>(entity =>
+        {
+            entity.ToTable("KandidatenkaartInviteCampaigns");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AreaKey).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.AreaLabel).HasMaxLength(200).IsRequired();
+            entity.HasIndex(e => new { e.VacancyId, e.CreatedAtUtc });
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KandidatenkaartInviteDelivery>(entity =>
+        {
+            entity.ToTable("KandidatenkaartInviteDeliveries");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CandidateUserId, e.SentAtUtc });
+            entity.HasIndex(e => e.CampaignId);
+            entity.HasOne(e => e.Campaign)
+                .WithMany(c => c.Deliveries)
+                .HasForeignKey(e => e.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -1326,6 +1674,16 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.RelatedEntityType).HasMaxLength(64);
             entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAtUtc });
             entity.HasIndex(e => e.CreatedAtUtc);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NotificationPreference>(entity =>
+        {
+            entity.ToTable("NotificationPreferences");
+            entity.HasKey(e => new { e.UserId, e.Soort });
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -1891,7 +2249,12 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.CandidatePassportEnabled).HasDefaultValue(true);
             entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
             entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.PupilPassportV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.StudentPassportEnabled).HasDefaultValue(false);
+            entity.Property(e => e.PassportPdfDnaBlocksEnabled).HasDefaultValue(true);
             entity.Property(e => e.TestsV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.TestItemExamplesEnabled).HasDefaultValue(false);
+            entity.Property(e => e.TestProgressInsightEnabled).HasDefaultValue(false);
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
             entity.Property(e => e.WhatsAppRemindersEnabled).HasDefaultValue(false);
             entity.Property(e => e.CompactTestPdfEnabled).HasDefaultValue(false);
@@ -2774,6 +3137,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.StartFeeEuro).HasPrecision(10, 2);
             entity.HasIndex(e => e.Kind);
             entity.HasIndex(e => e.IsActive);
+            entity.Property(e => e.FeedUrl).HasMaxLength(1024);
+            entity.Property(e => e.FeedMappingJson).HasMaxLength(4000);
+            entity.Property(e => e.FeedApiSecretName).HasMaxLength(120);
         });
 
         modelBuilder.Entity<TrainingOffer>(entity =>
@@ -2789,11 +3155,35 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ShowInPassport).HasDefaultValue(false);
             entity.Property(e => e.IsFree).HasDefaultValue(false);
             entity.Property(e => e.IsPartner).HasDefaultValue(false);
+            entity.Property(e => e.PartnerExternalId).HasMaxLength(120);
+            entity.Property(e => e.PriceLabel).HasMaxLength(80);
+            entity.Property(e => e.CompetenciesCsv).HasMaxLength(200).HasDefaultValue("");
+            entity.Property(e => e.CareerStepsCsv).HasMaxLength(400).HasDefaultValue("");
+            entity.Property(e => e.ReasonNl).HasMaxLength(400);
+            entity.Property(e => e.ReasonEn).HasMaxLength(400);
+            entity.Property(e => e.PriceEuro).HasPrecision(10, 2);
             entity.HasIndex(e => e.ProviderId);
             entity.HasIndex(e => e.ShowInPassport);
+            entity.HasIndex(e => new { e.ProviderId, e.PartnerExternalId }).IsUnique();
             entity.HasOne(e => e.Provider)
                 .WithMany(p => p.Offers)
                 .HasForeignKey(e => e.ProviderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TrainingEnrollment>(entity =>
+        {
+            entity.ToTable("TrainingEnrollments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CertificateTitle).HasMaxLength(200);
+            entity.HasIndex(e => new { e.UserId, e.OfferId }).IsUnique();
+            entity.HasOne(e => e.Offer)
+                .WithMany()
+                .HasForeignKey(e => e.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -2908,9 +3298,13 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.AnswersJson).IsRequired();
             entity.Property(e => e.LikesJson).IsRequired();
             entity.Property(e => e.DislikesJson).IsRequired();
+            entity.Property(e => e.PuzzlesJson).IsRequired();
             entity.Property(e => e.LikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DislikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DreamJobKey).HasMaxLength(64);
+            entity.Property(e => e.VoProfileKey).HasMaxLength(64);
+            entity.Property(e => e.VoTravelModeKey).HasMaxLength(32);
+            entity.Property(e => e.VoOwnWords).HasMaxLength(2000);
             entity.HasOne(e => e.PupilCode)
                 .WithOne(c => c.Progress)
                 .HasForeignKey<PupilProgress>(e => e.PupilCodeId)

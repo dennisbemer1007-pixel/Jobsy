@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text;
 using Bunit;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Components.Landing;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Components.Pages;
@@ -23,6 +24,17 @@ namespace Jobsy.Tests;
 
 public class LandingBunitTests : BunitContext
 {
+    private readonly AmbientCultureScope _cultureScope = new();
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _cultureScope.Dispose();
+        }
+    }
+
     public LandingBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -62,7 +74,7 @@ public class LandingBunitTests : BunitContext
             })));
 
         Assert.Single(cut.FindAll(".cookie-consent"));
-        foreach (var id in new[] { "top", "wat-is-lobsy", "kreeft", "wat-je-krijgt", "voor-wie", "privacy", "faq" })
+        foreach (var id in new[] { "top", "flow", "banenkaart", "ontdekkingsreis", "wat-je-krijgt", "privacy", "voor-werkgevers", "faq" })
         {
             Assert.NotNull(cut.Find($"#{id}"));
         }
@@ -71,7 +83,7 @@ public class LandingBunitTests : BunitContext
         Assert.Contains(cut.FindAll("a[data-kpi='LandingCtaLogin']"), a => a.GetAttribute("href") == PublicRoutes.Login);
         Assert.Contains(cut.FindAll("a[data-kpi='LandingCtaMap']"), a => a.GetAttribute("href") == PublicRoutes.Banenkaart);
         var landing = cut.Find(".pub-landing").OuterHtml;
-        Assert.DoesNotContain("/register", landing, StringComparison.Ordinal);
+        Assert.Contains("/register", landing, StringComparison.Ordinal);
         Assert.DoesNotContain("href=\"/werkgevers\"", landing, StringComparison.Ordinal);
         Assert.DoesNotContain("href=\"/scholen\"", landing, StringComparison.Ordinal);
         Assert.Contains("data-kpi=\"LandingCtaAudience\"", landing, StringComparison.Ordinal);
@@ -83,7 +95,7 @@ public class LandingBunitTests : BunitContext
         var heroLow = Render<LandingHero>(p => p
             .Add(c => c.Variant, LandingVariant.On)
             .Add(c => c.VacancyCount, (int?)null));
-        Assert.Contains("Of kijk eerst op de banenkaart", heroLow.Markup, StringComparison.Ordinal);
+        Assert.Contains("320", heroLow.Markup, StringComparison.Ordinal);
 
         var heroOk = Render<LandingHero>(p => p
             .Add(c => c.Variant, LandingVariant.On)
@@ -96,7 +108,7 @@ public class LandingBunitTests : BunitContext
     public void Faq_json_ld_matches_visible_questions()
     {
         var pairs = LandingFaq.BuildPairs(LandingVariant.On, "nl", 2.99m);
-        Assert.Equal(7, pairs.Count);
+        Assert.Equal(4, pairs.Count);
         var json = StructuredData.FaqPage(pairs);
         foreach (var (q, _) in pairs)
         {

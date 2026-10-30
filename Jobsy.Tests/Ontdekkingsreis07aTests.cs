@@ -1,4 +1,5 @@
 using Bunit;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
@@ -175,7 +176,30 @@ public class OntdekkingsreisServiceMigrationTests
             new FakeMatches(),
             new FakeInsightsQueue(),
             new FakeCareerPlans(),
-            new FixedFlags(passportOn));
+            new FixedFlags(passportOn),
+            new FakeDiscovery());
+
+    private sealed class FakeDiscovery : IVacancyDiscoveryIndex
+    {
+        public DateTime? LastRefreshedAtUtc => DateTime.UtcNow;
+
+        public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<VacancyDiscoveryRecord>>([]);
+
+        public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
+            CancellationToken cancellationToken = default)
+            => GetActiveAsync(cancellationToken);
+
+        public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new VacancyMapView(52.1, 5.1, 8, 0));
+
+        public void Invalidate() { }
+
+        public Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task RefreshAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
 
     private static async Task<Guid> SeedUserAsync(JobsyDbContext db)
     {
@@ -292,16 +316,16 @@ public class OntdekkingsreisRouteTests
     [Fact]
     public void DiscoveryJourney_requires_CandidatePassport_with_start_fallback()
     {
-        var page = typeof(DiscoveryJourney);
-        var attr = page.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var ssrPage = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateDiscoverySsr.razor"));
+        Assert.Contains("@page \"/candidate/ontdekkingsreis\"", ssrPage, StringComparison.Ordinal);
+        Assert.Contains("RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = \"/candidate/start\")", ssrPage, StringComparison.Ordinal);
+
+        var legacy = typeof(DiscoveryJourney);
+        var attr = legacy.GetCustomAttributes(typeof(RequiresFeatureAttribute), inherit: true)
             .OfType<RequiresFeatureAttribute>()
             .Single(a => a.Feature == PlatformFeature.CandidatePassport);
         Assert.Equal("/candidate/start", attr.FallbackPath);
-
-        var route = page.GetCustomAttributes(typeof(Microsoft.AspNetCore.Components.RouteAttribute), inherit: true)
-            .OfType<Microsoft.AspNetCore.Components.RouteAttribute>()
-            .Single();
-        Assert.Equal("/candidate/ontdekkingsreis", route.Template);
     }
 
     [Fact]
@@ -310,8 +334,8 @@ public class OntdekkingsreisRouteTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
         Assert.Contains("CandidatePassport", wizard, StringComparison.Ordinal);
-        Assert.Contains("/candidate/ontdekkingsreis", wizard, StringComparison.Ordinal);
-        Assert.Contains("replace: true", wizard, StringComparison.Ordinal);
+        Assert.Contains("FeatureRoutes.CandidateDiscoveryPath", wizard, StringComparison.Ordinal);
+        Assert.Contains("NavigateTo(FeatureRoutes.CandidateDiscoveryPath, true)", wizard, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -330,14 +354,13 @@ public class OntdekkingsreisRouteTests
             Assert.True(File.Exists(Path.Combine(dir, name)), name);
         }
 
-        Assert.Contains("<PersonalStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<AvailabilityStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<TransportStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<WorkHistoryStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<EducationStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<DreamJobStep", wizard, StringComparison.Ordinal);
-        Assert.Contains("<TestConsentStep", wizard, StringComparison.Ordinal);
+        Assert.Contains("<OnboardingRustigPersonalStepBody", wizard, StringComparison.Ordinal);
+        Assert.Contains("<OnboardingRustigMiniTestStep", wizard, StringComparison.Ordinal);
+        Assert.Contains("<OnboardingRustigDreamStep", wizard, StringComparison.Ordinal);
+        Assert.Contains("<TestConsentFooterFields", wizard, StringComparison.Ordinal);
         Assert.Contains("<OnboardingMiniTest", wizard, StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(dir, "PersonalStep.razor")));
+        Assert.True(File.Exists(Path.Combine(dir, "AvailabilityStep.razor")));
 
         var personal = File.ReadAllText(Path.Combine(dir, "PersonalStep.razor"));
         Assert.Contains("ob-wizard__field-row", personal, StringComparison.Ordinal);

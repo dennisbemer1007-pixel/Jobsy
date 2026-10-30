@@ -54,18 +54,18 @@ else
             @foreach (var row in _rows)
             {
                 <tr class="ent-data-table__row" @onclick="() => OpenClass(row.Id)">
-                    <td>@row.ClassName</td>
-                    <td>@Culture[SchoolLevelRules.LabelKey(row.Level)]</td>
-                    <td>@SchoolLevelRules.YearLabel(row.Level, row.Year)</td>
-                    <td>
+                    <td data-label="@Culture["School.Col.Class"]">@row.ClassName</td>
+                    <td data-label="@Culture["School.Col.Level"]">@Culture[SchoolLevelRules.LabelKey(row.Level)]</td>
+                    <td data-label="@Culture["School.Col.Year"]">@SchoolLevelRules.YearLabel(row.Level, row.Year)</td>
+                    <td data-label="@Culture["School.Col.QuestionSet"]">
                         <span class="sch-pill @(row.QuestionSet == PupilQuestionSet.Groep78 ? "sch-pill--ok" : "sch-pill--muted")">
                             @SchoolLevelRules.QuestionSetPillLabel(row.QuestionSet)
                         </span>
                     </td>
-                    <td>@(row.TeacherNames.Count == 0 ? "—" : string.Join(", ", row.TeacherNames))</td>
-                    <td class="tabular">@row.CodeCount</td>
-                    <td class="tabular">@row.CompletedCount</td>
-                    <td>
+                    <td data-label="@Culture["School.Col.Teacher"]">@(row.TeacherNames.Count == 0 ? "—" : string.Join(", ", row.TeacherNames))</td>
+                    <td class="tabular" data-label="@Culture["School.Col.Codes"]">@row.CodeCount</td>
+                    <td class="tabular" data-label="@Culture["School.Col.Completed"]">@row.CompletedCount</td>
+                    <td data-label="@Culture["School.Col.Parents"]">
                         @if (row.ParentalInfoConfirmed)
                         {
                             <span class="sch-pill sch-pill--ok">@Culture["School.Parents.Confirmed"]</span>
@@ -75,7 +75,7 @@ else
                             <span class="sch-pill sch-pill--warn">@Culture["School.Parents.Pending"]</span>
                         }
                     </td>
-                    <td><span class="sch-pill @WindowPill(row.TestWindow)">@WindowLabel(row)</span></td>
+                    <td data-label="@Culture["School.Col.Window"]"><span class="sch-pill @WindowPill(row.TestWindow)">@WindowLabel(row)</span></td>
                 </tr>
             }
         </Rows>
@@ -116,7 +116,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (!_disabled)
         {

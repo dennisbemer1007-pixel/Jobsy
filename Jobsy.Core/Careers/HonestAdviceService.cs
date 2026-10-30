@@ -28,6 +28,8 @@ public sealed class HonestAdviceService
 
     public static HonestAdviceService Shared => _shared ??= LoadEmbedded();
 
+    internal static void ResetSharedForTests() => _shared = null;
+
     public static HonestAdviceService LoadEmbedded()
     {
         using var stream = Open(FileName);
@@ -60,7 +62,7 @@ public sealed class HonestAdviceService
             {
                 var code = Jobsy.Core.Localization.JobsyLanguages.Normalize(locale.Key);
                 if (code == Jobsy.Core.Localization.JobsyLanguages.Default
-                    || !Jobsy.Core.Localization.JobsyLanguages.IsSupported(locale.Key))
+                    || !Jobsy.Core.Localization.JobsyLanguages.IsCatalogLanguage(code))
                 {
                     continue;
                 }

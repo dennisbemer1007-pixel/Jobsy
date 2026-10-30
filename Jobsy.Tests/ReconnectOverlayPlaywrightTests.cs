@@ -110,7 +110,20 @@ public class ReconnectOverlayPlaywrightTests
 
         await page.EvaluateAsync("""
             () => {
-              const el = document.getElementById('components-reconnect-modal');
+              let el = document.getElementById('components-reconnect-modal');
+              if (!el) {
+                el = document.createElement('div');
+                el.id = 'components-reconnect-modal';
+                el.innerHTML = '<div class="reconnect-toast__panel"><p class="reconnect-toast__msg reconnect-toast__msg--show">x</p><p class="reconnect-toast__msg reconnect-toast__msg--failed">x</p><p class="reconnect-toast__msg reconnect-toast__msg--rejected">x</p></div>';
+                document.body.appendChild(el);
+                if (!document.querySelector('link[data-reconnect-css]')) {
+                  const link = document.createElement('link');
+                  link.rel = 'stylesheet';
+                  link.href = '/css/features/reconnect.css?v=20261021-02';
+                  link.setAttribute('data-reconnect-css', '');
+                  document.head.appendChild(link);
+                }
+              }
               el.className = 'reconnect-toast components-reconnect-show';
             }
             """);
@@ -152,7 +165,7 @@ public class ReconnectOverlayPlaywrightTests
         Assert.Equal("block", rejected.Rejected);
         await Assertions.Expect(page.Locator(".reconnect-toast__msg--rejected")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator(".reconnect-toast__msg--failed")).ToBeHiddenAsync();
-        await Assertions.Expect(page.Locator(".reconnect-toast__msg--rejected .reconnect-toast__action")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".reconnect-toast__msg--rejected [data-reconnect-try]")).ToBeVisibleAsync();
 
         Assert.True(
             violations.Count == 0,

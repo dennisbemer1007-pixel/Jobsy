@@ -271,10 +271,12 @@ public class MfaTrustedDeviceTests
             challenges,
             new Auth04StubFeatures(true),
             new UnknownAccountLockoutTracker("test-lockout-key"),
+            new AccountLockoutPolicy(config),
             new StubTestAccountsRuntime(),
             new StubSystemAdminSettings(),
             SystemAdminTestDoubles.LoginNotifier(),
-            NullLogger<AuthController>.Instance);
+            NullLogger<AuthController>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.AuthOptions()));
         sut.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         return sut;
     }
@@ -440,7 +442,7 @@ file sealed class Auth04StubHostEnvironment : IHostEnvironment
     public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
 }
 
-file sealed class MfaPageWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class MfaPageWebFactory : WebWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

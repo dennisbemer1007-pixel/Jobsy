@@ -11,6 +11,8 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -38,12 +40,14 @@ public class ApplicationsController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly PassportPdfDownload _passportPdf;
+    private readonly IPassportDnaReader _dna;
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
     private readonly IPersonalDataAccessLogger _accessLog;
     private readonly ISupportAccessService _supportAccess;
     private readonly IApplicationStatusRecorder _statusRecorder;
+    private readonly ApplicationStatusNotifier _statusNotifier;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -54,12 +58,14 @@ public class ApplicationsController : ControllerBase
         IPlatformFeatureService features,
         ILobsyCvPdfService lobsyCvPdf,
         PassportPdfDownload passportPdf,
+        IPassportDnaReader dna,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
         IPersonalDataAccessLogger accessLog,
         ISupportAccessService supportAccess,
-        IApplicationStatusRecorder statusRecorder)
+        IApplicationStatusRecorder statusRecorder,
+        ApplicationStatusNotifier statusNotifier)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -69,12 +75,14 @@ public class ApplicationsController : ControllerBase
         _features = features;
         _lobsyCvPdf = lobsyCvPdf;
         _passportPdf = passportPdf;
+        _dna = dna;
         _notifications = notifications;
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
         _accessLog = accessLog;
         _supportAccess = supportAccess;
         _statusRecorder = statusRecorder;
+        _statusNotifier = statusNotifier;
     }
 
     [HttpGet]
@@ -244,6 +252,7 @@ public class ApplicationsController : ControllerBase
                 a.CandidateAgeYears,
                 a.HasUploadedCv,
                 a.CandidateReferenceCount,
+                a.SnapshotAttachedDocument,
                 a.CandidateUserId,
                 a.Vacancy.CompanyId
             })
@@ -312,7 +321,8 @@ public class ApplicationsController : ControllerBase
                         availability.Slots,
                         availability.FlexibleTimes),
                     UploadedCvAvailable: revealed && a.HasUploadedCv,
-                    CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+                    CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0,
+                    AttachedDocumentKind: a.SnapshotAttachedDocument);
             }));
         }
 
@@ -396,7 +406,8 @@ public class ApplicationsController : ControllerBase
                         LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).FlexibleTimes)
                     : null,
                 UploadedCvAvailable: unmask && a.HasUploadedCv,
-                CandidateReferenceCount: unmask ? a.CandidateReferenceCount : 0));
+                CandidateReferenceCount: unmask ? a.CandidateReferenceCount : 0,
+                AttachedDocumentKind: a.SnapshotAttachedDocument));
         }
 
         return Ok(mapped);
@@ -527,12 +538,15 @@ public class ApplicationsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
-        if (features.PassportPdfV2Enabled)
+        if (ApplicationAttachedDocumentRules.UsePassportPdf(
+                application.SnapshotAttachedDocument,
+                features.PassportPdfV2Enabled))
         {
             var passport = await _passportPdf.ForApplicationAsync(
                 application,
                 includeDirectContact,
                 features.PhoneVerificationEnabled,
+                features.PassportPdfDnaBlocksEnabled,
                 cancellationToken);
             return (passport.Pdf, passport.FileName);
         }
@@ -776,6 +790,19 @@ public class ApplicationsController : ControllerBase
             });
         }
 
+        var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
+        var basicsGaps = CandidateApplyBasicsRules.Evaluate(candidate, preferences);
+        if (basicsGaps.Count > 0)
+        {
+            return BadRequest(new
+            {
+                code = "apply_basics_incomplete",
+                message = CandidateApplyBasicsMessages.NlSummary(basicsGaps),
+                gaps = basicsGaps.Select(g => g.MessageKey).ToArray(),
+                userMessage = true
+            });
+        }
+
         var existing = await _db.Applications.FirstOrDefaultAsync(
             a => a.VacancyId == vacancy.Id
                  && (a.CandidateUserId == candidate.Id
@@ -788,7 +815,6 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
         }
 
-        var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
         var referenceRows = await _db.CandidateReferences.AsNoTracking()
             .Where(r => r.UserId == candidate.Id)
             .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone })
@@ -801,7 +827,7 @@ public class ApplicationsController : ControllerBase
             vacancy.MinimumEmployers,
             preferences.DrivingLicenses,
             preferences.Educations,
-            preferences.Employers?.Count ?? 0,
+            SensitiveExperienceRules.CountForMinimumEmployers(preferences),
             vacancy.MinimumReferences,
             completeReferences);
         if (requirementError is not null)
@@ -938,7 +964,7 @@ public class ApplicationsController : ControllerBase
             preferences.Educations is null ? null : string.Join(", ", preferences.Educations),
             512);
         application.SnapshotAboutMe = Truncate(preferences.AboutMe, 1024);
-        application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
+        application.CandidateEmployerCount = SensitiveExperienceRules.CountForMinimumEmployers(preferences);
         application.CandidateReferenceCount = completeReferences;
         await SnapshotUploadedCvAsync(application, candidate.Id, cancellationToken);
         application.SnapshotPhoneNumber = Truncate(candidate.PhoneNumber, 32);
@@ -966,6 +992,12 @@ public class ApplicationsController : ControllerBase
                                    && request.ConfirmLowMatchSafetyNet;
         // New applications do not snapshot the AI "Wie ben ik" story (decision 22). Existing rows stay.
         application.SnapshotWhoAmIJson = null;
+        var applyFeatures = await _features.GetAsync(cancellationToken);
+        var applyLanguage = JobsyLanguages.Normalize(preferences.Language);
+        var applyDnaLayers = await _dna.ReadAsync(candidate.Id, applyLanguage, cancellationToken);
+        application.SnapshotAttachedDocument = ApplicationAttachedDocumentRules.KindForNewApplication(
+            PassportDnaCompletion.AllLayersCompleted(applyDnaLayers),
+            applyFeatures.PassportPdfV2Enabled);
 
         if (vacancy.Kind == VacancyKind.Internship
             && vacancy.ExclusivitySetting is { } excl
@@ -1026,9 +1058,8 @@ public class ApplicationsController : ControllerBase
                     return BadRequest(new { message = "Sollicitatie kon niet worden opgeslagen. Probeer het opnieuw." });
                 }
 
-                await SendApplicationConfirmationAsync(
-                    candidate, vacancy, application, authenticatorStubUsed, cancellationToken);
-                await NotifyEmployersOfNewApplicationAsync(vacancy, application, cancellationToken);
+                await _statusNotifier.NotifyApplicationSubmittedAsync(
+                    application, vacancy, candidate.FullName, cancellationToken);
 
                 var immediateDto = new ApplicationDto(
                     application.Id,
@@ -1184,10 +1215,8 @@ public class ApplicationsController : ControllerBase
         existing.WorkPermitConfirmed = request.WorkPermitConfirmed;
         await _db.SaveChangesAsync(cancellationToken);
 
-        await SendApplicationConfirmationAsync(
-            candidate, vacancy, existing, authenticatorStubUsed, cancellationToken);
-
-        await NotifyEmployersOfNewApplicationAsync(vacancy, existing, cancellationToken);
+        await _statusNotifier.NotifyApplicationSubmittedAsync(
+            existing, vacancy, candidate.FullName, cancellationToken);
 
         var dto = new ApplicationDto(
             existing.Id,
@@ -1329,7 +1358,7 @@ public class ApplicationsController : ControllerBase
             .FirstOrDefaultAsync(v => v.Id == application.VacancyId, cancellationToken);
         if (vacancy is not null)
         {
-            await NotifyEmployersOfWithdrawalAsync(vacancy, application, cancellationToken);
+            await _statusNotifier.NotifyApplicationWithdrawnAsync(application, vacancy, cancellationToken);
         }
 
         return NoContent();
@@ -1423,27 +1452,7 @@ public class ApplicationsController : ControllerBase
         }
         else
         {
-            var acceptSubject = $"Je sollicitatie is geaccepteerd: {application.Vacancy.Title}";
-            var acceptBody =
-                $"{application.Vacancy.Company.Name}: je sollicitatie is geaccepteerd.";
-            var acceptMail = TransactionalEmails.EmployerReactionAccepted(
-                baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _mailer.SendAsync(acceptMail, application.CandidateEmail, cancellationToken: cancellationToken);
-
-            await _push.SendAsync(new PushMessage(
-                application.CandidateEmail,
-                "Positief nieuws over je sollicitatie",
-                acceptBody,
-                appsLink,
-                "EmployerReaction"), cancellationToken);
-
-            await NotifyCandidateAsync(
-                application,
-                acceptSubject,
-                acceptBody,
-                "EmployerReaction",
-                "/candidate/applications",
-                cancellationToken);
+            await _statusNotifier.NotifyMutualYesAsync(application, actor?.Id, cancellationToken);
         }
 
         return Ok(MapEmployerDto(application));
@@ -1739,7 +1748,8 @@ public class ApplicationsController : ControllerBase
                 availability.Slots,
                 availability.FlexibleTimes),
             UploadedCvAvailable: revealed && a.HasUploadedCv,
-            CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+            CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0,
+            AttachedDocumentKind: a.SnapshotAttachedDocument);
     }
 
     private async Task SnapshotUploadedCvAsync(
@@ -1793,32 +1803,6 @@ public class ApplicationsController : ControllerBase
                 e.ReferenceNumber))
             .ToListAsync(cancellationToken);
         return DiplomaEvaluationRules.SerializeSnapshot(rows);
-    }
-
-    private async Task SendApplicationConfirmationAsync(
-        Core.Entities.User candidate,
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        bool authenticatorStubUsed,
-        CancellationToken cancellationToken)
-    {
-        _ = authenticatorStubUsed; // logged by callers if needed; never shown in mail (05.3)
-        var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
-        var body = ApplicationRules.ConfirmationNoticeBody(vacancy.Company.Name);
-        var mail = TransactionalEmails.ApplicationConfirmation(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            candidate.FullName,
-            vacancy.Title,
-            vacancy.Company.Name);
-        await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
-
-        await NotifyCandidateAsync(
-            application,
-            subject,
-            body,
-            "ApplicationConfirmation",
-            "/candidate/applications",
-            cancellationToken);
     }
 
     private async Task SendVerificationCodeAsync(
@@ -1885,94 +1869,6 @@ public class ApplicationsController : ControllerBase
                 "Application",
                 application.Id),
             cancellationToken);
-    }
-
-    private async Task NotifyEmployersOfNewApplicationAsync(
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        CancellationToken cancellationToken)
-    {
-        var deepLink = await BuildDeepLinkAsync("/branch/applicants", cancellationToken);
-        var contacts = await _db.Users
-            .AsNoTracking()
-            .Where(u =>
-                u.IsActive
-                && u.Role != UserRole.Candidate
-                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
-            .Select(u => new { u.Id, u.Email })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var subject = $"Nieuwe sollicitatie: {vacancy.Title}";
-        var body = $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}";
-        var mail = TransactionalEmails.EmployerNewApplication(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title,
-            branchName: vacancy.Company.Name,
-            applicationId: application.Id,
-            receivedAtUtc: application.CreatedAt,
-            matchPercent: null,
-            companyName: vacancy.Company.Name);
-        foreach (var contact in contacts)
-        {
-            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
-
-            await _push.SendAsync(new PushMessage(
-                contact.Email,
-                "Nieuwe sollicitatie",
-                body,
-                deepLink,
-                "EmployerNewApplication"), cancellationToken);
-
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    contact.Id,
-                    subject,
-                    body,
-                    "EmployerNewApplication",
-                    "/branch/applicants",
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
-                cancellationToken);
-        }
-    }
-
-    private async Task NotifyEmployersOfWithdrawalAsync(
-        Core.Entities.Vacancy vacancy,
-        Core.Entities.Application application,
-        CancellationToken cancellationToken)
-    {
-        var contacts = await _db.Users
-            .AsNoTracking()
-            .Where(u =>
-                u.IsActive
-                && u.Role != UserRole.Candidate
-                && (u.CompanyId == vacancy.CompanyId || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.CompanyId)))
-            .Select(u => new { u.Id, u.Email })
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var subject = $"Sollicitatie ingetrokken: {vacancy.Title}";
-        var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
-        var mail = TransactionalEmails.CandidateWithdrawn(
-            (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title,
-            companyName: vacancy.Company.Name);
-        foreach (var contact in contacts)
-        {
-            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
-
-            await _notifications.CreateAsync(
-                new NotificationCreateRequest(
-                    contact.Id,
-                    subject,
-                    body,
-                    "CandidateWithdrawn",
-                    "/branch/applicants",
-                    RelatedEntityType: "Application",
-                    RelatedEntityId: application.Id),
-                cancellationToken);
-        }
     }
 
     private static string BuildCompactPreferencesSummary(CandidatePreferencesDto preferences)
@@ -2081,10 +1977,24 @@ public class ApplicationsController : ControllerBase
             return;
         }
 
-        await _statusRecorder.TryRecordEmployerViewedAsync(
+        var recorded = await _statusRecorder.TryRecordEmployerViewedAsync(
             application.Id,
             actorUserId,
             nowUtc,
             cancellationToken);
+        if (!recorded)
+        {
+            return;
+        }
+
+        if (application.Vacancy is null)
+        {
+            application = await _db.Applications
+                .Include(a => a.Vacancy)
+                .ThenInclude(v => v.Company)
+                .FirstAsync(a => a.Id == application.Id, cancellationToken);
+        }
+
+        await _statusNotifier.NotifyCvViewedAsync(application, actorUserId, cancellationToken);
     }
 }

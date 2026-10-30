@@ -13,6 +13,8 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Infrastructure.Ops;
 
@@ -394,6 +396,16 @@ public sealed class TestAccountsSeedService
             progress.Step = "candidate";
             progress.AccountKey = "Candidate";
             await EnsureCompleteCandidateAsync(candidate, cancellationToken);
+            if (usersByKey.TryGetValue("BranchManager", out var branchManager))
+            {
+                progress.Step = "sollicitaties-demo";
+                await TestAccountsSollicitatiesDemoSeeder.EnsureForCandidateAsync(
+                    _db,
+                    candidate.Id,
+                    branchManager.Id,
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance,
+                    cancellationToken);
+            }
         }
 
         if (usersByKey.TryGetValue("CandidateNew", out var candidateNew))
@@ -674,7 +686,17 @@ public sealed class TestAccountsSeedService
         candidate.HomeLocation = new GeoPoint(52.0780, 4.3100);
         candidate.DateOfBirth = new DateOnly(1998, 4, 12);
         candidate.PreferencesJson =
-            """{"roles":["horeca","retail"],"maxTravelMinutes":30,"educations":["MBO"]}""";
+            """
+            {
+              "roles":["horeca","retail"],
+              "maxTravelMinutes":30,
+              "educations":["MBO"],
+              "flexibleTimes":true,
+              "minHoursPerWeek":16,
+              "maxHoursPerWeek":40,
+              "employers":[{"employerName":"Demo Horeca BV","role":"Bediening","years":2,"startMonth":"2022-03","endMonth":"2024-08","isCurrent":false}]
+            }
+            """;
         candidate.CandidateHowToCompletedAt ??= DateTime.UtcNow;
         candidate.TalentPoolConsentAt ??= DateTime.UtcNow;
         candidate.TalentPoolConsentVersion = PrivacyConstants.CurrentConsentVersion;
@@ -711,27 +733,6 @@ public sealed class TestAccountsSeedService
         MarkJourneyStepsDone(onboarding);
 
         await EnsureCompletedProfileAsync(candidate.Id, cancellationToken);
-
-        if (!await _db.Applications.AnyAsync(a => a.Id == TestAccountsIds.Application, cancellationToken))
-        {
-            _db.Applications.Add(new Application
-            {
-                Id = TestAccountsIds.Application,
-                VacancyId = TestAccountsIds.VacancyHaag1,
-                CandidateUserId = candidate.Id,
-                CandidateName = candidate.FullName,
-                CandidateEmail = candidate.Email,
-                CandidateCity = "Den Haag",
-                PreferredTransport = "Bike",
-                EstimatedTravelMinutes = 15,
-                Status = ApplicationStatus.Pending,
-                ConsentAcceptedAt = DateTime.UtcNow,
-                ConsentVersion = PrivacyConstants.CurrentConsentVersion,
-                WorkPermitConfirmed = true,
-                EmailVerifiedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow
-            });
-        }
     }
 
     private static void MarkJourneyStepsDone(CandidateOnboarding onboarding)
@@ -761,17 +762,33 @@ public sealed class TestAccountsSeedService
     }
 
     /// <summary>
-    /// Rewrites the seeded complete candidate's assessments when answers or scores
-    /// diverge from the canonical seed (placeholder 70/65/60/55/50, gaps, career "done" without scores).
-    /// Does not touch preferences or the new candidate. Caller saves.
+    /// Acceptatie seed-reset: remove user-added external sollicitaties (+ activity rows) for every allowlisted demo login.
+    /// Independent of Sollicitaties SSR / demo-ensure.
     /// </summary>
-    public async Task<bool> RepairCompleteCandidateAssessmentsAsync(CancellationToken cancellationToken = default)
+    public Task ApplyAcceptatieSeedResetExternalPurgeAsync(
+        ILogger? logger = null,
+        CancellationToken cancellationToken = default)
+        => TestAccountsSollicitatiesDemoSeeder.PurgeAcceptatieDemoExternalVacanciesAsync(
+            _db,
+            _configuration,
+            logger ?? NullLogger.Instance,
+            cancellationToken);
+
+    /// <summary>
+    /// Acceptatie seed-reset: external purge for all allowlisted candidates, then rewrite catalog candidate assessments when drifted.
+    /// Does not touch preferences or the new candidate. Caller saves assessment changes.
+    /// </summary>
+    public async Task<bool> RepairCompleteCandidateAssessmentsAsync(
+        ILogger? logger = null,
+        CancellationToken cancellationToken = default)
     {
+        await ApplyAcceptatieSeedResetExternalPurgeAsync(logger, cancellationToken);
+
         var domain = _configuration["TestAccounts:EmailDomain"] ?? "lobsy.nl";
         var entry = TestAccountCatalog.FindByKey("Candidate");
         if (entry is null)
         {
-            return false;
+            return true;
         }
 
         var email = TestAccountCatalog.BuildEmail(entry.EmailSlug, domain);
@@ -780,7 +797,7 @@ public sealed class TestAccountsSeedService
             cancellationToken);
         if (user is null)
         {
-            return false;
+            return true;
         }
 
         var now = DateTime.UtcNow;
@@ -1155,12 +1172,12 @@ public sealed class TestAccountsSeedService
             {
                 Id = TestAccountsIds.SchoolClassGroep78,
                 SchoolId = school.Id,
-                Name = "7A",
+                Name = DemoSchoolIds.ClassGroep78Name,
                 Level = SchoolLevel.Groep78,
                 QuestionSet = PupilQuestionSet.Groep78,
-                Year = 7,
+                Year = 8,
                 SchoolYearStart = schoolYearStart,
-                PupilCount = 5,
+                PupilCount = 10,
                 IsTestData = true,
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -1169,12 +1186,12 @@ public sealed class TestAccountsSeedService
         else
         {
             groepClass.IsTestData = true;
-            groepClass.Name = "7A";
+            groepClass.Name = DemoSchoolIds.ClassGroep78Name;
             groepClass.Level = SchoolLevel.Groep78;
             groepClass.QuestionSet = PupilQuestionSet.Groep78;
-            groepClass.Year = 7;
+            groepClass.Year = 8;
             groepClass.SchoolYearStart = schoolYearStart;
-            groepClass.PupilCount = 5;
+            groepClass.PupilCount = 10;
         }
 
         await EnsurePupilCodesAsync(groepClass, insertedGroep, dryRun, cancellationToken);

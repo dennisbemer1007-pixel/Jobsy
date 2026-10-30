@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components
 @using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Features
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -8,41 +10,65 @@
 @inject AssistantChatHost ChatHost
 @inject FeedbackHost FeedbackHost
 @inject IFeatureFlags FeatureFlags
+@inject IChatContextGreetingGate ContextGreetingGate
 @inject IJSRuntime Js
 
 <AuthorizeView>
     <Authorized>
-        @if (_visible && !HideEdgeTab)
+        @if (_visible && _uiVariant == AssistantChatUiVariant.Business && !_open)
         {
-            <div class="lobsy-assistant-tab lobsy-assistant-tab--edge @(_hasBottomNav ? "has-bottom-nav" : null) @(_open ? "is-open" : null)">
+            <div class="lobsy-assistant-launcher lobsy-assistant-launcher--business @(_hasBottomNav ? "has-bottom-nav" : null)"
+                 data-lobsy-coach>
                 <button type="button"
-                        class="lobsy-assistant-tab__btn"
+                        id="lobsy-assistant-launcher-btn"
+                        class="lobsy-assistant-launcher__btn"
                         @onclick="Toggle"
                         aria-haspopup="dialog"
                         aria-expanded="@(_open ? "true" : "false")"
                         aria-controls="lobsy-assistant-panel">
-                    <span class="lobsy-assistant-tab__icon" aria-hidden="true">
-                        <LobsyLogo Class="lobsy-assistant-tab__mascot" Alt="" UseMascot="true" />
-                    </span>
-                    <span>@Culture["Nav.Assistant"]</span>
+                    <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="28" height="28" decoding="async" />
+                    <span class="visually-hidden">@Culture["Assistant.Open"]</span>
                 </button>
             </div>
         }
         @if (_visible && _open)
         {
-            <div class="lobsy-assistant is-open @(HideEdgeTab ? "lobsy-assistant--coach" : null) @(_hasBottomNav ? "has-bottom-nav" : null)">
+            <div class="lobsy-assistant is-open @SkinClass @(_hasBottomNav ? "has-bottom-nav" : null) @(_uiVariant == AssistantChatUiVariant.Warm ? "lobsy-assistant--coach" : "lobsy-assistant--business-panel")">
                 <div id="lobsy-assistant-panel" class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
                     <header class="lobsy-assistant__header">
                         <div class="lobsy-assistant__brand">
-                            <LobsyLogo Class="lobsy-assistant__logo" Alt="" UseMascot="true" />
-                            <div>
-                                <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
-                                <p class="lobsy-assistant__lead">@Culture[_employersOn ? "Assistant.Lead" : "Assistant.LeadEmployersOff"]</p>
-                            </div>
+                            @if (_uiVariant == AssistantChatUiVariant.Warm)
+                            {
+                                <img class="lobsy-assistant__avatar" src="@BrandImages.MarkSvg" alt="" width="40" height="40" decoding="async" />
+                                <div>
+                                    <h2 id="lobsy-assistant-title">@Culture["Assistant.BotName"]</h2>
+                                    <p class="lobsy-assistant__lead">@Culture["Assistant.SubtitleWarm"]</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="lobsy-assistant__avatar lobsy-assistant__avatar--business" aria-hidden="true">
+                                    <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="24" height="24" decoding="async" />
+                                </span>
+                                <div>
+                                    <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
+                                    <p class="lobsy-assistant__lead">@Culture["Assistant.SubtitleBusiness"]</p>
+                                </div>
+                            }
                         </div>
-                        <button type="button" class="btn btn-ghost" @onclick="StartNewChat" disabled="@_busy">@Culture["Assistant.NewChat"]</button>
-                        <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
+                        <div class="lobsy-assistant__header-actions">
+                            <button type="button" class="lobsy-assistant__icon-btn" @onclick="StartNewChat" disabled="@_busy" aria-label="@Culture["Assistant.NewChat"]" title="@Culture["Assistant.NewChat"]">+</button>
+                            <button type="button" class="lobsy-assistant__icon-btn" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
+                        </div>
                     </header>
+
+                    @if (!string.IsNullOrWhiteSpace(_pageContextLine))
+                    {
+                        <p class="lobsy-assistant__context" role="status">
+                            <span class="lobsy-assistant__context-dot" aria-hidden="true"></span>
+                            @_pageContextLine
+                        </p>
+                    }
 
                     <div class="lobsy-assistant__chat">
                         @for (var i = 0; i < _messages.Count; i++)
@@ -52,7 +78,16 @@
                                 @if (msg.Role == "assistant")
                                 {
                                     <div class="lobsy-assistant__bubble-head">
-                                        <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
+                                        @if (_uiVariant == AssistantChatUiVariant.Warm)
+                                        {
+                                            <img class="lobsy-assistant__bubble-logo" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                                        }
+                                        else
+                                        {
+                                            <span class="lobsy-assistant__bubble-logo lobsy-assistant__avatar--business" aria-hidden="true">
+                                                <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="20" height="20" decoding="async" />
+                                            </span>
+                                        }
                                         <span>@Culture["Assistant.BotName"]</span>
                                     </div>
                                 }
@@ -71,7 +106,16 @@
                         {
                             <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant lobsy-assistant__bubble--typing">
                                 <div class="lobsy-assistant__bubble-head">
-                                    <LobsyLogo Class="lobsy-assistant__bubble-logo" Alt="" Animate="false" UseMascot="true" />
+                                    @if (_uiVariant == AssistantChatUiVariant.Warm)
+                                    {
+                                        <img class="lobsy-assistant__bubble-logo" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                                    }
+                                    else
+                                    {
+                                        <span class="lobsy-assistant__bubble-logo lobsy-assistant__avatar--business" aria-hidden="true">
+                                            <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="20" height="20" decoding="async" />
+                                        </span>
+                                    }
                                     <span>@Culture["Assistant.BotName"]</span>
                                 </div>
                                 <p>@Culture["Assistant.Typing"]</p>
@@ -79,12 +123,24 @@
                         }
                     </div>
 
+                    @if (_suggestionChips.Count > 0)
+                    {
+                        <div class="lobsy-assistant__chips">
+                            @foreach (var chip in _suggestionChips)
+                            {
+                                <button type="button" class="lobsy-assistant__chip" disabled="@_busy" @onclick="() => SendChipAsync(chip)">
+                                    @chip.Label
+                                </button>
+                            }
+                        </div>
+                    }
+
                     @if (_actionLinks.Count > 0)
                     {
                         <div class="lobsy-assistant__actions">
                             @foreach (var link in _actionLinks)
                             {
-                                <button type="button" class="engagement-btn lobsy-assistant__action" @onclick="() => FollowLink(link)">
+                                <button type="button" class="lobsy-assistant__action" @onclick="() => FollowLink(link)">
                                     @(link.Label ?? link.Url ?? "→")
                                 </button>
                             }
@@ -98,27 +154,30 @@
 
                     <form class="lobsy-assistant__compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
                         <label class="visually-hidden" for="lobsy-assistant-input">@Culture["Assistant.InputLabel"]</label>
-                        <textarea id="lobsy-assistant-input"
-                                  rows="2"
-                                  maxlength="1500"
-                                  placeholder="@Culture["Assistant.Placeholder"]"
-                                  disabled="@_busy"
-                                  @bind="_draft"
-                                  @bind:event="oninput"
-                                  @onkeydown="OnDraftKeyDown"></textarea>
-                        <button type="submit" class="login-submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">
-                            @Culture["Assistant.Send"]
-                        </button>
+                        <div class="lobsy-assistant__compose-row">
+                            <textarea id="lobsy-assistant-input"
+                                      rows="2"
+                                      maxlength="1500"
+                                      placeholder="@(_uiVariant == AssistantChatUiVariant.Warm ? Culture["Assistant.PlaceholderWarm"] : Culture["Assistant.Placeholder"])"
+                                      disabled="@_busy"
+                                      @bind="_draft"
+                                      @bind:event="oninput"
+                                      @onkeydown="OnDraftKeyDown"></textarea>
+                            <button type="submit" class="lobsy-assistant__send" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))" aria-label="@Culture["Assistant.Send"]">
+                                <span aria-hidden="true">→</span>
+                            </button>
+                        </div>
                     </form>
 
                     <p class="lobsy-assistant__disclaimer">
                         @Culture["Assistant.Disclaimer"]
                         <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Assistant.DisclaimerLink"]</a>
                     </p>
-                    @if (HideEdgeTab)
+                    @if (_uiVariant == AssistantChatUiVariant.Warm)
                     {
-                        <p class="lobsy-assistant__feedback">
-                            <button type="button" class="btn btn-ghost" @onclick="OpenFeedback">@Culture["Coach.Feedback"]</button>
+                        <p class="lobsy-assistant__human">
+                            @Culture["Assistant.HumanLead"]
+                            <button type="button" class="auth-link" @onclick="OpenFeedback">@Culture["Assistant.HumanLink"]</button>
                         </p>
                     }
                 </div>
@@ -130,6 +189,7 @@
 @code {
     [Parameter] public bool HasBottomNav { get; set; }
     [Parameter] public bool HideEdgeTab { get; set; }
+    [Parameter] public AssistantChatUiVariant UiVariant { get; set; } = AssistantChatUiVariant.Warm;
 
     private bool _focusInput;
 
@@ -139,11 +199,18 @@
     private bool _started;
     private bool _hasBottomNav;
     private bool _employersOn = true;
+    private AssistantChatUiVariant _uiVariant;
     private string _draft = "";
     private string? _error;
+    private string? _pageContextLine;
     private int _sendGeneration;
     private readonly List<AssistantChatMessage> _messages = [];
     private List<AssistantChatActionItem> _actionLinks = [];
+    private List<ChatSuggestionChip> _suggestionChips = [];
+
+    private string SkinClass => _uiVariant == AssistantChatUiVariant.Warm
+        ? "lobsy-assistant--skin-warm"
+        : "lobsy-assistant--skin-business";
 
     protected override void OnInitialized()
     {
@@ -154,6 +221,7 @@
     protected override async Task OnParametersSetAsync()
     {
         _hasBottomNav = HasBottomNav;
+        _uiVariant = UiVariant;
         try
         {
             _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
@@ -180,10 +248,6 @@
     private void OnToggleRequested()
         => _ = InvokeAsync(OpenFromCoachAsync);
 
-    /// <summary>
-    /// The coach button lives in another component. A UI event there does not
-    /// render this chat, so the panel has to be painted here.
-    /// </summary>
     private async Task OpenFromCoachAsync()
     {
         await Toggle();
@@ -221,8 +285,6 @@
         if (_open)
         {
             _focusInput = true;
-            // Show the panel before the assistant HTTP call. A slow reply must
-            // not leave the click looking like a no-op.
             StateHasChanged();
             if (!_started)
             {
@@ -235,7 +297,7 @@
     {
         _open = false;
         ChatHost.NotifyOpen(false);
-        if (HideEdgeTab)
+        if (_uiVariant == AssistantChatUiVariant.Warm)
         {
             try
             {
@@ -244,6 +306,17 @@
             catch
             {
                 // Circuit gone or no coach button.
+            }
+        }
+        else
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.focus", "lobsy-assistant-launcher-btn");
+            }
+            catch
+            {
+                // No launcher in static render.
             }
         }
     }
@@ -299,21 +372,33 @@
     {
         _messages.Clear();
         _actionLinks = [];
+        _suggestionChips = [];
+        _pageContextLine = null;
         _error = null;
         _busy = true;
         _started = true;
         try
         {
-            var reply = await Api.SendAssistantChatAsync([]);
-            _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
-            ApplyActions(reply.Actions);
+            if (_uiVariant == AssistantChatUiVariant.Warm && ContextGreetingGate.Enabled)
+            {
+                var boot = await CandidateChatContextBuilder.BuildAsync(
+                    Api,
+                    Navigation,
+                    Culture);
+                _pageContextLine = boot.PageContextLine;
+                _messages.Add(new AssistantChatMessage("assistant", boot.Greeting));
+                _suggestionChips = boot.Chips.ToList();
+            }
+            else
+            {
+                var reply = await Api.SendAssistantChatAsync([]);
+                _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
+                ApplyActions(reply.Actions);
+            }
         }
         catch
         {
-            // Fallback greeting when API is unavailable
-            _messages.Add(new AssistantChatMessage("assistant",
-                Culture["Assistant.Greeting"]));
-            _started = true;
+            _messages.Add(new AssistantChatMessage("assistant", Culture["Assistant.Greeting"]));
         }
         finally
         {
@@ -326,10 +411,18 @@
         _sendGeneration++;
         _messages.Clear();
         _actionLinks = [];
+        _suggestionChips = [];
+        _pageContextLine = null;
         _error = null;
         _draft = "";
         _started = false;
         await StartAsync();
+    }
+
+    private Task SendChipAsync(ChatSuggestionChip chip)
+    {
+        _draft = chip.Message;
+        return SendAsync();
     }
 
     private async Task SendAsync()
@@ -342,6 +435,7 @@
         var text = _draft.Trim();
         _draft = "";
         _error = null;
+        _suggestionChips = [];
         _messages.Add(new AssistantChatMessage("user", text));
         _busy = true;
         _actionLinks = [];
@@ -350,7 +444,11 @@
         try
         {
             var history = AssistantChatHistory.ForRequest(_messages).ToList();
-            var reply = await Api.SendAssistantChatAsync(history, timeout.Token);
+            var reply = await Api.SendAssistantChatAsync(
+                history,
+                CurrentPagePath(),
+                _pageContextLine,
+                timeout.Token);
             if (generation != _sendGeneration)
             {
                 return;
@@ -408,7 +506,7 @@
             .Where(a => !string.IsNullOrWhiteSpace(a.Url))
             .GroupBy(a => a.Url)
             .Select(g => g.First())
-            .Take(6)
+            .Take(4)
             .ToList();
 
         var filter = actions.FirstOrDefault(a =>
@@ -416,7 +514,6 @@
             && !string.IsNullOrWhiteSpace(a.Url));
         if (filter?.Url is not null)
         {
-            // Navigate so VacancyDiscovery picks up ?workType=
             Navigation.NavigateTo(filter.Url, forceLoad: false);
         }
     }
@@ -427,5 +524,16 @@
         {
             Navigation.NavigateTo(link.Url, forceLoad: false);
         }
+    }
+
+    private string CurrentPagePath()
+    {
+        if (!Uri.TryCreate(Navigation.Uri, UriKind.Absolute, out var uri))
+        {
+            return "/";
+        }
+
+        var path = uri.AbsolutePath.TrimEnd('/');
+        return string.IsNullOrEmpty(path) ? "/" : path.ToLowerInvariant();
     }
 }

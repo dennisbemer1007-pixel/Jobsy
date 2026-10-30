@@ -81,6 +81,7 @@ public sealed class CandidateProfileEditor : IDisposable
     public bool ResearchFeatureEnabled { get; private set; }
     public ResearchConsentStateClient? ResearchConsent { get; private set; }
     public bool UnsubscribeOpen { get; set; }
+    public bool ProfileResetOpen { get; set; }
     public DateOnly? DobInput { get; set; }
     public string HomeAddress { get; set; } = string.Empty;
     public double? HomeLat { get; set; }
@@ -100,6 +101,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public HashSet<string> SelectedRoles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedEducations { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool ShowsEducationDirectionField => EducationDirectionCatalog.ProfileSupportsDirection(SelectedEducations);
     public string EducationDirection { get; set; } = "";
     public HashSet<string> Availability { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; } = [];
@@ -124,11 +127,16 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? WorkOutdoor { get; set; }
     public string? WorkPhysical { get; set; }
     public string? WorkPace { get; set; }
+    public string? WorkTeamMode { get; set; }
+    public string? WorkStructure { get; set; }
+    public string? WorkCustomerContact { get; set; }
+    public string? WorkShiftsPreference { get; set; }
     public bool ShareEmployerPreferences { get; set; }
     public string? WorkRegion { get; set; }
     public string? WorkRegionSuggestion { get; set; }
     public bool? HasOwnCar { get; set; }
     public HashSet<string> ContractPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> WorkStatuses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public bool EmailVerified { get; private set; }
     public bool PhoneVerified { get; private set; }
     public List<string> LearningGoals { get; } = [];
@@ -142,6 +150,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public List<AddressSuggestion> Suggestions { get; private set; } = [];
     public bool ShowSuggestions { get; set; }
     public bool Suggesting { get; private set; }
+    public bool LocatingHome { get; private set; }
+    public string? LocationError { get; private set; }
 
     public bool IsUnder16 => DobInput is DateOnly dob
         && Jobsy.Core.Privacy.CandidateConsentRules.AgeYears(dob) is int age
@@ -243,6 +253,10 @@ public sealed class CandidateProfileEditor : IDisposable
         WorkOutdoor = prefs.WorkPreferences?.Outdoor;
         WorkPhysical = prefs.WorkPreferences?.PhysicalWork;
         WorkPace = prefs.WorkPreferences?.Pace;
+        WorkTeamMode = prefs.WorkPreferences?.TeamMode;
+        WorkStructure = prefs.WorkPreferences?.Structure;
+        WorkCustomerContact = prefs.WorkPreferences?.CustomerContact;
+        WorkShiftsPreference = prefs.WorkPreferences?.ShiftsPreference;
         ShareEmployerPreferences = prefs.ShareEmployerPreferences == true;
         WorkRegion = prefs.WorkRegion;
         WorkRegionSuggestion = WorkRegionRules.SuggestFromHomeAddress(prefs.HomeAddress);
@@ -253,6 +267,15 @@ public sealed class CandidateProfileEditor : IDisposable
             if (!string.IsNullOrWhiteSpace(code))
             {
                 ContractPreferences.Add(code);
+            }
+        }
+
+        WorkStatuses.Clear();
+        foreach (var code in prefs.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
             }
         }
 
@@ -297,6 +320,7 @@ public sealed class CandidateProfileEditor : IDisposable
         AvailableFromDate = profile.AvailableFromDate;
         Employers.Clear();
         Employers.AddRange(prefs.Employers ?? []);
+        EnsureEmployerEntryIds();
         Certificates.Clear();
         Certificates.AddRange(prefs.Certificates ?? []);
         ApplyDiplomaEvaluations(profile);
@@ -348,6 +372,18 @@ public sealed class CandidateProfileEditor : IDisposable
         {
             // keep built-in fallbacks
         }
+    }
+
+    public void OpenProfileReset()
+    {
+        ProfileResetOpen = true;
+        Notify();
+    }
+
+    public void CloseProfileReset()
+    {
+        ProfileResetOpen = false;
+        Notify();
     }
 
     public void OpenUnsubscribe()
@@ -589,8 +625,26 @@ public sealed class CandidateProfileEditor : IDisposable
 
     public void AddEmployer()
     {
-        Employers.Add(new CandidateEmployerHistory { IsCurrent = false });
+        Employers.Add(new CandidateEmployerHistory { IsCurrent = false, EntryId = Guid.NewGuid() });
         Notify();
+    }
+
+    public void EnsureEmployerEntryIds()
+    {
+        var changed = false;
+        foreach (var employer in Employers)
+        {
+            if (employer.EntryId is null || employer.EntryId == Guid.Empty)
+            {
+                employer.EntryId = Guid.NewGuid();
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            Notify();
+        }
     }
 
     public void RemoveEmployer(int index)
@@ -769,18 +823,66 @@ public sealed class CandidateProfileEditor : IDisposable
             SelectedEducations.Remove(level);
         }
 
+        if (!ShowsEducationDirectionField)
+        {
+            EducationDirection = "";
+        }
+
         Notify();
     }
 
     public async Task OnAddressInputAsync(ChangeEventArgs e)
     {
-        HomeAddress = e.Value?.ToString() ?? string.Empty;
+        await OnAddressQueryInputAsync(e.Value?.ToString() ?? string.Empty);
+    }
+
+    public async Task OnAddressQueryInputAsync(string value)
+    {
+        HomeAddress = value ?? string.Empty;
         HomeLat = null;
         HomeLng = null;
         HomeLocationDirty = true;
         Message = null;
-        await SuggestAddressesAsync(HomeAddress);
+        LocationError = null;
+        _ = SuggestAddressesAsync(HomeAddress);
         Notify();
+    }
+
+    public async Task RequestHomeLocationAsync()
+    {
+        LocatingHome = true;
+        LocationError = null;
+        ShowSuggestions = false;
+        Notify();
+        try
+        {
+            var dict = await _js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
+            var lat = dict["lat"];
+            var lng = dict["lng"];
+            HomeLat = lat;
+            HomeLng = lng;
+            HomeLocationDirty = true;
+            var label = await CandidateHomeAddressLookup.ReverseGeocodeLabelAsync(_geocoder, lat, lng);
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                HomeAddress = label;
+            }
+            else
+            {
+                LocationError = _culture["Onboarding.LocationFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            LocationError = string.IsNullOrWhiteSpace(ex.Message)
+                ? _culture["Onboarding.LocationDenied"]
+                : ex.Message;
+        }
+        finally
+        {
+            LocatingHome = false;
+            Notify();
+        }
     }
 
     public void OnAddressFocus()
@@ -824,8 +926,10 @@ public sealed class CandidateProfileEditor : IDisposable
 
         try
         {
-            await Task.Delay(280, token);
-            var results = await _geocoder.SuggestAsync(trimmed, token);
+            await Task.Delay(300, token);
+            using var geocodeTimeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            geocodeTimeout.CancelAfter(TimeSpan.FromSeconds(3));
+            var results = await _geocoder.SuggestAsync(trimmed, geocodeTimeout.Token);
             if (generation != _suggestGeneration || token.IsCancellationRequested)
             {
                 return;
@@ -875,6 +979,7 @@ public sealed class CandidateProfileEditor : IDisposable
         Suggestions = [];
         ShowSuggestions = false;
         Message = null;
+        LocationError = null;
         Notify();
     }
 
@@ -937,6 +1042,7 @@ public sealed class CandidateProfileEditor : IDisposable
                         .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
                         .Select(e => new CandidateEmployerHistory
                         {
+                            EntryId = e.EntryId ?? Guid.NewGuid(),
                             EmployerName = e.EmployerName.Trim(),
                             Role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
                             Years = e.Years,
@@ -956,7 +1062,9 @@ public sealed class CandidateProfileEditor : IDisposable
                             return idx < 0 ? int.MaxValue : idx;
                         })
                         .ToList(),
-                    EducationDirection = string.IsNullOrWhiteSpace(EducationDirection) ? null : EducationDirection.Trim(),
+                    EducationDirection = ShowsEducationDirectionField && !string.IsNullOrWhiteSpace(EducationDirection)
+                        ? EducationDirection.Trim()
+                        : null,
                     HomeAddress = homeAddressToSave,
                     MinHoursPerWeek = MinHours,
                     MaxHoursPerWeek = MaxHours,
@@ -996,12 +1104,17 @@ public sealed class CandidateProfileEditor : IDisposable
                         Indoor = WorkIndoor,
                         Outdoor = WorkOutdoor,
                         PhysicalWork = WorkPhysical,
-                        Pace = WorkPace
+                        Pace = WorkPace,
+                        TeamMode = WorkTeamMode,
+                        Structure = WorkStructure,
+                        CustomerContact = WorkCustomerContact,
+                        ShiftsPreference = WorkShiftsPreference
                     },
                     ShareEmployerPreferences = ShareEmployerPreferences,
                     WorkRegion = WorkRegion,
                     HasOwnCar = HasOwnCar,
-                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList()
+                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList(),
+                    WorkStatuses = WorkStatuses.OrderBy(x => x).ToList()
                 },
                 homeLatitude: clearHome || !HomeLocationDirty ? null : HomeLat,
                 homeLongitude: clearHome || !HomeLocationDirty ? null : HomeLng,
@@ -1297,6 +1410,7 @@ public sealed class CandidateProfileEditor : IDisposable
         AboutMe = prefs.AboutMe ?? AboutMe;
         Employers.Clear();
         Employers.AddRange(prefs.Employers ?? []);
+        EnsureEmployerEntryIds();
         Certificates.Clear();
         Certificates.AddRange(prefs.Certificates ?? []);
         ApplyDiplomaEvaluations(profile);

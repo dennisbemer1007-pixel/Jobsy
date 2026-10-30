@@ -1,0 +1,52 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Media
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Loc
+
+<header class="kompas-greeting-band" data-testid="kompas-greeting">
+    <h2 class="kompas-greeting-band__title">@Greeting</h2>
+    <p class="kompas-greeting-band__lead">@Loc["Kompas.Greeting.Lead"]</p>
+</header>
+
+@code {
+    [Parameter] public string? FirstName { get; set; }
+
+    private string Greeting => BuildGreeting();
+
+    private string BuildGreeting()
+    {
+        var name = string.IsNullOrWhiteSpace(FirstName) ? "" : FirstName.Trim();
+        var hour = DateTime.Now.Hour;
+        if (string.IsNullOrEmpty(name))
+        {
+            if (hour < 12)
+            {
+                return Loc["Kompas.Greeting.PlainMorning"];
+            }
+
+            if (hour < 18)
+            {
+                return Loc["Kompas.Greeting.PlainAfternoon"];
+            }
+
+            return Loc["Kompas.Greeting.PlainEvening"];
+        }
+
+        string key;
+        if (hour < 12)
+        {
+            key = "Kompas.Greeting.Morning";
+        }
+        else if (hour < 18)
+        {
+            key = "Kompas.Greeting.Afternoon";
+        }
+        else
+        {
+            key = "Kompas.Greeting.Evening";
+        }
+
+        return Loc.Format(key, name);
+    }
+}

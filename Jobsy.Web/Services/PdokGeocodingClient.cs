@@ -31,10 +31,11 @@ public sealed class PdokGeocodingClient(HttpClient http)
             return [];
         }
 
-        var url = $"{SuggestBase}?q={Uri.EscapeDataString(q)}"
-            + "&fq=" + Uri.EscapeDataString("type:(adres OR postcode OR weg OR woonplaats)")
-            + "&rows=8"
-            + "&fl=weergavenaam,type,centroide_ll,score,postcode,woonplaatsnaam";
+        var plan = PdokAddressQuery.Parse(q);
+        var url = $"{SuggestBase}?q={Uri.EscapeDataString(plan.BuildPdokQueryString())}"
+            + "&fq=" + Uri.EscapeDataString(plan.BuildFilterQuery())
+            + "&rows=12"
+            + "&fl=weergavenaam,type,centroide_ll,score,postcode,woonplaatsnaam,straatnaam,huisnummer";
 
         using var response = await http.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -45,10 +46,62 @@ public sealed class PdokGeocodingClient(HttpClient http)
         var payload = await response.Content.ReadFromJsonAsync<PdokResponse>(cancellationToken: cancellationToken);
         var docs = payload?.Response?.Docs ?? [];
 
-        return docs
-            .Select(ParseDoc)
-            .Where(s => s is not null)
-            .Cast<(AddressSuggestion Suggestion, string Type, double Score)>()
+        return RankAndTake(plan, docs);
+    }
+
+    /// <summary>Best PDOK hit for typed text (onboarding blur / Volgende without picking a row).</summary>
+    public static AddressSuggestion? PickBestMatch(string query, IReadOnlyList<AddressSuggestion> suggestions)
+    {
+        if (suggestions.Count == 0)
+        {
+            return null;
+        }
+
+        var plan = PdokAddressQuery.Parse(query);
+        if (plan.PostcodeCompact is not null)
+        {
+            foreach (var item in suggestions)
+            {
+                if (LabelContainsPostcode(item.Label, plan.PostcodeCompact))
+                {
+                    if (!plan.HasHouseNumber || LabelContainsHouseNumber(item.Label, plan.HouseNumber!.Value))
+                    {
+                        return item;
+                    }
+                }
+            }
+        }
+
+        if (plan.HasHouseNumber && !string.IsNullOrWhiteSpace(plan.StreetHint))
+        {
+            foreach (var item in suggestions)
+            {
+                if (StreetMatchesHint(item.Label, plan.StreetHint)
+                    && LabelContainsHouseNumber(item.Label, plan.HouseNumber!.Value))
+                {
+                    return item;
+                }
+            }
+        }
+
+        return suggestions[0];
+    }
+
+    private static IReadOnlyList<AddressSuggestion> RankAndTake(PdokAddressQuery plan, IEnumerable<PdokDoc> docs)
+    {
+        var ranked = new List<(AddressSuggestion Suggestion, string Type, double Score)>();
+        foreach (var doc in docs)
+        {
+            if (ParseDoc(doc) is not { } parsed || !MatchesPlan(plan, doc))
+            {
+                continue;
+            }
+
+            var boost = ScoreBoost(plan, doc);
+            ranked.Add((parsed.Suggestion, parsed.Type, parsed.Score + boost));
+        }
+
+        return ranked
             .OrderBy(x => TypeRank.TryGetValue(x.Type, out var rank) ? rank : 99)
             .ThenByDescending(x => x.Score)
             .Select(x => x.Suggestion)
@@ -69,6 +122,73 @@ public sealed class PdokGeocodingClient(HttpClient http)
             .Select(g => g.First())
             .Take(6)
             .ToList();
+    }
+
+    private static bool MatchesPlan(PdokAddressQuery plan, PdokDoc doc)
+    {
+        if (plan.PostcodeCompact is null)
+        {
+            return true;
+        }
+
+        var docPc = PostcodeMatch.Compact(doc.Postcode);
+        if (docPc is not null && !docPc.Equals(plan.PostcodeCompact, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (plan.HasHouseNumber && doc.Huisnummer is int hn && hn != plan.HouseNumber)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static double ScoreBoost(PdokAddressQuery plan, PdokDoc doc)
+    {
+        var boost = 0d;
+        if (!string.IsNullOrWhiteSpace(plan.CityHint)
+            && !string.IsNullOrWhiteSpace(doc.Woonplaatsnaam)
+            && doc.Woonplaatsnaam.Contains(plan.CityHint, StringComparison.OrdinalIgnoreCase))
+        {
+            boost += 4;
+        }
+
+        if (!string.IsNullOrWhiteSpace(plan.StreetHint)
+            && !string.IsNullOrWhiteSpace(doc.Straatnaam)
+            && StreetMatchesHint(doc.Straatnaam, plan.StreetHint))
+        {
+            boost += 6;
+        }
+
+        if (plan.HasHouseNumber && doc.Huisnummer == plan.HouseNumber)
+        {
+            boost += 3;
+        }
+
+        return boost;
+    }
+
+    private static bool StreetMatchesHint(string labelOrStreet, string streetHint)
+    {
+        var norm = NormalizeStreet(streetHint);
+        var labelNorm = NormalizeStreet(labelOrStreet);
+        return labelNorm.Contains(norm, StringComparison.OrdinalIgnoreCase)
+               || norm.Contains(labelNorm, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeStreet(string value)
+        => string.Join(' ', value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+    private static bool LabelContainsPostcode(string label, string postcodeCompact)
+        => label.Replace(" ", "", StringComparison.Ordinal)
+            .Contains(postcodeCompact, StringComparison.OrdinalIgnoreCase);
+
+    private static bool LabelContainsHouseNumber(string label, int houseNumber)
+    {
+        var match = Regex.Match(label, @"\b" + houseNumber + @"[A-Za-z]?\b", RegexOptions.CultureInvariant);
+        return match.Success;
     }
 
     private static (AddressSuggestion Suggestion, string Type, double Score)? ParseDoc(PdokDoc doc)
@@ -129,6 +249,12 @@ public sealed class PdokGeocodingClient(HttpClient http)
 
         [JsonPropertyName("woonplaatsnaam")]
         public string? Woonplaatsnaam { get; set; }
+
+        [JsonPropertyName("straatnaam")]
+        public string? Straatnaam { get; set; }
+
+        [JsonPropertyName("huisnummer")]
+        public int? Huisnummer { get; set; }
     }
 
     /// <summary>

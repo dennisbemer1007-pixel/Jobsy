@@ -9,6 +9,8 @@
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
 @inject IFeatureFlags Flags
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
 @implements IDisposable
 
 <div class="passport-data">
@@ -146,7 +148,7 @@
                                 }
                                 else if (section.Id == "delete")
                                 {
-                                    <DeleteAccountSection />
+                                    <ProfileDangerZoneSection />
                                 }
                             </div>
                         }
@@ -182,6 +184,10 @@
     }
 </div>
 
+<CandidateProfileResetDialog IsOpen="Editor.ProfileResetOpen"
+                             ShowResearchNote="@(Editor.ResearchConsent?.HasConsent == true)"
+                             OnClose="Editor.CloseProfileReset" />
+
 <UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
                    OnClose="Editor.CloseUnsubscribe"
                    OnCompleted="Editor.OnUnsubscribeCompleted" />
@@ -204,16 +210,22 @@
     ];
 
     [Parameter] public bool Active { get; set; }
+    [Parameter] public string? DangerIntent { get; set; }
 
     private bool _loading = true;
+    private bool _dangerHandled;
+    private string? _lastDangerIntent;
     private bool _loadFailed;
     private bool _loaded;
     private bool _pdfV2;
+    private bool _employerFitQuestionnaires;
     private bool _phoneVerification;
     private string? _openSection;
 
     private IEnumerable<DataSection> VisibleSections
-        => _pdfV2 ? Sections : Sections.Where(s => s.Id != "shared");
+        => _pdfV2 || _employerFitQuestionnaires
+            ? Sections
+            : Sections.Where(s => s.Id != "shared");
 
     private string? StatusText =>
         !string.IsNullOrWhiteSpace(Editor.ConsentMessage) ? Editor.ConsentMessage
@@ -233,6 +245,22 @@
         {
             await LoadAsync();
         }
+
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        if (!string.Equals(_lastDangerIntent, DangerIntent, StringComparison.OrdinalIgnoreCase))
+        {
+            _lastDangerIntent = DangerIntent;
+            _dangerHandled = false;
+        }
+
+        if (Active && !_dangerHandled && !string.IsNullOrWhiteSpace(DangerIntent))
+        {
+            await ApplyDangerIntentAsync();
+        }
     }
 
     public void Dispose() => Editor.Changed -= OnEditorChanged;
@@ -249,6 +277,7 @@
         {
             var flags = await Flags.GetAsync();
             _pdfV2 = flags.PassportPdfV2Enabled;
+            _employerFitQuestionnaires = flags.IsEnabled(PlatformFeature.EmployerFitQuestionnaires);
             _phoneVerification = flags.PhoneVerificationEnabled;
             await Editor.LoadMasterdataAsync();
             var me = await Api.GetMyProfileAsync();
@@ -296,5 +325,36 @@
         {
             await Editor.WithdrawTalentPoolConsentAsync();
         }
+    }
+
+    private async Task ApplyDangerIntentAsync()
+    {
+        _dangerHandled = true;
+        _openSection = "delete";
+
+        if (string.Equals(DangerIntent, "reset", StringComparison.OrdinalIgnoreCase))
+        {
+            Editor.OpenProfileReset();
+        }
+        else if (string.Equals(DangerIntent, "delete", StringComparison.OrdinalIgnoreCase))
+        {
+            Editor.OpenUnsubscribe();
+        }
+        else
+        {
+            return;
+        }
+
+        var cleanUrl = PassportRedirects.BuildPassportUrl(PassportTabs.Data);
+        try
+        {
+            await Js.InvokeVoidAsync("history.replaceState", null, "", cleanUrl);
+        }
+        catch
+        {
+            Navigation.NavigateTo(cleanUrl, replace: true);
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 }

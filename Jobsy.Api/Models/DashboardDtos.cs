@@ -24,7 +24,9 @@ public record CompanySummaryDto(
     string KvkVerificationStatus = nameof(Jobsy.Core.Enums.KvkVerificationStatus.Verified),
     string? PreferredPaymentMethod = null,
     bool RequireEmailVerificationForApplications = false,
-    string VerificationStatus = nameof(Jobsy.Core.Enums.CompanyVerificationStatus.Verified));
+    string VerificationStatus = nameof(Jobsy.Core.Enums.CompanyVerificationStatus.Verified),
+    double? Latitude = null,
+    double? Longitude = null);
 
 public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);
 
@@ -102,7 +104,22 @@ public record ApplicationDto(
     IReadOnlyList<ApplicationTimelineStepDto>? Timeline = null,
     string? NextStepKey = null,
     bool LegacyNoHistory = false,
-    bool VacancyClosed = false);
+    bool VacancyClosed = false,
+    ApplicationAfterMatchSummaryDto? AfterMatch = null);
+
+/// <summary>Na de match card/rail hints for Sollicitaties (candidate list).</summary>
+public record ApplicationAfterMatchSummaryDto(
+    string InterviewStatus,
+    int UnreadMessageCount,
+    int OpenSlotCount,
+    DateTime? ScheduledStartUtc,
+    DateTime? ScheduledEndUtc,
+    DateTime? AcceptedAtUtc,
+    string? LastMessagePreview = null,
+    bool LastMessageFromCandidate = false,
+    DateTime? LastMessageAtUtc = null,
+    string? LastCancelReason = null,
+    bool? LastCancelByEmployer = null);
 
 /// <summary>Candidate timeline step (no actor ids).</summary>
 public record ApplicationTimelineStepDto(
@@ -223,7 +240,9 @@ public record CandidateReferenceDto(
     string EmployerName,
     string ContactName,
     string Email,
-    string Phone);
+    string Phone,
+    string? ReferenceType = null,
+    string? RelationshipContext = null);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
 

@@ -87,6 +87,7 @@ public class PupilFlowGoldenTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         for (var i = 0; i < 30; i++)
         {
+            await CompletePendingPuzzleAsync(client);
             var item = bank.AllItems[i];
             var value = ((i * 3) % 5) + 1;
             var save = await client.PutAsJsonAsync(
@@ -114,6 +115,7 @@ public class PupilFlowGoldenTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         for (var i = 30; i < 60; i++)
         {
+            await CompletePendingPuzzleAsync(client);
             var item = bank.AllItems[i];
             var value = ((i * 2) % 5) + 1;
             var save = await client.PutAsJsonAsync(
@@ -128,6 +130,22 @@ public class PupilFlowGoldenTests : IClassFixture<RoleFunctionalWebAppFactory>
         }
 
         return new GoldenFlowSnapshot(frames);
+    }
+
+    private static async Task CompletePendingPuzzleAsync(HttpClient client)
+    {
+        var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        if (progress is null
+            || !string.Equals(progress.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(progress.NextPuzzleKey))
+        {
+            return;
+        }
+
+        var puzzle = await client.PutAsJsonAsync(
+            $"api/pupil/progress/puzzles/{Uri.EscapeDataString(progress.NextPuzzleKey)}",
+            new PupilPuzzleRequest("done"));
+        Assert.Equal(HttpStatusCode.OK, puzzle.StatusCode);
     }
 
     /// <summary>

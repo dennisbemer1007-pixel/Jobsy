@@ -9,6 +9,35 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class MatchProfileCompleteness
 {
+    /// <summary>Match unlock basics: name + travel preset (same as onboarding steps 1–3, no CV background required).</summary>
+    public static bool IsMatchBasicsFilled(
+        string? fullName,
+        string? firstName,
+        string? lastName,
+        int? maxTravelMinutes,
+        string? preferredTransport)
+    {
+        if (string.IsNullOrWhiteSpace(CandidateNameRules.ComposeFullName(firstName, lastName, fullName)))
+        {
+            return false;
+        }
+
+        return maxTravelMinutes is > 0
+               && !string.IsNullOrWhiteSpace(preferredTransport);
+    }
+
+    public static bool IsMatchBasicsFilled(
+        string? fullName,
+        string? firstName,
+        string? lastName,
+        CandidatePreferencesDto? prefs)
+        => IsMatchBasicsFilled(
+            fullName,
+            firstName,
+            lastName,
+            prefs?.MaxTravelMinutes,
+            prefs?.PreferredTransport);
+
     /// <summary>
     /// Education step is complete when the candidate made an explicit choice,
     /// including <see cref="EducationLevelLabels.None"/> ("Geen" / geen specifiek niveau).

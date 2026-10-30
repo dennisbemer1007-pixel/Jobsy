@@ -1,10 +1,13 @@
+using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(JobsyDbContext))]
+    [Migration("20261013120000_AddQuickScanVersionAndTestsV2Enabled")]
     public partial class AddQuickScanVersionAndTestsV2Enabled : Migration
     {
         /// <inheritdoc />

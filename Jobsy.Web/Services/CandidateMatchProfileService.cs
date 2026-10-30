@@ -66,9 +66,16 @@ public sealed class CandidateMatchProfileService
 
         var educations = profile?.Preferences?.Educations ?? [];
         var hasEducation = MatchProfileCompleteness.HasEducationLevel(educations);
-        var basics = whoAmI?.ProfileFilled == true;
+        var basics = MatchProfileCompleteness.IsMatchBasicsFilled(
+                         profile?.FullName,
+                         profile?.FirstName,
+                         profile?.LastName,
+                         profile?.Preferences?.MaxTravelMinutes,
+                         profile?.Preferences?.PreferredTransport)
+                     || whoAmI?.ProfileFilled == true;
         var wizardDone = onboarding?.IsComplete == true
-                         || onboarding?.CompletedAtUtc is not null;
+                         || onboarding?.CompletedAtUtc is not null
+                         || onboarding?.FinishReached == true;
         var competency = whoAmI?.CompetencyCompleted == true;
         var career = whoAmI?.CareerCompleted == true;
         var culture = whoAmI?.CultureCompleted == true;

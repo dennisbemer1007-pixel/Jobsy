@@ -227,6 +227,24 @@ public class Company
     /// </summary>
     public bool PendingStartHighlightBonus { get; set; }
 
+    /// <summary>Paid kandidatenkaart access until this UTC instant. Null = no entitlement.</summary>
+    public DateTime? KandidatenkaartActiveUntilUtc { get; set; }
+
+    /// <summary>Short "Over ons" copy on the public company page.</summary>
+    public string? HubAboutText { get; set; }
+
+    /// <summary>Culture / atmosphere impression (Sfeer) on the public company page.</summary>
+    public string? HubCultureText { get; set; }
+
+    /// <summary>Optional YouTube/Vimeo URL for the company page.</summary>
+    public string? HubVideoUrl { get; set; }
+
+    /// <summary>JSON array of public photo URLs for the Sfeer block.</summary>
+    public string? HubPhotoUrlsJson { get; set; }
+
+    /// <summary>Average employer response time in days for map sorting (initiative program).</summary>
+    public int? InitiativeAvgResponseDays { get; set; }
+
     public ICollection<Vacancy> Vacancies { get; set; } = new List<Vacancy>();
     public ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
     public ICollection<User> PrimaryUsers { get; set; } = new List<User>();

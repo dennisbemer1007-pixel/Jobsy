@@ -1,0 +1,168 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@{
+    var rootClass = Compact ? "stack ndm-scheduling--compact" : "card stack";
+}
+<div class="@rootClass">
+    @if (Mode == NdMSchedulingMode.EmployerPropose)
+    {
+        <p class="lbl">@Culture["AfterMatch.Screen03.Format.OnSite"] / @Culture["AfterMatch.Screen03.Format.Online"]</p>
+        <div class="row wrapflex">
+            <button type="button" class="chip @(_format == InterviewFormat.OnSite ? "on" : "")" @onclick="() => _format = InterviewFormat.OnSite">
+                @Culture["AfterMatch.Screen03.Format.OnSite"]
+            </button>
+            <button type="button" class="chip @(_format == InterviewFormat.Online ? "on" : "")" @onclick="() => _format = InterviewFormat.Online">
+                @Culture["AfterMatch.Screen03.Format.Online"]
+            </button>
+            <button type="button" class="chip @(_format == InterviewFormat.Phone ? "on" : "")" @onclick="() => _format = InterviewFormat.Phone">
+                @Culture["AfterMatch.Screen03.Format.Phone"]
+            </button>
+        </div>
+        <label class="lbl">Locatie of link</label>
+        <input class="inp" @bind="_location" />
+        <div class="cal3">
+            @foreach (var slot in OpenSlots)
+            {
+                <button type="button" class="slot @(SelectedSlotId == slot.Id ? "on" : "")" @onclick="() => SelectedSlotId = slot.Id">
+                    <span class="radio @(SelectedSlotId == slot.Id ? "on" : "")"></span>
+                    <div>
+                        <b>@FormatSlot(slot)</b>
+                        <span class="small muted">@slot.Reason</span>
+                    </div>
+                </button>
+            }
+        </div>
+        <button type="button" class="btn" disabled="@Busy" @onclick="SubmitEmployerAsync">@Culture["AfterMatch.Screen03.Submit"]</button>
+    }
+    else if (Mode == NdMSchedulingMode.CandidatePick)
+    {
+        <div class="cal3">
+            @foreach (var slot in OpenSlots)
+            {
+                <button type="button" class="slot @(SelectedSlotId == slot.Id ? "on" : "")" @onclick="() => SelectedSlotId = slot.Id">
+                    <span class="radio @(SelectedSlotId == slot.Id ? "on" : "")"></span>
+                    <div class="sp">
+                        <b>@FormatSlotTitle(slot)</b>
+                        <span class="small muted">@FormatSlotSubtitle(slot)</span>
+                    </div>
+                </button>
+            }
+        </div>
+        <div class="row wrapflex">
+            <button type="button" class="btn" disabled="@(Busy || SelectedSlotId is null)" @onclick="ConfirmSlotAsync">
+                @Culture["AfterMatch.Screen04.ChooseSlot"]
+            </button>
+            @if (OnProposeOther.HasDelegate)
+            {
+                <button type="button" class="btn line" disabled="@Busy" @onclick="ProposeOtherAsync">
+                    @Culture["AfterMatch.Screen04.NoSlotFits"]
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn line" disabled="@Busy">@Culture["AfterMatch.Screen04.ProposeOther"]</button>
+            }
+        </div>
+    }
+    else if (Mode == NdMSchedulingMode.Waiting)
+    {
+        <div class="row wrapflex">
+            <span class="ico">@((MarkupString)NdMIcons.Calendar)</span>
+            <div class="sp">
+                <b style="color:var(--brand)">@Culture["AfterMatch.Screen01.Wait.Title"]</b>
+                <p class="small muted">@Culture["AfterMatch.Screen01.Wait.Body"]</p>
+            </div>
+        </div>
+    }
+    else if (Mode == NdMSchedulingMode.Scheduled)
+    {
+        <div class="note">
+            <span>@((MarkupString)NdMIcons.Calendar)</span>
+            <div>
+                <b>@ScheduledLabel</b>
+                <p class="small">@LocationOrLink</p>
+            </div>
+        </div>
+        <div class="row wrapflex">
+            <button type="button" class="btn line sm" disabled="@Busy" @onclick="OnDownloadCalendar">@Culture["AfterMatch.Screen05.Calendar"]</button>
+            <a class="btn line sm" href="#reminders">@Culture["AfterMatch.Screen05.Reminders"]</a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public NdMSchedulingMode Mode { get; set; }
+    [Parameter] public IReadOnlyList<AfterMatchSlotDto> OpenSlots { get; set; } = [];
+    [Parameter] public string? ScheduledLabel { get; set; }
+    [Parameter] public string? LocationOrLink { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    /// <summary>When true, omit outer card (parent already provides one).</summary>
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public EventCallback<Guid> OnSelectSlot { get; set; }
+    [Parameter] public EventCallback OnDownloadCalendar { get; set; }
+    [Parameter] public EventCallback<ProposeEmployerSlotsRequest> OnProposeEmployer { get; set; }
+    [Parameter] public EventCallback OnProposeOther { get; set; }
+
+    private InterviewFormat _format = InterviewFormat.OnSite;
+    private string? _location;
+    private Guid? SelectedSlotId;
+
+    private async Task ConfirmSlotAsync()
+    {
+        if (SelectedSlotId is Guid id)
+        {
+            await OnSelectSlot.InvokeAsync(id);
+        }
+    }
+
+    private async Task SubmitEmployerAsync()
+    {
+        var slots = OpenSlots.Take(3).Select(s => new ProposedSlotRequest(s.StartUtc, s.EndUtc)).ToList();
+        if (slots.Count < 2)
+        {
+            var start = DateTime.UtcNow.AddDays(2).Date.AddHours(10);
+            slots =
+            [
+                new ProposedSlotRequest(start, start.AddMinutes(30)),
+                new ProposedSlotRequest(start.AddDays(1), start.AddDays(1).AddMinutes(30))
+            ];
+        }
+
+        await OnProposeEmployer.InvokeAsync(new ProposeEmployerSlotsRequest(
+            _format,
+            _location,
+            null,
+            null,
+            slots));
+    }
+
+    private async Task ProposeOtherAsync()
+    {
+        if (OnProposeOther.HasDelegate)
+        {
+            await OnProposeOther.InvokeAsync();
+        }
+    }
+
+    private static string FormatSlot(AfterMatchSlotDto slot)
+    {
+        var start = slot.StartUtc.ToLocalTime();
+        return start.ToString("dddd d MMMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private static string FormatSlotTitle(AfterMatchSlotDto slot)
+    {
+        var start = slot.StartUtc.ToLocalTime();
+        return start.ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private static string FormatSlotSubtitle(AfterMatchSlotDto slot)
+    {
+        var start = slot.StartUtc.ToLocalTime();
+        var end = slot.EndUtc.ToLocalTime();
+        return $"{start:HH:mm} tot {end:HH:mm}";
+    }
+}

@@ -228,6 +228,7 @@ public static class UiStringsScholen
         nl["School.Nav.Todo"] = "Te doen";
         nl["School.Nav.Pupils"] = "Leerlingen";
         nl["School.Nav.Classes"] = "Klassen & codes";
+        nl["School.Nav.ClassesBottom"] = "Klassen";
         nl["School.Nav.Results"] = "Resultaten";
         nl["School.Nav.Team"] = "Team";
         nl["School.Nav.Teachers"] = "Leraren";
@@ -239,6 +240,7 @@ public static class UiStringsScholen
         nl["School.Nav.Help"] = "Hulp voor scholen";
         nl["School.Footer.NoNames"] = "Lobsy kent geen leerlingnamen. Alleen codes. De namenlijst houdt de school zelf.";
         nl["School.FeatureDisabled"] = "Scholen is nog niet ingeschakeld.";
+        nl["LeerlingPassport.FeatureDisabled"] = "Het DNA-paspoort is nog niet ingeschakeld op dit platform.";
 
         // —— Leraar shell ——
         nl["Leraar.RoleChip"] = "Leraar";
@@ -256,6 +258,11 @@ public static class UiStringsScholen
         nl["Leraar.Nav.MyClasses"] = "Mijn klassen";
         nl["Leraar.Nav.ClassItem"] = "Klas";
         nl["Leraar.Nav.More"] = "Meer";
+        nl["Leraar.Nav.MoreSheet"] = "Meer in je klas";
+        nl["Leraar.Nav.Overview.Short"] = "Overzicht";
+        nl["Leraar.Nav.Codes.Short"] = "Codes";
+        nl["Leraar.Nav.Group.Short"] = "Groep";
+        nl["Leraar.Nav.More.Short"] = "Meer";
 
         nl["Leraar.Overview.Title"] = "Klasoverzicht";
         nl["Leraar.Class.NotFound"] = "Klas niet gevonden.";
@@ -265,6 +272,15 @@ public static class UiStringsScholen
         nl["Leraar.Kpi.InProgress"] = "Bezig";
         nl["Leraar.Kpi.NotStarted"] = "Nog niet gestart";
         nl["Leraar.Kpi.AvgTime"] = "Gem. tijd";
+        nl["Leraar.Overview.ProgressTitle"] = "Voortgang van de klas";
+        nl["Leraar.Overview.ProgressLegend.Completed"] = "Afgerond";
+        nl["Leraar.Overview.ProgressLegend.InProgress"] = "Bezig";
+        nl["Leraar.Overview.ProgressLegend.NotStarted"] = "Nog niet gestart";
+        nl["Leraar.Pending.Title"] = "Nog niet klaar";
+        nl["Leraar.Pending.Subtitle"] = "{0} codes · zoek de naam op je eigen lijst";
+        nl["Leraar.Pending.Partial"] = "Eerste {0} van {1} · zoek de naam op je eigen lijst";
+        nl["Leraar.Pending.NotLoggedIn"] = "nog niet ingelogd";
+        nl["Leraar.Pending.InProgress"] = "Bezig · {0}/{1}";
 
         nl["Leraar.Codes.Title"] = "Leerlingcodes";
         nl["Leraar.Codes.All"] = "Alle codes";
@@ -382,7 +398,7 @@ public static class UiStringsScholen
         nl["Leerling.Answer.NotReally"] = "Niet echt";
         nl["Leerling.Answer.Sometimes"] = "Soms";
         nl["Leerling.Answer.Quite"] = "Best wel";
-        nl["Leerling.Answer.Yes"] = "Ja!";
+        nl["Leerling.Answer.Yes"] = "Ja";
         nl["Leerling.Vo.Answer.1"] = "Klopt niet";
         nl["Leerling.Vo.Answer.2"] = "Klopt meestal niet";
         nl["Leerling.Vo.Answer.3"] = "Klopt deels";
@@ -404,7 +420,9 @@ public static class UiStringsScholen
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.Bubble.Vo"] = "Elke 10 vragen valt er een schaaltje af. Je antwoorden worden bewaard.";
         nl["Leerling.Reis.PlatesGone"] = "Dit is het schild van Lobsy.";
-        nl["Leerling.Reis.Done"] = "Klaar!";
+        nl["Leerling.Reis.Progress"] = "Voortgang";
+        nl["Leerling.Reis.WorldProgress"] = "Wereldvoortgang";
+        nl["Leerling.Reis.Done"] = "Klaar";
         nl["Leerling.Reis.DoneLead"] = "Je hebt alle vragen beantwoord.";
         nl["Leerling.Reis.ToResult"] = "Dit ben jij";
         nl["Leerling.WindowClosed.Title"] = "Even pauze";
@@ -425,6 +443,31 @@ public static class UiStringsScholen
         nl["Leerling.Result.Placeholder"] = "Klaar! Je verhaal komt eraan.";
         nl["Leerling.Result.DoneLead"] = "Klaar! Je verhaal komt eraan.";
 
+        // —— Groep 7/8 puzzelpauzes ——
+        nl["Leerling.Puzzle.Title"] = "Puzzelpauze";
+        nl["Leerling.Puzzle.Lead"] = "Even iets anders doen, daarna ga je verder met je reis.";
+        nl["Leerling.Puzzle.Break"] = "Puzzelpauze";
+        nl["Leerling.Puzzle.Coach"] = "Los de puzzel op — of kies overslaan als het even niet lukt.";
+        nl["Leerling.Puzzle.Continue"] = "Verder met de reis";
+        nl["Leerling.Puzzle.Skip"] = "Overslaan";
+        nl["Leerling.Puzzle.BackReis"] = "Terug naar de reis";
+        nl["Leerling.Puzzle.WrongStep"] = "Deze puzzel is nu niet aan de beurt.";
+        nl["Leerling.Puzzle.Unknown"] = "Deze puzzel bestaat niet.";
+        nl["Leerling.Puzzle.SaveFailed"] = "Opslaan lukte niet. Probeer het nog eens.";
+        nl["Leerling.Puzzle.Schelpenrij.Title"] = "Schelpenrij";
+        nl["Leerling.Puzzle.Schelpenrij.Lead"] = "Zet de schelpen van klein naar groot.";
+        nl["Leerling.Puzzle.Schelpenrij.Hint"] = "Tik twee schelpen om ze te wisselen.";
+        nl["Leerling.Puzzle.ShellSize"] = "Schelp maat {0}";
+        nl["Leerling.Puzzle.Schatkaart.Title"] = "Schatkaart";
+        nl["Leerling.Puzzle.Schatkaart.Lead"] = "Vind de bij elkaar horende symbolen.";
+        nl["Leerling.Puzzle.Schatkaart.Hint"] = "Tik twee kaarten om ze om te draaien.";
+        nl["Leerling.Puzzle.Vuurtoren.Title"] = "Vuurtorenlampen";
+        nl["Leerling.Puzzle.Vuurtoren.Lead"] = "Onthoud het lichtpatroon en tik het na.";
+        nl["Leerling.Puzzle.Vuurtoren.Hint"] = "Kijk goed, daarna tik jij de lampen in dezelfde volgorde.";
+        nl["Leerling.Puzzle.Vuurtoren.Watch"] = "Kijk goed…";
+        nl["Leerling.Puzzle.Vuurtoren.YourTurn"] = "Jouw beurt";
+        nl["Leerling.Puzzle.Vuurtoren.Done"] = "Goed gedaan. Het patroon klopt.";
+        nl["Leerling.Puzzle.Vuurtoren.Lamp"] = "Lamp {0}";
         // —— Pauze-eiland chips ——
         nl["Leerling.Island.Title"] = "Pauze-eiland";
         nl["Leerling.Island.Lead"] = "Even uitrusten. Waar word jij blij van?";
@@ -433,7 +476,8 @@ public static class UiStringsScholen
         nl["Leerling.Island.Other"] = "Iets anders";
         nl["Leerling.Island.OtherHint"] = "Typ geen namen (ook niet je eigen naam), adres of telefoonnummer.";
         nl["Leerling.Island.OtherPlaceholder"] = "bijv. paardrijden";
-        nl["Leerling.Island.Continue"] = "Klaar, verder!";
+        nl["Leerling.Island.Continue"] = "Klaar, verder";
+        nl["Leerling.Island.ProgressLabel"] = "Voortgang reis";
         nl["Leerling.Island.ToWorld3"] = "Door naar wereld 3";
         nl["Leerling.Island.NameRejected"] = "Dat lijkt op een naam. Kies liever een knop.";
         nl["Leerling.Island.InvalidOther"] = "Gebruik alleen letters, spaties of een streepje (max. 24).";

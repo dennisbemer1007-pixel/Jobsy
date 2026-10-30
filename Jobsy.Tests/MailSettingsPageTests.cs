@@ -22,6 +22,17 @@ public class MailSettingsPageTests
     }
 
     [Fact]
+    public void Candidate_settings_ssr_mail_form_posts_back_to_settings()
+    {
+        var root = FindRepoRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Settings/SettingsSsrShells.cs"));
+        var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Auth/MailSettingsEndpoints.cs"));
+        Assert.Contains("name=\"settings_return\"", shells, StringComparison.Ordinal);
+        Assert.Contains("/candidate/settings?pane=mail", shells, StringComparison.Ordinal);
+        Assert.Contains("MailSettingsRedirect", endpoints, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Seo_catalog_marks_new_mail_pages_private_noindex()
     {
         var root = FindRepoRoot();

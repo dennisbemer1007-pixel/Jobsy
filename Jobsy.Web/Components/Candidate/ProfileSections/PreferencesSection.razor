@@ -55,18 +55,19 @@
 
                             @if (ShowDiscoveryFields)
                             {
-                            <fieldset class="profile-roles profile-chip-grid">
+                            <fieldset class="profile-roles">
                                 <legend>@Culture["Profile.EmployerPreferences"]</legend>
-                                @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
-                                {
-                                    var selected = Editor.EmployerPreferences.Contains(code);
-                                    <button type="button"
-                                            class="kompas-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => Editor.ToggleEmployerPreference(code, !selected)">
-                                        @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
-                                    </button>
-                                }
+                                <ChoiceTileGrid Class="profile-chip-grid" AriaLabel="@Culture["Profile.EmployerPreferences"]">
+                                    @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
+                                    {
+                                        var selected = Editor.EmployerPreferences.Contains(code);
+                                        <ChoiceTile Class="kompas-chip"
+                                                    Label="@Culture[DiscoveryCatalogs.EmployerLabelKey(code)]"
+                                                    Icon="@ChoiceTileIcons.ForEmployer(code)"
+                                                    Selected="selected"
+                                                    OnClick="@(() => Editor.ToggleEmployerPreference(code, !selected))" />
+                                    }
+                                </ChoiceTileGrid>
                             </fieldset>
                             }
 

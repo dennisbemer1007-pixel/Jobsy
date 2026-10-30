@@ -55,16 +55,20 @@ public class PassportCandidateFlowTests
     }
 
     [Fact]
-    public void Passport_refetches_kompas_instead_of_keeping_the_persisted_snapshot()
+    public void Passport_ssr_loads_kompas_on_each_request()
     {
-        var source = File.ReadAllText(Path.Combine(
+        var page = File.ReadAllText(Path.Combine(
             TestRepo.FindRoot(),
-            "Jobsy.Web", "Components", "Pages", "Candidate", "Passport.razor"));
-        Assert.DoesNotContain("if (_dna is null)", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("if (_kompas is null)", source, StringComparison.Ordinal);
-        Assert.Contains("GetMyKompasResultAsync", source, StringComparison.Ordinal);
-        Assert.Contains("Passport.Fit.Soon", source, StringComparison.Ordinal);
-        Assert.Contains("TestsComplete", source, StringComparison.Ordinal);
+            "Jobsy.Web", "Components", "Pages", "Candidate", "CandidatePassportSsr.razor"));
+        var data = File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "Passport", "PassportSsrData.cs"));
+        Assert.Contains("[NoBlazorRuntime]", page, StringComparison.Ordinal);
+        Assert.Contains("GetMyKompasResultAsync", data, StringComparison.Ordinal);
+        Assert.Contains("GetMyKompasDnaResultAsync", data, StringComparison.Ordinal);
+        Assert.Contains("Passport.Fit.Soon", File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "Passport", "PassportSsrShells.cs")), StringComparison.Ordinal);
     }
 
     [Theory]

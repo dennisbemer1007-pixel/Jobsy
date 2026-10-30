@@ -42,6 +42,8 @@ public class WerkgeverNavVisibilityTests
             HasTakeovers: true,
             HasSalesReferral: true,
             CandidateInsightsEnabled: true,
+            KandidatenkaartEnabled: true,
+            CompanyMapInitiativeEnabled: true,
             HasMaqqieHours: true);
         var items = WerkgeverNav.For(role, ctx).SelectMany(g => g.Items).ToList();
         foreach (var row in WerkgeverRightsMatrix.Pages)
@@ -50,7 +52,7 @@ public class WerkgeverNavVisibilityTests
                 string.Equals(WerkgeverNav.Normalize(i.Href), WerkgeverNav.Normalize(row.Route), StringComparison.OrdinalIgnoreCase));
             var allowed = WerkgeverRightsMatrix.RoleAllowed(row, role);
             if (row.Route is "/werkgever/vacatures/nieuw" or "/werkgever/partner" or "/werkgever/partner/uitbetalen"
-                or "/werkgever/koppelingen" or "/werkgever/uren"
+                or "/werkgever/koppelingen" or "/werkgever/uren" or "/werkgever/sollicitaties/initiatieven"
                 || row.Route.Contains('{', StringComparison.Ordinal))
             {
                 // Nieuw / detail / payout stub routes have no nav item; partner/koppelingen are conditional.

@@ -1,6 +1,6 @@
 namespace Jobsy.Web.Help;
 
-/// <summary>Pagina-documentatie voor de globale info-knop (niet op de banenkaart).</summary>
+/// <summary>Pagina-documentatie voor de globale info-knop in de app-header.</summary>
 public static class PageHelpDocs
 {
     public sealed record Doc(
@@ -12,7 +12,7 @@ public static class PageHelpDocs
     public static bool IsExcludedPath(string? path)
     {
         var p = Normalize(path);
-        return p is "/" or "/banen" or "/banenkaart";
+        return p is "/" or "/banen";
     }
 
     public static Doc? TryGet(string? path)
@@ -204,8 +204,14 @@ public static class PageHelpDocs
         ["/banenkaart"] = new(
             "Banenkaart",
             "Vacatures rondom je startadres (profiel-thuisadres, 20 min fietsen) met echte reistijd-ringen.",
-            "Pas adres en filters in de chipbalk. Fit-% zie je alleen na de cultuur- of waardentest; anders ‘Maak je paspoort af’. Dislikes zetten een baan lager (‘Staat lager: …’) zonder hem te verbergen.",
+            "Pas je startadres en filters via de chipbalk. Wissel tussen kaart en lijst met de weergave-knop of ?weergave=lijst.",
             "Banen zoeken op de kaart of in de lijstweergave (?weergave=lijst)."),
+
+        ["/bedrijvenkaart"] = new(
+            "Bedrijvenkaart",
+            "Bedrijven in de buurt die open staan voor contact, ook zonder vacature.",
+            "Filter op afstand, sector en ‘open voor jou’. Wissel tussen banen- en bedrijvenkaart via de tabs bovenaan.",
+            "Proactief contact met werkgevers via initiatief-aanvragen."),
         ["/candidate/paspoort"] = new(
             "Mijn Lobsy-paspoort",
             "Jouw DNA, tests, schalen en gegevens in één overzicht.",

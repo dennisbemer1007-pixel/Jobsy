@@ -1,0 +1,56 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="card" id="reminders">
+    <b style="color:var(--brand)">@Culture["AfterMatch.Screen07.Settings.Title"]</b>
+    <p class="small muted">@Culture["AfterMatch.Screen07.Settings.Lead"]</p>
+    <div class="list" style="margin-top:10px">
+        <div>
+            <button type="button" class="sw @(_dayBefore ? "on" : "")" aria-pressed="@_dayBefore" @onclick="() => Toggle(ref _dayBefore)"></button>
+            <span class="small">@Culture["AfterMatch.Screen07.Pref.DayBefore"]</span>
+        </div>
+        <div>
+            <button type="button" class="sw @(_twoHours ? "on" : "")" aria-pressed="@_twoHours" @onclick="() => Toggle(ref _twoHours)"></button>
+            <span class="small">@Culture["AfterMatch.Screen07.Pref.TwoHours"]</span>
+        </div>
+        <div>
+            <button type="button" class="sw @(_weekBefore ? "on" : "")" aria-pressed="@_weekBefore" @onclick="() => Toggle(ref _weekBefore)"></button>
+            <span class="small">@Culture["AfterMatch.Screen07.Pref.WeekBefore"]</span>
+        </div>
+    </div>
+    @if (Editable)
+    {
+        <button type="button" class="btn sm" style="margin-top:12px" disabled="@Busy" @onclick="SaveAsync">@Culture["Common.Save"]</button>
+    }
+</div>
+
+@code {
+    [Parameter] public AfterMatchReminderPreferenceDto? Preference { get; set; }
+    [Parameter] public bool Editable { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<UpdateReminderPreferenceRequest> OnSave { get; set; }
+
+    private bool _weekBefore;
+    private bool _dayBefore = true;
+    private bool _twoHours = true;
+
+    protected override void OnParametersSet()
+    {
+        if (Preference is null)
+        {
+            return;
+        }
+
+        _weekBefore = Preference.WeekBefore;
+        _dayBefore = Preference.DayBefore18;
+        _twoHours = Preference.TwoHoursBefore;
+    }
+
+    private static void Toggle(ref bool value) => value = !value;
+
+    private async Task SaveAsync()
+    {
+        await OnSave.InvokeAsync(new UpdateReminderPreferenceRequest(_weekBefore, _dayBefore, _twoHours));
+    }
+}

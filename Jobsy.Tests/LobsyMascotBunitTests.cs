@@ -25,8 +25,8 @@ public class LobsyMascotBunitTests : BunitContext
         Assert.Equal("256", img.GetAttribute("height"));
         Assert.Equal("eager", img.GetAttribute("loading"));
         Assert.Equal("high", img.GetAttribute("fetchpriority"));
-        Assert.Contains("mascot-128.webp", img.GetAttribute("src")!, StringComparison.Ordinal);
-        Assert.Contains("mascot-64.webp", img.GetAttribute("srcset")!, StringComparison.Ordinal);
+        Assert.Contains("lobsy-128.webp", img.GetAttribute("src")!, StringComparison.Ordinal);
+        Assert.Contains("lobsy-64.webp", img.GetAttribute("srcset")!, StringComparison.Ordinal);
         Assert.Contains("256w", img.GetAttribute("srcset")!, StringComparison.Ordinal);
         Assert.DoesNotContain("<picture", cut.Markup, StringComparison.Ordinal);
     }
@@ -131,7 +131,7 @@ public class LobsyMascotBunitTests : BunitContext
         Assert.Contains("fetchpriority=\"high\"", markup, StringComparison.Ordinal);
         Assert.Contains("imagesrcset=", markup, StringComparison.Ordinal);
         Assert.Contains("imagesizes=\"256px\"", markup, StringComparison.Ordinal);
-        Assert.Contains("mascot-256.webp", markup, StringComparison.Ordinal);
+        Assert.Contains("lobsy-256.webp", markup, StringComparison.Ordinal);
     }
 
     [Fact]

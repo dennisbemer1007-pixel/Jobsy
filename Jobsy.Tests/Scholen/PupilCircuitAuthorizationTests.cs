@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Claims;
 using Bunit;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
@@ -61,6 +62,65 @@ public class PupilCircuitAuthorizationTests
             CookieAuthenticationDefaults.AuthenticationScheme));
         Assert.True((await auth.AuthorizeAsync(staff, null, options.DefaultPolicy)).Succeeded);
         Assert.False((await auth.AuthorizeAsync(staff, JobsyPolicies.PupilSession)).Succeeded);
+    }
+
+    [Fact]
+    public async Task Blazor_circuit_uses_the_parent_scheme_on_ouder()
+    {
+        var store = new ParentApiTicketStore();
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddSingleton(store);
+        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options => options.Cookie.Name = "Jobsy.Auth")
+            .AddCookie(PupilAuthDefaults.Scheme, options => options.Cookie.Name = PupilAuthDefaults.CookieName)
+            .AddCookie(ParentPassportAuthDefaults.Scheme, options =>
+                options.Cookie.Name = ParentPassportAuthDefaults.CookieName);
+        builder.Services.AddAuthorization(AuthServiceCollectionExtensions.ConfigureAuthorization);
+
+        var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseMiddleware<PupilCircuitAuthenticationMiddleware>();
+        app.Run(async ctx =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/ouder/sign-in"))
+            {
+                var session = new ParentPassportSessionDto(CodeId, DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds());
+                await ctx.SignInAsync(
+                    ParentPassportAuthDefaults.Scheme,
+                    ParentPassportPrincipal.Create(session));
+                ParentApiSessionCookie.Set(ctx, "parent-api-ticket-1");
+                ctx.Response.StatusCode = StatusCodes.Status204NoContent;
+                return;
+            }
+
+            ctx.Response.Headers["X-Auth"] = ctx.User.Identity?.AuthenticationType ?? "none";
+            ctx.Response.Headers["X-Parent"] = JobsyApiAuthHandler.IsParentPassportPrincipal(ctx.User) ? "1" : "0";
+            var code = ctx.User.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+            ctx.Response.Headers["X-Ticket"] = store.Get(code) ?? "";
+            ctx.Response.StatusCode = StatusCodes.Status204NoContent;
+        });
+
+        await app.StartAsync();
+        try
+        {
+            var client = app.GetTestClient();
+            var signIn = await client.GetAsync("/ouder/sign-in");
+            var parentCookie = CookiePair(signIn, ParentPassportAuthDefaults.CookieName);
+            var apiCookie = CookiePair(signIn, ParentApiSessionCookie.Name);
+
+            var circuit = await client.SendAsync(WithCookies("/_blazor", parentCookie, apiCookie));
+            Assert.Equal(HttpStatusCode.NoContent, circuit.StatusCode);
+            Assert.Equal(ParentPassportAuthDefaults.Scheme, Header(circuit, "X-Auth"));
+            Assert.Equal("1", Header(circuit, "X-Parent"));
+            Assert.Equal("parent-api-ticket-1", Header(circuit, "X-Ticket"));
+        }
+        finally
+        {
+            await app.StopAsync();
+            await app.DisposeAsync();
+        }
     }
 
     [Fact]
@@ -151,7 +211,9 @@ public class PupilCircuitAuthorizationTests
     {
         Assert.Equal("Ingelogd", UiStrings.Get("School.Status.LoggedIn", "nl"));
         Assert.Equal("Nog niet gestart", UiStrings.Get("School.Status.NotStarted", "nl"));
-        Assert.False(PupilPuzzleRoutes.IsBuilt("schelpenrij"));
+        Assert.True(PupilPuzzleRoutes.IsBuilt("schelpenrij"));
+        Assert.True(PupilPuzzleRoutes.IsBuilt("schatkaart"));
+        Assert.True(PupilPuzzleRoutes.IsBuilt("vuurtorenlampen"));
         Assert.False(PupilPuzzleRoutes.IsBuilt(null));
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingReis.razor"));

@@ -73,6 +73,8 @@ public sealed record WerkgeverNavContext(
     bool HasTakeovers = false,
     bool HasSalesReferral = false,
     bool CandidateInsightsEnabled = true,
+    bool KandidatenkaartEnabled = false,
+    bool CompanyMapInitiativeEnabled = true,
     bool InsightsLocked = false,
     bool HasCandidateApplications = false,
     bool HasMultipleBranches = false,
@@ -115,6 +117,8 @@ public static class WerkgeverNav
                     [EmployerRole.Regiomanager] = "WgNav.Signals"
                 },
                 CountKey: "todo"),
+            new("notifications", "WgNav.Notifications", "/werkgever/meldingen", NavIcons.Notifications,
+                [], BmRmVm with { Intermediair = RoleVisibilityKind.Full }),
         ]),
         new("recruitment", "WgNav.Group.Recruitment",
         [
@@ -131,6 +135,9 @@ public static class WerkgeverNav
             new("insights", "WgNav.CandidateInsights", "/werkgever/kandidaatinzichten", NavIcons.Users,
                 ["/employer/kandidaatinzichten"], BmRmVm,
                 AvailabilityKey: "insights"),
+            new("kandidatenkaart", "WgNav.Kandidatenkaart", "/werkgever/kandidatenkaart", NavIcons.Search,
+                ["/employer/kandidatenkaart"], BmRmVm,
+                AvailabilityKey: "kandidatenkaart"),
         ]),
         new("organisation", "WgNav.Group.Organisation",
         [
@@ -144,6 +151,9 @@ public static class WerkgeverNav
                 {
                     [EmployerRole.Vestigingsmanager] = "WgNav.BranchProfile"
                 }),
+            new("open-initiative", "WgNav.OpenForInitiative", "/werkgever/open-voor-initiatief", NavIcons.Applications,
+                [], BmRmVm,
+                AvailabilityKey: "company-map-initiative"),
             new("salary", "WgNav.SalaryTables", "/werkgever/organisatie/salaristabellen", NavIcons.Wages,
                 ["/employer/salary-tables"], BmVmSalary),
         ],
@@ -363,6 +373,36 @@ public static class WerkgeverNav
         return string.IsNullOrEmpty(path) ? "/" : "/" + path;
     }
 
+    /// <summary>
+    /// Whether a catalog item matches the current path (sidebar / bottom nav highlight).
+    /// </summary>
+    public static bool IsNavItemActive(WerkgeverNavItem item, string relativePath)
+    {
+        var path = Normalize(relativePath);
+        var href = Normalize(item.Href);
+        if (string.Equals(path, href, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var alias in item.Aliases)
+        {
+            if (string.Equals(path, Normalize(alias), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        // /werkgever is the dashboard home only — not every /werkgever/… route.
+        if (string.Equals(href, "/werkgever", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return href is not "/" and not "#meer"
+               && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsItemVisible(WerkgeverNavItem item, EmployerRole role, WerkgeverNavContext ctx)
     {
         if (item.Visibility.For(role) == RoleVisibilityKind.Hidden)
@@ -388,6 +428,8 @@ public static class WerkgeverNav
             "takeovers" => ctx.HasTakeovers,
             "partner" => ctx.HasSalesReferral,
             "insights" => ctx.CandidateInsightsEnabled,
+            "kandidatenkaart" => ctx.KandidatenkaartEnabled,
+            "company-map-initiative" => ctx.CompanyMapInitiativeEnabled,
             "my-applications" => ctx.HasCandidateApplications,
             "regions-tab" => ctx.HasMultipleBranches,
             "maqqie-hours" => ctx.HasMaqqieHours,

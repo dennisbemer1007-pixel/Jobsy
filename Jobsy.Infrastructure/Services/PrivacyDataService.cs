@@ -1510,6 +1510,16 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateReminderPreferences.Remove(reminderPreference);
         }
 
+        var afterMatchReminder = await _db.AfterMatchReminderPreferences
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (afterMatchReminder is not null)
+        {
+            _db.AfterMatchReminderPreferences.Remove(afterMatchReminder);
+        }
+
+        _db.InterviewReminders.RemoveRange(
+            await _db.InterviewReminders.Where(r => r.UserId == user.Id).ToListAsync(cancellationToken));
+
         var reminderLogs = await _db.ComebackReminderLogs
             .Where(l => l.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1571,6 +1581,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .ToListAsync(cancellationToken);
         if (externalVacancies.Count > 0)
         {
+            var externalIds = externalVacancies.Select(v => v.Id).ToList();
+            var outbounds = await _db.CandidateExternalVacancyOutbounds
+                .Where(o => externalIds.Contains(o.ExternalVacancyId))
+                .ToListAsync(cancellationToken);
+            if (outbounds.Count > 0)
+            {
+                _db.CandidateExternalVacancyOutbounds.RemoveRange(outbounds);
+            }
+
             _db.CandidateExternalVacancies.RemoveRange(externalVacancies);
         }
 
@@ -1615,6 +1634,23 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateReferences.RemoveRange(references);
         }
 
+        var workExpRefs = await _db.WorkExperienceReferenceRequests
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (workExpRefs.Count > 0)
+        {
+            var workExpRefIds = workExpRefs.Select(r => r.Id).ToList();
+            var workExpRefTokens = await _db.WorkExperienceReferenceTokens
+                .Where(t => workExpRefIds.Contains(t.RequestId))
+                .ToListAsync(cancellationToken);
+            if (workExpRefTokens.Count > 0)
+            {
+                _db.WorkExperienceReferenceTokens.RemoveRange(workExpRefTokens);
+            }
+
+            _db.WorkExperienceReferenceRequests.RemoveRange(workExpRefs);
+        }
+
         var competencies = await _db.CandidateCompetencies
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1653,6 +1689,30 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (whoAmI.Count > 0)
         {
             _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
+        }
+
+        var testReflections = await _db.CandidateTestReflections
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (testReflections.Count > 0)
+        {
+            _db.CandidateTestReflections.RemoveRange(testReflections);
+        }
+
+        var uwvToolkit = await _db.CandidateUwvToolkitStates
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (uwvToolkit.Count > 0)
+        {
+            _db.CandidateUwvToolkitStates.RemoveRange(uwvToolkit);
+        }
+
+        var uwvShares = await _db.CandidateUwvAdviseurShares
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (uwvShares.Count > 0)
+        {
+            _db.CandidateUwvAdviseurShares.RemoveRange(uwvShares);
         }
 
         var privatePrefs = await _db.CandidatePrivatePreferences
@@ -1711,6 +1771,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateProactiveMatchingSettings.RemoveRange(proactiveSettings);
         }
 
+        var kkSettings = await _db.CandidateKandidatenkaartSettings
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (kkSettings.Count > 0)
+        {
+            _db.CandidateKandidatenkaartSettings.RemoveRange(kkSettings);
+        }
+
+        var kkDeliveries = await _db.KandidatenkaartInviteDeliveries
+            .Where(d => d.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (kkDeliveries.Count > 0)
+        {
+            _db.KandidatenkaartInviteDeliveries.RemoveRange(kkDeliveries);
+        }
+
         var proactiveSuggestions = await _db.ProactiveMatchSuggestions
             .Where(s => s.CandidateUserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1749,6 +1825,42 @@ public sealed class PrivacyDataService : IPrivacyDataService
         foreach (var click in trainingClicks)
         {
             click.UserId = null;
+        }
+
+        var trainingEnrollments = await _db.TrainingEnrollments
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (trainingEnrollments.Count > 0)
+        {
+            _db.TrainingEnrollments.RemoveRange(trainingEnrollments);
+        }
+
+        var initiativeIds = await _db.WorkInitiatives
+            .Where(i => i.CandidateUserId == user.Id)
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
+        if (initiativeIds.Count > 0)
+        {
+            var acceptances = await _db.WorkInitiativeAcceptances
+                .Where(a => initiativeIds.Contains(a.InitiativeId))
+                .ToListAsync(cancellationToken);
+            if (acceptances.Count > 0)
+            {
+                _db.WorkInitiativeAcceptances.RemoveRange(acceptances);
+            }
+
+            var initiatives = await _db.WorkInitiatives
+                .Where(i => i.CandidateUserId == user.Id)
+                .ToListAsync(cancellationToken);
+            _db.WorkInitiatives.RemoveRange(initiatives);
+        }
+
+        var initiativeDrafts = await _db.WorkInitiativeDrafts
+            .Where(d => d.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (initiativeDrafts.Count > 0)
+        {
+            _db.WorkInitiativeDrafts.RemoveRange(initiativeDrafts);
         }
 
         var deepAnalyses = await _db.CandidateDeepAnalyses

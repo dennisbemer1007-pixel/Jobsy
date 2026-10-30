@@ -11,6 +11,8 @@
 @inject IFeatureFlags Features
 @inject ILogger<LeraarCodeDetail> Log
 @using Jobsy.Web.Scholen
+@using Jobsy.Core.Scholen.PupilPassport
+@using Jobsy.Web.Components.Leerling
 @inject IJSRuntime Js
 
 <PageTitle>@(_detail?.DisplayCode ?? Culture["Leraar.Detail.Title"]) · Lobsy</PageTitle>
@@ -89,6 +91,14 @@ else
         <p class="muted">@Culture["Leraar.Detail.OwnListHint"]</p>
     </header>
 
+    @if (_g78Passport is { Enabled: true })
+    {
+        <section class="sch-card sch-passport-g78" data-testid="leraar-paspoort-g78">
+            <h2>@Culture["LeerlingPassport.Page.Title"]</h2>
+            <LeerlingPaspoortG78View Model="_g78Passport" />
+        </section>
+    }
+
     <div class="sch-detail-grid">
         <div>
             <section class="sch-card">
@@ -159,9 +169,12 @@ else
                 else
                 {
                     <p class="sch-dream-title">@(_detail.DreamJob.JobTitle ?? _detail.DreamJob.JobKey)</p>
-                    <p class="muted">
-                        @string.Format(Culture["Leraar.Detail.DreamProgress"], _detail.DreamJob.HaveCount, _detail.DreamJob.TotalCount)
-                    </p>
+                    @if (!_passportV2)
+                    {
+                        <p class="muted">
+                            @string.Format(Culture["Leraar.Detail.DreamProgress"], _detail.DreamJob.HaveCount, _detail.DreamJob.TotalCount)
+                        </p>
+                    }
                     @if (_detail.DreamJob.HaveItems.Count > 0)
                     {
                         <h3 class="sch-subhead">@Culture["LeerlingDroom.HaveTitle"]</h3>
@@ -208,10 +221,11 @@ else
     private string? _loadError;
     private TeacherCodeDetailDto? _detail;
     private bool _pdfBusy;
+    private bool _passportV2;
+    private PupilG78PassportWebDto? _g78Passport;
 
     protected override async Task OnParametersSetAsync()
     {
-        await Culture.SetLanguageAsync("nl");
         _disabled = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         if (_disabled)
         {
@@ -222,7 +236,19 @@ else
         _loading = true;
         _loadError = null;
         _missingCode = false;
-        try { _detail = await Api.GetTeacherCodeDetailAsync(ClassId, CodeId); }
+        _passportV2 = (await Features.GetAsync()).PupilPassportV2Enabled;
+        try
+        {
+            _detail = await Api.GetTeacherCodeDetailAsync(ClassId, CodeId);
+            if (_passportV2 && _detail?.Status == PupilCodeStatus.Completed)
+            {
+                _g78Passport = await Api.GetTeacherG78PassportAsync(ClassId, CodeId);
+            }
+            else
+            {
+                _g78Passport = null;
+            }
+        }
         catch (Exception ex)
         {
             _detail = null;

@@ -189,6 +189,48 @@ public sealed partial class JobsyApiClient
     public async Task<IReadOnlyList<ApplicationItem>> GetMyApplicationsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<ApplicationItem>>("api/me/applications", ct) ?? [];
 
+    public sealed record AcceptatieSollicitatiesDemoEnsureResult(bool Applied, int VerifiedApplicationCount);
+
+    /// <summary>
+    /// Acceptatie-only idempotent demo seed (404 when guard or email does not match).
+    /// </summary>
+    public async Task<AcceptatieSollicitatiesDemoEnsureResult?> TryEnsureAcceptatieSollicitatiesDemoAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/acceptatie-sollicitaties-demo-ensure", null, ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<AcceptatieSollicitatiesDemoEnsureResult>(cancellationToken: ct);
+    }
+
+    public sealed record AcceptatieAfterMatchDemoEnsureResult(bool Applied, string? SkipReason);
+
+    /// <summary>Acceptatie-only werkgever after-match demo refresh (404 when guard or email does not match).</summary>
+    public async Task<AcceptatieAfterMatchDemoEnsureResult?> TryEnsureAcceptatieAfterMatchDemoAsync(
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync("api/me/acceptatie-after-match-demo-ensure", null, ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<AcceptatieAfterMatchDemoEnsureResult>(cancellationToken: ct);
+    }
+
     public async Task WithdrawApplicationAsync(Guid applicationId, CancellationToken ct = default)
     {
         var response = await _http.PostAsync($"api/applications/{applicationId}/withdraw", null, ct);

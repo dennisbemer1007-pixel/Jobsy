@@ -164,6 +164,8 @@ public static partial class TransactionalEmails
             "mailtest" => MailTest(ctx.PublicWebBaseUrl, "acceptatie", "Resend", DateTime.UtcNow, c),
             "applicationconfirmation" => ApplicationConfirmation(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "applicationverificationcode" => ApplicationVerificationCode(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.VacancyId, ctx.OtpCode, c),
+            "applicationcvviewed" => ApplicationCvViewed(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId, c),
+            "applicationmutualyes" => ApplicationMutualYes(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId, c),
             "employerreactionaccepted" => EmployerReactionAccepted(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "employerreactionrejected" => EmployerReactionRejected(ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, c),
             "employercontacting" => EmployerContacting(ctx.PublicWebBaseUrl, ctx.VacancyTitle, ctx.RecipientName, ctx.CompanyName, c),
@@ -246,6 +248,12 @@ public static partial class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "referenceconfirmation" => ReferenceConfirmationRequest(
                 ctx.PublicWebBaseUrl, "Jan de Vries", ctx.RecipientName, ctx.CompanyName, "vakkenvuller", links.ReferenceConfirmation("voorbeeld"), c),
+            "workexperiencereference" => WorkExperienceReferenceRequest(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, "Jan de Vries", ctx.CompanyName, "vakkenvuller",
+                links.WorkExperienceReference("voorbeeld"), c),
+            "workexperiencereferencereminder" => WorkExperienceReferenceReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, "Jan de Vries", ctx.CompanyName,
+                links.WorkExperienceReference("voorbeeld"), c),
             "contentremoved" => ContentRemoved(
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
                 "De tekst vraagt om gegevens die niet mogen.", new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),
@@ -270,6 +278,28 @@ public static partial class TransactionalEmails
                 87,
                 c,
                 ctx.PublicWebBaseUrl),
+            "kandidatenkaartinvitebundled" => KandidatenkaartInviteBundled(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.VacancyTitle, 82,
+                Links(ctx.PublicWebBaseUrl).Absolute("/vacatures/voorbeeld"), c),
+            "kandidatenkaartinvitereminder" => KandidatenkaartInviteReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
+                Links(ctx.PublicWebBaseUrl).Absolute("/vacatures/voorbeeld"), c),
+            "kandidatenkaartinactivitycheck" => KandidatenkaartInactivityCheck(
+                ctx.PublicWebBaseUrl, ctx.RecipientName,
+                Links(ctx.PublicWebBaseUrl).Absolute("/candidate/settings/kandidatenkaart"), c),
+            "kandidatenkaartmissedout" => KandidatenkaartMissedOut(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
+                [(ctx.VacancyTitle, ctx.CompanyName)], Links(ctx.PublicWebBaseUrl).Absolute("/"), c),
+            "kandidatenkaartinvitewithdrawn" => KandidatenkaartInviteWithdrawn(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
+                Links(ctx.PublicWebBaseUrl).Absolute("/"), c),
+            "applicationstatusalert" => ApplicationStatusAlert(
+                ctx.PublicWebBaseUrl,
+                ctx.RecipientName,
+                "Status update",
+                "Je sollicitatie heeft een nieuwe status.",
+                "/candidate/applications/voorbeeld",
+                c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

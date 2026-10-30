@@ -187,7 +187,7 @@ public sealed class VacancyDraftCreationService : IVacancyDraftCreationService
         {
             Id = Guid.NewGuid(),
             Title = input.Title.Trim(),
-            Description = input.Description.Trim(),
+            Description = HtmlSanitize.ToVacancyDescriptionHtml(input.Description.Trim()),
             HourlyWage = hourlyWage,
             StartDate = input.StartDate,
             EndDate = input.EndDate,

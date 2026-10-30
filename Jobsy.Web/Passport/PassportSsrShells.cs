@@ -1,0 +1,524 @@
+using System.Net;
+using System.Text;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
+using Jobsy.Web.Components.Candidate.Dna;
+using Jobsy.Web.Localization;
+using Jobsy.Web.Media;
+using Jobsy.Web.Auth;
+using Jobsy.Web.Navigation;
+using Jobsy.Web.Hosting;
+using Jobsy.Web.Onboarding;
+
+namespace Jobsy.Web.Passport;
+
+internal static class PassportSsrShells
+{
+    internal static string BuildBody(
+        CultureState culture,
+        PassportSsrData.PageData data,
+        string antiforgeryToken,
+        string? openDataSection = null,
+        string? returnUrl = null,
+        string? openProofItem = null)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"passport-page-wrap\">");
+
+        sb.Append("<div class=\"panel-page passport-page passport-page--illustrated passport-page--compact-preview-c");
+        sb.Append("\" data-testid=\"passport-page-ssr\" data-passport-ssr=\"1\">");
+        PassportSsrHeroHtml.Append(sb, culture, data.FirstName);
+        sb.Append("<div class=\"passport-layout\">");
+        AppendSidebarCard(sb, culture, data, compact: false);
+        sb.Append("<div class=\"passport-layout__main\"><div class=\"passport-layout__main-flow\">");
+        AppendSidebarCard(sb, culture, data, compact: true);
+        PassportSsrPanelsHtml.AppendOverview(sb, culture, data.Overview);
+        if (data.DnaPanel.ShowEncourageBanner)
+        {
+            PassportSsrPanelsHtml.AppendEncourage(sb, culture);
+        }
+
+        AppendTabs(sb, culture, data);
+        AppendAllPanels(sb, culture, data, antiforgeryToken, openDataSection, returnUrl, openProofItem);
+        AppendFooterNav(sb, culture);
+        sb.Append("</div></div></div></div></div>");
+        sb.Append("<script src=\"");
+        sb.Append(WwwrootAssetCatalog.Url("js/passport-ssr-tabs.js"));
+        sb.Append("\" defer></script><script src=\"");
+        sb.Append(WwwrootAssetCatalog.Url("js/passport-ssr-extras.js"));
+        sb.Append("\" defer></script>");
+        AppendBanenkaartPrefetchBoot(sb, data);
+        return sb.ToString();
+    }
+
+    private static void AppendBanenkaartPrefetchBoot(StringBuilder sb, PassportSsrData.PageData data)
+    {
+        if (data.Profile.HomeLatitude is not double lat || data.Profile.HomeLongitude is not double lng)
+        {
+            return;
+        }
+
+        var transport = string.IsNullOrWhiteSpace(data.Profile.Preferences.PreferredTransport)
+            ? "Fiets"
+            : data.Profile.Preferences.PreferredTransport.Trim();
+        var maxMinutes = data.Profile.Preferences.MaxTravelMinutes is int m and > 0 ? m : 20;
+        sb.Append("<script type=\"application/json\" id=\"jobsy-bk-prefetch\">{\"lat\":")
+            .Append(lat.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append(",\"lng\":")
+            .Append(lng.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Append(",\"transport\":\"")
+            .Append(WebUtility.HtmlEncode(transport))
+            .Append("\",\"maxMinutes\":")
+            .Append(maxMinutes)
+            .Append("}</script>");
+    }
+
+    private static void AppendFooterNav(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<nav class=\"passport-ssr-footer-nav\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Title"]));
+        sb.Append("\" data-testid=\"passport-footer-nav\"><a href=\"");
+        sb.Append(OnboardingRoutes.KompasHubPath);
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Title"]));
+        sb.Append("</a><a href=\"/carriere\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Nav.CareerPath"]));
+        sb.Append("</a><a href=\"/candidate/applications\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Nav.Applications"]));
+        sb.Append("</a></nav>");
+    }
+
+    private static void AppendSidebarCard(StringBuilder sb, CultureState culture, PassportSsrData.PageData data, bool compact)
+    {
+        var card = data.Card;
+        var wrapperClass = compact
+            ? "passport-layout__card passport-layout__card--mobile"
+            : "passport-layout__sidebar passport-layout__card passport-layout__card--desktop";
+        sb.Append("<div class=\"");
+        sb.Append(wrapperClass);
+        sb.Append("\"><aside class=\"passport-card");
+        if (compact)
+        {
+            sb.Append(" passport-card--compact");
+        }
+
+        sb.Append("\" aria-labelledby=\"passport-card-name\">");
+        sb.Append("<div class=\"passport-card__banner\"><div class=\"passport-card__banner-text\">");
+        sb.Append("<p class=\"passport-card__banner-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Banner"]));
+        sb.Append("</p><p class=\"passport-card__member\">");
+        sb.Append(WebUtility.HtmlEncode(card.MemberNumber));
+        sb.Append("</p></div></div>");
+        sb.Append("<div class=\"passport-card__identity\"><div class=\"passport-card__avatar\" aria-hidden=\"true\">");
+        sb.Append(WebUtility.HtmlEncode(card.Initials));
+        sb.Append("</div><div class=\"passport-card__identity-main\"><h2 id=\"passport-card-name\" class=\"passport-card__name\">");
+        sb.Append(WebUtility.HtmlEncode(card.DisplayName));
+        sb.Append("</h2>");
+        if (compact && !string.IsNullOrWhiteSpace(card.OneLiner))
+        {
+            sb.Append("<p class=\"passport-card__one-liner\">");
+            sb.Append(WebUtility.HtmlEncode(card.OneLiner));
+            sb.Append("</p>");
+        }
+
+        if (card.ShowOpenForWork)
+        {
+            sb.Append("<span class=\"status-pill status-pill--success\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Profile.OpenForWork"]));
+            sb.Append("</span>");
+        }
+
+        if (!compact && card.Keywords.Count > 0)
+        {
+            sb.Append("<div class=\"passport-card__pills\">");
+            foreach (var kw in card.Keywords.Take(2))
+            {
+                sb.Append("<span class=\"kompas-chip\">");
+                sb.Append(WebUtility.HtmlEncode(kw));
+                sb.Append("</span>");
+            }
+
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div></div>");
+        sb.Append("<div class=\"passport-card__layers\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"");
+        sb.Append(card.LayerTotal);
+        sb.Append("\" aria-valuenow=\"");
+        sb.Append(card.FilledLayers);
+        sb.Append("\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture.Format("Passport.Layers", card.FilledLayers, card.LayerTotal)));
+        sb.Append("\"><div class=\"passport-card__layers-bars\" aria-hidden=\"true\">");
+        for (var i = 0; i < card.LayerTotal; i++)
+        {
+            sb.Append("<span class=\"passport-card__layer");
+            if (i < card.FilledLayers)
+            {
+                sb.Append(" passport-card__layer--");
+                sb.Append(i + 1);
+            }
+
+            sb.Append("\"></span>");
+        }
+
+        sb.Append("</div><p class=\"passport-card__layers-text\">");
+        sb.Append(WebUtility.HtmlEncode(culture.Format("Passport.Layers", card.FilledLayers, card.LayerTotal)));
+        sb.Append("</p></div>");
+        if (!compact)
+        {
+            PassportSsrPanelsHtml.AppendCardFacts(sb, culture, card, compact: false);
+            PassportSsrEmployerPreviewHtml.Append(sb, culture, data.Profile, data.ProofPanel);
+        }
+
+        sb.Append("<div class=\"passport-card__actions");
+        if (compact)
+        {
+            sb.Append(" passport-card__actions--compact");
+        }
+
+        sb.Append("\"><a class=\"btn btn-secondary passport-card__pdf-btn\" href=\"/api/me/paspoort.pdf\" data-testid=\"");
+        sb.Append(compact ? "passport-download-pdf-mobile" : "passport-download-pdf");
+        sb.Append("\" data-enhance-nav=\"false\" download>");
+        sb.Append(WebUtility.HtmlEncode(data.Flags.PassportPdfV2Enabled
+            ? culture["Passport.DownloadDna"]
+            : culture["Passport.LobsyCv"]));
+        sb.Append("</a><a class=\"btn btn-primary\" href=\"");
+        sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Data));
+        sb.Append("\" data-passport-tab-link=\"data\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Edit"]));
+        sb.Append("</a></div></aside>");
+        if (!compact)
+        {
+            PassportSsrPanelsHtml.AppendLobsyTipCard(sb, culture);
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static void AppendTabs(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
+    {
+        var tabs = PassportTabs.Visible(
+            data.Flags.EmployersEnabled,
+            data.Flags.FutureJobsForYouEnabled,
+            data.Flags.ReferenceVerificationEnabled);
+        sb.Append("<div class=\"passport-tabs-shell\"><div class=\"passport-tabs\" role=\"tablist\" data-passport-tab-order=\"");
+        sb.Append(WebUtility.HtmlEncode(string.Join(",", tabs)));
+        sb.Append("\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Title"]));
+        sb.Append("\">");
+        foreach (var tab in tabs)
+        {
+            var selected = string.Equals(tab, data.ActiveTab, StringComparison.OrdinalIgnoreCase);
+            sb.Append("<button type=\"button\" id=\"passport-tab-");
+            sb.Append(tab);
+            sb.Append("\" class=\"passport-tab");
+            if (selected)
+            {
+                sb.Append(" passport-tab--active");
+            }
+
+            sb.Append("\" role=\"tab\" data-passport-tab=\"");
+            sb.Append(WebUtility.HtmlEncode(tab));
+            sb.Append("\" aria-selected=\"");
+            sb.Append(selected ? "true" : "false");
+            sb.Append("\" aria-controls=\"passport-panel-");
+            sb.Append(tab);
+            sb.Append("\" tabindex=\"");
+            sb.Append(selected ? "0" : "-1");
+            sb.Append("\"><span class=\"passport-tabs__icon\" aria-hidden=\"true\">");
+            sb.Append(TabIcon(tab));
+            sb.Append("</span><span>");
+            sb.Append(WebUtility.HtmlEncode(TabLabel(culture, tab)));
+            sb.Append("</span>");
+            if (tab == PassportTabs.Tests && data.TestsNextStepCount > 0)
+            {
+                sb.Append("<span class=\"passport-tabs__pill\">");
+                sb.Append(data.TestsNextStepCount);
+                sb.Append("</span>");
+            }
+
+            sb.Append("</button>");
+        }
+
+        sb.Append("</div></div>");
+    }
+
+    private static void AppendAllPanels(
+        StringBuilder sb,
+        CultureState culture,
+        PassportSsrData.PageData data,
+        string antiforgeryToken,
+        string? openDataSection,
+        string? returnUrl,
+        string? openProofItem)
+    {
+        sb.Append("<div class=\"passport-panels\">");
+        if (!string.IsNullOrWhiteSpace(data.ErrorMessage))
+        {
+            sb.Append("<p class=\"state-message error\" role=\"alert\">");
+            sb.Append(WebUtility.HtmlEncode(data.ErrorMessage));
+            sb.Append("</p>");
+        }
+        else if (data.Saved)
+        {
+            sb.Append("<p class=\"state-message\" role=\"status\">");
+            sb.Append(WebUtility.HtmlEncode(culture["Common.Saved"]));
+            sb.Append("</p>");
+        }
+
+        AppendPanelShell(sb, PassportTabs.Dna, data.ActiveTab, () =>
+            PassportSsrPanelsHtml.AppendDnaPanel(sb, culture, data.DnaPanel, data.Card.Keywords));
+        AppendPanelShell(sb, PassportTabs.Tests, data.ActiveTab, () => AppendTestsPanel(sb, culture, data));
+        AppendPanelShell(sb, PassportTabs.Fit, data.ActiveTab, () => AppendFitPanel(sb, culture, data));
+        AppendPanelShell(sb, PassportTabs.Career, data.ActiveTab, () => AppendCareerPanel(sb, culture, data));
+        AppendPanelShell(sb, PassportTabs.Proof, data.ActiveTab, () =>
+            AppendProofPanel(sb, culture, data, antiforgeryToken, openProofItem));
+        if (data.Flags.ReferenceVerificationEnabled)
+        {
+            AppendPanelShell(sb, PassportTabs.References, data.ActiveTab, () => AppendReferencesPanel(sb, culture));
+        }
+
+        AppendPanelShell(sb, PassportTabs.Data, data.ActiveTab, () =>
+            AppendDataPanel(sb, culture, data, antiforgeryToken, openDataSection, returnUrl));
+        sb.Append("</div>");
+    }
+
+    private static void AppendPanelShell(StringBuilder sb, string tab, string activeTab, Action render)
+    {
+        var selected = string.Equals(tab, activeTab, StringComparison.OrdinalIgnoreCase);
+        sb.Append("<article id=\"passport-panel-");
+        sb.Append(tab);
+        sb.Append("\" class=\"passport-panel\" role=\"tabpanel\" aria-labelledby=\"passport-tab-");
+        sb.Append(tab);
+        sb.Append('"');
+        if (!selected)
+        {
+            sb.Append(' ').Append("hidden");
+        }
+
+        sb.Append(" data-passport-panel=\"");
+        sb.Append(WebUtility.HtmlEncode(tab));
+        sb.Append("\">");
+        render();
+        sb.Append("</article>");
+    }
+
+    private static string TabIcon(string tab) => tab switch
+    {
+        PassportTabs.Tests => NavIcons.Vacancies,
+        PassportTabs.Fit => NavIcons.Target,
+        PassportTabs.Career => NavIcons.Career,
+        PassportTabs.Proof => NavIcons.Stone,
+        PassportTabs.References => NavIcons.Shared,
+        PassportTabs.Data => NavIcons.Profile,
+        _ => NavIcons.DnaHelix
+    };
+
+    private static void AppendTestsPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
+    {
+        if (data.FromDiscovery)
+        {
+            sb.Append("<p class=\"passport-ssr-back\"><a class=\"passport-ssr-back-link btn btn-secondary\" href=\"/candidate/ontdekkingsreis?stap=overview\" data-enhance-nav=\"false\" data-testid=\"passport-back-to-discovery\"><span class=\"passport-ssr-back-link__icon\" aria-hidden=\"true\">←</span>");
+            sb.Append(WebUtility.HtmlEncode(culture["Discovery.Passport.BackToJourney"]));
+            sb.Append("</a></p>");
+        }
+
+        PassportSsrTestsHtml.Append(sb, culture, data.Kompas);
+    }
+
+    private static void AppendFitPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
+    {
+        PassportSsrFitHtml.Append(
+            sb,
+            culture,
+            data.Flags,
+            data.Profile,
+            data.Kompas,
+            data.FitPanel,
+            data.ProactiveMatchingEnabled);
+    }
+
+    private static void AppendCareerPanel(StringBuilder sb, CultureState culture, PassportSsrData.PageData data)
+    {
+        PassportSsrCareerHtml.Append(sb, culture, data.Flags.EmployersEnabled, data.CareerPanel);
+    }
+
+    private static void AppendProofPanel(
+        StringBuilder sb,
+        CultureState culture,
+        PassportSsrData.PageData data,
+        string antiforgeryToken,
+        string? openProofItem)
+    {
+        PassportSsrProofHtml.Append(
+            sb,
+            culture,
+            data.Profile,
+            data.ProofPanel,
+            antiforgeryToken,
+            openProofItem);
+    }
+
+    private static void AppendReferencesPanel(StringBuilder sb, CultureState culture)
+    {
+        sb.Append("<p class=\"login-lead\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.References"]));
+        sb.Append("</p>");
+    }
+
+    private static void AppendDataPanel(
+        StringBuilder sb,
+        CultureState culture,
+        PassportSsrData.PageData data,
+        string antiforgeryToken,
+        string? openDataSection,
+        string? returnUrl)
+    {
+        var profile = data.Profile;
+        var prefs = profile.Preferences ?? new Jobsy.Web.Models.CandidatePreferences();
+        var openAvailability = string.Equals(openDataSection, "availability", StringComparison.OrdinalIgnoreCase);
+        var openWorkStatus = string.Equals(openDataSection, "work-status", StringComparison.OrdinalIgnoreCase);
+        var safeReturn = AuthRedirects.TrySafeLocalUrl(returnUrl);
+        sb.Append("<div class=\"passport-data\"><p class=\"passport-data__intro\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Data"]));
+        sb.Append("</p><form method=\"post\" action=\"/api/passport-client/save-data\" data-enhance=\"false\" data-enhance-nav=\"false\">");
+        sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
+        sb.Append("\" /><input type=\"hidden\" name=\"returnTab\" value=\"data\" />");
+        sb.Append("<div class=\"profile-form competency-profile-card\"><div class=\"passport-data__body\">");
+        sb.Append("<label><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.FirstName"]));
+        sb.Append("</span><input name=\"firstName\" type=\"text\" autocomplete=\"given-name\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(profile.FirstName ?? ""));
+        sb.Append("\" data-testid=\"passport-data-first-name\" data-passport-static-field=\"1\" autocomplete=\"given-name\" /></label>");
+        sb.Append("<label><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.LastName"]));
+        sb.Append("</span><input name=\"lastName\" type=\"text\" autocomplete=\"family-name\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(profile.LastName ?? ""));
+        sb.Append("\" data-testid=\"passport-data-last-name\" data-passport-static-field=\"1\" autocomplete=\"family-name\" /></label>");
+        sb.Append("<label><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.Phone"]));
+        sb.Append("</span><input name=\"phoneNumber\" type=\"tel\" autocomplete=\"tel\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(profile.PhoneNumber ?? ""));
+        sb.Append("\" data-testid=\"passport-data-phone\" data-passport-static-field=\"1\" autocomplete=\"tel\" inputmode=\"tel\" /></label>");
+        sb.Append("<label><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.AboutMe"]));
+        sb.Append("</span><textarea name=\"aboutMe\" rows=\"4\" data-testid=\"passport-data-about\">");
+        sb.Append(WebUtility.HtmlEncode(profile.Preferences?.AboutMe ?? ""));
+        sb.Append("</textarea></label></div>");
+        sb.Append("<div class=\"profile-save-bar\"><button type=\"submit\" class=\"btn btn-primary login-submit\" data-testid=\"passport-data-save\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Save"]));
+        sb.Append("</button></div></div></form>");
+
+        sb.Append("<div class=\"detail-card passport-data__item");
+        if (openAvailability)
+        {
+            sb.Append(" is-open");
+        }
+
+        sb.Append("\" id=\"passport-data-availability\" data-testid=\"passport-data-availability\"><h3 class=\"passport-data__title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.Section.Availability"]));
+        sb.Append("</h3><p class=\"passport-data__sub\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Passport.Data.AvailabilitySub"]));
+        sb.Append("</p><form method=\"post\" action=\"/api/passport-client/save-availability\" data-enhance=\"false\" data-enhance-nav=\"false\">");
+        sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
+        sb.Append("\" /><input type=\"hidden\" name=\"returnTab\" value=\"data\" />");
+        if (!string.IsNullOrWhiteSpace(safeReturn))
+        {
+            sb.Append("<input type=\"hidden\" name=\"returnUrl\" value=\"");
+            sb.Append(WebUtility.HtmlEncode(safeReturn));
+            sb.Append("\" />");
+        }
+
+        sb.Append("<input type=\"hidden\" name=\"openSection\" value=\"availability\" />");
+        sb.Append("<fieldset class=\"profile-availability\"><legend class=\"visually-hidden\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.Availability"]));
+        sb.Append("</legend><label class=\"detail-card passport-data__switch\"><span class=\"passport-data__switch-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.PresetFlexible"]));
+        sb.Append("</span><input type=\"checkbox\" name=\"flexibleTimes\" value=\"true\"");
+        if (prefs.FlexibleTimes == true)
+        {
+            sb.Append(" checked");
+        }
+
+        sb.Append(" data-testid=\"passport-data-flexible\" /></label>");
+        sb.Append("<div class=\"availability-matrix availability-matrix--touch passport-data__matrix\" data-testid=\"passport-data-availability-matrix\">");
+        AvailabilityMatrixSsrHtml.Append(
+            sb,
+            culture,
+            PassportAvailabilityMatrix.ToSelectedKeys(prefs.Availability),
+            "passportMatrix",
+            AvailabilityMatrixSsrHtml.MatrixInputMode.BatchCheckbox);
+        sb.Append("</div></fieldset>");
+        sb.Append("<div class=\"profile-save-bar\"><button type=\"submit\" name=\"availabilityPreset\" value=\"immediate\" class=\"btn btn-secondary\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.PresetImmediate"]));
+        sb.Append("</button><button type=\"submit\" class=\"btn btn-primary\" data-testid=\"passport-data-availability-save\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Save"]));
+        sb.Append("</button></div></form></div>");
+
+        sb.Append("<div class=\"detail-card passport-data__item");
+        if (openWorkStatus)
+        {
+            sb.Append(" is-open");
+        }
+
+        sb.Append("\" id=\"passport-data-work-status\" data-testid=\"passport-data-work-status\"><h3 class=\"passport-data__title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
+        sb.Append("</h3><p class=\"passport-data__sub\">");
+        sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Hint"]));
+        sb.Append("</p>");
+        if (prefs.WorkStatuses is { Count: > 0 })
+        {
+            sb.Append("<ul class=\"passport-data__chips\">");
+            foreach (var code in prefs.WorkStatuses)
+            {
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    continue;
+                }
+
+                var labelKey = "WorkStatus." + code.Trim();
+                sb.Append("<li>");
+                sb.Append(WebUtility.HtmlEncode(culture[labelKey]));
+                sb.Append("</li>");
+            }
+
+            sb.Append("</ul>");
+        }
+
+        sb.Append("<p><a class=\"btn btn-primary\" href=\"");
+        var obReturn = safeReturn ?? "/candidate/applications";
+        sb.Append("/candidate/start?step=1&amp;returnUrl=");
+        sb.Append(Uri.EscapeDataString(obReturn));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Common.Continue"]));
+        sb.Append("</a></p></div>");
+
+        sb.Append("<p class=\"passport-ssr-nav-links\"><a href=\"");
+        sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Proof, safeReturn));
+        sb.Append("&item=experience\" data-passport-tab-link=\"proof\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Apply.Experience"]));
+        sb.Append("</a> · <a href=\"");
+        sb.Append(OnboardingRoutes.KompasHubPath);
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Kompas.Title"]));
+        sb.Append("</a> · <a href=\"/carriere\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Nav.CareerPath"]));
+        sb.Append("</a> · <a href=\"/candidate/applications\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Nav.Applications"]));
+        sb.Append("</a></p></div>");
+    }
+
+    private static string TabLabel(CultureState culture, string tab)
+        => culture[tab switch
+        {
+            PassportTabs.Tests => "Passport.Tab.Tests",
+            PassportTabs.Fit => "Passport.Tab.Fit.Compact",
+            PassportTabs.Career => "Passport.Tab.Career",
+            PassportTabs.Proof => "Passport.Tab.Proof",
+            PassportTabs.References => "Passport.Tab.References",
+            PassportTabs.Data => "Passport.Tab.Data.Compact",
+            _ => "Passport.Tab.Dna",
+        }];
+}

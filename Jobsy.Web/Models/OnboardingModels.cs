@@ -54,3 +54,25 @@ public sealed class OnboardingMatchCard
     public string WhyLine { get; set; } = "";
     public bool IsProvisional { get; set; }
 }
+
+public sealed class OnboardingNearbySignal
+{
+    public int Count { get; set; }
+    public int? WiderRadiusCount { get; set; }
+    public int MaxTravelMinutes { get; set; }
+    public string? PreferredTransport { get; set; }
+    public bool EmployersFeatureOff { get; set; }
+    public bool MissingHomeLocation { get; set; }
+    public List<OnboardingNearbyVacancyCard> Examples { get; set; } = [];
+}
+
+public sealed class OnboardingNearbyVacancyCard
+{
+    public Guid VacancyId { get; set; }
+    public string Title { get; set; } = "";
+    public double DistanceKm { get; set; }
+    public int TravelMinutes { get; set; }
+    public string HoursLabel { get; set; } = "";
+    public string ScheduleHint { get; set; } = "";
+    public string WhyLine { get; set; } = "";
+}

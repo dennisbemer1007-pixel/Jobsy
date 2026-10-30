@@ -15,7 +15,7 @@ public class DemoAccountPasswordSeedTests
 
         var emails = new[]
         {
-            "kandidaat@jobsy.local",
+            "sanne@jobsy.local",
             "kandidaat.denhaag@jobsy.local",
             "kandidaat.ver@jobsy.local",
             "valentine@jobsy.local",
@@ -87,7 +87,7 @@ public class DemoAccountPasswordSeedTests
         await using var db = CreateDb();
         await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
 
-        var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "kandidaat@jobsy.local");
+        var credential = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "sanne@jobsy.local");
         credential.PasswordHash = JobsyPasswordHasher.Hash("ChangedPass1!");
         await db.SaveChangesAsync();
 
@@ -95,7 +95,7 @@ public class DemoAccountPasswordSeedTests
         IbanEfProtection.Configure(new PassThroughIbanProtector());
         await DemoUsersSeeder.SeedUsersAsync(db, NullLogger.Instance);
 
-        var restored = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "kandidaat@jobsy.local");
+        var restored = await db.LocalAuthCredentials.SingleAsync(c => c.Email == "sanne@jobsy.local");
         Assert.True(JobsyPasswordHasher.Verify(DemoUsersSeeder.DemoPassword, restored.PasswordHash));
         Assert.False(JobsyPasswordHasher.Verify("ChangedPass1!", restored.PasswordHash));
     }

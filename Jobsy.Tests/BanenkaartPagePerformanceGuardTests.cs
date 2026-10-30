@@ -22,7 +22,7 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.DoesNotContain("onload=", appCssLink);
         Assert.Contains("?v=", appCssLink);
 
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
         Assert.DoesNotContain("rel=\"preload\"", home);
 
@@ -40,7 +40,8 @@ public class BanenkaartPagePerformanceGuardTests
     {
         var discovery = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("ShouldRenderVacancyCards", discovery);
-        Assert.Contains("_wideViewport || (_mapPainted && !showMapOnMobile)", discovery);
+        Assert.Contains("_mapPainted && !showMapOnMobile", discovery);
+        Assert.Contains("_wideViewport", discovery);
         Assert.Contains("!_wideViewport && !showMapOnMobile", discovery);
         Assert.Contains("VisibleVacancies", discovery);
         Assert.Contains("RendererInfo.IsInteractive", discovery);
@@ -59,14 +60,16 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.Contains(".cookie-consent { position: fixed", critical);
         Assert.Contains(".cookie-consent a { color: #fff; text-decoration: underline", critical);
         Assert.Contains(".bottom-nav { position: fixed", critical);
-        Assert.Contains(".lobsy-logo { display: block; width: 56px; height: 56px", critical);
+        Assert.Contains(".lobsy-logo--mark { width: 56px; height: 56px", critical);
+        Assert.Contains(".lobsy-logo--horizontal { width: auto; height: 44px", critical);
         Assert.Contains("min-height: 10rem", critical);
         Assert.Contains(".app-header { min-height: 4.25rem; }", critical);
         Assert.Contains("contain: layout", critical);
 
         var logo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "LobsyLogo.razor"));
-        Assert.Contains("width=\"56\"", logo);
-        Assert.Contains("height=\"56\"", logo);
+        Assert.Contains("LobsyLogoVariant", logo);
+        Assert.Contains("width=\"@Width\"", logo);
+        Assert.Contains("height=\"@Height\"", logo);
         Assert.DoesNotContain("width=\"128\"", logo);
     }
 
@@ -80,7 +83,7 @@ public class BanenkaartPagePerformanceGuardTests
         var banner = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "CookieConsentBanner.razor"));
         Assert.Contains("private bool _visible = true", banner);
         Assert.DoesNotContain("cookie-consent__mascot", banner);
-        Assert.Contains("Accepteer cookies", banner);
+        Assert.Contains("CookieConsent.", banner);
         Assert.DoesNotContain("Accepteer analytics", banner);
         Assert.Contains("cookie-consent__privacy", banner);
         Assert.DoesNotContain("class=\"auth-link\"", banner);
@@ -135,7 +138,8 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.DoesNotContain("warmDiscovery", bundle);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", bundle);
         // Pins HTTP still starts immediately; MapLibre create/style waits for circuit/idle.
-        Assert.Contains("whenCircuitOrIdle", bundle);
+        Assert.Contains("whenAfterFirstPaint", bundle);
+        Assert.Contains("whenCircuitReady", bundle);
         Assert.Contains("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
         Assert.Contains("loadScriptsParallel", bundle);
@@ -242,10 +246,11 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.Contains("css/app.min.css", appRazor);
         Assert.DoesNotContain("href=\"css/app.css?", appRazor);
 
-        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
         Assert.DoesNotContain("rel=\"preload\"", home);
         Assert.DoesNotContain("lib/maplibre/", home);
         Assert.DoesNotContain("jobMap.min.js", home);
+        Assert.Contains("data-banenkaart-ssr", File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs")));
 
         Assert.False(Directory.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "lib", "leaflet")));
     }

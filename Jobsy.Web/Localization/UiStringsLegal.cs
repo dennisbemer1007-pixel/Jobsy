@@ -820,6 +820,43 @@ public static class UiStringsLegal
             "Pliki cookie potrzebne do logowania ustawiamy zawsze. Statystyki tylko po „Akceptuj pliki cookie”.",
             "Cookie-urile necesare autentificării le punem mereu. Statistici doar după „Accept cookie-urile”.",
             "نضع دائماً ملفات تعريف الارتباط اللازمة لتسجيل الدخول. الإحصاءات فقط بعد «أقبل ملفات تعريف الارتباط».");
+
+        Add("CookieConsent.Title",
+            "Cookies & privacy",
+            "Cookies & privacy",
+            "Pliki cookie i prywatność",
+            "Cookie-uri și confidențialitate",
+            "ملفات تعريف الارتباط والخصوصية");
+        Add("CookieConsent.TextFull",
+            "Noodzakelijke cookies voor inloggen. Optioneel anonieme statistieken.",
+            "Cookies needed to sign in. Optional anonymous statistics.",
+            "Pliki cookie potrzebne do logowania. Opcjonalnie anonimowe statystyki.",
+            "Cookie-uri necesare pentru autentificare. Statistici anonime opționale.",
+            "ملفات تعريف الارتباط اللازمة لتسجيل الدخول. إحصاءات مجهولة اختيارية.");
+        Add("CookieConsent.TextShort",
+            "Cookies voor inloggen. Optioneel statistieken.",
+            "Cookies for sign-in. Optional statistics.",
+            "Pliki cookie do logowania. Opcjonalne statystyki.",
+            "Cookie-uri pentru autentificare. Statistici opționale.",
+            "ملفات تعريف الارتباط لتسجيل الدخول. إحصاءات اختيارية.");
+        Add("CookieConsent.PrivacyLink",
+            "Privacy",
+            "Privacy",
+            "Prywatność",
+            "Confidențialitate",
+            "الخصوصية");
+        Add("CookieConsent.Necessary",
+            "Alleen noodzakelijk",
+            "Necessary only",
+            "Tylko niezbędne",
+            "Doar necesare",
+            "الضرورية فقط");
+        Add("CookieConsent.Accept",
+            "Accepteer cookies",
+            "Accept cookies",
+            "Akceptuj pliki cookie",
+            "Accept cookie-urile",
+            "أقبل ملفات تعريف الارتباط");
         Add("Privacy.Sec.ai.Title",
             "AI, matching en reistijd",
             "AI, matching and travel time",

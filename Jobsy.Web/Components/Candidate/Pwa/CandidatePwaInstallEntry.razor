@@ -1,0 +1,112 @@
+@namespace Jobsy.Web.Components.Candidate.Pwa
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Pwa
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject PwaInstallSheetState SheetState
+@implements IAsyncDisposable
+
+@if (_showButton)
+{
+    <button type="button"
+            class="pwa-entry-btn"
+            data-testid="pwa-install-entry-btn"
+            title="@Culture["Pwa.Entry.Install"]"
+            aria-label="@Culture["Pwa.Entry.Install"]"
+            @onclick="OnEntryClickAsync">
+        <svg class="pwa-entry-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <rect x="7" y="2.5" width="10" height="19" rx="2" />
+            <path d="M12 6v7" stroke-linecap="round" />
+            <path d="M9.5 10.5L12 13l2.5-2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M10 17h4" stroke-linecap="round" />
+        </svg>
+        <span class="pwa-entry-btn__label">@Culture["Pwa.Entry.Install"]</span>
+    </button>
+}
+
+@code {
+    private bool _showButton;
+    private bool _hydrated;
+    private PwaEntryPlatform _platform = PwaEntryPlatform.None;
+    private DotNetObjectReference<CandidatePwaInstallEntry>? _self;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_hydrated)
+        {
+            return;
+        }
+
+        _hydrated = true;
+        try
+        {
+            await RefreshAsync();
+            _self = DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("lobsyPwaInstall.watchEntry", _self);
+        }
+        catch
+        {
+            _hydrated = false;
+        }
+    }
+
+    [JSInvokable]
+    public Task OnPwaInstallSignalsChanged()
+        => RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        var signals = await PwaInstallInterop.GetSignalsAsync(Js);
+        if (signals is null)
+        {
+            _showButton = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        _platform = signals.Platform;
+        _showButton = signals.ShouldShowEntry(now);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnEntryClickAsync()
+    {
+        if (_platform == PwaEntryPlatform.ChromePrompt)
+        {
+            try
+            {
+                await Js.InvokeAsync<object>("lobsyPwaInstall.prompt");
+            }
+            catch
+            {
+                // Best-effort.
+            }
+
+            await RefreshAsync();
+            return;
+        }
+
+        if (_platform is PwaEntryPlatform.Samsung or PwaEntryPlatform.Ios)
+        {
+            SheetState.Open(_platform);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_self is not null)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("lobsyPwaInstall.unwatchEntry", _self);
+            }
+            catch
+            {
+                // Circuit may be gone.
+            }
+
+            _self.Dispose();
+        }
+    }
+}

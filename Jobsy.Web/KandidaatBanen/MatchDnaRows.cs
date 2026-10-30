@@ -28,20 +28,21 @@ public static class MatchDnaRows
         CandidateFitDimensionsModel? dims,
         IReadOnlyList<string>? whyKinds,
         bool includeMissing,
-        int maxWithData = 3)
+        int maxWithData = 3,
+        MatchProfileGateViewModel? gate = null)
     {
         var why = new HashSet<string>(whyKinds ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
         var rows = new List<MatchDnaRow>(4);
 
         foreach (var (kind, labelKey, whyKey, href) in Spec)
         {
-            var percent = PercentFor(dims, kind);
+            var testDone = gate is null || IsTestCompleted(gate, kind);
+            var percent = testDone ? PercentFor(dims, kind) : null;
             if (percent is null && !includeMissing)
             {
                 continue;
             }
 
-            // Prefer a why-kind that maps to this dimension; otherwise the dimension's default Kb.Why.*.
             var reasonKey = why.Contains(kind) || percent is not null ? whyKey : whyKey;
             rows.Add(new MatchDnaRow(kind, labelKey, percent, reasonKey, href));
         }
@@ -52,6 +53,23 @@ public static class MatchDnaRows
         }
 
         return rows;
+    }
+
+    private static bool IsTestCompleted(MatchProfileGateViewModel? gate, string kind)
+    {
+        if (gate is null)
+        {
+            return false;
+        }
+
+        return kind switch
+        {
+            "culture" => gate.CultureCompleted,
+            "values" => gate.ValuesCompleted,
+            "competency" => gate.CompetencyCompleted,
+            "interest" => gate.CareerCompleted,
+            _ => false
+        };
     }
 
     private static int? PercentFor(CandidateFitDimensionsModel? dims, string kind) => kind switch

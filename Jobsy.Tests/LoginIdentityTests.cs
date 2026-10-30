@@ -10,6 +10,7 @@ public class LoginIdentityTests
     [InlineData("  Twalieb  ", "twalieb@jobsy.local")]
     [InlineData("twalieb@jobsy.local", "twalieb@jobsy.local")]
     [InlineData("Kandidaat@Jobsy.Local", "kandidaat@jobsy.local")]
+    [InlineData("lobsy-test+s14@mail.grokbot.com", "lobsy-test+s14@mail.grokbot.com")]
     [InlineData("", "")]
     [InlineData(null, "")]
     public void Normalize_maps_bare_names_to_jobsy_local(string? input, string expected)

@@ -1,8 +1,13 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
+using Jobsy.Core.Hosting;
 using Jobsy.Core.Security;
+using Jobsy.Web.Security;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Web.Hosting;
@@ -15,6 +20,20 @@ namespace Jobsy.Web.Hosting;
 public static class VacancyMapProxyEndpoints
 {
     public static readonly TimeSpan AnonymousCacheTtl = TimeSpan.FromSeconds(60);
+
+    private sealed class VacancyLikeProxyDto
+    {
+        public bool Liked { get; set; }
+    }
+
+    private sealed class VacancyLikeErrorDto
+    {
+        public bool Liked { get; set; }
+
+        public string? Error { get; set; }
+
+        public int? Status { get; set; }
+    }
 
     public static void MapVacancyMapProxyEndpoints(this WebApplication app)
     {
@@ -32,6 +51,10 @@ public static class VacancyMapProxyEndpoints
         app.MapGet("/api/vacancies/{id:guid}/image", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/image", ct));
 
+        // Small WebP for lagen map popups (lazy-loaded when a card opens).
+        app.MapGet("/api/vacancies/{id:guid}/map-popup-photo", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/map-popup-photo", ct));
+
         // Legacy detail path still used by older cached jobMap bundles.
         app.MapGet("/api/vacancies/{id:guid}", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct));
@@ -39,6 +62,171 @@ public static class VacancyMapProxyEndpoints
         // Travel-time polygons for banenkaart rings (Valhalla; client falls back to circles).
         app.MapGet("/api/travel/isochrones", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
             forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
+
+        app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization().DisableAntiforgery();
+        app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization().DisableAntiforgery();
+        app.MapDelete("/api/vacancies/{id:guid}/like", DeleteLikeAsync).RequireAuthorization().DisableAntiforgery();
+    }
+
+    private static async Task<IResult> GetLikeAsync(
+        Guid id,
+        HttpContext http,
+        JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
+    {
+        try
+        {
+            var liked = await api.GetLikedAsync(id, ct);
+            return Results.Json(new VacancyLikeProxyDto { Liked = liked });
+        }
+        catch (Exception ex)
+        {
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogWarning(ex, "Vacancy like GET proxy failed for {VacancyId}", id);
+            AcceptatieDiagnosticHeaders.TrySet(http.Response, deployment, ex);
+            return Results.Json(new VacancyLikeProxyDto { Liked = false });
+        }
+    }
+
+    private static async Task<IResult> PostLikeAsync(
+        Guid id,
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (!await TryValidateAntiforgeryAsync(http, antiforgery))
+            {
+                AcceptatieDiagnosticHeaders.TrySetMessage(
+                    http.Response,
+                    deployment,
+                    "AntiforgeryValidationException: token missing or invalid");
+                return Results.Json(
+                    new VacancyLikeErrorDto { Liked = false, Error = "antiforgery" },
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            return await MutateLikeAsync(id, liked: true, http, api, deployment, loggerFactory, ct);
+        }
+        catch (Exception ex)
+        {
+            return LikeProxyFailure(http, deployment, loggerFactory, id, liked: true, ex);
+        }
+    }
+
+    private static async Task<IResult> DeleteLikeAsync(
+        Guid id,
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (!await TryValidateAntiforgeryAsync(http, antiforgery))
+            {
+                AcceptatieDiagnosticHeaders.TrySetMessage(
+                    http.Response,
+                    deployment,
+                    "AntiforgeryValidationException: token missing or invalid");
+                return Results.Json(
+                    new VacancyLikeErrorDto { Liked = false, Error = "antiforgery" },
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            return await MutateLikeAsync(id, liked: false, http, api, deployment, loggerFactory, ct);
+        }
+        catch (Exception ex)
+        {
+            return LikeProxyFailure(http, deployment, loggerFactory, id, liked: false, ex);
+        }
+    }
+
+    private static async Task<bool> TryValidateAntiforgeryAsync(HttpContext http, IAntiforgery antiforgery)
+    {
+        if (!HasAntiforgeryToken(http))
+        {
+            return false;
+        }
+
+        try
+        {
+            return await antiforgery.IsRequestValidAsync(http);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return false;
+        }
+    }
+
+    private static bool HasAntiforgeryToken(HttpContext http)
+    {
+        if (http.Request.Headers.ContainsKey("RequestVerificationToken"))
+        {
+            return true;
+        }
+
+        if (http.Request.HasFormContentType
+            && http.Request.Form.TryGetValue("__RequestVerificationToken", out var formToken)
+            && !string.IsNullOrWhiteSpace(formToken))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static async Task<IResult> MutateLikeAsync(
+        Guid id,
+        bool liked,
+        HttpContext http,
+        JobsyApiClient api,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        CancellationToken ct)
+    {
+        try
+        {
+            var saved = await api.SetLikedAsync(id, liked, ct);
+            return Results.Json(new VacancyLikeProxyDto { Liked = saved });
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode code)
+        {
+            loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+                .LogWarning(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked} status={Status}", id, liked, code);
+            AcceptatieDiagnosticHeaders.TrySet(http.Response, deployment, ex);
+            return Results.Json(
+                new VacancyLikeErrorDto { Liked = false, Error = "api", Status = (int)code },
+                statusCode: (int)code);
+        }
+        catch (Exception ex)
+        {
+            return LikeProxyFailure(http, deployment, loggerFactory, id, liked, ex);
+        }
+    }
+
+    private static IResult LikeProxyFailure(
+        HttpContext http,
+        DeploymentEnvironmentLabel deployment,
+        ILoggerFactory loggerFactory,
+        Guid id,
+        bool liked,
+        Exception ex)
+    {
+        loggerFactory.CreateLogger(typeof(VacancyMapProxyEndpoints))
+            .LogError(ex, "Vacancy like proxy failed for {VacancyId} liked={Liked}", id, liked);
+        AcceptatieDiagnosticHeaders.TrySet(http.Response, deployment, ex);
+        return Results.Json(
+            new VacancyLikeErrorDto { Liked = false, Error = "proxy" },
+            statusCode: StatusCodes.Status500InternalServerError);
     }
 }
 
@@ -93,8 +281,9 @@ public sealed class VacancyMapApiForwarder : IVacancyMapApiForwarder
 
         using var client = JobsyApiClientFactory.Create(_services, _configuration);
         using var request = new HttpRequestMessage(HttpMethod.Get, target);
-        // Image proxy accepts any content; JSON endpoints keep application/json preference.
-        if (!apiPath.EndsWith("/image", StringComparison.OrdinalIgnoreCase))
+        // Image / map-popup-photo accept any content; JSON endpoints keep application/json preference.
+        if (!apiPath.EndsWith("/image", StringComparison.OrdinalIgnoreCase)
+            && !apiPath.Contains("/map-popup-photo", StringComparison.OrdinalIgnoreCase))
         {
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }

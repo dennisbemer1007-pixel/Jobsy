@@ -59,6 +59,7 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("PrivacyController", "RequestUnsubscribe", "Own unsubscribe request"),
         ("PrivacyController", "ConfirmUnsubscribe", "Own unsubscribe confirm"),
         ("PrivacyController", "DeleteAccount", "Own account delete"),
+        ("PrivacyController", "ResetCandidateProfile", "Own candidate profile reset"),
         ("DashboardController", "Refresh", "Refresh own role dashboard cache"),
         ("AssistantController", "Chat", "In-app assistant (no tenant mutate)"),
         ("CandidateActionsController", "SetUnavailable", "Own availability (token)"),
@@ -69,6 +70,15 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("VacancyEngagementController", "Like", "Own like"),
         ("VacancyEngagementController", "Unlike", "Own unlike"),
         ("VacancyEngagementController", "Share", "Own share signal"),
+        ("AfterMatchController", "ProposeEmployerSlots", "Employer after-match (company scoped in service)"),
+        ("AfterMatchController", "RecordOutcome", "Employer after-match outcome (company scoped in service)"),
+        ("AfterMatchController", "SelectSlot", "After-match slot selection (role checked in service)"),
+        ("AfterMatchController", "Reschedule", "After-match reschedule (role checked in service)"),
+        ("AfterMatchController", "Cancel", "After-match cancel (role checked in service)"),
+        ("AfterMatchController", "PreviewMessage", "After-match message preview (role checked in service)"),
+        ("AfterMatchController", "SendMessage", "After-match messaging (role checked in service)"),
+        ("AfterMatchController", "MarkCandidateMessagesRead", "Candidate marks after-match thread read"),
+        ("AfterMatchController", "MarkEmployerMessagesRead", "Employer marks after-match thread read"),
     ];
 
     [Fact]

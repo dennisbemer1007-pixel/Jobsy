@@ -82,7 +82,10 @@ public class AssetVersionGuardTests
         }
     }
 
-    private static readonly Regex SortableVersion = new(@"^\d{8}-\d{2}$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    // Shell uses yyyymmdd-NN; onboarding iteration tracks use yyyymmdd-rN (e.g. 20261018-r20).
+    private static readonly Regex SortableVersion = new(
+        @"^\d{8}-(?:\d{2}|r\d+)$",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     [Fact]
     public void Shell_and_feature_css_versions_are_sortable_yyyymmdd_nn()
@@ -249,6 +252,7 @@ public class AssetVersionGuardTests
             "*.razor",
             SearchOption.AllDirectories));
         hostFiles.Add(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        hostFiles.Add(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "banenkaart-maps-boot.js"));
         hostFiles.Add(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "lobsyPush.js"));
 
         foreach (var file in hostFiles.Distinct(StringComparer.OrdinalIgnoreCase))

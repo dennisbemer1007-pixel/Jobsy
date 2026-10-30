@@ -1,0 +1,219 @@
+@page "/__test/capture-test-block"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Capture
+@using Jobsy.Web.Localization
+@inject IWebHostEnvironment Environment
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+@if (!Environment.IsDevelopment() && !CaptureModeExtensions.IsEnabled(Configuration))
+{
+    <p>Not found.</p>
+}
+else
+{
+    <div class="test-page journey-page panel-page panel-page--cand-ill">
+        <TestPageShell Kind="_kind"
+                       Mode="TestPageShell.ShellMode.Question"
+                       Deep="_deep"
+                       H1="@_h1"
+                       TestName="@_testName"
+                       LevelName="@_levelName"
+                       Answered="_answeredForShell"
+                       TargetCount="_targetCount"
+                       ActiveDepth="_depth"
+                       ShowDepthSegments="true"
+                       ShowProgressSidePanel="true"
+                       BlockArtSlug="@_blockSlug">
+            <SidePanel>
+                <TestProgressInsightPanel Kind="_kind"
+                                          Lines="_insightLines"
+                                          NewLineCount="0" />
+            </SidePanel>
+            <ChildContent>
+                <TestQuestionFlow Kind="_kind"
+                                  Questions="_questions"
+                                  Answers="_answers"
+                                  Target="_depth"
+                                  StartAt="_startAt"
+                                  Compact="false"
+                                  ShowProgressInsight="true"
+                                  DomainForQuestionId="_domainFor"
+                                  OnChanged="@(_ => Task.CompletedTask)" />
+            </ChildContent>
+        </TestPageShell>
+    </div>
+}
+
+@code {
+    [Inject] private IConfiguration Configuration { get; set; } = default!;
+
+    private AssessmentKind _kind = AssessmentKind.Competence;
+    private TestDepthLevel _depth = TestDepthLevel.First;
+    private bool _deep;
+    private string _blockSlug = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
+    private string _h1 = "";
+    private string _testName = "";
+    private string _levelName = "";
+    private int _answeredForShell;
+    private int _startAt;
+    private int _targetCount = 5;
+    private Dictionary<int, int> _answers = [];
+    private List<TestQuestionFlow.FlowQuestion> _questions = [];
+    private IReadOnlyList<string> _insightLines = [];
+    private int _quickScanVersion = AssessmentTestVersions.V3;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _kind = ParseKind(q.TryGetValue("kind", out var k) ? k.ToString() : null);
+        var variant = q.TryGetValue("variant", out var v) ? v.ToString() : "quick";
+        _deep = variant.Equals("deep", StringComparison.OrdinalIgnoreCase);
+        _depth = variant switch
+        {
+            "verdieping" => TestDepthLevel.Full,
+            "deep" => TestDepthLevel.Bottom,
+            _ => TestDepthLevel.First
+        };
+        _blockSlug = _deep
+            ? TestBlockArt.SlugForDeepDomain(_kind, DeepSampleDomain(_kind))
+            : TestBlockArt.SlugForAssessment(_kind);
+
+        var flowAnswered = variant switch
+        {
+            "verdieping" => 12,
+            "deep" => 35,
+            _ => 0
+        };
+        _answeredForShell = flowAnswered;
+        _startAt = 0;
+
+        _targetCount = _deep
+            ? TestDepthRules.Bottom(_kind)
+            : TestDepthRules.CountFor(_kind, _depth, _quickScanVersion);
+
+        (_testName, _h1) = _kind switch
+        {
+            AssessmentKind.Career => (Culture["Career.Title"], Culture["Discovery.Test.Career.Title"]),
+            AssessmentKind.Culture => (Culture["CultureScan.Title"], Culture["Discovery.Test.CultureScan.Title"]),
+            AssessmentKind.Values => (Culture["ValuesScan.Title"], Culture["Discovery.Test.ValuesScan.Title"]),
+            _ => (Culture["Competency.Title"], Culture["Discovery.Test.Competency.Title"])
+        };
+        _levelName = Culture[TestDepthRules.NameKey(_depth)];
+
+        var ids = _deep
+            ? TestDepthRules.Parts(_kind).SelectMany(p => p.QuestionIds).Take(25).ToList()
+            : TestDepthRules.QuestionIdsFor(_kind, TestDepthLevel.Full, _quickScanVersion).Take(_targetCount).ToList();
+        var lang = Culture.Language;
+        _questions = ids.Select(id =>
+        {
+            var text = QuestionText(_kind, id, lang);
+            var (domain, reverse) = ItemMeta(_kind, id);
+            var example = AssessmentItemExamples.ExampleFor(_kind, id, domain, reverse, lang);
+            return new TestQuestionFlow.FlowQuestion(id, text, example);
+        }).ToList();
+
+        if (flowAnswered > 0)
+        {
+            var answeredIds = ids.Take(Math.Min(flowAnswered, ids.Count)).ToList();
+            _answers = answeredIds.ToDictionary(id => id, id => 3 + (id % 2));
+            _startAt = Math.Min(flowAnswered, Math.Max(0, _targetCount - 1));
+        }
+
+        _insightLines = BuildInsightLines(_kind, _answers.Count);
+    }
+
+    private static AssessmentKind ParseKind(string? raw)
+        => raw?.ToLowerInvariant() switch
+        {
+            "career" => AssessmentKind.Career,
+            "culture" => AssessmentKind.Culture,
+            "values" => AssessmentKind.Values,
+            _ => AssessmentKind.Competence
+        };
+
+    private static string? DeepSampleDomain(AssessmentKind kind)
+        => kind == AssessmentKind.Culture ? "Autonomy" : null;
+
+    private string QuestionText(AssessmentKind kind, int id, string lang)
+    {
+        if (_deep)
+        {
+            var q = DeepAnalysisScreenOrder.For(kind).First(x => x.Id == id);
+            return q.Prompt(lang);
+        }
+
+        return kind switch
+        {
+            AssessmentKind.Career => Culture[AssessmentQuickScanCatalog.CareerQuestions(_quickScanVersion).First(x => x.Id == id).TextKey],
+            AssessmentKind.Culture => Culture[AssessmentQuickScanCatalog.CultureQuestions(_quickScanVersion).First(x => x.Id == id).TextKey],
+            AssessmentKind.Values => Culture[AssessmentQuickScanCatalog.ValuesQuestions(_quickScanVersion).First(x => x.Id == id).TextKey],
+            _ => Culture[AssessmentQuickScanCatalog.CompetenceQuestions(_quickScanVersion).First(x => x.Id == id).TextKey]
+        };
+    }
+
+    private IReadOnlyList<string> BuildInsightLines(AssessmentKind kind, int answeredCount)
+    {
+        if (answeredCount < TestProgressInsight.BlockSize)
+        {
+            return [];
+        }
+
+        return kind switch
+        {
+            AssessmentKind.Career => ["Je werkt graag met mensen en ideeën."],
+            AssessmentKind.Culture => ["Je houdt van een informele, mensgerichte sfeer."],
+            AssessmentKind.Values => ["Verbinding en zelfstandigheid zijn voor jou belangrijk."],
+            _ => ["Je maakt af waar je aan begint."]
+        };
+    }
+
+    private (string Domain, bool Reverse) ItemMeta(AssessmentKind kind, int id)
+    {
+        if (_deep)
+        {
+            var q = DeepAnalysisCatalog.QuestionsFor(kind).First(x => x.Id == id);
+            return (q.Domain, q.Reverse);
+        }
+
+        return kind switch
+        {
+            AssessmentKind.Career => CareerMeta(id),
+            AssessmentKind.Culture => CultureMeta(id),
+            AssessmentKind.Values => ValuesMeta(id),
+            _ => CompetenceMeta(id)
+        };
+    }
+
+    private static (string Domain, bool Reverse) CompetenceMeta(int id)
+    {
+        var q = CompetencyTestCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private static (string Domain, bool Reverse) CareerMeta(int id)
+    {
+        var q = CareerTestCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private static (string Domain, bool Reverse) CultureMeta(int id)
+    {
+        var q = CulturePersonalityCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private static (string Domain, bool Reverse) ValuesMeta(int id)
+    {
+        var q = SchwartzValuesCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private string _domainFor(int id) => ItemMeta(_kind, id).Domain;
+}

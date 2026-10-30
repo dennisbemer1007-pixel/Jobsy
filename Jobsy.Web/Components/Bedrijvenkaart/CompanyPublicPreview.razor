@@ -1,0 +1,59 @@
+@inject CultureState Culture
+@using Jobsy.Core.Enums
+
+<section class="pub-section pp-company bk-preview-company">
+    <nav class="pp-company__crumbs">
+        <span>Banenkaart</span> › <span>Bedrijvenkaart</span> › <span>Bakkerij De Korenaar</span>
+    </nav>
+    <header class="pub-card pp-company__header">
+        <span class="pp-company__tile">🥐</span>
+        <div>
+            <h1>Bakkerij De Korenaar</h1>
+            <p class="pp-company__meta">Den Haag Centrum · @(NoVacancies ? "Geen vacatures" : "3 vacatures")</p>
+        </div>
+    </header>
+    <div class="pp-company__layout">
+        <div class="pp-company__main">
+            @if (NoVacancies)
+            {
+                <div class="pub-card" style="padding:1rem">
+                    <p>@Culture["Initiative.NoVacancies.Notify"]</p>
+                </div>
+            }
+            else
+            {
+                @for (var i = 0; i < 3; i++)
+                {
+                    <div class="pub-card" style="margin-bottom:.75rem;padding:1rem">Vacature @(i + 1)</div>
+                }
+            }
+            <section class="pub-card pp-company__about">
+                <h2>@Culture["CompanyPage.About"]</h2>
+                <p>Familiebakkerij in Den Haag — dagvers brood en patisserie.</p>
+            </section>
+            <section class="pub-card pp-company__sfeer">
+                <h2>@Culture["CompanyPage.Sfeer"]</h2>
+                <div class="pp-sfeer-grid">
+                    <div class="pp-sfeer-ph"></div>
+                    <div class="pp-sfeer-ph"></div>
+                    <div class="pp-sfeer-ph"></div>
+                    <div class="pp-sfeer-video">▶</div>
+                </div>
+            </section>
+        </div>
+        <aside class="pp-company__aside">
+            <div class="pp-initiative-card">
+                <h2>@Culture["Initiative.Panel.Title"]</h2>
+                <span class="bk-chip bk-chip--open">@Culture["Bk.OpenLabel"]</span>
+                <button type="button" class="btn--primary">@Culture["Initiative.Panel.Title"]</button>
+            </div>
+            <div class="pp-company__map-pane">
+                <div class="pp-company__map job-map bk-map-placeholder" aria-hidden="true"></div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+@code {
+    [Parameter] public bool NoVacancies { get; set; }
+}

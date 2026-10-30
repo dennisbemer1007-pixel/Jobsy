@@ -1,0 +1,56 @@
+@using Jobsy.Core.Models
+@using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Models
+@using Jobsy.Web.Onboarding
+@using Jobsy.Web.Services
+
+<div class="ob-rustig__canvas" data-testid="@($"onboarding-step-{Step}-illustrated")">
+    @switch (Step)
+    {
+        case 1:
+            <div class="ob-rustig__form-grid">
+                <OnboardingClientStepIsland Step="1"
+                                            Draft="Draft"
+                                            Presets="PresetTuples"
+                                            Seed="ClientSeed" />
+            </div>
+            break;
+        case 2:
+            <div class="ob-rustig__form-grid">
+                <OnboardingClientStepIsland Step="2"
+                                            Draft="Draft"
+                                            Presets="PresetTuples"
+                                            Seed="ClientSeed" />
+            </div>
+            break;
+    }
+</div>
+
+@code {
+    [Parameter] public int Step { get; set; }
+    [Parameter] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public IReadOnlyList<AvailabilityStep.Preset> Presets { get; set; } = Array.Empty<AvailabilityStep.Preset>();
+
+    private IReadOnlyList<(string Code, string TitleKey, string LeadKey)> PresetTuples
+        => Presets.Select(p => (p.Code, p.Title, p.Lead)).ToList();
+    [Parameter] public EventCallback AddressChanged { get; set; }
+    [Parameter] public EventCallback ShowCity { get; set; }
+    [Parameter] public EventCallback<AddressSuggestion> SelectAddress { get; set; }
+    [Parameter] public EventCallback<string> TogglePreset { get; set; }
+    [Parameter] public EventCallback ToggleFineTune { get; set; }
+    [Parameter] public EventCallback<int> SetMinHours { get; set; }
+    [Parameter] public EventCallback<int> SetMaxHours { get; set; }
+    [Parameter] public EventCallback ManualAvailability { get; set; }
+    [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
+    [Parameter] public EventCallback ResetPresets { get; set; }
+    [Parameter] public EventCallback<string> SelectTransport { get; set; }
+    [Parameter] public EventCallback<int> SelectTravelTime { get; set; }
+    [Parameter] public EventCallback ShowCustomTravel { get; set; }
+    [Parameter] public EventCallback AddJob { get; set; }
+    [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
+    [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
+    [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
+    [Parameter] public EventCallback<string> SelectEducation { get; set; }
+    [Parameter] public OnboardingClientStepSeed? ClientSeed { get; set; }
+}

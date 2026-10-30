@@ -110,7 +110,14 @@ public class JobsyJwtAuthSecurityTests : IClassFixture<JobsyJwtAuthSecurityFacto
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/health");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<HealthProbeDto>();
+        Assert.NotNull(json);
+        Assert.Equal("ok", json.Status);
+        Assert.False(string.IsNullOrWhiteSpace(json.Commit));
+        Assert.NotNull(json.AcceptatieSollicitatiesDemo);
     }
+
+    private sealed record HealthProbeDto(string Status, string Commit, object? AcceptatieSollicitatiesDemo);
 
     [Fact]
     public async Task Mollie_webhook_is_reachable_without_origin_header()
@@ -140,7 +147,7 @@ public class JobsyJwtAuthSecurityTests : IClassFixture<JobsyJwtAuthSecurityFacto
     }
 }
 
-public sealed class JobsyJwtAuthSecurityFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class JobsyJwtAuthSecurityFactory : ApiWebApplicationFactory
 {
     public Guid UserId { get; } = Guid.Parse("a1000000-0000-0000-0000-000000000099");
 

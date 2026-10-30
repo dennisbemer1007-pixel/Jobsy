@@ -61,6 +61,30 @@ dotnet test Jobsy.Tests/Jobsy.Tests.csproj
 dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter "FullyQualifiedName~CoreFunctionalFlow"
 ```
 
+### Playwright functional gate (`e2e-functional`)
+
+Required status check for PRs targeting **`acceptatie`**. Post-deploy smoke runs on every push to **`acceptatie`**
+(read-only against `acceptatie.lobsy.nl` when `JOBSY_E2E_BASE_URL` is configured in GitHub secrets).
+
+**Local (stack on :5201):**
+
+```bash
+chmod +x .github/scripts/start-ci-stack.sh
+export ConnectionStrings__JobsyDb='Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres'
+export VerificationCodes__Pepper='ci-verification-otp-pepper-32chars!!'
+.github/scripts/start-ci-stack.sh
+
+export JOBSY_E2E_FUNCTIONAL_GATE=1
+export JOBSY_E2E_BASE_URL=http://127.0.0.1:5201
+export JOBSY_E2E_CAPTURE=1
+export JOBSY_E2E_ARTIFACTS_ROOT=/opt/cursor/artifacts/functional-sweep
+pwsh Jobsy.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+dotnet test Jobsy.Tests/Jobsy.Tests.csproj -c Release --filter "Suite=FunctionalE2e"
+```
+
+Uses throwaway `@jobsy.local` registrations (OTP capture via `JOBSY_E2E_CAPTURE_EMAIL_CODES=1` on the API).
+Candidate sweep tests reuse `kandidaat@jobsy.local` / `Jobsy123!` on seeded CI, or Acc secrets when set.
+
 **Env:** meeste tests gebruiken EF InMemory / TestServer. Live Mollie wordt gemockt; `LiveApiSmokeTests` kan een draaiende API vereisen.
 
 ## 5. Testaccounts op acceptatie
@@ -72,3 +96,16 @@ Na merge + Dashboard env vars (`TestAccounts__Enabled`, `TestAccounts__Password_
 3. Cleanup: `dotnet Jobsy.Api.dll test-accounts cleanup` then `--execute --expect-users <n>`.
 
 Never put real passwords in tests or docs. Automated coverage lives under `Jobsy.Tests/TestAccounts/`.
+
+### Sollicitaties mockup demo data (acceptatie)
+
+When the **test-accounts guard** is active (`Lobsy__DeploymentEnvironment=Acceptatie`, `TestAccounts__Enabled=true`, `lobsy-acc-*`, stub payments, etc.), the API runs **`TestAccountsSollicitatiesDemoSeeder`** on **every startup** (after migrate). It is idempotent and only touches **`IsTestAccount`** candidates:
+
+- Primary lookup: `lobsy-test@mail.grokbot.com` (auto-marked `IsTestAccount` on acceptatie when the guard passes)
+- Fallback: catalog candidate e-mail (`test-kandidaat@<TestAccounts__EmailDomain>`)
+
+It adds fake employers (e.g. **Testbedrijf Groen**), vacancy applications (Verstuurd/Gezien, **Kies een moment** with open slots, gesprek gepland, unread berichten, afgerond), **Buiten Lobsy** external applied, and **Ik wil hier werken** initiatives.
+
+**First deploy / empty DB:** run `dotnet Jobsy.Api.dll test-accounts seed` once on `lobsy-acc-api` so the candidate + branch manager exist; subsequent acc deploys refresh demo rows automatically at startup.
+
+Manual re-run without redeploy: run `test-accounts seed` again (same guard).

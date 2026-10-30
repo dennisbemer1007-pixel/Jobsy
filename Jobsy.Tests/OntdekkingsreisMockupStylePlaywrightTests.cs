@@ -1,0 +1,167 @@
+using Jobsy.Core.Rules;
+using Jobsy.Tests.E2e;
+using Microsoft.Playwright;
+
+namespace Jobsy.Tests;
+
+[Collection("PlaywrightSmoke")]
+public sealed class OntdekkingsreisMockupStylePlaywrightTests : IAsyncLifetime
+{
+    private IPlaywright? _playwright;
+    private IBrowser? _browser;
+
+    public async ValueTask InitializeAsync()
+    {
+        var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        Assert.Equal(0, exit);
+        _playwright = await Playwright.CreateAsync();
+        _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_browser is not null)
+        {
+            await _browser.DisposeAsync();
+        }
+
+        _playwright?.Dispose();
+    }
+
+    [Theory]
+    [InlineData(false, 1024, 700)]
+    [InlineData(false, 1280, 720)]
+    [InlineData(true, 390, 844)]
+    public async Task Overview_ssr_status_margin_haltes_and_single_navigation(bool mobile, int width, int height)
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        factory.FinishReached = true;
+        factory.OnboardingComplete = true;
+        factory.CandidatePassportEnabled = true;
+        factory.SavedStep = 10;
+        factory.DiscoveryOverviewValuesAnswered = OnboardingWizardCatalog.MiniLevelCount;
+        factory.StoredProfile.PhoneNumber = "+31612345678";
+        factory.StoredProfile.Preferences ??= new();
+        factory.StoredProfile.Preferences.HomeAddress = "Zaandam";
+        factory.StoredProfile.Preferences.AboutMe = "Kok in opleiding";
+        factory.StoredProfile.AvailableFromDate = new DateOnly(2027, 4, 20);
+        factory.StoredProfile.Preferences.MaxTravelMinutes = 30;
+        factory.StoredProfile.TestAiConsentAt = DateTime.UtcNow;
+
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = mobile,
+            IsMobile = mobile,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        var navigations = 0;
+        page.FrameNavigated += (_, _) => navigations++;
+
+        var t0 = DateTime.UtcNow;
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/ontdekkingsreis?stap=overview"));
+        await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator("[data-discovery-ssr=\"1\"]").WaitForAsync(new() { Timeout = 30_000 });
+        var elapsedMs = (DateTime.UtcNow - t0).TotalMilliseconds;
+        Assert.True(elapsedMs < 8000, $"Discovery overview SSR took {elapsedMs}ms.");
+        Assert.True(navigations <= 2, $"Expected at most one redirect after sign-in, got {navigations} frame navigations.");
+        await page.WaitForURLAsync(u => u.Contains("stap=overview", StringComparison.OrdinalIgnoreCase), new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-discovery-ssr=\"1\"]')?.dataset.discoveryHaltesBound === '1'",
+            null,
+            new() { Timeout = 30_000 });
+
+        await DiscoveryRouteLabelPathAssert.AssertLabelsClearOfRoutePathAsync(page, mobile);
+
+        var container = page.Locator(".discovery-ssr-container").First;
+        var box = await container.BoundingBoxAsync();
+        Assert.NotNull(box);
+        var padLeft = await container.EvaluateAsync<double>(
+            "el => parseFloat(getComputedStyle(el).paddingLeft)");
+        Assert.True(padLeft >= 12, $"Overview container padding-left should be >= 12px, got {padLeft}");
+
+        var routeRoot = mobile ? ".discovery-mobile-route" : ".journey-route__desktop-only";
+        var kustLink = mobile
+            ? page.Locator(".discovery-mobile-stop[data-phase=kust] a.discovery-mobile-stop__hit")
+            : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=kust]");
+        await ClickHalteLinkAsync(kustLink, mobile);
+        await page.WaitForFunctionAsync("() => window.location.search.includes('fase=kust')", null, new() { Timeout = 15_000 });
+        if (!mobile)
+        {
+            var kustPanel = await page.Locator(".journey-route__desktop-only .discovery-phase-panel.is-active").InnerTextAsync();
+            Assert.DoesNotContain("Nog niet ingevuld", kustPanel, StringComparison.OrdinalIgnoreCase);
+            Assert.True(kustPanel.Contains("+316", StringComparison.Ordinal) || kustPanel.Contains("Zaandam", StringComparison.OrdinalIgnoreCase),
+                $"Expected filled kust summaries, got: {kustPanel}");
+        }
+
+        var rotsLink = mobile
+            ? page.Locator(".discovery-mobile-stop[data-phase=rots] a.discovery-mobile-stop__hit")
+            : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=rots]");
+        await ClickHalteLinkAsync(rotsLink, mobile);
+        await page.WaitForFunctionAsync("() => window.location.search.includes('fase=rots')", null, new() { Timeout = 15_000 });
+        if (!mobile)
+        {
+            var rotsPanel = await page.Locator(".journey-route__desktop-only .discovery-phase-panel[data-phase=rots]").InnerTextAsync();
+            Assert.Contains("Wat ik leuk vind", rotsPanel, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Waar houd ik niet van", rotsPanel, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var lightLink = mobile
+            ? page.Locator(".discovery-mobile-stop[data-phase=light] a.discovery-mobile-stop__hit")
+            : page.Locator($"{routeRoot} a.discovery-halte-link[data-phase=light]");
+        await ClickHalteLinkAsync(lightLink, mobile);
+        await page.WaitForFunctionAsync("() => window.location.search.includes('fase=light')", null, new() { Timeout = 15_000 });
+
+        await page.GotoAsync(root + "/candidate/ontdekkingsreis?stap=overview&fase=diep");
+        await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync();
+        var donePills = page.Locator(".journey-route__tests .status-pill--success");
+        Assert.True(await donePills.CountAsync() >= 4, "Expected four completed test rows on overview.");
+
+        await page.GotoAsync(root + "/candidate/ontdekkingsreis?stap=shed-10");
+        await page.Locator("[data-testid=\"discovery-shed\"]").WaitForAsync(new() { Timeout = 60_000 });
+
+        await page.GotoAsync(root + "/candidate/ontdekkingsreis?stap=overview&fase=light");
+        await page.Locator("[data-testid=\"discovery-overview-route\"]").WaitForAsync(new() { Timeout = 60_000 });
+        await AssertButtonsWithinViewportAsync(page, width, routeRoot);
+    }
+
+    private static async Task ClickHalteLinkAsync(ILocator link, bool mobile)
+    {
+        await link.ScrollIntoViewIfNeededAsync();
+        if (mobile)
+        {
+            await link.EvaluateAsync("el => el.click()");
+        }
+        else
+        {
+            await link.ClickAsync();
+        }
+    }
+
+    private static async Task AssertButtonsWithinViewportAsync(IPage page, int viewportWidth, string routeRoot)
+    {
+        var buttons = page.Locator($"{routeRoot} button, {routeRoot} a.discovery-halte-link[data-phase]");
+        var count = await buttons.CountAsync();
+        for (var i = 0; i < count; i++)
+        {
+            var btn = buttons.Nth(i);
+            if (!await btn.IsVisibleAsync())
+            {
+                continue;
+            }
+
+            var btnBox = await btn.BoundingBoxAsync();
+            Assert.NotNull(btnBox);
+            var slack = viewportWidth <= 400 ? 0.5 : 2.5;
+            Assert.True(btnBox!.X >= -slack, $"Button {i} starts at {btnBox.X}px");
+            Assert.True(btnBox.X + btnBox.Width <= viewportWidth + slack,
+                $"Button {i} ends at {btnBox.X + btnBox.Width}px (viewport {viewportWidth}px)");
+        }
+    }
+}

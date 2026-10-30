@@ -2,11 +2,13 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Http;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Services;
@@ -31,17 +33,37 @@ public sealed partial class JobsyApiClient
     private static async Task DownloadMyLobsyCvPdfViaBrowserAsync(IJSRuntime js)
     {
         await js.InvokeVoidAsync("jobsyExtras.ensure");
-        await js.InvokeVoidAsync("jobsyDownload.url", Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath);
+        await js.InvokeVoidAsync("jobsyDownload.file", Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath);
     }
 
     public async Task<MeProfile?> UploadMyCvAsync(IBrowserFile file, CancellationToken ct = default)
     {
         await using var stream = file.OpenReadStream(CandidateCvFileRules.MaxBytes, ct);
+        return await UploadMyCvStreamAsync(stream, file.Name, file.ContentType, ct);
+    }
+
+    public async Task<MeProfile?> UploadMyCvFromFormAsync(IFormFile file, CancellationToken ct = default)
+    {
+        if (file.Length <= 0 || file.Length > CandidateCvFileRules.MaxBytes)
+        {
+            throw new InvalidOperationException("CV upload mislukt.");
+        }
+
+        await using var stream = file.OpenReadStream();
+        return await UploadMyCvStreamAsync(stream, file.FileName, file.ContentType, ct);
+    }
+
+    private async Task<MeProfile?> UploadMyCvStreamAsync(
+        Stream stream,
+        string fileName,
+        string? contentType,
+        CancellationToken ct)
+    {
         using var content = new MultipartFormDataContent();
         using var fileContent = new StreamContent(stream);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(
-            string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType);
-        content.Add(fileContent, "file", file.Name);
+            string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
+        content.Add(fileContent, "file", fileName);
         var response = await _http.PostAsync("api/me/cv", content, ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -244,7 +266,11 @@ public sealed partial class JobsyApiClient
             availableFromDate,
             clearAvailableFromDate
         }, ct);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+
         InvalidateMeCache(KompasCacheKey);
         InvalidateMeCache(KompasDnaCacheKey);
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
@@ -274,6 +300,40 @@ public sealed partial class JobsyApiClient
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<CandidatePrivatePreferences>(cancellationToken: ct);
+    }
+
+    public async Task<OnboardingNearbySignal?> GetOnboardingNearbySignalAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<OnboardingNearbySignal>("api/me/onboarding/nearby-signal", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized
+                                               or HttpStatusCode.NotFound
+                                               or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<CandidateDiscoveryOverviewPanelDto?> GetDiscoveryOverviewPanelAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateDiscoveryOverviewPanelDto>(
+                "api/me/onboarding/discovery-overview",
+                ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized
+                                               or HttpStatusCode.NotFound
+                                               or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
     }
 
     public async Task<OnboardingState?> GetMyOnboardingAsync(CancellationToken ct = default)
@@ -328,7 +388,9 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(ExtractMessage(body) ?? "Voortgang opslaan mislukt.");
         }
 
-        return (await response.Content.ReadFromJsonAsync<OnboardingState>(cancellationToken: ct))!;
+        var state = (await response.Content.ReadFromJsonAsync<OnboardingState>(cancellationToken: ct))!;
+        InvalidateMeCache(OnboardingCacheKey);
+        return state;
     }
 
     public async Task<OnboardingState> CompleteMyOnboardingAsync(CancellationToken ct = default)

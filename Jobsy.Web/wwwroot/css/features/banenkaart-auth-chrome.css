@@ -1,0 +1,549 @@
+/* Scoped candidate header + footer chrome for NoBlazor /banenkaart (no full app.min.css). */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: var(--app-header-height, 4.25rem);
+    padding: 0.35rem 0.85rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+/* Match AppShellHeader + AuthHeader on other candidate NoBlazor pages (banenkaart skips app.min.css). */
+.app-shell--banenkaart-shell.app-shell--candidate .auth-user__name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 11rem;
+}
+
+.app-shell--banenkaart-shell .account-menu__av {
+    display: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    place-items: center;
+    flex: none;
+}
+
+.app-shell--banenkaart-shell .account-menu__toggle {
+    border: 0;
+    background: transparent;
+    padding: 0.2rem 0.15rem 0.2rem 0.35rem;
+}
+
+.app-shell--banenkaart-shell .account-menu__toggle .account-menu__icon {
+    display: inline-flex;
+}
+
+@media (max-width: 900px) {
+    .app-shell--banenkaart-shell {
+        --app-header-height: 55px;
+    }
+
+    .app-shell--banenkaart-shell .app-header {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100vw;
+        height: 55px;
+        min-height: 55px;
+        max-height: 55px;
+        padding: 8px 0.85rem;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .app-header__brand {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .app-shell--banenkaart-shell .app-header .brand__logo.lobsy-logo--horizontal,
+    .app-shell--banenkaart-shell .app-header .lobsy-logo__img {
+        max-height: 36px;
+        width: auto;
+    }
+
+    .app-shell--banenkaart-shell .account-menu__toggle .auth-user {
+        display: none;
+    }
+
+    .app-shell--banenkaart-shell .account-menu__toggle .account-menu__av {
+        display: grid;
+    }
+
+    .app-shell--banenkaart-shell .account-menu__toggle .account-menu__icon {
+        display: none;
+    }
+}
+
+.app-header__brand {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.app-header .brand,
+.app-header .brand:visited {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.app-header .brand__tagline {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-decoration: none;
+}
+
+.app-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+    min-width: 0;
+}
+
+.app-shell--candidate .app-header .brand-tagline,
+.app-shell--banenkaart-shell .app-header .brand-tagline {
+    display: none !important;
+}
+
+@media (max-width: 1023px) {
+    .app-shell--banenkaart-shell .candidate-header-nav-slot,
+    .app-shell--banenkaart-shell .candidate-header-nav {
+        display: none !important;
+    }
+}
+
+.account-menu {
+    position: relative;
+}
+
+.account-menu__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.2rem 0.15rem 0.2rem 0.35rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.account-menu__toggle:hover {
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+.account-menu__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    border: 1.5px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
+    background: color-mix(in srgb, var(--surface) 88%, var(--pearl-cool) 12%);
+    color: var(--brand);
+}
+
+.account-menu__icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.account-menu__panel {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    z-index: 60;
+    min-width: 14rem;
+    max-width: min(18rem, 90vw);
+    padding: 0.35rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+}
+
+.account-menu__identity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0.7rem 0.65rem;
+    margin-bottom: 0.15rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.account-menu__identity-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.account-menu__identity-email {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.3;
+    word-break: break-all;
+}
+
+.account-menu__link {
+    display: block;
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.account-menu__link:hover {
+    background: var(--accent-soft);
+    color: var(--brand);
+}
+
+.account-menu__link--logout {
+    appearance: none;
+    width: 100%;
+    margin-top: 0.2rem;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 7px 7px;
+    background: transparent;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: start;
+    color: var(--danger);
+    cursor: pointer;
+}
+
+.account-menu__link--logout:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.notification-bell__toggle,
+.language-selector__toggle {
+    border: 1.5px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
+    background: color-mix(in srgb, var(--surface) 88%, var(--pearl-cool) 12%);
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.app-shell--banenkaart-shell .account-menu__toggle,
+.app-shell--banenkaart-shell .account-menu__toggle:hover {
+    border: 0;
+    background: transparent;
+}
+
+.notification-bell {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.notification-bell__toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    color: var(--text);
+}
+
+.notification-bell__toggle:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+}
+
+.notification-bell__icon {
+    display: inline-flex;
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.notification-bell__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.notification-bell__badge {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: #b42318;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.15rem;
+    text-align: center;
+}
+
+.notification-bell__panel {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    width: min(22rem, 90vw);
+    max-width: 90vw;
+    margin-left: auto;
+    margin-right: 0;
+    max-height: min(70vh, 28rem);
+    overflow: auto;
+    z-index: 60;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.85rem;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
+    padding: 0.75rem;
+}
+
+.app-shell--banenkaart-shell .notification-bell__panel.notification-dropdown.mx-auto {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+.notification-bell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.notification-bell__subtitle {
+    margin: 0.1rem 0 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.notification-bell__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.notification-bell__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.notification-bell__close:hover {
+    background: color-mix(in srgb, var(--border) 35%, transparent);
+    color: var(--text);
+}
+
+.notification-bell__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.notification-bell__item {
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    background: color-mix(in srgb, var(--surface) 92%, var(--pearl-cool) 8%);
+}
+
+.notification-bell__item.is-unread {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.notification-bell__item-btn {
+    display: grid;
+    gap: 0.2rem;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.notification-bell__item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.notification-bell__item-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+}
+
+.notification-bell__item-body {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.notification-bell__item-meta {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.notification-bell__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-top: 0.35rem;
+    border-radius: 999px;
+    background: var(--brand);
+    flex-shrink: 0;
+}
+
+.notification-bell__action {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 0.45rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+    font-size: 0.82rem;
+    font-weight: 650;
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.notification-bell__action:hover {
+    background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+}
+
+.notification-bell__empty,
+.notification-bell__empty-state {
+    margin: 0.35rem 0;
+}
+
+.notification-bell__empty-title {
+    margin: 0 0 0.25rem;
+    font-weight: 700;
+}
+
+.app-shell--banenkaart-shell .muted {
+    color: var(--muted);
+}
+
+.header-dropdown-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
+}
+
+@media (max-width: 900px) {
+    .app-shell--banenkaart-shell .app-header .brand__tagline,
+    .app-shell--banenkaart-shell .app-header .brand-tagline {
+        display: none !important;
+    }
+
+    .app-shell--banenkaart-shell .notification-bell__panel,
+    .app-shell--banenkaart-shell .notification-dropdown {
+        position: fixed;
+        top: calc(var(--app-header-height, 4.25rem) + 0.35rem);
+        right: max(0.75rem, env(safe-area-inset-right, 0px));
+        left: auto;
+        width: min(22rem, calc(100vw - 1.5rem));
+        max-width: calc(100vw - 1.5rem);
+        margin-left: auto;
+        margin-right: 0;
+        bottom: auto;
+        max-height: min(70vh, 28rem);
+        overflow: auto;
+        z-index: 60;
+    }
+}
+
+.app-footer {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    margin-top: auto;
+    width: 100%;
+    max-width: min(72rem, 100%);
+    margin-inline: auto;
+    box-sizing: border-box;
+    padding: 0.75rem max(1.25rem, env(safe-area-inset-inline-end, 0px)) 0.65rem
+        max(1.25rem, env(safe-area-inset-inline-start, 0px));
+    background: transparent;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.app-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.9rem;
+}
+
+.app-footer__links a {
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+}
+
+.app-footer__links a:hover {
+    color: var(--brand);
+}
+
+.app-footer__copy {
+    margin: 0;
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+    .app-header:has(.candidate-header-nav) .app-header__actions .page-help,
+    .app-header:has(.candidate-header-nav) .app-header__actions .notification-bell {
+        display: none !important;
+    }
+}

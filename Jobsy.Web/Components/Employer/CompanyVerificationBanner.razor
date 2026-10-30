@@ -253,7 +253,7 @@
             // ignore
         }
 
-        Navigation.NavigateTo(EmployerLinks.Home, forceLoad: true);
+        Navigation.NavigateTo(EmployerLinks.Home, forceLoad: false, replace: true);
     }
 
     private void OnCultureChanged() => InvokeAsync(StateHasChanged);

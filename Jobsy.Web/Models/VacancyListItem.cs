@@ -56,6 +56,8 @@ public class VacancyListItem
     public decimal? CategoryPushBomCostTokens { get; set; }
     public bool CategoryUseTierPushBomPricing { get; set; } = true;
     public Dictionary<string, string> CategoryFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>ESCO occupation linked to this vacancy (category field or title resolve).</summary>
+    public string? EscoId { get; set; }
     public bool SuitableFor65Plus { get; set; }
     /// <summary>Public page path segment (8-digit KvK) when known.</summary>
     public string? KvkNumber { get; set; }
@@ -208,6 +210,15 @@ public sealed class CandidateReferenceItem
     public string ContactName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public string? ReferenceType { get; set; }
+    public string? RelationshipContext { get; set; }
+}
+
+public sealed class CandidateTimelineGapItem
+{
+    public string StartMonth { get; set; } = string.Empty;
+    public string EndMonth { get; set; } = string.Empty;
+    public string? Choice { get; set; }
 }
 
 public sealed class CandidatePreferences
@@ -244,6 +255,8 @@ public sealed class CandidatePreferences
     public string? WorkRegion { get; set; }
     public bool? HasOwnCar { get; set; }
     public List<string> ContractPreferences { get; set; } = [];
+    public List<string> WorkStatuses { get; set; } = [];
+    public List<CandidateTimelineGapItem> TimelineGaps { get; set; } = [];
 }
 
 public sealed class SharedWorkPreferenceChoices
@@ -252,6 +265,10 @@ public sealed class SharedWorkPreferenceChoices
     public string? Outdoor { get; set; }
     public string? PhysicalWork { get; set; }
     public string? Pace { get; set; }
+    public string? TeamMode { get; set; }
+    public string? Structure { get; set; }
+    public string? CustomerContact { get; set; }
+    public string? ShiftsPreference { get; set; }
 }
 
 public sealed class CandidateLanguage
@@ -269,6 +286,7 @@ public sealed class CandidatePrivatePreferences
 
 public sealed class CandidateEmployerHistory
 {
+    public Guid? EntryId { get; set; }
     public string EmployerName { get; set; } = string.Empty;
     public string? Role { get; set; }
     public int? Years { get; set; }
@@ -285,6 +303,11 @@ public sealed class CandidateEmployerHistory
 
     /// <summary>True after "Staat er niet bij". Not stored. A new role asks again.</summary>
     public bool OccupationDismissed { get; set; }
+
+    /// <summary>Hidden from employer-facing surfaces; still used in matching.</summary>
+    public bool OnlyForMe { get; set; }
+
+    public List<string> Skills { get; set; } = [];
 
     public bool ShowsAsCurrent =>
         IsCurrent == true

@@ -33,6 +33,9 @@ public static class UiStringsKandidaatBanen
             "Włącz 'Dostępny do pracy'",
             "Activează 'Disponibil pentru lucru'",
             "فعّل 'متاح للعمل'");
+        Add("Kb.Fit.PastWhy",
+            "Past bij je: {reason}", "Fits you: {reason}",
+            "Pasuje do ciebie: {reason}", "Ți se potrivește: {reason}", "يناسبك: {reason}");
         Add("Kb.Fit.Strong",
             "Sterke match", "Strong fit",
             "Silne dopasowanie", "Potrivire puternică", "تطابق قوي");
@@ -42,15 +45,24 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Fit.Some",
             "Enige match", "Some fit",
             "Częściowe dopasowanie", "Potrivire parțială", "تطابق جزئي");
+        Add("Kb.Fit.PastWhy",
+            "Past bij je: {reason}", "Fits you: {reason}",
+            "Pasuje do ciebie: {reason}", "Ți se potrivește: {reason}", "يناسبك: {reason}");
         Add("Kb.Fit.Gate",
             "Maak je paspoort af", "Finish your passport",
             "Uzupełnij paszport", "Finalizează pașaportul", "أكمل جوازك");
         Add("Kb.Fit.GateHint",
-            "Doe de cultuur- of waardentest, dan zie je hoe goed banen bij je passen.",
-            "Take the culture or values test to see how well jobs fit you.",
-            "Zrób test kultury lub wartości, a zobaczysz dopasowanie ofert.",
-            "Fă testul de cultură sau valori ca să vezi cât de bine ți se potrivesc joburile.",
-            "أجرِ اختبار الثقافة أو القيم لترى مدى ملاءمة الوظائف لك.");
+            "We laten zien wat we wél kunnen afwegen: reistijd, uren en beschikbaarheid. De korte tests maken het plaatje completer.",
+            "We show what we can weigh today: travel time, hours and availability. Short tests complete the picture.",
+            "Pokazujemy to, co dziś możemy ocenić: dojazd, godziny i dostępność. Krótkie testy dokańczają obraz.",
+            "Arătăm ce putem evalua acum: timp de drum, ore și disponibilitate. Testele scurte completează imaginea.",
+            "نعرض ما يمكن قياسه اليوم: وقت السفر والساعات والتوفر. الاختبارات القصيرة تكمل الصورة.");
+        Add("Kb.Fit.PracticalTitle",
+            "Wat nu al past", "What already fits",
+            "Co już pasuje", "Ce se potrivește deja", "ما يناسبك الآن");
+        Add("Kb.Fit.WhyTitle",
+            "Waarom past dit?", "Why does this fit?",
+            "Dlaczego to pasuje?", "De ce se potrivește?", "لماذا يناسبك هذا؟");
         Add("Kb.Fit.SparkleAria",
             "Fit-indicatie", "Fit indicator",
             "Wskaźnik dopasowania", "Indicator de potrivire", "مؤشر الملاءمة");
@@ -218,13 +230,16 @@ public static class UiStringsKandidaatBanen
             "Verstuurd", "Sent",
             "Wysłano", "Trimis", "أُرسل");
         Add("Kb.Timeline.Seen",
-            "Gezien door werkgever", "Seen by employer",
-            "Widziane przez pracodawcę", "Văzut de angajator", "شاهده صاحب العمل");
+            "Gezien", "Seen",
+            "Widziane", "Văzut", "شوهد");
+        Add("Kb.Timeline.SeenSub",
+            "Gezien op {0}", "Seen on {0}",
+            "Widziane {0}", "Văzut pe {0}", "شوهد في {0}");
         Add("Kb.Timeline.Interview",
             "Gesprek", "Interview",
             "Rozmowa", "Interviu", "مقابلة");
         Add("Kb.Timeline.Outcome",
-            "Uitslag", "Outcome",
+            "Uitkomst", "Outcome",
             "Wynik", "Rezultat", "النتيجة");
         Add("Kb.Timeline.StatusChanged",
             "Status bijgewerkt", "Status updated",
@@ -293,6 +308,18 @@ public static class UiStringsKandidaatBanen
             "Zobacz je", "Vezi-le", "اعرضها");
 
         // Steps legend (07)
+        Add("Kb.Apps.ApplyTip.Title",
+            "Zo werkt solliciteren met je Lobsy-CV",
+            "How applying works with your Lobsy CV",
+            "Jak działa aplikowanie z CV Lobsy",
+            "Cum funcționează candidatura cu CV-ul Lobsy",
+            "كيف يعمل التقديم مع سيرة Lobsy");
+        Add("Kb.Apps.ApplyTip.Body",
+            "Je Lobsy-CV gaat automatisch mee bij elke sollicitatie. Een aparte motivatiebrief hoef je niet mee te sturen.",
+            "Your Lobsy CV is sent automatically with every application. You do not need a separate cover letter.",
+            "Twoje CV Lobsy wysyłane jest automatycznie przy każdej aplikacji. Osobny list motywacyjny nie jest potrzebny.",
+            "CV-ul tău Lobsy merge automat la fiecare candidatură. Nu ai nevoie de scrisoare de intenție separată.",
+            "تُرسل سيرة Lobsy تلقائياً مع كل طلب. لا تحتاج إلى خطاب تغطية منفصل.");
         Add("Kb.Steps.Title",
             "Wat betekenen de stappen?", "What do the steps mean?",
             "Co oznaczają kroki?", "Ce înseamnă pașii?", "ماذا تعني الخطوات؟");
@@ -369,6 +396,12 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Saved.FilterOpen",
             "Nog open", "Still open",
             "Jeszcze otwarte", "Încă deschise", "ما زالت مفتوحة");
+        Add("Kb.Saved.FilterEmpty",
+            "Geen banen in deze filter. Kies een andere filter.",
+            "No jobs in this filter. Try another filter.",
+            "Brak ofert w tym filtrze. Wybierz inny filtr.",
+            "Niciun job în acest filtru. Încearcă alt filtru.",
+            "لا توجد وظائف في هذا الفلتر. جرّب فلترًا آخر.");
         Add("Kb.Saved.FilterClosed",
             "Gesloten", "Closed",
             "Zamknięte", "Închise", "مغلقة");
@@ -504,6 +537,18 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Map.NoVacancies",
             "Geen vacatures", "No vacancies",
             "Brak ofert", "Nicio ofertă", "لا وظائف");
+        Add("Kb.Map.NoVacanciesInTravel",
+            "Geen vacatures binnen je reistijd. De kaart zoomt naar waar banen wel staan.",
+            "No vacancies within your travel time. The map zooms to where jobs are available.",
+            "Brak ofert w czasie dojazdu. Mapa pokazuje, gdzie są oferty.",
+            "Nicio ofertă în timpul tău de călătorie. Harta se focusează unde sunt joburi.",
+            "لا وظائف ضمن وقت التنقل. تتمركز الخريطة حيث توجد الوظائف.");
+        Add("Kb.Map.NoVacanciesInViewport",
+            "Geen vacatures in beeld. Pas filters aan of verruim je reistijd.",
+            "No vacancies in view. Adjust filters or widen your travel time.",
+            "Brak ofert na mapie. Zmień filtry lub wydłuż czas dojazdu.",
+            "Nicio ofertă în vizor. Ajustează filtrele sau mărește timpul de călătorie.",
+            "لا وظائف في العرض. عدّل الفلاتر أو وسّع وقت التنقل.");
         Add("Kb.Map.VacancyFallback",
             "Vacature", "Vacancy",
             "Oferta", "Ofertă", "وظيفة");
@@ -579,6 +624,15 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.WorkType",
             "Soort werk", "Type of work",
             "Rodzaj pracy", "Tip de muncă", "نوع العمل");
+        Add("Kb.Filter.Category",
+            "Sector op de kaart", "Sector on the map",
+            "Sektor na mapie", "Sector pe hartă", "القطاع على الخريطة");
+        Add("Kb.Filter.DistanceHint",
+            "Alleen nodig zonder adres: zoek op vogelvlucht-afstand tot je een vertrekpunt kiest.",
+            "Only without an address: filter by crow-flies distance until you pick a starting point.",
+            "Tylko bez adresu: filtruj po linii prostej, dopóki nie wybierzesz punktu startu.",
+            "Doar fără adresă: filtrează după distanță în linie dreaptă până alegi un punct de plecare.",
+            "فقط بدون عنوان: رشّح حسب المسافة حتى تختار نقطة انطلاق.");
         Add("Kb.Filter.Hours",
             "Uren", "Hours",
             "Godziny", "Ore", "ساعات");
@@ -626,6 +680,36 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.ShowCount",
             "Toon {0} banen", "Show {0} jobs",
             "Pokaż {0} ofert", "Arată {0} joburi", "عرض {0} وظائف");
+        Add("Kb.Filter.ShowVacancyCount",
+            "Toon {0} vacatures", "Show {0} jobs",
+            "Pokaż {0} ofert", "Arată {0} joburi", "عرض {0} وظائف");
+        Add("Kb.Filter.ActiveCount",
+            "{0} actief", "{0} active",
+            "{0} aktywne", "{0} active", "{0} نشط");
+        Add("Kb.Filter.Wissen",
+            "Wissen", "Clear",
+            "Wyczyść", "Șterge", "مسح");
+        Add("Kb.Filter.ResultCount",
+            "{0} vacatures", "{0} jobs",
+            "{0} ofert", "{0} joburi", "{0} وظائف");
+        Add("Kb.Filter.ResultWithin",
+            "binnen {0} min {1}", "within {0} min {1}",
+            "w {0} min {1}", "în {0} min {1}", "خلال {0} د {1}");
+        Add("Kb.Filter.ResultOutsideTravelHint",
+            "Geen vacatures binnen je reistijd. Dit zijn de dichtstbijzijnde banen.",
+            "No vacancies within your travel time. These are the nearest jobs.",
+            "Brak ofert w czasie dojazdu. To najbliższe oferty.",
+            "Nicio ofertă în timpul tău de călătorie. Acestea sunt cele mai apropiate joburi.",
+            "لا وظائف ضمن وقت التنقل. هذه أقرب الوظائف.");
+        Add("Kb.Filter.RemoveTag",
+            "Verwijder filter {0}", "Remove filter {0}",
+            "Usuń filtr {0}", "Elimină filtrul {0}", "إزالة عامل التصفية {0}");
+        Add("Kb.Filter.AgeTag",
+            "{0} jaar", "Age {0}",
+            "{0} lat", "Vârsta {0}", "عمر {0}");
+        Add("Kb.Filter.MatchTag",
+            "Match vanaf {0}%", "Match from {0}%",
+            "Dopasowanie od {0}%", "Potrivire de la {0}%", "تطابق من {0}٪");
         Add("Kb.Filter.Keyword",
             "Zoekwoord", "Keyword",
             "Słowo kluczowe", "Cuvânt cheie", "كلمة البحث");
@@ -724,11 +808,11 @@ public static class UiStringsKandidaatBanen
             "Reistijd ongeveer (cirkel)", "Travel time approximate (circle)",
             "Czas orientacyjny (okrąg)", "Timp aproximativ (cerc)", "وقت تقريبي (دائرة)");
         Add("Kb.Legend.TravelApproxHint",
-            "Ongeveer — echte OV-routes volgen we nog niet.",
-            "Approximate — we do not follow real transit routes yet.",
-            "Orientacyjnie — nie śledzimy jeszcze tras komunikacji.",
-            "Aproximativ — încă nu urmărim rutele de transport.",
-            "تقريبي — لا نتبع مسارات المواصلات بعد.");
+            "Ongeveer. Echte OV-routes volgen we nog niet.",
+            "Approximate. We do not follow real transit routes yet.",
+            "Orientacyjnie. Nie śledzimy jeszcze tras komunikacji.",
+            "Aproximativ. Încă nu urmărim rutele de transport.",
+            "تقريبي. لا نتبع مسارات المواصلات بعد.");
         Add("Kb.Legend.RingMinutes",
             "{0} min", "{0} mins",
             "{0} minut", "{0} min.", "{0} د");
@@ -824,11 +908,11 @@ public static class UiStringsKandidaatBanen
             "În {0} min {1} de acasă. Schimbă cu butonul '{2}'.",
             "خلال {0} د {1} من المنزل. عدّله بزر '{2}'.");
         Add("Kb.List.RailTravel.Approx",
-            "Ongeveer — echte OV-routes volgen we nog niet.",
-            "Approximate — we do not follow real transit routes yet.",
-            "Orientacyjnie — nie śledzimy jeszcze tras komunikacji.",
-            "Aproximativ — încă nu urmărim rutele de transport.",
-            "تقريبي — لا نتبع مسارات المواصلات بعد.");
+            "Ongeveer. Echte OV-routes volgen we nog niet.",
+            "Approximate. We do not follow real transit routes yet.",
+            "Orientacyjnie. Nie śledzimy jeszcze tras komunikacji.",
+            "Aproximativ. Încă nu urmărim rutele de transport.",
+            "تقريبي. لا نتبع مسارات المواصلات بعد.");
 
         // Vacancy detail (06)
         Add("Kb.Detail.TravelTitle",
@@ -855,6 +939,12 @@ public static class UiStringsKandidaatBanen
             "Twój paszport idzie z tobą. List nie jest potrzebny.",
             "Pașaportul tău te însoțește. Nu e nevoie de scrisoare.",
             "جوازك يرافقك. لا حاجة لرسالة.");
+        Add("Kb.Detail.LobsyCvHint",
+            "Je Lobsy-CV gaat mee. Een brief is niet nodig.",
+            "Your Lobsy CV goes with you. No cover letter needed.",
+            "Twoje CV Lobsy idzie z tobą. List nie jest potrzebny.",
+            "CV-ul tău Lobsy te însoțește. Nu e nevoie de scrisoare.",
+            "سيرتك Lobsy تُرسل معك. لا حاجة لرسالة.");
         Add("Kb.Detail.HoursFact",
             "Uren per week", "Hours per week",
             "Godziny tygodniowo", "Ore pe săptămână", "ساعات في الأسبوع");

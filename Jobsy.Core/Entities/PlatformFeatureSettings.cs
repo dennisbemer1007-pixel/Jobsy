@@ -1,3 +1,4 @@
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Entities;
@@ -12,7 +13,7 @@ public class PlatformFeatureSettings
     /// <summary>When false, vacancy save skips AI/heuristic content moderation.</summary>
     public bool VacancyContentModerationEnabled { get; set; } = true;
 
-    public bool AuthenticatorEnabled { get; set; } = true;
+    public bool AuthenticatorEnabled { get; set; }
 
     public string? PublicWebBaseUrl { get; set; }
 
@@ -26,7 +27,7 @@ public class PlatformFeatureSettings
     /// Interactive session inactivity timeout in minutes (cookie + UI idle timer).
     /// Default 30 minutes; admin-configurable.
     /// </summary>
-    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+    public int SessionInactivityTimeoutMinutes { get; set; } = SessionAuthDefaults.InactivityTimeoutMinutes;
 
     /// <summary>
     /// Global floor for cookie <c>session_version</c>. Raise on a release to force every
@@ -106,6 +107,18 @@ public class PlatformFeatureSettings
     /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
     public bool PassportPdfV2Enabled { get; set; }
 
+    /// <summary>Age-specific school DNA-paspoort PDFs (groep 7/8 + VO). Default false; on in non-production when unset.</summary>
+    public bool PupilPassportV2Enabled { get; set; }
+
+    /// <summary>Student/stagiair DNA-paspoort (2-page, with vacancies). Default false; on in non-production when unset.</summary>
+    public bool StudentPassportEnabled { get; set; }
+
+    /// <summary>
+    /// When true, the DNA paspoort PDF shows the four DNA layer cards plus “Hoe ik graag werk”
+    /// and “Zo haal je het beste uit …”. Default true (acceptatie/dev); can be turned off per platform.
+    /// </summary>
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
+
     /// <summary>SMS phone verification. Stays false until an SMS provider is chosen.</summary>
     public bool PhoneVerificationEnabled { get; set; }
 
@@ -145,10 +158,64 @@ public class PlatformFeatureSettings
     /// <summary>Quick-Scan v2 catalogs for newly started candidate tests. Default false.</summary>
     public bool TestsV2Enabled { get; set; }
 
+    /// <summary>Per-item practice examples on Quick-Scan flows. Default false.</summary>
+    public bool TestItemExamplesEnabled { get; set; }
+
+    /// <summary>Progress insight card + motivation on Quick-Scan. Default false.</summary>
+    public bool TestProgressInsightEnabled { get; set; }
+
     /// <summary>
     /// Realistic match calibration (fit + confidence, no neutral inflation). Default false.
     /// </summary>
     public bool MatchCalibrationV1Enabled { get; set; }
+
+    /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
+    public bool EmployerFitQuestionnairesEnabled { get; set; }
+
+    /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
+    public bool KandidatenkaartEnabled { get; set; }
+
+    /// <summary>Bedrijvenkaart and open-application initiative flows. Default true.</summary>
+    public bool CompanyMapInitiativeEnabled { get; set; } = true;
+
+    /// <summary>Na de match: gesprek plannen en berichten. Default false.</summary>
+    public bool AfterMatchEnabled { get; set; }
+
+    /// <summary>Work-experience reference verification for candidates. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
+    /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
+    public bool SensitiveExperienceEnabled { get; set; }
+
+    /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
+    public bool TrainingPartnersEnabled { get; set; }
+
+    /// <summary>UWV werkmap flows for candidates. Default false.</summary>
+    public bool UwvFeaturesEnabled { get; set; }
+
+    /// <summary>Mijn activiteiten (UWV). Default false.</summary>
+    public bool ActivityLogEnabled { get; set; }
+
+    /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
+    public bool TestJourneyIllustrationEnabled { get; set; }
+
+    /// <summary>Onboarding finale v2 cards layout. Default false.</summary>
+    public bool OnboardingFinaleV2Enabled { get; set; }
+
+    /// <summary>Dag-in-het-leven links on occupation detail. Default true.</summary>
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+    /// <summary>Antwoorden wijzigen on completed tests. Default false.</summary>
+    public bool TestEditModeEnabled { get; set; }
+
+    /// <summary>Voorbeeld-PDF on test result pages. Default false.</summary>
+    public bool SamplePdfEnabled { get; set; }
+
+    /// <summary>Progressive test depth mockup (mini-spiegel, unlock cards). Default true.</summary>
+    public bool TestDepthValueMockupEnabled { get; set; } = true;
+
+    /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
+    public string AdminFlagOverridesJson { get; set; } = "[]";
 
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;

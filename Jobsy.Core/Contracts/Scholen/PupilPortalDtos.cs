@@ -80,6 +80,17 @@ public sealed record PupilChipsResponse(
     string NextStep = "question",
     string? NextPuzzleKey = null);
 
+public sealed record PupilPuzzleRequest(string Status = "done");
+
+public sealed record PupilPuzzleResponse(
+    bool Ok,
+    int CurrentIndex,
+    string? NextItemId,
+    string? NextWorldKey,
+    bool NeedsIsland,
+    string NextStep = "question",
+    string? NextPuzzleKey = null);
+
 public sealed record PupilErrorDto(
     string Error,
     string Message,
@@ -99,6 +110,29 @@ public sealed record PupilResultPageDto(
     int TotalItems = 60,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo);
 
-public sealed record PupilDreamJobRequest(string? Key);
+public sealed record PupilDreamJobRequest(string? Key, string? DisplayTitle = null);
 
 public sealed record PupilDreamJobResponse(string Key, DreamJobRouteStubDto DreamJob);
+
+public sealed record PupilVoPassportDto(
+    bool Enabled,
+    IReadOnlyList<string> FavoriteSubjects,
+    string? ProfileKey,
+    IReadOnlyList<string> SideJobAvailability,
+    string? TravelModeKey,
+    string? OwnWords,
+    IReadOnlyList<string> LearningGoals);
+
+public sealed record PupilVoPassportSaveRequest(
+    IReadOnlyList<string>? FavoriteSubjects,
+    string? ProfileKey,
+    IReadOnlyList<string>? SideJobAvailability,
+    string? TravelModeKey,
+    string? OwnWords,
+    IReadOnlyList<string>? LearningGoals);
+
+public sealed record ParentPassportCodeRequest(string Code);
+
+public sealed record ParentPassportErrorDto(string Code, string Message);
+
+public sealed record ParentPassportSessionDto(Guid PupilCodeId, long AccessExpiresUnix);

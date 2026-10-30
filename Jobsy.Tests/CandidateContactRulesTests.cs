@@ -27,4 +27,41 @@ public class CandidateContactRulesTests
     {
         Assert.Equal("31612345678", CandidatePhoneRules.ToWhatsAppE164Digits("06 12345678"));
     }
+
+    [Fact]
+    public void DisplayFirstName_rejects_email_and_local_part()
+    {
+        const string email = "dbemer@live.com";
+        Assert.Equal(string.Empty, CandidateNameRules.DisplayFirstName(email, null, email));
+        Assert.Equal(string.Empty, CandidateNameRules.DisplayFirstName("dbemer", null, email));
+        Assert.Equal("Dennis", CandidateNameRules.DisplayFirstName("Dennis", null, email));
+    }
+
+    [Fact]
+    public void ResolveOnboardingPrefill_splits_display_name_and_skips_email()
+    {
+        var (first, last) = CandidateNameRules.ResolveOnboardingPrefill(
+            "dbemer@live.com",
+            null,
+            "Ada Lovelace",
+            "dbemer@live.com");
+        Assert.Equal("Ada", first);
+        Assert.Equal("Lovelace", last);
+
+        (first, last) = CandidateNameRules.ResolveOnboardingPrefill(
+            "dbemer@live.com",
+            "",
+            "dbemer@live.com",
+            "dbemer@live.com");
+        Assert.Equal(string.Empty, first);
+        Assert.Equal(string.Empty, last);
+
+        (first, last) = CandidateNameRules.ResolveOnboardingPrefill(
+            "Test Kandidaat",
+            "Kandidaat",
+            "Test Kandidaat",
+            "test@example.com");
+        Assert.Equal("Test", first);
+        Assert.Equal("Kandidaat", last);
+    }
 }

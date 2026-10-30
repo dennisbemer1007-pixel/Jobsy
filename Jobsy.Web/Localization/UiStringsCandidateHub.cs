@@ -22,11 +22,26 @@ public static class UiStringsCandidateHub
             "Instellingen", "Settings",
             "Ustawienia", "Setări", "الإعدادات");
         Add("CandidateSettings.Lead",
-            "Alles wat je account, meldingen en voorkeuren regelt — op één plek.",
-            "Everything for your account, notifications and preferences — in one place.",
-            "Konto, powiadomienia i preferencje — w jednym miejscu.",
-            "Cont, notificări și preferințe — într-un singur loc.",
-            "حسابك وإشعاراتك وتفضيلاتك — في مكان واحد.");
+            "Alles wat je account, meldingen en voorkeuren regelt, op één plek.",
+            "Everything for your account, notifications and preferences, in one place.",
+            "Konto, powiadomienia i preferencje w jednym miejscu.",
+            "Cont, notificări și preferințe, într-un singur loc.",
+            "حسابك وإشعاراتك وتفضيلاتك في مكان واحد.");
+        Add("CandidateSettings.NavSettings",
+            "Instellingen", "Settings",
+            "Ustawienia", "Setări", "الإعدادات");
+        Add("CandidateSettings.NavPrivacy",
+            "Privacy", "Privacy",
+            "Prywatność", "Confidențialitate", "الخصوصية");
+        Add("CandidateSettings.NavAccount",
+            "Account", "Account",
+            "Konto", "Cont", "الحساب");
+        Add("CandidateSettings.PickPane",
+            "Kies links wat je wilt bekijken. Op desktop staat mail hier direct open.",
+            "Pick a section on the left. On desktop, mail settings open here by default.",
+            "Wybierz sekcję po lewej. Na desktopie ustawienia maila są tutaj.",
+            "Alege o secțiune în stânga. Pe desktop, mailul se deschide aici.",
+            "اختر قسمًا على اليسار. على سطح المكتب تفتح إعدادات البريد هنا.");
         Add("CandidateSettings.Mail.Title",
             "E-mail en meldingen", "E-mail and notifications",
             "E-mail i powiadomienia", "E-mail și notificări", "البريد والإشعارات");
@@ -64,6 +79,13 @@ public static class UiStringsCandidateHub
             "Confidențialitate, potrivire și călătoria ta.",
             "الخصوصية والمطابقة ورحلة الاكتشاف.");
 
+        Add("Profile.Hub.ViewPassport",
+            "Bekijk je paspoort", "View your passport",
+            "Zobacz paszport", "Vezi pașaportul", "اعرض جوازك");
+        Add("Profile.Hub.StatusComplete",
+            "Compleet", "Complete",
+            "Kompletny", "Complet", "مكتمل");
+
         Add("CandidatePrivacy.Title",
             "Privacy", "Privacy",
             "Prywatność", "Confidențialitate", "الخصوصية");
@@ -95,11 +117,11 @@ public static class UiStringsCandidateHub
             "Toestemmingen in je profiel", "Consents in your profile",
             "Zgody w profilu", "Consimțăminte în profil", "الموافقات في ملفك");
         Add("CandidatePrivacy.Consent.Desc",
-            "Talentpool, matching en commerciële voorkeuren — aanpassen in Mijn gegevens.",
-            "Talent pool, matching and marketing — edit under My details.",
-            "Talent pool i marketing — w danych paszportu.",
-            "Talent pool și marketing — în datele pașaportului.",
-            "مجموعة المواهب والتسويق — في بيانات الجواز.");
+            "Talentpool, matching en commerciële voorkeuren. Aanpassen in Mijn gegevens.",
+            "Talent pool, matching and marketing. Edit under My details.",
+            "Talent pool i marketing. W danych paszportu.",
+            "Talent pool și marketing. În datele pașaportului.",
+            "مجموعة المواهب والتسويق. في بيانات الجواز.");
         Add("CandidatePrivacy.Mail.Title",
             "E-mailvoorkeuren", "E-mail preferences",
             "Preferencje e-mail", "Preferințe e-mail", "تفضيلات البريد");

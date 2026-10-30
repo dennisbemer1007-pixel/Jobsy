@@ -53,33 +53,32 @@ public class StatusPageBunitTests : BunitContext
     }
 
     [Fact]
-    public void NotFound_has_exactly_three_actions_with_the_employers_on_hrefs()
+    public void NotFound_has_kreeft_actions_for_guests()
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(true));
 
         var cut = Render<StatusPage>(p => p.Add(x => x.Code, 404));
         var actions = cut.FindAll(".err-actions a").ToList();
 
-        Assert.Equal(3, actions.Count);
+        Assert.Equal(2, actions.Count);
         Assert.Equal("/", actions[0].GetAttribute("href"));
         Assert.Equal("/ontdek", actions[1].GetAttribute("href"));
-        Assert.Equal("/melden", actions[2].GetAttribute("href"));
-        Assert.Contains("Naar home", actions[0].TextContent, StringComparison.Ordinal);
+        Assert.Contains("Naar Mijn Lobsy", actions[0].TextContent, StringComparison.Ordinal);
+        Assert.Contains("Naar je reis", actions[1].TextContent, StringComparison.Ordinal);
+        Assert.Contains("Foutcode 404", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void NotFound_swaps_the_primary_action_when_employers_are_off()
+    public void NotFound_keeps_the_same_guest_actions_when_employers_are_off()
     {
         Services.AddSingleton<IEmployersSwitch>(new FixedSwitch(false));
 
         var cut = Render<StatusPage>(p => p.Add(x => x.Code, 404));
         var actions = cut.FindAll(".err-actions a").ToList();
 
-        Assert.Equal(3, actions.Count);
+        Assert.Equal(2, actions.Count);
         Assert.Equal("/", actions[0].GetAttribute("href"));
         Assert.Equal("/ontdek", actions[1].GetAttribute("href"));
-        Assert.Equal("/melden", actions[2].GetAttribute("href"));
-        Assert.Contains("Naar home", actions[0].TextContent, StringComparison.Ordinal);
     }
 
     [Fact]

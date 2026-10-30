@@ -1,3 +1,4 @@
+using Jobsy.Core.Localization;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Features;
 using Jobsy.Web.Hosting;
@@ -20,11 +21,14 @@ namespace Jobsy.Tests.Errors;
 /// tests exercise the middleware instead of a timer. Every API call still throws: the
 /// onderhoudspagina must render with the API down.
 /// </summary>
-public sealed class MaintenanceWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class MaintenanceWebFactory : WebWebApplicationFactory
 {
     public bool MaintenanceEnabled { get; init; }
 
     public DateTime? ExpectedEndUtc { get; init; }
+
+    /// <summary>When set, overrides <c>Localization:EnabledCultures</c> for this host.</summary>
+    public string? EnabledCultures { get; init; }
 
     public HttpClient CreateHtmlClient(string? culture = null)
     {
@@ -60,6 +64,22 @@ public sealed class MaintenanceWebFactory : WebApplicationFactory<Jobsy.Web.WebA
                 [ErrorPagesExtensions.ForceHandlerConfigKey] = "true",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
             });
+            if (EnabledCultures is not null)
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Localization:EnabledCultures"] = EnabledCultures
+                });
+            }
+        });
+
+        builder.ConfigureServices((context, _) =>
+        {
+            var enabled = context.Configuration["Localization:EnabledCultures"];
+            if (!string.IsNullOrWhiteSpace(enabled))
+            {
+                JobsyLanguages.ConfigureEnabledCultures(enabled);
+            }
         });
 
         builder.ConfigureTestServices(services =>

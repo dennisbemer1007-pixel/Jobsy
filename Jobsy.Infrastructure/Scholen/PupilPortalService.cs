@@ -6,7 +6,9 @@ using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +46,12 @@ public interface IPupilPortalService
         PupilChipsRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilPuzzleResponse? Ok, PupilErrorDto? Error, int StatusCode)> SavePuzzleAsync(
+        ClaimsPrincipal pupil,
+        string puzzleKey,
+        PupilPuzzleRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default);
@@ -51,10 +59,28 @@ public interface IPupilPortalService
     Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
         ClaimsPrincipal pupil,
         string? key,
+        string? displayTitle,
+        CancellationToken cancellationToken = default);
+
+    Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> GetVoPassportAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default);
+
+    Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> SaveVoPassportAsync(
+        ClaimsPrincipal pupil,
+        PupilVoPassportSaveRequest request,
         CancellationToken cancellationToken = default);
 
     Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
+        string? language = null,
+        CancellationToken cancellationToken = default);
+
+    Task<(PupilG78PassportWebDto? Ok, PupilErrorDto? Error, int StatusCode)> GetG78PassportWebAsync(
+        ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
+        string? language = null,
         CancellationToken cancellationToken = default);
 
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
@@ -83,6 +109,9 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IMemoryCache _cache;
     private readonly IPupilStoryRenderer _story;
     private readonly IPupilReportPdfService _pdf;
+    private readonly IPupilPassportPdfService _passportV2;
+    private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
+    private readonly IPlatformFeatureService _features;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
 
@@ -96,6 +125,9 @@ public sealed class PupilPortalService : IPupilPortalService
         IMemoryCache cache,
         IPupilStoryRenderer story,
         IPupilReportPdfService pdf,
+        IPupilPassportPdfService passportV2,
+        PupilPassportPdfModelBuilder passportModelBuilder,
+        IPlatformFeatureService features,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
     {
@@ -108,6 +140,9 @@ public sealed class PupilPortalService : IPupilPortalService
         _cache = cache;
         _story = story;
         _pdf = pdf;
+        _passportV2 = passportV2;
+        _passportModelBuilder = passportModelBuilder;
+        _features = features;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
@@ -273,9 +308,10 @@ public sealed class PupilPortalService : IPupilPortalService
         var def = _registry.ForClass(schoolClass);
         await EnsureResultAsync(code, def, cancellationToken);
 
+        var answersAtLogin = ParseAnswers(code.Progress?.AnswersJson);
         var completed = code.Status == PupilCodeStatus.Completed
-                        || code.Progress?.CompletedAtUtc is not null
-                        || code.Result is not null;
+                        && code.Result is not null
+                        && def.Bank.AllItems.All(i => answersAtLogin.ContainsKey(i.Id));
         if (schoolClass.TestWindow != TestWindowState.Open && !completed)
         {
             return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
@@ -350,7 +386,7 @@ public sealed class PupilPortalService : IPupilPortalService
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -365,13 +401,14 @@ public sealed class PupilPortalService : IPupilPortalService
         var total = def.Bank.AllItems.Count;
         var answered = answers.Count;
         var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
+        var puzzles = ParsePuzzles(code.Progress?.PuzzlesJson);
         var completed = code.Status == PupilCodeStatus.Completed
                         || code.Progress?.CompletedAtUtc is not null
                         || code.Result is not null;
         var windowOpen = schoolClass.TestWindow == TestWindowState.Open;
         var step = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, islandDone);
+            : PupilFlow.Next(def, answers, islandDone, puzzles);
         var nextStep = PupilFlow.ToNextStepToken(step.Kind);
         var needsIsland = step.Kind == PupilFlowStepKind.Island;
         var currentIndex = step.Kind == PupilFlowStepKind.Done
@@ -421,7 +458,7 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, new PupilErrorDto("validation", "Antwoord moet 1–5 zijn."), 400);
         }
 
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, includeResult: false, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -472,7 +509,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var answers = ParseAnswers(progress.AnswersJson);
         var islandDone = progress.ChipsSavedAtUtc is not null;
-        var step = PupilFlow.Next(def, answers, islandDone);
+        var puzzles = ParsePuzzles(progress.PuzzlesJson);
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
         var alreadyAnswered = answers.ContainsKey(item.Id);
         var allowed =
             alreadyAnswered
@@ -543,7 +581,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var nextStep = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null);
+            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null, ParsePuzzles(progress.PuzzlesJson));
         var needsIsland = nextStep.Kind == PupilFlowStepKind.Island;
         string? nextId = nextStep.Kind == PupilFlowStepKind.Question ? nextStep.ItemId : null;
         string? nextWorld = nextStep.Kind == PupilFlowStepKind.Island
@@ -569,7 +607,7 @@ public sealed class PupilPortalService : IPupilPortalService
         PupilChipsRequest request,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -625,7 +663,7 @@ public sealed class PupilPortalService : IPupilPortalService
         await _db.SaveChangesAsync(cancellationToken);
 
         var answers = ParseAnswers(progress.AnswersJson);
-        var step = PupilFlow.Next(def, answers, islandDone: true);
+        var step = PupilFlow.Next(def, answers, islandDone: true, ParsePuzzles(progress.PuzzlesJson));
         return (new PupilChipsResponse(
             true,
             step.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : step.Index,
@@ -635,11 +673,91 @@ public sealed class PupilPortalService : IPupilPortalService
             step.PuzzleKey), null, 200);
     }
 
+    public async Task<(PupilPuzzleResponse? Ok, PupilErrorDto? Error, int StatusCode)> SavePuzzleAsync(
+        ClaimsPrincipal pupil,
+        string puzzleKey,
+        PupilPuzzleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(puzzleKey))
+        {
+            return (null, new PupilErrorDto("validation", "Puzzel ontbreekt."), 400);
+        }
+
+        puzzleKey = puzzleKey.Trim();
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        var def = _registry.ForClass(schoolClass);
+        if (def.Set != PupilQuestionSet.Groep78
+            || !def.PuzzleSlots.Any(s => string.Equals(s.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase)))
+        {
+            return (null, new PupilErrorDto("not_found", "Deze puzzel hoort niet bij jouw test."), 404);
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
+        {
+            return (null, new PupilErrorDto("already_completed", "Je reis is al klaar."), 409);
+        }
+
+        if (schoolClass.TestWindow != TestWindowState.Open)
+        {
+            return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
+                PupilCopy.AnswersSavedWindow(schoolClass.QuestionSet)), 409);
+        }
+
+        var progress = code.Progress;
+        if (progress is null)
+        {
+            return (null, new PupilErrorDto("not_started", "Begin eerst met de reis."), 409);
+        }
+
+        var answers = ParseAnswers(progress.AnswersJson);
+        var islandDone = progress.ChipsSavedAtUtc is not null;
+        var puzzles = ParsePuzzles(progress.PuzzlesJson);
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
+        if (step.Kind != PupilFlowStepKind.Puzzle
+            || !string.Equals(step.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return (null, new PupilErrorDto(
+                "step_pending",
+                "Deze puzzel is nu niet aan de beurt.",
+                PupilFlow.ToNextStepToken(step.Kind),
+                step.PuzzleKey), 409);
+        }
+
+        var status = string.Equals(request.Status, "skipped", StringComparison.OrdinalIgnoreCase)
+            ? PupilPuzzleStatus.Skipped
+            : PupilPuzzleStatus.Done;
+        puzzles[puzzleKey] = status;
+        progress.PuzzlesJson = JsonSerializer.Serialize(
+            puzzles.ToDictionary(kv => kv.Key, kv => (int)kv.Value, StringComparer.Ordinal));
+        progress.UpdatedAtUtc = now;
+        code.LastSeenAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var next = PupilFlow.Next(def, answers, islandDone, puzzles);
+        return (new PupilPuzzleResponse(
+            true,
+            next.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : next.Index,
+            next.ItemId,
+            next.WorldKey,
+            next.Kind == PupilFlowStepKind.Island,
+            PupilFlow.ToNextStepToken(next.Kind),
+            next.PuzzleKey), null, 200);
+    }
+
     public async Task<(PupilResultPageDto? Ok, PupilErrorDto? Error, int StatusCode)> GetResultAsync(
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -689,9 +807,10 @@ public sealed class PupilPortalService : IPupilPortalService
     public async Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
         ClaimsPrincipal pupil,
         string? key,
+        string? displayTitle,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, ctx.Error, ctx.StatusCode);
@@ -722,6 +841,14 @@ public sealed class PupilPortalService : IPupilPortalService
         code.Progress.DreamJobKey = storeKey;
         code.Progress.UpdatedAtUtc = _clock.GetUtcNow().UtcDateTime;
         code.Result.DreamJobKey = storeKey;
+        var display = string.IsNullOrWhiteSpace(displayTitle) ? null : displayTitle.Trim();
+        if (display is { Length: > 96 })
+        {
+            display = display[..96];
+        }
+
+        code.Progress.DreamJobDisplayTitle = display;
+        code.Result.DreamJobDisplayTitle = display;
 
         var fit = PupilDreamJobFit.Evaluate(code.Result, code.Progress, storeKey);
         code.Result.FitSnapshotJson = fit is null ? null : PupilDreamJobFit.SerializeSnapshot(fit.Snapshot);
@@ -731,11 +858,95 @@ public sealed class PupilPortalService : IPupilPortalService
         return (new PupilDreamJobResponse(storeKey, dream), null, 200);
     }
 
-    public async Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
+    public async Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> GetVoPassportAsync(
         ClaimsPrincipal pupil,
         CancellationToken cancellationToken = default)
     {
-        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var enabled = await VoPassportExtrasEnabledAsync(ctx.Class!, cancellationToken);
+        if (!enabled)
+        {
+            return (new PupilVoPassportDto(false, [], null, [], null, null, []), null, 200);
+        }
+
+        return (MapVoPassportDto(ctx.Code!.Progress, enabled: true), null, 200);
+    }
+
+    public async Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> SaveVoPassportAsync(
+        ClaimsPrincipal pupil,
+        PupilVoPassportSaveRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var enabled = await VoPassportExtrasEnabledAsync(ctx.Class!, cancellationToken);
+        if (!enabled)
+        {
+            return (null, new PupilErrorDto("disabled", "Deze stap is niet beschikbaar."), 404);
+        }
+
+        var code = ctx.Code!;
+        if (code.Status != PupilCodeStatus.Completed || code.Progress is null)
+        {
+            return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        var progress = code.Progress;
+        var fav = (request.FavoriteSubjects ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Take(6).ToList();
+        var side = (request.SideJobAvailability ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Take(6).ToList();
+        var learn = (request.LearningGoals ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Take(5).ToList();
+        var own = string.IsNullOrWhiteSpace(request.OwnWords) ? null : request.OwnWords.Trim()[..Math.Min(500, request.OwnWords.Trim().Length)];
+
+        progress.VoFavoriteSubjectsJson = fav.Count > 0 ? JsonSerializer.Serialize(fav) : null;
+        progress.VoProfileKey = string.IsNullOrWhiteSpace(request.ProfileKey) ? null : request.ProfileKey.Trim();
+        progress.VoSideJobAvailabilityJson = side.Count > 0 ? JsonSerializer.Serialize(side) : null;
+        progress.VoTravelModeKey = string.IsNullOrWhiteSpace(request.TravelModeKey) ? null : request.TravelModeKey.Trim();
+        progress.VoOwnWords = own;
+        progress.VoLearningGoalsJson = learn.Count > 0 ? JsonSerializer.Serialize(learn) : null;
+        progress.UpdatedAtUtc = _clock.GetUtcNow().UtcDateTime;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return (MapVoPassportDto(progress, enabled: true), null, 200);
+    }
+
+    private async Task<bool> VoPassportExtrasEnabledAsync(SchoolClass schoolClass, CancellationToken cancellationToken)
+    {
+        if (schoolClass.QuestionSet != PupilQuestionSet.Vo)
+        {
+            return false;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        return features.PupilPassportV2Enabled;
+    }
+
+    private static PupilVoPassportDto MapVoPassportDto(PupilProgress? progress, bool enabled)
+        => new(
+            enabled,
+            ParseTagList(progress?.VoFavoriteSubjectsJson),
+            progress?.VoProfileKey,
+            ParseTagList(progress?.VoSideJobAvailabilityJson),
+            progress?.VoTravelModeKey,
+            progress?.VoOwnWords,
+            ParseTagList(progress?.VoLearningGoalsJson));
+
+    public async Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
+        ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
+        string? language = null,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
             return (null, null, ctx.Error, ctx.StatusCode);
@@ -753,10 +964,78 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(s => s.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "";
         var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
-        var model = BuildPdfModel(code, schoolClass, schoolName, display);
-        var bytes = _pdf.Render(model);
-        var fileName = $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
+        displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
+        var features = await _features.GetAsync(cancellationToken);
+        byte[] bytes;
+        if (features.PupilPassportV2Enabled)
+        {
+            var passportModel = _passportModelBuilder.Build(
+                code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
+            bytes = _passportV2.Render(passportModel);
+        }
+        else
+        {
+            var model = BuildPdfModel(code, schoolClass, schoolName, display);
+            bytes = _pdf.Render(model);
+        }
+
+        var fileName = features.PupilPassportV2Enabled
+            ? $"lobsy-dna-paspoort-{SanitizeFilePart(schoolClass.Name)}.pdf"
+            : $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
         return (bytes, fileName, null, 200);
+    }
+
+    public async Task<(PupilG78PassportWebDto? Ok, PupilErrorDto? Error, int StatusCode)> GetG78PassportWebAsync(
+        ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
+        string? language = null,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        var features = await _features.GetAsync(cancellationToken);
+        if (!features.PupilPassportV2Enabled
+            || schoolClass.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return (new PupilG78PassportWebDto(Enabled: false), null, 200);
+        }
+
+        if (code.Status != PupilCodeStatus.Completed || code.Result is null)
+        {
+            return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        var schoolName = await _db.Schools.AsNoTracking()
+            .Where(s => s.Id == schoolClass.SchoolId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync(cancellationToken) ?? "";
+        var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
+        displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
+        var passportModel = _passportModelBuilder.Build(
+            code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
+        return (PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true), null, 200);
+    }
+
+    private static string? SanitizeDisplayName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        var trimmed = name.Trim();
+        if (trimmed.Length > 48)
+        {
+            trimmed = trimmed[..48];
+        }
+
+        return trimmed;
     }
 
     private PupilReportPdfModel BuildPdfModel(
@@ -970,7 +1249,8 @@ public sealed class PupilPortalService : IPupilPortalService
 
     private async Task<(PupilCode? Code, SchoolClass? Class, PupilErrorDto? Error, int StatusCode)> ResolveSessionAsync(
         ClaimsPrincipal pupil,
-        CancellationToken cancellationToken)
+        bool includeResult = true,
+        CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(pupil.FindFirst(PupilClaimTypes.PupilCodeId)?.Value, out var codeId)
             || !int.TryParse(pupil.FindFirst(PupilClaimTypes.SessionVersion)?.Value, out var claimVersion))
@@ -978,11 +1258,16 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, null, new PupilErrorDto(SessionInvalidError, "Sessie ongeldig."), 401);
         }
 
-        var code = await _db.PupilCodes
+        IQueryable<PupilCode> query = _db.PupilCodes
+            .AsSplitQuery()
             .Include(c => c.Progress)
-            .Include(c => c.Result)
-            .Include(c => c.SchoolClass)!.ThenInclude(sc => sc!.School)
-            .FirstOrDefaultAsync(c => c.Id == codeId, cancellationToken);
+            .Include(c => c.SchoolClass)!.ThenInclude(sc => sc!.School);
+        if (includeResult)
+        {
+            query = query.Include(c => c.Result);
+        }
+
+        var code = await query.FirstOrDefaultAsync(c => c.Id == codeId, cancellationToken);
 
         if (code?.SchoolClass?.School is null)
         {
@@ -1073,6 +1358,38 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(c => (PupilQuestionSet?)c.QuestionSet)
             .FirstOrDefaultAsync(cancellationToken);
         return set ?? PupilQuestionSet.Groep78;
+    }
+
+    private static Dictionary<string, PupilPuzzleStatus> ParsePuzzles(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        try
+        {
+            var raw = JsonSerializer.Deserialize<Dictionary<string, int>>(json);
+            if (raw is null)
+            {
+                return new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var map = new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (key, value) in raw)
+            {
+                if (Enum.IsDefined(typeof(PupilPuzzleStatus), value))
+                {
+                    map[key] = (PupilPuzzleStatus)value;
+                }
+            }
+
+            return map;
+        }
+        catch (JsonException)
+        {
+            return new Dictionary<string, PupilPuzzleStatus>(StringComparer.OrdinalIgnoreCase);
+        }
     }
 
     private static Dictionary<string, int> ParseAnswers(string? json)

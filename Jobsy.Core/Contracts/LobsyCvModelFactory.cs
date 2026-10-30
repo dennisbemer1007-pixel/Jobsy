@@ -37,8 +37,9 @@ public static class LobsyCvModelFactory
         _ = latitude;
         _ = longitude;
 
-        var employers = (preferences.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
-            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+        var employerPrefs = EmployerFacingCandidateProfile.FilterPreferences(preferences);
+        var employers = (employerPrefs.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
+            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
             .Select(e => new LobsyCvEmployerEntry(
                 e.EmployerName.Trim(),
                 string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
@@ -158,12 +159,8 @@ public static class LobsyCvModelFactory
         var availability = ParseAvailabilityPayload(availabilityJson);
         var certificates = ParseCertificatesJson(certificatesJson);
 
+        _ = employerCount;
         var about = aboutMe;
-        if (employerCount > 0)
-        {
-            var note = $"{employerCount} eerdere werkgever{(employerCount == 1 ? "" : "s")}";
-            about = string.IsNullOrWhiteSpace(about) ? note : $"{about}\n\n{note}";
-        }
 
         var resolvedAge = ageYears ?? AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
         var reachMinutes = estimatedTravelMinutes > 0

@@ -63,9 +63,9 @@ public class EmailRendererTests
     public void Mascot_only_when_allowed()
     {
         var with = EmailRenderer.Render(Sample(mascot: true), Brand()).Html;
-        Assert.Contains("mascot-celebrating-128.png", with);
+        Assert.Contains("lobsy-mark-128.png", with);
         var without = EmailRenderer.Render(Sample(mascot: false), Brand()).Html;
-        Assert.DoesNotContain("mascot-celebrating-128.png", without);
+        Assert.DoesNotContain("lobsy-mark-128.png", without);
     }
 
     [Fact]

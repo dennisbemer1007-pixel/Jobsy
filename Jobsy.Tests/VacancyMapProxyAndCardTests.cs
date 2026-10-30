@@ -87,7 +87,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("jobsy-pins", js);
         Assert.Contains("getClusterLeaves", js);
         Assert.Contains("openClusterList", js);
-        Assert.Contains("async function onClusterClick", js);
+        Assert.Contains("function onClusterClick", js);
         Assert.Contains("setFeatureState", js);
         Assert.Contains("AbortController", js);
         Assert.DoesNotContain(
@@ -104,20 +104,44 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.Contains("photoIsWorkTypePlaceholder", js);
         Assert.Contains("/api/vacancies/{id:guid}/image",
             File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs")));
+        var proxy = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs"));
+        Assert.Contains("/api/vacancies/{id:guid}/map-popup-photo", proxy);
+        Assert.Contains("DisableAntiforgery", proxy);
+        Assert.Contains("IsRequestValidAsync", proxy);
+        Assert.Contains("MapPost(\"/api/vacancies/{id:guid}/like\", PostLikeAsync).RequireAuthorization().DisableAntiforgery()", proxy);
+        Assert.Contains("AcceptatieDiagnosticHeaders.TrySet", proxy);
+        Assert.Contains("readAntiforgeryHeader", js);
+        Assert.Contains("likeMutationHeaders", js);
+        Assert.Contains("ev.type !== \"click\"", js);
+        Assert.Contains("ensureLagenHeartInteractionGuard", js);
+        var vacanciesClient = File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Services", "ApiClient", "JobsyApiClient.Vacancies.cs"));
+        Assert.Contains("PostAsJsonAsync($\"api/vacancies/{vacancyId}/like\"", vacanciesClient);
+        Assert.Contains("PropertyNameCaseInsensitive = true", vacanciesClient);
+        var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "banenkaart-catalog.js"));
+        Assert.Contains("data-kb-list-photo", catalog);
+        Assert.Contains("observeLazyListPhotos", catalog);
+        Assert.Contains("map-popup-photo?variant=mobile", catalog);
+        Assert.Contains("data-kb-strip-photo", catalog);
+        Assert.Contains("kb-strip-lazy-photo", catalog);
+        Assert.Contains("stopEvent(ev)", js);
         var discovery = File.ReadAllText(
             Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         // Full vacancy catalog must never be persisted into / HTML (2 MB hub limit).
         Assert.DoesNotContain("PersistentComponentState", discovery);
         Assert.DoesNotContain("PersistAsJson", discovery);
         Assert.DoesNotContain("DiscoveryPersistState", discovery);
+        Assert.Contains("getClusterExpansionZoom", js, StringComparison.Ordinal);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
-        var onClusterStart = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
+        var onClusterStart = js.IndexOf("function onClusterClick", StringComparison.Ordinal);
         Assert.True(onClusterStart >= 0);
         var onClusterEnd = js.IndexOf("\n    function onPinClick", onClusterStart, StringComparison.Ordinal);
         Assert.True(onClusterEnd > onClusterStart);
         var onCluster = js.Substring(onClusterStart, onClusterEnd - onClusterStart);
-        Assert.Contains("openClusterList", onCluster, StringComparison.Ordinal);
-        Assert.DoesNotContain("easeTo", onCluster, StringComparison.Ordinal);
+        Assert.Contains("getClusterExpansionZoom", onCluster, StringComparison.Ordinal);
+        Assert.Contains("easeTo", onCluster, StringComparison.Ordinal);
+        Assert.Contains("openClusterListFromClusterId", onCluster, StringComparison.Ordinal);
+        Assert.DoesNotContain("stubMarkersForCluster", onCluster, StringComparison.Ordinal);
         Assert.Contains("fetchJsonWithOneRetry", js);
         Assert.Contains("retryAfterMs", js);
         // Cluster paging uses pin/card HTML in a fixed frame — never the shimmer skeleton.
@@ -179,7 +203,8 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             "/api/vacancies/pins",
             $"/api/vacancies/{sampleId:D}/card",
             $"/api/vacancies/cards?ids={sampleId:D}",
-            $"/api/vacancies/{sampleId:D}"
+            $"/api/vacancies/{sampleId:D}",
+            $"/api/vacancies/{sampleId:D}/map-popup-photo?variant=desktop"
         };
 
         foreach (var url in urls)
@@ -188,6 +213,20 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
             Assert.True(
                 response.StatusCode is HttpStatusCode.OK or HttpStatusCode.NotModified,
                 $"{url} → {response.StatusCode}");
+        }
+
+        var photo = await webClient.GetAsync($"/api/vacancies/{sampleId:D}/map-popup-photo?variant=desktop");
+        Assert.Equal(HttpStatusCode.OK, photo.StatusCode);
+        var photoBytes = await photo.Content.ReadAsByteArrayAsync();
+        Assert.InRange(photoBytes.Length, 200, 80_000);
+        if (photo.Content.Headers.ContentType?.MediaType is { } mediaType)
+        {
+            Assert.Equal("image/webp", mediaType);
+        }
+        else
+        {
+            Assert.Equal((byte)'R', photoBytes[0]);
+            Assert.Equal((byte)'I', photoBytes[1]);
         }
     }
 
@@ -211,7 +250,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
 /// <summary>
 /// Jobsy.Web TestServer that forwards map proxy calls to the API test factory.
 /// </summary>
-public sealed class VacancyMapWebProxyFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class VacancyMapWebProxyFactory : WebWebApplicationFactory
 {
     private readonly RoleFunctionalWebAppFactory _api;
 

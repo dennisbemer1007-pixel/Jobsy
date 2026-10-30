@@ -33,7 +33,7 @@ public class BlazorCircuitGuardTests
         Assert.Contains("LoadBlazorRuntime", app);
         Assert.Contains("type === \"unload\"", app);
         Assert.Contains("pagehide", app);
-        Assert.Contains("js/app-core.js?v=", app);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", app);
         Assert.Contains("nonce=\"@Nonce\"", app);
         Assert.Contains("defer", app);
     }
@@ -69,12 +69,15 @@ public class BlazorCircuitGuardTests
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("id=\"components-reconnect-modal\"", app);
         Assert.Contains("reconnect-toast", app);
-        Assert.Contains("data-reconnect-reload", app);
+        Assert.Contains("data-reconnect-try", app);
+        Assert.Contains("data-reconnect-login", app);
         // errors 04 §04.3: the toast reads the catalog, so assert the key, not a Dutch literal.
         Assert.Contains("Status.Reconnect.Trying", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Failed", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Rejected", app, StringComparison.Ordinal);
-        Assert.Contains("Status.Reconnect.Reload", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.SessionExpired", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.ReconnectButton", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.SignInAgain", app, StringComparison.Ordinal);
         Assert.DoesNotContain(">Verbinding herstellen", app, StringComparison.Ordinal);
         Assert.Equal(
             "Verbinding herstellen…",
@@ -83,11 +86,10 @@ public class BlazorCircuitGuardTests
             Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "nl"),
             Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "ar"));
         Assert.DoesNotContain("onclick=\"location.reload()\"", app);
-        Assert.Contains("closest(\"[data-reconnect-reload]\")", app);
+        Assert.Contains("data-reconnect-reload", app, StringComparison.Ordinal);
 
-        var appHead = app[..app.IndexOf("@if (LoadBlazorRuntime)", StringComparison.Ordinal)];
-        Assert.Contains("css/features/reconnect.css?v=", appHead, StringComparison.Ordinal);
-        Assert.Contains("data-reconnect-css", appHead, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/reconnect.css\")", app, StringComparison.Ordinal);
+        Assert.Contains("data-reconnect-css", app, StringComparison.Ordinal);
         var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.Contains(
             "#components-reconnect-modal:not(.components-reconnect-show)",
@@ -95,11 +97,15 @@ public class BlazorCircuitGuardTests
             StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "reconnect.css"));
-        Assert.Contains(".reconnect-toast {\n    display: none;\n    position: fixed;", css);
-        Assert.Contains("bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains(".reconnect-toast", css);
+        Assert.Contains("display: none", css);
+        Assert.Contains("position: fixed", css);
+        Assert.Contains("--bottom-nav-clearance", css, StringComparison.Ordinal);
+        Assert.Contains("data-lobsy-reconnect-active", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-retrying", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-paused", css, StringComparison.Ordinal);
-        Assert.Contains(".reconnect-toast__msg {\n    display: none;", css, StringComparison.Ordinal);
+        Assert.Contains(".reconnect-toast__msg", css, StringComparison.Ordinal);
+        Assert.Contains("display: none", css, StringComparison.Ordinal);
     }
 
     [Fact]

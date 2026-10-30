@@ -4,6 +4,8 @@
 @using System.Net.Http.Json
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
@@ -13,6 +15,7 @@
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject IServiceProvider Services
+@inject IFeatureFlags Features
 
 <PageTitle>@Culture["LeerlingStory.Title"] · Lobsy</PageTitle>
 
@@ -48,7 +51,7 @@ else
 
         <section class="ll-card">
             <p class="ll-question__meta">
-                <span class="ll-pill">@string.Format(Culture["LeerlingStory.DonePill"], _result.TotalItems)</span>
+                <span class="ll-pill">@Culture["LeerlingStory.DonePill"]</span>
             </p>
             <h1>@Culture["LeerlingStory.Title"]</h1>
             <LeerlingSpeak Text="@_result.Story.Body" SpeechKey="ll-story" />
@@ -89,6 +92,10 @@ else
         </section>
 
         <div class="ll-result__actions">
+            @if (_passportV2)
+            {
+                <a class="btn-secondary" href="/leerling/paspoort">@Culture["LeerlingPassport.Page.Title"]</a>
+            }
             <a class="btn-secondary" href="/leerling/pdf">@Culture["LeerlingStory.Pdf"]</a>
             <a class="btn-primary" href="/leerling/droombaan">@Culture["LeerlingStory.CheckDream"]</a>
         </div>
@@ -102,10 +109,14 @@ else
     private bool _retried;
     private bool _sessionLost;
     private PupilResultPageDto? _result;
+    private bool _passportV2;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync(allowRetry: true);
+        var flags = await Features.GetAsync();
+        _passportV2 = flags.PupilPassportV2Enabled
+                      && _result?.QuestionSet == PupilQuestionSet.Groep78;
     }
 
     private async Task RetryOnce()

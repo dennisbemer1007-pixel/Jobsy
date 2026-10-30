@@ -50,16 +50,24 @@
     {
         var price = priceEuro ?? FlexCommercialSettings.DefaultDeepAnalysisPriceEuro;
         var priceText = "€ " + price.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
-        var keys = new[]
-        {
-            ("Landing.Faq.Q1", "Landing.Faq.A1"),
-            ("Landing.Faq.Q2", "Landing.Faq.A2"),
-            ("Landing.Faq.Q3", "Landing.Faq.A3"),
-            ("Landing.Faq.Q4", "Landing.Faq.A4"),
-            ("Landing.Faq.Q5", "Landing.Faq.A5"),
-            ("Landing.Faq.Q6", "Landing.Faq.A6"),
-            ("Landing.Faq.Q7", "Landing.Faq.A7"),
-        };
+        (string Q, string A)[] keys = variant == LandingVariant.On
+            ?
+            [
+                ("Landing.Faq.Q1", "Landing.Faq.A1"),
+                ("Landing.Faq.Q2", "Landing.Faq.A2"),
+                ("Landing.Faq.Q3", "Landing.Faq.A3"),
+                ("Landing.Faq.Q4", "Landing.Faq.A4"),
+            ]
+            :
+            [
+                ("Landing.Faq.Q1", "Landing.Faq.A1"),
+                ("Landing.Faq.Q2", "Landing.Faq.A2"),
+                ("Landing.Faq.Q3", "Landing.Faq.A3"),
+                ("Landing.Faq.Q4", "Landing.Faq.A4"),
+                ("Landing.Faq.Q5", "Landing.Faq.A5"),
+                ("Landing.Faq.Q6", "Landing.Faq.A6"),
+                ("Landing.Faq.Q7", "Landing.Faq.A7"),
+            ];
         var list = new List<(string, string)>(keys.Length);
         foreach (var (qk, ak) in keys)
         {

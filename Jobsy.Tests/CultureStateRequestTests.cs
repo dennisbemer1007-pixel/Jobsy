@@ -1,11 +1,21 @@
+using Jobsy.Core.Localization;
 using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Tests;
 
-public class CultureStateRequestTests
+[Collection("JobsyLanguagesState")]
+public class CultureStateRequestTests : IDisposable
 {
+    public CultureStateRequestTests() => JobsyLanguages.ResetEnabledForTests();
+
+    public void Dispose()
+    {
+        JobsyLanguages.ResetEnabledForTests();
+        GC.SuppressFinalize(this);
+    }
+
     [Fact]
     public void Lang_query_beats_cookie_beats_nl()
     {
@@ -14,13 +24,21 @@ public class CultureStateRequestTests
         Assert.Equal("en", CultureRequest.ResolveLanguage(http));
 
         http.Request.QueryString = new QueryString("?lang=pl");
-        Assert.Equal("pl", CultureRequest.ResolveLanguage(http));
+        Assert.Equal("en", CultureRequest.ResolveLanguage(http));
+
+        http.Request.Headers.Cookie = "";
+        http.Request.QueryString = new QueryString("?lang=pl");
+        http.Request.Headers.AcceptLanguage = "en-US,en;q=0.9";
+        Assert.Equal("en", CultureRequest.ResolveLanguage(http));
+
+        http.Request.Headers.AcceptLanguage = "";
+        Assert.Equal("nl", CultureRequest.ResolveLanguage(http));
 
         var empty = new DefaultHttpContext();
         Assert.Equal("nl", CultureRequest.ResolveLanguage(empty));
         Assert.False(CultureRequest.HasExplicitChoice(empty));
         Assert.False(CultureRequest.HasExplicitChoice(null));
-        Assert.True(CultureRequest.HasExplicitChoice(http));
+        Assert.False(CultureRequest.HasExplicitChoice(http));
     }
 
     [Fact]
@@ -63,7 +81,38 @@ public class CultureStateRequestTests
             new AnonAuth(),
             accessor);
         await culture.InitializeAsync();
-        Assert.Equal("ro", culture.Language);
+        Assert.Equal("nl", culture.Language);
+    }
+
+    [Fact]
+    public void InitializeFromLanguage_ignores_accept_language_on_apply()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.AcceptLanguage = "en-US,en;q=0.9";
+        var accessor = new HttpContextAccessor { HttpContext = http };
+        var culture = new CultureState(
+            new NoJs(),
+            new ServiceCollection().BuildServiceProvider(),
+            new AnonAuth(),
+            accessor);
+        culture.InitializeFromLanguage("nl");
+        Assert.Equal("nl", culture.Language);
+    }
+
+    [Fact]
+    public async Task Disabled_cookie_falls_back_to_accept_language_english()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.Cookie = "Jobsy.Culture=pl";
+        http.Request.Headers.AcceptLanguage = "en-US,en;q=0.9,pl;q=0.8";
+        var accessor = new HttpContextAccessor { HttpContext = http };
+        var culture = new CultureState(
+            new NoJs(),
+            new ServiceCollection().BuildServiceProvider(),
+            new AnonAuth(),
+            accessor);
+        await culture.InitializeAsync();
+        Assert.Equal("en", culture.Language);
     }
 
     private sealed class ScriptedJs : Microsoft.JSInterop.IJSRuntime
@@ -105,4 +154,5 @@ public class CultureStateRequestTests
             => Task.FromResult(new Microsoft.AspNetCore.Components.Authorization.AuthenticationState(
                 new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity())));
     }
+
 }

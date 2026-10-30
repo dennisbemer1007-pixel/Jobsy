@@ -62,8 +62,8 @@ public class KbFilterSheetBunitTests
     public void Wis_alles_clears_filters_but_not_address_helpers()
     {
         var discovery = ReadDiscovery();
-        Assert.Contains("Kb.Filter.ClearAll", discovery, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"kb-filter-clear-all\"", discovery, StringComparison.Ordinal);
+        Assert.Contains("Kb.Filter.Wissen", discovery, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"kb-filter-cancel\"", discovery, StringComparison.Ordinal);
         Assert.Contains("@onclick=\"ClearAllFiltersAsync\"", discovery, StringComparison.Ordinal);
 
         var clearMethod = discovery.IndexOf("private async Task ClearAllFiltersAsync()", StringComparison.Ordinal);
@@ -84,7 +84,7 @@ public class KbFilterSheetBunitTests
         Assert.Contains("data-testid=\"kb-filter-cancel\"", discovery, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"kb-filter-apply\"", discovery, StringComparison.Ordinal);
         Assert.Contains("ApplyFiltersLabel", discovery, StringComparison.Ordinal);
-        Assert.Contains("Kb.Filter.ShowCount", discovery, StringComparison.Ordinal);
+        Assert.Contains("Kb.Filter.ShowVacancyCount", discovery, StringComparison.Ordinal);
         Assert.Contains("SchedulePendingCountRefresh", discovery, StringComparison.Ordinal);
         Assert.Contains("Task.Delay(300", discovery, StringComparison.Ordinal);
 
@@ -109,7 +109,7 @@ public class KbFilterSheetBunitTests
     }
 
     [Fact]
-    public void Footer_uses_toon_banen_not_toepassen_and_header_has_wis_alles()
+    public void Footer_uses_toon_vacatures_and_wissen_and_header_has_active_count()
     {
         var discovery = ReadDiscovery();
         var footerIdx = discovery.IndexOf("class=\"filter-sheet__footer\"", StringComparison.Ordinal);
@@ -118,11 +118,13 @@ public class KbFilterSheetBunitTests
         Assert.True(footerEnd > footerIdx);
         var footer = discovery[footerIdx..Math.Min(discovery.Length, footerEnd + 6)];
         Assert.Contains("ApplyFiltersLabel", footer, StringComparison.Ordinal);
+        Assert.Contains("Kb.Filter.Wissen", footer, StringComparison.Ordinal);
         Assert.DoesNotContain("Discovery.Apply", footer, StringComparison.Ordinal);
 
         var headerIdx = discovery.IndexOf("class=\"filter-sheet__header\"", StringComparison.Ordinal);
         var header = discovery.Substring(headerIdx, 600);
-        Assert.Contains("Kb.Filter.ClearAll", header, StringComparison.Ordinal);
+        Assert.Contains("Kb.Filter.ActiveCount", header, StringComparison.Ordinal);
+        Assert.Contains("data-jobsy-dialog-close", header, StringComparison.Ordinal);
         Assert.Contains("filter-sheet__close", header, StringComparison.Ordinal);
         Assert.DoesNotContain("filter-sheet__mascot", header, StringComparison.Ordinal);
     }

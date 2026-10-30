@@ -1,0 +1,426 @@
+@page "/leerling/puzzel/{Key}"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+
+<PageTitle>@Title · Lobsy</PageTitle>
+
+<LeerlingCoachCue Text="@Culture["Leerling.Puzzle.Coach"]" />
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_wrongStep)
+{
+    <section class="ll-card">
+        <p>@Culture["Leerling.Puzzle.WrongStep"]</p>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Puzzle.BackReis"]</a>
+    </section>
+}
+else if (!_known)
+{
+    <section class="ll-card">
+        <p>@Culture["Leerling.Puzzle.Unknown"]</p>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Puzzle.BackReis"]</a>
+    </section>
+}
+else
+{
+    <section class="ll-card ll-puzzle" data-testid="ll-puzzle-root">
+        <p class="ll-question__meta">@Culture["Leerling.Puzzle.Break"]</p>
+        <h1 class="ll-question__text">@Title</h1>
+        <p class="ll-puzzle__lead">@Lead</p>
+
+        @if (Key.Equals("schelpenrij", StringComparison.OrdinalIgnoreCase))
+        {
+            <p class="ll-puzzle__hint">@Culture["Leerling.Puzzle.Schelpenrij.Hint"]</p>
+            <div class="ll-puzzle__shells" role="group" aria-label="@Title">
+                @for (var i = 0; i < _shellOrder.Count; i++)
+                {
+                    var idx = i;
+                    var size = _shellOrder[idx];
+                    <button type="button"
+                            class="ll-puzzle__shell @( _shellPick == idx ? "is-pick" : null) @(IsShellsSorted() ? "is-done" : null)"
+                            aria-pressed="@(_shellPick == idx)"
+                            disabled="@_busy"
+                            data-testid="ll-puzzle-shell"
+                            @onclick="() => PickShell(idx)">
+                        <span class="ll-puzzle__shell-icon" data-size="@size"></span>
+                        <span class="visually-hidden">@string.Format(Culture["Leerling.Puzzle.ShellSize"], size)</span>
+                    </button>
+                }
+            </div>
+        }
+        else if (Key.Equals("schatkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            <p class="ll-puzzle__hint">@Culture["Leerling.Puzzle.Schatkaart.Hint"]</p>
+            <div class="ll-puzzle__cards">
+                @for (var i = 0; i < _cardFaces.Count; i++)
+                {
+                    var idx = i;
+                    var face = _cardFaces[idx];
+                    var open = _cardOpen.Contains(idx) || _cardMatched.Contains(face);
+                    <button type="button"
+                            class="ll-puzzle__card @(open ? "is-open" : null) @(_cardMatched.Contains(face) ? "is-matched" : null)"
+                            disabled="@(_busy || open || _cardFirst == idx)"
+                            data-testid="ll-puzzle-card"
+                            @onclick="() => FlipCard(idx)">
+                        @(open ? face : "?")
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="ll-puzzle__hint">@Culture["Leerling.Puzzle.Vuurtoren.Hint"]</p>
+            <div class="ll-puzzle__lamps" role="group" aria-label="@Title">
+                @for (var i = 0; i < 3; i++)
+                {
+                    var lamp = i;
+                    <button type="button"
+                            class="ll-puzzle__lamp @(_lampLit == lamp ? "is-lit" : null)"
+                            disabled="@(_lampPlayMode)"
+                            aria-label="@string.Format(Culture["Leerling.Puzzle.Vuurtoren.Lamp"], lamp + 1)"
+                            data-testid="ll-puzzle-lamp"
+                            @onclick="() => TapLamp(lamp)">
+                        <span class="ll-puzzle__lamp-glow"></span>
+                    </button>
+                }
+            </div>
+            @if (_solved)
+            {
+                <p class="ll-puzzle__status ll-puzzle__status--calm" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.Done"]</p>
+            }
+            else if (_lampPlayMode)
+            {
+                <p class="ll-puzzle__status" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.Watch"]</p>
+            }
+            else if (_lampStep > 0)
+            {
+                <p class="ll-puzzle__status" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.YourTurn"]</p>
+            }
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="ll-error" role="alert">@_error</p>
+        }
+
+        <div class="ll-puzzle__actions">
+            @if (_solved)
+            {
+                <button type="button"
+                        class="btn-primary"
+                        disabled="@_busy"
+                        data-testid="ll-puzzle-continue"
+                        @onclick="CompleteAsync">
+                    @Culture["Leerling.Puzzle.Continue"]
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="SkipAsync">
+                    @Culture["Leerling.Puzzle.Skip"]
+                </button>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public string Key { get; set; } = "";
+
+    private bool _loading = true;
+    private bool _sessionLost;
+    private bool _wrongStep;
+    private bool _known;
+    private bool _busy;
+    private bool _solved;
+    private string? _error;
+
+    private List<int> _shellOrder = [1, 3, 2, 4];
+    private int? _shellPick;
+
+    private readonly string[] _cardSymbols = ["🐚", "⚓", "🐠", "🐚", "⚓", "🐠"];
+    private List<string> _cardFaces = [];
+    private HashSet<int> _cardOpen = [];
+    private HashSet<string> _cardMatched = [];
+    private int? _cardFirst;
+
+    private List<int> _lampPattern = [];
+    private int _lampStep;
+    private int? _lampLit;
+    private bool _lampPlayMode;
+
+    private string Title => Key.ToLowerInvariant() switch
+    {
+        "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Title"],
+        "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Title"],
+        "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Title"],
+        _ => Culture["Leerling.Puzzle.Title"]
+    };
+
+    private string Lead => Key.ToLowerInvariant() switch
+    {
+        "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Lead"],
+        "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Lead"],
+        "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Lead"],
+        _ => Culture["Leerling.Puzzle.Lead"]
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _known = PupilPuzzleRoutes.IsBuilt(Key);
+        if (!_known)
+        {
+            _loading = false;
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _sessionLost = false;
+        _wrongStep = false;
+        try
+        {
+            var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "puzzel");
+            if (outcome.SessionLost)
+            {
+                _sessionLost = true;
+                return;
+            }
+
+            if (outcome.Value is null)
+            {
+                _wrongStep = true;
+                return;
+            }
+
+            var state = outcome.Value;
+            if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))
+            {
+                _wrongStep = true;
+                return;
+            }
+
+            if (state.QuestionSet != PupilQuestionSet.Groep78)
+            {
+                _wrongStep = true;
+                return;
+            }
+
+            ResetPuzzleUi();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ResetPuzzleUi()
+    {
+        _solved = false;
+        _error = null;
+        _shellPick = null;
+        _shellOrder = [1, 3, 2, 4];
+        _cardFaces = _cardSymbols.OrderBy(_ => Random.Shared.Next()).ToList();
+        _cardOpen = [];
+        _cardMatched = [];
+        _cardFirst = null;
+        _lampPattern = [];
+        _lampStep = 0;
+        _lampLit = null;
+        _lampPlayMode = false;
+        if (Key.Equals("vuurtorenlampen", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = StartLampPatternAsync();
+        }
+    }
+
+    private void PickShell(int index)
+    {
+        if (_solved)
+        {
+            return;
+        }
+
+        if (_shellPick is null)
+        {
+            _shellPick = index;
+            return;
+        }
+
+        if (_shellPick == index)
+        {
+            _shellPick = null;
+            return;
+        }
+
+        (_shellOrder[_shellPick.Value], _shellOrder[index]) = (_shellOrder[index], _shellOrder[_shellPick.Value]);
+        _shellPick = null;
+        if (IsShellsSorted())
+        {
+            _solved = true;
+        }
+    }
+
+    private bool IsShellsSorted() =>
+        _shellOrder.Count == 4
+        && _shellOrder[0] == 1
+        && _shellOrder[1] == 2
+        && _shellOrder[2] == 3
+        && _shellOrder[3] == 4;
+
+    private void FlipCard(int index)
+    {
+        if (_solved || _cardMatched.Contains(_cardFaces[index]))
+        {
+            return;
+        }
+
+        if (_cardFirst is null)
+        {
+            _cardOpen.Add(index);
+            _cardFirst = index;
+            return;
+        }
+
+        var first = _cardFirst.Value;
+        _cardOpen.Add(index);
+        if (string.Equals(_cardFaces[first], _cardFaces[index], StringComparison.Ordinal))
+        {
+            _cardMatched.Add(_cardFaces[index]);
+            _cardFirst = null;
+            if (_cardMatched.Count >= 3)
+            {
+                _solved = true;
+            }
+        }
+        else
+        {
+            _ = HideCardsAsync(first, index);
+        }
+    }
+
+    private async Task HideCardsAsync(int a, int b)
+    {
+        await Task.Delay(650);
+        _cardOpen.Remove(a);
+        _cardOpen.Remove(b);
+        _cardFirst = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task StartLampPatternAsync()
+    {
+        _lampPlayMode = true;
+        _lampPattern = [Random.Shared.Next(0, 3), Random.Shared.Next(0, 3), Random.Shared.Next(0, 3)];
+        await Task.Delay(400);
+        foreach (var lamp in _lampPattern)
+        {
+            _lampLit = lamp;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(550);
+            _lampLit = null;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(200);
+        }
+
+        _lampPlayMode = false;
+        _lampStep = 0;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void TapLamp(int lamp)
+    {
+        if (_lampPlayMode || _solved)
+        {
+            return;
+        }
+
+        _lampLit = lamp;
+        if (_lampStep >= _lampPattern.Count || _lampPattern[_lampStep] != lamp)
+        {
+            _ = StartLampPatternAsync();
+            return;
+        }
+
+        _lampStep++;
+        if (_lampStep >= _lampPattern.Count)
+        {
+            _solved = true;
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        await SaveAsync(new PupilPuzzleRequest("done"));
+    }
+
+    private async Task SkipAsync()
+    {
+        await SaveAsync(new PupilPuzzleRequest("skipped"));
+    }
+
+    private async Task SaveAsync(PupilPuzzleRequest request)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.SavePupilPuzzleAsync(Key, request);
+            if (result is null)
+            {
+                _error = Culture["Leerling.Puzzle.SaveFailed"];
+                return;
+            }
+
+            if (result.NeedsIsland || string.Equals(result.NextStep, "island", StringComparison.OrdinalIgnoreCase))
+            {
+                Nav.NavigateTo("/leerling/eiland");
+                return;
+            }
+
+            if (string.Equals(result.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && PupilPuzzleRoutes.IsBuilt(result.NextPuzzleKey))
+            {
+                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey!)}", forceLoad: true);
+                return;
+            }
+
+            Nav.NavigateTo("/leerling/reis");
+        }
+        catch
+        {
+            _error = Culture["Leerling.Puzzle.SaveFailed"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

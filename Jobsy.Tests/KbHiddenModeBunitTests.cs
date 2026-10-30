@@ -49,7 +49,7 @@ public class KbHiddenModeBunitTests : BunitContext
             .Add(x => x.MaxVisible, 2)
             .Add(x => x.Fit, fit));
 
-        Assert.Contains("76% past bij jou", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sterke match", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Staat lager: nachtdienst", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("kb-badges__more", cut.Markup, StringComparison.Ordinal);
     }

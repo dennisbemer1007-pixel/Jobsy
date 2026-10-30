@@ -256,9 +256,10 @@ public class ProfessionalismTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
         Assert.Contains("Deze pagina bestaat niet", html, StringComparison.Ordinal);
+        Assert.Contains("Foutcode 404", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/melden\"", html, StringComparison.Ordinal);
+        Assert.Contains("Naar Mijn Lobsy", html, StringComparison.Ordinal);
         Assert.Contains("noindex", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotMatch(Placeholder, html);
     }

@@ -1,0 +1,547 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match/blazor"
+@page "/candidate/applications/{ApplicationId:guid}/after-match/bevestiging"
+@page "/candidate/applications/{ApplicationId:guid}/after-match/herinneringen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components
+@using Jobsy.Web.Components.AfterMatch
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Applications
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject UserFacingError UserFacing
+@inject NavigationManager Navigation
+
+<PageTitle>@_pageTitle · Lobsy</PageTitle>
+<PageSeo Title="@_pageTitle" />
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_thread is null)
+{
+    <p class="state-message error">@Culture["AfterMatch.Error.NotFound"]</p>
+    <a class="btn btn-secondary" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a>
+}
+else if (_view == ViewKind.MailConfirmation)
+{
+    <div class="ndm ndm-page" data-testid="ndm-candidate-live" data-ndm-view="bevestiging">
+        <main class="wrap">
+            <p class="crumb">@Culture["AfterMatch.Screen06.Crumb"]</p>
+            <h1 style="font-size:1.8rem;margin-bottom:14px">@Culture["AfterMatch.Screen06.PageTitle"]</h1>
+            <NdMMailConfirmation Thread="_thread" />
+            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a></p>
+        </main>
+    </div>
+}
+else if (_view == ViewKind.Reminders)
+{
+    <div class="ndm ndm-page" data-testid="ndm-candidate-live" data-ndm-view="herinneringen">
+        <main class="wrap">
+            <p class="crumb">@Culture["AfterMatch.Screen07.Crumb"]</p>
+            <h1 style="font-size:1.8rem;margin-bottom:14px">@Culture["AfterMatch.Screen07.Title"]</h1>
+            <div class="mgrid">
+                <div>
+                    <span class="lbl">@Culture["AfterMatch.Screen07.EmailLabel"]</span>
+                    <div class="mclient">
+                        <div class="mail ndm-mail-preview">
+                            <div class="mtop">
+                                <span class="ndm-mail-logo"><LobsyMark /></span>
+                                <span class="xs muted">@Culture["AfterMatch.Mail.PlannedTag"]</span>
+                            </div>
+                            <p class="xs muted ndm-mail-from"><b>Lobsy</b> &lt;gesprek@lobsy.nl&gt;</p>
+                            <h2>Morgen is je gesprek</h2>
+                            <p class="small">Hoi @_firstName, nog even op een rij. Je kunt het.</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span class="lbl">@Culture["AfterMatch.Screen07.PushLabel"]</span>
+                    <div class="phone">
+                        <div class="lock">
+                            <div class="ltime">8:30</div>
+                            <div class="push"><div><b>Over 2 uur je gesprek</b></div></div>
+                        </div>
+                    </div>
+                    <NdMReminderPanel Preference="_thread.ReminderPreference"
+                                      Editable="true"
+                                      Busy="_busy"
+                                      OnSave="SaveRemindersAsync" />
+                </div>
+            </div>
+            <p style="margin-top:16px"><a class="lk" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a></p>
+        </main>
+    </div>
+}
+else
+{
+    <div class="ndm ndm-page" data-testid="ndm-candidate-live" data-ndm-panel="@_panel">
+        <main class="wrap">
+            @if (_panel == "messages")
+            {
+                <div class="ndm-flow-hero">
+                    <NdMHero Title="@Culture["AfterMatch.Screen10.Hero.Title"]"
+                             Lead="@Culture["AfterMatch.Screen10.Hero.Lead"]"
+                             ShowArt="false" />
+                </div>
+                <div class="ndm-flow-msgs">
+                <NdMMessagePanel Messages="_thread.Messages"
+                                 ShowNewPill="@HasUnread(_thread)"
+                                 Editable="true"
+                                 Busy="_busy"
+                                 SystemLine="@SystemLine(_thread)"
+                                 Preview="_messagePreview"
+                                 OnSend="SendMessageAsync"
+                                 OnPreview="PreviewMessageAsync" />
+                </div>
+            }
+            else
+            {
+                <div class="ndm-flow-hero">
+                    <NdMHero Title="@_heroTitle" Lead="@_heroLead" LeadCompact="@_heroLeadCompact" />
+                </div>
+                <div class="ndm-mob-timeline ndm-flow-timeline card">
+                    <NdMTimeline CurrentStep="@CurrentTimelineStep()" YesDate="@YesDateLabel" InterviewHint="@CurrentTimelineHint()" />
+                </div>
+                <div class="g2 ndm-flow-main">
+                    @if (_panel != "messages" && _thread.Outcome != AfterMatchOutcomeKind.NotNow)
+                    {
+                        <NdMMessagePanel Messages="_thread.Messages"
+                                         ShowNewPill="@HasUnread(_thread)"
+                                         Editable="@(_panel != "reschedule")"
+                                         Busy="_busy"
+                                         Compact="true"
+                                         SystemLine="@SystemLine(_thread)"
+                                         Preview="_messagePreview"
+                                         OnSend="SendMessageAsync"
+                                         OnPreview="PreviewMessageAsync" />
+                    }
+                    <div class="stack">
+                        @if (_thread.Outcome == AfterMatchOutcomeKind.NotNow)
+                        {
+                            <div class="card">
+                                <NdMVacancyCard Initials="@Initials(_thread.CompanyName)"
+                                                Title="@_thread.VacancyTitle"
+                                                Subtitle="@VacancySubtitle(_thread)" />
+                                <div class="hide-m">
+                                    <div class="hr"></div>
+                                    <NdMTimeline CurrentStep="3" YesDate="@YesDateLabel" InterviewHint="22 okt" />
+                                </div>
+                                @if (_thread.RecentChanges.Count == 0 && !string.IsNullOrWhiteSpace(_notNowReason))
+                                {
+                                    <div class="note warm ndm-feedback" style="margin-top:12px">
+                                        <div class="ndm-feedback__body">
+                                            <b>@Culture["AfterMatch.Screen13.FeedbackTitle"]</b>
+                                            <p class="small ndm-feedback__quote">"@_notNowReason"</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="card ndm-similar-card">
+                                <b>@Culture["AfterMatch.Screen13.Similar"]</b>
+                                <div class="ndm-similar-jobs">
+                                    @foreach (var v in _thread.SimilarVacancies)
+                                    {
+                                        <div class="ndm-job-card">
+                                            <b>@v.Title</b>
+                                            <span class="small muted">@v.CompanyName</span>
+                                        </div>
+                                    }
+                                    @if (_thread.SimilarVacancies.Count == 0)
+                                    {
+                                        <div class="ndm-job-card">
+                                            <b>@Culture["AfterMatch.Demo.Vacancy"]</b>
+                                            <span class="small muted">@Culture["AfterMatch.Demo.Company"]</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card">
+                                <NdMVacancyCard Initials="@Initials(_thread.CompanyName)"
+                                                Title="@_thread.VacancyTitle"
+                                                Subtitle="@VacancySubtitle(_thread)" />
+                                <div class="hide-m">
+                                    <div class="hr"></div>
+                                    <NdMTimeline CurrentStep="@TimelineStep(_thread)" YesDate="@YesDateLabel" InterviewHint="@InterviewHint(_thread)" />
+                                </div>
+                                @if (_panel != "reschedule")
+                                {
+                                    <NdMWhatGrid />
+                                }
+                            </div>
+                            @if (_panel == "reschedule")
+                            {
+                                <NdMReschedulePanel Busy="_busy" OnReschedule="RescheduleAsync" />
+                            }
+                            else
+                            {
+                                <NdMSchedulingPanel Mode="@SchedulingMode(_thread)"
+                                                    OpenSlots="_thread.OpenSlots"
+                                                    ScheduledLabel="@ScheduledLabel(_thread)"
+                                                    LocationOrLink="@_thread.LocationOrLink"
+                                                    Busy="_busy"
+                                                    OnSelectSlot="SelectSlotAsync"
+                                                    OnDownloadCalendar="DownloadCalendarAsync" />
+                                @if (_thread.InterviewStatus == InterviewStatus.Scheduled && _panel != "reschedule")
+                                {
+                                    <NdMReminderPanel Preference="_thread.ReminderPreference"
+                                                      Editable="true"
+                                                      Busy="_busy"
+                                                      OnSave="SaveRemindersAsync" />
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            }
+            <p class="ndm-back" style="margin-top:16px"><a class="lk" href="@_applicationsBackHref" data-enhance-nav="false">@ApplicationsBackLabel()</a></p>
+        </main>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error" role="alert">@_error</p>
+}
+
+@code {
+    private enum ViewKind { Main, MailConfirmation, Reminders }
+
+    [Parameter] public Guid ApplicationId { get; set; }
+    [SupplyParameterFromQuery] public string? Panel { get; set; }
+    [SupplyParameterFromQuery(Name = "return")]
+    public string? ReturnUrl { get; set; }
+
+    private AfterMatchThreadDto? _thread;
+    private string _applicationsBackHref = KbRoutes.Applications;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string _heroTitle = "";
+    private string _heroLead = "";
+    private string? _heroLeadCompact;
+    private string _pageTitle = "";
+    private string _panel = "";
+    private ViewKind _view = ViewKind.Main;
+    private string _firstName = "";
+    private string? _notNowReason;
+    private string BaseHref => $"/candidate/applications/{ApplicationId}/after-match";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _panel = (Panel ?? "").Trim().ToLowerInvariant();
+        _view = ResolveView(Navigation.Uri);
+        _applicationsBackHref = ApplicationsSsrQuery.TryGetSafeApplicationsReturn(ReturnUrl, out var backHref)
+            ? backHref
+            : KbRoutes.Applications;
+        _pageTitle = ResolveInitialPageTitle(_panel);
+
+        try
+        {
+            _thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId);
+            ApplyHero(_thread);
+            if (_thread is not null)
+            {
+                _firstName = _thread.CandidateName.Split(' ').FirstOrDefault() ?? _thread.CandidateName;
+            }
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static ViewKind ResolveView(string uri)
+    {
+        var path = new Uri(uri).AbsolutePath;
+        if (path.EndsWith("/bevestiging", StringComparison.OrdinalIgnoreCase))
+        {
+            return ViewKind.MailConfirmation;
+        }
+
+        if (path.EndsWith("/herinneringen", StringComparison.OrdinalIgnoreCase))
+        {
+            return ViewKind.Reminders;
+        }
+
+        return ViewKind.Main;
+    }
+
+    private void ApplyHero(AfterMatchThreadDto? thread)
+    {
+        if (thread is null)
+        {
+            return;
+        }
+
+        if (_view == ViewKind.MailConfirmation)
+        {
+            _pageTitle = Culture["AfterMatch.Screen06.PageTitle"];
+            return;
+        }
+
+        if (_view == ViewKind.Reminders)
+        {
+            _pageTitle = Culture["AfterMatch.Screen07.PageTitle"];
+            return;
+        }
+
+        _heroLeadCompact = null;
+
+        if (_panel == "messages")
+        {
+            _heroTitle = Culture["AfterMatch.Screen10.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen10.Hero.Lead"];
+            _pageTitle = Culture["AfterMatch.Screen10.Hero.Title"];
+            return;
+        }
+
+        if (_panel is "pick-slot" or "propose-slot")
+        {
+            _heroTitle = Culture["AfterMatch.Screen04.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen04.Hero.Lead"];
+            _heroLeadCompact = Culture["AfterMatch.Screen04.Hero.LeadCompact"];
+            _pageTitle = Culture["AfterMatch.Screen04.Hero.Title"];
+            return;
+        }
+
+        if (_panel == "reschedule")
+        {
+            _heroTitle = Culture["AfterMatch.Screen08.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen08.Hero.Lead"];
+        }
+        else if (thread.InterviewStatus == InterviewStatus.Scheduled)
+        {
+            _heroTitle = Culture["AfterMatch.Screen05.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen05.Hero.Lead"];
+        }
+        else if (thread.Outcome == AfterMatchOutcomeKind.NotNow)
+        {
+            _heroTitle = Culture["AfterMatch.Screen13.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen13.Hero.Lead"];
+            _notNowReason =
+                "Je was heel zorgvuldig en vriendelijk. We kozen nu voor iemand die al zelfstandig aan de oven kan staan.";
+        }
+        else if (thread.OpenSlots.Count > 0)
+        {
+            _heroTitle = Culture["AfterMatch.Screen04.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen04.Hero.Lead"];
+            _heroLeadCompact = Culture["AfterMatch.Screen04.Hero.LeadCompact"];
+        }
+        else
+        {
+            _heroTitle = $"{thread.CompanyName} zei ja";
+            _heroLead = Culture["AfterMatch.Screen01.Hero.Lead"];
+            _heroLeadCompact = Culture["AfterMatch.Screen01.Hero.LeadCompact"];
+        }
+
+        _pageTitle = _heroTitle;
+    }
+
+    private int CurrentTimelineStep() =>
+        _thread is null || _thread.Outcome == AfterMatchOutcomeKind.NotNow ? 3 : TimelineStep(_thread);
+
+    private string? CurrentTimelineHint() =>
+        _thread is null || _thread.Outcome == AfterMatchOutcomeKind.NotNow ? "22 okt" : InterviewHint(_thread);
+
+    private static int TimelineStep(AfterMatchThreadDto t) => t.InterviewStatus switch
+    {
+        InterviewStatus.Proposing or InterviewStatus.RescheduleRequested => 1,
+        InterviewStatus.Scheduled => 2,
+        InterviewStatus.Done => 3,
+        _ => 1
+    };
+
+    private static NdMSchedulingMode SchedulingMode(AfterMatchThreadDto t) => t.InterviewStatus switch
+    {
+        InterviewStatus.Scheduled => NdMSchedulingMode.Scheduled,
+        InterviewStatus.Proposing when t.OpenSlots.Count > 0 => NdMSchedulingMode.CandidatePick,
+        InterviewStatus.RescheduleRequested => NdMSchedulingMode.Waiting,
+        _ => NdMSchedulingMode.Waiting
+    };
+
+    private string? YesDateLabel =>
+        _thread?.AcceptedAtUtc?.ToLocalTime().ToString("d MMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+        ?? "13 okt";
+
+    private static string? InterviewHint(AfterMatchThreadDto t) =>
+        t.ScheduledStartUtc?.ToLocalTime().ToString("d MMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
+    private static string VacancySubtitle(AfterMatchThreadDto t) =>
+        string.Join(" · ", new[] { t.CompanyName, t.LocationOrLink, t.TravelLabel }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private static string Initials(string company)
+    {
+        var parts = company.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+            : company.Length >= 2 ? company[..2].ToUpperInvariant() : company.ToUpperInvariant();
+    }
+
+    private static bool HasUnread(AfterMatchThreadDto t) =>
+        t.Messages.Any(m => !m.IsMine && m.ReadAtUtc is null);
+
+    private string? SystemLine(AfterMatchThreadDto t) =>
+        t.ContactShare.PhoneAllowed ? null : Culture["AfterMatch.Screen10.SysContact"];
+
+    private static string? ScheduledLabel(AfterMatchThreadDto t)
+    {
+        if (t.ScheduledStartUtc is not DateTime start)
+        {
+            return null;
+        }
+
+        return start.ToLocalTime().ToString("dddd d MMMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private async Task SelectSlotAsync(Guid slotId)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.SelectAfterMatchSlotAsync(ApplicationId, new SelectSlotRequest(slotId));
+            ApplyHero(_thread);
+            if (_panel == "pick-slot" && _thread?.InterviewStatus == InterviewStatus.Scheduled)
+            {
+                var url = AfterMatchSollicitatiesUrls.AfterMatchBase(ApplicationId, _applicationsBackHref);
+                Navigation.NavigateTo(url, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string ResolveInitialPageTitle(string panel) => panel switch
+    {
+        "messages" => "Berichten",
+        "pick-slot" or "propose-slot" => "Gesprek plannen",
+        _ => "Sollicitaties"
+    };
+
+    private string ApplicationsBackLabel()
+    {
+        if (ApplicationsSsrQuery.TryGetSafeApplicationsReturn(ReturnUrl, out var href)
+            && href.Contains("tab=berichten", StringComparison.OrdinalIgnoreCase))
+        {
+            return Culture["AfterMatch.Link.BackBerichten"];
+        }
+
+        if (_panel is "pick-slot" or "propose-slot")
+        {
+            return Culture["AfterMatch.Link.BackPickSlot"];
+        }
+
+        return Culture["AfterMatch.Link.BackApplications"];
+    }
+
+
+    private async Task RescheduleAsync(string reason)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.RescheduleAfterMatchAsync(ApplicationId, new RescheduleRequest(reason));
+            ApplyHero(_thread);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendMessageAsync((string Body, bool ConfirmSensitive) args)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.SendAfterMatchMessageAsync(
+                ApplicationId,
+                new SendMessageRequest(args.Body, args.ConfirmSensitive));
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private SensitiveMessagePreview? _messagePreview;
+
+    private async Task PreviewMessageAsync(string body)
+    {
+        _messagePreview = await Api.PreviewAfterMatchMessageAsync(
+            ApplicationId,
+            new SendMessageRequest(body, ConfirmSensitive: false));
+    }
+
+    private async Task SaveRemindersAsync(UpdateReminderPreferenceRequest request)
+    {
+        _busy = true;
+        try
+        {
+            var prefs = await Api.UpdateAfterMatchReminderPreferencesAsync(request);
+            if (_thread is not null)
+            {
+                _thread = _thread with { ReminderPreference = prefs };
+            }
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadCalendarAsync()
+    {
+        try
+        {
+            await Api.DownloadAfterMatchCalendarAsync(ApplicationId, Js);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+    }
+}

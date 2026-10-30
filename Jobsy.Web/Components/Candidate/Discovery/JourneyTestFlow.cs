@@ -1,3 +1,5 @@
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 
@@ -8,11 +10,33 @@ public static class JourneyTestFlow
 {
     public sealed record DepthOptionSpec(int Level, string TitleKey, string SubKey, int Dots, bool Disabled);
 
+    public static int FullLevelCount(
+        OnboardingWizardCatalog.OnboardingTestKind kind,
+        int quickScanVersion = AssessmentTestVersions.V1)
+        => TestDepthRules.FullCount(TestDepthRules.ToAssessmentKind(kind), quickScanVersion);
+
+    public static int ReachedLevel(
+        int answeredCount,
+        OnboardingWizardCatalog.OnboardingTestKind kind,
+        int quickScanVersion = AssessmentTestVersions.V1)
+    {
+        var reached = TestDepthRules.Reached(
+            TestDepthRules.ToAssessmentKind(kind), answeredCount, quickScanVersion);
+        return reached switch
+        {
+            TestDepthLevel.Full => FullLevelCount(kind, quickScanVersion),
+            TestDepthLevel.Deeper => TestDepthRules.DeeperCount,
+            TestDepthLevel.First => OnboardingWizardCatalog.MiniLevelCount,
+            _ => 0
+        };
+    }
+
     public static IReadOnlyList<DepthOptionSpec> BuildDepthOptions(
         OnboardingWizardCatalog.OnboardingTestKind kind,
-        int answeredCount)
+        int answeredCount,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
-        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        var full = FullLevelCount(kind, quickScanVersion);
         var miniDone = OnboardingWizardCatalog.IsLevelReached(answeredCount, OnboardingWizardCatalog.MiniLevelCount);
         var deeperDone = OnboardingWizardCatalog.IsLevelReached(answeredCount, OnboardingWizardCatalog.DeeperLevelCount);
         var fullDone = OnboardingWizardCatalog.IsLevelReached(answeredCount, full);
@@ -44,17 +68,23 @@ public static class JourneyTestFlow
     /// Default selection on the shed: the next band that is not done yet.
     /// A finished band stays visible as Gedaan and is not preselected.
     /// </summary>
-    public static int DefaultSelectedLevel(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
+    public static int DefaultSelectedLevel(
+        int answeredCount,
+        OnboardingWizardCatalog.OnboardingTestKind kind,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
-        var full = OnboardingWizardCatalog.FullLevelCount(kind);
+        var full = FullLevelCount(kind, quickScanVersion);
         if (answeredCount >= full) return full;
         if (answeredCount >= OnboardingWizardCatalog.DeeperLevelCount) return full;
         if (answeredCount >= OnboardingWizardCatalog.MiniLevelCount) return OnboardingWizardCatalog.DeeperLevelCount;
         return OnboardingWizardCatalog.MiniLevelCount;
     }
 
-    public static bool IsFullyDone(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
-        => OnboardingWizardCatalog.IsLevelReached(answeredCount, OnboardingWizardCatalog.FullLevelCount(kind));
+    public static bool IsFullyDone(
+        int answeredCount,
+        OnboardingWizardCatalog.OnboardingTestKind kind,
+        int quickScanVersion = AssessmentTestVersions.V1)
+        => OnboardingWizardCatalog.IsLevelReached(answeredCount, FullLevelCount(kind, quickScanVersion));
 
     public static IReadOnlyList<string> ImpressionLinesForTest(
         OnboardingWizardCatalog.OnboardingTestKind kind,
@@ -107,9 +137,12 @@ public static class JourneyTestFlow
     /// <summary>
     /// Depth label for an end-screen card: Eerste indruk, Iets dieper, or Helemaal gedaan.
     /// </summary>
-    public static string DepthLabelKey(int answeredCount, OnboardingWizardCatalog.OnboardingTestKind kind)
+    public static string DepthLabelKey(
+        int answeredCount,
+        OnboardingWizardCatalog.OnboardingTestKind kind,
+        int quickScanVersion = AssessmentTestVersions.V1)
     {
-        if (answeredCount >= OnboardingWizardCatalog.FullLevelCount(kind))
+        if (answeredCount >= FullLevelCount(kind, quickScanVersion))
         {
             return "Discovery.Overview.FullyDone";
         }
@@ -186,10 +219,22 @@ public static class JourneyTestFlow
             return false;
         }
 
-        if (parsed is not (OnboardingWizardCatalog.MiniLevelCount
-            or OnboardingWizardCatalog.DeeperLevelCount
-            or 18
-            or 25))
+        if (parsed is OnboardingWizardCatalog.MiniLevelCount or OnboardingWizardCatalog.DeeperLevelCount)
+        {
+            level = parsed;
+            return true;
+        }
+
+        foreach (var kind in Enum.GetValues<OnboardingWizardCatalog.OnboardingTestKind>())
+        {
+            if (parsed == OnboardingWizardCatalog.FullLevelCount(kind))
+            {
+                level = parsed;
+                return true;
+            }
+        }
+
+        if (parsed is not (18 or 25))
         {
             return false;
         }

@@ -1,0 +1,35 @@
+KEY: KandidatenkaartInviteBundled
+SUBJECT: Invitation to apply: ⁨Weekendhulp verkoop⁩
+PREHEADER: Match 82% - view the vacancy
+KIND: Optional
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+An employer invited you
+
+⁨Bakkerij De Gouden Korrel⁩ invited you to apply for ⁨Weekendhulp verkoop⁩
+(82% match).
+
+You receive at most a few invitations per week, bundled in one message.
+
+View vacancy: https://lobsy.nl/vacatures/voorbeeld
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تريد وظائف قريبة.
+لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: An employer invited you
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View vacancy -> https://lobsy.nl/vacatures/voorbeeld
+a: لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

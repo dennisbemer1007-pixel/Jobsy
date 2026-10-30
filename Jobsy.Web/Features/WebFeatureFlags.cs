@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Core;
 using Jobsy.Core.Features;
+using Jobsy.Web.Hosting;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Web.Features;
@@ -50,13 +51,16 @@ public sealed class WebFeatureFlags : IFeatureFlags
             client.Timeout = TimeSpan.FromSeconds(5);
 
             var dto = await client.GetFromJsonAsync<FeatureFlagsResponse>(
-                "api/settings/feature-flags",
-                cancellationToken);
+                    "api/settings/feature-flags",
+                    cancellationToken)
+                .ConfigureAwait(false);
             var flags = new FeatureFlagSnapshot(
                 dto?.EmployersEnabled ?? false,
                 dto?.CandidatePassportEnabled ?? true,
                 dto?.PassportPartnersEnabled ?? false,
                 dto?.PassportPdfV2Enabled ?? false,
+                dto?.PupilPassportV2Enabled ?? false,
+                dto?.StudentPassportEnabled ?? false,
                 dto?.PhoneVerificationEnabled ?? false,
                 dto?.SchoolsEnabled ?? false,
                 dto?.AmbassadorsEnabled ?? false,
@@ -67,7 +71,25 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.EmployerPhase2Enabled ?? false,
                 dto?.CandidateExternalVacanciesEnabled ?? false,
                 dto?.ProactiveMatchingEnabled ?? false,
-                dto?.TestsV2Enabled ?? false);
+                dto?.TestsV2Enabled ?? false,
+                TestItemExamplesEnabled: dto?.TestItemExamplesEnabled ?? false,
+                TestProgressInsightEnabled: dto?.TestProgressInsightEnabled ?? false,
+                dto?.EmployerFitQuestionnairesEnabled ?? false,
+                dto?.KandidatenkaartEnabled ?? false,
+                dto?.CompanyMapInitiativeEnabled ?? true,
+                dto?.AfterMatchEnabled ?? false,
+                dto?.ReferenceVerificationEnabled ?? false,
+                dto?.SensitiveExperienceEnabled ?? false,
+                dto?.TrainingPartnersEnabled ?? false,
+                dto?.TestJourneyIllustrationEnabled ?? false,
+                dto?.OnboardingFinaleV2Enabled ?? false,
+                dto?.OccupationDayInLifeEnabled ?? true,
+                dto?.TestEditModeEnabled ?? false,
+                dto?.SamplePdfEnabled ?? false,
+                dto?.TestDepthValueMockupEnabled ?? true,
+                dto?.UwvFeaturesEnabled ?? true,
+                dto?.ActivityLogEnabled ?? false);
+            flags = ApplyAcceptatieConfigOverrides(flags);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -75,10 +97,27 @@ public sealed class WebFeatureFlags : IFeatureFlags
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to load feature flags from API; using last known or defaults.");
-            var fallback = _lastKnown ?? FeatureFlagSnapshot.Defaults;
+            var fallback = ApplyAcceptatieConfigOverrides(_lastKnown ?? FeatureFlagSnapshot.Defaults);
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;
         }
+    }
+
+    /// <summary>Acceptatie Web config can force public test examples when API/DB lag behind deploy.</summary>
+    private FeatureFlagSnapshot ApplyAcceptatieConfigOverrides(FeatureFlagSnapshot flags)
+    {
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+        {
+            return flags;
+        }
+
+        var enabled = _configuration.GetValue("JobsyFeatures:TestItemExamplesEnabled", true);
+        if (enabled)
+        {
+            flags = flags with { TestItemExamplesEnabled = true };
+        }
+
+        return flags;
     }
 
     public async ValueTask<bool> IsEnabledAsync(
@@ -137,5 +176,62 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("testsV2Enabled")]
         public bool TestsV2Enabled { get; set; }
+
+        [JsonPropertyName("testItemExamplesEnabled")]
+        public bool TestItemExamplesEnabled { get; set; }
+
+        [JsonPropertyName("testProgressInsightEnabled")]
+        public bool TestProgressInsightEnabled { get; set; }
+
+        [JsonPropertyName("employerFitQuestionnairesEnabled")]
+        public bool EmployerFitQuestionnairesEnabled { get; set; }
+
+        [JsonPropertyName("kandidatenkaartEnabled")]
+        public bool KandidatenkaartEnabled { get; set; }
+
+        [JsonPropertyName("companyMapInitiativeEnabled")]
+        public bool CompanyMapInitiativeEnabled { get; set; } = true;
+
+        [JsonPropertyName("afterMatchEnabled")]
+        public bool AfterMatchEnabled { get; set; }
+
+        [JsonPropertyName("referenceVerificationEnabled")]
+        public bool ReferenceVerificationEnabled { get; set; }
+
+        [JsonPropertyName("sensitiveExperienceEnabled")]
+        public bool SensitiveExperienceEnabled { get; set; }
+
+        [JsonPropertyName("trainingPartnersEnabled")]
+        public bool TrainingPartnersEnabled { get; set; }
+
+        [JsonPropertyName("pupilPassportV2Enabled")]
+        public bool PupilPassportV2Enabled { get; set; }
+
+        [JsonPropertyName("studentPassportEnabled")]
+        public bool StudentPassportEnabled { get; set; }
+
+        [JsonPropertyName("testJourneyIllustrationEnabled")]
+        public bool TestJourneyIllustrationEnabled { get; set; }
+
+        [JsonPropertyName("onboardingFinaleV2Enabled")]
+        public bool OnboardingFinaleV2Enabled { get; set; }
+
+        [JsonPropertyName("occupationDayInLifeEnabled")]
+        public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+        [JsonPropertyName("testEditModeEnabled")]
+        public bool TestEditModeEnabled { get; set; }
+
+        [JsonPropertyName("samplePdfEnabled")]
+        public bool SamplePdfEnabled { get; set; }
+
+        [JsonPropertyName("testDepthValueMockupEnabled")]
+        public bool TestDepthValueMockupEnabled { get; set; } = true;
+
+        [JsonPropertyName("uwvFeaturesEnabled")]
+        public bool UwvFeaturesEnabled { get; set; } = true;
+
+        [JsonPropertyName("activityLogEnabled")]
+        public bool ActivityLogEnabled { get; set; }
     }
 }

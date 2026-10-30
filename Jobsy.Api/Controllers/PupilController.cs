@@ -1,6 +1,7 @@
 using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
@@ -99,6 +100,18 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPut("progress/puzzles/{puzzleKey}")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SavePuzzle(
+        string puzzleKey,
+        [FromBody] PupilPuzzleRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SavePuzzleAsync(User, puzzleKey, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpGet("result")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> Result(CancellationToken cancellationToken)
@@ -115,16 +128,51 @@ public sealed class PupilController : ControllerBase
         CancellationToken cancellationToken)
     {
         NoStore();
-        var (ok, error, status) = await _portal.SaveDreamJobAsync(User, request.Key, cancellationToken);
+        var (ok, error, status) = await _portal.SaveDreamJobAsync(User, request.Key, request.DisplayTitle, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("vo-passport")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> GetVoPassport(CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.GetVoPassportAsync(User, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpPut("vo-passport")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SaveVoPassport(
+        [FromBody] PupilVoPassportSaveRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveVoPassportAsync(User, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("passport/g78")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> G78Passport(
+        [FromQuery] string? naam,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.GetG78PassportWebAsync(User, naam, lang, cancellationToken);
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
     [HttpGet("~/leerling/pdf")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
-    public async Task<IActionResult> Pdf(CancellationToken cancellationToken)
+    public async Task<IActionResult> Pdf(
+        [FromQuery] string? naam,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
     {
         NoStore();
-        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, cancellationToken);
+        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, naam, lang, cancellationToken);
         if (bytes is null)
         {
             return StatusCode(status, error);

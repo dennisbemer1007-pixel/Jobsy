@@ -3,6 +3,9 @@
 (function () {
     var STORAGE_KEY = "lobsy.readAloud";
     var RATE = 0.9;
+    var VOICE_WAIT_MS = 2500;
+    var SPEAK_START_MS = 3500;
+    var SPEAK_MAX_MS = 90000;
     var token = 0;
 
     function synth() {
@@ -26,18 +29,26 @@
         return !!(voice && voice.localService === true);
     }
 
-    function voicesFor(lang) {
+    function allVoices() {
         var engine = synth();
         if (!engine || typeof engine.getVoices !== "function") {
             return [];
         }
+        return engine.getVoices() || [];
+    }
+
+    function voicesFor(lang, localOnly) {
         var prefix = uiPrefix(lang);
-        var all = engine.getVoices() || [];
+        var all = allVoices();
         var matches = [];
         for (var i = 0; i < all.length; i++) {
-            if (voiceMatches(all[i].lang, prefix) && isLocalVoice(all[i])) {
-                matches.push(all[i]);
+            if (!voiceMatches(all[i].lang, prefix)) {
+                continue;
             }
+            if (localOnly && !isLocalVoice(all[i])) {
+                continue;
+            }
+            matches.push(all[i]);
         }
         return matches;
     }
@@ -53,6 +64,15 @@
         return null;
     }
 
+    function pickVoice(lang) {
+        var local = voicesFor(lang, true);
+        if (local.length) {
+            return local[0];
+        }
+        var any = voicesFor(lang, false);
+        return any.length ? any[0] : null;
+    }
+
     function isEnabled() {
         try {
             return localStorage.getItem(STORAGE_KEY) !== "off";
@@ -62,8 +82,12 @@
     }
 
     function probe(lang) {
+        var engine = synth();
+        var supported = !!(engine
+            && typeof engine.speak === "function"
+            && typeof SpeechSynthesisUtterance === "function");
         return {
-            supported: voicesFor(lang).length > 0,
+            supported: supported,
             enabled: isEnabled()
         };
     }
@@ -93,12 +117,18 @@
         if (typeof engine.addEventListener === "function") {
             engine.addEventListener("voiceschanged", finish);
         }
-        setTimeout(finish, 800);
+        setTimeout(finish, VOICE_WAIT_MS);
     }
 
     function notify(dotnetRef) {
         if (dotnetRef && typeof dotnetRef.invokeMethodAsync === "function") {
             dotnetRef.invokeMethodAsync("OnSpeechEnded").catch(function () { });
+        }
+    }
+
+    function notifyError(dotnetRef, message) {
+        if (dotnetRef && typeof dotnetRef.invokeMethodAsync === "function") {
+            dotnetRef.invokeMethodAsync("OnSpeechError", message || "").catch(function () { });
         }
     }
 
@@ -113,15 +143,17 @@
 
     function speak(text, lang, dotnetRef) {
         var spoken = String(text || "").trim();
-        var voices = voicesFor(lang);
-        if (!spoken || !isEnabled() || voices.length === 0 || typeof SpeechSynthesisUtterance !== "function") {
+        if (!spoken || !isEnabled() || typeof SpeechSynthesisUtterance !== "function") {
+            notifyError(dotnetRef, "unsupported");
             return false;
         }
         var engine = synth();
         if (!engine || typeof engine.speak !== "function") {
+            notifyError(dotnetRef, "unsupported");
             return false;
         }
 
+        var voice = pickVoice(lang);
         token += 1;
         var mine = token;
         if (typeof engine.cancel === "function") {
@@ -129,25 +161,84 @@
         }
 
         var utter = new SpeechSynthesisUtterance(spoken);
+        var started = false;
+        var startTimer = null;
+        var maxTimer = null;
+
+        function cleanup() {
+            if (startTimer) {
+                clearTimeout(startTimer);
+                startTimer = null;
+            }
+            if (maxTimer) {
+                clearTimeout(maxTimer);
+                maxTimer = null;
+            }
+        }
+
+        function finish(endToken) {
+            if (token !== endToken) {
+                return;
+            }
+            cleanup();
+            notify(dotnetRef);
+        }
+
+        function fail(reason) {
+            if (token !== mine) {
+                return;
+            }
+            cleanup();
+            if (typeof engine.cancel === "function") {
+                engine.cancel();
+            }
+            notifyError(dotnetRef, reason || "error");
+        }
+
         try {
-            if (voices[0] && window.SpeechSynthesisVoice && voices[0] instanceof window.SpeechSynthesisVoice) {
-                utter.voice = voices[0];
+            if (voice && window.SpeechSynthesisVoice && voice instanceof window.SpeechSynthesisVoice) {
+                utter.voice = voice;
             }
         } catch (e) {
             /* Some browsers throw when voice is not a real SpeechSynthesisVoice. */
         }
-        utter.lang = (voices[0] && voices[0].lang) || uiPrefix(lang);
-        if (voices[0] && voices[0].localService !== true) {
-            return false;
-        }
+        utter.lang = (voice && voice.lang) || uiPrefix(lang);
         utter.rate = RATE;
-        utter.onend = utter.onerror = function () {
+        utter.onstart = function () {
+            started = true;
+            if (startTimer) {
+                clearTimeout(startTimer);
+                startTimer = null;
+            }
+        };
+        utter.onend = function () {
+            finish(mine);
+        };
+        utter.onerror = function () {
+            fail("error");
+        };
+
+        startTimer = setTimeout(function () {
+            if (token !== mine || started) {
+                return;
+            }
+            fail("timeout");
+        }, SPEAK_START_MS);
+
+        maxTimer = setTimeout(function () {
             if (token !== mine) {
                 return;
             }
-            notify(dotnetRef);
-        };
-        engine.speak(utter);
+            fail("timeout");
+        }, SPEAK_MAX_MS);
+
+        try {
+            engine.speak(utter);
+        } catch (e) {
+            fail("error");
+            return false;
+        }
+
         return true;
     }
 

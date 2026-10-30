@@ -248,7 +248,10 @@ public sealed class PlatformFeatureItem
     public bool CandidatePassportEnabled { get; set; } = true;
     public bool PassportPartnersEnabled { get; set; }
     public bool PassportPdfV2Enabled { get; set; }
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
     public bool TestsV2Enabled { get; set; }
+    public bool TestItemExamplesEnabled { get; set; }
+    public bool TestProgressInsightEnabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
     /// <summary>Compact chart layout for paid personal test PDFs. Default off.</summary>
@@ -259,6 +262,23 @@ public sealed class PlatformFeatureItem
     public bool FutureJobsForYouEnabled { get; set; }
     public bool ProactiveMatchingEnabled { get; set; }
     public bool MatchCalibrationV1Enabled { get; set; }
+    public bool EmployerFitQuestionnairesEnabled { get; set; }
+    public bool KandidatenkaartEnabled { get; set; }
+    public bool CompanyMapInitiativeEnabled { get; set; } = true;
+    public bool AfterMatchEnabled { get; set; }
+    public bool SensitiveExperienceEnabled { get; set; }
+    public bool TrainingPartnersEnabled { get; set; }
+    public bool UwvFeaturesEnabled { get; set; }
+    public bool ActivityLogEnabled { get; set; }
+    public bool ReferenceVerificationEnabled { get; set; }
+    public bool TestJourneyIllustrationEnabled { get; set; }
+    public bool OnboardingFinaleV2Enabled { get; set; }
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+    public bool ResearchConsentEnabled { get; set; }
+    public bool TestEditModeEnabled { get; set; }
+    public bool SamplePdfEnabled { get; set; }
+    public bool TestDepthValueMockupEnabled { get; set; } = true;
+    public IReadOnlyList<string>? AdminOverriddenFlagKeys { get; set; }
     public int CandidateApplyPerMinuteLimit { get; set; } = 5;
     public int CandidateApplyPerHourLimit { get; set; } = 30;
     public int CandidateApplyPerDayLimit { get; set; } = 100;
@@ -295,7 +315,10 @@ public sealed class PlatformFeaturePatch
     public bool? CandidatePassportEnabled { get; set; }
     public bool? PassportPartnersEnabled { get; set; }
     public bool? PassportPdfV2Enabled { get; set; }
+    public bool? PassportPdfDnaBlocksEnabled { get; set; }
     public bool? TestsV2Enabled { get; set; }
+    public bool? TestItemExamplesEnabled { get; set; }
+    public bool? TestProgressInsightEnabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
     public bool? CompactTestPdfEnabled { get; set; }
@@ -304,6 +327,23 @@ public sealed class PlatformFeaturePatch
     public bool? FutureJobsForYouEnabled { get; set; }
     public bool? ProactiveMatchingEnabled { get; set; }
     public bool? MatchCalibrationV1Enabled { get; set; }
+    public bool? EmployerFitQuestionnairesEnabled { get; set; }
+    public bool? KandidatenkaartEnabled { get; set; }
+    public bool? CompanyMapInitiativeEnabled { get; set; }
+    public bool? AfterMatchEnabled { get; set; }
+    public bool? SensitiveExperienceEnabled { get; set; }
+    public bool? TrainingPartnersEnabled { get; set; }
+    public bool? UwvFeaturesEnabled { get; set; }
+    public bool? ActivityLogEnabled { get; set; }
+    public bool? ReferenceVerificationEnabled { get; set; }
+    public bool? TestJourneyIllustrationEnabled { get; set; }
+    public bool? OnboardingFinaleV2Enabled { get; set; }
+    public bool? OccupationDayInLifeEnabled { get; set; }
+    public bool? ResearchConsentEnabled { get; set; }
+    public bool? TestEditModeEnabled { get; set; }
+    public bool? SamplePdfEnabled { get; set; }
+    public bool? TestDepthValueMockupEnabled { get; set; }
+    public IReadOnlyList<string>? ClearAdminFlagOverrideKeys { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }
     public int? CandidateApplyPerMinuteLimit { get; set; }

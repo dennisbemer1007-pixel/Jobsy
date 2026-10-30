@@ -13,6 +13,14 @@ public static class VacancyImageUrls
     public const int IntrinsicWidth = 800;
     public const int IntrinsicHeight = 533;
     public const int ListCardWidth = 400;
+    public const int MapPopupDesktopWidth = 640;
+    public const int MapPopupMobileWidth = 248;
+
+    /// <summary>Lazy map popup photo (WebP, ~2× retina). Load only when the popup opens.</summary>
+    public static string MapPopupPhotoPath(Guid id, bool mobile)
+        => id == Guid.Empty
+            ? string.Empty
+            : $"/api/vacancies/{id:D}/map-popup-photo?variant={(mobile ? "mobile" : "desktop")}";
     public const string LocalPrefix = "/images/vacancies/";
     public const string ImagesPrefix = "/images/";
     public const string FallbackExtension = ".webp";
@@ -533,6 +541,12 @@ public static class VacancyImageUrls
         if (hash >= 0)
         {
             path = path[..hash];
+        }
+
+        var query = path.IndexOf('?', StringComparison.Ordinal);
+        if (query >= 0)
+        {
+            path = path[..query];
         }
 
         return IsSafeSameOriginPath(path) ? path : null;

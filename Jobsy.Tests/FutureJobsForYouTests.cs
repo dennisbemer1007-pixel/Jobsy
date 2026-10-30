@@ -43,11 +43,11 @@ public class FutureJobsForYouTests
         Assert.Contains(PassportTabs.Fit, PassportTabs.Visible(employersEnabled: false, futureJobsEnabled: true));
         Assert.Contains(PassportTabs.Fit, PassportTabs.Visible(employersEnabled: true, futureJobsEnabled: false));
 
-        var passport = File.ReadAllText(Path.Combine(
+        var shells = File.ReadAllText(Path.Combine(
             TestRepo.FindRoot(),
-            "Jobsy.Web/Components/Pages/Candidate/Passport.razor"));
-        Assert.Contains("_flags.FutureJobsForYouEnabled", passport, StringComparison.Ordinal);
-        Assert.Contains("Passport.Fit.Soon", passport, StringComparison.Ordinal);
+            "Jobsy.Web/Passport/PassportSsrShells.cs"));
+        Assert.Contains("FutureJobsForYouEnabled", shells, StringComparison.Ordinal);
+        Assert.Contains("Passport.Fit.Soon", shells, StringComparison.Ordinal);
     }
 
     [Fact]

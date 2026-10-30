@@ -1,5 +1,6 @@
 using Jobsy.Api.Admin;
 using Jobsy.Core.Admin;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Api.Controllers;
 
@@ -19,17 +21,23 @@ public sealed class PrivacyController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly ISupportAccessService _supportAccess;
     private readonly IUserLookupService _users;
+    private readonly ICandidateProfileResetService _profileReset;
+    private readonly ILogger<PrivacyController> _logger;
 
     public PrivacyController(
         IPrivacyDataService privacy,
         IPlatformFeatureService features,
         ISupportAccessService supportAccess,
-        IUserLookupService users)
+        IUserLookupService users,
+        ICandidateProfileResetService profileReset,
+        ILogger<PrivacyController> logger)
     {
         _privacy = privacy;
         _features = features;
         _supportAccess = supportAccess;
         _users = users;
+        _profileReset = profileReset;
+        _logger = logger;
     }
 
     /// <summary>AVG Art. 15 / 20 — export personal data as JSON. Own account only.</summary>
@@ -139,6 +147,58 @@ public sealed class PrivacyController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex)
+        {
+            return PrivacyFailure(ex, "confirm-unsubscribe");
+        }
+    }
+
+    /// <summary>
+    /// Candidate-only: wipe profile data and restart onboarding; login identity is kept.
+    /// </summary>
+    [HttpPost("reset-candidate-profile")]
+    [Authorize(Roles = JobsyRoles.Candidate)]
+    [AdminAudit(AdminAuditKeys.PrivacyCandidateProfileReset, TargetType = AdminAuditKeys.TargetTypes.Account)]
+    [EnableRateLimiting("otp-verify")]
+    public async Task<ActionResult<ResetCandidateProfileResponse>> ResetCandidateProfile(
+        [FromBody] ResetCandidateProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        var language = Request.Headers["X-Jobsy-Language"].FirstOrDefault();
+        try
+        {
+            var me = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var auditContext = HttpContext.RequestServices.GetRequiredService<IAdminAuditContext>();
+            auditContext.ForceWrite = true;
+            if (me is not null)
+            {
+                auditContext.TargetId = me.Id.ToString("D");
+                auditContext.TargetLabel = $"Kandidaat #{me.Id.ToString("N")[..8]}";
+            }
+
+            var result = await _profileReset.ResetAsync(
+                User,
+                request.ConfirmPhrase,
+                language,
+                cancellationToken);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return PrivacyFailure(ex, "reset-candidate-profile");
+        }
     }
 
     /// <summary>
@@ -189,5 +249,27 @@ public sealed class PrivacyController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex)
+        {
+            return PrivacyFailure(ex, "delete-account");
+        }
+    }
+
+    private ObjectResult PrivacyFailure(Exception ex, string operation)
+    {
+        var refCode = PrivacyOperationErrors.ShortReference(HttpContext.TraceIdentifier);
+        _logger.LogError(
+            ex,
+            "Privacy operation {Operation} failed for authenticated user (ref {ReferenceCode}, trace {TraceId})",
+            operation,
+            refCode,
+            HttpContext.TraceIdentifier);
+        return StatusCode(
+            StatusCodes.Status500InternalServerError,
+            new
+            {
+                message = PrivacyOperationErrors.GenericMessageNl,
+                referenceCode = refCode
+            });
     }
 }

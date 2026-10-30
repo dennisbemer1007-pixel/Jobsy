@@ -1,0 +1,17 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+
+<span class="ref-verif-draw-check ref-verif-draw-check--@Size @CssClass @(Animate ? "ref-verif-draw-check--animate" : null)" aria-hidden="true">
+    <svg viewBox="0 0 48 48" focusable="false">
+        <circle class="ref-verif-draw-check__ring" cx="24" cy="24" r="21" />
+        <path class="ref-verif-draw-check__mark" d="M14 25.5 20.5 32 34 16.5" />
+    </svg>
+</span>
+
+@code {
+    [Parameter] public bool Animate { get; set; } = true;
+
+    [Parameter] public string? CssClass { get; set; }
+
+    /// <summary>sm = chip inline, md = default, lg = confirmation hero.</summary>
+    [Parameter] public string Size { get; set; } = "md";
+}

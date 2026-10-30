@@ -1,0 +1,69 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Seo
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<a href="@Href"
+   class="@Class"
+   title="@Title"
+   aria-current="@AriaCurrent"
+   data-testid="@TestId"
+   data-desktop-only="@DesktopOnly"
+   data-lobsy-candidate-nav="true"
+   data-lobsy-document-title="@DocumentTitle"
+   data-enhance-nav="false"
+   @onclick="NavigateAsync"
+   @onclick:preventDefault="true">
+    @ChildContent
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? AriaCurrent { get; set; }
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public string? DesktopOnly { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string DocumentTitle
+    {
+        get
+        {
+            var entry = PageSeoCatalog.Resolve(Href);
+            return PageSeoResolver.WithBrand(Culture[entry.TitleKey]);
+        }
+    }
+
+    private async Task NavigateAsync()
+    {
+        Navigation.NavigateTo(Href, forceLoad: false);
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyCandidateNav.commitPrimaryNav", Href, DocumentTitle);
+        }
+        catch
+        {
+            // Disconnected circuit / prerender
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyCandidateNav.markInteractive");
+        }
+        catch
+        {
+            // bUnit / disconnected circuit
+        }
+    }
+}
