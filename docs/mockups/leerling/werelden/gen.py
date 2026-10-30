@@ -5,9 +5,9 @@ from painted_svgs import (
     job_none_icon,
     day_icon,
     world_deco,
-    job_paint_img,
-    day_hero_img,
-    day_scene_img,
+    category_art_img,
+    day_hero_art_img,
+    DAY_SCENE_ART,
     PLUS as PLUS_SVG,
 )
 
@@ -368,33 +368,34 @@ JOB_ICONS={
  'brandweer':'<path d="M12 22c4 0 7-2.7 7-6.5 0-3-2-5-4-7-1 3-3 4-4 5-1-2-1-4 .5-6.5C7 9.5 5 13 5 15.5 5 19.3 8 22 12 22Z"/>',
 }
 # Keys/titles/blurbs/domains align with DreamJobCatalog + PupilPassportCopy (Groep78).
+# category_slug = one illustration per beroepsgroep (see img/jobs/{slug}.jpg)
 JOB_PICKS=[
- ('dierenverzorger','Dierenverzorger','Zorg & dieren',
+ ('dierenverzorger','Dierenverzorger','Zorg & dieren','zorg-dieren',
   'Je zorgt voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.',
   'jij van <b>dieren</b> houdt en graag voor anderen zorgt.',True),
- ('bioloog','Bioloog','Onderzoek',
+ ('bioloog','Bioloog','Onderzoek','onderzoek',
   'Je ontdekt hoe planten en dieren leven. Soms buiten, soms in een lab.',
   'jij van <b>natuur</b> houdt en wilt weten hoe iets werkt.',False),
- ('grafisch-ontwerper','Grafisch ontwerper','Creatief',
+ ('grafisch-ontwerper','Grafisch ontwerper','Creatief','creatief',
   'Je bedenkt en maakt plaatjes, logo\'s en andere creatieve dingen.',
   'jij van <b>tekenen</b> en maken houdt.',False),
- ('hovenier','Hovenier','Buiten & groen',
+ ('hovenier','Hovenier','Buiten & groen','buiten-groen',
   'Je maakt tuinen en parken mooi. Je bent bijna de hele dag buiten.',
   'jij van <b>buiten</b> en <b>natuur</b> houdt.',False),
- ('brandweer','Brandweerman/-vrouw','Helpen',
+ ('brandweer','Brandweerman/-vrouw','Helpen','helpen',
   'Je helpt mensen als er brand is of als iemand in de knel zit.',
   'jij snel ziet wanneer iemand hulp nodig heeft.',False),
 ]
 def job_pick(name,k,none_selected=False):
     w=W[k]; img,pos=RESULT_BAND[k]; last=len(w['nodes'])-1
     cards=''
-    for key,title,domain,blurb,why,default_sel in JOB_PICKS:
+    for key,title,domain,cat_slug,blurb,why,default_sel in JOB_PICKS:
         sel=(not none_selected) and default_sel
-        paint=job_paint_img(k, key)
+        art_src=category_art_img(cat_slug)
         day_hint=' · <span style="color:var(--teal);font-weight:600">Tik voor een dag in dit beroep</span>' if key=='dierenverzorger' else ''
         mark='<span class="jmark">✓ Jouw keuze</span>' if sel else ''
         cards+=f'''<button type="button" class="jpick{" sel" if sel else ""}" aria-pressed="{"true" if sel else "false"}">
-<figure class="jpick-paint"><img src="{paint}" alt="" width="520" height="360"></figure><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Leuk voor jou omdat {why}{day_hint}</p></div>
+<figure class="jpick-paint jpick-paint-w-{k}"><img src="{art_src}" alt="" width="400" height="400"></figure><div class="jbody"><p class="jtitle">{title}</p><p class="jdom">{domain}</p><p class="jblurb">{blurb}</p><p class="jwhy">Leuk voor jou omdat {why}{day_hint}</p></div>
 <span class="jspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span>
 {mark}</button>'''
     none_art=job_none_icon()
@@ -454,8 +455,7 @@ def job_day(name,k):
     blocks=''
     for b in d['blocks']:
         key=b['key']; lab=b['label']; txt=b['text']
-        scene_src=day_scene_img(k, key)
-        blocks+=f'''<li class="day-block" data-moment="{key}"><div class="day-block-inner"><span class="day-scene"><img class="day-scene-img" src="{scene_src}" alt="" width="280" height="280"></span><div><h2>{lab}</h2><p>{txt}</p></div>
+        blocks+=f'''<li class="day-block" data-moment="{key}"><div class="day-block-inner"><span class="day-scene day-scene-w-{k}"><img class="day-scene-img" src="{DAY_SCENE_ART}" alt="" width="400" height="400"></span><div><h2>{lab}</h2><p>{txt}</p></div>
 <span class="dspeak"><button type="button" class="speak" aria-label="Voorlezen">{SPK}</button></span></div></li>'''
     facts=''
     skills=d.get('skills') or []
@@ -473,7 +473,7 @@ def job_day(name,k):
 <div class="qmeta"><span class="kicker">Een werkdag</span><span>·</span><span>{title}</span></div>
 <h1 class="island-lead" style="margin-top:4px">Een dag als {title}</h1>
 <p class="day-disclaimer">Zo kan een dag eruitzien. Overal is het een beetje anders.</p>
-<figure class="day-job-hero"><img src="{day_hero_img(k)}" alt="" width="960" height="380"></figure>
+<figure class="day-job-hero day-job-hero-w-{k}"><img src="{day_hero_art_img()}" alt="" width="960" height="380"></figure>
 <div class="qrow"><button class="speak on">{SPK}</button><span class="speak-label">Lobsy leest de uitleg voor</span></div>
 <ol class="day-timeline">{blocks}</ol>{facts}{varies_html}
 <div class="qfoot" style="flex-wrap:wrap"><button class="btn btn-ghost">{BACK}Terug naar de beroepen</button>
