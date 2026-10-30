@@ -76,7 +76,7 @@
                         return;
                     }
 
-                    if (string.Equals(progress.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase)
+                    if (PupilGroep78RouteCatalog.SupportsThemedRoute(progress.JourneyThemeKey)
                         && progress.CurrentIndex == 0
                         && progress.AnsweredCount == 0
                         && !progress.Completed)

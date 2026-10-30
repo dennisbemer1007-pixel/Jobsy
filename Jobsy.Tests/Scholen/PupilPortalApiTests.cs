@@ -390,8 +390,15 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         var zeeSaved = await zee.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
         Assert.Equal(PupilGroep78EntryPaths.Route, zeeSaved!.RedirectPath);
 
+        var tuin = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(PupilJourneyTheme.Eilandtuin));
+        Assert.Equal(HttpStatusCode.OK, tuin.StatusCode);
+        var tuinSaved = await tuin.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Route, tuinSaved!.RedirectPath);
+
         var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
-        Assert.Equal(PupilJourneyTheme.ZeeExpeditie, progress!.JourneyThemeKey);
+        Assert.Equal(PupilJourneyTheme.Eilandtuin, progress!.JourneyThemeKey);
     }
 
     [Fact]

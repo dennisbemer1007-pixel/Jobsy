@@ -629,6 +629,82 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Groep78_tuin_route_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(
+            3,
+            answered: 0,
+            chipsSaved: false,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_TUIN_ROUTE_CAPTURE_DIR");
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+            await page.WaitForURLAsync("**/leerling/route**", DomReady);
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "De route" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("Zo ga je van de steiger naar jouw eiland.")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Naar de Bloemenbaai" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Andere wereld kiezen" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".ll-g78-shell.t-tuin")).ToBeVisibleAsync();
+            var speak = width >= 600
+                ? page.Locator(".rt-coach [data-read-aloud]")
+                : page.Locator(".m-only .guide [data-read-aloud]");
+            await Assertions.Expect(speak).ToBeVisibleAsync();
+            if (!string.IsNullOrEmpty(captureDir))
+            {
+                Directory.CreateDirectory(captureDir);
+                await page.Locator(".btn-main").WaitForAsync(new() { Timeout = 30_000 });
+                await speak.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-04-eilandtuin-route-{tag}.png"),
+                    FullPage = true,
+                });
+            }
+
+            await page.CloseAsync();
+        }
+
+        var desktop = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+        });
+        var url = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+        await LoginAsync(desktop, url, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+        await desktop.WaitForURLAsync("**/leerling/route**", DomReady);
+        await desktop.GetByRole(AriaRole.Link, new() { Name = "Naar de Bloemenbaai" }).ClickAsync();
+        await desktop.WaitForURLAsync("**/leerling/reis**", DomReady);
+        await desktop.CloseAsync();
+
+        var mobile = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+        });
+        await LoginAsync(mobile, url, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+        await mobile.WaitForURLAsync("**/leerling/route**", DomReady);
+        await mobile.GetByRole(AriaRole.Link, new() { Name = "Andere wereld kiezen" }).ClickAsync();
+        await mobile.WaitForURLAsync("**/leerling/wereld**", DomReady);
+        await mobile.CloseAsync();
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Groep78_zee_vraag_screen_links_and_capture()
     {
         _ = TestContext.Current.CancellationToken;
@@ -800,9 +876,27 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     };
 
     private static Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
-        => LoginAsync(page, loginUrl, code, classId, chooseDefaultWorld: true);
+        => LoginAsync(page, loginUrl, code, classId, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
 
-    private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId, bool chooseDefaultWorld)
+    private static Task LoginAsync(
+        IPage page,
+        string loginUrl,
+        string code,
+        Guid classId,
+        bool chooseDefaultWorld)
+        => LoginAsync(
+            page,
+            loginUrl,
+            code,
+            classId,
+            chooseDefaultWorld ? PupilJourneyTheme.ZeeExpeditie : null);
+
+    private static async Task LoginAsync(
+        IPage page,
+        string loginUrl,
+        string code,
+        Guid classId,
+        string? journeyThemeKey)
     {
         var classValue = classId.ToString("D");
         Exception? last = null;
@@ -891,10 +985,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
                     UrlCommitted);
-                if (chooseDefaultWorld
+                if (!string.IsNullOrEmpty(journeyThemeKey)
                     && page.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
                 {
-                    await page.Locator("[data-testid=ll-wereld-zee]").ClickAsync();
+                    await page.Locator($"[data-testid=ll-wereld-{journeyThemeKey}]").ClickAsync();
                     await page.WaitForURLAsync(
                         url => url.Contains("/leerling/route", StringComparison.OrdinalIgnoreCase)
                             || url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
@@ -1056,7 +1150,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         int pupils,
         int answered,
         bool chipsSaved,
-        bool completeActivePuzzleGate = false)
+        bool completeActivePuzzleGate = false,
+        string journeyThemeKey = PupilJourneyTheme.ZeeExpeditie)
     {
         await using var scope = _api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -1107,7 +1202,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 AnswersJson = answersJson,
                 PuzzlesJson = puzzlesJson,
                 CurrentIndex = answered,
-                JourneyThemeKey = PupilJourneyTheme.ZeeExpeditie,
+                JourneyThemeKey = journeyThemeKey,
                 LikesJson = "[]",
                 DislikesJson = "[]",
                 ChipsSavedAtUtc = chipsSaved ? now : null,

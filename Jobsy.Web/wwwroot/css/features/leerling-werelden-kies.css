@@ -555,3 +555,32 @@
     font-size: 17px;
   }
 }
+
+.ll-g78-shell.t-tuin {
+  --navy: #3a2230;
+  --navy2: #55303f;
+  --teal: #4d7a5c;
+  --sea: #c06b4e;
+  --cream: #fbf3ea;
+  --paper: #fffaf4;
+  --sand: #efe5d3;
+  --coral: #c4553a;
+  --coral2: #9c3f29;
+  --brass: #c08a4a;
+  --brass2: #e8b98a;
+  --ink: #2a1b22;
+  --muted: #6a5560;
+}
+
+.ll-g78-shell.t-tuin .card {
+  border-color: #efd9c6;
+  box-shadow: 0 10px 40px rgba(58, 34, 48, 0.14);
+}
+
+.ll-g78-shell.t-tuin .bubble {
+  box-shadow: 0 6px 20px rgba(58, 34, 48, 0.15);
+}
+
+.ll-g78-shell.t-tuin .ring {
+  background-color: #f6e4d4;
+}

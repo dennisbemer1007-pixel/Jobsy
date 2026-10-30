@@ -8,14 +8,15 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
+@inject Jobsy.Web.Scholen.LeerlingGroep78ShellTheme ShellTheme
 @implements IDisposable
 
-<div class="ll-g78-shell t-zee" lang="@Culture.Language">
+<div class="ll-g78-shell @ShellTheme.CssClass" lang="@Culture.Language">
     <header class="top">
         <a class="brand" href="/leerling/wereld">
             <img src="/leerling/werelden/img/embleem.png" width="40" height="40" alt="" />
             Lobsy
-            <small>@Culture[ResolveHeaderSmallKey()]</small>
+            <small>@Culture[ShellTheme.HeaderSmallKey]</small>
         </a>
         <div class="sp"></div>
         @if (!string.IsNullOrEmpty(_chip))
@@ -44,6 +45,12 @@
     private string _chip = "";
     private bool _showPause = true;
     private IDisposable? _displayLanguage;
+
+    protected override void OnInitialized()
+    {
+        ShellTheme.Changed += OnShellThemeChanged;
+        Nav.LocationChanged += OnLocationChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -94,18 +101,21 @@
         return null;
     }
 
-    private string ResolveHeaderSmallKey()
-    {
-        var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?', 2)[0];
-        if (path.Equals("leerling/route", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("leerling/reis", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("leerling/puzzel-intro/", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Leerling.Route.HeaderExpedition";
-        }
+    private void OnShellThemeChanged() => InvokeAsync(StateHasChanged);
 
-        return "Leerling.Wereld.HeaderGrade";
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var path = Nav.ToBaseRelativePath(e.Location).Split('?', 2)[0];
+        if (path.Equals("leerling/wereld", StringComparison.OrdinalIgnoreCase))
+        {
+            ShellTheme.Reset();
+        }
     }
 
-    public void Dispose() => _displayLanguage?.Dispose();
+    public void Dispose()
+    {
+        ShellTheme.Changed -= OnShellThemeChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+        _displayLanguage?.Dispose();
+    }
 }

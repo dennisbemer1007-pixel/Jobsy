@@ -10,6 +10,15 @@
   min-height: 230px;
 }
 
+.ll-g78-shell .band.rt.rt-tuin {
+  background-image: image-set(
+    url("/leerling/werelden/img/tuin-baai-390w.jpg") 1x,
+    url("/leerling/werelden/img/tuin-baai-780w.jpg") 2x,
+    url("/leerling/werelden/img/tuin-baai.jpg") 3x
+  );
+  background-position: center 22%;
+}
+
 .ll-g78-shell .rt-hero {
   padding-top: 44px;
 }
@@ -211,6 +220,10 @@
   .ll-g78-shell .band.rt {
     min-height: 150px;
     background-position: center 45%;
+  }
+
+  .ll-g78-shell .band.rt.rt-tuin {
+    background-position: center 22%;
   }
 
   .ll-g78-shell .rt-hero {
