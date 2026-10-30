@@ -77,6 +77,17 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPut("progress/journey-theme")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SaveJourneyTheme(
+        [FromBody] PupilJourneyThemeRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveJourneyThemeAsync(User, request.Key, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpPut("progress/answers/{itemId}")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> SaveAnswer(

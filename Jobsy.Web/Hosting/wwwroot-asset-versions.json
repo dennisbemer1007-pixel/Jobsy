@@ -167,6 +167,14 @@
     "sha256": "b8c8ebe7ac11ba2ccc445300496c26c652b4044397452912d0306be80467ef69",
     "v": "20261028-59"
   },
+  "css/features/leerling-werelden-kies.css": {
+    "sha256": "5c5bdda7bcc2e6474897eda69acd7aabdb5486d1a0d9d8bb4299b513b9dbbbcb",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-route.css": {
+    "sha256": "df7ce33c1559d68286e3b3ca9db01c9ce73862b9ea318151366d86738c5d7b4d",
+    "v": "20261030-catalog"
+  },
   "css/features/lobsy-assistant-panel.css": {
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"
