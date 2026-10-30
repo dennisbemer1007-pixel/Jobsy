@@ -726,6 +726,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     Path = Path.Combine(captureDir, $"built-03-zee-puzzel-intro-{tag}.png"),
                     FullPage = true,
                 });
+                if (width == 390)
+                {
+                    await page.ScreenshotAsync(new()
+                    {
+                        Path = Path.Combine(captureDir, "built-03-zee-puzzel-intro-390-viewport.png"),
+                        FullPage = false,
+                    });
+                }
             }
 
             await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();

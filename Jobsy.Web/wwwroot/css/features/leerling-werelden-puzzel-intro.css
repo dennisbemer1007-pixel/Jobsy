@@ -2,7 +2,7 @@
 
 .ll-g78-shell .band.pi {
   background-image: url("/leerling/werelden/img/rif.jpg");
-  background-position: center 75%;
+  background-position: 68% 75%;
   background-size: cover;
   min-height: 300px;
   padding-top: 130px;
@@ -141,9 +141,27 @@
   flex-wrap: wrap;
 }
 
+.ll-g78-shell .pi-foot__read {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
 .ll-g78-shell .pi-foot .read-aloud.read-aloud--icon {
   width: 52px;
   height: 52px;
+}
+
+.ll-g78-shell .pi-start.btn-main {
+  margin-top: 0;
+}
+
+.ll-g78-shell .pi-start.btn-big {
+  font-size: 22px;
+  padding: 20px 40px;
+  border-radius: 16px;
 }
 
 .ll-g78-shell .pi-start {
@@ -154,9 +172,8 @@
   justify-content: center;
   gap: 10px;
   width: auto;
-  font-size: 21px;
-  padding: 18px 28px;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .ll-g78-shell .pi-coach-aside {
@@ -186,21 +203,41 @@
 @media (max-width: 600px) {
   .ll-g78-shell .band.pi {
     min-height: 190px;
-    padding-top: 104px;
-    background-position: center 75%;
+    padding-top: 130px;
+    background-position: 62% 82%;
+  }
+
+  .ll-g78-shell .vr-jn.is-cur .vr-here {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .ll-g78-shell section.band.pi + .wrap.pi-overlap {
+    margin-top: 14px;
   }
 
   .ll-g78-shell .pi-title {
     font-size: 34px;
   }
 
+  .ll-g78-shell .pi-steps {
+    gap: 10px;
+  }
+
   .ll-g78-shell .pi-steps li {
     font-size: 17px;
+    gap: 12px;
+  }
+
+  .ll-g78-shell .pi-facts span {
+    font-size: 14px;
+    padding: 5px 12px;
   }
 
   .ll-g78-shell .pi-prev-row {
-    gap: 5px;
-    padding: 10px 6px;
+    gap: 4px;
+    padding: 10px 4px;
+    margin-inline: -2px;
   }
 
   .ll-g78-shell .pi-slot {
@@ -223,16 +260,35 @@
   }
 
   .ll-g78-shell .card.pi-card {
-    padding: 22px 18px;
+    padding: 20px 18px 22px;
   }
 
   .ll-g78-shell .pi-foot {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .ll-g78-shell .pi-foot__read {
+    flex: none;
+    width: 100%;
+  }
+
+  .ll-g78-shell .pi-foot__read .speak-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ll-g78-shell .pi-start.btn-big {
+    font-size: 20px;
+    padding: 18px 26px;
+    border-radius: 16px;
   }
 
   .ll-g78-shell .pi-start {
-    order: -1;
     width: 100%;
+    max-width: 100%;
     margin-left: 0;
+    justify-content: center;
   }
 }

@@ -101,10 +101,12 @@
             </div>
 
             <div class="pi-foot">
-                <LeerlingSpeak Text="@introSpoken"
-                               SpeechKey="@($"ll-puzzel-intro-{PuzzleKey}")"
-                               AlwaysShow="true" />
-                <span class="speak-label">@Culture["Leerling.PuzzelIntro.ReadIntro"]</span>
+                <div class="pi-foot__read">
+                    <LeerlingSpeak Text="@introSpoken"
+                                   SpeechKey="@($"ll-puzzel-intro-{PuzzleKey}")"
+                                   AlwaysShow="true" />
+                    <span class="speak-label">@Culture["Leerling.PuzzelIntro.ReadIntro"]</span>
+                </div>
                 <a class="btn btn-main btn-big pi-start"
                    href="@StartHref"
                    data-testid="ll-puzzel-intro-start">
