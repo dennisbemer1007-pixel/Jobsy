@@ -3,6 +3,7 @@
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
@@ -67,6 +68,12 @@
             if (progress is not null)
             {
                 _def = Registry.Get(progress.QuestionSet);
+                if (progress.QuestionSet == PupilQuestionSet.Groep78
+                    && !PupilJourneyTheme.IsValid(progress.JourneyThemeKey))
+                {
+                    Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
+                    return;
+                }
             }
         }
         catch
@@ -74,6 +81,6 @@
             _def = null;
         }
 
-        _def ??= Registry.Get(Jobsy.Core.Enums.PupilQuestionSet.Vo);
+        _def ??= Registry.Get(PupilQuestionSet.Vo);
     }
 }

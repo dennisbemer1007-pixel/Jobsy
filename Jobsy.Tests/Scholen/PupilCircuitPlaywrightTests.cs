@@ -85,6 +85,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
         await page.WaitForTimeoutAsync(3_000);
         Assert.Contains("/leerling/start", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/leerling/wereld", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
 
         await page.GetByRole(AriaRole.Link, new() { Name = "Beginnen" }).ClickAsync();
@@ -395,6 +396,38 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Wereld_choice_matches_mockup_layout_at_1440_and_390()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var baseUrl = EnsureWeb();
+        var outDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "artifacts", "wereld-screenshots");
+        Directory.CreateDirectory(outDir);
+        foreach (var (width, height, tag) in new[] { (1440, 900, "desktop-1440"), (390, 844, "mobile-390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+            page.SetDefaultTimeout(90_000);
+            await page.Context.ClearCookiesAsync();
+            var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+            await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+            await page.WaitForURLAsync("**/leerling/wereld**", DomReady);
+            await page.Locator("[data-testid=ll-wereld-zee]").WaitForAsync();
+            await page.WaitForTimeoutAsync(500);
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(outDir, $"built-{tag}.png"),
+                FullPage = true
+            });
+            await page.CloseAsync();
+        }
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Question_card_is_painted_above_the_scene_at_1366_and_390()
     {
         _ = TestContext.Current.CancellationToken;
@@ -582,7 +615,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Timeout = 45_000
     };
 
-    private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
+    private static Task LoginAsync(IPage page, string loginUrl, string code, Guid classId)
+        => LoginAsync(page, loginUrl, code, classId, chooseDefaultWorld: true);
+
+    private static async Task LoginAsync(IPage page, string loginUrl, string code, Guid classId, bool chooseDefaultWorld)
     {
         var classValue = classId.ToString("D");
         Exception? last = null;
@@ -662,12 +698,23 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             try
             {
                 await page.WaitForURLAsync(
-                    url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
+                    url => url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
                     UrlCommitted);
+                if (chooseDefaultWorld
+                    && page.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
+                {
+                    await page.Locator("[data-testid=ll-wereld-zee]").ClickAsync();
+                    await page.WaitForURLAsync(
+                        url => url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
+                            || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase),
+                        UrlCommitted);
+                }
+
                 return;
             }
             catch (TimeoutException ex) when (attempt < 2)
