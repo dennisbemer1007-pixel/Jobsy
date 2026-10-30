@@ -292,3 +292,35 @@
     justify-content: center;
   }
 }
+
+/* Groep 7/8 screen 06 — Eilandtuin Schelpenrij intro (mockup 06-eilandtuin-puzzel-intro). */
+
+.ll-g78-shell.t-tuin .band.pi.pi-tuin {
+  background-image: url("/leerling/werelden/img/tuin-koraal.jpg");
+  background-position: center 82%;
+}
+
+.ll-g78-shell.t-tuin .pi-prev-row {
+  background: linear-gradient(#fbeee2, #f4dcc9);
+  border: 2px solid #e8c6ab;
+}
+
+.ll-g78-shell.t-tuin .pi-slot {
+  border-color: #e8c6ab;
+  background: rgba(255, 250, 244, 0.85);
+}
+
+.ll-g78-shell.t-tuin .vr-journey {
+  background: rgba(58, 34, 48, 0.86);
+  border-color: rgba(232, 185, 138, 0.5);
+}
+
+.ll-g78-shell.t-tuin .vr-jn.is-cur .vr-here {
+  background: var(--coral);
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-tuin .band.pi.pi-tuin {
+    background-position: center 82%;
+  }
+}

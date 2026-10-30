@@ -832,6 +832,64 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Groep78_tuin_puzzel_intro_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(
+            3,
+            answered: 15,
+            chipsSaved: false,
+            journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_TUIN_PUZZEL_INTRO_CAPTURE_DIR");
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Eilandtuin);
+            await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", DomReady);
+            await page.Locator("[data-testid=ll-tuin-puzzel-intro-band]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = 60_000,
+            });
+            await Assertions.Expect(page.Locator(".ll-g78-shell.t-tuin")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("Vind het patroon in de rij schelpen in de koraaltuin.")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".pi-foot [data-read-aloud]")).ToBeVisibleAsync();
+            if (!string.IsNullOrEmpty(captureDir))
+            {
+                Directory.CreateDirectory(captureDir);
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-06-eilandtuin-puzzel-intro-{tag}.png"),
+                    FullPage = true,
+                });
+            }
+
+            var coach = width >= 600
+                ? page.Locator(".pi-coach-aside [data-read-aloud]")
+                : page.Locator(".m-only .guide [data-read-aloud]");
+            await coach.ClickAsync();
+
+            await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", DomReady);
+            await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+            await page.CloseAsync();
+        }
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Groep78_zee_puzzel_intro_screen_links_and_capture()
     {
         _ = TestContext.Current.CancellationToken;
@@ -1047,11 +1105,19 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     }
 
                     await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", UrlCommitted);
+                    var introBand = theme == PupilJourneyTheme.Eilandtuin
+                        ? "ll-tuin-puzzel-intro-band"
+                        : "ll-zee-puzzel-intro-band";
+                    await page.Locator($"[data-testid={introBand}]").WaitForAsync();
                 });
 
                 await Step("Puzzle intro speaker", async () =>
                 {
-                    await page.Locator(".pi-foot [data-read-aloud], .wrap [data-read-aloud]").First.ClickAsync();
+                    await page.Locator(".pi-foot [data-read-aloud]").ClickAsync();
+                    var coach = width >= 600
+                        ? page.Locator(".pi-coach-aside [data-read-aloud]")
+                        : page.Locator(".m-only .guide [data-read-aloud]");
+                    await coach.ClickAsync();
                 });
 
                 await Step("Start de puzzel", async () =>

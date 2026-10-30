@@ -38,6 +38,12 @@ else if (!_built)
         <a class="btn btn-main" href="/leerling/reis">@Culture["Leerling.Puzzle.BackReis"]</a>
     </section>
 }
+else if (string.Equals(_journeyThemeKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase))
+{
+    <LeerlingReisTuinPuzzleIntro PuzzleKey="@Key"
+                                 StartHref="@_startHref"
+                                 AfterQuestion="@_afterQuestion" />
+}
 else
 {
     <LeerlingReisZeePuzzleIntro PuzzleKey="@Key"
@@ -54,6 +60,7 @@ else
     private bool _built;
     private string _startHref = "";
     private int _afterQuestion = 15;
+    private string _journeyThemeKey = PupilJourneyTheme.ZeeExpeditie;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -95,6 +102,7 @@ else
         }
 
         ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
+        _journeyThemeKey = state.JourneyThemeKey!;
 
         if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
             || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))

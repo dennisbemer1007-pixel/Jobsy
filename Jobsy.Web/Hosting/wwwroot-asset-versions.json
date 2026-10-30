@@ -168,19 +168,19 @@
     "v": "20261028-59"
   },
   "css/features/leerling-werelden-kies.css": {
-    "sha256": "5c5bdda7bcc2e6474897eda69acd7aabdb5486d1a0d9d8bb4299b513b9dbbbcb",
+    "sha256": "1e9bd7ed6eb8107f077f595f298a31a24b63b3915a2883fa485edd7573cc6225",
     "v": "20261030-catalog"
   },
   "css/features/leerling-werelden-puzzel-intro.css": {
-    "sha256": "de362f66de30383a1a98f710b38d63c0a9e0c536c5d0186fdd9575ee874fd618",
+    "sha256": "04eae2129dc6b647d05135e1842e2214b5f7a16a2481352e61b878d24d6b5ae2",
     "v": "20261030-catalog"
   },
   "css/features/leerling-werelden-route.css": {
-    "sha256": "df7ce33c1559d68286e3b3ca9db01c9ce73862b9ea318151366d86738c5d7b4d",
+    "sha256": "dd56b358c157e9636f82e0ecc126bcc0cfac642e049614efeda6123ad6f65014",
     "v": "20261030-catalog"
   },
   "css/features/leerling-werelden-vraag.css": {
-    "sha256": "751c3a879c6cd6d20b405112fe45d141b6780709329ae8d0e161383fb6fffde7",
+    "sha256": "14b5c9827dc77f7ed2508c26ac3dcceeef63ff38855cfe113e89b80bc8380b57",
     "v": "20261030-catalog"
   },
   "css/features/lobsy-assistant-panel.css": {

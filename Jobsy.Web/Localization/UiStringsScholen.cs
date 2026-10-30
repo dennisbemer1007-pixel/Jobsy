@@ -490,6 +490,7 @@ public static class UiStringsScholen
         nl["Leerling.PuzzelIntro.Part2"] = "Puzzel 2 van 3";
         nl["Leerling.PuzzelIntro.Part3"] = "Puzzel 3 van 3";
         nl["Leerling.PuzzelIntro.Schelpenrij.Lead"] = "Vind het patroon in de rij schelpen op het rif.";
+        nl["Leerling.PuzzelIntro.Schelpenrij.Lead.Tuin"] = "Vind het patroon in de rij schelpen in de koraaltuin.";
         nl["Leerling.PuzzelIntro.Step1"] = "Kijk goed naar de rij.";
         nl["Leerling.PuzzelIntro.Step2"] = "Zoek wat er steeds terugkomt.";
         nl["Leerling.PuzzelIntro.Step3"] = "Kies welke schelp erna komt.";
@@ -816,6 +817,7 @@ public static class UiStringsScholen
         Add("Leerling.PuzzelIntro.Part2", "Puzzel 2 van 3", "Puzzle 2 of 3", "Łamigłówka 2 z 3", "Puzzle 2 din 3", "لغز 2 من 3");
         Add("Leerling.PuzzelIntro.Part3", "Puzzel 3 van 3", "Puzzle 3 of 3", "Łamigłówka 3 z 3", "Puzzle 3 din 3", "لغز 3 من 3");
         Add("Leerling.PuzzelIntro.Schelpenrij.Lead", "Vind het patroon in de rij schelpen op het rif.", "Find the pattern in the row of shells on the reef.", "Znajdź wzór w rzędzie muszli na rafie.", "Găsește modelul în șirul de scoici de pe recif.", "اعثر على النمط في صف الأصداف على الشعاب.");
+        Add("Leerling.PuzzelIntro.Schelpenrij.Lead.Tuin", "Vind het patroon in de rij schelpen in de koraaltuin.", "Find the pattern in the row of shells in the coral garden.", "Znajdź wzór w rzędzie muszli w ogrodzie koralowym.", "Găsește modelul în șirul de scoici din grădina de corali.", "اعثر على النمط في صف الأصداف في حديقة المرجان.");
         Add("Leerling.PuzzelIntro.Step1", "Kijk goed naar de rij.", "Look carefully at the row.", "Dobrze popatrz na rząd.", "Privește cu atenție rândul.", "انظر جيداً إلى الصف.");
         Add("Leerling.PuzzelIntro.Step2", "Zoek wat er steeds terugkomt.", "Find what keeps coming back.", "Szukaj, co wraca w kółko.", "Caută ce revine mereu.", "ابحث عما يتكرر.");
         Add("Leerling.PuzzelIntro.Step3", "Kies welke schelp erna komt.", "Choose which shell comes next.", "Wybierz, która muszla jest następna.", "Alege ce scoică urmează.", "اختر أي صدفة تأتي بعد ذلك.");
