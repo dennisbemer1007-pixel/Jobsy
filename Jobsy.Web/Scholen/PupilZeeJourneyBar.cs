@@ -37,6 +37,16 @@ public static class PupilZeeJourneyBar
         };
     }
 
+    /// <summary>Journey strip position when the pupil is on a puzzle intro (mockup 03).</summary>
+    public static int IntroNodeIndex(string? puzzleKey)
+        => puzzleKey?.ToLowerInvariant() switch
+        {
+            "schelpenrij" => 1,
+            "schatkaart" => 3,
+            "vuurtorenlampen" => 6,
+            _ => 0,
+        };
+
     public static string DoneLineWidth(int currentIndex)
     {
         var n = Nodes.Count;

@@ -97,9 +97,14 @@
     private string ResolveHeaderSmallKey()
     {
         var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?', 2)[0];
-        return path.Equals("leerling/route", StringComparison.OrdinalIgnoreCase)
-            ? "Leerling.Route.HeaderExpedition"
-            : "Leerling.Wereld.HeaderGrade";
+        if (path.Equals("leerling/route", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("leerling/reis", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("leerling/puzzel-intro/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Leerling.Route.HeaderExpedition";
+        }
+
+        return "Leerling.Wereld.HeaderGrade";
     }
 
     public void Dispose() => _displayLanguage?.Dispose();

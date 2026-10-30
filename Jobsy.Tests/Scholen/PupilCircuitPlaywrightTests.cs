@@ -688,6 +688,53 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await back.CloseAsync();
     }
 
+    [Fact(Timeout = 300_000)]
+    public async Task Groep78_zee_puzzel_intro_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(3, answered: 15, chipsSaved: false);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_PUZZEL_INTRO_CAPTURE_DIR");
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, chooseDefaultWorld: true);
+            await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", DomReady);
+            await page.Locator("[data-testid=ll-zee-puzzel-intro-band]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Attached,
+                Timeout = 60_000,
+            });
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".pi-foot [data-read-aloud]")).ToBeVisibleAsync();
+            if (!string.IsNullOrEmpty(captureDir))
+            {
+                Directory.CreateDirectory(captureDir);
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-03-zee-puzzel-intro-{tag}.png"),
+                    FullPage = true,
+                });
+            }
+
+            await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", DomReady);
+            await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+            await page.CloseAsync();
+        }
+    }
+
     private async Task<IBrowserContext> NewMobileContextAsync()
         => await _browser!.NewContextAsync(new BrowserNewContextOptions
         {
@@ -832,6 +879,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                         || url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/puzzel-intro/", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
                     UrlCommitted);
@@ -985,10 +1033,13 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
         var started = DateTime.UtcNow;
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel-intro/schelpenrij**", UrlCommitted);
+        await page.Locator("[data-testid=ll-zee-puzzel-intro-band]").WaitForAsync();
+        var elapsedMs = (DateTime.UtcNow - started).TotalMilliseconds;
+        Assert.True(elapsedMs < 3_000, $"puzzle intro load took {elapsedMs:F0} ms at {width}x{height}");
+        await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
         await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", UrlCommitted);
         await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
-        var elapsedMs = (DateTime.UtcNow - started).TotalMilliseconds;
-        Assert.True(elapsedMs < 3_000, $"puzzle load took {elapsedMs:F0} ms at {width}x{height}");
         await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" })).ToBeVisibleAsync();
         await page.CloseAsync();
     }
@@ -1048,6 +1099,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 AnswersJson = answersJson,
                 PuzzlesJson = puzzlesJson,
                 CurrentIndex = answered,
+                JourneyThemeKey = PupilJourneyTheme.ZeeExpeditie,
                 LikesJson = "[]",
                 DislikesJson = "[]",
                 ChipsSavedAtUtc = chipsSaved ? now : null,

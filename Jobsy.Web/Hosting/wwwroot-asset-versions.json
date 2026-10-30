@@ -171,8 +171,16 @@
     "sha256": "5c5bdda7bcc2e6474897eda69acd7aabdb5486d1a0d9d8bb4299b513b9dbbbcb",
     "v": "20261030-catalog"
   },
+  "css/features/leerling-werelden-puzzel-intro.css": {
+    "sha256": "9fd6f4709491093cfeb5407a689b25f703ffef0221a6bc1305bec804da78b741",
+    "v": "20261030-catalog"
+  },
   "css/features/leerling-werelden-route.css": {
     "sha256": "df7ce33c1559d68286e3b3ca9db01c9ce73862b9ea318151366d86738c5d7b4d",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-vraag.css": {
+    "sha256": "751c3a879c6cd6d20b405112fe45d141b6780709329ae8d0e161383fb6fffde7",
     "v": "20261030-catalog"
   },
   "css/features/lobsy-assistant-panel.css": {

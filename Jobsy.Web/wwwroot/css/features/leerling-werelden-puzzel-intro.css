@@ -1,0 +1,238 @@
+/* Groep 7/8 screen 03 — Zee-expeditie Schelpenrij intro (mockup 03-zee-puzzel-intro). */
+
+.ll-g78-shell .band.pi {
+  background-image: url("/leerling/werelden/img/rif.jpg");
+  background-position: center 75%;
+  background-size: cover;
+  min-height: 300px;
+  padding-top: 130px;
+}
+
+.ll-g78-shell .pi-journey {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.ll-g78-shell .pi-jmeta {
+  justify-content: flex-start;
+}
+
+.ll-g78-shell .wrap.pi-overlap {
+  margin-top: -24px;
+  position: relative;
+  z-index: 4;
+}
+
+.ll-g78-shell .pi-layout {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 28px;
+  align-items: start;
+}
+
+.ll-g78-shell .pi-layout > * {
+  min-width: 0;
+}
+
+.ll-g78-shell .card.pi-card {
+  padding: 36px 40px;
+}
+
+.ll-g78-shell .pi-title {
+  font-size: 44px;
+  margin: 6px 0;
+  color: var(--ink);
+}
+
+.ll-g78-shell .pi-lead {
+  font-size: 20px;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+
+.ll-g78-shell .pi-prev-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 18px;
+  background: linear-gradient(#e9f3f1, #d7eae8);
+  border: 2px solid #b9d6d2;
+}
+
+.ll-g78-shell .pi-slot {
+  width: 54px;
+  height: 64px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #b9d6d2;
+  flex: none;
+}
+
+.ll-g78-shell .pi-slot img {
+  max-width: 50px;
+  max-height: 58px;
+}
+
+.ll-g78-shell .pi-slot--q {
+  border: 3px dashed var(--coral);
+  background: #fff6f0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 46px;
+  color: var(--coral);
+  font-weight: 700;
+}
+
+.ll-g78-shell .pi-steps {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 6px;
+  padding: 0;
+}
+
+.ll-g78-shell .pi-steps li {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 19px;
+}
+
+.ll-g78-shell .pi-steps li span {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ll-g78-shell .pi-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ll-g78-shell .pi-facts span {
+  background: var(--cream);
+  border: 1.5px solid var(--brass2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.ll-g78-shell .pi-foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+}
+
+.ll-g78-shell .pi-foot .read-aloud.read-aloud--icon {
+  width: 52px;
+  height: 52px;
+}
+
+.ll-g78-shell .pi-start {
+  margin-left: auto;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: auto;
+  font-size: 21px;
+  padding: 18px 28px;
+  text-decoration: none;
+}
+
+.ll-g78-shell .pi-coach-aside {
+  padding-top: 10px;
+}
+
+.ll-g78-shell .pi-coach-aside .bubble.tail-b::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 46px;
+  width: 20px;
+  height: 20px;
+  background: var(--paper);
+  border-right: 2px solid var(--navy);
+  border-bottom: 2px solid var(--navy);
+  transform: rotate(45deg);
+}
+
+.ll-g78-shell .pi-lob {
+  width: 250px;
+  height: auto;
+  margin-top: 22px;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .band.pi {
+    min-height: 190px;
+    padding-top: 104px;
+    background-position: center 75%;
+  }
+
+  .ll-g78-shell .pi-title {
+    font-size: 34px;
+  }
+
+  .ll-g78-shell .pi-steps li {
+    font-size: 17px;
+  }
+
+  .ll-g78-shell .pi-prev-row {
+    gap: 5px;
+    padding: 10px 6px;
+  }
+
+  .ll-g78-shell .pi-slot {
+    width: 44px;
+    height: 54px;
+    border-radius: 10px;
+  }
+
+  .ll-g78-shell .pi-slot img {
+    max-width: 34px;
+    max-height: 44px;
+  }
+
+  .ll-g78-shell .pi-slot--q {
+    font-size: 32px;
+  }
+
+  .ll-g78-shell .pi-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ll-g78-shell .card.pi-card {
+    padding: 22px 18px;
+  }
+
+  .ll-g78-shell .pi-foot {
+    flex-wrap: wrap;
+  }
+
+  .ll-g78-shell .pi-start {
+    order: -1;
+    width: 100%;
+    margin-left: 0;
+  }
+}

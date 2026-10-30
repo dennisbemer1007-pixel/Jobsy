@@ -236,6 +236,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
 | `/leerling/eiland` | `Pages/Leerling/LeerlingEiland.razor` | authenticated |
 | `/leerling/paspoort` | `Pages/Leerling/LeerlingPaspoort.razor` | authenticated |
+| `/leerling/puzzel-intro/{Key}` | `Pages/Leerling/LeerlingPuzzelIntro.razor` | authenticated (groep 7/8, Zee-expeditie puzzle intro) |
 | `/leerling/puzzel/{Key}` | `Pages/Leerling/LeerlingPuzzel.razor` | authenticated |
 | `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
 | `/leerling/wereld` | `Pages/Leerling/LeerlingWereld.razor` | authenticated |
