@@ -1554,3 +1554,142 @@ html.using-keyboard .ll-question__text:focus-visible {
 .ll-dream-ssr__nav .btn-secondary {
     min-height: 52px;
 }
+
+.ll-progress-dots__dot.is-now {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.ll-vakken {
+    max-width: min(100%, 920px);
+    margin: 0 auto var(--space-6);
+    padding: 0 var(--space-3);
+}
+
+.ll-vakken__hero {
+    border-radius: var(--r-lg);
+    min-height: 140px;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+}
+
+.ll-vakken__hero-overlay {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-deep, var(--brand)) 55%, transparent), color-mix(in srgb, var(--brand) 75%, #000));
+    padding: var(--space-5);
+    color: #fff;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.ll-vakken__kicker {
+    font-size: var(--text-sm);
+    opacity: 0.9;
+    margin: 0 0 var(--space-1);
+}
+
+.ll-vakken__hero h1 {
+    margin: 0;
+    font-size: var(--text-xl);
+}
+
+.ll-vakken__intro {
+    margin-bottom: var(--space-4);
+}
+
+.ll-vakken__grid {
+    display: grid;
+    gap: var(--space-4);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 900px) {
+    .ll-vakken__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .ll-vakken__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ll-vakken__subject {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: var(--space-4);
+}
+
+.ll-vakken__subject-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
+.ll-vakken__subject-head h2 {
+    margin: 0;
+    font-size: var(--text-md);
+}
+
+.ll-vakken__emoji {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.ll-vakken__scale-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.ll-vakken__scale-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+}
+
+.ll-vakken__btn {
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font: inherit;
+    cursor: pointer;
+}
+
+.ll-vakken__btn.is-on {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+}
+
+.ll-vakken__bubble {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: var(--space-4) 0;
+    padding: var(--space-3);
+    border-radius: var(--r-lg);
+    background: color-mix(in srgb, var(--gold-light, #ffe8a3) 35%, var(--surface));
+}
+
+.ll-vakken__bubble p {
+    margin: 0;
+    flex: 1;
+}
+
+.ll-vakken__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}

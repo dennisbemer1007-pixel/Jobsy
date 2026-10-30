@@ -81,7 +81,7 @@ public class SchoolDtoJsonRoundTripTests
         var progress = new PupilProgressStateDto(
             Guid.Parse("44444444-4444-4444-4444-444444444444"),
             "1A", "ABC-123", PupilCodeStatus.NotStarted, 0, 100, 0, 0, false,
-            null, null, new Dictionary<string, int>(), true, false, false, false, [], [], null, null,
+            null, null, new Dictionary<string, int>(), true, false, false, false, false, [], [], null, null,
             PupilQuestionSet.Vo);
 
         foreach (var sample in new object[] { dashboard, classes, detail, teacherClasses, overview, results, privacy, pupilClasses, progress })

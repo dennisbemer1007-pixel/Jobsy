@@ -370,6 +370,7 @@ public static partial class PageSeoCatalog
             ["/leerling/start"] = Private("Leerling.Start.Title", "Seo.PrivateDescription"),
             ["/leerling/reis"] = Private("Leerling.Reis.Title", "Seo.PrivateDescription"),
             ["/leerling/eiland"] = Private("Leerling.Island.Title", "Seo.PrivateDescription"),
+            ["/leerling/vakken"] = Private("Leerling.Vakken.Title", "Seo.PrivateDescription"),
             ["/leerling/stop"] = Private("Leerling.Stop.Title", "Seo.PrivateDescription"),
             ["/leerling/dit-ben-jij"] = Private("LeerlingStory.Title", "Seo.PrivateDescription"),
             ["/leerling/droombaan"] = Private("LeerlingDroom.Title", "Seo.PrivateDescription"),

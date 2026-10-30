@@ -1,0 +1,299 @@
+@page "/leerling/vakken"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+
+<PageTitle>@Culture["Leerling.Vakken.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_state is null)
+{
+    <LeerlingOfflineRetry OnRetry="Reload" />
+}
+else
+{
+    <div class="ll-vakken" data-testid="leerling-vakken">
+        <header class="ll-vakken__hero" style="background-image:url('/images/leerling-paspoort-g78/g78-rif.jpg')">
+            <div class="ll-vakken__hero-overlay">
+                <p class="ll-vakken__kicker">@Culture["Leerling.Vakken.Kicker"]</p>
+                <h1>@Culture["Leerling.Vakken.Heading"]</h1>
+            </div>
+        </header>
+
+        <div class="ll-vakken__dots ll-progress-dots" role="group" aria-label="@Culture["Leerling.Vakken.Progress"]">
+            @for (var i = 1; i <= 5; i++)
+            {
+                var on = i <= (_page == 1 ? 4 : 5);
+                var now = _page == 1 ? i == 4 : i == 5;
+                <span class="ll-progress-dots__dot @(on ? "is-on" : null) @(now ? "is-now" : null)" aria-hidden="true"></span>
+            }
+        </div>
+
+        <section class="ll-card ll-vakken__intro">
+            <p>@Culture[_page == 1 ? "Leerling.Vakken.Intro1" : "Leerling.Vakken.Intro2"]</p>
+        </section>
+
+        <div class="ll-vakken__grid">
+            @foreach (var key in _pageKeys)
+            {
+                var emoji = SubjectEmoji(key);
+                <article class="ll-vakken__subject">
+                    <div class="ll-vakken__subject-head">
+                        <span class="ll-vakken__emoji" aria-hidden="true">@emoji</span>
+                        <h2>@Culture[PupilVakSubjectLabels.UiKey(key)]</h2>
+                    </div>
+                    <div class="ll-vakken__scale">
+                        <span class="ll-vakken__scale-label">@Culture["Leerling.Vakken.Leuk"]</span>
+                        <div class="ll-vakken__scale-btns" role="radiogroup" aria-label="@($"{Culture[PupilVakSubjectLabels.UiKey(key)]} — {Culture["Leerling.Vakken.Leuk"]}")">
+                            @for (var v = 1; v <= 5; v++)
+                            {
+                                var val = v;
+                                var selected = GetLeuk(key) == val;
+                                <button type="button"
+                                        class="ll-vakken__btn @(selected ? "is-on" : null)"
+                                        role="radio"
+                                        aria-checked="@(selected ? "true" : "false")"
+                                        aria-pressed="@(selected ? "true" : "false")"
+                                        disabled="@_busy"
+                                        @onclick="() => SetLeuk(key, val)">@val</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="ll-vakken__scale">
+                        <span class="ll-vakken__scale-label">@Culture["Leerling.Vakken.Goed"]</span>
+                        <div class="ll-vakken__scale-btns" role="radiogroup" aria-label="@($"{Culture[PupilVakSubjectLabels.UiKey(key)]} — {Culture["Leerling.Vakken.Goed"]}")">
+                            @for (var v = 1; v <= 5; v++)
+                            {
+                                var val = v;
+                                var selected = GetGoed(key) == val;
+                                <button type="button"
+                                        class="ll-vakken__btn @(selected ? "is-on" : null)"
+                                        role="radio"
+                                        aria-checked="@(selected ? "true" : "false")"
+                                        aria-pressed="@(selected ? "true" : "false")"
+                                        disabled="@_busy"
+                                        @onclick="() => SetGoed(key, val)">@val</button>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        @if (_page == 1)
+        {
+            <aside class="ll-vakken__bubble" aria-hidden="true">
+                <p>@Culture["Leerling.Vakken.Bubble"]</p>
+                <img src="/images/leerling-paspoort-g78/g78-kreeft-kaart.png" alt="" width="72" height="72" />
+            </aside>
+        }
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="ll-error" role="alert">@_error</p>
+        }
+
+        <div class="ll-vakken__nav">
+            <button type="button" class="btn-secondary" disabled="@_busy" @onclick="GoBack">
+                @Culture["Leerling.Vakken.Back"]
+            </button>
+            <button type="button" class="btn-primary" disabled="@(_busy || !PageComplete())" @onclick="ContinueAsync">
+                @Culture[_page == 1 ? "Leerling.Vakken.Next" : "Leerling.Vakken.Finish"]
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private PupilProgressStateDto? _state;
+    private bool _loading = true;
+    private bool _sessionLost;
+    private bool _busy;
+    private string? _error;
+    private int _page = 1;
+    private readonly Dictionary<string, (int Leuk, int Goed)> _scores = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<string> _pageKeys = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        ParsePageFromQuery();
+        await Reload();
+    }
+
+    protected override void OnParametersSet()
+    {
+        ParsePageFromQuery();
+        _pageKeys = PupilVakScores.KeysForPage(_page);
+    }
+
+    private void ParsePageFromQuery()
+    {
+        _page = 1;
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var p)
+            && int.TryParse(p.ToString(), out var n)
+            && n == 2)
+        {
+            _page = 2;
+        }
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _sessionLost = false;
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "vakken");
+        if (outcome.SessionLost)
+        {
+            _sessionLost = true;
+            _state = null;
+        }
+        else if (outcome.Value is null)
+        {
+            _state = null;
+        }
+        else
+        {
+            ApplyLoaded(outcome.Value);
+        }
+
+        _loading = false;
+    }
+
+    private void ApplyLoaded(PupilProgressStateDto state)
+    {
+        _state = state;
+        if (state.Completed || string.Equals(state.NextStep, "done", StringComparison.OrdinalIgnoreCase))
+        {
+            Nav.NavigateTo("/leerling/dit-ben-jij");
+            return;
+        }
+
+        if (string.Equals(state.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        Nav.NavigateTo("/leerling/reis");
+    }
+
+    private int? GetLeuk(string key)
+        => _scores.TryGetValue(key, out var p) ? p.Leuk : null;
+
+    private int? GetGoed(string key)
+        => _scores.TryGetValue(key, out var p) ? p.Goed : null;
+
+    private void SetLeuk(string key, int value)
+    {
+        _scores.TryGetValue(key, out var p);
+        _scores[key] = (value, p.Goed);
+    }
+
+    private void SetGoed(string key, int value)
+    {
+        _scores.TryGetValue(key, out var p);
+        _scores[key] = (p.Leuk, value);
+    }
+
+    private bool PageComplete()
+    {
+        foreach (var key in _pageKeys)
+        {
+            if (!_scores.TryGetValue(key, out var p) || p.Leuk is < 1 or > 5 || p.Goed is < 1 or > 5)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private async Task ContinueAsync()
+    {
+        if (_busy || !PageComplete())
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var inputs = _pageKeys
+                .Select(k => new PupilVakScoreInput(k, _scores[k].Leuk, _scores[k].Goed))
+                .ToList();
+            var result = await Api.PutPupilVakScoresAsync(inputs);
+            if (result is null)
+            {
+                _error = Culture["Leerling.Vakken.SaveFailed"];
+                return;
+            }
+
+            if (_page == 1)
+            {
+                Nav.NavigateTo("/leerling/vakken?page=2");
+                return;
+            }
+
+            if (result.JourneyCompleted || string.Equals(result.NextStep, "done", StringComparison.OrdinalIgnoreCase))
+            {
+                Nav.NavigateTo("/leerling/dit-ben-jij");
+                return;
+            }
+
+            Nav.NavigateTo("/leerling/reis");
+        }
+        catch
+        {
+            _error = Culture["Leerling.Vakken.SaveFailed"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        if (_page == 2)
+        {
+            Nav.NavigateTo("/leerling/vakken");
+            return;
+        }
+
+        Nav.NavigateTo("/leerling/reis");
+    }
+
+    private static string SubjectEmoji(string key) => key switch
+    {
+        "rekenen" => "🔢",
+        "lezen" => "📖",
+        "spelling" => "✏️",
+        "taal" => "💬",
+        "engels" => "🌐",
+        "schrijven" => "📝",
+        "aardrijkskunde" => "🗺️",
+        "geschiedenis" => "🏛️",
+        "natuur-techniek" => "🔬",
+        "tekenen" => "🎨",
+        "muziek" => "🎵",
+        "gym" => "⚽",
+        _ => "📚"
+    };
+}

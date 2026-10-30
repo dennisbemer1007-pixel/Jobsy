@@ -540,6 +540,33 @@ public static class UiStringsScholen
         nl["Leerling.Placeholder.Imagine.lagune.1"] = "Stel je voor… je werkt met drie vrienden aan een poster. Dat voelt goed.";
         nl["Leerling.Placeholder.Imagine.lagune.2"] = "Stel je voor… de leraar zegt precies wat er moet gebeuren. Dat helpt jou.";
         nl["Leerling.Placeholder.Imagine.lagune.3"] = "Stel je voor… elke week doe je iets anders. Saai wordt het nooit.";
+
+        nl["Leerling.Vakken.Title"] = "Vakkentest";
+        nl["Leerling.Vakken.Kicker"] = "Even andere vragen";
+        nl["Leerling.Vakken.Heading"] = "Hoe vind jij je vakken?";
+        nl["Leerling.Vakken.Intro1"] = "Geef per vak twee antwoorden. Er is geen goed of fout.";
+        nl["Leerling.Vakken.Intro2"] = "Nog 6 vakken. Hetzelfde: hoe leuk en hoe goed ben je erin?";
+        nl["Leerling.Vakken.Leuk"] = "Hoe leuk?";
+        nl["Leerling.Vakken.Goed"] = "Hoe goed ben ik erin?";
+        nl["Leerling.Vakken.Progress"] = "Voortgang reis";
+        nl["Leerling.Vakken.Bubble"] = "Nog 6 vakken… je bent bijna klaar!";
+        nl["Leerling.Vakken.Back"] = "Terug";
+        nl["Leerling.Vakken.Next"] = "Zwem verder";
+        nl["Leerling.Vakken.Finish"] = "Klaar!";
+        nl["Leerling.Vakken.SaveFailed"] = "Opslaan lukte niet. Probeer het nog eens.";
+        nl["Leerling.Vakken.Subject.rekenen"] = "Rekenen";
+        nl["Leerling.Vakken.Subject.lezen"] = "Lezen";
+        nl["Leerling.Vakken.Subject.spelling"] = "Spelling";
+        nl["Leerling.Vakken.Subject.taal"] = "Taal";
+        nl["Leerling.Vakken.Subject.engels"] = "Engels";
+        nl["Leerling.Vakken.Subject.schrijven"] = "Schrijven";
+        nl["Leerling.Vakken.Subject.aardrijkskunde"] = "Aardrijkskunde";
+        nl["Leerling.Vakken.Subject.geschiedenis"] = "Geschiedenis";
+        nl["Leerling.Vakken.Subject.natuur-techniek"] = "Natuur & techniek";
+        nl["Leerling.Vakken.Subject.tekenen"] = "Tekenen/handvaardigheid";
+        nl["Leerling.Vakken.Subject.muziek"] = "Muziek";
+        nl["Leerling.Vakken.Subject.gym"] = "Gym";
+
         nl["Leraar.LoginPause.Title"] = "Inloggen gepauzeerd";
         nl["Leraar.LoginPause.Body"] = "Er waren te veel foute codes. Inloggen staat tijdelijk stil.";
         nl["Leraar.LoginPause.Clear"] = "Pauze opheffen";

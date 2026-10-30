@@ -50,6 +50,15 @@ public static class PupilPassportWebMapper
             s.Subtitle,
             s.IconKey)).ToList();
 
+        var subjectGroups = (m.SubjectGroups ?? [])
+            .Select(g => new PupilG78PassportSubjectGroupDto(
+                g.Title,
+                g.Intro,
+                g.Subjects.Select(s => s.Label).ToList(),
+                g.TraitLines,
+                g.ConversationQuestions))
+            .ToList();
+
         return new PupilG78PassportWebDto(
             Enabled: enabled,
             SchoolName: m.SchoolName,
@@ -73,7 +82,9 @@ public static class PupilPassportWebMapper
             OccupationCards: cards,
             DiscoveryQuestions: m.DiscoveryQuestions,
             HomeClassTips: m.HomeClassTips,
-            FooterPrivacy: m.FooterPrivacy);
+            FooterPrivacy: m.FooterPrivacy,
+            MirrorBody: m.MirrorBody,
+            SubjectGroups: subjectGroups.Count == 0 ? null : subjectGroups);
     }
 
     private static string? DreamEncouragement(PupilPassportPdfModel m)
@@ -157,4 +168,13 @@ public sealed record PupilG78PassportWebDto(
     IReadOnlyList<PupilG78PassportCardDto>? OccupationCards = null,
     IReadOnlyList<string>? DiscoveryQuestions = null,
     IReadOnlyList<string>? HomeClassTips = null,
-    string FooterPrivacy = "");
+    string FooterPrivacy = "",
+    string? MirrorBody = null,
+    IReadOnlyList<PupilG78PassportSubjectGroupDto>? SubjectGroups = null);
+
+public sealed record PupilG78PassportSubjectGroupDto(
+    string Title,
+    string Intro,
+    IReadOnlyList<string> SubjectLabels,
+    IReadOnlyList<string> TraitLines,
+    IReadOnlyList<string> ConversationQuestions);

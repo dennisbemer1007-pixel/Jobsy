@@ -41,6 +41,11 @@ public interface IPupilPortalService
         int value,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilVakScoresResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveVakScoresAsync(
+        ClaimsPrincipal pupil,
+        PupilVakScoresRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<(PupilChipsResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveChipsAsync(
         ClaimsPrincipal pupil,
         PupilChipsRequest request,
@@ -111,6 +116,7 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilReportPdfService _pdf;
     private readonly IPupilPassportPdfService _passportV2;
     private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
+    private readonly IPupilG78MirrorRenderer _g78Mirror;
     private readonly IPlatformFeatureService _features;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
@@ -127,6 +133,7 @@ public sealed class PupilPortalService : IPupilPortalService
         IPupilReportPdfService pdf,
         IPupilPassportPdfService passportV2,
         PupilPassportPdfModelBuilder passportModelBuilder,
+        IPupilG78MirrorRenderer g78Mirror,
         IPlatformFeatureService features,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
@@ -142,6 +149,7 @@ public sealed class PupilPortalService : IPupilPortalService
         _pdf = pdf;
         _passportV2 = passportV2;
         _passportModelBuilder = passportModelBuilder;
+        _g78Mirror = g78Mirror;
         _features = features;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
@@ -402,13 +410,14 @@ public sealed class PupilPortalService : IPupilPortalService
         var answered = answers.Count;
         var islandDone = code.Progress?.ChipsSavedAtUtc is not null;
         var puzzles = ParsePuzzles(code.Progress?.PuzzlesJson);
+        var vakkenDone = VakkenComplete(def, code.Progress);
         var completed = code.Status == PupilCodeStatus.Completed
                         || code.Progress?.CompletedAtUtc is not null
                         || code.Result is not null;
         var windowOpen = schoolClass.TestWindow == TestWindowState.Open;
         var step = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, islandDone, puzzles);
+            : PupilFlow.Next(def, answers, islandDone, puzzles, vakkenDone);
         var nextStep = PupilFlow.ToNextStepToken(step.Kind);
         var needsIsland = step.Kind == PupilFlowStepKind.Island;
         var currentIndex = step.Kind == PupilFlowStepKind.Done
@@ -438,6 +447,7 @@ public sealed class PupilPortalService : IPupilPortalService
             completed,
             needsIsland,
             islandDone,
+            vakkenDone,
             likes,
             dislikes,
             code.Progress?.LikeOtherWord,
@@ -510,7 +520,7 @@ public sealed class PupilPortalService : IPupilPortalService
         var answers = ParseAnswers(progress.AnswersJson);
         var islandDone = progress.ChipsSavedAtUtc is not null;
         var puzzles = ParsePuzzles(progress.PuzzlesJson);
-        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles, VakkenComplete(def, progress));
         var alreadyAnswered = answers.ContainsKey(item.Id);
         var allowed =
             alreadyAnswered
@@ -548,40 +558,44 @@ public sealed class PupilPortalService : IPupilPortalService
 
         if (allAnswered)
         {
-            try
+            var vakkenDone = VakkenComplete(def, progress);
+            if (vakkenDone)
             {
-                await _results.BuildAsync(code.Id, cancellationToken);
-                await _db.Entry(code).ReloadAsync(cancellationToken);
-                if (code.Progress is not null)
+                try
                 {
-                    await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
-                }
+                    await _results.BuildAsync(code.Id, cancellationToken);
+                    await _db.Entry(code).ReloadAsync(cancellationToken);
+                    if (code.Progress is not null)
+                    {
+                        await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
+                    }
 
-                await _db.Entry(code).Reference(c => c.Result).LoadAsync(cancellationToken);
-                completed = code.Status == PupilCodeStatus.Completed && code.Result is not null;
-                if (!completed)
+                    await _db.Entry(code).Reference(c => c.Result).LoadAsync(cancellationToken);
+                    completed = code.Status == PupilCodeStatus.Completed && code.Result is not null;
+                    if (!completed)
+                    {
+                        resultPending = true;
+                    }
+                }
+                catch (Exception ex)
                 {
+                    _logger.LogWarning(ex, "Pupil result builder failed for {CodeId}", code.Id);
+                    await _db.Entry(code).ReloadAsync(cancellationToken);
+                    if (code.Progress is not null)
+                    {
+                        await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
+                    }
+
                     resultPending = true;
+                    completed = false;
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Pupil result builder failed for {CodeId}", code.Id);
-                // Builder may have mutated tracked entities before failing — restore DB state.
-                await _db.Entry(code).ReloadAsync(cancellationToken);
-                if (code.Progress is not null)
-                {
-                    await _db.Entry(code.Progress).ReloadAsync(cancellationToken);
-                }
-
-                resultPending = true;
-                completed = false;
             }
         }
 
+        var vakkenComplete = VakkenComplete(def, progress);
         var nextStep = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null, ParsePuzzles(progress.PuzzlesJson));
+            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null, ParsePuzzles(progress.PuzzlesJson), vakkenComplete);
         var needsIsland = nextStep.Kind == PupilFlowStepKind.Island;
         string? nextId = nextStep.Kind == PupilFlowStepKind.Question ? nextStep.ItemId : null;
         string? nextWorld = nextStep.Kind == PupilFlowStepKind.Island
@@ -600,6 +614,112 @@ public sealed class PupilPortalService : IPupilPortalService
             resultPending,
             PupilFlow.ToNextStepToken(nextStep.Kind),
             nextStep.PuzzleKey), null, 200);
+    }
+
+    public async Task<(PupilVakScoresResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveVakScoresAsync(
+        ClaimsPrincipal pupil,
+        PupilVakScoresRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var ctx = await ResolveSessionAsync(pupil, includeResult: false, cancellationToken: cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var code = ctx.Code!;
+        var schoolClass = ctx.Class!;
+        var def = _registry.ForClass(schoolClass);
+        if (def.Set != PupilQuestionSet.Groep78)
+        {
+            return (null, new PupilErrorDto("wrong_set", "De vakkentest hoort niet bij jouw test."), 400);
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
+        {
+            return (null, new PupilErrorDto("already_completed", "Je reis is al klaar."), 409);
+        }
+
+        if (schoolClass.TestWindow != TestWindowState.Open)
+        {
+            return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
+                PupilCopy.AnswersSavedWindow(schoolClass.QuestionSet)), 409);
+        }
+
+        var progress = code.Progress;
+        if (progress is null)
+        {
+            return (null, new PupilErrorDto("not_started", "Begin eerst met de reis."), 409);
+        }
+
+        var answers = ParseAnswers(progress.AnswersJson);
+        var total = def.Bank.AllItems.Count;
+        var allAnswered = answers.Count >= total
+                          && def.Bank.AllItems.All(i => answers.ContainsKey(i.Id));
+        if (!allAnswered)
+        {
+            return (null, new PupilErrorDto("step_pending", "Eerst alle vragen afmaken.", "question", null), 409);
+        }
+
+        var merged = ParseVakScoreMap(progress.VakScoresJson);
+        foreach (var entry in request.Scores)
+        {
+            if (string.IsNullOrWhiteSpace(entry.SubjectKey)
+                || entry.Leuk is < 1 or > 5
+                || entry.Goed is < 1 or > 5)
+            {
+                return (null, new PupilErrorDto("validation", "Kies voor elk vak een cijfer van 1 tot 5."), 400);
+            }
+
+            if (!PupilVakScores.AllSubjectKeys.Contains(entry.SubjectKey, StringComparer.OrdinalIgnoreCase))
+            {
+                return (null, new PupilErrorDto("validation", "Onbekend vak."), 400);
+            }
+
+            merged[entry.SubjectKey] = (entry.Leuk, entry.Goed);
+        }
+
+        progress.VakScoresJson = PupilVakScores.Serialize(merged);
+        progress.UpdatedAtUtc = now;
+        code.LastSeenAtUtc = now;
+
+        var completed = false;
+        var resultPending = false;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        if (PupilVakScores.IsComplete(progress.VakScoresJson))
+        {
+            try
+            {
+                await _results.BuildAsync(code.Id, cancellationToken);
+                await _db.Entry(code).ReloadAsync(cancellationToken);
+                await _db.Entry(code).Reference(c => c.Result).LoadAsync(cancellationToken);
+                completed = code.Status == PupilCodeStatus.Completed && code.Result is not null;
+                if (!completed)
+                {
+                    resultPending = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Pupil result builder failed after vakken for {CodeId}", code.Id);
+                resultPending = true;
+            }
+        }
+
+        var vakkenDone = VakkenComplete(def, progress);
+        var step = completed
+            ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
+            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null, ParsePuzzles(progress.PuzzlesJson), vakkenDone);
+
+        return (new PupilVakScoresResponse(
+            PupilVakScores.IsComplete(progress.VakScoresJson),
+            completed,
+            resultPending,
+            PupilFlow.ToNextStepToken(step.Kind)), null, 200);
     }
 
     public async Task<(PupilChipsResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveChipsAsync(
@@ -663,7 +783,7 @@ public sealed class PupilPortalService : IPupilPortalService
         await _db.SaveChangesAsync(cancellationToken);
 
         var answers = ParseAnswers(progress.AnswersJson);
-        var step = PupilFlow.Next(def, answers, islandDone: true, ParsePuzzles(progress.PuzzlesJson));
+        var step = PupilFlow.Next(def, answers, islandDone: true, ParsePuzzles(progress.PuzzlesJson), VakkenComplete(def, progress));
         return (new PupilChipsResponse(
             true,
             step.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : step.Index,
@@ -721,7 +841,7 @@ public sealed class PupilPortalService : IPupilPortalService
         var answers = ParseAnswers(progress.AnswersJson);
         var islandDone = progress.ChipsSavedAtUtc is not null;
         var puzzles = ParsePuzzles(progress.PuzzlesJson);
-        var step = PupilFlow.Next(def, answers, islandDone, puzzles);
+        var step = PupilFlow.Next(def, answers, islandDone, puzzles, VakkenComplete(def, progress));
         if (step.Kind != PupilFlowStepKind.Puzzle
             || !string.Equals(step.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase))
         {
@@ -742,7 +862,7 @@ public sealed class PupilPortalService : IPupilPortalService
         code.LastSeenAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
 
-        var next = PupilFlow.Next(def, answers, islandDone, puzzles);
+        var next = PupilFlow.Next(def, answers, islandDone, puzzles, VakkenComplete(def, progress));
         return (new PupilPuzzleResponse(
             true,
             next.Kind == PupilFlowStepKind.Done ? def.Bank.AllItems.Count : next.Index,
@@ -971,6 +1091,17 @@ public sealed class PupilPortalService : IPupilPortalService
         {
             var passportModel = _passportModelBuilder.Build(
                 code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
+            if (passportModel.Variant == PupilPassportVariant.Groep78
+                && schoolClass.QuestionSet == PupilQuestionSet.Groep78)
+            {
+                var mirror = await _g78Mirror.RenderMirrorBodyAsync(
+                    code.Result!,
+                    code.Progress,
+                    language ?? "nl",
+                    cancellationToken);
+                passportModel = passportModel with { MirrorBody = mirror };
+            }
+
             bytes = _passportV2.Render(passportModel);
         }
         else
@@ -1429,6 +1560,21 @@ public sealed class PupilPortalService : IPupilPortalService
 
     private static int FirstUnansweredIndex(PupilQuestionSetDef def, string answersJson)
         => PupilFlow.FirstUnansweredIndex(def, ParseAnswers(answersJson));
+
+    private static bool VakkenComplete(PupilQuestionSetDef def, PupilProgress? progress)
+        => def.Set != PupilQuestionSet.Groep78
+           || PupilVakScores.IsComplete(progress?.VakScoresJson);
+
+    private static Dictionary<string, (int Leuk, int Goed)> ParseVakScoreMap(string? json)
+    {
+        var map = new Dictionary<string, (int Leuk, int Goed)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in PupilVakScores.Parse(json))
+        {
+            map[entry.SubjectKey] = (entry.Leuk, entry.Goed);
+        }
+
+        return map;
+    }
 
     private static string FormatLevel(SchoolLevel level) => level switch
     {

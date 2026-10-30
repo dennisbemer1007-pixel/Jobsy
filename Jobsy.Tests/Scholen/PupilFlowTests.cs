@@ -65,10 +65,19 @@ public class PupilFlowTests
     }
 
     [Fact]
-    public void Sixty_answered_yields_done()
+    public void Sixty_answered_without_vakken_yields_vakken()
     {
         var answers = Fill(60);
-        var step = PupilFlow.Next(_g78, answers, islandDone: true);
+        var step = PupilFlow.Next(_g78, answers, islandDone: true, vakkenDone: false);
+        Assert.Equal(PupilFlowStepKind.Vakken, step.Kind);
+        Assert.Equal("koraalrif", step.WorldKey);
+    }
+
+    [Fact]
+    public void Sixty_answered_with_vakken_yields_done()
+    {
+        var answers = Fill(60);
+        var step = PupilFlow.Next(_g78, answers, islandDone: true, vakkenDone: true);
         Assert.Equal(PupilFlowStepKind.Done, step.Kind);
         Assert.Equal(60, step.Index);
     }

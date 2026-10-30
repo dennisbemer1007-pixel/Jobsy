@@ -32,6 +32,10 @@ public static class PupilRiasecJobIdeas
             ['C'] = ["kapper", "programmeur", "doktersassistent", "logistiek-medewerker", "ict-medewerker", "verkoper"]
         };
 
+    internal static IReadOnlyDictionary<char, IReadOnlyList<string>> Groep78LetterPoolForScoring => Groep78ByLetter;
+
+    internal static IReadOnlyDictionary<string, IReadOnlyList<string>> LikeJobsForScoring => LikeJobs;
+
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> LikeJobs =
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
         {
@@ -124,4 +128,13 @@ public static class PupilRiasecJobIdeas
         => DreamJobCatalog.All.FirstOrDefault(j =>
                string.Equals(j.Key, key, StringComparison.OrdinalIgnoreCase))?.TitleNl
            ?? key;
+
+    /// <summary>Top five catalog keys for G78 passport (uses vak scores when present).</summary>
+    public static IReadOnlyList<string> TopGroep78Jobs(
+        Entities.Scholen.PupilResult result,
+        Entities.Scholen.PupilProgress? progress)
+    {
+        var vak = PupilVakScores.Parse(progress?.VakScoresJson);
+        return PupilG78CareerScoring.TopJobKeys(result, progress, vak, take: 5);
+    }
 }

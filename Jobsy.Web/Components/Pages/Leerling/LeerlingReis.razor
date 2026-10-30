@@ -247,6 +247,13 @@ else
             return;
         }
 
+        if (string.Equals(state.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+        {
+            _leaving = true;
+            Nav.NavigateTo("/leerling/vakken");
+            return;
+        }
+
         if (state.NeedsIsland || string.Equals(state.NextStep, "island", StringComparison.OrdinalIgnoreCase))
         {
             _leaving = true;
@@ -367,6 +374,13 @@ else
                 return;
             }
 
+            if (string.Equals(result.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                _leaving = true;
+                Nav.NavigateTo("/leerling/vakken");
+                return;
+            }
+
             if (result.ResultPending)
             {
                 _resultPending = true;
@@ -476,7 +490,7 @@ else
             }
         }
 
-        var step = PupilFlow.Next(_def, answers, _state.IslandDone, puzzles);
+        var step = PupilFlow.Next(_def, answers, _state.IslandDone, puzzles, _state.VakkenDone);
         var answeredCount = answers.Count;
         if (step.Kind is PupilFlowStepKind.Done)
         {

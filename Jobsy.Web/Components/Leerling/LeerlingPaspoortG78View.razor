@@ -53,7 +53,26 @@
                 <span class="lp-g78__who">@Culture["LeerlingPassport.Section.DitBenIk.Who"]</span>
             </h3>
             <p>@Model.StoryBody</p>
+            @if (!string.IsNullOrWhiteSpace(Model.MirrorBody))
+            {
+                <p class="lp-g78__mirror">@Model.MirrorBody</p>
+            }
         </section>
+
+        @if (Model.SubjectGroups is { Count: > 0 })
+        {
+            <section class="lp-g78__card">
+                <h3>@Culture["LeerlingPassport.G78.Page.Subjects"]</h3>
+                @foreach (var group in Model.SubjectGroups)
+                {
+                    <div class="lp-g78__vak-group">
+                        <h4>@group.Title</h4>
+                        <p>@group.Intro</p>
+                        <p><b>@string.Join(" · ", group.SubjectLabels)</b></p>
+                    </div>
+                }
+            </section>
+        }
 
         @if (Model.Worlds is { Count: > 0 })
         {

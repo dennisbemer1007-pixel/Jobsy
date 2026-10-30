@@ -44,6 +44,7 @@ public sealed record PupilProgressStateDto(
     bool Completed,
     bool NeedsIsland,
     bool IslandDone,
+    bool VakkenDone,
     IReadOnlyList<string> Likes,
     IReadOnlyList<string> Dislikes,
     string? LikeOtherWord,
@@ -65,6 +66,16 @@ public sealed record PupilAnswerResponse(
     bool ResultPending = false,
     string NextStep = "question",
     string? NextPuzzleKey = null);
+
+public sealed record PupilVakScoreInput(string SubjectKey, int Leuk, int Goed);
+
+public sealed record PupilVakScoresRequest(IReadOnlyList<PupilVakScoreInput> Scores);
+
+public sealed record PupilVakScoresResponse(
+    bool Complete,
+    bool JourneyCompleted,
+    bool ResultPending,
+    string NextStep);
 
 public sealed record PupilChipsRequest(
     IReadOnlyList<string>? Likes,

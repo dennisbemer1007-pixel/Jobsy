@@ -528,6 +528,11 @@ public static class DependencyInjection
         services.AddSingleton<IPupilPassportPdfService, Scholen.Passport.PupilPassportPdfService>();
         services.AddSingleton<IParentPassportAnswersPdfService, Scholen.Passport.ParentPassportAnswersPdfService>();
         services.AddSingleton<PupilPassportPdfModelBuilder>();
+        services.AddSingleton<IPupilG78MirrorRenderer, PupilG78MirrorService>();
+        services.AddHttpClient(PupilG78MirrorService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(14);
+        });
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddSingleton<IAuthorizationHandler, ParentPassportSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();

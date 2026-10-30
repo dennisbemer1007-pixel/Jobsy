@@ -201,6 +201,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
            || absolutePath.Contains("/api/pupil/result", StringComparison.OrdinalIgnoreCase)
            || absolutePath.Contains("/api/pupil/dreamjob", StringComparison.OrdinalIgnoreCase)
            || absolutePath.Contains("/api/pupil/passport/", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/progress/vakscores", StringComparison.OrdinalIgnoreCase)
            || absolutePath.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>

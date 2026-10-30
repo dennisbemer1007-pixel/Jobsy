@@ -25,6 +25,9 @@ public class PupilProgress
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
 
+    /// <summary>JSON map subject key → leuk/goed (G78 vakkentest). Wiped with progress after school year.</summary>
+    public string? VakScoresJson { get; set; }
+
     // VO-only optional fields (D3/D8: no names; wiped with progress after school year).
     /// <summary>JSON array of subject chip keys (VO flow).</summary>
     public string? VoFavoriteSubjectsJson { get; set; }
