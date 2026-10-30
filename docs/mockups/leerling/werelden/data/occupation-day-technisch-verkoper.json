@@ -1,0 +1,52 @@
+{
+  "source": "occupation-day-facts-grounded",
+  "dreamJobKey": "technisch-verkoper",
+  "escoId": "c956be07-53a3-4b01-b8f8-f0c5a428eaa8",
+  "titleNl": "technisch verkoper",
+  "dreamTitle": "technisch-verkoper",
+  "thinSource": false,
+  "variesNote": "De volgorde kan per werkgever anders zijn.",
+  "highlights": [
+    "Dieren verzorgen",
+    "Kijken naar dierenwelzijn"
+  ],
+  "tasks": [
+    "Regelmatig en prospectief klantenbedrijf bezoeken om verkoopmogelijkheden op te zetten en te benutten",
+    "Schatting van de kosten van installatie en onderhoud van apparatuur of service"
+  ],
+  "skills": [
+    "productkennis",
+    "taakplanning beheren",
+    "naleving met wettelijke vereisten garanderen",
+    "producteigenschappen demonstreren",
+    "verkoopbevorderingstechnieken",
+    "klanttevredenheid garanderen"
+  ],
+  "blocks": [
+    {
+      "key": "start",
+      "label": "07:00 Start",
+      "text": "Technisch verkopers vertegenwoordigen een bedrijf om zijn producten te verkopen en verschaffen technisch inzicht aan de klant."
+    },
+    {
+      "key": "morning",
+      "label": "09:00 Ochtend",
+      "text": "Regelmatig en prospectief klantenbedrijf bezoeken om verkoopmogelijkheden op te zetten en te benutten."
+    },
+    {
+      "key": "pause",
+      "label": "12:00 Pauze",
+      "text": "Schatting van de kosten van installatie en onderhoud van apparatuur of service."
+    },
+    {
+      "key": "afternoon",
+      "label": "14:00 Middag",
+      "text": "Je let op producteigenschappen demonstreren."
+    },
+    {
+      "key": "close",
+      "label": "17:00 Afronden",
+      "text": "Je let op verkoopbevorderingstechnieken."
+    }
+  ]
+}

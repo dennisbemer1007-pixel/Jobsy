@@ -690,6 +690,7 @@ public sealed class OccupationDayInLifeGenerator
         }
 
         draft = AttachFacts(draft, facts, forceCatalog: true);
+        draft = OccupationDayDraftRepair.Apply(draft, facts);
         if (!OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons))
         {
             return (null, string.Join("; ", reasons), false, false, model);

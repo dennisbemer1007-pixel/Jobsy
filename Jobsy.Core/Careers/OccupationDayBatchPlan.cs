@@ -83,6 +83,14 @@ public static class OccupationDayBatchPlan
     public static OccupationDayBatchEstimate EstimateRemaining(OccupationDayStoredCounts counts, OccupationDayInLifeOptions? options = null)
         => Estimate(counts.RemainingComplete, options);
 
+    public static decimal EstimateFromUsage(int promptTokens, int completionTokens, string model = DefaultModel)
+    {
+        _ = model;
+        var inputUsd = promptTokens / 1_000_000m * Gpt4oInputUsdPerMillion;
+        var outputUsd = completionTokens / 1_000_000m * Gpt4oOutputUsdPerMillion;
+        return inputUsd + outputUsd;
+    }
+
     private static bool HasDutch(OccupationDayStoredRow row)
         => !string.IsNullOrWhiteSpace(row.Morning)
            && !string.IsNullOrWhiteSpace(row.Midday)

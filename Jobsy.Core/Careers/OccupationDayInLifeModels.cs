@@ -40,7 +40,13 @@ public interface IOccupationDayInLifeWriter
         CancellationToken cancellationToken = default);
 }
 
-public sealed record OccupationDayWriteResult(bool Ok, string? Json, string? Error, string Model)
+public sealed record OccupationDayWriteResult(
+    bool Ok,
+    string? Json,
+    string? Error,
+    string Model,
+    int PromptTokens = 0,
+    int CompletionTokens = 0)
 {
     public bool KeyMissing => string.Equals(Error, OccupationDayWriteErrors.KeyMissing, StringComparison.Ordinal);
 }

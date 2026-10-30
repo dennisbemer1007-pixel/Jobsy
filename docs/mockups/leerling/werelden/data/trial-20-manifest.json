@@ -1,0 +1,144 @@
+{
+  "occupations": [
+    {
+      "escoId": "06bd6285-13ed-4ea7-90cc-e9638a0600a9",
+      "titleNl": "accumonteur",
+      "riasec": "R",
+      "categorySlug": "buiten-groen",
+      "world": "zee"
+    },
+    {
+      "escoId": "e9f0b7ae-c848-464e-af9d-55eb87a592e0",
+      "titleNl": "anodiseur",
+      "riasec": "R",
+      "categorySlug": "buiten-groen",
+      "world": "tuin"
+    },
+    {
+      "escoId": "0d6bb2cc-06b0-481c-b553-2a973be03254",
+      "titleNl": "aquacultuurtechnicus",
+      "riasec": "R",
+      "categorySlug": "buiten-groen",
+      "world": "ster"
+    },
+    {
+      "escoId": "0a7e24a8-19bd-4b45-83f0-f05d8fedf62d",
+      "titleNl": "arbeider klinkwerk",
+      "riasec": "R",
+      "categorySlug": "buiten-groen",
+      "world": "zee"
+    },
+    {
+      "escoId": "394a4bdd-7032-4d87-89a2-9d937cebdd09",
+      "titleNl": "beleidsmedewerker economische zaken",
+      "riasec": "I",
+      "categorySlug": "onderzoek",
+      "world": "tuin"
+    },
+    {
+      "escoId": "68d973df-bf10-4bf7-9a1b-fbd9f604b9db",
+      "titleNl": "bio-informaticus",
+      "riasec": "I",
+      "categorySlug": "onderzoek",
+      "world": "ster"
+    },
+    {
+      "escoId": "eee68e13-8248-43bb-a9fb-959832a6c217",
+      "titleNl": "bioloog",
+      "riasec": "I",
+      "categorySlug": "onderzoek",
+      "world": "zee"
+    },
+    {
+      "escoId": "b0f3f595-4965-4f13-ba5c-f6049b62469f",
+      "titleNl": "biometricus",
+      "riasec": "I",
+      "categorySlug": "onderzoek",
+      "world": "tuin"
+    },
+    {
+      "escoId": "bab5fa79-7f96-4e21-87b6-1eba560b8d9a",
+      "titleNl": "3D modeller",
+      "riasec": "A",
+      "categorySlug": "creatief",
+      "world": "ster"
+    },
+    {
+      "escoId": "40d76b2c-b917-4bf1-95b3-191f11472e67",
+      "titleNl": "3D-ontwikkelaar schoeisel",
+      "riasec": "A",
+      "categorySlug": "creatief",
+      "world": "zee"
+    },
+    {
+      "escoId": "849a656c-8559-4471-91ed-442c42b0b641",
+      "titleNl": "CAD-patroontekenaar",
+      "riasec": "A",
+      "categorySlug": "creatief",
+      "world": "tuin"
+    },
+    {
+      "escoId": "9a26d76b-b9e3-46ae-ab4b-057a1262138b",
+      "titleNl": "coördinator speciaal onderwijs",
+      "riasec": "S",
+      "categorySlug": "zorg-dieren",
+      "world": "ster"
+    },
+    {
+      "escoId": "02f1ae71-f89c-47b7-af2c-50d7ab1d9b8a",
+      "titleNl": "docent alfabetisering",
+      "riasec": "S",
+      "categorySlug": "zorg-dieren",
+      "world": "zee"
+    },
+    {
+      "escoId": "bfc92738-128b-44f5-92d4-51b10df17961",
+      "titleNl": "filosoof",
+      "riasec": "S",
+      "categorySlug": "zorg-dieren",
+      "world": "tuin"
+    },
+    {
+      "escoId": "2eac08c2-a81a-46fc-8d75-eb0e0f3e0f6d",
+      "titleNl": "accountmanager",
+      "riasec": "E",
+      "categorySlug": "helpen",
+      "world": "ster"
+    },
+    {
+      "escoId": "4ebf2dae-c326-4627-befe-fbc91410f432",
+      "titleNl": "advertentiemanager",
+      "riasec": "E",
+      "categorySlug": "helpen",
+      "world": "zee"
+    },
+    {
+      "escoId": "a79d9e58-36be-4e67-a4db-ea6c8ff445fc",
+      "titleNl": "afdelingsmanager detailhandel",
+      "riasec": "E",
+      "categorySlug": "helpen",
+      "world": "tuin"
+    },
+    {
+      "escoId": "eda0d957-3c3c-4139-b89a-a18bc9e18897",
+      "titleNl": "accountant",
+      "riasec": "C",
+      "categorySlug": "onderzoek",
+      "world": "ster"
+    },
+    {
+      "escoId": "9a39a143-d93c-4093-ba3b-47fb67ade318",
+      "titleNl": "administratief medewerker verzekeringen",
+      "riasec": "C",
+      "categorySlug": "onderzoek",
+      "world": "zee"
+    },
+    {
+      "escoId": "7b74626d-b487-48a1-9e80-47faf9928210",
+      "titleNl": "apotheekmedewerker",
+      "riasec": "C",
+      "categorySlug": "onderzoek",
+      "world": "tuin"
+    }
+  ]
+}

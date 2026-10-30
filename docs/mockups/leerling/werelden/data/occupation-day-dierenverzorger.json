@@ -1,0 +1,53 @@
+{
+  "source": "occupation-day-facts-grounded",
+  "dreamJobKey": "dierenverzorger",
+  "escoId": "1ee1b792-4d5f-4555-be4e-ce7e4c05d1a9",
+  "titleNl": "dierenverzorger",
+  "dreamTitle": "Dierenverzorger",
+  "thinSource": false,
+  "variesNote": "De volgorde kan per werkgever anders zijn.",
+  "highlights": [
+    "Tekenen van ziekte bij dieren",
+    "Letten op dierenwelzijn"
+  ],
+  "tasks": [
+    "Etikettering van geneesmiddelen, chemicali\u00EBn en andere farmaceutische preparaten en aanvullen van voorraad",
+    "Dieren trainen om het gewenste gedrag te ontwikkelen en te handhaven voor competitie, amusement, gehoorzaamheid, veiligheidmauie en andere activiteiten",
+    "Dieren verzorgen door taken uit te voeren zoals het wassen, borstelen, knippen en trimmen van jassen, het knippen van nagels en het reinigen van oren"
+  ],
+  "skills": [
+    "tekenen van ziekte bij dieren",
+    "dierenwelzijn",
+    "gebruiken op het gebied van dierhygi\u00EBne toepassen",
+    "veilige werkmethoden toepassen in een veterinaire omgeving",
+    "diertraining geven",
+    "omgaan met werkdieren"
+  ],
+  "blocks": [
+    {
+      "key": "start",
+      "label": "07:00 Start",
+      "text": "Dierenverzorgers zijn verantwoordelijk voor de omgang met dieren in een bepaalde functie en zetten de training van het."
+    },
+    {
+      "key": "morning",
+      "label": "09:00 Ochtend",
+      "text": "Dieren trainen om het gewenste gedrag te ontwikkelen en te handhaven voor competitie, amusement, gehoorzaamheid, veiligheidmauie en andere."
+    },
+    {
+      "key": "pause",
+      "label": "12:00 Pauze",
+      "text": "Dieren verzorgen door taken uit te voeren zoals het wassen, borstelen, knippen en trimmen van jassen, het knippen."
+    },
+    {
+      "key": "afternoon",
+      "label": "14:00 Middag",
+      "text": "Je let op veilige werkmethoden toepassen in een veterinaire omgeving."
+    },
+    {
+      "key": "close",
+      "label": "17:00 Afronden",
+      "text": "Je let op diertraining geven."
+    }
+  ]
+}
