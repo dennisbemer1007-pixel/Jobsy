@@ -1,10 +1,12 @@
 @page "/leerling/reis"
-@layout LeerlingLayout
+@layout LeerlingReisLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
@@ -14,10 +16,14 @@
 @inject IJSRuntime Js
 @inject IPupilQuestionSetRegistry Registry
 @inject IServiceProvider Services
+@inject LeerlingReisShellState ShellState
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
 
-<LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+@if (ShellState.Mode == LeerlingReisShellMode.Classic)
+{
+    <LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+}
 
 @if (_windowClosed)
 {
@@ -54,6 +60,20 @@ else if (_state.Completed)
         <p>@Culture["Leerling.Reis.DoneLead"]</p>
         <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["Leerling.Reis.ToResult"]</a>
     </section>
+}
+else if (ShellState.Mode == LeerlingReisShellMode.ZeeExpeditie)
+{
+    <LeerlingReisZeeQuestion State="_state"
+                             Def="_def"
+                             Item="_current"
+                             Selected="_selected"
+                             Busy="_busy"
+                             Saved="_saved"
+                             SaveError="_saveError"
+                             Offline="_offline"
+                             OnSelect="SelectAnswer"
+                             OnPrev="GoPrevZee"
+                             OnReload="Reload" />
 }
 else
 {
@@ -188,7 +208,6 @@ else
     private bool _busy;
     private bool _cheerToast;
     private int _platesSeen = int.MinValue;
-
     protected override async Task OnInitializedAsync()
     {
         await Reload();
@@ -234,6 +253,21 @@ else
         _state = state;
         _offline = false;
         _def = Registry.Get(state.QuestionSet);
+        ShellState.Mode = UsesZeeQuestionShell(state) ? LeerlingReisShellMode.ZeeExpeditie : LeerlingReisShellMode.Classic;
+
+        if (state.QuestionSet == PupilQuestionSet.Groep78
+            && !PupilJourneyTheme.IsValid(state.JourneyThemeKey))
+        {
+            _leaving = true;
+            Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
+            return;
+        }
+
+        if (state.QuestionSet == PupilQuestionSet.Groep78
+            && !string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase))
+        {
+            ShellState.Mode = LeerlingReisShellMode.Classic;
+        }
 
         if (!state.WindowOpen && !state.Completed)
         {
@@ -254,11 +288,15 @@ else
             return;
         }
 
-        if (string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
-            && PupilPuzzleRoutes.IsBuilt(state.NextPuzzleKey))
+        var puzzlePath = PupilZeePuzzleNavigation.TargetPath(
+            state.QuestionSet,
+            state.JourneyThemeKey,
+            state.NextStep,
+            state.NextPuzzleKey);
+        if (puzzlePath is not null)
         {
             _leaving = true;
-            Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(state.NextPuzzleKey!)}");
+            Nav.NavigateTo(puzzlePath);
             return;
         }
 
@@ -381,11 +419,15 @@ else
                 return;
             }
 
-            if (string.Equals(result.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
-                && PupilPuzzleRoutes.IsBuilt(result.NextPuzzleKey))
+            var puzzlePath = PupilZeePuzzleNavigation.TargetPath(
+                _state!.QuestionSet,
+                _state.JourneyThemeKey,
+                result.NextStep,
+                result.NextPuzzleKey);
+            if (puzzlePath is not null)
             {
                 _leaving = true;
-                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey!)}");
+                Nav.NavigateTo(puzzlePath);
                 return;
             }
 
@@ -410,6 +452,22 @@ else
         }
     }
 
+    private async Task GoPrevZee()
+    {
+        if (_state is null || _def is null)
+        {
+            return;
+        }
+
+        if (_state.CurrentIndex <= 0)
+        {
+            Nav.NavigateTo(PupilGroep78EntryPaths.Route);
+            return;
+        }
+
+        await GoPrev();
+    }
+
     private async Task GoPrev()
     {
         if (_state is null || _def is null || _state.CurrentIndex <= 0)
@@ -428,6 +486,10 @@ else
         _infoOpen = false;
         await Task.CompletedTask;
     }
+
+    private static bool UsesZeeQuestionShell(PupilProgressStateDto state)
+        => state.QuestionSet == PupilQuestionSet.Groep78
+           && string.Equals(state.JourneyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase);
 
     private void ToggleInfo() => _infoOpen = !_infoOpen;
 
