@@ -184,8 +184,66 @@ def intro(name,k):
 <style>@media(max-width:600px){{.in-h{{font-size:34px!important}}.qfoot .btn-main{{order:0!important}}}}</style>{FOOT}'''
     page(name,body,w['cls'])
 
+# ---------- result (Dit ben jij) ----------
+STORY=('Jij maakt graag af waar je aan begint. Je wilt weten hoe iets werkt en maakt het graag zelf. '
+       'Rust en duidelijkheid vind je belangrijk. Je voelt je thuis op een plek waar je zelf mag kiezen. '
+       'En je houdt van lezen en dieren.')
+RESULT_TILES=[
+ ('Zo ben jij','Je maakt graag af waar je aan begint.'),
+ ('Dit doe je graag','Je wilt weten hoe iets werkt.'),
+ ('Dit vind je belangrijk','Je houdt van een helder plan.'),
+ ('Hier voel je je thuis','Je kiest graag zelf hoe je iets doet.'),
+]
+LIKES=['Lezen','Dieren','Natuur','Duiken']
+JOBS=['Dierenverzorger','Dierenarts','Bioloog','Boswachter','Programmeur']
+RESULT_BAND={'zee':('lagune','center 40%'),'tuin':('dot-tuin-6','center 55%'),'ster':('dot-ster-5','center 45%')}
+RESULT_TILE_IMG={
+ 'zee':['img/rif.jpg','img/grot.jpg','img/vuurtoren.jpg','img/lagune.jpg'],
+ 'tuin':['img/dot-tuin-1.jpg','img/dot-tuin-2.jpg','img/dot-tuin-4.jpg','img/dot-tuin-6.jpg'],
+ 'ster':['img/dot-ster-1.jpg','img/dot-ster-2.jpg','img/dot-ster-4.jpg','img/dot-ster-5.jpg'],
+}
+def result(name,k):
+    w=W[k]; img,pos=RESULT_BAND[k]; last=len(w['nodes'])-1
+    tiles=''
+    for (lab,txt),bg in zip(RESULT_TILES,RESULT_TILE_IMG[k]):
+        tiles+=f'''<div class="rtile"><div class="rtile-img" style="background-image:url({bg})"></div><div class="rtile-body"><p class="kicker">{lab}</p><p class="rtile-txt">{txt}</p><button class="speak" aria-label="Voorlezen">{SPK}</button></div></div>'''
+    chips_l=''.join(f'<span class="chip on">{c}</span>' for c in LIKES)
+    chips_j=''.join(f'<span class="chip">{c}</span>' for c in JOBS)
+    coach='Kijk, dit ben jij.'
+    body=f'''{top(w['small'])}{bandcss('rb',img,460,300,pos,pos)}
+<section class="band rb dark" style="padding-top:36px">{journey(w,last,'<b>Klaar</b> · alle 60 vragen · jouw verhaal')}</section>
+<div class="wrap rs-hdr"><div class="rs-title"><span class="pill-done">Klaar</span><h1 class="rs-h">Dit ben jij</h1></div></div>
+<div class="wrap" style="position:relative;z-index:4;margin-top:-20px"><div class="q-layout"><div>
+<div class="card" style="margin-bottom:24px"><div class="qrow" style="margin-bottom:12px"><button class="speak">{SPK}</button><span class="speak-label">Laat jouw verhaal voorlezen</span></div>
+<p class="story-body">{STORY}</p></div>
+<div class="rtiles">{tiles}</div>
+<div class="card" style="margin-top:24px"><h2 class="rsub">Je houdt van</h2><div class="chips">{chips_l}</div>
+<h2 class="rsub">Beroepen om eens te bekijken</h2><div class="qrow" style="margin:10px 0 14px"><button class="speak">{SPK}</button><span class="speak-label">Laat de beroepen voorlezen</span></div><div class="chips">{chips_j}</div>
+<p class="note" style="margin-top:22px">Je leraar kan dit verhaal ook zien, met jouw code. Niemand anders.</p></div>
+<div class="qfoot res-foot"><button class="btn btn-ghost">Jouw DNA-paspoort</button><button class="btn btn-ghost">PDF</button><button class="btn btn-main" style="margin-left:auto">Check je droombaan {NEXT}</button></div></div>
+<aside class="d-only">{bubble(coach,'b')}<img class="lob" src="img/kreeft-kijker.png" style="margin-top:22px" alt="Lobsy"></aside>
+<div class="m-only" style="order:-1"><div class="guide"><div class="ring"></div>{bubble(coach,'l')}</div></div></div></div>
+<style>
+.rs-hdr{{display:flex;align-items:flex-end;margin-top:28px;margin-bottom:8px}}
+.rs-title{{background:rgba(16,40,74,.88);border:1px solid rgba(226,194,122,.55);border-radius:20px;padding:18px 28px;color:#fff}}
+.pill-done{{display:inline-block;background:var(--ok);color:#fff;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:4px 12px;margin-bottom:8px}}
+.rs-h{{font-size:52px;color:#ffd98a;margin:0}}
+.story-body{{font-size:21px;line-height:1.6;margin:0}}
+.rtiles{{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:4px}}
+.rtile{{background:#fff;border:1px solid #e4d7bf;border-radius:18px;overflow:hidden;box-shadow:0 4px 14px rgba(16,40,74,.08)}}
+.rtile-img{{height:120px;background-size:cover;background-position:center}}
+.rtile-body{{padding:16px 18px}}
+.rtile-txt{{font-size:16px;color:var(--muted);margin:6px 0 0;line-height:1.45}}
+.rtile .speak{{width:40px;height:40px;margin-top:10px}}
+.rsub{{font-family:Lexend;font-size:21px;margin:0 0 10px;font-weight:600}}
+.res-foot{{flex-wrap:wrap;margin-top:24px}}
+@media(max-width:600px){{.rs-h{{font-size:38px!important}}.rs-hdr{{margin-top:16px}}.rtiles{{grid-template-columns:1fr 1fr!important;gap:10px!important}}.rtile-img{{height:80px!important}}.rtile-body{{padding:12px!important}}.rtile-txt{{font-size:15px}}.res-foot .btn-main{{width:100%;margin-left:0!important;order:-1}}.res-foot .btn-ghost{{flex:1;min-width:calc(50% - 8px)}}}}
+</style>{FOOT}'''
+    page(name,body,w['cls'])
+
 keuze('00-kies-je-wereld')
 for i,k in enumerate(['zee','tuin','ster']):
     b=1+i*3; nm={'zee':'zee','tuin':'eilandtuin','ster':'sterrenkust'}[k]
     route(f'{b:02d}-{nm}-route',k); question(f'{b+1:02d}-{nm}-vraag',k); intro(f'{b+2:02d}-{nm}-puzzel-intro',k)
+    result(f'10-{nm}-result',k)
 print('ok')

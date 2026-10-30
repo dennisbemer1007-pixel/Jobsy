@@ -13,11 +13,11 @@ Alle drie de werelden hebben dezelfde 60 vragen in dezelfde volgorde, dezelfde d
 De kreeft is in alle werelden dezelfde gids (bestaande poses).
 
 ## Schermen (reisvolgorde)
-00 Kies jouw wereld · 01-03 Zee-expeditie (route, vraag, puzzel-intro) · 04-06 Eilandtuin · 07-09 Sterrenkust
+00 Kies jouw wereld · 01-03 Zee-expeditie (route, vraag, puzzel-intro) · 04-06 Eilandtuin · 07-09 Sterrenkust · 10 Dit ben jij (per wereld)
 
 ## Bestanden
 - `walkthrough-desktop.html` en `walkthrough-mobiel.html`: klikbaar, ook met de pijltjestoetsen
-- `groep78-werelden-desktop.pdf` en `groep78-werelden-mobiel.pdf`: voorblad en 10 schermen
+- `groep78-werelden-desktop.pdf` en `groep78-werelden-mobiel.pdf`: voorblad en 13 schermen (inclusief uitkomst per wereld)
 - `vergelijking-vraagscherm.png`: dezelfde vraag in alle drie de werelden
 - `renders/desktop` (1440) en `renders/mobile` (390)
 - `illustraties/`: nieuwe aquarellen voor Eilandtuin en Sterrenkust

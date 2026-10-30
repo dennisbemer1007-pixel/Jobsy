@@ -9,4 +9,7 @@ SCREENS=[
 ('07-sterrenkust-route','Sterrenkust','De route','De route is een sterrenbeeld boven de kust. Elke ster is een stop.'),
 ('08-sterrenkust-vraag','Sterrenkust','Vraag 1 van 60','Dezelfde voorbeeldvraag, nu op het Duinpad.'),
 ('09-sterrenkust-puzzel-intro','Sterrenkust','Puzzel 1: Schelpenrij','Hetzelfde denkspel met dezelfde regels, op het maanstrand.'),
+('10-zee-result','Zee-expeditie','Dit ben jij','Uitkomst na 60 vragen en alle puzzels: verhaal, vier tegels, interesses en beroepsideeën.'),
+('10-eilandtuin-result','Eilandtuin','Dit ben jij','Dezelfde uitkomst als in de andere werelden, in tuin-stijl met voltooide reisbalk.'),
+('10-sterrenkust-result','Sterrenkust','Dit ben jij','Dezelfde uitkomst, op het maanstrand met goudaccenten en voltooide sterrenroute.'),
 ]
