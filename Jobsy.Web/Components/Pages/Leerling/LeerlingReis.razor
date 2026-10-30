@@ -90,6 +90,20 @@ else if (ShellState.Mode == LeerlingReisShellMode.Eilandtuin)
                               OnPrev="GoPrevThemed"
                               OnReload="Reload" />
 }
+else if (ShellState.Mode == LeerlingReisShellMode.Sterrenkust)
+{
+    <LeerlingReisSterQuestion State="_state"
+                              Def="_def"
+                              Item="_current"
+                              Selected="_selected"
+                              Busy="_busy"
+                              Saved="@_saved"
+                              SaveError="@_saveError"
+                              Offline="_offline"
+                              OnSelect="SelectAnswer"
+                              OnPrev="GoPrevThemed"
+                              OnReload="Reload" />
+}
 else
 {
     var item = _current;
@@ -269,7 +283,9 @@ else
         _offline = false;
         _def = Registry.Get(state.QuestionSet);
         ShellState.Mode = ShellModeFor(state);
-        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie or LeerlingReisShellMode.Eilandtuin)
+        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie
+            or LeerlingReisShellMode.Eilandtuin
+            or LeerlingReisShellMode.Sterrenkust)
         {
             ShellTheme.ApplyJourney(state.JourneyThemeKey!, routeHeader: true);
         }
@@ -533,6 +549,11 @@ else
         if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase))
         {
             return LeerlingReisShellMode.Eilandtuin;
+        }
+
+        if (string.Equals(state.JourneyThemeKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase))
+        {
+            return LeerlingReisShellMode.Sterrenkust;
         }
 
         return LeerlingReisShellMode.Classic;

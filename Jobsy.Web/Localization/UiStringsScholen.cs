@@ -469,6 +469,10 @@ public static class UiStringsScholen
         nl["Leerling.World.Tuin.Koraaltuin.Title"] = "De Koraaltuin";
         nl["Leerling.World.Tuin.Waterval.Title"] = "De Waterval";
         nl["Leerling.World.Tuin.Zonnelagune.Title"] = "De Zonnelagune";
+        nl["Leerling.World.Ster.Duinpad.Title"] = "Het Duinpad";
+        nl["Leerling.World.Ster.Maangrot.Title"] = "De Maangrot";
+        nl["Leerling.World.Ster.Vuurtoren.Title"] = "De vuurtoren";
+        nl["Leerling.World.Ster.Sterrenbaai.Title"] = "De Sterrenbaai";
         nl["Leerling.Answer.No"] = "Nee";
         nl["Leerling.Answer.NotReally"] = "Niet echt";
         nl["Leerling.Answer.Sometimes"] = "Soms";
@@ -815,6 +819,10 @@ public static class UiStringsScholen
         Add("Leerling.World.Tuin.Koraaltuin.Title", "De Koraaltuin", "The coral garden", "Ogród koralowy", "Grădina de corali", "حديقة المرجان");
         Add("Leerling.World.Tuin.Waterval.Title", "De Waterval", "The waterfall", "Wodospad", "Cascada", "الشلال");
         Add("Leerling.World.Tuin.Zonnelagune.Title", "De Zonnelagune", "The sun lagoon", "Laguna słońca", "Laguna soarelui", "بحيرة الشمس");
+        Add("Leerling.World.Ster.Duinpad.Title", "Het Duinpad", "The dune path", "Ścieżka wydm", "Poteca dunelor", "مسار الكثبان");
+        Add("Leerling.World.Ster.Maangrot.Title", "De Maangrot", "The moon cave", "Jaskinia księżyca", "Peștera lunii", "كهف القمر");
+        Add("Leerling.World.Ster.Vuurtoren.Title", "De vuurtoren", "The lighthouse", "Latarnia morska", "Farul", "المنارة");
+        Add("Leerling.World.Ster.Sterrenbaai.Title", "De Sterrenbaai", "Star bay", "Zatoka gwiazd", "Golful stelelor", "خليج النجوم");
         Add("Leerling.Route.Stop.Vuurtorenlampen.Title", "Vuurtorenlampen", "Lighthouse lamps", "Latarnie", "Lămpile farului", "مصابيح المنارة");
         Add("Leerling.Route.Stop.Vuurtorenlampen.Sub", "Puzzel 3", "Puzzle 3", "Łamigłówka 3", "Puzzle 3", "لغز 3");
         Add("Leerling.Route.Ster.Lead", "Je route is een sterrenbeeld. Elke ster is een stop.", "Your route is a constellation. Each star is a stop.", "Twoja trasa to gwiazdozbiór. Każda gwiazda to przystanek.", "Ruta ta e o constelație. Fiecare stea e o oprire.", "مسارك كوكبة. كل نجمة محطة.");

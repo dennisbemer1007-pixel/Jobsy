@@ -524,3 +524,46 @@
     background-position: center 78%;
   }
 }
+
+/* Groep 7/8 screen 08 — Sterrenkust question (mockup 08-sterrenkust-vraag). */
+
+.ll-g78-shell.t-ster .band.vr.vr-ster {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-kaart-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-kaart-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-kaart.jpg") 3x
+  );
+  background-position: center 82%;
+}
+
+.ll-g78-shell.t-ster .band.vr.is-maangrot {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-kaart-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-kaart-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-kaart.jpg") 3x
+  );
+  background-position: center 55%;
+}
+
+.ll-g78-shell.t-ster .band.vr.is-vuurtoren,
+.ll-g78-shell.t-ster .band.vr.is-sterrenbaai {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-strand-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-strand-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-strand.jpg") 3x
+  );
+  background-position: center 35%;
+}
+
+.ll-g78-shell.t-ster .vr-jn.is-result .dot {
+  background: none;
+  background-image: url("/leerling/werelden/img/dot-ster-6.jpg");
+  background-size: cover;
+  filter: none;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell.t-ster .band.vr.vr-ster {
+    background-position: center 82%;
+  }
+}

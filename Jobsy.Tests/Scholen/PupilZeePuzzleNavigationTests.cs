@@ -29,6 +29,17 @@ public sealed class PupilZeePuzzleNavigationTests
     }
 
     [Fact]
+    public void TargetPath_ster_schelpenrij_goes_to_intro()
+    {
+        var path = PupilZeePuzzleNavigation.TargetPath(
+            PupilQuestionSet.Groep78,
+            PupilJourneyTheme.Sterrenkust,
+            "puzzle",
+            "schelpenrij");
+        Assert.Equal("/leerling/puzzel-intro/schelpenrij", path);
+    }
+
+    [Fact]
     public void IntroNodeIndex_schelpenrij_is_second_stop()
     {
         Assert.Equal(1, PupilZeeJourneyBar.IntroNodeIndex("schelpenrij"));

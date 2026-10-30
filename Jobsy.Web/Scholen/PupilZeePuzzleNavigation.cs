@@ -19,8 +19,7 @@ public static class PupilZeePuzzleNavigation
         }
 
         if (questionSet == PupilQuestionSet.Groep78
-            && (string.Equals(journeyThemeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(journeyThemeKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase))
+            && PupilJourneyTheme.IsValid(journeyThemeKey)
             && PupilPuzzleIntroRoutes.IsBuilt(puzzleKey))
         {
             return PupilPuzzleIntroRoutes.Path(puzzleKey);

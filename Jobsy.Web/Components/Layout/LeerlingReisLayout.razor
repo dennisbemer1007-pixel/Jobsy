@@ -13,7 +13,9 @@
 @inject Jobsy.Web.Scholen.LeerlingGroep78ShellTheme ShellTheme
 @implements IDisposable
 
-@if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie or LeerlingReisShellMode.Eilandtuin)
+@if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie
+     or LeerlingReisShellMode.Eilandtuin
+     or LeerlingReisShellMode.Sterrenkust)
 {
     <div class="ll-g78-shell @ShellTheme.CssClass" lang="@Culture.Language">
         <header class="top">
@@ -91,7 +93,9 @@ else
     {
         var http = HttpContextAccessor.HttpContext;
         var lang = http?.Request.Query["lang"].ToString();
-        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie or LeerlingReisShellMode.Eilandtuin)
+        if (ShellState.Mode is LeerlingReisShellMode.ZeeExpeditie
+            or LeerlingReisShellMode.Eilandtuin
+            or LeerlingReisShellMode.Sterrenkust)
         {
             if (!string.IsNullOrWhiteSpace(lang))
             {
