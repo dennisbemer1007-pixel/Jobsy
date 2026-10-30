@@ -97,16 +97,32 @@
                 {
                     var idx = i;
                     var size = ShellOrder[idx];
-                    <button type="button"
-                            class="pp-shell @(ShellPick == idx ? "is-pick" : null) @(IsSorted ? "is-done" : null)"
-                            aria-pressed="@(ShellPick == idx)"
-                            disabled="@Busy"
-                            data-testid="ll-puzzle-shell"
-                            @onclick="() => OnPickShell.InvokeAsync(idx)">
-                        <img src="@ShellImage(size)" width="58" height="68" alt="" decoding="async" />
-                        <span class="visually-hidden">@string.Format(Culture["Leerling.Puzzle.ShellSize"], size)</span>
-                    </button>
+                    <div class="pp-slot">
+                        <button type="button"
+                                class="pp-shell @(ShellPick == idx ? "is-pick" : null) @(IsSorted ? "is-done" : null)"
+                                aria-pressed="@(ShellPick == idx)"
+                                disabled="@Busy"
+                                data-testid="ll-puzzle-shell"
+                                @onclick="() => OnPickShell.InvokeAsync(idx)">
+                            <img src="@PupilSchelpenrijPuzzle.ShellImagePath(size)" width="50" height="58" alt="" decoding="async" />
+                            <span class="visually-hidden">@string.Format(Culture["Leerling.Puzzle.ShellSize"], size)</span>
+                        </button>
+                    </div>
                 }
+                <div class="pp-slot pp-slot--q @(Solved ? "is-filled" : null)" aria-hidden="@(!Solved)">
+                    @if (Solved)
+                    {
+                        <img src="@PupilSchelpenrijPuzzle.ShellImagePath(PupilSchelpenrijPuzzle.NextShellSize)"
+                             width="50"
+                             height="58"
+                             alt=""
+                             decoding="async" />
+                    }
+                    else
+                    {
+                        <span>?</span>
+                    }
+                </div>
             </div>
 
             @if (Solved)
@@ -179,7 +195,7 @@
 
 @code {
     [Parameter] public string JourneyThemeKey { get; set; } = PupilJourneyTheme.ZeeExpeditie;
-    [Parameter] public IReadOnlyList<int> ShellOrder { get; set; } = [1, 3, 2, 4];
+    [Parameter] public IReadOnlyList<int> ShellOrder { get; set; } = PupilSchelpenrijPuzzle.InitialPlayOrder;
     [Parameter] public int? ShellPick { get; set; }
     [Parameter] public bool IsSorted { get; set; }
     [Parameter] public bool Solved { get; set; }
@@ -189,12 +205,4 @@
     [Parameter] public EventCallback OnSkip { get; set; }
     [Parameter] public EventCallback OnContinue { get; set; }
 
-    private static string ShellImage(int size)
-        => size switch
-        {
-            1 => "/leerling/werelden/img/schelp-1.png",
-            2 => "/leerling/werelden/img/schelp-2.png",
-            3 => "/leerling/werelden/img/schelp-3.png",
-            _ => "/leerling/werelden/img/schelp-4.png",
-        };
 }

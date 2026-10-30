@@ -555,12 +555,12 @@ public static class UiStringsScholen
         nl["Leerling.Puzzle.SaveFailed"] = "Opslaan lukte niet. Probeer het nog eens.";
         nl["Leerling.Puzzle.Schelpenrij.Title"] = "Schelpenrij";
         nl["Leerling.Puzzle.Schelpenrij.Kicker"] = "Puzzel · Schelpenrij";
-        nl["Leerling.Puzzle.Schelpenrij.Lead"] = "Zet de schelpen van klein naar groot.";
+        nl["Leerling.Puzzle.Schelpenrij.Lead"] = "Zet de schelpen in het juiste patroon.";
         nl["Leerling.Puzzle.Schelpenrij.Hint"] = "Tik twee schelpen om ze te wisselen.";
         nl["Leerling.Puzzle.Schelpenrij.ReadTask"] = "Laat de opdracht voorlezen";
         nl["Leerling.Puzzle.Schelpenrij.Coach"] = "Neem je tijd. Er loopt geen klok.";
         nl["Leerling.Puzzle.Schelpenrij.CoachDone"] = "Netjes. Puzzel 1 is klaar. Ga verder met je reis.";
-        nl["Leerling.Puzzle.Schelpenrij.Solved"] = "Goed gezien. De schelpen staan van klein naar groot.";
+        nl["Leerling.Puzzle.Schelpenrij.Solved"] = "Goed gezien. Het patroon klopt en de volgende schelp past op de plek van het vraagteken.";
         nl["Leerling.Puzzle.ShellSize"] = "Schelp maat {0}";
         nl["Leerling.Puzzle.Schatkaart.Title"] = "Schatkaart";
         nl["Leerling.Puzzle.Schatkaart.Lead"] = "Vind de bij elkaar horende symbolen.";

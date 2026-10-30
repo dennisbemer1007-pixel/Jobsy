@@ -170,7 +170,7 @@ else
     private bool _solved;
     private string? _error;
 
-    private List<int> _shellOrder = [1, 3, 2, 4];
+    private List<int> _shellOrder = PupilSchelpenrijPuzzle.InitialPlayOrder.ToList();
     private int? _shellPick;
 
     private readonly string[] _cardSymbols = ["🐚", "⚓", "🐠", "🐚", "⚓", "🐠"];
@@ -269,7 +269,7 @@ else
         _solved = false;
         _error = null;
         _shellPick = null;
-        _shellOrder = [1, 3, 2, 4];
+        _shellOrder = PupilSchelpenrijPuzzle.InitialPlayOrder.ToList();
         _cardFaces = _cardSymbols.OrderBy(_ => Random.Shared.Next()).ToList();
         _cardOpen = [];
         _cardMatched = [];
@@ -317,12 +317,7 @@ else
         }
     }
 
-    private bool IsShellsSorted() =>
-        _shellOrder.Count == 4
-        && _shellOrder[0] == 1
-        && _shellOrder[1] == 2
-        && _shellOrder[2] == 3
-        && _shellOrder[3] == 4;
+    private bool IsShellsSorted() => PupilSchelpenrijPuzzle.IsSolved(_shellOrder);
 
     private void FlipCard(int index)
     {

@@ -12,6 +12,7 @@ using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -944,6 +945,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
                 await Assertions.Expect(page.Locator($".ll-g78-shell.{shellClass}")).ToBeVisibleAsync();
                 await Assertions.Expect(page.Locator("[data-testid=ll-puzzle-root]")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator("[data-testid=ll-puzzle-shell]")).ToHaveCountAsync(PupilSchelpenrijPuzzle.ShellCount);
                 await Assertions.Expect(page.Locator(".pp-card .vr-qrow [data-read-aloud]")).ToBeVisibleAsync();
                 await page.ScreenshotAsync(new()
                 {
@@ -1394,8 +1396,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" })).ToBeVisibleAsync();
                     var shells = page.Locator("[data-testid=ll-puzzle-shell]");
+                    await Assertions.Expect(shells).ToHaveCountAsync(PupilSchelpenrijPuzzle.ShellCount);
                     await shells.Nth(1).ClickAsync();
-                    await shells.Nth(2).ClickAsync();
+                    await shells.Nth(3).ClickAsync();
                     await Assertions.Expect(page.GetByTestId("ll-puzzle-continue")).ToBeVisibleAsync();
                 });
 

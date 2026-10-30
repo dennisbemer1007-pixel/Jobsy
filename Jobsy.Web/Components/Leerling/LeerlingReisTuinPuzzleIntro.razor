@@ -175,12 +175,5 @@
         _ => "Leerling.Puzzle.Break",
     };
 
-    private static IReadOnlyList<string> PreviewShells { get; } =
-    [
-        "/leerling/werelden/img/schelp-1.png",
-        "/leerling/werelden/img/schelp-2.png",
-        "/leerling/werelden/img/schelp-2.png",
-        "/leerling/werelden/img/schelp-3.png",
-        "/leerling/werelden/img/schelp-1.png",
-    ];
+    private static IReadOnlyList<string> PreviewShells => PupilSchelpenrijPuzzle.PreviewImageUrls;
 }

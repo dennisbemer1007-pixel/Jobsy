@@ -40,8 +40,12 @@ public sealed class G78ReisPuzzlePlaywrightTests
               <div class="pp-layout">
                 <div class="card pp-card" data-testid="ll-puzzle-root">
                   <div class="pp-shell-row">
-                    <button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button>
-                    <button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button>
+                    <div class="pp-slot"><button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button></div>
+                    <div class="pp-slot"><button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button></div>
+                    <div class="pp-slot"><button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button></div>
+                    <div class="pp-slot"><button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button></div>
+                    <div class="pp-slot"><button type="button" class="pp-shell" data-testid="ll-puzzle-shell"><img src="/x.png" alt=""></button></div>
+                    <div class="pp-slot pp-slot--q"><span>?</span></div>
                   </div>
                   <div class="pp-foot"><button type="button" class="btn btn-quiet">Overslaan</button></div>
                 </div>
@@ -64,7 +68,7 @@ public sealed class G78ReisPuzzlePlaywrightTests
         var scroll = await page.EvaluateAsync<int>(
             "() => document.documentElement.scrollWidth - document.documentElement.clientWidth");
         Assert.True(scroll <= 1, $"horizontal overflow {scroll} at {width}x{height}");
-        Assert.Equal(2, await page.Locator("[data-testid=ll-puzzle-shell]").CountAsync());
+        Assert.Equal(5, await page.Locator("[data-testid=ll-puzzle-shell]").CountAsync());
     }
 
     private static string RepoRoot()
