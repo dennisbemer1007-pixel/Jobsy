@@ -1113,6 +1113,27 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Directory.CreateDirectory(zeeCapture);
         Directory.CreateDirectory(tuinCapture);
         Directory.CreateDirectory(sterCapture);
+        foreach (var dir in new[] { zeeCapture, tuinCapture, sterCapture })
+        {
+            foreach (var file in Directory.EnumerateFiles(dir, "built-*-result-*.png"))
+            {
+                File.Delete(file);
+            }
+        }
+
+        foreach (var compareDir in new[]
+                 {
+                     "/opt/cursor/artifacts/groep78-zee-result-compare",
+                     "/opt/cursor/artifacts/groep78-tuin-result-compare",
+                     "/opt/cursor/artifacts/groep78-ster-result-compare",
+                 })
+        {
+            Directory.CreateDirectory(compareDir);
+            foreach (var file in Directory.EnumerateFiles(compareDir, "side-by-side-*.png"))
+            {
+                File.Delete(file);
+            }
+        }
 
         foreach (var (theme, bandTestId, shellClass, captureDir, builtPrefix, mockPrefix) in new[]
                  {
@@ -1122,15 +1143,19 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                  })
         {
             var pupil = await SeedGroep78CompletedAsync(journeyThemeKey: theme);
-            foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+            foreach (var (width, height, tag, mobile) in new[]
+                     {
+                         (1440, 900, "1440", false),
+                         (390, 844, "390", true),
+                     })
             {
-                var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
-                {
-                    ViewportSize = new ViewportSize { Width = width, Height = height },
-                    IsMobile = width < 600,
-                    HasTouch = width < 600,
-                    DeviceScaleFactor = width < 600 ? 2 : 1,
-                });
+                await using var context = mobile
+                    ? await NewMobileContextAsync()
+                    : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                    {
+                        ViewportSize = new ViewportSize { Width = width, Height = height },
+                    });
+                var page = await context.NewPageAsync();
                 page.SetDefaultTimeout(90_000);
                 var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
                 await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
@@ -1138,12 +1163,19 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
                 await Assertions.Expect(page.Locator($".ll-g78-shell.{shellClass}")).ToBeVisibleAsync();
                 await Assertions.Expect(page.Locator("[data-testid=leerling-dit-ben-jij]")).ToBeVisibleAsync();
+                await WaitForGroep78ResultFootReadyAsync(page, mobile);
+                var outPath = Path.Combine(captureDir, $"built-{builtPrefix}-result-{tag}.png");
+                if (File.Exists(outPath))
+                {
+                    File.Delete(outPath);
+                }
+
+                await page.Locator(".rs-foot").ScrollIntoViewIfNeededAsync();
                 await page.ScreenshotAsync(new()
                 {
-                    Path = Path.Combine(captureDir, $"built-{builtPrefix}-result-{tag}.png"),
+                    Path = outPath,
                     FullPage = true,
                 });
-                await page.CloseAsync();
             }
         }
 
@@ -1720,6 +1752,28 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         return report;
     }
 
+    private static async Task WaitForGroep78ResultFootReadyAsync(IPage page, bool mobile)
+    {
+        var passport = page.GetByRole(AriaRole.Link, new() { Name = "Jouw DNA-paspoort" });
+        await passport.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        var pdf = page.GetByRole(AriaRole.Link, new() { Name = "PDF" });
+        await Assertions.Expect(pdf).ToBeVisibleAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+                const links = document.querySelectorAll('.rs-foot .btn.btn-ghost');
+                if (links.length < 2) return false;
+                return [...links].every(el => getComputedStyle(el).borderWidth === '2px');
+            }
+            """,
+            null,
+            new PageWaitForFunctionOptions { Timeout = 60_000 });
+        if (mobile)
+        {
+            await Assertions.Expect(passport).ToHaveCSSAsync("border-width", "2px");
+        }
+    }
+
     private static string PuzzleIntroBandTestId(string theme)
         => theme switch
         {
@@ -2224,8 +2278,13 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         foreach (var (mockRel, builtName, outName) in pairs)
         {
             var mockPath = Path.Combine(compareDir, Path.GetFileName(mockRel));
-            if (!File.Exists(mockPath))
+            if (!File.Exists(mockPath) || new FileInfo(mockPath).Length == 0)
             {
+                if (File.Exists(mockPath))
+                {
+                    File.Delete(mockPath);
+                }
+
                 TryGitShowMockup(repoRoot, mockRel, mockPath);
             }
 
@@ -2234,6 +2293,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             if (!File.Exists(mockPath) || !File.Exists(builtPath))
             {
                 continue;
+            }
+
+            if (File.Exists(outPath))
+            {
+                File.Delete(outPath);
             }
 
             var script = Path.Combine(repoRoot, "tools", "banenkaart-lagen-capture", "side_by_side.py");
