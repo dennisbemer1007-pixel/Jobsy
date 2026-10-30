@@ -38,12 +38,18 @@ else if (_sessionLost)
 }
 else if (_view is not null)
 {
-    var bandClass = string.Equals(_view.JourneyKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase)
-        ? "band rt rt-tuin"
-        : "band rt";
-    var mainTestId = string.Equals(_view.JourneyKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase)
-        ? "ll-route-bloemenbaai"
-        : "ll-route-reef";
+    var bandClass = _view.JourneyKey switch
+    {
+        var k when string.Equals(k, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase) => "band rt rt-tuin",
+        var k when string.Equals(k, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase) => "band rt rt-ster",
+        _ => "band rt",
+    };
+    var mainTestId = _view.JourneyKey switch
+    {
+        var k when string.Equals(k, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase) => "ll-route-bloemenbaai",
+        var k when string.Equals(k, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase) => "ll-route-duinpad",
+        _ => "ll-route-reef",
+    };
 
     <section class="@bandClass">
         <div class="wrap rt-hero">

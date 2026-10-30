@@ -19,6 +19,15 @@
   background-position: center 22%;
 }
 
+.ll-g78-shell .band.rt.rt-ster {
+  background-image: image-set(
+    url("/leerling/werelden/img/sterren-strand-390w.jpg") 1x,
+    url("/leerling/werelden/img/sterren-strand-780w.jpg") 2x,
+    url("/leerling/werelden/img/sterren-strand.jpg") 3x
+  );
+  background-position: center 12%;
+}
+
 .ll-g78-shell .rt-hero {
   padding-top: 44px;
 }
@@ -224,6 +233,10 @@
 
   .ll-g78-shell .band.rt.rt-tuin {
     background-position: center 22%;
+  }
+
+  .ll-g78-shell .band.rt.rt-ster {
+    background-position: 70% 12%;
   }
 
   .ll-g78-shell .rt-hero {

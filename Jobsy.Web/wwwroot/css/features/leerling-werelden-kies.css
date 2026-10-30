@@ -584,3 +584,33 @@
 .ll-g78-shell.t-tuin .ring {
   background-color: #f6e4d4;
 }
+
+.ll-g78-shell.t-ster {
+  --navy: #141c36;
+  --navy2: #24305a;
+  --teal: #4a6a8c;
+  --sea: #6f86a8;
+  --cream: #f2f1ee;
+  --paper: #fcfcfa;
+  --sand: #e8e9ed;
+  --coral: #c7802f;
+  --coral2: #9c6220;
+  --brass: #b7a06a;
+  --brass2: #d9c79a;
+  --ok: #4a7a64;
+  --ink: #161c2e;
+  --muted: #56607a;
+}
+
+.ll-g78-shell.t-ster .card {
+  border-color: #e1e0dc;
+  box-shadow: 0 10px 40px rgba(20, 28, 54, 0.14);
+}
+
+.ll-g78-shell.t-ster .bubble {
+  box-shadow: 0 6px 20px rgba(20, 28, 54, 0.15);
+}
+
+.ll-g78-shell.t-ster .ring {
+  background-color: #e4e6ee;
+}

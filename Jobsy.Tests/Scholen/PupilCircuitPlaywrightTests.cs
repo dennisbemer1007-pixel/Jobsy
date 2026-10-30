@@ -705,6 +705,82 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Groep78_ster_route_screen_links_and_capture()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtAsync(
+            3,
+            answered: 0,
+            chipsSaved: false,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var pupil = seed[0];
+        var baseUrl = EnsureWeb();
+        var captureDir = Environment.GetEnvironmentVariable("LEERLING_STER_ROUTE_CAPTURE_DIR")
+            ?? "/opt/cursor/artifacts/groep78-ster-route-capture";
+        Directory.CreateDirectory(captureDir);
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                IsMobile = width < 600,
+                HasTouch = width < 600,
+                DeviceScaleFactor = width < 600 ? 2 : 1,
+            });
+            page.SetDefaultTimeout(90_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+            await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+            await page.WaitForURLAsync("**/leerling/route**", DomReady);
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "De route" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByText("Je route is een sterrenbeeld. Elke ster is een stop.")).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Naar het Duinpad" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Andere wereld kiezen" })).ToBeVisibleAsync();
+            await Assertions.Expect(page.Locator(".ll-g78-shell.t-ster")).ToBeVisibleAsync();
+            var speak = width >= 600
+                ? page.Locator(".rt-coach [data-read-aloud]")
+                : page.Locator(".m-only .guide [data-read-aloud]");
+            await Assertions.Expect(speak).ToBeVisibleAsync();
+            await page.Locator(".btn-main").WaitForAsync(new() { Timeout = 30_000 });
+            await speak.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(captureDir, $"built-07-sterrenkust-route-{tag}.png"),
+                FullPage = true,
+            });
+            await page.CloseAsync();
+        }
+
+        WriteSterRouteSideBySideComparisons(captureDir);
+
+        var desktop = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+        });
+        var url = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+        await LoginAsync(desktop, url, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        await desktop.WaitForURLAsync("**/leerling/route**", DomReady);
+        await desktop.GetByRole(AriaRole.Link, new() { Name = "Naar het Duinpad" }).ClickAsync();
+        await desktop.WaitForURLAsync("**/leerling/reis**", DomReady);
+        await desktop.Locator(".ll-card").WaitForAsync();
+        await desktop.CloseAsync();
+
+        var mobile = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+        });
+        await LoginAsync(mobile, url, pupil.PlainCode, pupil.ClassId, journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        await mobile.WaitForURLAsync("**/leerling/route**", DomReady);
+        await mobile.GetByRole(AriaRole.Link, new() { Name = "Andere wereld kiezen" }).ClickAsync();
+        await mobile.WaitForURLAsync("**/leerling/wereld**", DomReady);
+        await mobile.CloseAsync();
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Groep78_tuin_vraag_screen_links_and_capture()
     {
         _ = TestContext.Current.CancellationToken;
@@ -959,12 +1035,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             File.Delete(reportPath);
         }
 
-        foreach (var (theme, routeBtn, bandTestId, width, height, mobile) in new[]
+        foreach (var (theme, routeBtn, bandTestId, width, height, mobile, reisOnly) in new[]
                  {
-                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false),
-                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true),
-                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false),
-                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true),
+                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 1440, 900, false, false),
+                     (PupilJourneyTheme.ZeeExpeditie, "Naar het Koraalrif", "ll-zee-vraag-band", 390, 844, true, false),
+                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 1440, 900, false, false),
+                     (PupilJourneyTheme.Eilandtuin, "Naar de Bloemenbaai", "ll-tuin-vraag-band", 390, 844, true, false),
+                     (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", (string?)null, 1440, 900, false, true),
+                     (PupilJourneyTheme.Sterrenkust, "Naar het Duinpad", (string?)null, 390, 844, true, true),
                  })
         {
             var seed = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, completeActivePuzzleGate: true, journeyThemeKey: theme);
@@ -1060,8 +1138,20 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     await page.GetByRole(AriaRole.Link, new() { Name = routeBtn }).ClickAsync();
                     await page.WaitForURLAsync("**/leerling/reis**", DomReady);
-                    await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                    if (!string.IsNullOrEmpty(bandTestId))
+                    {
+                        await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                    }
+                    else
+                    {
+                        await page.Locator(".ll-card").WaitForAsync();
+                    }
                 });
+
+                if (reisOnly)
+                {
+                    continue;
+                }
 
                 await Step("Vorige Q1 → route", async () =>
                 {
@@ -1203,6 +1293,99 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     private static Regex UntranslatedKeyPattern() => new(@"Leerling\.[A-Z][\w.]+", RegexOptions.Compiled);
+
+    private static void WriteSterRouteSideBySideComparisons(string captureDir)
+    {
+        var compareDir = "/opt/cursor/artifacts/groep78-ster-route-compare";
+        Directory.CreateDirectory(compareDir);
+        var repoRoot = FindRepoRoot();
+        foreach (var (mockRel, builtName, outName) in new[]
+                 {
+                     (
+                         "docs/mockups/leerling/werelden/renders/desktop/07-sterrenkust-route.png",
+                         "built-07-sterrenkust-route-1440.png",
+                         "side-by-side-07-sterrenkust-route-1440.png"),
+                     (
+                         "docs/mockups/leerling/werelden/renders/mobile/07-sterrenkust-route.png",
+                         "built-07-sterrenkust-route-390.png",
+                         "side-by-side-07-sterrenkust-route-390.png"),
+                 })
+        {
+            var mockPath = Path.Combine(compareDir, Path.GetFileName(mockRel));
+            if (!File.Exists(mockPath))
+            {
+                TryGitShowMockup(repoRoot, mockRel, mockPath);
+            }
+
+            var builtPath = Path.Combine(captureDir, builtName);
+            var outPath = Path.Combine(compareDir, outName);
+            if (!File.Exists(mockPath) || !File.Exists(builtPath))
+            {
+                continue;
+            }
+
+            var script = Path.Combine(repoRoot, "tools", "banenkaart-lagen-capture", "side_by_side.py");
+            if (!File.Exists(script))
+            {
+                continue;
+            }
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "python3",
+                ArgumentList = { script, mockPath, builtPath, outPath },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            })?.WaitForExit(30_000);
+        }
+    }
+
+    private static void TryGitShowMockup(string repoRoot, string gitPath, string dest)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "git",
+                WorkingDirectory = repoRoot,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            psi.ArgumentList.Add("show");
+            psi.ArgumentList.Add($"pr-878-mockups:{gitPath}");
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc is null)
+            {
+                return;
+            }
+
+            var bytes = proc.StandardOutput.BaseStream;
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            using var fs = File.Create(dest);
+            bytes.CopyTo(fs);
+            proc.WaitForExit(5_000);
+        }
+        catch
+        {
+            // Mockups are optional when pr-878-mockups ref is missing.
+        }
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        return "/workspace";
+    }
 
     private async Task<IBrowserContext> NewMobileContextAsync()
         => await _browser!.NewContextAsync(new BrowserNewContextOptions

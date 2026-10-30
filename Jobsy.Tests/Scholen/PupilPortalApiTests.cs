@@ -381,7 +381,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             new PupilJourneyThemeRequest(PupilJourneyTheme.Sterrenkust));
         Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
         var saved = await theme.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
-        Assert.Equal(PupilGroep78EntryPaths.Start, saved!.RedirectPath);
+        Assert.Equal(PupilGroep78EntryPaths.Route, saved!.RedirectPath);
 
         var zee = await client.PutAsJsonAsync(
             "api/pupil/progress/journey-theme",

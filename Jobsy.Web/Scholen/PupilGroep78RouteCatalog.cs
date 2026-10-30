@@ -36,6 +36,20 @@ public static class PupilGroep78RouteCatalog
         new(10, "Leerling.Route.Stop.Result.Title", "Leerling.Route.Stop.Result.Sub", "t-coral"),
     ];
 
+    private static readonly PupilRouteStop[] SterStops =
+    [
+        new(1, "Leerling.Route.Ster.Stop.Strandpaal.Title", "Leerling.Route.Ster.Stop.Strandpaal.Sub", "t-ok", ShowHere: true),
+        new(2, "Leerling.Route.Ster.Stop.Duinpad.Title", "Leerling.Route.Ster.Stop.Duinpad.Sub", "t-navy"),
+        new(3, "Leerling.Route.Stop.Schelpenrij.Title", "Leerling.Route.Stop.Schelpenrij.Sub", "t-brass", Diamond: true),
+        new(4, "Leerling.Route.Ster.Stop.Maangrot.Title", "Leerling.Route.Ster.Stop.Maangrot.Sub", "t-navy"),
+        new(5, "Leerling.Route.Stop.Schatkaart.Title", "Leerling.Route.Stop.Schatkaart.Sub", "t-brass", Diamond: true),
+        new(6, "Leerling.Route.Stop.Island.Title", "Leerling.Route.Stop.Island.Sub", "t-teal"),
+        new(7, "Leerling.Route.Stop.Lighthouse.Title", "Leerling.Route.Stop.Lighthouse.Sub", "t-navy"),
+        new(8, "Leerling.Route.Stop.Vuurtorenlampen.Title", "Leerling.Route.Stop.Vuurtorenlampen.Sub", "t-brass", Diamond: true),
+        new(9, "Leerling.Route.Ster.Stop.Sterrenbaai.Title", "Leerling.Route.Ster.Stop.Sterrenbaai.Sub", "t-navy"),
+        new(10, "Leerling.Route.Stop.Result.Title", "Leerling.Route.Ster.Stop.Result.Sub", "t-coral"),
+    ];
+
     private static readonly PupilRouteStop[] TuinStops =
     [
         new(1, "Leerling.Route.Tuin.Stop.Steiger.Title", "Leerling.Route.Tuin.Stop.Steiger.Sub", "t-ok", ShowHere: true),
@@ -102,9 +116,42 @@ public static class PupilGroep78RouteCatalog
         <circle cx="228" cy="452" r="27" fill="none" stroke="#ffd98a" stroke-width="4" />
         """;
 
+    private const string SterMapSvg = """
+        <path d="M110,366 L207,345 L282,323 L346,280 L397,323 L477,266 L572,236 L673,217 L749,181 L849,111" fill="none" stroke="#f3e2a8" stroke-width="3" opacity=".75" />
+        <circle cx="110" cy="366" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="110" cy="366" r="17" fill="#4a7a64" stroke="#f3e2a8" stroke-width="3" />
+        <text x="110" y="372" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">1</text>
+        <circle cx="207" cy="345" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="207" cy="345" r="17" fill="#24305a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="207" y="351" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">2</text>
+        <rect x="268" y="309" width="28" height="28" rx="5" transform="rotate(45 282 323)" fill="#b7a06a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="282" y="329" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">3</text>
+        <circle cx="346" cy="280" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="346" cy="280" r="17" fill="#24305a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="346" y="286" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">4</text>
+        <rect x="383" y="309" width="28" height="28" rx="5" transform="rotate(45 397 323)" fill="#b7a06a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="397" y="329" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">5</text>
+        <circle cx="477" cy="266" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="477" cy="266" r="17" fill="#4a6a8c" stroke="#f3e2a8" stroke-width="3" />
+        <text x="477" y="272" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">6</text>
+        <circle cx="572" cy="236" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="572" cy="236" r="17" fill="#24305a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="572" y="242" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">7</text>
+        <rect x="659" y="203" width="28" height="28" rx="5" transform="rotate(45 673 217)" fill="#b7a06a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="673" y="223" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">8</text>
+        <circle cx="749" cy="181" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="749" cy="181" r="17" fill="#24305a" stroke="#f3e2a8" stroke-width="3" />
+        <text x="749" y="187" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">9</text>
+        <circle cx="849" cy="111" r="26" fill="#f3e2a8" opacity=".18" />
+        <circle cx="849" cy="111" r="17" fill="#c7802f" stroke="#f3e2a8" stroke-width="3" />
+        <text x="849" y="117" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" font-size="17" fill="#fff">10</text>
+        <circle cx="110" cy="366" r="27" fill="none" stroke="#ffd98a" stroke-width="4" />
+        """;
+
     public static bool SupportsThemedRoute(string? journeyKey)
         => string.Equals(journeyKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase)
-           || string.Equals(journeyKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase);
+           || string.Equals(journeyKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(journeyKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase);
 
     public static PupilRouteThemeView? Find(string? journeyKey)
     {
@@ -132,6 +179,19 @@ public static class PupilGroep78RouteCatalog
                 "tuin-kaart",
                 TuinMapSvg,
                 TuinStops);
+        }
+
+        if (string.Equals(journeyKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase))
+        {
+            return new PupilRouteThemeView(
+                PupilJourneyTheme.Sterrenkust,
+                "Leerling.Route.Ster.Lead",
+                "Leerling.Route.Ster.ToDuinpad",
+                "sterren-strand",
+                "center 12%",
+                "sterren-kaart",
+                SterMapSvg,
+                SterStops);
         }
 
         return null;

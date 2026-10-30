@@ -53,6 +53,7 @@ public static class PupilGroep78EntryPaths
     private static string RouteForTheme(string? themeKey)
         => string.Equals(themeKey, PupilJourneyTheme.ZeeExpeditie, StringComparison.OrdinalIgnoreCase)
            || string.Equals(themeKey, PupilJourneyTheme.Eilandtuin, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(themeKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase)
             ? Route
             : Start;
 }
