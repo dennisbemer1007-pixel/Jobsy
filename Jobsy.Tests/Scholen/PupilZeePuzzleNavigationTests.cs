@@ -1,0 +1,53 @@
+using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
+using Jobsy.Web.Scholen;
+
+namespace Jobsy.Tests.Scholen;
+
+public sealed class PupilZeePuzzleNavigationTests
+{
+    [Fact]
+    public void TargetPath_zee_schelpenrij_goes_to_intro()
+    {
+        var path = PupilZeePuzzleNavigation.TargetPath(
+            PupilQuestionSet.Groep78,
+            PupilJourneyTheme.ZeeExpeditie,
+            "puzzle",
+            "schelpenrij");
+        Assert.Equal("/leerling/puzzel-intro/schelpenrij", path);
+    }
+
+    [Fact]
+    public void TargetPath_tuin_schelpenrij_goes_to_intro()
+    {
+        var path = PupilZeePuzzleNavigation.TargetPath(
+            PupilQuestionSet.Groep78,
+            PupilJourneyTheme.Eilandtuin,
+            "puzzle",
+            "schelpenrij");
+        Assert.Equal("/leerling/puzzel-intro/schelpenrij", path);
+    }
+
+    [Fact]
+    public void TargetPath_ster_schelpenrij_goes_to_intro()
+    {
+        var path = PupilZeePuzzleNavigation.TargetPath(
+            PupilQuestionSet.Groep78,
+            PupilJourneyTheme.Sterrenkust,
+            "puzzle",
+            "schelpenrij");
+        Assert.Equal("/leerling/puzzel-intro/schelpenrij", path);
+    }
+
+    [Fact]
+    public void IntroNodeIndex_schelpenrij_is_second_stop()
+    {
+        Assert.Equal(1, PupilZeeJourneyBar.IntroNodeIndex("schelpenrij"));
+    }
+
+    [Fact]
+    public void IntroNodeIndex_ster_schelpenrij_is_second_stop()
+    {
+        Assert.Equal(1, PupilSterJourneyBar.IntroNodeIndex("schelpenrij"));
+    }
+}

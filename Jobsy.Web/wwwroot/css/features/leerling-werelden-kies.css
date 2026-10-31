@@ -1,0 +1,617 @@
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap");
+
+.ll-g78-shell {
+  --navy: #10284a;
+  --navy2: #1b3a63;
+  --teal: #0f5b66;
+  --sea: #2f8a96;
+  --cream: #faf6ef;
+  --paper: #fffdf8;
+  --sand: #efe5d3;
+  --coral: #d4532f;
+  --coral2: #b8431f;
+  --brass: #b98f3e;
+  --brass2: #e2c27a;
+  --ink: #14213a;
+  --muted: #4c5a70;
+  --ok: #2f7d5b;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: "Lexend", system-ui, sans-serif;
+  font-size: 19px;
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ll-g78-shell h1,
+.ll-g78-shell h2,
+.ll-g78-shell .serif {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.ll-g78-shell .top {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 68px;
+  padding: 0 32px;
+  background: var(--navy);
+  color: var(--cream);
+  flex: none;
+}
+
+.ll-g78-shell .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Fraunces", serif;
+  font-size: 24px;
+  font-weight: 700;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ll-g78-shell .brand img {
+  width: 40px;
+  height: 40px;
+}
+
+.ll-g78-shell .brand small {
+  font-family: "Lexend", sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass2);
+  margin-left: 4px;
+}
+
+.ll-g78-shell .top .sp {
+  flex: 1;
+}
+
+.ll-g78-shell .chip-code {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.ll-g78-shell .btn-pauze {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px solid var(--brass2);
+  color: var(--cream);
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ll-g78-shell .btn-pauze svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ll-g78-shell .band {
+  position: relative;
+  width: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  flex: none;
+}
+
+.ll-g78-shell .band::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, rgba(250, 246, 239, 0), var(--cream));
+}
+
+.ll-g78-shell .band.kz {
+  background-image: image-set(
+    url("/leerling/werelden/img/keuze-strip-390w.jpg") 1x,
+    url("/leerling/werelden/img/keuze-strip-780w.jpg") 2x,
+    url("/leerling/werelden/img/keuze-strip.jpg") 3x
+  );
+  background-position: center 55%;
+  min-height: 200px;
+}
+
+.ll-g78-shell .wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+  width: 100%;
+  flex: 1;
+}
+
+.ll-g78-shell .wrap.kz-overlap {
+  margin-top: -60px;
+  position: relative;
+  z-index: 4;
+}
+
+.ll-g78-shell .card {
+  background: var(--paper);
+  border-radius: 22px;
+  box-shadow: 0 10px 40px rgba(16, 40, 74, 0.14);
+  border: 1px solid #eadfcb;
+  padding: 36px 40px;
+}
+
+.ll-g78-shell .kicker {
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+/* Ring + bubble side by side (mockup). Do not pair with .d-only { display:block } alone. */
+.ll-g78-shell .guide,
+.ll-g78-shell .kz-lob {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 14px;
+  max-width: 440px;
+}
+
+.ll-g78-shell .kz-lob {
+  align-items: center;
+}
+
+.ll-g78-shell .guide .bubble,
+.ll-g78-shell .kz-lob .bubble {
+  flex: 1;
+  min-width: 0;
+}
+
+.ll-g78-shell .guide .ring,
+.ll-g78-shell .kz-lob .ring {
+  flex: none;
+}
+
+.ll-g78-shell .bubble {
+  position: relative;
+  background: var(--paper);
+  border: 2px solid var(--navy);
+  border-radius: 18px;
+  padding: 16px 18px;
+  font-size: 18px;
+  line-height: 1.45;
+  box-shadow: 0 6px 20px rgba(16, 40, 74, 0.15);
+}
+
+.ll-g78-shell .bubble .who {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--coral);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.ll-g78-shell .bubble .bt {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.ll-g78-shell .bubble.tail-l::after {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 30px;
+  width: 20px;
+  height: 20px;
+  background: var(--paper);
+  border-left: 2px solid var(--navy);
+  border-bottom: 2px solid var(--navy);
+  transform: rotate(45deg);
+}
+
+.ll-g78-shell .ring {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 4px solid var(--brass);
+  background: #f3e7cf url("/leerling/werelden/img/kreeft-portret.png") center 22% / 120% no-repeat;
+  flex: none;
+  box-shadow: 0 4px 14px rgba(16, 40, 74, 0.25);
+}
+
+.ll-g78-shell .speak-label {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ll-g78-shell .worlds {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-top: 26px;
+}
+
+.ll-g78-shell .wcard {
+  background: var(--paper);
+  border: 3px solid #e6dccb;
+  border-radius: 22px;
+  overflow: hidden;
+  text-align: left;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  box-shadow: 0 8px 28px rgba(16, 40, 74, 0.12);
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.ll-g78-shell .wcard:active,
+.ll-g78-shell .wcard.is-tapped {
+  transform: scale(0.985);
+}
+
+.ll-g78-shell .wcard.is-saving {
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.ll-g78-shell .wcard.sel {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 5px rgba(212, 83, 47, 0.22), 0 8px 28px rgba(16, 40, 74, 0.14);
+}
+
+.ll-g78-shell .wcard .wimg {
+  height: 210px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  flex: none;
+}
+
+.ll-g78-shell .wcard .wbody {
+  padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.ll-g78-shell .wcard h2 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.ll-g78-shell .wcard p {
+  font-size: 17px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.ll-g78-shell .wcard .wgo {
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.ll-g78-shell .wcard .wgo i {
+  width: 44px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex: none;
+}
+
+.ll-g78-shell .wcard .wgo svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ll-g78-shell .same {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: #e7f0ec;
+  border-left: 5px solid var(--ok);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 17px;
+  margin-top: 22px;
+}
+
+.ll-g78-shell footer {
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 40px 0 30px;
+  flex: none;
+}
+
+.ll-g78-shell footer a {
+  color: var(--muted);
+  margin: 0 10px;
+}
+
+.ll-g78-shell .d-only:not(.kz-lob):not(.guide):not(.rt-coach) {
+  display: block;
+}
+
+.ll-g78-shell .d-only.kz-lob,
+.ll-g78-shell .d-only.guide,
+.ll-g78-shell .d-only.rt-coach,
+.ll-g78-shell .d-only.rs-coach-aside {
+  display: flex;
+}
+
+.ll-g78-shell .m-only {
+  display: none;
+}
+
+.ll-g78-shell .kz-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+
+.ll-g78-shell .kz-h {
+  font-size: 46px;
+  margin: 6px 0 8px;
+}
+
+.ll-g78-shell .kz-lead {
+  font-size: 20px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.ll-g78-shell .read-aloud.read-aloud--icon {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--navy);
+  background: var(--paper);
+  color: var(--navy);
+  padding: 0;
+  box-shadow: none;
+  flex: none;
+}
+
+.ll-g78-shell .read-aloud.read-aloud--icon.is-speaking {
+  background: var(--navy);
+  color: var(--brass2);
+  box-shadow: 0 0 0 6px rgba(185, 143, 62, 0.35);
+}
+
+.ll-g78-shell .bubble .bt .read-aloud.read-aloud--icon {
+  display: inline-flex;
+}
+
+.ll-g78-shell .read-aloud__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell {
+    font-size: 18px;
+  }
+
+  .ll-g78-shell .top {
+    height: 60px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .ll-g78-shell .brand {
+    font-size: 21px;
+  }
+
+  .ll-g78-shell .brand img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ll-g78-shell .brand small {
+    display: none;
+  }
+
+  .ll-g78-shell .chip-code {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+
+  .ll-g78-shell .btn-pauze {
+    padding: 7px 10px;
+    font-size: 15px;
+  }
+
+  .ll-g78-shell .wrap {
+    padding: 0 14px;
+  }
+
+  .ll-g78-shell .card {
+    padding: 22px 18px;
+    border-radius: 18px;
+  }
+
+  .ll-g78-shell .band.kz {
+    min-height: 120px;
+    background-position: 30% 55%;
+  }
+
+  .ll-g78-shell .wrap.kz-overlap {
+    margin-top: -30px !important;
+  }
+
+  .ll-g78-shell .kz-head {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ll-g78-shell .kz-h {
+    font-size: 34px !important;
+  }
+
+  .ll-g78-shell .same {
+    font-size: 15px;
+  }
+
+  .ll-g78-shell .worlds {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .ll-g78-shell .wcard {
+    flex-direction: row;
+  }
+
+  .ll-g78-shell .wcard .wimg {
+    height: auto;
+    width: 118px;
+    min-height: 118px;
+  }
+
+  .ll-g78-shell .wcard .wbody {
+    padding: 14px 14px 14px 16px;
+    gap: 4px;
+  }
+
+  .ll-g78-shell .wcard h2 {
+    font-size: 22px;
+  }
+
+  .ll-g78-shell .wcard p {
+    font-size: 15px;
+  }
+
+  .ll-g78-shell .wcard .wgo {
+    padding-top: 6px;
+    font-size: 15px;
+  }
+
+  .ll-g78-shell .wcard .wgo i {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ll-g78-shell .d-only {
+    display: none !important;
+  }
+
+  .ll-g78-shell .m-only {
+    display: block;
+  }
+
+  .ll-g78-shell .m-only .guide {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    max-width: none;
+  }
+
+  .ll-g78-shell .band::after {
+    height: 50px;
+  }
+
+  .ll-g78-shell .ring {
+    width: 66px;
+    height: 66px;
+  }
+
+  .ll-g78-shell .bubble {
+    font-size: 17px;
+  }
+}
+
+.ll-g78-shell.t-tuin {
+  --navy: #3a2230;
+  --navy2: #55303f;
+  --teal: #4d7a5c;
+  --sea: #c06b4e;
+  --cream: #fbf3ea;
+  --paper: #fffaf4;
+  --sand: #efe5d3;
+  --coral: #c4553a;
+  --coral2: #9c3f29;
+  --brass: #c08a4a;
+  --brass2: #e8b98a;
+  --ink: #2a1b22;
+  --muted: #6a5560;
+}
+
+.ll-g78-shell.t-tuin .card {
+  border-color: #efd9c6;
+  box-shadow: 0 10px 40px rgba(58, 34, 48, 0.14);
+}
+
+.ll-g78-shell.t-tuin .bubble {
+  box-shadow: 0 6px 20px rgba(58, 34, 48, 0.15);
+}
+
+.ll-g78-shell.t-tuin .ring {
+  background-color: #f6e4d4;
+}
+
+.ll-g78-shell.t-ster {
+  --navy: #141c36;
+  --navy2: #24305a;
+  --teal: #4a6a8c;
+  --sea: #6f86a8;
+  --cream: #f2f1ee;
+  --paper: #fcfcfa;
+  --sand: #e8e9ed;
+  --coral: #c7802f;
+  --coral2: #9c6220;
+  --brass: #b7a06a;
+  --brass2: #d9c79a;
+  --ok: #4a7a64;
+  --ink: #161c2e;
+  --muted: #56607a;
+}
+
+.ll-g78-shell.t-ster .card {
+  border-color: #e1e0dc;
+  box-shadow: 0 10px 40px rgba(20, 28, 54, 0.14);
+}
+
+.ll-g78-shell.t-ster .bubble {
+  box-shadow: 0 6px 20px rgba(20, 28, 54, 0.15);
+}
+
+.ll-g78-shell.t-ster .ring {
+  background-color: #e4e6ee;
+}

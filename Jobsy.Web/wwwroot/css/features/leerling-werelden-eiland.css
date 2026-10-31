@@ -1,0 +1,401 @@
+/* Groep 7/8 screen 11a — Pauze-eiland likes (mockups 11a-*). Shell tokens in leerling-werelden-kies.css. */
+
+.ll-g78-shell .band.is-eiland {
+  background-position: center 45%;
+  min-height: 280px;
+  padding-top: 130px;
+}
+
+.ll-g78-shell .band.is-eiland.is-tuin {
+  background-image: url("/leerling/werelden/img/dot-tuin-3.jpg");
+}
+
+.ll-g78-shell .band.is-eiland.is-ster {
+  background-image: url("/leerling/werelden/img/dot-ster-3.jpg");
+}
+
+.ll-g78-shell .band.is-eiland:not(.is-tuin):not(.is-ster) {
+  background-image: url("/leerling/werelden/img/eiland.jpg");
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .band.is-eiland {
+    min-height: 200px;
+    padding-top: 100px;
+  }
+}
+
+.ll-g78-shell .wrap.is-overlap {
+  margin-top: -24px;
+  position: relative;
+  z-index: 4;
+}
+
+.ll-g78-shell .is-layout {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 601px) {
+  .ll-g78-shell .is-layout {
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 28px;
+    align-items: start;
+  }
+}
+
+.ll-g78-shell .card.is-card-deco {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--paper) 0%, var(--cream) 100%);
+}
+
+.ll-g78-shell .is-card-deco .pick-chips,
+.ll-g78-shell .is-card-deco .is-qmeta,
+.ll-g78-shell .is-card-deco .step-pill,
+.ll-g78-shell .is-card-deco .island-sub,
+.ll-g78-shell .is-card-deco .island-lead,
+.ll-g78-shell .is-card-deco .vr-qrow,
+.ll-g78-shell .is-card-deco .vr-qfoot {
+  position: relative;
+  z-index: 2;
+}
+
+.ll-g78-shell .is-card-deco .wdeco {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.72;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.ll-g78-shell .is-card-deco .wd1 {
+  width: 96px;
+  height: 96px;
+  top: 6px;
+  right: 10px;
+}
+
+.ll-g78-shell .is-card-deco .wd2 {
+  width: 120px;
+  height: 70px;
+  top: 38%;
+  right: 4px;
+}
+
+.ll-g78-shell .is-card-deco .wd3 {
+  width: 80px;
+  height: 80px;
+  bottom: 20%;
+  left: 4px;
+}
+
+.ll-g78-shell .is-card-deco .wd4 {
+  width: 64px;
+  height: 64px;
+  bottom: 10px;
+  right: 24%;
+}
+
+.ll-g78-shell.t-zee .is-card-deco {
+  border-color: #9ec9c4;
+  box-shadow: 0 12px 36px rgba(16, 72, 90, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.ll-g78-shell.t-zee .wd-shell {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='36' rx='22' ry='18' fill='%23c9ebe6'/%3E%3Cpath d='M18 34c6-14 22-16 28-2 4 10-2 18-14 18S14 44 18 34z' fill='%23f5e6c8' stroke='%23d4a86a' stroke-width='2'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-zee .wd-wave {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48'%3E%3Cpath d='M0 28c20-12 40-12 60 0s40 12 60 0v20H0z' fill='%232f8a96' opacity='.45'/%3E%3Cpath d='M0 34c16-8 32-8 48 0s32 8 48 0v14H0z' fill='%230f5b66' opacity='.35'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-zee .wd-fish {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='28' cy='32' rx='16' ry='10' fill='%23e8b46a'/%3E%3Cpath d='M44 32l14-8v16z' fill='%23d4532f'/%3E%3Ccircle cx='22' cy='30' r='2' fill='%2310284a'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-tuin .is-card-deco {
+  border-color: #e8c6ab;
+  box-shadow: 0 12px 36px rgba(58, 34, 48, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.ll-g78-shell.t-tuin .wd-leaf {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 8c-12 16-14 32-6 44 8-10 10-24 6-36 10 6 16 18 12 28 6-8 8-20 4-32 8 12 6 28-4 38 10-14 12-32 4-46z' fill='%235d8a52'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-tuin .wd-flower {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='8' fill='%23c4553a'/%3E%3Cellipse cx='32' cy='16' rx='8' ry='12' fill='%23e8a0b0'/%3E%3Cellipse cx='32' cy='48' rx='8' ry='12' fill='%23e8a0b0'/%3E%3Cellipse cx='16' cy='32' rx='12' ry='8' fill='%23e8a0b0'/%3E%3Cellipse cx='48' cy='32' rx='12' ry='8' fill='%23e8a0b0'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-tuin .wd-petal {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cellipse cx='24' cy='24' rx='10' ry='16' fill='%23c08a4a' transform='rotate(25 24 24)'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-ster .is-card-deco {
+  border-color: #c5cad8;
+  box-shadow: 0 12px 36px rgba(20, 28, 54, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.ll-g78-shell.t-ster .wd-star {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6l6 14 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2z' fill='%23e8b46a'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell.t-ster .wd-moon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M40 10a22 22 0 1 0 0 44 18 18 0 1 1 0-44z' fill='%23d9c79a'/%3E%3C/svg%3E");
+}
+
+.ll-g78-shell .step-pill {
+  display: inline-block;
+  background: var(--navy);
+  color: #ffd98a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  padding: 5px 14px;
+  margin: 0 0 10px;
+}
+
+.ll-g78-shell .island-sub {
+  font-size: 17px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+.ll-g78-shell .island-lead {
+  font-family: Lexend, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 1.32;
+  margin: 6px 0 14px;
+  color: var(--ink);
+}
+
+.ll-g78-shell .pick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ll-g78-shell .pchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #d4c6aa;
+  background: #fff;
+  border-radius: 999px;
+  padding: 9px 15px 9px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ll-g78-shell .pchip .ico {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #eef5f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--teal);
+}
+
+.ll-g78-shell .pchip .ico svg.painted {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.ll-g78-shell .pchip .ico svg.painted .shade {
+  fill: currentColor;
+  opacity: 0.14;
+}
+
+.ll-g78-shell .pchip .ico svg.painted .main {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.ll-g78-shell .pchip .ico svg.painted path.main[fill="none"],
+.ll-g78-shell .pchip .ico svg.painted path[fill="none"].main {
+  fill: none !important;
+  stroke-width: 2.2;
+}
+
+.ll-g78-shell .pchip .ico svg.painted .accent {
+  fill: currentColor;
+  stroke: currentColor;
+  opacity: 0.9;
+}
+
+.ll-g78-shell .pchip.on.like {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.ll-g78-shell .pchip.on.like .ico {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.ll-g78-shell .pchip.other {
+  border-style: dashed;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.ll-g78-shell .pchip.other .ico {
+  background: transparent;
+  border: 1.5px dashed #b9ab8f;
+  color: var(--muted);
+}
+
+.ll-g78-shell.t-zee .pchip {
+  background: linear-gradient(180deg, #fff 0%, #eef8f6 100%);
+  border-color: #8ec4bc;
+  box-shadow: 0 3px 10px rgba(47, 138, 150, 0.14);
+}
+
+.ll-g78-shell.t-zee .pchip .ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #dff3f0, #9fd4cc);
+  border: 1.5px solid #6fb8ae;
+  color: #0f5b66;
+}
+
+.ll-g78-shell.t-zee .pchip.on.like {
+  background: linear-gradient(145deg, #0f5b66, #2f8a96);
+  border-color: #0a4a52;
+  color: #fff;
+}
+
+.ll-g78-shell.t-zee .pchip.on.like .ico {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.12));
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+.ll-g78-shell.t-tuin .pchip {
+  background: linear-gradient(180deg, #fffaf4 0%, #f8ebe0 100%);
+  border-color: #e0c4a8;
+}
+
+.ll-g78-shell.t-tuin .pchip .ico {
+  background: linear-gradient(145deg, #f4dcc9, #d4a86a);
+  border: 1.5px solid #c08a4a;
+  color: #55303f;
+}
+
+.ll-g78-shell.t-tuin .pchip.on.like {
+  background: linear-gradient(145deg, #4d7a5c, #6a9a72);
+  border-color: #3d6248;
+  color: #fff;
+}
+
+.ll-g78-shell.t-tuin .pchip.on.like .ico {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ll-g78-shell.t-ster .pchip {
+  background: linear-gradient(180deg, #fcfcfa 0%, #e8eaf2 100%);
+  border-color: #b8bfd4;
+}
+
+.ll-g78-shell.t-ster .pchip .ico {
+  background: linear-gradient(145deg, #e4e8f4, #9aacc8);
+  border: 1.5px solid #6f86a8;
+  color: #24305a;
+}
+
+.ll-g78-shell.t-ster .pchip.on.like {
+  background: linear-gradient(145deg, #24305a, #4a6a8c);
+  border-color: #1a2446;
+  color: #fff;
+}
+
+.ll-g78-shell.t-ster .pchip.on.like .ico {
+  color: #e8b46a;
+  border-color: rgba(232, 180, 106, 0.55);
+}
+
+.ll-g78-shell .is-other-input {
+  margin-top: 12px;
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 14px;
+  border: 2px solid var(--sand);
+  border-radius: 12px;
+  font: inherit;
+}
+
+.ll-g78-shell .is-jmeta-rest {
+  font-weight: 400;
+}
+
+.ll-g78-shell .is-card-deco .is-qfoot {
+  flex-wrap: nowrap;
+}
+
+.ll-g78-shell .is-card-deco .is-qfoot .btn-main {
+  width: auto;
+  margin-top: 0;
+  margin-left: auto;
+  flex: none;
+}
+
+.ll-g78-shell .is-card-deco .is-qfoot .btn-ghost {
+  background: var(--paper);
+  border: 2px solid var(--navy);
+  border-radius: 12px;
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 12px 18px;
+  width: auto;
+  flex: none;
+  box-shadow: none;
+}
+
+@media (max-width: 600px) {
+  .ll-g78-shell .is-card-deco .is-qfoot {
+    flex-wrap: wrap;
+  }
+
+  .ll-g78-shell .is-card-deco .is-qfoot .btn-main {
+    width: 100%;
+    margin-left: 0 !important;
+    order: -1;
+  }
+
+  .ll-g78-shell .is-card-deco .is-qfoot .btn-ghost {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ll-g78-shell .island-lead {
+    font-size: 24px;
+  }
+
+  .ll-g78-shell .pchip {
+    font-size: 15px;
+    padding: 8px 13px 8px 10px;
+  }
+
+  .ll-g78-shell .pchip .ico {
+    width: 22px;
+    height: 22px;
+  }
+}

@@ -50,7 +50,12 @@ public sealed record PupilProgressStateDto(
     string? DislikeOtherWord,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
     string NextStep = "question",
-    string? NextPuzzleKey = null);
+    string? NextPuzzleKey = null,
+    string? JourneyThemeKey = null);
+
+public sealed record PupilJourneyThemeRequest(string Key);
+
+public sealed record PupilJourneyThemeResponse(string JourneyThemeKey, string RedirectPath);
 
 public sealed record PupilAnswerRequest(int Value);
 
@@ -70,7 +75,8 @@ public sealed record PupilChipsRequest(
     IReadOnlyList<string>? Likes,
     IReadOnlyList<string>? Dislikes,
     string? LikeOtherWord,
-    string? DislikeOtherWord);
+    string? DislikeOtherWord,
+    bool FinalizeIsland = true);
 
 public sealed record PupilChipsResponse(
     bool Ok,

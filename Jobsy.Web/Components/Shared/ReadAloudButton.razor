@@ -34,11 +34,19 @@
     /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
     [Parameter] public string? PlayAria { get; set; }
 
+    /// <summary>Mockup-faithful pupil shells show the speaker even before TTS probe completes.</summary>
+    [Parameter] public bool AlwaysShow { get; set; }
+
+    /// <summary>Speak once when <see cref="SpeechKey"/> or <see cref="Text"/> changes (pupil question flow).</summary>
+    [Parameter] public bool AutoPlay { get; set; }
+
     private bool _show;
+    private bool _voiceProbed;
     private bool _speaking;
     private bool _pending;
     private string? _error;
     private string _spoken = "";
+    private string? _autoPlayedKey;
     private DotNetObjectReference<ReadAloudButton>? _self;
     private ReadAloudCoordinator? _coordinator;
 
@@ -69,7 +77,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender || (AlwaysShow && !_voiceProbed))
         {
             await Task.Yield();
             await ProbeAsync();
@@ -78,9 +86,20 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (AlwaysShow && !string.IsNullOrWhiteSpace(Text))
+        {
+            _show = true;
+        }
+
         if (_speaking && !string.Equals(_spoken, Text, StringComparison.Ordinal))
         {
             await StopQuietlyAsync();
+        }
+
+        if (AutoPlay && _voiceProbed)
+        {
+            _autoPlayedKey = null;
+            _ = TryAutoPlayAsync();
         }
     }
 
@@ -95,26 +114,79 @@
         await base.OnCultureChanged();
     }
 
+    private async Task<bool> EnsureReadAloudJsAsync()
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            try
+            {
+                var ready = await Js.InvokeAsync<bool>(
+                    "eval",
+                    "typeof window.lobsyReadAloud!=='undefined'&&typeof window.lobsyReadAloud.speak==='function'");
+                if (ready)
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                /* Script still loading (defer) or circuit reconnecting. */
+            }
+
+            await Task.Delay(50);
+        }
+
+        return false;
+    }
+
     private async Task ProbeAsync()
     {
         if (string.IsNullOrWhiteSpace(Text))
         {
             _show = false;
+            _voiceProbed = true;
             StateHasChanged();
             return;
         }
 
+        var voiceOk = false;
         try
         {
-            var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
-            _show = probe is { Supported: true, Enabled: true };
+            if (!await EnsureReadAloudJsAsync())
+            {
+                voiceOk = false;
+            }
+            else
+            {
+                var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
+                voiceOk = probe is { Supported: true, Enabled: true };
+            }
         }
         catch (Exception)
         {
-            _show = false;
+            voiceOk = false;
         }
 
+        _voiceProbed = true;
+        _show = AlwaysShow || voiceOk;
         StateHasChanged();
+        await TryAutoPlayAsync();
+    }
+
+    private async Task TryAutoPlayAsync()
+    {
+        if (!AutoPlay || !_show || _speaking || _pending || string.IsNullOrWhiteSpace(Text))
+        {
+            return;
+        }
+
+        if (string.Equals(_autoPlayedKey, EffectiveKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _autoPlayedKey = EffectiveKey;
+        await StartSpeakAsync();
     }
 
     private async Task ToggleAsync()
@@ -130,11 +202,28 @@
             return;
         }
 
+        await StartSpeakAsync();
+    }
+
+    private async Task StartSpeakAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            return;
+        }
+
         _error = null;
         _pending = true;
         StateHasChanged();
         try
         {
+            if (!await EnsureReadAloudJsAsync())
+            {
+                _pending = false;
+                _error = Culture["ReadAloud.Error"];
+                return;
+            }
+
             _self ??= DotNetObjectReference.Create(this);
             var started = await Js.InvokeAsync<bool>("lobsyReadAloud.speak", Text, Culture.Language, _self);
             if (!started)

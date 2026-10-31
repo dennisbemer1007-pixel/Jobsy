@@ -1,0 +1,222 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Scholen
+@inject CultureState Culture
+
+@{
+    var nodes = PupilGroep78IslandPage.Nodes(JourneyThemeKey);
+    var curNode = PupilGroep78IslandPage.IslandNodeIndex;
+    var bandClass = PupilGroep78IslandPage.BandExtraClass(JourneyThemeKey);
+    var bandImg = PupilGroep78IslandPage.BandImage(JourneyThemeKey);
+    var deco = PupilGroep78IslandPage.Deco(JourneyThemeKey);
+    var progress = Culture.Format("Leerling.Island.Progress", State.AnsweredCount, State.TotalItems);
+    var bandMeta = Culture.Format("Leerling.Island.G78.BandMeta", progress);
+    var lead = Culture["Leerling.Island.Lead"];
+    var coachSpoken = SpokenText.Join("Lobsy", Culture["Leerling.Island.G78.Coach"]);
+}
+
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")" data-page-eiland-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-vraag.css")" data-page-eiland-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-route.css")" data-page-eiland-css="true" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/leerling-werelden-eiland.css")" data-page-eiland-css="true" />
+    <link rel="preload" as="image" href="@bandImg" />
+</HeadContent>
+
+<section class="band vr is-eiland @bandClass" data-testid="@PupilGroep78IslandPage.BandTestId(JourneyThemeKey)">
+    <div class="vr-journey" aria-label="@Culture["Leerling.Vraag.JourneyAria"]">
+        <div class="vr-jrow">
+            <span class="vr-jdone" style="width:@PupilGroep78IslandPage.DoneLineWidth(JourneyThemeKey)"></span>
+            @for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                var done = i < curNode;
+                var current = i == curNode;
+                var cls = "vr-jn"
+                          + (node.IsPuzzle ? " is-puzzle" : "")
+                          + (node.IsResult ? " is-result" : "")
+                          + (done ? " is-done" : "")
+                          + (current ? " is-cur" : "");
+                <div class="@cls">
+                    @if (current)
+                    {
+                        <span class="vr-here">@Culture["Leerling.Route.Here"]</span>
+                    }
+                    @if (node.IsPuzzle)
+                    {
+                        <span class="dot" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 3a2 2 0 014 0v2h4a1 1 0 011 1v4h-2a2 2 0 000 4h2v4a1 1 0 01-1 1h-4v-2a2 2 0 00-4 0v2H6a1 1 0 01-1-1v-4h2a2 2 0 000-4H5V6a1 1 0 011-1h4V3z"/></svg>
+                        </span>
+                    }
+                    else if (node.IsResult)
+                    {
+                        <span class="dot" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <span class="dot" style="background-image:url(@(node.ImageUrl))" aria-hidden="true"></span>
+                    }
+                    <b>@Culture[node.TitleKey]</b>
+                </div>
+            }
+        </div>
+        <div class="vr-jmeta">
+            <span><b>@Culture["Leerling.Route.Stop.Island.Title"]</b><span class="is-jmeta-rest"> @bandMeta</span></span>
+        </div>
+    </div>
+</section>
+
+<div class="wrap is-overlap">
+    <div class="is-layout">
+        <div class="card vr-q is-card-deco" data-testid="ll-eiland-leuk-card">
+            <span class="wdeco @deco.C1" aria-hidden="true"></span>
+            <span class="wdeco @deco.C2" aria-hidden="true"></span>
+            <span class="wdeco @deco.C3" aria-hidden="true"></span>
+            <span class="wdeco @deco.C4" aria-hidden="true"></span>
+
+            <div class="vr-qmeta is-qmeta">
+                <span class="kicker">@Culture["Leerling.Route.Stop.Island.Title"]</span>
+                <span aria-hidden="true">·</span>
+                <span>@progress</span>
+            </div>
+            <span class="step-pill">@Culture["Leerling.Island.G78.Step1"]</span>
+            <p class="island-sub">@Culture["Leerling.Island.G78.SubLikes"]</p>
+            <h1 class="island-lead" id="ll-island-lead">@lead</h1>
+            <div class="vr-qrow">
+                <LeerlingSpeak Text="@lead"
+                               SpeechKey="ll-island-lead"
+                               AlwaysShow="true" />
+                <span class="speak-label">@Culture["Leerling.Island.ReadLead"]</span>
+            </div>
+
+            <div class="pick-chips" role="group" aria-labelledby="ll-island-lead">
+                @foreach (var chip in PupilInterestChipCatalog.LikeChips)
+                {
+                    var on = Likes.Contains(chip.Key);
+                    <button type="button"
+                            class="pchip @(on ? "on like" : null)"
+                            aria-pressed="@on"
+                            disabled="@Busy"
+                            data-testid="@($"ll-island-chip-{chip.Key}")"
+                            @onclick="() => OnToggleLike.InvokeAsync(chip.Key)">
+                        <span class="ico">@PupilInterestChipIcons.ForKey(chip.Key)</span>
+                        @Culture[chip.LabelKey]
+                    </button>
+                }
+                <button type="button"
+                        class="pchip other @(LikeOtherOpen ? "on like" : null)"
+                        aria-expanded="@LikeOtherOpen"
+                        disabled="@Busy"
+                        data-testid="ll-island-chip-other"
+                        @onclick="() => OnToggleLikeOther.InvokeAsync()">
+                    <span class="ico">@PupilInterestChipIcons.Other</span>
+                    + @Culture["Leerling.Island.Other"]
+                </button>
+            </div>
+            @if (LikeOtherOpen)
+            {
+                <label class="visually-hidden" for="ll-like-other">@Culture["Leerling.Island.Other"]</label>
+                <input id="ll-like-other"
+                       class="is-other-input"
+                       maxlength="24"
+                       value="@LikeOther"
+                       @oninput="OnLikeOtherInput"
+                       placeholder="@Culture["Leerling.Island.OtherPlaceholder"]"
+                       autocomplete="off" />
+            }
+
+            @if (Offline)
+            {
+                <p class="vr-error" role="alert">@Culture["Leerling.Reis.Offline"]</p>
+                <button type="button" class="btn-ghost" disabled="@Busy" @onclick="OnReload">
+                    @Culture["Leerling.Reis.Retry"]
+                </button>
+            }
+            else if (!string.IsNullOrEmpty(Error))
+            {
+                <p class="vr-error" role="alert">@Error</p>
+            }
+
+            <div class="vr-qfoot is-qfoot">
+                <button type="button"
+                        class="btn btn-ghost @(_prevTap ? "is-tapped" : null)"
+                        data-testid="ll-eiland-prev"
+                        disabled="@Busy"
+                        @onpointerdown="() => _prevTap = true"
+                        @onpointerup="ClearPrevTap"
+                        @onpointerleave="ClearPrevTap"
+                        @onpointercancel="ClearPrevTap"
+                        @onclick="OnPrev">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                    @Culture["Leerling.Reis.Prev"]
+                </button>
+                <button type="button"
+                        class="btn btn-main"
+                        data-testid="ll-eiland-continue"
+                        disabled="@Busy"
+                        @onclick="OnContinue">
+                    @Culture["Leerling.Island.Continue"]
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <aside class="d-only vr-coach-aside">
+            <div class="bubble tail-b">
+                <span class="who">Lobsy</span>
+                @Culture["Leerling.Island.G78.Coach"]
+                <div class="bt">
+                    <LeerlingSpeak Text="@coachSpoken" SpeechKey="ll-island-coach" AlwaysShow="true" />
+                    <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                </div>
+            </div>
+            <img class="vr-lob"
+                 src="/leerling/werelden/img/kreeft-welkom.png"
+                 width="250"
+                 height="250"
+                 alt=""
+                 decoding="async"
+                 loading="lazy" />
+        </aside>
+
+        <div class="m-only" style="margin-top:18px">
+            <div class="guide">
+                <div class="ring" role="img" aria-label="Lobsy"></div>
+                <div class="bubble tail-l">
+                    <span class="who">Lobsy</span>
+                    @Culture["Leerling.Island.G78.Coach"]
+                    <div class="bt">
+                        <LeerlingSpeak Text="@coachSpoken" SpeechKey="ll-island-coach-m" AlwaysShow="true" />
+                        <span class="speak-label">@Culture["Leerling.Wereld.ReadAloud"]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PupilProgressStateDto State { get; set; } = default!;
+    [Parameter] public string JourneyThemeKey { get; set; } = PupilJourneyTheme.ZeeExpeditie;
+    [Parameter] public IReadOnlySet<string> Likes { get; set; } = default!;
+    [Parameter] public bool LikeOtherOpen { get; set; }
+    [Parameter] public string LikeOther { get; set; } = "";
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Offline { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public EventCallback<string> OnToggleLike { get; set; }
+    [Parameter] public EventCallback OnToggleLikeOther { get; set; }
+    [Parameter] public EventCallback<string> OnLikeOtherChanged { get; set; }
+    [Parameter] public EventCallback OnPrev { get; set; }
+    [Parameter] public EventCallback OnContinue { get; set; }
+    [Parameter] public EventCallback OnReload { get; set; }
+
+    private bool _prevTap;
+
+    private void ClearPrevTap() => _prevTap = false;
+
+    private Task OnLikeOtherInput(ChangeEventArgs e)
+        => OnLikeOtherChanged.InvokeAsync(e.Value?.ToString() ?? "");
+}

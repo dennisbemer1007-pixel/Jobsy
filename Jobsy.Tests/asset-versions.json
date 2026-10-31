@@ -167,6 +167,34 @@
     "sha256": "b8c8ebe7ac11ba2ccc445300496c26c652b4044397452912d0306be80467ef69",
     "v": "20261028-59"
   },
+  "css/features/leerling-werelden-eiland.css": {
+    "sha256": "a1c3c07062e954474be17d4b0b7ab436295ba90579a6293ecaab43b7fb50e0e5",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-kies.css": {
+    "sha256": "dbb8a855938a1280715ee6ca702b3e55429fde8de60b60268539e5b6e0f14ba4",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-puzzel-intro.css": {
+    "sha256": "0ab24daffc790bf23051b0f5ec335c39c151b39f1af8101bb75d7519e96eeb0d",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-puzzel-play.css": {
+    "sha256": "dd0c1613716b51535ca3b34feee52dfa714ed2226e1b23ee66c5c5d8fad2c80f",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-result.css": {
+    "sha256": "e6abaccc128f10f348ce38e6a2a09b2b035e94bf4558cc7d704b05fb9a46b104",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-route.css": {
+    "sha256": "8e5c017d003cf6f0dba1d2eab096569b4d2580bfdcf6724434061e64ab21ef9e",
+    "v": "20261030-catalog"
+  },
+  "css/features/leerling-werelden-vraag.css": {
+    "sha256": "8ee5c85a28f4133f96d1e0f57fed1ef9ebd16495a9b1f50ee8ae169fea72e664",
+    "v": "20261030-catalog"
+  },
   "css/features/lobsy-assistant-panel.css": {
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"
