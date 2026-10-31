@@ -3,11 +3,17 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen;
 
 namespace Jobsy.Core.Scholen.PupilPassport;
 
 public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
 {
+    private static readonly JsonSerializerOptions JsonCaseInsensitive = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     public PupilPassportPdfModel Build(
         PupilCode code,
         SchoolClass schoolClass,
@@ -44,6 +50,8 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             })
             .ToList();
 
+        var jobKeys = keys.JobIdeaKeys;
+        IReadOnlyList<PupilPassportOccupationCard> cards;
         var strengths = PupilPassportStrengths.For(result, lang);
         var discovery = PupilPassportLocalizedCopy.DiscoveryQuestions(dream.JobKey, holland, lang);
         var tips = PupilPassportLocalizedCopy.HomeClassTips(dream.JobKey, riasecLetter, lang);
@@ -123,12 +131,24 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         string? samen = null;
         IReadOnlyList<string>? parentTips = null;
         IReadOnlyList<string>? teacherTips = null;
+        IReadOnlyList<PupilPassportValueBar>? valueBars = null;
+        var g78RiasecPending = false;
+
+        if (variant == PupilPassportVariant.Groep78)
+        {
+            cards = [];
+        }
+        else
+        {
+            cards = PupilPassportJobCards.Build(jobKeys, likes, ctx.Set, lang);
+        }
 
         if (variant == PupilPassportVariant.Groep78)
         {
             var vak = PupilVakScores.Parse(progress?.VakScoresJson);
             mirrorBody = PupilG78MirrorTemplate.Render(result, progress, vak, lang);
-            riasecBars = BuildRiasecBars(result);
+            (riasecBars, g78RiasecPending) = PupilG78PassportPdfData.BuildRiasecBars(result);
+            valueBars = PupilG78PassportPdfData.BuildValueBars(result);
             cultureSliders = BuildCultureSliders(result, lang);
             subjectGroups = PupilG78SubjectGroups.Build(vak, result, lang);
             var beroepRanks = PupilG78CareerScoring.TopBeroepssoorten(result, vak, take: 10);
@@ -154,7 +174,9 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
                 .Where(c => c is not null)
                 .Cast<PupilG78SchoolDirectionCard>()
                 .ToList();
-            topJobs = PupilG78CareerScoring.TopJobKeys(result, progress, vak, take: 5);
+            var jobMatches = PupilG78CareerScoring.TopJobMatches(result, progress, vak, maxCount: 5);
+            topJobs = jobMatches.Select(m => m.JobKey).ToList();
+            cards = PupilPassportJobCards.BuildGroep78(jobMatches, lang);
             samen = BuildSamenAssignment(result, lang);
             parentTips =
             [
@@ -167,11 +189,6 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
                 PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Teacher.2"),
             ];
         }
-
-        var cardJobKeys = variant == PupilPassportVariant.Groep78 && topJobs is { Count: > 0 }
-            ? topJobs
-            : keys.JobIdeaKeys;
-        var cards = PupilPassportJobCards.Build(cardJobKeys, likes, ctx.Set, lang);
 
         return new PupilPassportPdfModel(
             Variant: variant,
@@ -231,7 +248,9 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             TopJobKeys: topJobs,
             SamenAssignment: samen,
             UsageParentTips: parentTips,
-            UsageTeacherTips: teacherTips);
+            UsageTeacherTips: teacherTips,
+            ValueBars: valueBars,
+            G78RiasecPending: g78RiasecPending);
     }
 
     private static string BuildSamenAssignment(PupilResult result, string language)
@@ -249,43 +268,6 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         return string.Join("\n\n", prompts.Select(k => PupilPassportLocalizedCopy.Get(k, language)));
     }
 
-    private static IReadOnlyList<PupilPassportRiasecBar> BuildRiasecBars(PupilResult result)
-    {
-        RiasecScores? scores = null;
-        if (!string.IsNullOrWhiteSpace(result.RiasecScoresJson))
-        {
-            try
-            {
-                scores = JsonSerializer.Deserialize<RiasecScores>(result.RiasecScoresJson);
-            }
-            catch (JsonException)
-            {
-                // ignore
-            }
-        }
-
-        var letters = new[] { 'R', 'I', 'A', 'S', 'E', 'C' };
-        return letters
-            .Select(c =>
-            {
-                var code = c switch
-                {
-                    'R' => CareerTestCatalog.Realistic,
-                    'I' => CareerTestCatalog.Investigative,
-                    'A' => CareerTestCatalog.Artistic,
-                    'S' => CareerTestCatalog.Social,
-                    'E' => CareerTestCatalog.Enterprising,
-                    _ => CareerTestCatalog.Conventional
-                };
-                var score = scores?.Get(code) ?? 50;
-                return new PupilPassportRiasecBar(
-                    c.ToString(),
-                    PupilPassportCopy.Get($"LeerlingPassport.G78.Riasec.{c}"),
-                    score);
-            })
-            .ToList();
-    }
-
     private static IReadOnlyList<PupilPassportCultureSlider> BuildCultureSliders(PupilResult result, string language)
     {
         CulturePersonalityScores? culture = null;
@@ -293,7 +275,9 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         {
             try
             {
-                culture = JsonSerializer.Deserialize<CulturePersonalityScores>(result.CultureScoresJson);
+                culture = JsonSerializer.Deserialize<CulturePersonalityScores>(
+                    result.CultureScoresJson,
+                    JsonCaseInsensitive);
             }
             catch (JsonException)
             {
@@ -407,7 +391,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
 
         try
         {
-            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+            return JsonSerializer.Deserialize<List<string>>(json, JsonCaseInsensitive) ?? [];
         }
         catch
         {
