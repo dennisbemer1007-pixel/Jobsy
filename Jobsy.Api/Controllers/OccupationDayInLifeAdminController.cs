@@ -166,7 +166,8 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
     public IActionResult Start(
         [FromQuery] int? limit,
         [FromQuery] string? ids,
-        [FromBody] OccupationDayRunRequest? body)
+        [FromQuery] bool replaceExisting = false,
+        [FromBody] OccupationDayRunRequest? body = null)
     {
         var chosen = body?.Limit ?? limit;
         if (chosen is < 1)
@@ -179,9 +180,10 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
             return BadRequest(new { message = error });
         }
 
+        var replace = body?.ReplaceExisting == true || replaceExisting;
         Guid? actorId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsed) ? parsed : null;
         var role = User.FindFirstValue(ClaimTypes.Role);
-        if (!_runner.TryStart(chosen, only, actorId, role))
+        if (!_runner.TryStart(chosen, only, actorId, role, replace))
         {
             return Conflict(new { message = "Er loopt al een vulling." });
         }
@@ -292,6 +294,7 @@ public sealed class OccupationDayRunRequest
 {
     public int? Limit { get; set; }
     public string? Ids { get; set; }
+    public bool ReplaceExisting { get; set; }
 }
 
 public sealed record OccupationDayStartResult(bool Started, bool Busy, string? Message, IReadOnlyList<string> Titles);

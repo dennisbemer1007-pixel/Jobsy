@@ -153,15 +153,28 @@
                 return;
             }
 
-            var result = await Api.RegenerateOccupationDaysAsync(15, _pick);
-            if (result is null)
+            var pickCount = OccupationDaySelection.Resolve(_pick).Jobs.Count;
+            if (pickCount == 0)
             {
-                _message = Culture["Common.Error"];
+                _message = Culture["Admin.Day.PickEmpty"];
+                return;
+            }
+
+            var limit = Math.Clamp(pickCount, 1, 50);
+            var start = await Api.StartOccupationDayBatchAsync(limit, _pick, replaceExisting: true);
+            if (start?.Busy == true)
+            {
+                _message = Culture["Admin.Day.Busy"];
+            }
+            else if (!string.IsNullOrWhiteSpace(start?.Message) && start.Started != true)
+            {
+                _message = start.Message;
             }
             else
             {
-                _message = Culture.Format("Admin.Day.Summary", result.Generated, result.Failed);
+                _message = Culture["Admin.Day.Started"];
                 await RefreshAsync();
+                StartPolling();
             }
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))

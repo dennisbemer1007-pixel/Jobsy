@@ -41,7 +41,8 @@ public sealed class OccupationDayInLifeBatchRunner : IDisposable
         int? limit,
         IReadOnlySet<string>? onlyEscoIds = null,
         Guid? actorUserId = null,
-        string? actorRole = null)
+        string? actorRole = null,
+        bool replaceExisting = false)
     {
         lock (_gate)
         {
@@ -53,7 +54,7 @@ public sealed class OccupationDayInLifeBatchRunner : IDisposable
             _run = new CancellationTokenSource();
             _status = Snapshot.Started();
             var token = _run.Token;
-            _ = Task.Run(() => ExecuteAsync(limit, onlyEscoIds, actorUserId, actorRole, token));
+            _ = Task.Run(() => ExecuteAsync(limit, onlyEscoIds, actorUserId, actorRole, replaceExisting, token));
             return true;
         }
     }
@@ -81,6 +82,7 @@ public sealed class OccupationDayInLifeBatchRunner : IDisposable
         IReadOnlySet<string>? onlyEscoIds,
         Guid? actorUserId,
         string? actorRole,
+        bool replaceExisting,
         CancellationToken cancellationToken)
     {
         var generated = 0;
@@ -103,7 +105,12 @@ public sealed class OccupationDayInLifeBatchRunner : IDisposable
                 {
                     await using var scope = _scopes.CreateAsyncScope();
                     var generator = scope.ServiceProvider.GetRequiredService<OccupationDayInLifeGenerator>();
-                    var result = await generator.GenerateMissingAsync(take, skip, onlyEscoIds, cancellationToken);
+                    var result = await generator.GenerateMissingAsync(
+                        take,
+                        skip,
+                        onlyEscoIds,
+                        replaceExisting,
+                        cancellationToken);
                     generated += result.Generated;
                     failed += result.Failed;
                     foreach (var failure in result.Failures)

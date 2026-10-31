@@ -54,11 +54,15 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<OccupationDayGenerateResult>(response.Content, ct);
     }
 
-    public async Task<OccupationDayStartResult?> StartOccupationDayBatchAsync(int? limit = null, string? ids = null, CancellationToken ct = default)
+    public async Task<OccupationDayStartResult?> StartOccupationDayBatchAsync(
+        int? limit = null,
+        string? ids = null,
+        bool replaceExisting = false,
+        CancellationToken ct = default)
     {
         var response = await PostApiJsonAsync(
             "api/admin/occupation-day-in-life/start",
-            new OccupationDayRunRequest { Limit = limit, Ids = ids },
+            new OccupationDayRunRequest { Limit = limit, Ids = ids, ReplaceExisting = replaceExisting },
             ct);
         if (response.StatusCode == HttpStatusCode.Conflict)
         {
@@ -118,6 +122,7 @@ public sealed class OccupationDayRunRequest
 {
     public int? Limit { get; set; }
     public string? Ids { get; set; }
+    public bool ReplaceExisting { get; set; }
 }
 
 public sealed class OccupationDayStartResult
