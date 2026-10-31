@@ -114,20 +114,17 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
             if (step == 2)
             {
-                await page.Locator(".ob-wizard__presets .lobsy-choice-tile, [data-ob-client=presetGrid] .lobsy-choice-tile").First
-                    .ClickAsync(new() { Force = true });
+                await FunctionalOnboardingInteractivityHelpers.SelectFirstPresetAndAdvanceFromStep2Async(page);
+                continue;
             }
 
             if (step == 3)
             {
-                await page.Locator("#onboarding-field-transport .lobsy-choice-tile, [data-ob-client=transportGrid] .lobsy-choice-tile").First
-                    .ClickAsync(new() { Force = true });
-                await page.Locator(".ob-wizard__transport .lobsy-choice-tile, [data-ob-client=travelGrid] .lobsy-choice-tile")
-                    .Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+                await FunctionalOnboardingInteractivityHelpers.SelectTransportAndTravelMinutesAsync(page, 30);
             }
 
             await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
-            if (step < 5)
+            if (step < 5 && step != 2)
             {
                 await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, step + 1)
                     .WaitForAsync(new() { Timeout = 90_000 });

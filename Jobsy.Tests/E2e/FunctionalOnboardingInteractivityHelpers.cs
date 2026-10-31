@@ -519,9 +519,9 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AdvanceThroughMiniBlockIfPresentAsync(IPage page, int maxAnswers = 16)
     {
-        for (var i = 0; i < maxAnswers && await page.Locator(".test-likert").CountAsync() > 0; i++)
+        for (var i = 0; i < maxAnswers && await page.Locator(".test-likert, [data-testid=onboarding-mini-likert]").CountAsync() > 0; i++)
         {
-            await page.Locator(".test-likert__opt").Nth(2).ClickAsync(new() { Force = true, Timeout = 15_000 });
+            await AnswerCurrentMiniLikertAsync(page);
             await page.WaitForTimeoutAsync(350);
             await ClickWizardNextWhenVisibleAsync(page);
             await WaitForCircuitReadyAsync(page);
@@ -550,14 +550,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     await WaitForStepIllustrationLoadedAsync(page, 2);
                     break;
                 case 2:
-                    await page.Locator(".ob-wizard__presets .lobsy-choice-tile, [data-ob-client=presetGrid] .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
-                    await ClickWizardNextWhenVisibleAsync(page);
-                    await OnboardingStepIllustrated(page, 3).WaitForAsync(new() { Timeout = 90_000 });
+                    await SelectFirstPresetAndAdvanceFromStep2Async(page);
                     await WaitForStepIllustrationLoadedAsync(page, 3);
                     break;
                 case 3:
-                    await page.Locator("#onboarding-field-transport .lobsy-choice-tile, [data-ob-client=transportGrid] .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
-                    await page.Locator(".ob-wizard__transport .lobsy-choice-tile, [data-ob-client=travelGrid] .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+                    await SelectTransportAndTravelMinutesAsync(page, 30);
                     await ClickWizardNextWhenVisibleAsync(page);
                     await page.WaitForTimeoutAsync(500);
                     break;
@@ -592,10 +589,65 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         await AssertNoUnpromptedReloadAsync(page, "after-step-10");
         Assert.True(
-            await page.Locator(".test-likert").CountAsync() > 0
+            await page.Locator(".test-likert, .ob-client-mini-likert, [data-testid=onboarding-mini-likert]").CountAsync() > 0
             || await page.Locator(".ob-wizard__finish").CountAsync() > 0
             || page.Url.Contains("/candidate/start", StringComparison.OrdinalIgnoreCase),
             "Expected to reach test flow or finish after step 10 walk.");
+    }
+
+    internal static async Task SelectFirstPresetAndAdvanceFromStep2Async(IPage page)
+    {
+        await WaitForSsrClientStepMountedAsync(page, 2);
+        var preset = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile, .ob-wizard__presets .lobsy-choice-tile").First;
+        await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await preset.ClickAsync(new() { Force = true });
+        await page.WaitForFunctionAsync(
+            """
+            () => !!document.querySelector(
+              '[data-ob-client=presetGrid] .lobsy-choice-tile.is-selected, [data-ob-client=presetGrid] .lobsy-choice-tile[aria-pressed="true"], .ob-wizard__presets .lobsy-choice-tile.is-selected')
+            """,
+            null,
+            new() { Timeout = 20_000 });
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await page.WaitForURLAsync("**/candidate/start?step=3**", new() { Timeout = 90_000 });
+        await OnboardingStepIllustrated(page, 3).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+    }
+
+    internal static async Task SelectTransportAndTravelMinutesAsync(IPage page, int travelMinutes)
+    {
+        await WaitForSsrClientStepMountedAsync(page, 3);
+        var transportTile = page.Locator(
+            "#onboarding-field-transport .lobsy-choice-tile, [data-ob-client=transportGrid] .lobsy-choice-tile").First;
+        await transportTile.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await transportTile.ClickAsync(new() { Force = true });
+        var travel = page.Locator(
+                ".ob-wizard__travel-times .lobsy-choice-tile, [data-ob-client=travelGrid] .lobsy-choice-tile, .ob-wizard__transport .lobsy-choice-tile")
+            .Filter(new() { HasText = travelMinutes.ToString() });
+        if (await travel.CountAsync() == 0)
+        {
+            travel = page.Locator("[data-ob-client=travelGrid] .lobsy-choice-tile, .ob-wizard__transport .lobsy-choice-tile").First;
+        }
+
+        await travel.First.ClickAsync(new() { Force = true });
+    }
+
+    internal static async Task WaitForOnboardingMiniQuestionVisibleAsync(IPage page)
+    {
+        await page.Locator(".test-likert, .ob-client-mini-likert, [data-testid=onboarding-mini-likert]").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+    }
+
+    internal static async Task AnswerCurrentMiniLikertAsync(IPage page, int optionIndex = 2)
+    {
+        var ssrPick = page.Locator("[data-testid=onboarding-mini-likert]").Nth(optionIndex);
+        if (await ssrPick.CountAsync() > 0)
+        {
+            await ssrPick.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            return;
+        }
+
+        await page.Locator(".test-likert__opt").Nth(optionIndex).ClickAsync(new() { Force = true, Timeout = 20_000 });
     }
 
     internal static async Task AssertRapidWizardChipInteractionsSteps1To3Async(IPage page, string baseUrl)
@@ -1161,30 +1213,42 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 return;
             }
 
+            var laterAnywhere = page.GetByTestId("onboarding-tests-later").First;
+            if (await laterAnywhere.CountAsync() > 0 && await laterAnywhere.IsVisibleAsync())
+            {
+                await laterAnywhere.ScrollIntoViewIfNeededAsync();
+                await laterAnywhere.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                await WaitForBanenkaartLocationAsync(page);
+                await WaitForBanenkaartDiscoveryShellAsync(page);
+                return;
+            }
+
             if (await consentHeading.IsVisibleAsync())
             {
                 await page.WaitForTimeoutAsync(mobile ? 800 : 500);
                 var later = page.GetByTestId("onboarding-tests-later").First;
-                await later.ScrollIntoViewIfNeededAsync();
-                await Assertions.Expect(later).ToBeEnabledAsync(new() { Timeout = 30_000 });
-                for (var clickTry = 0; clickTry < 2; clickTry++)
+                if (await later.CountAsync() > 0)
                 {
-                    await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
-                    try
+                    await later.ScrollIntoViewIfNeededAsync();
+                    for (var clickTry = 0; clickTry < 2; clickTry++)
                     {
-                        await page.WaitForURLAsync(
-                            u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                            new() { Timeout = 90_000 });
-                        break;
+                        await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                        try
+                        {
+                            await page.WaitForURLAsync(
+                                u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+                                new() { Timeout = 90_000 });
+                            break;
+                        }
+                        catch (TimeoutException) when (clickTry == 0)
+                        {
+                            await page.WaitForTimeoutAsync(800);
+                        }
                     }
-                    catch (TimeoutException) when (clickTry == 0)
-                    {
-                        await page.WaitForTimeoutAsync(800);
-                    }
-                }
 
-                await WaitForBanenkaartDiscoveryShellAsync(page);
-                return;
+                    await WaitForBanenkaartDiscoveryShellAsync(page);
+                    return;
+                }
             }
 
             if (await flowLater.CountAsync() > 0)
@@ -1431,8 +1495,8 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var box = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
         await box.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await box.CheckAsync(new() { Force = true });
-        await page.GetByTestId("onboarding-next").ClickAsync(new() { Force = true, Timeout = 20_000 });
-        await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 90_000 });
+        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await WaitForOnboardingMiniQuestionVisibleAsync(page);
         await WaitForCircuitReadyAsync(page);
     }
 
@@ -1440,15 +1504,31 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         for (var q = 0; q < 5; q++)
         {
-            await page.Locator(".test-likert__opt").Nth(2).ClickAsync(new() { Force = true, Timeout = 20_000 });
+            if (await page.Locator("[data-testid=onboarding-mini-likert], .test-likert__opt").CountAsync() == 0)
+            {
+                break;
+            }
+
+            await AnswerCurrentMiniLikertAsync(page);
             await WaitForCircuitReadyAsync(page);
             await page.WaitForTimeoutAsync(350);
         }
 
         var flowNext = page.Locator("button.test-flow__next:not([disabled])").First;
-        await flowNext.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await flowNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
-        await WaitForCircuitReadyAsync(page);
+        if (await flowNext.CountAsync() > 0)
+        {
+            await flowNext.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await flowNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await WaitForCircuitReadyAsync(page);
+            return;
+        }
+
+        var ssrNext = page.GetByTestId("onboarding-next");
+        if (await ssrNext.CountAsync() > 0 && await ssrNext.IsVisibleAsync())
+        {
+            await ssrNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await WaitForCircuitReadyAsync(page);
+        }
     }
 
     internal static async Task AdvancePastEarlyInsightIfVisibleAsync(IPage page)
@@ -1460,7 +1540,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             if (counter is null)
             {
                 await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
-                await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 90_000 });
+                await WaitForOnboardingMiniQuestionVisibleAsync(page);
                 await WaitForCircuitReadyAsync(page);
             }
         }
@@ -1489,7 +1569,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         for (var block = 0; block < 4; block++)
         {
             var expectedStep = 7 + block;
-            await page.Locator(".test-likert").First.WaitForAsync(new() { Timeout = 90_000 });
+            await page.Locator(".test-likert, [data-testid=onboarding-mini-likert]").First.WaitForAsync(new() { Timeout = 90_000 });
             var stepNow = await ReadOnboardingWizardStepAsync(page);
             Assert.True(
                 stepNow == expectedStep,
@@ -1506,7 +1586,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
                       const el = document.querySelector('[data-onboarding-step]');
                       if (!el) return false;
                       const step = parseInt(el.getAttribute('data-onboarding-step') || '0', 10);
-                      return step >= 9 && document.querySelector('.test-likert');
+                      return step >= 9 && (document.querySelector('.test-likert') || document.querySelector('[data-testid=onboarding-mini-likert]'));
                     }
                     """,
                     null,

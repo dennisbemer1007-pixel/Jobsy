@@ -39,13 +39,7 @@ public sealed class FunctionalOnboardingPlaywrightTestsMobile
 
         await FunctionalOnboardingInteractivityHelpers.AssertWorkStatusChipTogglesAsync(page);
         await FunctionalOnboardingInteractivityHelpers.AssertBirthDateFieldInteractiveAsync(page);
-
-        var firstName = page.Locator("input[autocomplete=given-name]").First;
-        await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, firstName, "firstname");
-        await firstName.FillAsync("Func");
-        Assert.Equal("Func", await firstName.InputValueAsync());
-
-        await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, "2671GB");
+        await FunctionalOnboardingInteractivityHelpers.FillKennismakenBasicsExceptWorkStatusAsync(page);
         await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         var next = page.GetByTestId("onboarding-next");
