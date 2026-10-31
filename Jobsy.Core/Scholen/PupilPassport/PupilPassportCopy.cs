@@ -202,7 +202,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Riasec.S.Desc"] = "Je helpt graag anderen en bent er voor ze.";
         d["LeerlingPassport.G78.Riasec.E.Desc"] = "Soms neem je graag de leiding.";
         d["LeerlingPassport.G78.Riasec.C.Desc"] = "Soms vind je het fijn als alles netjes op een rij staat.";
-        d["LeerlingPassport.G78.Riasec.Pending"] = "Nog niet bekend — rond eerst de vragen over wat je energie geeft af.";
+        d["LeerlingPassport.G78.Riasec.Pending"] = "Nog niet bekend. Rond eerst de vragen over wat je energie geeft af.";
         d["LeerlingPassport.G78.Culture.Title"] = "Waar ik me thuis voel";
         d["LeerlingPassport.G78.Strengths.Title"] = "Dit kan ik al goed";
         d["LeerlingPassport.G78.Strengths.Sub"] = "Jouw sterke punten uit de test";
