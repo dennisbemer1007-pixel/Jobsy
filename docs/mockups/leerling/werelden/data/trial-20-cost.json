@@ -1,6 +1,7 @@
 {
   "trialOccupations": 20,
-  "acceptatieDeployCommit": "3011cf2224968d7789619140fa8fbf5d5f252f0e",
+  "acceptatieDeployCommit": "1b11779ce079c55e2166a3e27577d33809b098fc",
+  "occupationDayMerge3011cf22Deployed": true,
   "regenRunStartedUtc": "2026-10-31T04:37:30.487Z",
   "actualOpenAiUsageThisRun": {
     "model": "gpt-4o",
@@ -8,7 +9,7 @@
     "promptTokens": 0,
     "completionTokens": 0,
     "usd": 0.0,
-    "note": "Acceptatie admin Opnieuw genereren was attempted via Playwright but did not update stored rows (generatedAtUtc unchanged). No usage returned from API."
+    "note": "No OpenAI usage on Acceptatie: regenerate endpoint was never called (Blazor _pick empty / 401 without Acc JWT PEM). Real cost remains USD 0.00 until a successful server-side regen."
   },
   "dataPipeline": "Downloaded Acceptatie export after deploy 3011cf22; applied OccupationDayExportRepair locally (same Core repair as merged PR #1357); regen HTML + 60 PNG renders.",
   "estimatedUsdIfFreshGpt4oRegenAll20": {
