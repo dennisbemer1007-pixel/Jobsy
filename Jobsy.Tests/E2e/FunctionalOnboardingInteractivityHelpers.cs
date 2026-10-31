@@ -1,3 +1,5 @@
+using Jobsy.Tests.E2eFlow;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
@@ -771,18 +773,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static async Task<string> RegisterFreshCandidateEmailAsync(IPage page, string baseUrl, string emailPrefix)
     {
         var email = $"{emailPrefix}.{Guid.NewGuid():N}@jobsy.local";
-        await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
-        await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.Locator("input[type=email]").FillAsync(email);
-        await page.Locator("input[name=firstName]").FillAsync("Func");
-        await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/code**", new() { Timeout = 90_000 });
-        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
-        Assert.False(string.IsNullOrWhiteSpace(code), "Expected OTP from E2E mail capture.");
-        await page.Locator("input[name=code]").FillAsync(code!);
-        await page.Locator("button.login-submit").ClickAsync();
-        await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+        _ = await E2eFlowOnboarding.SignUpFreshAsync(page, baseUrl, email, "Func");
         return email;
     }
 
@@ -1563,23 +1554,24 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await box.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await box.CheckAsync(new() { Force = true });
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await page.WaitForURLAsync("**/candidate/start?step=7**", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await WaitForOnboardingMiniQuestionVisibleAsync(page);
+        await Assertions.Expect(page.Locator(".ob-client-mini-q")).ToHaveCountAsync(1);
         await WaitForCircuitReadyAsync(page);
     }
 
-    private static async Task WaitForMiniStepQuestionAsync(IPage page, int step, int minQuestion)
+    internal static int ParseOnboardingStepFromUrl(string url)
     {
-        await page.WaitForFunctionAsync(
-            """
-            ({ step, minQuestion }) => {
-              const u = new URL(location.href);
-              const s = parseInt(u.searchParams.get('step') || '0', 10);
-              const q = parseInt(u.searchParams.get('q') || '1', 10);
-              return s === step && q >= minQuestion;
-            }
-            """,
-            new { step, minQuestion },
-            new() { Timeout = 90_000 });
+        var uri = new Uri(url);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        return query.TryGetValue("step", out var step) && int.TryParse(step, out var n) ? n : 1;
+    }
+
+    internal static int ParseOnboardingQuestionFromUrl(string url)
+    {
+        var uri = new Uri(url);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        return query.TryGetValue("q", out var q) && int.TryParse(q, out var n) ? n : 1;
     }
 
     internal static async Task CompleteCurrentMiniTestBlockAsync(IPage page)
@@ -1593,18 +1585,57 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     break;
                 }
 
-                var step = await ReadOnboardingWizardStepAsync(page);
+                await Assertions.Expect(page.Locator(".ob-client-mini-q")).ToHaveCountAsync(1);
+                var step = ParseOnboardingStepFromUrl(page.Url);
+                if (q == 1)
+                {
+                    await page.WaitForURLAsync(
+                        url =>
+                        {
+                            if (!url.Contains("/candidate/start", StringComparison.Ordinal))
+                            {
+                                return false;
+                            }
+
+                            var uri = new Uri(url);
+                            var query = QueryHelpers.ParseQuery(uri.Query);
+                            if (!query.TryGetValue("step", out var stepVal) || !int.TryParse(stepVal, out var stepNum) || stepNum != step)
+                            {
+                                return false;
+                            }
+
+                            if (!query.TryGetValue("q", out var qVal))
+                            {
+                                return true;
+                            }
+
+                            return int.TryParse(qVal, out var qNum) && qNum == 1;
+                        },
+                        new() { Timeout = 90_000 });
+                }
+                else
+                {
+                    await page.WaitForURLAsync($"**/candidate/start?step={step}&q={q}**", new() { Timeout = 90_000 });
+                }
                 var pick = page.Locator("button[name=\"obMiniPick\"]").Nth(2);
-                await pick.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                await pick.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
                 if (q < 5)
                 {
-                    await WaitForMiniStepQuestionAsync(page, step, q + 1);
+                    await Task.WhenAll(
+                        page.WaitForURLAsync(
+                            $"**/candidate/start?step={step}&q={q + 1}**",
+                            new() { WaitUntil = WaitUntilState.Commit, Timeout = 90_000 }),
+                        pick.ClickAsync(new() { Timeout = 20_000 }));
+                }
+                else
+                {
+                    await pick.ClickAsync(new() { Timeout = 20_000 });
                 }
 
                 await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             }
 
-            var stepAfter = await ReadOnboardingWizardStepAsync(page);
+            var stepAfter = ParseOnboardingStepFromUrl(page.Url);
             var next = page.GetByTestId("onboarding-next");
             if (await next.CountAsync() > 0)
             {
