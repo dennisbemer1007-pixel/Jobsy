@@ -38,7 +38,8 @@
 
 @media (min-width: 601px) {
   .ll-g78-shell .is-layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 28px;
     align-items: start;
   }
 }
@@ -344,7 +345,46 @@
   font-weight: 400;
 }
 
+.ll-g78-shell .is-card-deco .is-qfoot {
+  flex-wrap: nowrap;
+}
+
+.ll-g78-shell .is-card-deco .is-qfoot .btn-main {
+  width: auto;
+  margin-top: 0;
+  margin-left: auto;
+  flex: none;
+}
+
+.ll-g78-shell .is-card-deco .is-qfoot .btn-ghost {
+  background: var(--paper);
+  border: 2px solid var(--navy);
+  border-radius: 12px;
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 12px 18px;
+  width: auto;
+  flex: none;
+  box-shadow: none;
+}
+
 @media (max-width: 600px) {
+  .ll-g78-shell .is-card-deco .is-qfoot {
+    flex-wrap: wrap;
+  }
+
+  .ll-g78-shell .is-card-deco .is-qfoot .btn-main {
+    width: 100%;
+    margin-left: 0 !important;
+    order: -1;
+  }
+
+  .ll-g78-shell .is-card-deco .is-qfoot .btn-ghost {
+    width: 100%;
+    justify-content: center;
+  }
+
   .ll-g78-shell .island-lead {
     font-size: 24px;
   }

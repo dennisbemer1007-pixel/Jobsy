@@ -52,7 +52,7 @@
                     }
                     else if (node.IsResult)
                     {
-                        <span class="dot" style="background-image:url(@(node.ImageUrl))" aria-hidden="true"></span>
+                        <span class="dot" aria-hidden="true"></span>
                     }
                     else
                     {
@@ -87,8 +87,7 @@
             <div class="vr-qrow">
                 <LeerlingSpeak Text="@lead"
                                SpeechKey="ll-island-lead"
-                               AlwaysShow="true"
-                               AutoPlay="true" />
+                               AlwaysShow="true" />
                 <span class="speak-label">@Culture["Leerling.Island.ReadLead"]</span>
             </div>
 
@@ -140,9 +139,9 @@
                 <p class="vr-error" role="alert">@Error</p>
             }
 
-            <div class="vr-qfoot">
+            <div class="vr-qfoot is-qfoot">
                 <button type="button"
-                        class="btn-ghost @(_prevTap ? "is-tapped" : null)"
+                        class="btn btn-ghost @(_prevTap ? "is-tapped" : null)"
                         data-testid="ll-eiland-prev"
                         disabled="@Busy"
                         @onpointerdown="() => _prevTap = true"
@@ -155,7 +154,6 @@
                 </button>
                 <button type="button"
                         class="btn btn-main"
-                        style="margin-left:auto"
                         data-testid="ll-eiland-continue"
                         disabled="@Busy"
                         @onclick="OnContinue">

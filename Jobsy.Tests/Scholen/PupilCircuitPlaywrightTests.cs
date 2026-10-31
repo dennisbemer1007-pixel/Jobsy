@@ -46,6 +46,68 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
+    private const string Groep78ReadAloudInitScript =
+        """
+        () => {
+          const voices = [{
+            lang: "nl-NL",
+            name: "Test NL",
+            localService: true,
+            voiceURI: "test-nl",
+            default: true
+          }];
+          class MockUtterance {
+            constructor(text) {
+              this.text = String(text || "");
+              this.lang = "nl-NL";
+              this.rate = 1;
+              this.onstart = null;
+              this.onend = null;
+              this.onerror = null;
+            }
+          }
+          window.SpeechSynthesisUtterance = MockUtterance;
+          const synth = {
+            speaking: false,
+            getVoices: function () { return voices; },
+            speak: function (utter) {
+              this.speaking = true;
+              const self = this;
+              setTimeout(function () {
+                if (utter && typeof utter.onstart === "function") {
+                  utter.onstart({});
+                }
+                if (utter && typeof utter.onend === "function") {
+                  utter.onend({});
+                }
+                self.speaking = false;
+              }, 0);
+            },
+            cancel: function () { this.speaking = false; },
+            addEventListener: function () {},
+            removeEventListener: function () {}
+          };
+          window.__lobsyReadAloudSynth = synth;
+          try {
+            Object.defineProperty(window, "speechSynthesis", {
+              value: synth,
+              configurable: true,
+              writable: false
+            });
+          } catch (e) {
+            window.speechSynthesis = synth;
+          }
+          const reapply = () => {
+            window.__lobsyReadAloudSynth = synth;
+            if (window.speechSynthesis !== synth) {
+              try { window.speechSynthesis = synth; } catch (err) { /* ignore */ }
+            }
+          };
+          reapply();
+          window.addEventListener("pageshow", reapply);
+        }
+        """;
+
     public PupilCircuitPlaywrightTests(RoleFunctionalWebAppFactory api) => _api = api;
 
     public async ValueTask InitializeAsync()
@@ -1444,13 +1506,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             var pupil = seed[0];
             foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
             {
-                var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+                await using var context = await NewGroep78BrowserContextAsync(new BrowserNewContextOptions
                 {
                     ViewportSize = new ViewportSize { Width = width, Height = height },
                     IsMobile = width < 600,
                     HasTouch = width < 600,
                     DeviceScaleFactor = width < 600 ? 2 : 1,
                 });
+                var page = await context.NewPageAsync();
                 page.SetDefaultTimeout(90_000);
                 var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
                 await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
@@ -1458,6 +1521,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
                 await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
                 await Assertions.Expect(page.Locator($".ll-g78-shell.{shellClass}")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator(".read-aloud__error >> visible=true")).ToHaveCountAsync(0);
                 await page.GetByTestId("ll-island-chip-dieren").ClickAsync();
                 await page.GetByTestId("ll-island-chip-tekenen").ClickAsync();
                 await page.ScreenshotAsync(new()
@@ -1465,7 +1529,6 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     Path = Path.Combine(captureDir, $"built-11a-{builtPrefix}-pauze-leuk-{tag}.png"),
                     FullPage = true,
                 });
-                await page.CloseAsync();
             }
         }
 
@@ -1542,7 +1605,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await using var context = mobile
             ? await NewMobileContextAsync()
-            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            : await NewGroep78BrowserContextAsync(new BrowserNewContextOptions
             {
                 ViewportSize = new ViewportSize { Width = width, Height = height },
             });
@@ -2294,8 +2357,28 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             new PageWaitForFunctionOptions { Timeout = 45_000 });
     }
 
+    private static async Task WaitGroep78ReadAloudCleanAsync(IPage page)
+    {
+        var readAloudErrors = page.Locator(".read-aloud__error >> visible=true");
+        var deadline = DateTime.UtcNow.AddSeconds(8);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await readAloudErrors.CountAsync() == 0)
+            {
+                var body = await page.Locator("body").InnerTextAsync();
+                if (!body.Contains("lukt nu even niet", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+
+            await Task.Delay(150);
+        }
+    }
+
     private static async Task WaitGroep78VisibleErrorsClearAsync(IPage page)
     {
+        await WaitGroep78ReadAloudCleanAsync(page);
         var errors = page.Locator(".vr-error, .ll-error");
         var deadline = DateTime.UtcNow.AddSeconds(20);
         while (DateTime.UtcNow < deadline)
@@ -2324,9 +2407,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         await WaitGroep78VisibleErrorsClearAsync(page);
 
-        var body = await page.Locator("body").InnerTextAsync();
+        var body = await page.Locator("body").InnerTextAsync(new LocatorInnerTextOptions { Timeout = 5_000 });
         Assert.DoesNotContain("_saveError", body, StringComparison.Ordinal);
         Assert.DoesNotContain("_saved", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("lukt nu even niet", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, await page.Locator(".read-aloud__error >> visible=true").CountAsync());
         var untranslated = UntranslatedKeyPattern().Match(body);
         if (untranslated.Success)
         {
@@ -2666,8 +2751,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         return "/workspace";
     }
 
+    private async Task<IBrowserContext> NewGroep78BrowserContextAsync(BrowserNewContextOptions options)
+    {
+        var ctx = await _browser!.NewContextAsync(options);
+        await ctx.AddInitScriptAsync(Groep78ReadAloudInitScript);
+        return ctx;
+    }
+
     private async Task<IBrowserContext> NewMobileContextAsync()
-        => await _browser!.NewContextAsync(new BrowserNewContextOptions
+        => await NewGroep78BrowserContextAsync(new BrowserNewContextOptions
         {
             ViewportSize = new ViewportSize { Width = 390, Height = 844 },
             UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",

@@ -117,6 +117,7 @@ public class SchoolRun8ReadAloudTests : BunitContext
 
     public SchoolRun8ReadAloudTests()
     {
+        JSInterop.Setup<bool>("eval", _ => true).SetResult(true);
         JSInterop.Setup<ReadAloudProbe>("lobsyReadAloud.whenReady", _ => true)
             .SetResult(new ReadAloudProbe { Supported = true, Enabled = true });
         Services.AddLogging();

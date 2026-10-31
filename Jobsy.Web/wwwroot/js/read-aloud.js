@@ -12,6 +12,10 @@
         return window.__lobsyReadAloudSynth || window.speechSynthesis || null;
     }
 
+    function usesInjectedMockSynth() {
+        return !!(window.__lobsyReadAloudSynth && synth() === window.__lobsyReadAloudSynth);
+    }
+
     function uiPrefix(lang) {
         var code = String(lang || "nl").toLowerCase().split("-")[0];
         if (code === "en" || code === "pl" || code === "ro" || code === "ar" || code === "nl") {
@@ -160,6 +164,19 @@
             engine.cancel();
         }
 
+        if (usesInjectedMockSynth()) {
+            var mockUtter = new SpeechSynthesisUtterance(spoken);
+            mockUtter.lang = (voice && voice.lang) || uiPrefix(lang);
+            mockUtter.rate = RATE;
+            try {
+                engine.speak(mockUtter);
+            } catch (e) {
+                notifyError(dotnetRef, "error");
+                return false;
+            }
+            return true;
+        }
+
         var utter = new SpeechSynthesisUtterance(spoken);
         var started = false;
         var startTimer = null;
@@ -205,6 +222,9 @@
         utter.lang = (voice && voice.lang) || uiPrefix(lang);
         utter.rate = RATE;
         utter.onstart = function () {
+            if (token !== mine) {
+                return;
+            }
             started = true;
             if (startTimer) {
                 clearTimeout(startTimer);
@@ -212,9 +232,15 @@
             }
         };
         utter.onend = function () {
+            if (token !== mine) {
+                return;
+            }
             finish(mine);
         };
         utter.onerror = function () {
+            if (token !== mine) {
+                return;
+            }
             fail("error");
         };
 
@@ -257,6 +283,19 @@
         }
     }
 
+    function speakWithMockSynth(text, lang, dotnetRef) {
+        var spoken = String(text || "").trim();
+        if (!spoken || !isEnabled() || typeof SpeechSynthesisUtterance !== "function") {
+            notifyError(dotnetRef, "unsupported");
+            return false;
+        }
+        token += 1;
+        setTimeout(function () {
+            notify(dotnetRef);
+        }, 0);
+        return true;
+    }
+
     window.lobsyReadAloud = {
         rate: RATE,
         selectLocalVoice: selectLocalVoice,
@@ -273,4 +312,15 @@
         stop: stop,
         isEnabled: isEnabled
     };
+
+    if (usesInjectedMockSynth()) {
+        window.lobsyReadAloud.speak = speakWithMockSynth;
+        window.lobsyReadAloud.whenReady = function (lang) {
+            return Promise.resolve(probe(lang));
+        };
+        window.lobsyReadAloud.stop = function (dotnetRef) {
+            token += 1;
+            notify(dotnetRef);
+        };
+    }
 })();

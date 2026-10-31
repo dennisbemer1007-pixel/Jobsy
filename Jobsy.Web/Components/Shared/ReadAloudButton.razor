@@ -114,6 +114,31 @@
         await base.OnCultureChanged();
     }
 
+    private async Task<bool> EnsureReadAloudJsAsync()
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            try
+            {
+                var ready = await Js.InvokeAsync<bool>(
+                    "eval",
+                    "typeof window.lobsyReadAloud!=='undefined'&&typeof window.lobsyReadAloud.speak==='function'");
+                if (ready)
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                /* Script still loading (defer) or circuit reconnecting. */
+            }
+
+            await Task.Delay(50);
+        }
+
+        return false;
+    }
+
     private async Task ProbeAsync()
     {
         if (string.IsNullOrWhiteSpace(Text))
@@ -127,8 +152,15 @@
         var voiceOk = false;
         try
         {
-            var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
-            voiceOk = probe is { Supported: true, Enabled: true };
+            if (!await EnsureReadAloudJsAsync())
+            {
+                voiceOk = false;
+            }
+            else
+            {
+                var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
+                voiceOk = probe is { Supported: true, Enabled: true };
+            }
         }
         catch (Exception)
         {
@@ -185,6 +217,13 @@
         StateHasChanged();
         try
         {
+            if (!await EnsureReadAloudJsAsync())
+            {
+                _pending = false;
+                _error = Culture["ReadAloud.Error"];
+                return;
+            }
+
             _self ??= DotNetObjectReference.Create(this);
             var started = await Js.InvokeAsync<bool>("lobsyReadAloud.speak", Text, Culture.Language, _self);
             if (!started)

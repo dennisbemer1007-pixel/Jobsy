@@ -87,6 +87,7 @@ public sealed class ReadAloudBunitTests : BunitContext
     public ReadAloudBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
+        JSInterop.Setup<bool>("eval", _ => true).SetResult(true);
         Services.AddSingleton<AuthenticationStateProvider>(new ReadAloudFakeAuth());
         Services.AddSingleton<CoachTipBus>();
         Services.AddSingleton<AssistantChatHost>();
