@@ -1550,14 +1550,33 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         await page.Locator("[data-testid=onboarding-step-7-consent], .ob-wizard__consent input[type=checkbox]").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 120_000 });
-        var box = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
-        await box.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-        await box.CheckAsync(new() { Force = true });
-        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await EnsureStep7TestConsentCheckedAsync(page);
+        // SSR step 7: consent and mini questions share one form (see OnboardingStartSsrStep3PlaywrightTests).
+        // Checking consent then clicking obMiniPick persists AcceptTestAiConsent; Volgende in between is flaky.
         await page.WaitForURLAsync("**/candidate/start?step=7**", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await WaitForOnboardingMiniQuestionVisibleAsync(page);
         await Assertions.Expect(page.Locator(".ob-client-mini-q")).ToHaveCountAsync(1);
         await WaitForCircuitReadyAsync(page);
+    }
+
+    internal static async Task EnsureStep7TestConsentCheckedAsync(IPage page)
+    {
+        var consent = page.GetByTestId("onboarding-consent");
+        if (await consent.CountAsync() > 0)
+        {
+            if (!await consent.IsCheckedAsync())
+            {
+                await consent.CheckAsync(new() { Force = true });
+            }
+
+            return;
+        }
+
+        var box = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
+        if (await box.CountAsync() > 0 && !await box.IsCheckedAsync())
+        {
+            await box.CheckAsync(new() { Force = true });
+        }
     }
 
     internal static int ParseOnboardingStepFromUrl(string url)
@@ -1590,6 +1609,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 if (step is < 7 or > 10)
                 {
                     step = ParseOnboardingStepFromUrl(page.Url);
+                }
+
+                if (step == 7)
+                {
+                    await EnsureStep7TestConsentCheckedAsync(page);
                 }
 
                 var pick = page.Locator("button[name=\"obMiniPick\"]").Nth(2);
