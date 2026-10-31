@@ -70,9 +70,9 @@ public sealed class PupilG78MirrorService(
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", endpoint.ApiKey);
         var system = """
-            Herschrijf de spiegeltekst warmer in maximaal 4 korte zinnen, B1 Nederlands.
+            Herschrijf de tekst in 4 tot 6 korte zinnen (B1). Gebruik 'je' of 'jij', geen 'deze leerling'.
             Gebruik alleen feiten uit de feitenlijst. Verzin geen namen, werk, diploma's of nieuwe hobby's.
-            Geen markdown, geen opsommingstekens.
+            Geen markdown, geen opsommingstekens. Noem geen woonplaats, adres of postcode.
             """ + "\n" + CandidateFactGuard.StrictAddendum;
         request.Content = System.Net.Http.Json.JsonContent.Create(new
         {

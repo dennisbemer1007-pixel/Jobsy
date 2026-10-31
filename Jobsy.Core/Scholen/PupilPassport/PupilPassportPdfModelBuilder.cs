@@ -44,8 +44,6 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             })
             .ToList();
 
-        var jobKeys = keys.JobIdeaKeys;
-        var cards = PupilPassportJobCards.Build(jobKeys, likes, ctx.Set, lang);
         var strengths = PupilPassportStrengths.For(result, lang);
         var discovery = PupilPassportLocalizedCopy.DiscoveryQuestions(dream.JobKey, holland, lang);
         var tips = PupilPassportLocalizedCopy.HomeClassTips(dream.JobKey, riasecLetter, lang);
@@ -169,6 +167,11 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
                 PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Teacher.2"),
             ];
         }
+
+        var cardJobKeys = variant == PupilPassportVariant.Groep78 && topJobs is { Count: > 0 }
+            ? topJobs
+            : keys.JobIdeaKeys;
+        var cards = PupilPassportJobCards.Build(cardJobKeys, likes, ctx.Set, lang);
 
         return new PupilPassportPdfModel(
             Variant: variant,
@@ -304,13 +307,25 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         }
 
         return CulturePersonalityCatalog.CultureDimensionCodes
+            .Take(4)
             .Select(code => (Code: code, Score: culture.Get(code)))
-            .OrderByDescending(x => x.Score)
-            .Take(3)
             .Select(x => new PupilPassportCultureSlider(
-                PupilPassportLocalizedCopy.Get($"LeerlingStory.Tile.Cult.{x.Code}", language),
+                PassportCultureSliderLabel(x.Code, language),
                 x.Score))
             .ToList();
+    }
+
+    private static string PassportCultureSliderLabel(string code, string language)
+    {
+        var english = PupilVerhaalLocalized.IsEnglish(language);
+        return code switch
+        {
+            CulturePersonalityCatalog.Collaboration => english ? "Together or alone" : "Samen of alleen",
+            CulturePersonalityCatalog.PeopleFirst => english ? "Indoors or outdoors" : "Binnen of buiten",
+            CulturePersonalityCatalog.Informal => english ? "Calm or busy" : "Rustig of druk",
+            CulturePersonalityCatalog.Flexibility => english ? "Fixed or varied" : "Vast of afwisselend",
+            _ => PupilPassportLocalizedCopy.Get($"LeerlingStory.Tile.Cult.{code}", language)
+        };
     }
 
     private static IReadOnlyList<PupilPassportWorldStamp> BuildWorlds(PupilStoryViewDto story, string language)

@@ -25,6 +25,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\lobsy.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy.png" />
+    <EmbeddedResource Include="Assets\lobsy-logo-horizontaal.svg" LogicalName="Jobsy.Infrastructure.Assets.lobsy-logo-horizontaal.svg" />
+    <EmbeddedResource Include="Assets\g78-kreeft-kijker.png" LogicalName="Jobsy.Infrastructure.Assets.g78-kreeft-kijker.png" />
+    <EmbeddedResource Include="Assets\g78-kreeft-schild.png" LogicalName="Jobsy.Infrastructure.Assets.g78-kreeft-schild.png" />
+    <EmbeddedResource Include="Assets\g78-kreeft-kaart.png" LogicalName="Jobsy.Infrastructure.Assets.g78-kreeft-kaart.png" />
     <EmbeddedResource Include="Assets\Fonts\NotoSansArabic-Regular.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Regular.ttf" />
     <EmbeddedResource Include="Assets\Fonts\NotoSansArabic-Bold.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Bold.ttf" />
     <EmbeddedResource Include="Assets\Fonts\Nunito-Regular.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.Nunito-Regular.ttf" />

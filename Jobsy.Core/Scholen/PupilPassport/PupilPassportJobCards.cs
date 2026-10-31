@@ -13,7 +13,7 @@ public static class PupilPassportJobCards
     {
         var cards = new List<PupilPassportOccupationCard>();
         var rank = 1;
-        foreach (var key in jobKeys.Take(3))
+        foreach (var key in jobKeys.Take(set == PupilQuestionSet.Groep78 ? 5 : 3))
         {
             var title = PupilPassportLocalizedCopy.JobTitle(key, language);
             var domain = PupilPassportLocalizedCopy.JobDomain(key, language);

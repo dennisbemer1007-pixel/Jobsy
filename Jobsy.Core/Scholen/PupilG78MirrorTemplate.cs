@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen.PupilPassport;
@@ -10,6 +11,9 @@ public static class PupilG78MirrorTemplate
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
+    public const int MinSentences = 4;
+    public const int MaxSentences = 6;
+
     public static string Render(
         PupilResult result,
         PupilProgress? progress,
@@ -17,55 +21,200 @@ public static class PupilG78MirrorTemplate
         string language = "nl")
     {
         var english = PupilVerhaalLocalized.IsEnglish(language);
-        var likes = ParseChips(progress?.LikesJson);
-        var likeLabels = likes
-            .Select(k => PupilInterestChipCatalog.LikeChips.FirstOrDefault(c =>
-                string.Equals(c.Key, k, StringComparison.OrdinalIgnoreCase)))
-            .Where(c => c is not null)
-            .Select(c => PupilPassportLocalizedCopy.Get(c!.LabelKey, language))
-            .Take(3)
+        var sentences = english
+            ? BuildEnglishSentences(result, progress, vakScores)
+            : BuildDutchSentences(result, progress, vakScores);
+
+        return NormalizeSentences(sentences);
+    }
+
+    private static string NormalizeSentences(IReadOnlyList<string> sentences)
+    {
+        var cleaned = sentences
+            .Select(s => s.Trim())
+            .Where(s => s.Length > 0)
+            .Select(EnsurePeriod)
+            .Distinct(StringComparer.Ordinal)
+            .Take(MaxSentences)
             .ToList();
 
-        if (!string.IsNullOrWhiteSpace(progress?.LikeOtherWord))
+        return string.Join(' ', cleaned);
+    }
+
+    private static List<string> BuildDutchSentences(
+        PupilResult result,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vakScores)
+    {
+        var sentences = new List<string>(MaxSentences);
+        var holland = (result.HollandCode ?? "IS").Trim().ToUpperInvariant();
+        foreach (var letter in HollandLetters(holland).Take(2))
         {
-            likeLabels.Add(progress.LikeOtherWord.Trim());
+            var desc = RiasecDesc(letter, "nl");
+            if (!string.IsNullOrWhiteSpace(desc))
+            {
+                sentences.Add(desc);
+            }
         }
 
-        var holland = (result.HollandCode ?? "S").Trim().ToUpperInvariant();
-        var letter = holland.Length > 0 && "RIASEC".Contains(holland[0]) ? holland[0] : 'S';
-        var riasecKid = PupilPassportLocalizedCopy.Get($"LeerlingStory.Tile.Riasec.{letter}", language);
+        var strongFun = vakScores
+            .Where(e => e.Leuk >= 4 && e.Goed >= 4)
+            .OrderByDescending(e => e.Leuk + e.Goed)
+            .Take(3)
+            .ToList();
+        if (strongFun.Count > 0)
+        {
+            var names = strongFun.Select(s => PupilVakSubjectLabels.Nl(s.SubjectKey)).ToList();
+            sentences.Add(JoinDutchList(names) + " vind je leuk, en daar ben je ook goed in");
+        }
+        else
+        {
+            var strong = vakScores.Where(PupilVakScores.IsStrong).Take(3).ToList();
+            if (strong.Count > 0)
+            {
+                var names = strong.Select(s => PupilVakSubjectLabels.Nl(s.SubjectKey)).ToList();
+                sentences.Add("Op school ben je sterk in " + JoinDutchList(names));
+            }
+        }
+
+        var likes = LikeLabels(progress, english: false);
+        if (likes.Count > 0)
+        {
+            sentences.Add("In je vrije tijd vind je " + JoinDutchList(likes.Take(3).ToList()) + " leuk");
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.TopValue))
+        {
+            var valueLabel = PupilPassportLocalizedCopy
+                .Get($"LeerlingStory.Tile.Val.{result.TopValue.Trim()}", "nl")
+                .TrimEnd('.');
+            if (valueLabel.Length > 0)
+            {
+                sentences.Add(valueLabel + " vind je belangrijk");
+            }
+        }
+
+        var dreamKey = progress?.DreamJobKey ?? result.DreamJobKey;
+        if (!string.IsNullOrWhiteSpace(dreamKey))
+        {
+            var job = PupilPassportLocalizedCopy.JobTitle(dreamKey.Trim(), "nl");
+            sentences.Add("Later wil je misschien iets doen als " + job.ToLowerInvariant());
+        }
+
+        if (sentences.Count < MinSentences)
+        {
+            sentences.Add("Je gaf zelf antwoord over wat bij jou past.");
+        }
+
+        if (sentences.Count < MinSentences)
+        {
+            sentences.Add("Herken je jezelf in wat hier staat?");
+        }
+
+        return sentences;
+    }
+
+    private static List<string> BuildEnglishSentences(
+        PupilResult result,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vakScores)
+    {
+        var sentences = new List<string>(MaxSentences);
+        var holland = (result.HollandCode ?? "IS").Trim().ToUpperInvariant();
+        foreach (var letter in HollandLetters(holland).Take(2))
+        {
+            var desc = RiasecDesc(letter, "en");
+            if (!string.IsNullOrWhiteSpace(desc))
+            {
+                sentences.Add(desc);
+            }
+        }
 
         var strong = vakScores.Where(PupilVakScores.IsStrong).Take(3).ToList();
-        var subjectBit = strong.Count == 0
-            ? (english
-                ? "You rated your school subjects honestly."
-                : "Je gaf eerlijk antwoord over je schoolvakken.")
-            : (english
-                ? $"At school you feel strong in {string.Join(", ", strong.Select(s => PupilVakSubjectLabels.Nl(s.SubjectKey)))}."
-                : $"Op school ben je sterk in {string.Join(", ", strong.Select(s => PupilVakSubjectLabels.Nl(s.SubjectKey)))}.");
+        if (strong.Count > 0)
+        {
+            var names = strong.Select(s => PupilVakSubjectLabels.Nl(s.SubjectKey)).ToList();
+            sentences.Add("At school you feel strong in " + string.Join(", ", names) + ".");
+        }
 
-        var likeBit = likeLabels.Count == 0
-            ? ""
-            : (english
-                ? $" In your free time you like {string.Join(", ", likeLabels)}."
-                : $" In je vrije tijd vind je {string.Join(", ", likeLabels)} leuk.");
+        var likes = LikeLabels(progress, english: true);
+        if (likes.Count > 0)
+        {
+            sentences.Add("In your free time you like " + string.Join(", ", likes.Take(3)) + ".");
+        }
 
-        var valueKey = string.IsNullOrWhiteSpace(result.TopValue)
-            ? null
-            : $"LeerlingStory.Tile.Val.{result.TopValue.Trim()}";
-        var valueBit = valueKey is null
-            ? ""
-            : (english
-                ? $" What matters to you: {PupilPassportLocalizedCopy.Get(valueKey, language).TrimEnd('.')}."
-                : $" Wat jij belangrijk vindt: {PupilPassportLocalizedCopy.Get(valueKey, language).TrimEnd('.')}.");
+        if (!string.IsNullOrWhiteSpace(result.TopValue))
+        {
+            var valueLabel = PupilPassportLocalizedCopy
+                .Get($"LeerlingStory.Tile.Val.{result.TopValue.Trim()}", "en")
+                .TrimEnd('.');
+            if (valueLabel.Length > 0)
+            {
+                sentences.Add("You said " + valueLabel.ToLowerInvariant() + " matters to you.");
+            }
+        }
 
-        return (english
-                ? $"From your Lobsy journey: {riasecKid.TrimEnd('.')}."
-                : $"Uit jouw Lobsy-reis: {riasecKid.TrimEnd('.')}.")
-            + likeBit
-            + valueBit
-            + " "
-            + subjectBit;
+        return sentences;
+    }
+
+    private static IEnumerable<char> HollandLetters(string holland)
+    {
+        foreach (var ch in holland)
+        {
+            if ("RIASEC".Contains(ch))
+            {
+                yield return ch;
+            }
+        }
+    }
+
+    private static string RiasecDesc(char letter, string language)
+    {
+        var key = $"LeerlingPassport.G78.Riasec.{letter}.Desc";
+        var text = PupilPassportLocalizedCopy.Get(key, language).Trim();
+        if (string.IsNullOrWhiteSpace(text) || string.Equals(text, key, StringComparison.Ordinal))
+        {
+            return "";
+        }
+
+        return EnsurePeriod(text.TrimEnd('.'));
+    }
+
+    private static List<string> LikeLabels(PupilProgress? progress, bool english)
+    {
+        var likes = ParseChips(progress?.LikesJson);
+        var labels = (english
+                ? likes.Select(PupilPortalChipLabels.English)
+                : likes.Select(PupilPortalChipLabels.Dutch))
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+        if (!string.IsNullOrWhiteSpace(progress?.LikeOtherWord))
+        {
+            labels.Add(progress.LikeOtherWord.Trim());
+        }
+
+        return labels;
+    }
+
+    private static string JoinDutchList(IReadOnlyList<string> items) => items.Count switch
+    {
+        0 => "",
+        1 => items[0],
+        2 => $"{items[0]} en {items[1]}",
+        _ => string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
+    };
+
+    private static string EnsurePeriod(string sentence)
+        => sentence.EndsWith('.') ? sentence : sentence + ".";
+
+    public static int CountSentences(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return 0;
+        }
+
+        return Regex.Matches(text, @"(?<=[.!?])\s+").Count + 1;
     }
 
     public static CandidateFactSheet FactSheet(
@@ -74,6 +223,7 @@ public static class PupilG78MirrorTemplate
         IReadOnlyList<PupilVakScoreEntry> vakScores,
         string language)
     {
+        var english = PupilVerhaalLocalized.IsEnglish(language);
         var confirmed = new List<string>();
         foreach (var chip in ParseChips(progress?.LikesJson))
         {
@@ -81,7 +231,9 @@ public static class PupilG78MirrorTemplate
                 string.Equals(x.Key, chip, StringComparison.OrdinalIgnoreCase));
             if (c is not null)
             {
-                confirmed.Add(PupilPassportLocalizedCopy.Get(c.LabelKey, language));
+                confirmed.Add(english
+                    ? PupilPortalChipLabels.English(chip)
+                    : PupilPortalChipLabels.Dutch(chip));
             }
         }
 
