@@ -33,8 +33,6 @@ internal static class PupilPassportGroep78PdfRenderer
     private static readonly Color SoftGoldTint = Color.FromHex("#fff8e6");
     private static readonly Color MockChrome = Color.FromHex("#c4552a");
 
-    private static readonly float[] ValueBarWidths = [0.90f, 0.80f, 0.70f, 0.62f, 0.50f];
-
     private static float Mm(float mm) => mm * 72f / 25.4f;
 
     /// <summary>Calm highlight: warm cream fill, thin border, coloured left accent strip.</summary>
@@ -249,7 +247,18 @@ internal static class PupilPassportGroep78PdfRenderer
             col.Spacing(Mm(8));
             col.Item().Element(c => MirrorBox(c, m));
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
-                T(m, "LeerlingPassport.G78.Riasec.Sub"), inner => RiasecBars(inner, m, spacious: true)));
+                T(m, "LeerlingPassport.G78.Riasec.Sub"), inner =>
+                {
+                    if (m.G78RiasecPending)
+                    {
+                        inner.Text(T(m, "LeerlingPassport.G78.Riasec.Pending"))
+                            .FontSize(9.5f).Italic().FontColor(Muted).LineHeight(1.45f);
+                    }
+                    else
+                    {
+                        inner.Element(x => RiasecBars(x, m, spacious: true));
+                    }
+                }));
             col.Item().Row(row =>
             {
                 row.RelativeItem().MinWidth(0).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Culture.Title"), null,
@@ -303,18 +312,20 @@ internal static class PupilPassportGroep78PdfRenderer
                     }
                 }));
 
-            var valueLabels = ValueBarLabels(m);
-            if (valueLabels.Count > 0)
+            var valueBars = m.ValueBars ?? [];
+            if (valueBars.Count > 0)
             {
                 col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Values.Title"),
                     T(m, "LeerlingPassport.G78.Values.Sub"), inner =>
                     {
                         inner.Column(box =>
                         {
-                            for (var i = 0; i < valueLabels.Count; i++)
+                            for (var i = 0; i < valueBars.Count; i++)
                             {
+                                var bar = valueBars[i];
+                                var ratio = Math.Clamp(bar.ScorePercent / 100f, 0.05f, 1f);
                                 box.Item().PaddingTop(i == 0 ? 0 : 5)
-                                    .Element(x => ValueBar(x, valueLabels[i], ValueBarWidths[Math.Min(i, ValueBarWidths.Length - 1)], spacious: true));
+                                    .Element(x => ValueBar(x, bar.Label, ratio, spacious: true));
                             }
 
                             box.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Values.Question"))
@@ -449,9 +460,11 @@ internal static class PupilPassportGroep78PdfRenderer
                             var key = keys[i];
                             var occ = i < cards.Count ? cards[i] : null;
                             var title = occ?.Title ?? PupilPassportLocalizedCopy.JobTitle(key, m.Language);
-                            var sub = occ is not null && occ.FitTags.Count > 0
-                                ? string.Join(" & ", occ.FitTags.Take(2))
-                                : JobCardSubtitle(m, key);
+                            var sub = occ is not null && !string.IsNullOrWhiteSpace(occ.DomainLabel)
+                                ? occ.DomainLabel
+                                : occ is not null && occ.FitTags.Count > 0
+                                    ? string.Join(" & ", occ.FitTags.Take(2))
+                                    : JobCardSubtitle(m, key);
                             card.Background(CreamWarm).Border(1).BorderColor(Border).CornerRadius(Mm(1))
                                 .Padding(Mm(3)).Column(inner =>
                                 {
@@ -843,21 +856,6 @@ internal static class PupilPassportGroep78PdfRenderer
                     });
             }
         });
-    }
-
-    private static IReadOnlyList<string> ValueBarLabels(PupilPassportPdfModel m)
-    {
-        var fromTiles = (m.DnaTiles ?? [])
-            .Select(t => t.Label)
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Take(5)
-            .ToList();
-        if (fromTiles.Count > 0)
-        {
-            return fromTiles;
-        }
-
-        return m.Strengths.Select(s => s.Title).Where(s => !string.IsNullOrWhiteSpace(s)).Take(5).ToList();
     }
 
     private static void ValueBar(IContainer c, string label, float widthRatio, bool spacious = false)

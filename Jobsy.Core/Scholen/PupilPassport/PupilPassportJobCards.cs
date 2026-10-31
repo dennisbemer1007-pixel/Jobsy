@@ -32,6 +32,38 @@ public static class PupilPassportJobCards
         return cards;
     }
 
+    public static IReadOnlyList<PupilPassportOccupationCard> BuildGroep78(
+        IReadOnlyList<PupilG78JobMatch> matches,
+        string language = "nl")
+    {
+        var english = PupilVerhaalLocalized.IsEnglish(language);
+        var cards = new List<PupilPassportOccupationCard>();
+        var rank = 1;
+        foreach (var match in matches)
+        {
+            var key = match.JobKey;
+            var beroepKey = PupilG78CareerScoring.PrimaryBeroepssoortKey(key);
+            var domain = beroepKey is null
+                ? ""
+                : PupilG78BeroepssoortCatalog.Title(beroepKey, english);
+            var title = PupilPassportLocalizedCopy.JobTitle(key, language);
+            var blurb = PupilPassportLocalizedCopy.JobBlurb(key, PupilQuestionSet.Groep78, language);
+            var tags = string.IsNullOrWhiteSpace(domain)
+                ? Array.Empty<string>()
+                : new[] { domain };
+            cards.Add(new PupilPassportOccupationCard(
+                rank,
+                domain,
+                title,
+                blurb,
+                tags,
+                IconFor(key)));
+            rank++;
+        }
+
+        return cards;
+    }
+
     private static IReadOnlyList<string> FitTags(IReadOnlyList<string> likes)
     {
         var tags = new List<string>(3);

@@ -29,10 +29,11 @@ public class ExportG78PassportSampleTests
             HollandCode = "RI",
             DreamJobKey = "kok",
             RiasecScoresJson =
-                """{"Realistic":86,"Investigative":74,"Artistic":48,"Social":61,"Enterprising":35,"Conventional":30}""",
+                """{"realistic":86,"investigative":74,"artistic":48,"social":61,"enterprising":35,"conventional":30}""",
             CultureScoresJson =
-                """{"Collaboration":35,"PeopleFirst":75,"Informal":30,"Flexibility":65}""",
-            ValuesScoresJson = "{}",
+                """{"collaboration":35,"peopleFirst":75,"informal":30,"flexibility":65}""",
+            ValuesScoresJson =
+                """{"autonomy":62,"connection":84,"achievement":71,"stability":48,"impact":66}""",
             CompetenceScoresJson = "{}",
             TopValue = "Connection"
         };

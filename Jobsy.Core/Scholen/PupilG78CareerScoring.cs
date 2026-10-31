@@ -9,47 +9,62 @@ public sealed record PupilG78BeroepssoortRank(string Key, double Score);
 
 public sealed record PupilG78SchoolDirectionRank(string Key, double Score);
 
+public sealed record PupilG78JobMatch(string JobKey, double MatchScore);
+
 /// <summary>Deterministic G78 job and beroepssoort ranking (no AI).</summary>
 public static class PupilG78CareerScoring
 {
+    private const double DefaultMinJobMatch = 0.70;
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
+
+    public static IReadOnlyList<PupilG78JobMatch> TopJobMatches(
+        PupilResult result,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vakScores,
+        double minMatch = DefaultMinJobMatch,
+        int maxCount = 5)
+    {
+        var riasec = Deserialize<RiasecScores>(result.RiasecScoresJson);
+        var likes = ParseChips(progress?.LikesJson);
+        var threshold = Math.Clamp(minMatch, 0, 1);
+        return CandidateJobKeys(likes)
+            .Select(key => (Key: key, Score: ScoreJob(key, riasec, likes, vakScores)))
+            .Where(x => x.Score > threshold)
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(maxCount)
+            .Select(x => new PupilG78JobMatch(x.Key, x.Score))
+            .ToList();
+    }
 
     public static IReadOnlyList<string> TopJobKeys(
         PupilResult result,
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vakScores,
         int take = 5)
-    {
-        var riasec = Deserialize<RiasecScores>(result.RiasecScoresJson);
-        var likes = ParseChips(progress?.LikesJson);
-        var candidates = CandidateJobKeys(likes);
-        var ranked = candidates
-            .Select(key => (Key: key, Score: ScoreJob(key, riasec, likes, vakScores)))
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
-            .Take(take)
-            .Select(x => x.Key)
+        => TopJobMatches(result, progress, vakScores, DefaultMinJobMatch, take)
+            .Select(m => m.JobKey)
             .ToList();
 
-        if (ranked.Count >= take)
+    /// <summary>Primary beroepsgroep cluster for a job key (for PDF labels).</summary>
+    public static string? PrimaryBeroepssoortKey(string jobKey)
+    {
+        if (string.IsNullOrWhiteSpace(jobKey))
         {
-            return ranked;
+            return null;
         }
 
-        foreach (var fallback in DefaultJobKeys(result))
+        string? match = null;
+        foreach (var entry in PupilG78BeroepssoortCatalog.All)
         {
-            if (ranked.Count >= take)
+            if (BeroepJobHints(entry.Key).Any(h =>
+                    string.Equals(jobKey, h, StringComparison.OrdinalIgnoreCase)))
             {
-                break;
-            }
-
-            if (!ranked.Contains(fallback, StringComparer.OrdinalIgnoreCase))
-            {
-                ranked.Add(fallback);
+                match = entry.Key;
             }
         }
 
-        return ranked;
+        return match;
     }
 
     public static IReadOnlyList<PupilG78BeroepssoortRank> TopBeroepssoorten(
@@ -352,18 +367,6 @@ public static class PupilG78CareerScoring
         }
 
         return set;
-    }
-
-    private static IReadOnlyList<string> DefaultJobKeys(PupilResult result)
-    {
-        var holland = (result.HollandCode ?? "S").Trim().ToUpperInvariant();
-        var letters = holland.Where(c => "RIASEC".Contains(c)).Take(2).ToList();
-        if (letters.Count == 0)
-        {
-            letters = ['S'];
-        }
-
-        return PupilRiasecJobIdeas.ForLetters(letters, PupilQuestionSet.Groep78, null);
     }
 
     private static IReadOnlyList<char> JobPrimaryLetters(string jobKey)
