@@ -103,18 +103,19 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
         for (var step = 1; step <= 5; step++)
         {
+            if (step == 2)
+            {
+                await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, 2);
+                await FunctionalOnboardingInteractivityHelpers.SelectFirstPresetAndAdvanceFromStep2Async(page);
+                continue;
+            }
+
             await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, step);
             await FunctionalOnboardingInteractivityHelpers.AssertOnboardingStepInteractiveAsync(page, step);
             if (step == 1)
             {
                 await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
                 await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
-                continue;
-            }
-
-            if (step == 2)
-            {
-                await FunctionalOnboardingInteractivityHelpers.SelectFirstPresetAndAdvanceFromStep2Async(page);
                 continue;
             }
 

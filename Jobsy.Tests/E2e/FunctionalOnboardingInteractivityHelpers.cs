@@ -540,6 +540,14 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         for (var step = 1; step <= 10; step++)
         {
+            if (step == 2)
+            {
+                await WaitForStepIllustrationLoadedAsync(page, 2);
+                await SelectFirstPresetAndAdvanceFromStep2Async(page);
+                await WaitForStepIllustrationLoadedAsync(page, 3);
+                continue;
+            }
+
             await AssertOnboardingStepInteractiveAsync(page, step);
 
             switch (step)
@@ -548,10 +556,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     await ClickWizardNextWhenVisibleAsync(page);
                     await OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
                     await WaitForStepIllustrationLoadedAsync(page, 2);
-                    break;
-                case 2:
-                    await SelectFirstPresetAndAdvanceFromStep2Async(page);
-                    await WaitForStepIllustrationLoadedAsync(page, 3);
                     break;
                 case 3:
                     await SelectTransportAndTravelMinutesAsync(page, 30);
@@ -1239,7 +1243,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
         if (await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0
             && (await ReadSsrFormActiveStepAsync(page)) >= 7)
         {
-            await CompleteOnboardingForSkipTestsLaterViaApiAsync(page);
             await GotoBanenkaartFromPageAsync(page);
             await WaitForBanenkaartDiscoveryShellAsync(page);
             return;
@@ -1345,32 +1348,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.GotoAsync(
             $"{baseUrl}/banenkaart",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-    }
-
-    private static async Task CompleteOnboardingForSkipTestsLaterViaApiAsync(IPage page)
-    {
-        var baseUrl = new Uri(page.Url).GetLeftPart(UriPartial.Authority);
-        var save = await page.APIRequest.PutAsync(
-            $"{baseUrl}/api/me/onboarding",
-            new()
-            {
-                DataObject = new
-                {
-                    currentStep = 6,
-                    stepCompleted = true,
-                    finishReached = true,
-                },
-            });
-        if (!save.Ok)
-        {
-            throw new InvalidOperationException($"Onboarding progress save failed: HTTP {(int)save.Status}");
-        }
-
-        var complete = await page.APIRequest.PostAsync($"{baseUrl}/api/me/onboarding/complete");
-        if (!complete.Ok)
-        {
-            throw new InvalidOperationException($"Onboarding complete failed: HTTP {(int)complete.Status}");
-        }
     }
 
     private static async Task WaitForBanenkaartDiscoveryShellAsync(IPage page)
@@ -1592,14 +1569,52 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task CompleteCurrentMiniTestBlockAsync(IPage page)
     {
+        if (await page.Locator("[data-testid=onboarding-mini-likert]").CountAsync() > 0)
+        {
+            var step = await ReadOnboardingWizardStepAsync(page);
+            for (var q = 1; q <= 5; q++)
+            {
+                if (await page.Locator("[data-testid=onboarding-mini-likert]").CountAsync() == 0)
+                {
+                    break;
+                }
+
+                await page.Locator("[data-testid=onboarding-mini-likert]").Nth(2)
+                    .ClickAsync(new() { Force = true, Timeout = 20_000 });
+                if (q < 5)
+                {
+                    await page.WaitForURLAsync($"**/candidate/start?step={step}&q={q + 1}**", new() { Timeout = 90_000 });
+                }
+
+                await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            }
+
+            var next = page.GetByTestId("onboarding-next");
+            if (await next.CountAsync() > 0)
+            {
+                await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                if (step is >= 7 and <= 9)
+                {
+                    await page.WaitForURLAsync($"**/candidate/start?step={step + 1}**", new() { Timeout = 120_000 });
+                }
+                else if (step == 10)
+                {
+                    await page.WaitForURLAsync("**/candidate/start/kompas**", new() { Timeout = 120_000 });
+                }
+            }
+
+            await WaitForCircuitReadyAsync(page);
+            return;
+        }
+
         for (var q = 0; q < 5; q++)
         {
-            if (await page.Locator("[data-testid=onboarding-mini-likert], .test-likert__opt").CountAsync() == 0)
+            if (await page.Locator(".test-likert__opt").CountAsync() == 0)
             {
                 break;
             }
 
-            await AnswerCurrentMiniLikertAsync(page);
+            await page.Locator(".test-likert__opt").Nth(2).ClickAsync(new() { Force = true, Timeout = 20_000 });
             await WaitForCircuitReadyAsync(page);
             await page.WaitForTimeoutAsync(350);
         }
@@ -1609,14 +1624,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
         {
             await flowNext.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
             await flowNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
-            await WaitForCircuitReadyAsync(page);
-            return;
-        }
-
-        var ssrNext = page.GetByTestId("onboarding-next");
-        if (await ssrNext.CountAsync() > 0 && await ssrNext.IsVisibleAsync())
-        {
-            await ssrNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
             await WaitForCircuitReadyAsync(page);
         }
     }
@@ -1638,8 +1645,8 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AssertOnKompasFinishScreenAsync(IPage page)
     {
-        await page.Locator(".ob-wizard__finish, .ob-finale").First
-            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 180_000 });
+        var kompas = page.Locator("[data-ob-rustig-screen=kompas], .ob-wizard__finish, .ob-finale").First;
+        await kompas.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 180_000 });
     }
 
     /// <summary>
