@@ -41,7 +41,8 @@ namespace Jobsy.Tests.Scholen;
 public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWebAppFactory>, IAsyncLifetime
 {
     private readonly RoleFunctionalWebAppFactory _api;
-    private PupilKestrelFactory? _web;
+    private static readonly object SharedWebGate = new();
+    private static PupilKestrelFactory? _sharedWeb;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -53,6 +54,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.Equal(0, exit);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+        _ = EnsureWeb();
     }
 
     public async ValueTask DisposeAsync()
@@ -63,7 +65,6 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         }
 
         _playwright?.Dispose();
-        _web?.Dispose();
     }
 
     [Fact(Timeout = 300_000)]
@@ -2677,32 +2678,34 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private string EnsureWeb()
     {
-        if (_web is not null)
+        lock (SharedWebGate)
         {
-            return _web.ServerAddress.TrimEnd('/');
-        }
-
-        // Disposing a Kestrel host mid-suite can stop the next host
-        // (background-service cancellation). One host for the class avoids that.
-        InvalidOperationException? last = null;
-        for (var attempt = 0; attempt < 2; attempt++)
-        {
-            try
+            if (_sharedWeb is not null)
             {
-                _web?.Dispose();
-                _web = new PupilKestrelFactory(_api.Server.CreateHandler());
-                _ = _web.CreateClient();
-                return _web.ServerAddress.TrimEnd('/');
+                return _sharedWeb.ServerAddress.TrimEnd('/');
             }
-            catch (InvalidOperationException ex)
-            {
-                last = ex;
-                _web?.Dispose();
-                _web = null;
-            }
-        }
 
-        throw last ?? new InvalidOperationException("Pupil web host did not start.");
+            // One Kestrel host for the suite avoids background-service cancellation
+            // when a per-test host is torn down mid-run.
+            InvalidOperationException? last = null;
+            for (var attempt = 0; attempt < 4; attempt++)
+            {
+                try
+                {
+                    var factory = new PupilKestrelFactory(_api.Server.CreateHandler());
+                    _ = factory.CreateClient();
+                    _sharedWeb = factory;
+                    return factory.ServerAddress.TrimEnd('/');
+                }
+                catch (InvalidOperationException ex)
+                {
+                    last = ex;
+                    Thread.Sleep(200 * (attempt + 1));
+                }
+            }
+
+            throw last ?? new InvalidOperationException("Pupil web host did not start.");
+        }
     }
 
     private static readonly PageWaitForURLOptions DomReady = new()
