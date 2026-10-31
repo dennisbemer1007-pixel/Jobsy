@@ -163,6 +163,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Cover.Title"] = "Wie ben ik en\nwaar kan ik naartoe?";
         d["LeerlingPassport.G78.Cover.Sub"] = "Bijlagen bij je Lobsy-reis · groep 7/8";
         d["LeerlingPassport.G78.Cover.Kicker"] = "MIJN PASPOORT · BIJLAGEN";
+        d["LeerlingPassport.G78.MockChrome"] = "VOORBEELDDATA · mockup";
         d["LeerlingPassport.G78.Cover.Intro"] =
             "Wat jij zelf over jezelf vertelde, op een rij. Om in jezelf te herkennen, om over te praten en om verder mee te ontdekken.";
         d["LeerlingPassport.G78.Cover.About"] = "Over dit document";

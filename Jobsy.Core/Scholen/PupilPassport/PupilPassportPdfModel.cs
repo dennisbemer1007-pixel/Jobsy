@@ -106,4 +106,6 @@ public sealed record PupilPassportPdfModel(
     IReadOnlyList<string>? TopJobKeys = null,
     string? SamenAssignment = null,
     IReadOnlyList<string>? UsageParentTips = null,
-    IReadOnlyList<string>? UsageTeacherTips = null);
+    IReadOnlyList<string>? UsageTeacherTips = null,
+    /// <summary>Red-orange VOORBEELDDATA chrome (export/mock only).</summary>
+    bool G78BijlagenMockChrome = false);

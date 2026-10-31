@@ -30,7 +30,7 @@ internal static class PupilPassportGroep78PdfRenderer
     private static readonly Color NoticeBg = Color.FromHex("#fbf3e8");
     private static readonly Color MirrorGold = Color.FromHex("#ffd966");
     private static readonly Color MirrorSource = Color.FromHex("#b9c6da");
-    private static readonly Color MockChrome = Color.FromHex("#df5530");
+    private static readonly Color MockChrome = Color.FromHex("#c4552a");
 
     private static readonly float[] ValueBarWidths = [0.90f, 0.80f, 0.70f, 0.62f, 0.50f];
 
@@ -572,18 +572,14 @@ internal static class PupilPassportGroep78PdfRenderer
         var raw = NormalizePdfLine(m.MirrorBody ?? m.StoryBody);
         var body = raw.Length > 520 ? raw[..517] + "…" : raw;
 
-        c.MinHeight(Mm(22)).CornerRadius(Mm(1.5f)).Layers(layers =>
+        c.MinHeight(Mm(22)).CornerRadius(Mm(1.5f)).Background(Navy).Padding(Mm(3.5f)).Column(col =>
         {
-            layers.Layer().Svg(PupilPassportG78BijlagenVisuals.MirrorGradientBackground()).FitArea();
-            layers.PrimaryLayer().Padding(Mm(3.5f)).Column(col =>
-            {
-                col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
-                    .Bold().FontSize(12).FontColor(MirrorGold);
-                col.Item().PaddingTop(4).Text(body)
-                    .FontFamily(MirrorFont).FontSize(11).FontColor(Colors.White).LineHeight(1.6f);
-                col.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
-                    .FontSize(7.5f).FontColor(MirrorSource);
-            });
+            col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
+                .Bold().FontSize(12).FontColor(MirrorGold);
+            col.Item().PaddingTop(4).Text(body)
+                .FontFamily(MirrorFont).FontSize(11).FontColor(Colors.White).LineHeight(1.6f);
+            col.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
+                .FontSize(7.5f).FontColor(MirrorSource);
         });
     }
 
