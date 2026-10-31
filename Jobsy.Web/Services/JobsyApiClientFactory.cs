@@ -78,7 +78,8 @@ public static class JobsyApiClientFactory
         return new HttpClient(handler)
         {
             BaseAddress = new Uri(apiBaseUrl),
-            Timeout = TimeSpan.FromSeconds(20)
+            // Occupation-day admin regenerate/generate can run many OpenAI calls in one request.
+            Timeout = TimeSpan.FromMinutes(45)
         };
     }
 
