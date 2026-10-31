@@ -420,8 +420,17 @@ internal static class PupilPassportGroep78PdfRenderer
                     }));
             });
 
-            col.Item().PaddingTop(Mm(3)).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Jobs.Title"), null,
-                inner => inner.Element(JobCardsRow)));
+            col.Item().PaddingTop(Mm(3)).Element(c =>
+            {
+                var jobCards = (m.OccupationCards ?? []).Take(5).ToList();
+                var jobsTitle = jobCards.Count is > 0 and < 5
+                    ? T(m, "LeerlingPassport.G78.Jobs.TitleFew")
+                    : T(m, "LeerlingPassport.G78.Jobs.Title");
+                var jobsSub = jobCards.Count is > 0 and < 5
+                    ? T(m, "LeerlingPassport.G78.Jobs.FewSub")
+                    : null;
+                SectionBox(c, jobsTitle, jobsSub, inner => inner.Element(jc => JobCardsRow(jc, m, jobCards)));
+            });
 
             col.Item().PaddingTop(Mm(3)).Column(tail =>
             {
@@ -436,46 +445,62 @@ internal static class PupilPassportGroep78PdfRenderer
                 }
             });
 
-            void JobCardsRow(IContainer jc)
+            void JobCardsRow(IContainer jc, PupilPassportPdfModel model, IReadOnlyList<PupilPassportOccupationCard> cards)
             {
-                var keys = (m.TopJobKeys ?? []).Take(5).ToList();
-                var cards = (m.OccupationCards ?? []).Take(5).ToList();
+                if (cards.Count == 0)
+                {
+                    jc.Text(T(model, "LeerlingPassport.G78.Jobs.FewSub"))
+                        .FontSize(9f).Italic().FontColor(Muted);
+                    return;
+                }
+
+                var spacious = cards.Count <= 2;
+                var iconH = spacious ? 26f : 20f;
+                var pad = spacious ? Mm(4.5f) : Mm(3f);
                 jc.Row(row =>
                 {
-                    for (var i = 0; i < 5; i++)
+                    for (var i = 0; i < cards.Count; i++)
                     {
                         if (i > 0)
                         {
-                            row.ConstantItem(4);
+                            row.ConstantItem(spacious ? 8 : 4);
+                        }
+
+                        var occ = cards[i];
+                        var jobKey = (model.TopJobKeys ?? []).ElementAtOrDefault(i);
+                        if (string.IsNullOrWhiteSpace(jobKey))
+                        {
+                            return;
                         }
 
                         row.RelativeItem().MinWidth(0).Element(card =>
                         {
-                            if (i >= keys.Count)
-                            {
-                                card.MinHeight(48);
-                                return;
-                            }
-
-                            var key = keys[i];
-                            var occ = i < cards.Count ? cards[i] : null;
-                            var title = occ?.Title ?? PupilPassportLocalizedCopy.JobTitle(key, m.Language);
-                            var sub = occ is not null && !string.IsNullOrWhiteSpace(occ.DomainLabel)
+                            var sub = !string.IsNullOrWhiteSpace(occ.DomainLabel)
                                 ? occ.DomainLabel
-                                : occ is not null && occ.FitTags.Count > 0
+                                : occ.FitTags.Count > 0
                                     ? string.Join(" & ", occ.FitTags.Take(2))
-                                    : JobCardSubtitle(m, key);
+                                    : JobCardSubtitle(model, jobKey);
                             card.Background(CreamWarm).Border(1).BorderColor(Border).CornerRadius(Mm(1))
-                                .Padding(Mm(3)).Column(inner =>
+                                .Padding(pad).Column(inner =>
                                 {
-                                    inner.Item().AlignCenter().Height(20)
-                                        .Svg(PupilPassportG78BijlagenVisuals.JobEmojiGlyph(key)).FitArea();
-                                    inner.Item().AlignCenter().PaddingTop(2).Text(TruncateLabel(title, 22)).FontSize(9f).SemiBold()
-                                    .FontColor(Ink).LineHeight(1.15f);
+                                    inner.Item().AlignCenter().Height(iconH)
+                                        .Svg(PupilPassportG78BijlagenVisuals.JobEmojiGlyph(jobKey)).FitArea();
+                                    if (occ.MatchPercent is > 0)
+                                    {
+                                        inner.Item().AlignCenter().PaddingTop(2)
+                                            .Text(FormatJobMatchPercent(model, occ.MatchPercent.Value))
+                                            .FontSize(spacious ? 8.5f : 8f).SemiBold().FontColor(Kicker);
+                                    }
+
+                                    inner.Item().AlignCenter().PaddingTop(2)
+                                        .Text(TruncateLabel(occ.Title, spacious ? 26 : 22))
+                                        .FontSize(spacious ? 10f : 9f).SemiBold()
+                                        .FontColor(Ink).LineHeight(1.15f);
                                     if (!string.IsNullOrWhiteSpace(sub))
                                     {
                                         inner.Item().AlignCenter().PaddingTop(2)
-                                            .Text(TruncateLabel(sub, 28)).FontSize(7f).FontColor(Muted).LineHeight(1.1f);
+                                            .Text(TruncateLabel(sub, spacious ? 32 : 28))
+                                            .FontSize(7f).FontColor(Muted).LineHeight(1.1f);
                                     }
                                 });
                         });
@@ -1002,6 +1027,12 @@ internal static class PupilPassportGroep78PdfRenderer
             }
         });
     }
+
+    private static string FormatJobMatchPercent(PupilPassportPdfModel m, int percent)
+        => string.Format(
+            System.Globalization.CultureInfo.InvariantCulture,
+            T(m, "LeerlingPassport.G78.Jobs.MatchPercent"),
+            percent);
 
     private static string JobCardSubtitle(PupilPassportPdfModel m, string jobKey)
     {

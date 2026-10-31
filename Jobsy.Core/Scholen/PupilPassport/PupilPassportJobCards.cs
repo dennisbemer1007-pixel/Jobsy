@@ -51,13 +51,15 @@ public static class PupilPassportJobCards
             var tags = string.IsNullOrWhiteSpace(domain)
                 ? Array.Empty<string>()
                 : new[] { domain };
+            var matchPercent = PupilG78CareerScoring.MatchPercentInt(match.MatchScore);
             cards.Add(new PupilPassportOccupationCard(
                 rank,
                 domain,
                 title,
                 blurb,
                 tags,
-                IconFor(key)));
+                IconFor(key),
+                matchPercent));
             rank++;
         }
 

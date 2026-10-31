@@ -29,13 +29,17 @@ public static class PupilG78CareerScoring
         var threshold = Math.Clamp(minMatch, 0, 1);
         return CandidateJobKeys(likes)
             .Select(key => (Key: key, Score: ScoreJob(key, riasec, likes, vakScores)))
-            .Where(x => x.Score > threshold)
+            .Where(x => x.Score >= threshold)
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
             .Take(maxCount)
             .Select(x => new PupilG78JobMatch(x.Key, x.Score))
             .ToList();
     }
+
+    /// <summary>Rounded 0–100 display percent from the same 0–1 score used for ranking and threshold.</summary>
+    public static int MatchPercentInt(double matchScore)
+        => Math.Clamp((int)Math.Round(Math.Clamp(matchScore, 0, 1) * 100, MidpointRounding.AwayFromZero), 0, 100);
 
     public static IReadOnlyList<string> TopJobKeys(
         PupilResult result,

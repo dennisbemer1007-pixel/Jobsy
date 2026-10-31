@@ -132,6 +132,9 @@ public static class PupilPassportLocalizedCopy
         "LeerlingPassport.Discover.Letter.S.1" => "In which job do you help others the most?",
         "LeerlingPassport.Discover.Letter.S.2" => "When do you feel most useful?",
         "LeerlingPassport.Discover.Letter.S.3" => "Which outing or internship fits care or animals?",
+        "LeerlingPassport.G78.Jobs.TitleFew" => "Jobs that fit you",
+        "LeerlingPassport.G78.Jobs.FewSub" => "These are the jobs that fit you best.",
+        "LeerlingPassport.G78.Jobs.MatchPercent" => "{0}% match",
         _ when key.StartsWith("LeerlingPassport.Tip.", StringComparison.Ordinal) && EnTips.TryGetValue(key, out var tip) => tip,
         _ => nl
     };
