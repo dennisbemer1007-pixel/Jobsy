@@ -89,6 +89,17 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPut("progress/vakscores")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SaveVakScores(
+        [FromBody] PupilVakScoresRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveVakScoresAsync(User, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpPut("progress/chips")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
     public async Task<IActionResult> SaveChips(

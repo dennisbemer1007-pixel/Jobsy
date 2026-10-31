@@ -43,13 +43,14 @@ public static class PupilDreamJobFit
         var riasec = Deserialize<RiasecScores>(result.RiasecScoresJson);
         var values = Deserialize<SchwartzValuesScores>(result.ValuesScoresJson);
         var likes = ParseChips(progress?.LikesJson);
+        var vakScores = PupilVakScores.Parse(progress?.VakScoresJson);
 
         var haveKeys = new List<string>();
         var needKeys = new List<string>();
         var metFlags = new List<bool>(route.Needs.Count);
         foreach (var need in route.Needs)
         {
-            var met = IsMet(need, competence, riasec, values, likes);
+            var met = IsMet(need, competence, riasec, values, likes, vakScores);
             metFlags.Add(met);
             var sentenceKey = $"LeerlingDroom.Need.{need.NeedKey}";
             if (met)
@@ -133,7 +134,8 @@ public static class PupilDreamJobFit
         CompetencyScores? competence,
         RiasecScores? riasec,
         SchwartzValuesScores? values,
-        IReadOnlySet<string> likes)
+        IReadOnlySet<string> likes,
+        IReadOnlyList<PupilVakScoreEntry> vakScores)
     {
         return need.Signal switch
         {
@@ -166,9 +168,23 @@ public static class PupilDreamJobFit
             PupilNeedSignal.ChipProgrammeren => likes.Contains("programmeren") || likes.Contains("computers"),
             PupilNeedSignal.ChipRekenen => likes.Contains("rekenen") || likes.Contains("puzzels"),
             PupilNeedSignal.ChipGamen => likes.Contains("gamen") || likes.Contains("filmpjes"),
+            PupilNeedSignal.SubjectRekenen => SubjectMet(vakScores, "rekenen"),
+            PupilNeedSignal.SubjectLezen => SubjectMet(vakScores, "lezen"),
+            PupilNeedSignal.SubjectNatuurTechniek => SubjectMet(vakScores, "natuur-techniek"),
+            PupilNeedSignal.SubjectTekenen => SubjectMet(vakScores, "tekenen"),
+            PupilNeedSignal.SubjectEngels => SubjectMet(vakScores, "engels"),
+            PupilNeedSignal.SubjectGym => SubjectMet(vakScores, "gym"),
+            PupilNeedSignal.SubjectMuziek => SubjectMet(vakScores, "muziek"),
             PupilNeedSignal.AlwaysCurious => true,
             _ => false
         };
+    }
+
+    private static bool SubjectMet(IReadOnlyList<PupilVakScoreEntry> vakScores, string subjectKey)
+    {
+        var entry = vakScores.FirstOrDefault(v =>
+            string.Equals(v.SubjectKey, subjectKey, StringComparison.OrdinalIgnoreCase));
+        return entry is not null && PupilVakScores.SubjectWeight(entry) >= 0.5;
     }
 
     private static HashSet<string> ParseChips(string? json)

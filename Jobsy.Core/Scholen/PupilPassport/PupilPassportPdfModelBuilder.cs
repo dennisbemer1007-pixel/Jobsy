@@ -2,6 +2,7 @@ using System.Text.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen.PupilPassport;
 
@@ -114,6 +115,61 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             }
         }
 
+        string? mirrorBody = null;
+        IReadOnlyList<PupilPassportRiasecBar>? riasecBars = null;
+        IReadOnlyList<PupilPassportCultureSlider>? cultureSliders = null;
+        IReadOnlyList<PupilPassportSubjectGroup>? subjectGroups = null;
+        IReadOnlyList<PupilG78BeroepssoortCard>? beroepen = null;
+        IReadOnlyList<PupilG78SchoolDirectionCard>? directions = null;
+        IReadOnlyList<string>? topJobs = null;
+        string? samen = null;
+        IReadOnlyList<string>? parentTips = null;
+        IReadOnlyList<string>? teacherTips = null;
+
+        if (variant == PupilPassportVariant.Groep78)
+        {
+            var vak = PupilVakScores.Parse(progress?.VakScoresJson);
+            mirrorBody = PupilG78MirrorTemplate.Render(result, progress, vak, lang);
+            riasecBars = BuildRiasecBars(result);
+            cultureSliders = BuildCultureSliders(result, lang);
+            subjectGroups = PupilG78SubjectGroups.Build(vak, result, lang);
+            var beroepRanks = PupilG78CareerScoring.TopBeroepssoorten(result, vak, take: 10);
+            var english = PupilVerhaalLocalized.IsEnglish(lang);
+            beroepen = beroepRanks
+                .Select((r, i) => new PupilG78BeroepssoortCard(
+                    i + 1,
+                    r.Key,
+                    PupilG78BeroepssoortCatalog.Title(r.Key, english),
+                    PupilG78BeroepssoortCatalog.Omdat(r.Key, english)))
+                .ToList();
+            directions = PupilG78CareerScoring.TopSchoolDirections(result, vak, take: 3)
+                .Select(r =>
+                {
+                    var entry = PupilG78SchoolDirectionCatalog.TryGet(r.Key);
+                    return entry is null
+                        ? null
+                        : new PupilG78SchoolDirectionCard(
+                            r.Key,
+                            english ? entry.TitleEn : entry.TitleNl,
+                            english ? entry.IdeaEn : entry.IdeaNl);
+                })
+                .Where(c => c is not null)
+                .Cast<PupilG78SchoolDirectionCard>()
+                .ToList();
+            topJobs = PupilG78CareerScoring.TopJobKeys(result, progress, vak, take: 5);
+            samen = BuildSamenAssignment(result, lang);
+            parentTips =
+            [
+                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Parent.1"),
+                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Parent.2"),
+            ];
+            teacherTips =
+            [
+                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Teacher.1"),
+                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Teacher.2"),
+            ];
+        }
+
         return new PupilPassportPdfModel(
             Variant: variant,
             Language: language,
@@ -162,7 +218,99 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             LevelInfoSubline: levelSub,
             FavoriteSubjectsSubline: favSub,
             SideJobInfoSubline: sideSub,
-            TravelInfoSubline: travelSub);
+            TravelInfoSubline: travelSub,
+            MirrorBody: mirrorBody,
+            RiasecBars: riasecBars,
+            CultureSliders: cultureSliders,
+            SubjectGroups: subjectGroups,
+            BeroepssoortRanks: beroepen,
+            SchoolDirections: directions,
+            TopJobKeys: topJobs,
+            SamenAssignment: samen,
+            UsageParentTips: parentTips,
+            UsageTeacherTips: teacherTips);
+    }
+
+    private static string BuildSamenAssignment(PupilResult result, string language)
+    {
+        var holland = (result.HollandCode ?? "S").Trim().ToUpperInvariant();
+        var letters = holland.Where(c => "RIASEC".Contains(c)).Take(2).ToList();
+        if (letters.Count == 0)
+        {
+            letters = ['S'];
+        }
+
+        var prompts = PupilStoryTemplates.ClassDiscussionPromptKeys(
+            letters[0].ToString(),
+            letters.Count > 1 ? letters[1].ToString() : letters[0].ToString());
+        return string.Join("\n\n", prompts.Select(k => PupilPassportLocalizedCopy.Get(k, language)));
+    }
+
+    private static IReadOnlyList<PupilPassportRiasecBar> BuildRiasecBars(PupilResult result)
+    {
+        RiasecScores? scores = null;
+        if (!string.IsNullOrWhiteSpace(result.RiasecScoresJson))
+        {
+            try
+            {
+                scores = JsonSerializer.Deserialize<RiasecScores>(result.RiasecScoresJson);
+            }
+            catch (JsonException)
+            {
+                // ignore
+            }
+        }
+
+        var letters = new[] { 'R', 'I', 'A', 'S', 'E', 'C' };
+        return letters
+            .Select(c =>
+            {
+                var code = c switch
+                {
+                    'R' => CareerTestCatalog.Realistic,
+                    'I' => CareerTestCatalog.Investigative,
+                    'A' => CareerTestCatalog.Artistic,
+                    'S' => CareerTestCatalog.Social,
+                    'E' => CareerTestCatalog.Enterprising,
+                    _ => CareerTestCatalog.Conventional
+                };
+                var score = scores?.Get(code) ?? 50;
+                return new PupilPassportRiasecBar(
+                    c.ToString(),
+                    PupilPassportCopy.Get($"LeerlingPassport.G78.Riasec.{c}"),
+                    score);
+            })
+            .ToList();
+    }
+
+    private static IReadOnlyList<PupilPassportCultureSlider> BuildCultureSliders(PupilResult result, string language)
+    {
+        CulturePersonalityScores? culture = null;
+        if (!string.IsNullOrWhiteSpace(result.CultureScoresJson))
+        {
+            try
+            {
+                culture = JsonSerializer.Deserialize<CulturePersonalityScores>(result.CultureScoresJson);
+            }
+            catch (JsonException)
+            {
+                // ignore
+            }
+        }
+
+        if (culture is null)
+        {
+            return [];
+        }
+
+        return CulturePersonalityCatalog.CultureDimensionCodes
+            .Select(code => (Code: code, Score: culture.Get(code)))
+            .OrderByDescending(x => x.Score)
+            .Take(3)
+            .Select(x => new PupilPassportCultureSlider(
+                PupilPassportLocalizedCopy.Get($"LeerlingStory.Tile.Cult.{x.Code}", language),
+                x.Score))
+            .ToList();
     }
 
     private static IReadOnlyList<PupilPassportWorldStamp> BuildWorlds(PupilStoryViewDto story, string language)

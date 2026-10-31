@@ -5,7 +5,8 @@ public enum PupilFlowStepKind
     Question = 0,
     Puzzle = 1,
     Island = 2,
-    Done = 3
+    Done = 3,
+    Vakken = 4
 }
 
 public sealed record PupilFlowStep(
@@ -24,7 +25,8 @@ public static class PupilFlow
         PupilQuestionSetDef def,
         IReadOnlyDictionary<string, int> answers,
         bool islandDone,
-        IReadOnlyDictionary<string, PupilPuzzleStatus>? puzzles = null)
+        IReadOnlyDictionary<string, PupilPuzzleStatus>? puzzles = null,
+        bool vakkenDone = true)
     {
         ArgumentNullException.ThrowIfNull(def);
         ArgumentNullException.ThrowIfNull(answers);
@@ -32,6 +34,16 @@ public static class PupilFlow
         var first = FirstUnansweredIndex(def, answers);
         if (first >= def.Bank.AllItems.Count)
         {
+            if (def.Set == Enums.PupilQuestionSet.Groep78 && !vakkenDone)
+            {
+                return new PupilFlowStep(
+                    PupilFlowStepKind.Vakken,
+                    first,
+                    null,
+                    "koraalrif",
+                    null);
+            }
+
             return new PupilFlowStep(PupilFlowStepKind.Done, first, null, null, null);
         }
 
@@ -97,6 +109,7 @@ public static class PupilFlow
         PupilFlowStepKind.Question => "question",
         PupilFlowStepKind.Puzzle => "puzzle",
         PupilFlowStepKind.Island => "island",
+        PupilFlowStepKind.Vakken => "vakken",
         PupilFlowStepKind.Done => "done",
         _ => "question"
     };

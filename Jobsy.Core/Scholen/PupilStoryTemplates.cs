@@ -43,7 +43,8 @@ public static class PupilStoryTemplates
     public static PupilStoryKeySet SelectKeys(
         PupilResult result,
         IReadOnlyList<string>? likeChipKeys,
-        PupilQuestionSet set = PupilQuestionSet.Vo)
+        PupilQuestionSet set = PupilQuestionSet.Vo,
+        Entities.Scholen.PupilProgress? progress = null)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -77,7 +78,9 @@ public static class PupilStoryTemplates
             .Take(2)
             .ToList();
 
-        var jobIdeas = PupilRiasecJobIdeas.ForLetters(top2, set, likes);
+        var jobIdeas = set == PupilQuestionSet.Groep78 && PupilVakScores.IsComplete(progress?.VakScoresJson)
+            ? PupilRiasecJobIdeas.TopGroep78Jobs(result, progress)
+            : PupilRiasecJobIdeas.ForLetters(top2, set, likes);
 
         return new PupilStoryKeySet(
             Version: Version,

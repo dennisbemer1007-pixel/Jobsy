@@ -13,5 +13,6 @@ internal static class PupilPassportV2SchemaIdempotentSql
         ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "VoOwnWords" character varying(2000);
         ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "VoLearningGoalsJson" text;
         ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "PuzzlesJson" text NOT NULL DEFAULT '{{}}';
+        ALTER TABLE "PupilProgresses" ADD COLUMN IF NOT EXISTS "VakScoresJson" text;
         """;
 }

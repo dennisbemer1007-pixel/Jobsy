@@ -58,6 +58,22 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilPuzzleResponse>(response.Content, ct);
     }
 
+    public async Task<PupilVakScoresResponse?> PutPupilVakScoresAsync(
+        IReadOnlyList<PupilVakScoreInput> scores,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync(
+            "api/pupil/progress/vakscores",
+            new PupilVakScoresRequest(scores),
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilVakScoresResponse>(response.Content, ct);
+    }
+
     public async Task<PupilResultPageDto?> GetPupilResultAsync(CancellationToken ct = default)
         => await GetApiJsonAsync<PupilResultPageDto>("api/pupil/result", ct);
 

@@ -160,6 +160,47 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Strength.Betrouwbaar.Title"] = "Betrouwbaar";
         d["LeerlingPassport.Footer.PageLabel"] = "pagina 1/1";
 
+        d["LeerlingPassport.G78.Cover.Title"] = "Mijn DNA-paspoort";
+        d["LeerlingPassport.G78.Cover.Sub"] = "Bijlagen bij je Lobsy-reis · groep 7/8";
+        d["LeerlingPassport.G78.Toc.Title"] = "Inhoud";
+        d["LeerlingPassport.G78.Toc.1"] = "Wie ben ik";
+        d["LeerlingPassport.G78.Toc.2"] = "Schoolvakken";
+        d["LeerlingPassport.G78.Toc.3"] = "Waar kan ik naartoe";
+        d["LeerlingPassport.G78.Toc.4"] = "Zo gebruik je dit";
+        d["LeerlingPassport.G78.Page.Who"] = "Wie ben ik";
+        d["LeerlingPassport.G78.Page.Subjects"] = "Jouw schoolvakken";
+        d["LeerlingPassport.G78.Page.Where"] = "Waar kan ik naartoe";
+        d["LeerlingPassport.G78.Page.Usage"] = "Zo gebruik je dit paspoort";
+        d["LeerlingPassport.G78.Riasec.Title"] = "Wat past bij jou (RIASEC)";
+        d["LeerlingPassport.G78.Riasec.R"] = "Maken";
+        d["LeerlingPassport.G78.Riasec.I"] = "Uitzoeken";
+        d["LeerlingPassport.G78.Riasec.A"] = "Creatief";
+        d["LeerlingPassport.G78.Riasec.S"] = "Helpen";
+        d["LeerlingPassport.G78.Riasec.E"] = "Leiden";
+        d["LeerlingPassport.G78.Riasec.C"] = "Ordenen";
+        d["LeerlingPassport.G78.Culture.Title"] = "Waar je je thuis voelt";
+        d["LeerlingPassport.G78.Culture.Empty"] = "Nog geen werkomgeving-antwoorden.";
+        d["LeerlingPassport.G78.Talk.Title"] = "Vragen om over te praten";
+        d["LeerlingPassport.G78.Beroep.Title"] = "Top beroepssoorten (ideeën)";
+        d["LeerlingPassport.G78.School.Title"] = "Schoolrichting (ideeën)";
+        d["LeerlingPassport.G78.School.Disclaimer"] =
+            "Dit zijn ideeën, geen advies. Het schooladvies van je school is leidend.";
+        d["LeerlingPassport.G78.Jobs.Title"] = "Beroepen om te ontdekken";
+        d["LeerlingPassport.G78.Samen.Title"] = "Opdracht voor thuis of in de klas";
+        d["LeerlingPassport.G78.Usage.Lead"] =
+            "Gebruik dit paspoort om te praten over wat je leuk vindt en wat je kunt. Er zijn geen foute antwoorden.";
+        d["LeerlingPassport.G78.Usage.Parents"] = "Tips voor thuis";
+        d["LeerlingPassport.G78.Usage.Parent.1"] = "Vraag open: wat vond je het leukst om te vertellen?";
+        d["LeerlingPassport.G78.Usage.Parent.2"] = "Koppel niet meteen aan één beroep; laat ontdekken.";
+        d["LeerlingPassport.G78.Usage.Teachers"] = "Tips voor de leraar";
+        d["LeerlingPassport.G78.Usage.Teacher.1"] = "Gebruik de gespreksvragen in een kring of tweetal.";
+        d["LeerlingPassport.G78.Usage.Teacher.2"] = "Geen cijfers delen; het gaat om interesse en zelfbeeld.";
+        d["LeerlingPassport.G78.Sign.Title"] = "Handtekeningen (optioneel)";
+        d["LeerlingPassport.G78.Sign.Student"] = "Leerling";
+        d["LeerlingPassport.G78.Sign.Parent"] = "Ouder/verzorger";
+        d["LeerlingPassport.G78.Sign.Teacher"] = "Leraar";
+        d["LeerlingPassport.G78.Footer.Page"] = "pagina";
+
         d["LeerlingPassport.Strength.Samenwerken.Sub"] = "ik luister en denk mee";
         d["LeerlingPassport.Strength.Zorgvuldig.Sub"] = "ik doe dingen netjes";
         d["LeerlingPassport.Strength.Helpen.Sub"] = "ik zie het als iemand vastzit";

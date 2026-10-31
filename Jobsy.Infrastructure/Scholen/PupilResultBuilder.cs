@@ -41,6 +41,12 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         }
 
         var def = _registry.ForClass(code.SchoolClass);
+        if (def.Set == PupilQuestionSet.Groep78
+            && !PupilVakScores.IsComplete(code.Progress.VakScoresJson))
+        {
+            return;
+        }
+
         if (def.Bank is not PupilQuestionBankBase bank)
         {
             throw new InvalidOperationException(
@@ -108,7 +114,7 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         result.DreamJobKey = code.Progress.DreamJobKey;
 
         var likeKeys = ParseChipKeys(code.Progress.LikesJson);
-        var storyKeys = PupilStoryTemplates.SelectKeys(result, likeKeys, def.Set);
+        var storyKeys = PupilStoryTemplates.SelectKeys(result, likeKeys, def.Set, code.Progress);
         result.StoryTemplateVersion = PupilStoryTemplates.Version.ToString(System.Globalization.CultureInfo.InvariantCulture);
         result.StoryKeysJson = PupilStoryTemplates.Serialize(storyKeys);
 

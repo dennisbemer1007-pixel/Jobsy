@@ -7698,6 +7698,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("VakScoresJson")
+                        .HasColumnType("text");
+
                     b.HasKey("PupilCodeId");
 
                     b.ToTable("PupilProgresses", (string)null);

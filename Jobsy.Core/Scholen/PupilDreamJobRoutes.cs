@@ -35,6 +35,13 @@ public enum PupilNeedSignal
     ChipProgrammeren,
     ChipRekenen,
     ChipGamen,
+    SubjectRekenen,
+    SubjectLezen,
+    SubjectNatuurTechniek,
+    SubjectTekenen,
+    SubjectEngels,
+    SubjectGym,
+    SubjectMuziek,
     AlwaysCurious // always met — used only as fallback prose, not as a catalog need
 }
 
@@ -195,7 +202,7 @@ public static class PupilDreamJobRoutes
                 N("Logica", PupilNeedSignal.RiasecI),
                 N("Ordenen", PupilNeedSignal.RiasecC),
                 N("Doorzetten", PupilNeedSignal.CompetenceResultaat),
-                N("Nieuw", PupilNeedSignal.CompetenceInnovatie),
+                N("Rekenen", PupilNeedSignal.SubjectRekenen),
                 N("Computers", PupilNeedSignal.ChipProgrammeren),
                 alt: true),
             R("bouwkundige",

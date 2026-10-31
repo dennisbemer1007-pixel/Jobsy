@@ -1,8 +1,8 @@
 namespace Jobsy.Web.Scholen;
 
 /// <summary>
-/// Groep 7/8 puzzle pages (schelpenrij, schatkaart, vuurtorenlampen) are not built.
-/// The reis must not navigate to <c>/leerling/puzzel/{key}</c> until one is.
+/// Groep 7/8 puzzle pages (schelpenrij, schatkaart, vuurtorenlampen).
+/// Reis navigates to <c>/leerling/puzzel/{key}</c> only when <see cref="IsBuilt"/> is true.
 /// </summary>
 public static class PupilPuzzleRoutes
 {
