@@ -4134,9 +4134,9 @@
         "currentIndex": 60,
         "answeredCount": 60,
         "platesShed": 10,
-        "completed": true,
+        "completed": false,
         "nextItemId": null,
-        "nextWorldKey": null,
+        "nextWorldKey": "koraalrif",
         "needsIsland": false,
         "resultPending": false
       }
@@ -4144,14 +4144,14 @@
     {
       "name": "progress-after-59",
       "body": {
-        "status": "Completed",
+        "status": "InProgress",
         "currentIndex": 60,
         "totalItems": 60,
         "answeredCount": 60,
         "platesShed": 10,
         "newShell": true,
         "currentItemId": null,
-        "currentWorldKey": null,
+        "currentWorldKey": "koraalrif",
         "answers": {
           "9001": 1,
           "9002": 4,
@@ -4215,7 +4215,7 @@
           "9060": 4
         },
         "windowOpen": true,
-        "completed": true,
+        "completed": false,
         "needsIsland": false,
         "islandDone": true,
         "likes": [
