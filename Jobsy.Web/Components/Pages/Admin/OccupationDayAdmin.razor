@@ -173,9 +173,14 @@
             else
             {
                 _message = Culture["Admin.Day.Started"];
-                await RefreshAsync();
                 StartPolling();
+                await RefreshAsync();
             }
+        }
+        catch (Exception ex) when (Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Admin.Day.Started"];
+            StartPolling();
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
         {
