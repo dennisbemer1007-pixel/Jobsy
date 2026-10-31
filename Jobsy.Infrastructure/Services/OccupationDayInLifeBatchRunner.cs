@@ -111,6 +111,10 @@ public sealed class OccupationDayInLifeBatchRunner : IDisposable
                         skip.Add(failure.EscoId);
                         lastEscoId = failure.EscoId;
                         lastError = failure.Reason;
+                        _logger.LogWarning(
+                            "Dag-in-het-leven mislukt voor beroep {EscoId}: {Reason}",
+                            failure.EscoId,
+                            OccupationDayWriteErrors.SafeSnippet(failure.Reason));
                     }
 
                     var shown = result.KeyMissing

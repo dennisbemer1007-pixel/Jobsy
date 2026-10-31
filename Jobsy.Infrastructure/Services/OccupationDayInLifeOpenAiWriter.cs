@@ -130,12 +130,14 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
 
                 var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
                 var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
+                var promptTokens = completion?.Usage?.PromptTokens ?? 0;
+                var completionTokens = completion?.Usage?.CompletionTokens ?? 0;
                 if (string.IsNullOrWhiteSpace(content))
                 {
-                    return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Empty, model);
+                    return new OccupationDayWriteResult(false, null, OccupationDayWriteErrors.Empty, model, promptTokens, completionTokens);
                 }
 
-                return new OccupationDayWriteResult(true, content, null, model);
+                return new OccupationDayWriteResult(true, content, null, model, promptTokens, completionTokens);
             }
         }
 
@@ -276,6 +278,17 @@ public sealed class OccupationDayInLifeOpenAiWriter : IOccupationDayInLifeWriter
     private sealed class ChatCompletionResponse
     {
         public List<Choice>? Choices { get; set; }
+
+        public UsageTokens? Usage { get; set; }
+
+        public sealed class UsageTokens
+        {
+            [JsonPropertyName("prompt_tokens")]
+            public int PromptTokens { get; set; }
+
+            [JsonPropertyName("completion_tokens")]
+            public int CompletionTokens { get; set; }
+        }
 
         public sealed class Choice
         {

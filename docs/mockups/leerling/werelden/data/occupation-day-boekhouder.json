@@ -1,0 +1,52 @@
+{
+  "source": "occupation-day-facts-grounded",
+  "dreamJobKey": "boekhouder",
+  "escoId": "c3aae59e-1441-4b3e-bdd1-6da50dc7cf42",
+  "titleNl": "boekhouder",
+  "dreamTitle": "boekhouder",
+  "thinSource": false,
+  "variesNote": "De volgorde kan per werkgever anders zijn.",
+  "highlights": [
+    "Dieren verzorgen",
+    "Kijken naar dierenwelzijn"
+  ],
+  "tasks": [
+    "Opstellen van financi\u00EBle overzichten en verslagen voor bepaalde perioden",
+    "Je controleren van het werk van rekeningen en boekhouders"
+  ],
+  "skills": [
+    "boekhoudkundige fouten identificeren",
+    "processen van de boekhoudafdeling",
+    "financi\u00EBle jaarrekeningen",
+    "voldoen aan wettelijke verplichtingen",
+    "jaarrekeningen opstellen",
+    "belastingwetgeving"
+  ],
+  "blocks": [
+    {
+      "key": "start",
+      "label": "07:00 Start",
+      "text": "Boekhouders boeken en verzamelen de dagelijkse financi\u00EBle transacties van een organisatie of bedrijf, die meestal bestaan uit verkopen,."
+    },
+    {
+      "key": "morning",
+      "label": "09:00 Ochtend",
+      "text": "Opstellen van financi\u00EBle overzichten en verslagen voor bepaalde perioden."
+    },
+    {
+      "key": "pause",
+      "label": "12:00 Pauze",
+      "text": "Je controleren van het werk van rekeningen en boekhouders."
+    },
+    {
+      "key": "afternoon",
+      "label": "14:00 Middag",
+      "text": "Je let op voldoen aan wettelijke verplichtingen."
+    },
+    {
+      "key": "close",
+      "label": "17:00 Afronden",
+      "text": "Je let op jaarrekeningen opstellen."
+    }
+  ]
+}

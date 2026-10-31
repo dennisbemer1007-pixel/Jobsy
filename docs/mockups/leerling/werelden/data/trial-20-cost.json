@@ -1,0 +1,25 @@
+{
+  "trialOccupations": 20,
+  "generatedOnAcceptatieGpt4o": 20,
+  "blockedEscoIds": [],
+  "blockedTitlesNl": [],
+  "blockedReason": "OpenAI output failed highlights validation (fixed in OccupationDayDraftRepair on this branch).",
+  "costForGeneratedRows": {
+    "model": "gpt-4o",
+    "occupations": 20,
+    "openAiCalls": 105,
+    "promptTokens": 147000,
+    "completionTokens": 50400,
+    "estimatedUsd": 0.8715,
+    "note": "Token counts are plan averages (OccupationDayBatchPlan); Acceptatie does not return usage headers."
+  },
+  "costIfAll20Succeeded": {
+    "model": "gpt-4o",
+    "occupations": 20,
+    "openAiCalls": 105,
+    "promptTokens": 147000,
+    "completionTokens": 50400,
+    "estimatedUsd": 0.8715,
+    "note": "Token counts are plan averages (OccupationDayBatchPlan); Acceptatie does not return usage headers."
+  }
+}

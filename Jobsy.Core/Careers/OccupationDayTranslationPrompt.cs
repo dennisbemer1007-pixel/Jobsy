@@ -13,6 +13,8 @@ public static class OccupationDayTranslationPrompt
         return
             "You translate a typical Dutch workday into " + target.NativeName + " (" + target.Code + "). "
             + "Plain language, about B1. Short sentences. Warm and clear, not childish. "
+            + "Also easy for 11-12 year olds to follow: everyday words, no jargon. "
+            + "Do not use words like specimens, organisms, or scientific community; use simple words such as samples, plants and animals. "
             + "Translate only what is in the Dutch JSON. Do not add a fact. "
             + "Do not add an employer, a company name, a city, a town, a named client, a wage, a salary, a diploma, a degree, or a person's name. "
             + "Keep the same parts, the same block keys in the same order, and the same number of highlights, tasks, and skills. "

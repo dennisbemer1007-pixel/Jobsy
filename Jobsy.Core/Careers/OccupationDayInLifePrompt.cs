@@ -7,7 +7,8 @@ public static class OccupationDayInLifePrompt
 {
     public const string System =
         """
-        Je schrijft een typische werkdag voor één beroep. Nederlands, taalniveau B1 of lager. Vriendelijk en helder, niet kinderachtig. Korte zinnen, meestal hooguit 20 woorden.
+        Je schrijft een typische werkdag voor één beroep. Nederlands, taalniveau B1 of lager. Vriendelijk en helder, niet kinderachtig. Ook begrijpelijk voor kinderen van 11 of 12 jaar (groep 7-8): gewone woorden, geen vakjargon. Korte zinnen, meestal hooguit 20 woorden.
+        Gebruik geen moeilijke woorden zoals specimens, organismen, wetenschappelijke gemeenschap, hypothese of stakeholder. Schrijf "planten en dieren" in plaats van organismen, "monsters" in plaats van specimens.
 
         Je gebruikt alleen de feiten in het bericht van de gebruiker: de titel, de andere namen, de beschrijving, de vaardigheden en de taken. Dat zijn feiten over het beroep.
 
@@ -27,8 +28,8 @@ public static class OccupationDayInLifePrompt
         blocks heeft 5 tot 8 momenten. Bij een dunne bron: 4 tot 6 momenten.
         Neem altijd start, morning en afternoon. Neem ook pause en close. Dat zijn 5 momenten en dat is genoeg als de bron verder niets noemt.
         Neem bij voorkeur 7 momenten als de bron dat toelaat. Voeg talk toe alleen bij contact met mensen, plan alleen bij plannen of routes, handover alleen bij overdragen of afstemmen. Sla die drie over als de bron ze niet noemt. Verzin ze niet om aan een hoger aantal te komen.
-        key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close. Geen Nederlands woord als key en geen kloktijd als key. Gebruik die volgorde.
-        label is kort, hooguit drie woorden en hooguit 32 tekens. Elke label heeft een kloktijd in het formaat uu:mm, zoals "07:00 Start" of "14:30 Afronden". "Ochtendzorg" alleen als de bron over zorg gaat. "Gesprek" alleen als de bron contact met mensen noemt. "Overdracht" alleen als de bron overdragen of afstemmen noemt.
+        key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close. Geen Nederlands woord als key en geen kloktijd als key. Gebruik die volgorde: start, dan morning, dan eventueel talk of plan, dan pause, dan afternoon, dan eventueel handover, dan close.
+        label is alleen het momentwoord, zonder kloktijd: Start, Ochtend, Gesprek, Plannen, Pauze, Middag, Overdracht of Afronden. Hooguit 32 tekens. De server zet later vaste kloktijden (08:00, 09:30, …) in chronologische volgorde.
         Pauze mag altijd. Noem daarbij geen plaats.
         text is één of twee korte zinnen, minstens 40 tekens. Alleen feiten uit de bron.
         highlights zijn 2 tot 4 korte punten die letterlijk bij de taken of vaardigheden passen. Bij een dunne bron mag 1 punt.
@@ -46,6 +47,6 @@ public static class OccupationDayInLifePrompt
     {
         var detail = string.IsNullOrWhiteSpace(reason) ? "afgekeurd" : reason.Trim();
         return "Afgekeurd: " + detail
-            + "\nSchrijf opnieuw. Alleen JSON. Herstel precies die punten. Zinnen van hooguit 20 woorden. Verzin geen werkgever, stad, salaris of diploma. Alleen feiten uit de bron. Als de bron dun is, houd de dag kort. key is precies een van: start, morning, talk, plan, pause, afternoon, handover, close. Elke label heeft een kloktijd (uu:mm).";
+            + "\nSchrijf opnieuw. Alleen JSON. Herstel precies die punten. Zinnen van hooguit 20 woorden, gewone woorden voor groep 7-8. Verzin geen werkgever, stad, salaris of diploma. Alleen feiten uit de bron. key in vaste volgorde; label zonder kloktijd.";
     }
 }

@@ -54,23 +54,40 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
         CancellationToken cancellationToken = default)
     {
         var storedRows = await _db.OccupationDayInLives.AsNoTracking()
-            .Select(item => new { item.EscoId, item.ContentHash, item.TranslationsJson })
+            .Select(item => new
+            {
+                item.EscoId,
+                item.ContentHash,
+                item.TranslationsJson,
+                item.Morning,
+                item.Midday,
+                item.Afternoon,
+                item.Closing
+            })
             .ToListAsync(cancellationToken);
-        var complete = storedRows
-            .Where(item => OccupationDayTranslations.IsComplete(item.TranslationsJson, item.ContentHash))
-            .Select(item => item.EscoId)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var counts = OccupationDayBatchPlan.CountStored(storedRows.Select(item => new OccupationDayStoredRow(
+            item.EscoId,
+            item.ContentHash,
+            item.TranslationsJson,
+            item.Morning,
+            item.Midday,
+            item.Afternoon,
+            item.Closing)));
         var total = OccupationCatalog.Shared.All.Count;
-        var remaining = OccupationCatalog.Shared.All.Count(job => !complete.Contains(job.Id));
+        var estimate = OccupationDayBatchPlan.EstimateRemaining(counts, _options);
         return new OccupationDayAdminStatus(
             storedRows.Count,
             total,
-            remaining,
+            counts.RemainingComplete,
             running,
             generatedThisRun,
             failedThisRun,
             lastError,
-            lastEscoId);
+            lastEscoId,
+            counts.DutchComplete,
+            counts.AllLanguagesComplete,
+            _options.Model ?? OccupationDayBatchPlan.DefaultModel,
+            estimate);
     }
 
     internal static OccupationDayView ToView(

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Options;
 
 namespace Jobsy.Core.Careers;
 
@@ -39,7 +40,13 @@ public interface IOccupationDayInLifeWriter
         CancellationToken cancellationToken = default);
 }
 
-public sealed record OccupationDayWriteResult(bool Ok, string? Json, string? Error, string Model)
+public sealed record OccupationDayWriteResult(
+    bool Ok,
+    string? Json,
+    string? Error,
+    string Model,
+    int PromptTokens = 0,
+    int CompletionTokens = 0)
 {
     public bool KeyMissing => string.Equals(Error, OccupationDayWriteErrors.KeyMissing, StringComparison.Ordinal);
 }
@@ -169,7 +176,11 @@ public sealed record OccupationDayAdminStatus(
     int GeneratedThisRun,
     int FailedThisRun,
     string? LastError,
-    string? LastEscoId);
+    string? LastEscoId,
+    int DutchComplete = 0,
+    int AllLanguagesComplete = 0,
+    string DefaultModel = OccupationDayInLifeOptions.DefaultModel,
+    OccupationDayBatchEstimate? FillEstimate = null);
 
 public sealed class OccupationDayExportDocument
 {

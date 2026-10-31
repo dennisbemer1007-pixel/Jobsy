@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
@@ -27,6 +28,7 @@ public class OccupationDayInLifeTests
         Assert.Contains("geen salaris", prompt, StringComparison.Ordinal);
         Assert.Contains("geen diploma", prompt, StringComparison.Ordinal);
         Assert.Contains("B1", prompt, StringComparison.Ordinal);
+        Assert.Contains("groep 7-8", prompt, StringComparison.Ordinal);
         Assert.Contains("Bron is dun", prompt, StringComparison.Ordinal);
         Assert.Contains("blocks", prompt, StringComparison.Ordinal);
         Assert.Contains("start", prompt, StringComparison.Ordinal);
@@ -94,7 +96,25 @@ public class OccupationDayInLifeTests
     public void Validator_accepts_six_grounded_blocks()
     {
         var facts = SampleFacts();
-        Assert.True(OccupationDayInLifeValidator.TryValidate(BlockDraft(), facts, out var reasons), string.Join(", ", reasons));
+        var draft = OccupationDayDraftRepair.Apply(BlockDraft(), facts);
+        Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join(", ", reasons));
+        Assert.True(OccupationDayTimeline.TryValidate(draft.Blocks!, out _), string.Join(", ", reasons));
+        Assert.StartsWith("08:00", draft.Blocks![0].Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Timeline_rejects_backwards_clock_labels()
+    {
+        var blocks = BlockDraft().Blocks!.ToList();
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var hour = 8 + i;
+            blocks[i] = blocks[i] with { Label = $"{hour:00}:00 {OccupationDayBlocks.DefaultLabel(blocks[i].Key)}" };
+        }
+
+        blocks[2] = blocks[2] with { Label = "07:00 Plannen" };
+        Assert.False(OccupationDayTimeline.TryValidate(blocks, out var reason));
+        Assert.Equal("tijd-niet-stijgend", reason);
     }
 
     [Fact]
@@ -124,6 +144,7 @@ public class OccupationDayInLifeTests
         var blocks = BlockDraft().Blocks!.Where(block => block.Key != "plan").ToList();
         var draft = OccupationDayBlocks.WithDerived(BlockDraft() with { Blocks = blocks });
         Assert.Equal(5, draft.Blocks!.Count);
+        draft = OccupationDayDraftRepair.Apply(draft, SampleFacts());
         Assert.True(OccupationDayInLifeValidator.TryValidate(draft, SampleFacts(), out var reasons), string.Join("; ", reasons));
     }
 
@@ -134,9 +155,10 @@ public class OccupationDayInLifeTests
         Assert.NotNull(facts);
         Assert.False(facts!.IsThin);
         Assert.True(OccupationDayInLifeJson.TryParse(RealisticCookJson(), facts, out var draft, out var error), error);
+        draft = OccupationDayDraftRepair.Apply(draft, facts);
         var blocks = draft.Blocks ?? [];
         Assert.Equal(["start", "morning", "pause", "afternoon", "close"], blocks.Select(block => block.Key).ToArray());
-        Assert.Equal("07:00 Start", blocks[0].Label);
+        Assert.Equal("08:00 Start", blocks[0].Label);
         Assert.Contains("temperatuur", blocks.Single(block => block.Key == "afternoon").Text, StringComparison.Ordinal);
         Assert.True(OccupationDayInLifeValidator.TryValidate(draft, facts, out var reasons), string.Join("; ", reasons));
     }
@@ -391,6 +413,7 @@ public class OccupationDayInLifeTests
         Assert.Equal(["en", "pl", "ro", "ar"], OccupationDayTranslations.TargetLanguages);
         var prompt = OccupationDayTranslationPrompt.System("pl");
         Assert.Contains("B1", prompt, StringComparison.Ordinal);
+        Assert.Contains("11-12", prompt, StringComparison.Ordinal);
         Assert.Contains("Do not add", prompt, StringComparison.Ordinal);
         Assert.Contains("city", prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("wage", prompt, StringComparison.OrdinalIgnoreCase);
@@ -533,7 +556,83 @@ public class OccupationDayInLifeTests
     [Fact]
     public void Catalog_lists_3039_esco_occupations_for_batch_fill()
     {
-        Assert.Equal(3039, OccupationCatalog.Shared.All.Count);
+        Assert.Equal(3039, OccupationDayBatchPlan.CatalogTotal);
+    }
+
+    [Fact]
+    public void Batch_plan_estimates_openai_cost_for_a_full_catalog_fill()
+    {
+        var estimate = OccupationDayBatchPlan.Estimate(3039);
+        Assert.Equal(OccupationDayInLifeOptions.DefaultModel, estimate.Model);
+        Assert.Equal(3039, estimate.Occupations);
+        Assert.True(estimate.OpenAiCalls > 15_000);
+        Assert.True(estimate.InputTokens > 20_000_000);
+        Assert.True(estimate.EstimatedUsd is > 80 and < 250);
+        Assert.True(estimate.EstimatedDuration.TotalHours is > 8 and < 48);
+    }
+
+    [Fact]
+    public void Stored_counts_track_dutch_and_each_translation_language()
+    {
+        var hash = "abc";
+        var en = OccupationDayTranslations.Serialize(new Dictionary<string, OccupationDayStoredTranslation>
+        {
+            ["en"] = new()
+            {
+                Morning = "a",
+                Midday = "b",
+                Afternoon = "c",
+                Closing = "d",
+                SourceHash = hash
+            }
+        });
+        var rows = new[]
+        {
+            new OccupationDayStoredRow("1", hash, en, "m", "m", "a", "c"),
+            new OccupationDayStoredRow("2", hash, "{}", "m", "m", "a", "c")
+        };
+        var counts = OccupationDayBatchPlan.CountStored(rows);
+        Assert.Equal(2, counts.DutchComplete);
+        Assert.Equal(0, counts.AllLanguagesComplete);
+        Assert.Equal(3039, counts.RemainingComplete);
+        Assert.Equal(1, counts.PerLanguage["en"]);
+        Assert.Equal(2, counts.PerLanguage["nl"]);
+    }
+
+    [Fact]
+    public async Task Generate_waits_between_openai_calls_when_delay_is_configured()
+    {
+        var id = OccupationCatalog.Shared.All[4].Id;
+        await using var db = NewDb();
+        var writer = new ScriptWriter(CleanJson());
+        var generator = new OccupationDayInLifeGenerator(
+            db,
+            writer,
+            new EchoTranslator(),
+            Options.Create(new OccupationDayInLifeOptions { DelayMilliseconds = 40 }),
+            NullLogger<OccupationDayInLifeGenerator>.Instance);
+        var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { id };
+        var started = Environment.TickCount64;
+        var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);
+        var elapsed = Environment.TickCount64 - started;
+        Assert.Equal(1, result.Generated);
+        Assert.True(elapsed >= 120, "Expected delay between compose and translation calls.");
+    }
+
+    [Fact]
+    public void Pilot_sample_lists_ten_diverse_occupations_with_nl_and_en()
+    {
+        var path = Path.Combine(RepoRoot.Find(), "Jobsy.Tests/Fixtures/occupation-day-in-life-pilot-sample.json");
+        using var doc = JsonDocument.Parse(File.ReadAllText(path));
+        var list = doc.RootElement.GetProperty("occupations");
+        Assert.Equal(10, list.GetArrayLength());
+        foreach (var item in list.EnumerateArray())
+        {
+            Assert.True(item.TryGetProperty("nl", out var nl));
+            Assert.True(item.TryGetProperty("en", out var en));
+            Assert.False(string.IsNullOrWhiteSpace(nl.GetProperty("morning").GetString()));
+            Assert.False(string.IsNullOrWhiteSpace(en.GetProperty("morning").GetString()));
+        }
     }
 
     [Fact]
@@ -585,8 +684,7 @@ public class OccupationDayInLifeTests
     public async Task Generate_fails_after_retries_when_quality_never_passes()
     {
         await using var db = NewDb();
-        var bad = RealisticCookJson().Replace("07:00 Start", "Start", StringComparison.Ordinal);
-        var writer = new ScriptWriter([bad, bad, bad, bad]);
+        var writer = new ScriptWriter([ShortCookJson(), ShortCookJson(), ShortCookJson(), ShortCookJson()]);
         var generator = Generator(db, writer);
         var only = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { CookId };
         var result = await generator.GenerateMissingAsync(1, null, only, CancellationToken.None);

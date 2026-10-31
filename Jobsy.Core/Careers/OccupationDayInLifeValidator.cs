@@ -47,6 +47,23 @@ public static partial class OccupationDayInLifeValidator
         if (draft.Blocks is { Count: > 0 } blocks)
         {
             ValidateBlocks(found, blocks, facts.IsThin);
+            var timed = blocks.Count(block => OccupationDayTimeline.TryParseLabelMinutes(block.Label, out _));
+            if (timed == blocks.Count)
+            {
+                if (!OccupationDayTimeline.TryValidate(blocks, out var timelineReason))
+                {
+                    found.Add(timelineReason ?? "tijdlijn");
+                }
+            }
+            else if (timed > 0)
+            {
+                found.Add("tijd-onleesbaar");
+            }
+        }
+
+        foreach (var jargon in OccupationDayChildLanguage.FindForbiddenInDraft(draft))
+        {
+            found.Add(jargon);
         }
 
         var highlightMin = facts.IsThin ? 1 : 2;
