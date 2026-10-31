@@ -199,10 +199,60 @@ public static class KbE2e
         Assert.False(circuit, "Circuit.ErrorTitle visible (Even iets misgegaan)");
     }
 
+    /// <summary>CI Playwright stack on 127.0.0.1 — seeded accounts use <see cref="DefaultPassword"/>, not Acc secrets.</summary>
+    public static bool IsLocalCiStack(string baseUrl)
+    {
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return uri.Host is "127.0.0.1" or "localhost" or "::1";
+    }
+
+    /// <summary>
+    /// Blazor sets <c>data-lobsy-circuit=ready</c>; <c>[NoBlazorRuntime]</c> SSR routes (e.g. /candidate/start) never start a circuit.
+    /// </summary>
+    internal const string CircuitOrSsrReadyJavaScript = """
+        () => {
+          if (document.documentElement.getAttribute('data-lobsy-circuit') === 'ready') return true;
+          if (document.querySelector('script[src*="blazor.web.js"]')) return false;
+          var path = location.pathname || '';
+          if (path.startsWith('/candidate/start')) {
+            return !!(
+              document.querySelector('form[data-ob-ssr-form]')
+              || document.querySelector('[data-ob-rustig-screen]')
+              || document.querySelector('.ob-wizard__welcome')
+              || document.querySelector('[data-testid^="onboarding-step-"]')
+            );
+          }
+          if (path.includes('/banenkaart')) {
+            return !!(
+              document.querySelector('.jobsy-discovery')
+              || document.querySelector('[data-testid=uwv-banenkaart-mock]')
+              || document.querySelector('[data-testid=kb-keyword-search]')
+              || document.querySelector('#jobsy-map-boot')
+            );
+          }
+          if (document.querySelector('form[data-ob-ssr-form]')) return true;
+          return false;
+        }
+        """;
+
+    public static Task WaitForCircuitOrSsrReadyAsync(IPage page, int timeoutMs = 90_000)
+        => page.WaitForFunctionAsync(CircuitOrSsrReadyJavaScript, null, new() { Timeout = timeoutMs });
+
+    /// <summary>GitHub may inject an empty secret; fall back to seeded Development email.</summary>
+    public static string ResolveCandidateEmail()
+    {
+        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
+        return string.IsNullOrWhiteSpace(preferred) ? DefaultCompleteEmail : preferred.Trim();
+    }
+
     public static async Task<bool> TryLoginAsync(IPage page, string baseUrl, string? email = null, string? password = null)
     {
-        email ??= Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultCompleteEmail;
-        password ??= Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        email = string.IsNullOrWhiteSpace(email) ? ResolveCandidateEmail() : email.Trim();
+        password ??= ResolveCandidatePassword(baseUrl);
         try
         {
             await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -246,6 +296,18 @@ public static class KbE2e
             ?? Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD")
             ?? DefaultPassword;
         return await TryLoginAsync(page, baseUrl, email, password);
+    }
+
+    /// <summary>Acc secrets must not override seeded Development passwords on the local CI stack.</summary>
+    public static string ResolveCandidatePassword(string baseUrl)
+    {
+        if (IsLocalCiStack(baseUrl))
+        {
+            return DefaultPassword;
+        }
+
+        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD");
+        return string.IsNullOrWhiteSpace(preferred) ? DefaultPassword : preferred.Trim();
     }
 
     public static string ScreenshotDir()

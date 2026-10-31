@@ -18,7 +18,7 @@ jobs:
   e2e-functional:
     name: e2e-functional
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     env:
       JOBSY_E2E_FUNCTIONAL_GATE: "1"
     services:

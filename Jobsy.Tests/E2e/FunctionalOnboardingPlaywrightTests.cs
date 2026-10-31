@@ -40,7 +40,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
-        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+        await FunctionalOnboardingInteractivityHelpers.OnboardingStep1Illustrated(page).WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
             Timeout = 90_000,
@@ -103,30 +103,32 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
         for (var step = 1; step <= 5; step++)
         {
+            if (step == 2)
+            {
+                await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, 2);
+                await FunctionalOnboardingInteractivityHelpers.SelectFirstPresetAndAdvanceFromStep2Async(page);
+                continue;
+            }
+
             await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, step);
             await FunctionalOnboardingInteractivityHelpers.AssertOnboardingStepInteractiveAsync(page, step);
             if (step == 1)
             {
                 await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
-                await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
                 continue;
-            }
-
-            if (step == 2)
-            {
-                await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
             }
 
             if (step == 3)
             {
-                await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
-                await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+                await FunctionalOnboardingInteractivityHelpers.SelectTransportAndTravelMinutesAsync(page, 30);
             }
 
             await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
-            if (step < 5)
+            if (step < 5 && step != 2)
             {
-                await page.Locator($"[data-testid=onboarding-step-{step + 1}-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, step + 1)
+                    .WaitForAsync(new() { Timeout = 90_000 });
             }
         }
 
@@ -156,7 +158,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
         await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
 
-        await Assertions.Expect(page.Locator("[data-testid=onboarding-step-3-illustrated]")).ToBeVisibleAsync();
+        await Assertions.Expect(FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 3)).ToBeVisibleAsync();
         var selectedTransport = page.Locator(
             "#onboarding-field-transport .lobsy-choice-tile.is-selected, #onboarding-field-transport [aria-pressed=\"true\"]");
         await Assertions.Expect(selectedTransport.First).ToBeVisibleAsync(new() { Timeout = 15_000 });
@@ -310,9 +312,8 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
         var next = page.GetByTestId("onboarding-next");
         await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 20_000 });
-        await next.ClickAsync(new() { Timeout = 15_000, Force = mobile });
-        await page.Locator("[data-testid=onboarding-step-2-illustrated], .ob-wizard__presets, .ob-illustrated-step").First
-            .WaitForAsync(new() { Timeout = 90_000 });
+        await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
+        await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
 
         await FunctionalE2eArtifacts.CaptureAsync(page, "kennismaken-after-next", tag);
     }
