@@ -1,24 +1,33 @@
 {
-  "investigationUtc": "2026-10-31T08:00:00Z",
-  "acceptatieApiHealthCommit": "1b11779ce079c55e2166a3e27577d33809b098fc",
-  "merge3011cf22OnAcceptatie": true,
-  "note3011cf22": "3011cf22 is an ancestor of origin/acceptatie; Acc API /health reports 1b11779 (includes #1357 occupation-day B1 batch).",
-  "acceptatieWebCommitMeta": "1b11779ce079c55e2166a3e27577d33809b098fc",
-  "regenDidNotRunBecause": [
-    "Playwright filled the textarea DOM but Blazor Server @bind (default onchange) never updated _pick; server re-render cleared the field.",
-    "RegenerateAsync short-circuits with Admin.Day.PickEmpty — no POST to api/admin/occupation-day-in-life/regenerate.",
-    "Direct API: DevelopmentPrivateKeyPem → HTTP 401; sessionToken from local-login is not a JWT Bearer → HTTP 401.",
-    "Acceptatie Web does not yet include @bind:event=oninput nor ?ids= query prefill (fix on PR #1363 branch, unmerged)."
+  "startedAt": "2026-10-31T11:35:44.651Z",
+  "ids": [
+    "06bd6285-13ed-4ea7-90cc-e9638a0600a9",
+    "e9f0b7ae-c848-464e-af9d-55eb87a592e0",
+    "0d6bb2cc-06b0-481c-b553-2a973be03254",
+    "0a7e24a8-19bd-4b45-83f0-f05d8fedf62d",
+    "394a4bdd-7032-4d87-89a2-9d937cebdd09",
+    "68d973df-bf10-4bf7-9a1b-fbd9f604b9db",
+    "eee68e13-8248-43bb-a9fb-959832a6c217",
+    "b0f3f595-4965-4f13-ba5c-f6049b62469f",
+    "bab5fa79-7f96-4e21-87b6-1eba560b8d9a",
+    "40d76b2c-b917-4bf1-95b3-191f11472e67",
+    "849a656c-8559-4471-91ed-442c42b0b641",
+    "9a26d76b-b9e3-46ae-ab4b-057a1262138b",
+    "02f1ae71-f89c-47b7-af2c-50d7ab1d9b8a",
+    "bfc92738-128b-44f5-92d4-51b10df17961",
+    "2eac08c2-a81a-46fc-8d75-eb0e0f3e0f6d",
+    "4ebf2dae-c326-4627-befe-fbc91410f432",
+    "a79d9e58-36be-4e67-a4db-ea6c8ff445fc",
+    "eda0d957-3c3c-4139-b89a-a18bc9e18897",
+    "9a39a143-d93c-4093-ba3b-47fb67ade318",
+    "7b74626d-b487-48a1-9e80-47faf9928210"
   ],
-  "openAiKeyOnAcceptatie": "Not exercised — regenerate never reached the API. Confirm Integraties tile / OpenAI__ApiKey on Acc API if regen fails after deploy.",
-  "unblock": [
-    "Merge PR #1363 (or cherry-pick OccupationDayAdmin.razor) to acceptatie and redeploy Web, then run tools/trial-20-regenerate-acceptatie.mjs",
-    "OR set JobsyAuth__Jwt__PrivateKeyPem (Acc API key pair) and run tools/AccOccupationDayRegen"
-  ],
-  "priorPlaywrightRun": {
-    "targetCommit": "3011cf22",
-    "waitPerOccMs": 420000,
-    "startedAt": "2026-10-31T04:37:30.487Z",
-    "itemsSample": "empty message or Laden… — no API regen"
+  "mode": "background-start-replace",
+  "kickoffMessage": "",
+  "lastPoll": {
+    "at": "2026-10-31T13:46:13.276Z",
+    "running": false,
+    "summary": "",
+    "runLine": ""
   }
 }
