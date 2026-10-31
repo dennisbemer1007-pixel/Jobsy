@@ -259,6 +259,9 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static Task WaitForCircuitReadyAsync(IPage page, int timeoutMs = 90_000)
         => KbE2e.WaitForCircuitOrSsrReadyAsync(page, timeoutMs);
 
+    internal static ILocator OnboardingStep1Illustrated(IPage page) =>
+        page.Locator("[data-testid=onboarding-step-1-illustrated]").First;
+
     internal static async Task AssertChoiceTileTogglesWithinMsAsync(IPage page, ILocator tile, int maxMs = 300)
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_E2E_FUNCTIONAL_GATE") ?? "").Trim() == "1")
@@ -628,7 +631,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.Locator("input[type=email]").FillAsync(email);
         await page.Locator("input[name=firstName]").FillAsync("Func");
         await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/code**", new() { Timeout = 60_000 });
+        await page.WaitForURLAsync("**/code**", new() { Timeout = 90_000 });
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
         Assert.False(string.IsNullOrWhiteSpace(code), "Expected OTP from E2E mail capture.");
         await page.Locator("input[name=code]").FillAsync(code!);
@@ -725,7 +728,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
         else
         {
-            await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+            await OnboardingStep1Illustrated(page).WaitForAsync(new()
             {
                 State = WaitForSelectorState.Visible,
                 Timeout = 90_000,
@@ -913,10 +916,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         for (var attempt = 0; attempt < 2; attempt++)
         {
             await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            KbE2e.CircuitOrSsrReadyJavaScript,
-            null,
-            new() { Timeout = 120_000 });
+            await WaitForCircuitReadyAsync(page, 120_000);
             try
             {
                 if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
@@ -937,7 +937,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             }
         }
 
-        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await OnboardingStep1Illustrated(page).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         await page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
     }

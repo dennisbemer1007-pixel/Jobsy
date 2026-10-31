@@ -40,7 +40,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         await FunctionalOnboardingInteractivityHelpers.AssertCandidateHeaderVisibleAsync(page);
-        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new()
+        await FunctionalOnboardingInteractivityHelpers.OnboardingStep1Illustrated(page).WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
             Timeout = 90_000,

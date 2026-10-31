@@ -31,6 +31,40 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         await ValueTask.CompletedTask;
     }
 
+    private static bool UseCaptureTestSignIn(string baseUrl, string? localBaseUrl) =>
+        localBaseUrl is not null && string.Equals(baseUrl, localBaseUrl, StringComparison.Ordinal);
+
+    private async Task SignInCandidateForApplicationsAsync(IPage page, string baseUrl, string returnPath)
+    {
+        if (UseCaptureTestSignIn(baseUrl, _localBaseUrl))
+        {
+            await page.GotoAsync(baseUrl + "/__test/sign-in?return=" + Uri.EscapeDataString(returnPath));
+            return;
+        }
+
+        if (KbE2e.IsLocalCiStack(baseUrl))
+        {
+            await FunctionalE2eAuth.SignInSeededCandidateAsync(page, baseUrl, returnPath);
+            return;
+        }
+
+        await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+        {
+            throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+        }
+
+        if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+        {
+            var ensure = await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+            _output.WriteLine($"demo-ensure: {(int)ensure.Status} {ensure.StatusText}");
+        }
+
+        await page.GotoAsync(baseUrl + returnPath, new() { WaitUntil = WaitUntilState.NetworkIdle });
+    }
+
     [Fact]
     public async Task Applications_list_column_is_wide_at_1280()
     {
@@ -49,28 +83,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
-        {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
-        }
-        else
-        {
-            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                var ensure = await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-                _output.WriteLine($"demo-ensure: {(int)ensure.Status} {ensure.StatusText}");
-            }
-
-            await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        }
+        await SignInCandidateForApplicationsAsync(page, baseUrl, "/candidate/applications");
 
         await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -252,24 +265,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
-        {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
-        }
-        else
-        {
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-            }
-
-            await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        }
+        await SignInCandidateForApplicationsAsync(page, baseUrl, "/candidate/applications");
 
         await page.WaitForSelectorAsync(".sollicitaties-hero-strip", new() { Timeout = 60_000 });
         var listHero = await MeasureHeroStripAsync(page);
@@ -318,24 +314,8 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
-        {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
-        }
-        else
-        {
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
+        await SignInCandidateForApplicationsAsync(page, baseUrl, "/candidate/applications");
 
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-            }
-        }
-
-        await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
         try
         {
             await page.WaitForSelectorAsync(".sollic-card", new() { Timeout = 20_000 });
@@ -402,26 +382,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
-        {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications?tab=berichten");
-        }
-        else
-        {
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-            }
-        }
-
-        await page.GotoAsync(
-            baseUrl + "/candidate/applications?tab=berichten",
-            new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await SignInCandidateForApplicationsAsync(page, baseUrl, "/candidate/applications?tab=berichten");
 
         var tab = await page.QuerySelectorAsync("[data-testid=\"sollicitaties-berichten-tab\"]");
         if (tab is null)
@@ -509,10 +470,6 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public bool HasVisiblePanel { get; set; }
         public bool HasBack { get; set; }
     }
-
-    private static bool UseCiTestSignIn(string baseUrl, string? localBaseUrl) =>
-        KbE2e.IsLocalCiStack(baseUrl)
-        || (localBaseUrl is not null && string.Equals(baseUrl, localBaseUrl, StringComparison.Ordinal));
 
     private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)
     {
