@@ -1586,37 +1586,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 }
 
                 await Assertions.Expect(page.Locator(".ob-client-mini-q")).ToHaveCountAsync(1);
-                var step = ParseOnboardingStepFromUrl(page.Url);
-                if (q == 1)
+                var step = await ReadOnboardingWizardStepAsync(page);
+                if (step is < 7 or > 10)
                 {
-                    await page.WaitForURLAsync(
-                        url =>
-                        {
-                            if (!url.Contains("/candidate/start", StringComparison.Ordinal))
-                            {
-                                return false;
-                            }
-
-                            var uri = new Uri(url);
-                            var query = QueryHelpers.ParseQuery(uri.Query);
-                            if (!query.TryGetValue("step", out var stepVal) || !int.TryParse(stepVal, out var stepNum) || stepNum != step)
-                            {
-                                return false;
-                            }
-
-                            if (!query.TryGetValue("q", out var qVal))
-                            {
-                                return true;
-                            }
-
-                            return int.TryParse(qVal, out var qNum) && qNum == 1;
-                        },
-                        new() { Timeout = 90_000 });
+                    step = ParseOnboardingStepFromUrl(page.Url);
                 }
-                else
-                {
-                    await page.WaitForURLAsync($"**/candidate/start?step={step}&q={q}**", new() { Timeout = 90_000 });
-                }
+
                 var pick = page.Locator("button[name=\"obMiniPick\"]").Nth(2);
                 await pick.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
                 if (q < 5)
@@ -1629,13 +1604,24 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 }
                 else
                 {
-                    await pick.ClickAsync(new() { Timeout = 20_000 });
+                    var lastPickNav = step == 10
+                        ? page.WaitForURLAsync(
+                            "**/candidate/start/kompas**",
+                            new() { WaitUntil = WaitUntilState.Commit, Timeout = 90_000 })
+                        : page.WaitForURLAsync(
+                            $"**/candidate/start?step={step + 1}**",
+                            new() { WaitUntil = WaitUntilState.Commit, Timeout = 90_000 });
+                    await Task.WhenAll(lastPickNav, pick.ClickAsync(new() { Timeout = 20_000 }));
                 }
 
                 await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             }
 
-            var stepAfter = ParseOnboardingStepFromUrl(page.Url);
+            var stepAfter = await ReadOnboardingWizardStepAsync(page);
+            if (stepAfter is < 7 or > 10)
+            {
+                stepAfter = ParseOnboardingStepFromUrl(page.Url);
+            }
             var next = page.GetByTestId("onboarding-next");
             if (await next.CountAsync() > 0)
             {
