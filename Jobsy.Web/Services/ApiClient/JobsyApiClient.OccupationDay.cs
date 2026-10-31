@@ -131,6 +131,7 @@ public sealed class OccupationDayStartResult
     public bool Busy { get; set; }
     public string? Message { get; set; }
     public List<string> Titles { get; set; } = [];
+    public bool Ok => Started && !Busy;
 }
 
 public sealed class OccupationDayProbeResult

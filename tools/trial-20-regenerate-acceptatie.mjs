@@ -54,14 +54,16 @@ try {
 
   await page.getByRole('button', { name: /Opnieuw genereren|Regenerate selected/i }).click();
   await page.waitForTimeout(5000);
-  log.kickoffMessage = (await page.locator('p.state-message').first().textContent())?.trim() ?? '';
+  log.kickoffMessage =
+    (await page.locator('p.state-message').first().textContent({ timeout: 5000 }).catch(() => ''))?.trim() ?? '';
 
   const deadline = Date.now() + 150 * 60_000;
   while (Date.now() < deadline) {
     await page.reload({ waitUntil: 'networkidle' });
     const body = await waitForAdminReady(page);
-    const running = /Bezig|Running|loopt/i.test(body) || body.includes('deze run');
-    const summary = (await page.locator('p.state-message').first().textContent())?.trim() ?? '';
+    const running = /Bezig:\s*\d+/i.test(body) || /Running:\s*\d+/i.test(body);
+    const summary =
+      (await page.locator('p.state-message').first().textContent({ timeout: 10_000 }).catch(() => ''))?.trim() ?? '';
     const runLine = body.match(/(\d+)[^\n]*mislukt[^\n]*/i)?.[0] ?? '';
     console.log(new Date().toISOString(), running ? 'RUNNING' : 'idle', summary.slice(0, 80), runLine.slice(0, 60));
     log.lastPoll = { at: new Date().toISOString(), running, summary, runLine };
