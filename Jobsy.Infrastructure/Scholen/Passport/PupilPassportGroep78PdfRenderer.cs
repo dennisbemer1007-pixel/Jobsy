@@ -512,32 +512,15 @@ internal static class PupilPassportGroep78PdfRenderer
     private static void MirrorBox(IContainer c, PupilPassportPdfModel m)
     {
         var body = NormalizePdfLine(m.MirrorBody ?? m.StoryBody);
-        c.MinHeight(72).Layers(layers =>
+        c.MinHeight(72).Background(Navy).Padding(10).Column(col =>
         {
-            layers.Layer().Svg(MirrorGradientSvg());
-            layers.Layer().Padding(10).Column(col =>
-            {
-                col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
-                    .FontFamily(PupilPassportFonts.Fredoka).FontSize(12).FontColor(GoldLight);
-                col.Item().PaddingTop(4).Text(body).FontSize(10.5f).FontColor(Colors.White).LineHeight(1.55f);
-                col.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
-                    .FontSize(7.5f).FontColor(Color.FromHex("#b9c6da"));
-            });
+            col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
+                .FontFamily(PupilPassportFonts.Fredoka).FontSize(12).FontColor(GoldLight);
+            col.Item().PaddingTop(4).Text(body).FontSize(10.5f).FontColor(Colors.White).LineHeight(1.55f);
+            col.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
+                .FontSize(7.5f).FontColor(Color.FromHex("#b9c6da"));
         });
     }
-
-    private static string MirrorGradientSvg()
-        => """
-           <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none">
-             <defs>
-               <linearGradient id="g78mirror" x1="0%" y1="0%" x2="100%" y2="100%">
-                 <stop offset="0%" stop-color="#0f2d5c"/>
-                 <stop offset="100%" stop-color="#1b4a7a"/>
-               </linearGradient>
-             </defs>
-             <rect width="100%" height="100%" fill="url(#g78mirror)" rx="4"/>
-           </svg>
-           """;
 
     private static void RiasecBars(IContainer c, PupilPassportPdfModel m)
     {
@@ -719,8 +702,13 @@ internal static class PupilPassportGroep78PdfRenderer
 
     private static IReadOnlyList<string> FirstTalkQuestions(PupilPassportPdfModel m)
     {
-        var group = m.SubjectGroups?.FirstOrDefault();
-        return group?.ConversationQuestions.Take(3).Select(NormalizePdfLine).ToList() ?? [];
+        if (m.SubjectGroups is not { Count: > 0 } groups)
+        {
+            return [];
+        }
+
+        var group = groups[0];
+        return group.ConversationQuestions.Take(3).Select(NormalizePdfLine).ToList();
     }
 
     private static void TalkBox(IContainer c, PupilPassportPdfModel m, IReadOnlyList<string> questions)

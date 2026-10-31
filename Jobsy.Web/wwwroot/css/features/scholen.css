@@ -989,6 +989,18 @@
     }.ll-reis.ll-island > .ll-lob-zone:not(.ll-lob-zone--mobile) {
         grid-column: 2;
         grid-row: 1;
+    }.ll-reis.ll-vakken {
+        grid-template-columns: minmax(0, 728px) 200px;
+        justify-content: center;
+        max-width: 960px;
+    }.ll-reis.ll-vakken > .ll-vakken-card {
+        grid-column: 1;
+        grid-row: 1;
+        width: 100%;
+        max-width: 728px;
+    }.ll-reis.ll-vakken > .ll-lob-zone:not(.ll-lob-zone--mobile) {
+        grid-column: 2;
+        grid-row: 1;
     }.ll-rail { display: block; background:var(--surface); border-radius:var(--r-lg); padding: var(--space-4); }.ll-rail__list { list-style: none; padding: 0; margin: var(--space-3) 0; }.ll-rail__list li { padding: var(--space-2) 0; opacity: 0.55; }.ll-rail__list li.is-done { opacity: 0.9; }.ll-rail__list li.is-now { opacity: 1; font-weight: 600;     }.ll-reis.ll-result,
     .ll-reis.ll-dream {
         grid-template-columns: minmax(0, 1fr);
@@ -1560,46 +1572,6 @@ html.using-keyboard .ll-question__text:focus-visible {
     outline-offset: 2px;
 }
 
-.ll-vakken {
-    max-width: min(100%, 920px);
-    margin: 0 auto var(--space-6);
-    padding: 0 var(--space-3);
-}
-
-.ll-vakken__hero {
-    border-radius: var(--r-lg);
-    min-height: 140px;
-    background-size: cover;
-    background-position: center;
-    overflow: hidden;
-    margin-bottom: var(--space-3);
-}
-
-.ll-vakken__hero-overlay {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-deep, var(--brand)) 55%, transparent), color-mix(in srgb, var(--brand) 75%, #000));
-    padding: var(--space-5);
-    color: #fff;
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-}
-
-.ll-vakken__kicker {
-    font-size: var(--text-sm);
-    opacity: 0.9;
-    margin: 0 0 var(--space-1);
-}
-
-.ll-vakken__hero h1 {
-    margin: 0;
-    font-size: var(--text-xl);
-}
-
-.ll-vakken__intro {
-    margin-bottom: var(--space-4);
-}
-
 .ll-vakken__grid {
     display: grid;
     gap: var(--space-4);
@@ -1670,26 +1642,4 @@ html.using-keyboard .ll-question__text:focus-visible {
     background: var(--brand);
     color: #fff;
     border-color: var(--brand);
-}
-
-.ll-vakken__bubble {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin: var(--space-4) 0;
-    padding: var(--space-3);
-    border-radius: var(--r-lg);
-    background: color-mix(in srgb, var(--gold-light, #ffe8a3) 35%, var(--surface));
-}
-
-.ll-vakken__bubble p {
-    margin: 0;
-    flex: 1;
-}
-
-.ll-vakken__nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-top: var(--space-4);
 }

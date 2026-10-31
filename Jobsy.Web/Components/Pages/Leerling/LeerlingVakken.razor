@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Components.Leerling.Scene
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -28,99 +29,113 @@ else if (_state is null)
 }
 else
 {
-    <div class="ll-vakken" data-testid="leerling-vakken">
-        <header class="ll-vakken__hero" style="background-image:url('/images/leerling-paspoort-g78/g78-rif.jpg')">
-            <div class="ll-vakken__hero-overlay">
-                <p class="ll-vakken__kicker">@Culture["Leerling.Vakken.Kicker"]</p>
-                <h1>@Culture["Leerling.Vakken.Heading"]</h1>
+    <LeerlingCoachCue Text="@Culture["Leerling.Vakken.Kicker"]" />
+    <LeerlingScene Depth="@SceneDepth" />
+
+    <div class="ll-reis ll-vakken" data-testid="leerling-vakken">
+        <section class="ll-card ll-vakken-card">
+            <div class="ll-progress-dots" role="group" aria-label="@Culture["Leerling.Vakken.Progress"]">
+                @for (var i = 1; i <= 5; i++)
+                {
+                    var on = i <= (_page == 1 ? 4 : 5);
+                    var now = _page == 1 ? i == 4 : i == 5;
+                    <span class="ll-progress-dots__dot @(on ? "is-on" : null) @(now ? "is-now" : null)" aria-hidden="true"></span>
+                }
             </div>
-        </header>
 
-        <div class="ll-vakken__dots ll-progress-dots" role="group" aria-label="@Culture["Leerling.Vakken.Progress"]">
-            @for (var i = 1; i <= 5; i++)
+            <p class="ll-question__world">@Culture["Leerling.Vakken.Kicker"]</p>
+            <h1 class="ll-question__text">@Culture["Leerling.Vakken.Heading"]</h1>
+            <p class="muted">@Culture[_page == 1 ? "Leerling.Vakken.Intro1" : "Leerling.Vakken.Intro2"]</p>
+
+            <div class="ll-vakken__grid">
+                @foreach (var key in _pageKeys)
+                {
+                    var emoji = SubjectEmoji(key);
+                    <article class="ll-vakken__subject">
+                        <div class="ll-vakken__subject-head">
+                            <span class="ll-vakken__emoji" aria-hidden="true">@emoji</span>
+                            <h2>@Culture[PupilVakSubjectLabels.UiKey(key)]</h2>
+                        </div>
+                        <div class="ll-vakken__scale">
+                            <span class="ll-vakken__scale-label">@Culture["Leerling.Vakken.Leuk"]</span>
+                            <div class="ll-vakken__scale-btns" role="radiogroup" aria-label="@($"{Culture[PupilVakSubjectLabels.UiKey(key)]} — {Culture["Leerling.Vakken.Leuk"]}")">
+                                @for (var v = 1; v <= 5; v++)
+                                {
+                                    var val = v;
+                                    var selected = GetLeuk(key) == val;
+                                    <button type="button"
+                                            class="ll-vakken__btn @(selected ? "is-on" : null)"
+                                            role="radio"
+                                            aria-checked="@(selected ? "true" : "false")"
+                                            aria-pressed="@(selected ? "true" : "false")"
+                                            disabled="@_busy"
+                                            @onclick="() => SetLeuk(key, val)">@val</button>
+                                }
+                            </div>
+                        </div>
+                        <div class="ll-vakken__scale">
+                            <span class="ll-vakken__scale-label">@Culture["Leerling.Vakken.Goed"]</span>
+                            <div class="ll-vakken__scale-btns" role="radiogroup" aria-label="@($"{Culture[PupilVakSubjectLabels.UiKey(key)]} — {Culture["Leerling.Vakken.Goed"]}")">
+                                @for (var v = 1; v <= 5; v++)
+                                {
+                                    var val = v;
+                                    var selected = GetGoed(key) == val;
+                                    <button type="button"
+                                            class="ll-vakken__btn @(selected ? "is-on" : null)"
+                                            role="radio"
+                                            aria-checked="@(selected ? "true" : "false")"
+                                            aria-pressed="@(selected ? "true" : "false")"
+                                            disabled="@_busy"
+                                            @onclick="() => SetGoed(key, val)">@val</button>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
             {
-                var on = i <= (_page == 1 ? 4 : 5);
-                var now = _page == 1 ? i == 4 : i == 5;
-                <span class="ll-progress-dots__dot @(on ? "is-on" : null) @(now ? "is-now" : null)" aria-hidden="true"></span>
+                <p class="ll-error" role="alert">@_error</p>
             }
-        </div>
 
-        <section class="ll-card ll-vakken__intro">
-            <p>@Culture[_page == 1 ? "Leerling.Vakken.Intro1" : "Leerling.Vakken.Intro2"]</p>
+            <div class="ll-question__nav">
+                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="GoBack">
+                    @Culture["Leerling.Vakken.Back"]
+                </button>
+                <button type="button" class="btn-primary" disabled="@(_busy || !PageComplete())" @onclick="ContinueAsync">
+                    @Culture[_page == 1 ? "Leerling.Vakken.Next" : "Leerling.Vakken.Finish"]
+                </button>
+            </div>
         </section>
 
-        <div class="ll-vakken__grid">
-            @foreach (var key in _pageKeys)
+        <aside class="ll-lob-zone" aria-hidden="@(_page != 1)">
+            @if (_page == 1)
             {
-                var emoji = SubjectEmoji(key);
-                <article class="ll-vakken__subject">
-                    <div class="ll-vakken__subject-head">
-                        <span class="ll-vakken__emoji" aria-hidden="true">@emoji</span>
-                        <h2>@Culture[PupilVakSubjectLabels.UiKey(key)]</h2>
-                    </div>
-                    <div class="ll-vakken__scale">
-                        <span class="ll-vakken__scale-label">@Culture["Leerling.Vakken.Leuk"]</span>
-                        <div class="ll-vakken__scale-btns" role="radiogroup" aria-label="@($"{Culture[PupilVakSubjectLabels.UiKey(key)]} — {Culture["Leerling.Vakken.Leuk"]}")">
-                            @for (var v = 1; v <= 5; v++)
-                            {
-                                var val = v;
-                                var selected = GetLeuk(key) == val;
-                                <button type="button"
-                                        class="ll-vakken__btn @(selected ? "is-on" : null)"
-                                        role="radio"
-                                        aria-checked="@(selected ? "true" : "false")"
-                                        aria-pressed="@(selected ? "true" : "false")"
-                                        disabled="@_busy"
-                                        @onclick="() => SetLeuk(key, val)">@val</button>
-                            }
-                        </div>
-                    </div>
-                    <div class="ll-vakken__scale">
-                        <span class="ll-vakken__scale-label">@Culture["Leerling.Vakken.Goed"]</span>
-                        <div class="ll-vakken__scale-btns" role="radiogroup" aria-label="@($"{Culture[PupilVakSubjectLabels.UiKey(key)]} — {Culture["Leerling.Vakken.Goed"]}")">
-                            @for (var v = 1; v <= 5; v++)
-                            {
-                                var val = v;
-                                var selected = GetGoed(key) == val;
-                                <button type="button"
-                                        class="ll-vakken__btn @(selected ? "is-on" : null)"
-                                        role="radio"
-                                        aria-checked="@(selected ? "true" : "false")"
-                                        aria-pressed="@(selected ? "true" : "false")"
-                                        disabled="@_busy"
-                                        @onclick="() => SetGoed(key, val)">@val</button>
-                            }
-                        </div>
-                    </div>
-                </article>
+                <p class="ll-bubble">@Culture["Leerling.Vakken.Bubble"]</p>
             }
-        </div>
+            <LeerlingLobster PlatesShed="@LobsterPlatesShed"
+                             NewShell="@_state.NewShell"
+                             Label="Lobsy de kreeft" />
+        </aside>
 
-        @if (_page == 1)
-        {
-            <aside class="ll-vakken__bubble" aria-hidden="true">
-                <p>@Culture["Leerling.Vakken.Bubble"]</p>
-                <img src="/images/leerling-paspoort-g78/g78-kreeft-kaart.png" alt="" width="72" height="72" />
-            </aside>
-        }
-
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="ll-error" role="alert">@_error</p>
-        }
-
-        <div class="ll-vakken__nav">
-            <button type="button" class="btn-secondary" disabled="@_busy" @onclick="GoBack">
-                @Culture["Leerling.Vakken.Back"]
-            </button>
-            <button type="button" class="btn-primary" disabled="@(_busy || !PageComplete())" @onclick="ContinueAsync">
-                @Culture[_page == 1 ? "Leerling.Vakken.Next" : "Leerling.Vakken.Finish"]
-            </button>
-        </div>
+        <aside class="ll-lob-zone ll-lob-zone--mobile" aria-hidden="@(_page != 1)">
+            @if (_page == 1)
+            {
+                <p class="ll-bubble">@Culture["Leerling.Vakken.Bubble"]</p>
+            }
+            <LeerlingLobster PlatesShed="@LobsterPlatesShed"
+                             NewShell="@_state.NewShell"
+                             Mobile="true"
+                             Label="Lobsy de kreeft" />
+        </aside>
     </div>
 }
 
 @code {
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
     private PupilProgressStateDto? _state;
     private bool _loading = true;
     private bool _sessionLost;
@@ -130,28 +145,25 @@ else
     private readonly Dictionary<string, (int Leuk, int Goed)> _scores = new(StringComparer.OrdinalIgnoreCase);
     private IReadOnlyList<string> _pageKeys = [];
 
+    private int SceneDepth => 9;
+
+    private int LobsterPlatesShed => Math.Clamp(_state?.PlatesShed ?? 10, 0, 10);
+
     protected override async Task OnInitializedAsync()
     {
-        ParsePageFromQuery();
+        ApplyPageFromQuery();
         await Reload();
     }
 
     protected override void OnParametersSet()
     {
-        ParsePageFromQuery();
-        _pageKeys = PupilVakScores.KeysForPage(_page);
+        ApplyPageFromQuery();
     }
 
-    private void ParsePageFromQuery()
+    private void ApplyPageFromQuery()
     {
-        _page = 1;
-        var uri = Nav.ToAbsoluteUri(Nav.Uri);
-        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var p)
-            && int.TryParse(p.ToString(), out var n)
-            && n == 2)
-        {
-            _page = 2;
-        }
+        _page = Page == 2 ? 2 : 1;
+        _pageKeys = PupilVakScores.KeysForPage(_page);
     }
 
     private async Task Reload()

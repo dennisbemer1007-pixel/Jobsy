@@ -26,48 +26,43 @@ public static class PupilG78SubjectGroups
         var skill = Lines(scores, PupilVakScores.IsGoedOnly, english);
 
         var valueLabel = ValueLabel(result?.TopValue, english);
-        var talkKeys = result is null ? [] : PupilStoryTemplates.ConversationStarterKeys(result);
-        var talk = talkKeys
-            .Select(k => PupilPassportLocalizedCopy.Get(k, language))
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Take(3)
-            .ToList();
+        var talk = PupilG78PassportTalk.Questions(scores, english);
 
         var groups = new List<PupilPassportSubjectGroup>(3);
         if (strong.Count > 0)
         {
             groups.Add(new PupilPassportSubjectGroup(
-                Title(english, "Sterk in school", "Strong at school"),
+                Title(english, "Mijn sterke vakken", "My strong subjects"),
                 Intro(english,
-                    "Deze vakken vind je leuk én gaat het goed. Dat is een mooie combinatie.",
-                    "You enjoy these subjects and you do well. That is a strong mix."),
+                    "Leuk én goed in",
+                    "Fun and you do well"),
                 strong,
-                TraitLines(english, valueLabel, "leuk én goed", "enjoy and do well"),
+                TraitLines(english, valueLabel, strong: true),
                 talk));
         }
 
         if (growth.Count > 0)
         {
             groups.Add(new PupilPassportSubjectGroup(
-                Title(english, "Leuk om verder in te groeien", "Fun to grow in"),
+                Title(english, "Leuk, hier groei ik in", "Fun to grow in"),
                 Intro(english,
-                    "Je vindt het leuk, maar het kan nog beter. Oefenen helpt.",
-                    "You like it, and you can still improve. Practice helps."),
+                    "Je plezier helpt je verder",
+                    "Your enjoyment helps you grow"),
                 growth,
-                TraitLines(english, valueLabel, "leuk", "enjoy"),
-                talk.Count >= 2 ? talk.Skip(1).ToList() : talk));
+                TraitLines(english, valueLabel, growth: true),
+                talk));
         }
 
         if (skill.Count > 0)
         {
             groups.Add(new PupilPassportSubjectGroup(
-                Title(english, "Goed, maar minder leuk", "Good, but less fun"),
+                Title(english, "Hier ben ik goed in", "Good at this"),
                 Intro(english,
-                    "Je kunt het al, maar het kost misschien meer moeite. Kies later bewust.",
-                    "You can do it, but it may cost more effort. Choose consciously later."),
+                    "Ook als het niet je favoriet is",
+                    "Even when it is not your favourite"),
                 skill,
-                TraitLines(english, valueLabel, "goed", "do well"),
-                talk.Count >= 1 ? [talk[0]] : talk));
+                TraitLines(english, valueLabel, skill: true),
+                talk));
         }
 
         return groups;
@@ -104,14 +99,22 @@ public static class PupilG78SubjectGroups
         return PupilPassportLocalizedCopy.Get(key, english ? "en" : "nl");
     }
 
-    private static IReadOnlyList<string> TraitLines(bool english, string? valueLabel, string nlBand, string enBand)
+    private static IReadOnlyList<string> TraitLines(bool english, string? valueLabel, bool strong = false, bool growth = false, bool skill = false)
     {
-        var band = english ? enBand : nlBand;
         var lines = new List<string>
         {
-            english
-                ? $"You said you {band} in these subjects."
-                : $"Je gaf aan dat je hier {nlBand} bent."
+            english switch
+            {
+                true when strong => "You said these subjects are fun and you do well in them.",
+                true when growth => "You said you enjoy these subjects.",
+                true when skill => "You said you do well in these subjects.",
+                false when strong => "Je vindt deze vakken leuk en je bent er goed in.",
+                false when growth => "Je vindt deze vakken leuk.",
+                false when skill => "Je bent in deze vakken goed.",
+                _ => english
+                    ? "You rated these subjects yourself."
+                    : "Je gaf zelf antwoord over deze vakken."
+            }
         };
 
         if (!string.IsNullOrWhiteSpace(valueLabel))

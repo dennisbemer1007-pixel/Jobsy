@@ -18,11 +18,9 @@ public static class PupilG78MirrorTemplate
     {
         var english = PupilVerhaalLocalized.IsEnglish(language);
         var likes = ParseChips(progress?.LikesJson);
-        var likeLabels = likes
-            .Select(k => PupilInterestChipCatalog.LikeChips.FirstOrDefault(c =>
-                string.Equals(c.Key, k, StringComparison.OrdinalIgnoreCase)))
-            .Where(c => c is not null)
-            .Select(c => PupilPassportLocalizedCopy.Get(c!.LabelKey, language))
+        var likeLabels = (english
+                ? likes.Select(PupilPortalChipLabels.English)
+                : likes.Select(PupilPortalChipLabels.Dutch))
             .Take(3)
             .ToList();
 
@@ -74,6 +72,7 @@ public static class PupilG78MirrorTemplate
         IReadOnlyList<PupilVakScoreEntry> vakScores,
         string language)
     {
+        var english = PupilVerhaalLocalized.IsEnglish(language);
         var confirmed = new List<string>();
         foreach (var chip in ParseChips(progress?.LikesJson))
         {
@@ -81,7 +80,9 @@ public static class PupilG78MirrorTemplate
                 string.Equals(x.Key, chip, StringComparison.OrdinalIgnoreCase));
             if (c is not null)
             {
-                confirmed.Add(PupilPassportLocalizedCopy.Get(c.LabelKey, language));
+                confirmed.Add(english
+                    ? PupilPortalChipLabels.English(chip)
+                    : PupilPortalChipLabels.Dutch(chip));
             }
         }
 
