@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using QuestPDF.Fluent;
@@ -212,7 +213,7 @@ internal static class PupilPassportGroep78PdfRenderer
         page.Content().Column(col =>
         {
             col.Item().Element(c => MirrorBox(c, m));
-            col.Item().PaddingTop(8).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
+            col.Item().PaddingTop(Mm(6)).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
                 T(m, "LeerlingPassport.G78.Riasec.Sub"), inner => RiasecBars(inner, m)));
             col.Item().PaddingTop(6).Row(row =>
             {
@@ -570,17 +571,39 @@ internal static class PupilPassportGroep78PdfRenderer
     private static void MirrorBox(IContainer c, PupilPassportPdfModel m)
     {
         var raw = NormalizePdfLine(m.MirrorBody ?? m.StoryBody);
-        var body = raw.Length > 520 ? raw[..517] + "…" : raw;
+        var body = TrimMirrorSentences(raw);
 
-        c.MinHeight(Mm(22)).CornerRadius(Mm(1.5f)).Background(Navy).Padding(Mm(3.5f)).Column(col =>
+        c.MinHeight(Mm(38)).CornerRadius(Mm(1.5f)).Background(Navy)
+            .PaddingVertical(Mm(5)).PaddingHorizontal(Mm(6)).Column(col =>
+            {
+                col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
+                    .Bold().FontSize(13).FontColor(MirrorGold);
+                col.Item().PaddingTop(Mm(2.5f)).Text(body)
+                    .FontFamily(MirrorFont).FontSize(12.5f).FontColor(Colors.White).LineHeight(1.65f);
+                col.Item().PaddingTop(Mm(3)).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
+                    .FontSize(7.5f).FontColor(MirrorSource);
+            });
+    }
+
+    private static string TrimMirrorSentences(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
         {
-            col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
-                .Bold().FontSize(12).FontColor(MirrorGold);
-            col.Item().PaddingTop(4).Text(body)
-                .FontFamily(MirrorFont).FontSize(11).FontColor(Colors.White).LineHeight(1.6f);
-            col.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
-                .FontSize(7.5f).FontColor(MirrorSource);
-        });
+            return raw;
+        }
+
+        var parts = Regex.Split(raw.Trim(), @"(?<=[.!?])\s+")
+            .Select(p => p.Trim())
+            .Where(p => p.Length > 0)
+            .Take(PupilG78MirrorTemplate.MaxSentences)
+            .ToList();
+
+        if (parts.Count == 0)
+        {
+            return raw.Length > 720 ? raw[..717] + "…" : raw;
+        }
+
+        return string.Join(' ', parts);
     }
 
     private static void RiasecBars(IContainer c, PupilPassportPdfModel m)
