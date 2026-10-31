@@ -8,6 +8,8 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.WebUtilities
 @implements IDisposable
 
 <PageTitle>@Culture["AdminNav.DayInLife"] · Lobsy</PageTitle>
@@ -36,7 +38,7 @@
 
         <label>
             @Culture["Admin.Day.Pick"]
-            <textarea rows="5" @bind="_pick" placeholder="@Culture["Admin.Day.PickLead"]"></textarea>
+            <textarea rows="5" @bind="_pick" @bind:event="oninput" placeholder="@Culture["Admin.Day.PickLead"]"></textarea>
         </label>
         <p class="login-lead">@Culture["Admin.Day.PickLead"]</p>
 
@@ -65,11 +67,23 @@
 
     protected override async Task OnInitializedAsync()
     {
+        ApplyIdsFromQuery();
         await RefreshAsync();
         if (_status?.Running == true)
         {
             StartPolling();
         }
+    }
+
+    private void ApplyIdsFromQuery()
+    {
+        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
+        if (!qs.TryGetValue("ids", out var raw) || string.IsNullOrWhiteSpace(raw))
+        {
+            return;
+        }
+
+        _pick = Uri.UnescapeDataString(raw.ToString()).Trim();
     }
 
     private async Task RefreshAsync()
