@@ -81,6 +81,11 @@ foreach (var row in doc.Rows)
     blocks = blocks
         .Select(block => block with { Text = OccupationDayChildLanguage.SimplifyKnownJargon(block.Text) })
         .ToList();
+    row.VariesNote = OccupationDayChildLanguage.SimplifyKnownJargon(row.VariesNote);
+    row.Morning = OccupationDayChildLanguage.SimplifyKnownJargon(row.Morning);
+    row.Midday = OccupationDayChildLanguage.SimplifyKnownJargon(row.Midday);
+    row.Afternoon = OccupationDayChildLanguage.SimplifyKnownJargon(row.Afternoon);
+    row.Closing = OccupationDayChildLanguage.SimplifyKnownJargon(row.Closing);
 
     var draft = OccupationDayBlocks.WithDerived(new OccupationDayDraft(
         row.TitleNl,

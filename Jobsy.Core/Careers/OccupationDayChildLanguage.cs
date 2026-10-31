@@ -52,6 +52,8 @@ public static class OccupationDayChildLanguage
         t = t.Replace("organismen", "planten en dieren", StringComparison.OrdinalIgnoreCase);
         t = t.Replace("organisme", "plant of dier", StringComparison.OrdinalIgnoreCase);
         t = t.Replace("wetenschappelijke gemeenschap", "andere onderzoekers", StringComparison.OrdinalIgnoreCase);
+        t = t.Replace("wetenschappelijke papers", "verslagen over je onderzoek", StringComparison.OrdinalIgnoreCase);
+        t = t.Replace("wetenschappelijk onderzoek", "onderzoek in de praktijk", StringComparison.OrdinalIgnoreCase);
         return t;
     }
 

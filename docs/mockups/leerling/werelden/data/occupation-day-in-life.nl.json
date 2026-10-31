@@ -1,6 +1,6 @@
 {
   "locale": "nl",
-  "exportedAtUtc": "2026-10-30T22:17:54.3868646Z",
+  "exportedAtUtc": "2026-10-31T07:24:15.6750422Z",
   "rows": [
     {
       "escoId": "02f1ae71-f89c-47b7-af2c-50d7ab1d9b8a",
@@ -1000,7 +1000,7 @@
         "Kwaliteit van water in kooien beoordelen.",
         "Symptomen van visziekten waarnemen."
       ],
-      "variesNote": "Werkzaamheden kunnen verschillen per werkgever en locatie. De focus kan liggen op verschillende soorten aquacultuurorganismen.",
+      "variesNote": "Werkzaamheden kunnen verschillen per werkgever en locatie. De focus kan liggen op verschillende soorten aquacultuurplanten en dieren.",
       "sourceModel": "gpt-4o",
       "generatedAtUtc": "2026-10-30T21:54:50.265659Z",
       "contentHash": "2662dfe8fb370db9160ea7cdc6cb03dcd0d78eb31c572fdf5d0f62a146ce9239",
@@ -5341,7 +5341,7 @@
       "morning": "Je voert metingen uit van vingerafdrukken en netvliezen. Deze gegevens zijn belangrijk voor je onderzoek.",
       "midday": "Je ontwerpt enqu\u00EAtes en stelt vragenlijsten op voor nieuwe onderzoeken. Dit helpt bij het verzamelen van gegevens.",
       "afternoon": "Je evalueert onderzoeksactiviteiten en interpreteert actuele gegevens. Dit is essentieel voor je wetenschappelijke publicaties.",
-      "closing": "Je vat de informatie samen en werkt aan wetenschappelijke papers. De dag eindigt met het bijwerken van je notities.",
+      "closing": "Je vat de informatie samen en werkt aan verslagen over je onderzoek. De dag eindigt met het bijwerken van je notities.",
       "highlights": [
         "Onderzoeksactiviteiten evalueren.",
         "Actuele gegevens interpreteren.",
@@ -5597,7 +5597,7 @@
         {
           "key": "close",
           "label": "16:30 Afronden",
-          "text": "Je vat de informatie samen en werkt aan wetenschappelijke papers. De dag eindigt met het bijwerken van je notities."
+          "text": "Je vat de informatie samen en werkt aan verslagen over je onderzoek. De dag eindigt met het bijwerken van je notities."
         }
       ],
       "tasks": [
@@ -6532,7 +6532,7 @@
       "titleNl": "bioloog",
       "morning": "Je bestudeert de oorsprong en ontwikkeling van de verzamelde planten en dieren. Dit omvat hun structuur en levensprocessen.",
       "midday": "Je plant experimenten en bepaalt welke gegevens je verder moet verzamelen voor je onderzoek.",
-      "afternoon": "Je schrijft wetenschappelijke papers en rapporten over je bevindingen. Deze worden gedeeld met de andere onderzoekers.",
+      "afternoon": "Je schrijft verslagen over je onderzoek en rapporten over je bevindingen. Deze worden gedeeld met de andere onderzoekers.",
       "closing": "Je sluit de dag af door je onderzoeksgegevens te beheren en te zorgen dat alles goed is gedocumenteerd.",
       "highlights": [
         "Openbare publicaties beheren.",
@@ -6853,7 +6853,7 @@
         {
           "key": "afternoon",
           "label": "15:00 Middag",
-          "text": "Je schrijft wetenschappelijke papers en rapporten over je bevindingen. Deze worden gedeeld met de andere onderzoekers."
+          "text": "Je schrijft verslagen over je onderzoek en rapporten over je bevindingen. Deze worden gedeeld met de andere onderzoekers."
         },
         {
           "key": "close",
@@ -6892,7 +6892,7 @@
       ],
       "variesNote": "De volgorde en taken kunnen per werkgever verschillen. Dat is normaal in dit beroep.",
       "sourceModel": "gpt-4o-grounded-bridge",
-      "generatedAtUtc": "2026-10-30T22:45:48.2968819Z",
+      "generatedAtUtc": "2026-10-31T07:28:33.3584231Z",
       "contentHash": "trial-bridge",
       "locale": "nl",
       "thinSource": false,
@@ -6950,7 +6950,7 @@
       ],
       "variesNote": "De volgorde en taken kunnen per werkgever verschillen. Dat is normaal in dit beroep.",
       "sourceModel": "gpt-4o-grounded-bridge",
-      "generatedAtUtc": "2026-10-30T22:45:48.3001475Z",
+      "generatedAtUtc": "2026-10-31T07:28:33.3616905Z",
       "contentHash": "trial-bridge",
       "locale": "nl",
       "thinSource": false,
