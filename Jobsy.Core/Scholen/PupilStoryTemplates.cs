@@ -78,8 +78,8 @@ public static class PupilStoryTemplates
             .Take(2)
             .ToList();
 
-        var jobIdeas = set == PupilQuestionSet.Groep78 && PupilVakScores.IsComplete(progress?.VakScoresJson)
-            ? PupilRiasecJobIdeas.TopGroep78Jobs(result, progress)
+        var jobIdeas = set == PupilQuestionSet.Groep78
+            ? Groep78JobIdeaKeys(result, progress, top2, likes)
             : PupilRiasecJobIdeas.ForLetters(top2, set, likes);
 
         return new PupilStoryKeySet(
@@ -315,5 +315,20 @@ public static class PupilStoryTemplates
         {
             return null;
         }
+    }
+
+    private static IReadOnlyList<string> Groep78JobIdeaKeys(
+        PupilResult result,
+        Entities.Scholen.PupilProgress? progress,
+        IReadOnlyList<char> top2,
+        IReadOnlyList<string> likes)
+    {
+        var scored = PupilRiasecJobIdeas.TopGroep78Jobs(result, progress);
+        if (scored.Count > 0)
+        {
+            return scored;
+        }
+
+        return PupilRiasecJobIdeas.ForLetters(top2, PupilQuestionSet.Groep78, likes);
     }
 }

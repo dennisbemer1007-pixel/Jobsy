@@ -24,7 +24,8 @@ public sealed record PupilPassportOccupationCard(
     string Title,
     string Blurb,
     IReadOnlyList<string> FitTags,
-    string IconKey);
+    string IconKey,
+    int? MatchPercent = null);
 
 public sealed record PupilPassportRouteStep(string Title, string Detail, bool IsGoal);
 

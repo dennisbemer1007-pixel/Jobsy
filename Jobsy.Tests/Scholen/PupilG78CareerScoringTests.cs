@@ -30,7 +30,7 @@ public class PupilG78CareerScoringTests
         var vak = PupilVakScores.Parse(progress.VakScoresJson);
         var matches = PupilG78CareerScoring.TopJobMatches(result, progress, vak, minMatch: 0.70, maxCount: 5);
         Assert.NotEmpty(matches);
-        Assert.All(matches, m => Assert.True(m.MatchScore > 0.70));
+        Assert.All(matches, m => Assert.True(m.MatchScore >= 0.70));
         var keys = PupilG78CareerScoring.TopJobKeys(result, progress, vak, take: 5);
         Assert.Equal(matches.Count, keys.Count);
     }
@@ -49,6 +49,7 @@ public class PupilG78CareerScoringTests
         Assert.Equal(PupilG78BeroepssoortCatalog.Title("creatief-design", english: false), cards[0].DomainLabel);
         Assert.Equal(PupilG78BeroepssoortCatalog.Title("media-digital", english: false), cards[1].DomainLabel);
         Assert.Equal(PupilG78BeroepssoortCatalog.Title("dieren-leven", english: false), cards[2].DomainLabel);
+        Assert.Equal(82, cards[0].MatchPercent);
         Assert.DoesNotContain("dieren", cards[0].DomainLabel, StringComparison.OrdinalIgnoreCase);
     }
 
