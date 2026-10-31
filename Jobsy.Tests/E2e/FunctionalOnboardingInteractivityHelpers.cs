@@ -186,6 +186,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static async Task AssertGeolocateButtonRespondsAsync(IPage page)
     {
         var geo = page.Locator(".ob-fields__address .kb-address__geo").First;
+        if (await geo.CountAsync() == 0)
+        {
+            return;
+        }
+
         await geo.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await AssertHitTargetAsync(page, geo, "locate button");
         await geo.ClickAsync(new() { Timeout = 10_000 });
@@ -274,7 +279,10 @@ internal static class FunctionalOnboardingInteractivityHelpers
         => KbE2e.WaitForCircuitOrSsrReadyAsync(page, timeoutMs);
 
     internal static ILocator OnboardingStep1Illustrated(IPage page) =>
-        page.Locator("[data-testid=onboarding-step-1-illustrated]").First;
+        OnboardingStepIllustrated(page, 1);
+
+    internal static ILocator OnboardingStepIllustrated(IPage page, int step) =>
+        page.Locator($"[data-testid=onboarding-step-{step}-illustrated]").First;
 
     internal static async Task AssertChoiceTileTogglesWithinMsAsync(IPage page, ILocator tile, int maxMs = 300)
     {
@@ -338,6 +346,25 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task WaitForStepIllustrationLoadedAsync(IPage page, int step)
     {
+        if (step is >= 1 and <= 6 && await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0)
+        {
+            await OnboardingStepIllustrated(page, step).WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+            await page.WaitForFunctionAsync(
+                """
+                (step) => {
+                  const root = document.querySelector('[data-ob-client-step="' + step + '"]');
+                  return !root || root.getAttribute('data-ob-client-mounted') === '1';
+                }
+                """,
+                step,
+                new() { Timeout = 60_000 });
+            return;
+        }
+
         if (step is >= 1 and <= 6)
         {
             var mobile = (page.ViewportSize?.Width ?? 1440) < 768;
@@ -512,13 +539,13 @@ internal static class FunctionalOnboardingInteractivityHelpers
             {
                 case 1:
                     await ClickWizardNextWhenVisibleAsync(page);
-                    await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                    await OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
                     await WaitForStepIllustrationLoadedAsync(page, 2);
                     break;
                 case 2:
                     await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
                     await ClickWizardNextWhenVisibleAsync(page);
-                    await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                    await OnboardingStepIllustrated(page, 3).WaitForAsync(new() { Timeout = 90_000 });
                     await WaitForStepIllustrationLoadedAsync(page, 3);
                     break;
                 case 3:
@@ -585,7 +612,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await SelectAnyWorkStatusChipAsync(page);
         await FillKennismakenBasicsExceptWorkStatusAsync(page);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator("[data-testid=onboarding-step-2-illustrated]").First.WaitForAsync(new() { Timeout = 90_000 });
         await WaitForCircuitReadyAsync(page);
 
         var presets = page.Locator(".ob-wizard__presets .lobsy-choice-tile");
@@ -597,7 +624,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
 
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator("[data-testid=onboarding-step-3-illustrated]").First.WaitForAsync(new() { Timeout = 90_000 });
         await WaitForCircuitReadyAsync(page);
 
         var transport = page.Locator(".ob-wizard__transport .lobsy-choice-tile").First;

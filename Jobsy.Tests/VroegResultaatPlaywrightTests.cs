@@ -601,12 +601,12 @@ combo.save(out)
         await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator("[data-testid=onboarding-step-2-illustrated]").First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         var preset = page.Locator(".ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile, [data-testid=onboarding-step-2-illustrated] .lobsy-choice-tile").First;
         await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await preset.ClickAsync(new() { Force = true });
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new()
+        await page.Locator("[data-testid=onboarding-step-3-illustrated]").First.WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
             Timeout = 90_000,

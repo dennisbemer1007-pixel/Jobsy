@@ -103,7 +103,7 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
         if (await card.CountAsync() > 0)
         {
-            await card.ClickAsync();
+            await card.ClickAsync(new() { Force = true });
             await page.WaitForTimeoutAsync(1000);
         }
 

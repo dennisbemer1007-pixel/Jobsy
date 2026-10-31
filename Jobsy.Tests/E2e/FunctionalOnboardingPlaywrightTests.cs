@@ -108,7 +108,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
             if (step == 1)
             {
                 await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
-                await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
                 continue;
             }
 
@@ -156,7 +156,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
         await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
 
-        await Assertions.Expect(page.Locator("[data-testid=onboarding-step-3-illustrated]")).ToBeVisibleAsync();
+        await Assertions.Expect(FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 3)).ToBeVisibleAsync();
         var selectedTransport = page.Locator(
             "#onboarding-field-transport .lobsy-choice-tile.is-selected, #onboarding-field-transport [aria-pressed=\"true\"]");
         await Assertions.Expect(selectedTransport.First).ToBeVisibleAsync(new() { Timeout = 15_000 });
@@ -310,9 +310,8 @@ public sealed class FunctionalOnboardingPlaywrightTests
 
         var next = page.GetByTestId("onboarding-next");
         await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 20_000 });
-        await next.ClickAsync(new() { Timeout = 15_000, Force = mobile });
-        await page.Locator("[data-testid=onboarding-step-2-illustrated], .ob-wizard__presets, .ob-illustrated-step").First
-            .WaitForAsync(new() { Timeout = 90_000 });
+        await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
+        await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 2).WaitForAsync(new() { Timeout = 90_000 });
 
         await FunctionalE2eArtifacts.CaptureAsync(page, "kennismaken-after-next", tag);
     }
