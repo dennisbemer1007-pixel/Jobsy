@@ -380,6 +380,23 @@
   font-size: 16px;
 }
 
+.ll-g78-shell:has(.is-page-foot) > footer:not(.is-page-foot) {
+  display: none;
+}
+
+.ll-g78-shell .is-page-foot {
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 40px 0 30px;
+  flex: none;
+}
+
+.ll-g78-shell .is-page-foot a {
+  color: var(--muted);
+  margin: 0 10px;
+}
+
 .ll-g78-shell .is-jmeta-rest {
   font-weight: 400;
 }

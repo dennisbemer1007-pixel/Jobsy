@@ -117,6 +117,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
         _ = EnsureWeb();
+        await ValueTask.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
@@ -1588,6 +1589,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.GetByTestId("ll-island-dislike-chip-lang-stilzitten").ClickAsync();
                 await page.GetByTestId("ll-island-dislike-chip-druk-lawaai").ClickAsync();
                 await page.GetByTestId("ll-island-dislike-chip-other").ClickAsync();
+                var otherInput = page.Locator("#ll-dislike-other");
+                await Assertions.Expect(otherInput).ToHaveValueAsync("");
+                await Assertions.Expect(otherInput).ToHaveAttributeAsync("placeholder", "bijv. paardrijden");
+                await Assertions.Expect(page.GetByTestId("ll-g78-page-footer")).ToBeVisibleAsync();
                 await page.ScreenshotAsync(new()
                 {
                     Path = Path.Combine(captureDir, $"built-11b-{builtPrefix}-pauze-niet-leuk-{tag}.png"),
@@ -1602,6 +1607,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     private static int _groep78E2eReportSeq;
+    private static int _groep78E2eSuiteStarted;
     private static readonly SemaphoreSlim Groep78E2eReportLock = new(1, 1);
     private const string Groep78E2eReportPath = "/opt/cursor/artifacts/groep78-e2e-button-results.txt";
 
@@ -1625,9 +1631,20 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         Directory.CreateDirectory("/opt/cursor/artifacts");
-        if (Interlocked.Increment(ref _groep78E2eReportSeq) == 1 && File.Exists(Groep78E2eReportPath))
+        if (Interlocked.CompareExchange(ref _groep78E2eSuiteStarted, 1, 0) == 0)
         {
-            File.Delete(Groep78E2eReportPath);
+            Interlocked.Exchange(ref _groep78E2eReportSeq, 0);
+            try
+            {
+                if (File.Exists(Groep78E2eReportPath))
+                {
+                    File.Delete(Groep78E2eReportPath);
+                }
+            }
+            catch
+            {
+                // best-effort: report file is diagnostic only
+            }
         }
 
         var report = await RunGroep78FullPupilJourneyVariantAsync(
@@ -1928,7 +1945,21 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                         await page.GetByTestId(testId).ClickAsync();
                     }
 
-                    await page.Locator("#ll-dislike-other").FillAsync("paardrijden");
+                    var otherInput = page.Locator("#ll-dislike-other");
+                    await Assertions.Expect(otherInput).ToBeVisibleAsync();
+                    await Assertions.Expect(otherInput).ToHaveValueAsync("");
+                    await Assertions.Expect(otherInput).ToHaveAttributeAsync("placeholder", "bijv. paardrijden");
+                    var body = await page.Locator("body").InnerTextAsync();
+                    Assert.DoesNotContain("_dislikeOther", body, StringComparison.Ordinal);
+                    await otherInput.FillAsync("paardrijden");
+                });
+
+                await Step("Island 11b page footer links", async () =>
+                {
+                    var foot = page.GetByTestId("ll-g78-page-footer");
+                    await Assertions.Expect(foot).ToBeVisibleAsync();
+                    await Assertions.Expect(foot.GetByRole(AriaRole.Link, new() { Name = "Privacyverklaring" })).ToBeVisibleAsync();
+                    await Assertions.Expect(foot.GetByRole(AriaRole.Link, new() { Name = "Toegankelijkheid" })).ToBeVisibleAsync();
                 });
 
                 await Step("Island 11b Vorige to stap 1 and back", async () =>
@@ -2515,7 +2546,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var body = await page.Locator("body").InnerTextAsync(new LocatorInnerTextOptions { Timeout = 5_000 });
         Assert.DoesNotContain("_saveError", body, StringComparison.Ordinal);
         Assert.DoesNotContain("_saved", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("_dislikeOther", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("_likeOther", body, StringComparison.Ordinal);
         Assert.DoesNotContain("lukt nu even niet", body, StringComparison.OrdinalIgnoreCase);
+        await AssertGroep78IslandOtherInputsCleanAsync(page);
         Assert.Equal(0, await page.Locator(".read-aloud__error >> visible=true").CountAsync());
         var untranslated = UntranslatedKeyPattern().Match(body);
         if (untranslated.Success)
@@ -2558,6 +2592,38 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     private static Regex UntranslatedKeyPattern() => new(@"Leerling\.[A-Z][\w.]+", RegexOptions.Compiled);
+
+    private static readonly Regex LiteralBindingFieldPattern = new(
+        @"_(?:dislikeOther|likeOther|state|busy|error|offline)\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static async Task AssertGroep78IslandOtherInputsCleanAsync(IPage page)
+    {
+        foreach (var sel in new[] { "#ll-dislike-other", "#ll-like-other" })
+        {
+            var input = page.Locator(sel);
+            if (await input.CountAsync() == 0)
+            {
+                continue;
+            }
+
+            var value = await input.InputValueAsync();
+            Assert.DoesNotMatch(LiteralBindingFieldPattern, value);
+            Assert.DoesNotContain("_dislikeOther", value, StringComparison.Ordinal);
+            Assert.DoesNotContain("_likeOther", value, StringComparison.Ordinal);
+
+            var placeholder = await input.GetAttributeAsync("placeholder");
+            if (!string.IsNullOrEmpty(placeholder))
+            {
+                Assert.Equal("bijv. paardrijden", placeholder);
+            }
+
+            if (string.IsNullOrEmpty(value))
+            {
+                Assert.Equal("", value);
+            }
+        }
+    }
 
     private static void WriteSterRouteSideBySideComparisons(string captureDir)
         => WriteMockupSideBySideComparisons(

@@ -1,4 +1,5 @@
 using Jobsy.Core.Scholen;
+using Jobsy.Web.Scholen;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -15,6 +16,18 @@ public class PupilInterestChipTests
         Assert.Equal(
             PupilInterestChipCatalog.DislikeChips.Count,
             PupilInterestChipCatalog.DislikeChips.Select(c => c.Key).Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void Dislike_extra_chips_have_distinct_mockup_icons()
+    {
+        var sport = PupilInterestChipIcons.ForKey("sport").Value;
+        foreach (var chip in PupilInterestChipCatalog.DislikeExtraChips)
+        {
+            var svg = PupilInterestChipIcons.ForKey(chip.Key).Value;
+            Assert.False(string.IsNullOrWhiteSpace(svg));
+            Assert.NotEqual(sport, svg);
+        }
     }
 
     [Fact]

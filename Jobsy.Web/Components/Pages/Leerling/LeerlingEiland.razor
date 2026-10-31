@@ -47,14 +47,13 @@ else if (_state is null)
 }
 else if (_themedGroep78 && !_step2)
 {
-    <LeerlingGroep78EilandLeuk State="_state"
+    <LeerlingGroep78EilandLeuk State="@_state"
                                JourneyThemeKey="@_journeyThemeKey"
-                               Likes="_likes"
-                               LikeOtherOpen="_likeOtherOpen"
-                               LikeOther="_likeOther"
-                               Busy="_busy"
-                               Offline="_offline"
-                               Error="@_error"
+                               Likes="@_likes"
+                               LikeOtherOpen="@_likeOtherOpen"
+                               LikeOther="@_likeOther"
+                               Busy="@_busy"
+                               Offline="@_offline"
                                OnToggleLike="ToggleLike"
                                OnToggleLikeOther="ToggleLikeOtherOpen"
                                OnLikeOtherChanged="SetLikeOther"
@@ -64,13 +63,13 @@ else if (_themedGroep78 && !_step2)
 }
 else if (_themedGroep78 && _step2)
 {
-    <LeerlingGroep78EilandNietLeuk State="_state"
+    <LeerlingGroep78EilandNietLeuk State="@_state"
                                    JourneyThemeKey="@_journeyThemeKey"
-                                   Dislikes="_dislikes"
-                                   DislikeOtherOpen="_dislikeOtherOpen"
-                                   DislikeOther="_dislikeOther"
-                                   Busy="_busy"
-                                   Offline="_offline"
+                                   Dislikes="@_dislikes"
+                                   DislikeOtherOpen="@_dislikeOtherOpen"
+                                   DislikeOther="@_dislikeOther"
+                                   Busy="@_busy"
+                                   Offline="@_offline"
                                    Error="@_error"
                                    OnToggleDislike="ToggleDislike"
                                    OnToggleDislikeOther="ToggleDislikeOtherOpen"
