@@ -116,6 +116,15 @@ public sealed partial class JobsyApiClient
         response.EnsureSuccessStatusCode();
         return await ReadApiJsonAsync<OccupationDayImportResult>(response.Content, ct);
     }
+
+    public async Task<OccupationDayDagtekstenImportResult?> ImportOccupationDayDagtekstenAsync(Stream json, CancellationToken ct = default)
+    {
+        using var content = new StreamContent(json);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        var response = await _http.PostAsync("api/admin/occupation-day-in-life/import-dagteksten", content, ct);
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<OccupationDayDagtekstenImportResult>(response.Content, ct);
+    }
 }
 
 public sealed class OccupationDayRunRequest

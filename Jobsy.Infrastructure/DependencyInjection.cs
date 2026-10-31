@@ -646,6 +646,7 @@ public static class DependencyInjection
         services.AddScoped<OccupationDayInLifeReader>();
         services.AddScoped<IOccupationDayInLifeReader>(sp => sp.GetRequiredService<OccupationDayInLifeReader>());
         services.AddScoped<OccupationDayInLifeGenerator>();
+        services.AddScoped<OccupationDayDagtekstenImporter>();
         services.AddSingleton<OccupationDayInLifeBatchRunner>();
         services.AddScoped<ICareerPathPlanGenerationService, CareerPathPlanGenerationService>();
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();

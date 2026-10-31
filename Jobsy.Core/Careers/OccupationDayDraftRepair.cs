@@ -7,7 +7,10 @@ public static class OccupationDayDraftRepair
 {
     public static OccupationDayDraft Apply(OccupationDayDraft draft, OccupationDayFacts facts)
     {
-        var blocks = OccupationDayBlocks.Normalize(draft.Blocks ?? []);
+        var incoming = draft.Blocks ?? [];
+        var blocks = OccupationDayBlocks.UsesNumberedTimeline(incoming)
+            ? OccupationDayBlocks.NormalizeNumbered(incoming)
+            : OccupationDayBlocks.Normalize(incoming);
         blocks = OccupationDayTimeline.AssignChronologicalLabels(blocks);
         draft = OccupationDayBlocks.WithDerived(draft with { Blocks = blocks.ToList() });
 

@@ -24,17 +24,20 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
     private readonly OccupationDayInLifeReader _reader;
     private readonly OccupationDayInLifeGenerator _generator;
     private readonly OccupationDayInLifeBatchRunner _runner;
+    private readonly OccupationDayDagtekstenImporter _dagteksten;
     private readonly IAdminAuditContext _audit;
 
     public OccupationDayInLifeAdminController(
         OccupationDayInLifeReader reader,
         OccupationDayInLifeGenerator generator,
         OccupationDayInLifeBatchRunner runner,
+        OccupationDayDagtekstenImporter dagteksten,
         IAdminAuditContext audit)
     {
         _reader = reader;
         _generator = generator;
         _runner = runner;
+        _dagteksten = dagteksten;
         _audit = audit;
     }
 
@@ -245,6 +248,28 @@ public sealed class OccupationDayInLifeAdminController : ControllerBase
         }
 
         return Ok(await _generator.ImportAsync(document, cancellationToken));
+    }
+
+    /// <summary>Import dagteksten.json: 7–10 blocks per occupation, NL + EN, idempotent upsert per ESCO id.</summary>
+    [HttpPost("import-dagteksten")]
+    [EnableRateLimiting("public-write")]
+    [RequestSizeLimit(15_000_000)]
+    [AdminAudit(AdminAuditKeys.OccupationDayDagtekstenImport, TargetType = "setting")]
+    public async Task<ActionResult<OccupationDayDagtekstenImportResult>> ImportDagteksten(CancellationToken cancellationToken)
+    {
+        var document = OccupationDayDagtekstenImporter.ParseDocument(Request.Body);
+        if (document?.Mapping is null || document.Mapping.Count == 0)
+        {
+            return BadRequest(new { message = "De JSON heeft geen mapping." });
+        }
+
+        var result = await _dagteksten.ImportAsync(document, cancellationToken);
+        _audit.Reason = result.Mapped + " gekoppeld, "
+            + result.Inserted + " nieuw, "
+            + result.Updated + " bijgewerkt, "
+            + result.Unchanged + " gelijk, "
+            + result.Rejected + " afgekeurd.";
+        return Ok(result);
     }
 
     private void Remember(OccupationDayGenerateResult result)
