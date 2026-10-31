@@ -242,9 +242,16 @@ public static class KbE2e
     public static Task WaitForCircuitOrSsrReadyAsync(IPage page, int timeoutMs = 90_000)
         => page.WaitForFunctionAsync(CircuitOrSsrReadyJavaScript, null, new() { Timeout = timeoutMs });
 
+    /// <summary>GitHub may inject an empty secret; fall back to seeded Development email.</summary>
+    public static string ResolveCandidateEmail()
+    {
+        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
+        return string.IsNullOrWhiteSpace(preferred) ? DefaultCompleteEmail : preferred.Trim();
+    }
+
     public static async Task<bool> TryLoginAsync(IPage page, string baseUrl, string? email = null, string? password = null)
     {
-        email ??= Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultCompleteEmail;
+        email = string.IsNullOrWhiteSpace(email) ? ResolveCandidateEmail() : email.Trim();
         password ??= ResolveCandidatePassword(baseUrl);
         try
         {
@@ -299,7 +306,8 @@ public static class KbE2e
             return DefaultPassword;
         }
 
-        return Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD");
+        return string.IsNullOrWhiteSpace(preferred) ? DefaultPassword : preferred.Trim();
     }
 
     public static string ScreenshotDir()

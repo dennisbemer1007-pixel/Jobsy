@@ -48,8 +48,8 @@ public static class FunctionalE2eAuth
 
             await WarmupStackAsync(baseUrl);
             var path = Path.Combine(Path.GetTempPath(), "jobsy-functional-e2e-candidate.json");
-            var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
-            var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+            var email = KbE2e.ResolveCandidateEmail();
+            var password = KbE2e.ResolveCandidatePassword(baseUrl);
 
             await using var ctx = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
             await PlaywrightCookieConsent.AcceptAsync(ctx);
@@ -95,7 +95,7 @@ public static class FunctionalE2eAuth
     /// <summary>Seeded Development candidate on the CI stack (demo-login or form login).</summary>
     public static async Task SignInSeededCandidateAsync(IPage page, string baseUrl, string returnPath)
     {
-        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
+        var email = KbE2e.ResolveCandidateEmail();
         var password = KbE2e.ResolveCandidatePassword(baseUrl);
         if (!await TryDemoLoginAsync(page, baseUrl, email, returnPath)
             && !await KbE2e.TryLoginAsync(page, baseUrl, email, password))

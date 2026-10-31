@@ -126,9 +126,7 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
     private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)
     {
         var password = KbE2e.ResolveCandidatePassword(baseUrl);
-        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
-        if (!string.IsNullOrWhiteSpace(preferred)
-            && await KbE2e.TryLoginAsync(page, baseUrl, preferred.Trim(), password))
+        if (await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.ResolveCandidateEmail(), password))
         {
             return true;
         }

@@ -205,8 +205,22 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task TypeBirthDateSlowlyAsync(IPage page, string digits = "15062000")
     {
-        var field = page.Locator("[data-testid=onboarding-birth-date]").First;
+        var field = OnboardingBirthDateRoot(page);
         await field.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        var ssrInput = page.Locator("#onboarding-field-birthdate input[data-ob-client=birthDate]").First;
+        if (await ssrInput.CountAsync() > 0)
+        {
+            await ssrInput.ClickAsync(new() { Force = true });
+            await ssrInput.FillAsync("");
+            var formatted = digits.Length >= 8
+                ? $"{digits[..2]}-{digits.Substring(2, 2)}-{digits.Substring(4, 4)}"
+                : digits;
+            await ssrInput.PressSequentiallyAsync(formatted, new() { Delay = 80 });
+            await page.WaitForTimeoutAsync(600);
+            await WaitForCircuitReadyAsync(page);
+            return;
+        }
+
         var text = field.Locator(".jobsy-date-field__text").First;
         await text.ClickAsync(new() { Force = true });
         await text.FillAsync("");
@@ -441,8 +455,10 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var next = page.GetByTestId("onboarding-next");
         if (await next.CountAsync() > 0 && await next.IsVisibleAsync())
         {
+            var stepBefore = await ReadSsrFormActiveStepAsync(page);
+            await PrepareSsrStepBeforeNextAsync(page, stepBefore);
             await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
-            await page.WaitForTimeoutAsync(400);
+            await WaitForSsrMainStepAdvanceAsync(page, stepBefore);
             return;
         }
 
@@ -598,6 +614,16 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AssertBirthDateFieldInteractiveAsync(IPage page)
     {
+        var ssrBirth = page.Locator("#onboarding-field-birthdate input[data-ob-client=birthDate]").First;
+        if (await ssrBirth.CountAsync() > 0)
+        {
+            await AssertHitTargetAsync(page, ssrBirth, "birth date ssr field");
+            await ssrBirth.FillAsync("15-06-2000");
+            var ssrValue = await ssrBirth.InputValueAsync();
+            Assert.Contains("15", ssrValue, StringComparison.Ordinal);
+            return;
+        }
+
         var field = page.Locator("[data-testid=onboarding-birth-date]").First;
         await field.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var text = field.Locator(".jobsy-date-field__text").First;
@@ -1251,6 +1277,15 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task FillBirthDateAsync(IPage page)
     {
+        var ssrBirth = page.Locator("#onboarding-field-birthdate input[data-ob-client=birthDate]").First;
+        if (await ssrBirth.CountAsync() > 0)
+        {
+            await ssrBirth.ScrollIntoViewIfNeededAsync();
+            await ssrBirth.FillAsync("15-06-2000");
+            await ssrBirth.EvaluateAsync("el => el.dispatchEvent(new Event('blur', { bubbles: true }))");
+            return;
+        }
+
         var birthText = page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").First;
         if (await birthText.CountAsync() > 0)
         {
@@ -1449,8 +1484,10 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var next = page.GetByTestId("onboarding-next");
         await next.ScrollIntoViewIfNeededAsync();
         await WaitForCircuitReadyAsync(page, 15_000);
+        var stepBefore = await ReadSsrFormActiveStepAsync(page);
+        await PrepareSsrStepBeforeNextAsync(page, stepBefore);
         await next.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await page.WaitForTimeoutAsync(450);
+        await WaitForSsrMainStepAdvanceAsync(page, stepBefore);
     }
 
     internal static async Task ClickOnboardingBackAsync(IPage page, bool mobile)
@@ -1459,6 +1496,47 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await back.ScrollIntoViewIfNeededAsync();
         await back.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
         await page.WaitForTimeoutAsync(450);
+    }
+
+    private static ILocator OnboardingBirthDateRoot(IPage page) =>
+        page.Locator("[data-testid=onboarding-birth-date], #onboarding-field-birthdate").First;
+
+    private static async Task<int> ReadSsrFormActiveStepAsync(IPage page)
+        => await page.EvaluateAsync<int>(
+            """
+            () => {
+              const f = document.querySelector('form[data-ob-ssr-form]');
+              if (!f) return 0;
+              const n = parseInt(f.getAttribute('data-ob-active-step') || '0', 10);
+              return Number.isFinite(n) ? n : 0;
+            }
+            """);
+
+    private static async Task PrepareSsrStepBeforeNextAsync(IPage page, int stepBefore)
+    {
+        if (stepBefore != 6)
+        {
+            return;
+        }
+
+        var dream = page.Locator("#onboarding-rustig-dream-input").First;
+        if (await dream.CountAsync() > 0)
+        {
+            await dream.BlurAsync();
+            await page.WaitForTimeoutAsync(250);
+        }
+    }
+
+    private static async Task WaitForSsrMainStepAdvanceAsync(IPage page, int fromStep, int timeoutMs = 90_000)
+    {
+        if (fromStep is < 1 or > 6 || await page.Locator("form[data-ob-ssr-form]").CountAsync() == 0)
+        {
+            await page.WaitForTimeoutAsync(450);
+            return;
+        }
+
+        await page.WaitForURLAsync($"**/candidate/start?step={fromStep + 1}**", new() { Timeout = timeoutMs });
+        await WaitForCircuitReadyAsync(page, timeoutMs);
     }
 
     private static async Task<string> TargetSelectorAsync(ILocator target)
