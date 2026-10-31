@@ -579,22 +579,38 @@ combo.save(out)
         int maxTravelMinutes,
         string postcode = "2671GB")
     {
-        await page.Locator(".ob-fields input").First.FillAsync("Vroeg");
-        await page.Locator(".ob-fields input").Nth(1).FillAsync("Test");
-        await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, postcode);
-        await FillOnboardingBirthDateIfPresentAsync(page);
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const birthErr = document.querySelector('[data-testid=onboarding-birth-date] .jobsy-date-field__error');
-              if (birthErr?.textContent?.trim()) return false;
-              const locErr = document.querySelector('[data-testid=onboarding-location-error]');
-              if (locErr?.textContent?.trim()) return false;
-              return true;
-            }
-            """,
-            null,
-            new() { Timeout = 30_000 });
+        if (await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0)
+        {
+            await FunctionalOnboardingInteractivityHelpers.FillSsrOnboardingStep1FieldsAsync(
+                page,
+                "Vroeg",
+                "Test",
+                postcode,
+                "15-06-2000");
+        }
+        else
+        {
+            await page.Locator(".ob-fields input").First.FillAsync("Vroeg");
+            await page.Locator(".ob-fields input").Nth(1).FillAsync("Test");
+            await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, postcode);
+            await FillOnboardingBirthDateIfPresentAsync(page);
+        }
+
+        if (await page.Locator("form[data-ob-ssr-form]").CountAsync() == 0)
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const birthErr = document.querySelector('[data-testid=onboarding-birth-date] .jobsy-date-field__error');
+                  if (birthErr?.textContent?.trim()) return false;
+                  const locErr = document.querySelector('[data-testid=onboarding-location-error]');
+                  if (locErr?.textContent?.trim()) return false;
+                  return true;
+                }
+                """,
+                null,
+                new() { Timeout = 30_000 });
+        }
 
         await FunctionalOnboardingInteractivityHelpers.DismissAddressSuggestionsAsync(page);
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 15_000);
@@ -773,6 +789,21 @@ combo.save(out)
         await next.ScrollIntoViewIfNeededAsync();
         await page.WaitForTimeoutAsync(150);
         var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+
+        var stepBefore = 0;
+        if (await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0)
+        {
+            stepBefore = await page.EvaluateAsync<int>(
+                """
+                () => {
+                  const f = document.querySelector('form[data-ob-ssr-form]');
+                  if (!f) return 0;
+                  const n = parseInt(f.getAttribute('data-ob-active-step') || '0', 10);
+                  return Number.isFinite(n) ? n : 0;
+                }
+                """);
+        }
+
         if (mobile)
         {
             await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
@@ -782,7 +813,15 @@ combo.save(out)
             await next.ClickAsync(new() { Timeout = 20_000 });
         }
 
-        await page.WaitForTimeoutAsync(500);
+        if (stepBefore is >= 1 and <= 6)
+        {
+            await page.WaitForURLAsync($"**/candidate/start?step={stepBefore + 1}**", new() { Timeout = 90_000 });
+            await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 30_000);
+        }
+        else
+        {
+            await page.WaitForTimeoutAsync(500);
+        }
     }
 }
 

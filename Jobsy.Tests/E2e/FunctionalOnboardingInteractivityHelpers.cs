@@ -317,6 +317,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task FillKennismakenBasicsExceptWorkStatusAsync(IPage page)
     {
+        if (await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0)
+        {
+            await FillSsrOnboardingStep1FieldsAsync(page, "Func", "Test", "2671GB", "15-06-2000");
+            return;
+        }
+
         await page.Locator("input[autocomplete=given-name]").FillAsync("Func");
         await page.Locator("input[autocomplete=family-name]").FillAsync("Test");
         await ResolveHomeAddressAsync(page, "2671GB");
@@ -457,14 +463,15 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         if (step == 2)
         {
-            var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile").First;
+            var preset = page.Locator(".ob-wizard__presets .lobsy-choice-tile, [data-ob-client=presetGrid] .lobsy-choice-tile").First;
             await AssertHitTargetAsync(page, preset, "step-2-preset");
             return;
         }
 
         if (step == 3)
         {
-            var transport = page.Locator("#onboarding-field-transport .lobsy-choice-tile").First;
+            var transport = page.Locator(
+                "#onboarding-field-transport .lobsy-choice-tile, [data-ob-client=transportGrid] .lobsy-choice-tile").First;
             await AssertHitTargetAsync(page, transport, "step-3-transport");
             return;
         }
@@ -543,14 +550,14 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     await WaitForStepIllustrationLoadedAsync(page, 2);
                     break;
                 case 2:
-                    await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+                    await page.Locator(".ob-wizard__presets .lobsy-choice-tile, [data-ob-client=presetGrid] .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
                     await ClickWizardNextWhenVisibleAsync(page);
                     await OnboardingStepIllustrated(page, 3).WaitForAsync(new() { Timeout = 90_000 });
                     await WaitForStepIllustrationLoadedAsync(page, 3);
                     break;
                 case 3:
-                    await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
-                    await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+                    await page.Locator("#onboarding-field-transport .lobsy-choice-tile, [data-ob-client=transportGrid] .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+                    await page.Locator(".ob-wizard__transport .lobsy-choice-tile, [data-ob-client=travelGrid] .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
                     await ClickWizardNextWhenVisibleAsync(page);
                     await page.WaitForTimeoutAsync(500);
                     break;
@@ -1523,6 +1530,48 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await back.ScrollIntoViewIfNeededAsync();
         await back.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
         await page.WaitForTimeoutAsync(450);
+    }
+
+    internal static async Task FillSsrOnboardingStep1FieldsAsync(
+        IPage page,
+        string firstName,
+        string lastName,
+        string postcode,
+        string birthDisplay)
+    {
+        await page.Locator("[data-ob-client=firstName]").FillAsync(firstName);
+        await page.Locator("[data-ob-client=lastName]").FillAsync(lastName);
+        var address = page.Locator("#onboarding-home-address").First;
+        await address.FillAsync(postcode.Replace(" ", "", StringComparison.Ordinal));
+        await page.WaitForTimeoutAsync(900);
+        var suggestion = page.Locator("button.address-suggestions__item").First;
+        for (var i = 0; i < 45; i++)
+        {
+            if (await suggestion.CountAsync() > 0)
+            {
+                await suggestion.ClickAsync(new() { Force = true });
+                break;
+            }
+
+            await page.WaitForTimeoutAsync(200);
+        }
+
+        await page.Locator("[data-ob-client=birthDate]").FillAsync(birthDisplay);
+        await WaitForSsrClientStepMountedAsync(page, 1);
+        await WaitForCircuitReadyAsync(page, 30_000);
+    }
+
+    private static async Task WaitForSsrClientStepMountedAsync(IPage page, int step)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            (step) => {
+              const root = document.querySelector('[data-ob-client-step="' + step + '"]');
+              return !root || root.getAttribute('data-ob-client-mounted') === '1';
+            }
+            """,
+            step,
+            new() { Timeout = 60_000 });
     }
 
     private static ILocator OnboardingBirthDateRoot(IPage page) =>

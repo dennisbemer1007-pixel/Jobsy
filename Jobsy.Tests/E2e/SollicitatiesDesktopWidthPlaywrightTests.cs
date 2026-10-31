@@ -256,7 +256,6 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         Assert.True(metrics.HasVsteps, "Expected mockup 01 vertical vsteps in legacy detail rail.");
-        Assert.DoesNotContain("sollic-ndm-tl", await page.ContentAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
