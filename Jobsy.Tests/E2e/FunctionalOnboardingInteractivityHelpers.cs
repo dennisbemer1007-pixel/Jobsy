@@ -1597,6 +1597,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         if (await page.Locator("button[name=obMiniPick], [data-testid=onboarding-mini-likert]").CountAsync() > 0)
         {
+            var blockStep = await ReadOnboardingWizardStepAsync(page);
+            if (blockStep is < 7 or > 10)
+            {
+                blockStep = ParseOnboardingStepFromUrl(page.Url);
+            }
+
             for (var q = 1; q <= 5; q++)
             {
                 if (await page.Locator("button[name=obMiniPick]").CountAsync() == 0)
@@ -1628,40 +1634,30 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 }
                 else
                 {
-                    var lastPickNav = step == 10
-                        ? page.WaitForURLAsync(
-                            "**/candidate/start/kompas**",
-                            new() { WaitUntil = WaitUntilState.Commit, Timeout = 90_000 })
-                        : page.WaitForURLAsync(
-                            $"**/candidate/start?step={step + 1}**",
-                            new() { WaitUntil = WaitUntilState.Commit, Timeout = 90_000 });
-                    await Task.WhenAll(lastPickNav, pick.ClickAsync(new() { Timeout = 20_000 }));
+                    await pick.ClickAsync(new() { Timeout = 20_000 });
                 }
 
                 await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             }
 
-            var stepAfter = await ReadOnboardingWizardStepAsync(page);
-            if (stepAfter is < 7 or > 10)
-            {
-                stepAfter = ParseOnboardingStepFromUrl(page.Url);
-            }
+            var urlStep = ParseOnboardingStepFromUrl(page.Url);
             var next = page.GetByTestId("onboarding-next");
-            if (await next.CountAsync() > 0)
+            if (blockStep is >= 7 and <= 9 && urlStep <= blockStep && await next.CountAsync() > 0)
             {
-                await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
-                if (stepAfter is >= 7 and <= 9)
-                {
-                    await page.WaitForURLAsync(
-                        $"**/candidate/start?step={stepAfter + 1}**",
-                        new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-                }
-                else if (stepAfter == 10)
-                {
-                    await page.WaitForURLAsync(
+                var targetStep = blockStep + 1;
+                await Task.WhenAll(
+                    page.WaitForURLAsync(
+                        $"**/candidate/start?step={targetStep}**",
+                        new() { WaitUntil = WaitUntilState.Commit, Timeout = 120_000 }),
+                    next.ClickAsync(new() { Force = true, Timeout = 20_000 }));
+            }
+            else if (blockStep == 10 && !page.Url.Contains("/kompas", StringComparison.OrdinalIgnoreCase) && await next.CountAsync() > 0)
+            {
+                await Task.WhenAll(
+                    page.WaitForURLAsync(
                         "**/candidate/start/kompas**",
-                        new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-                }
+                        new() { WaitUntil = WaitUntilState.Commit, Timeout = 120_000 }),
+                    next.ClickAsync(new() { Force = true, Timeout = 20_000 }));
             }
 
             await WaitForCircuitReadyAsync(page);
