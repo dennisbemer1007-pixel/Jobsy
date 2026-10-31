@@ -59,6 +59,19 @@ internal static class PupilPassportG78BijlagenVisuals
     internal static string StepDashLine()
         => """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 4" preserveAspectRatio="none"><line x1="0" y1="2" x2="100" y2="2" stroke="#c9a227" stroke-width="2" stroke-dasharray="4 3"/></svg>""";
 
+    /// <summary>Soft cover decoration: light wave and bubbles (professional, low contrast).</summary>
+    internal static string CoverSparkleDecor()
+        => """
+           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+             <path d="M0 72 Q100 48 200 68 T400 58 L400 120 L0 120 Z" fill="#fff8e6" opacity="0.85"/>
+             <path d="M0 88 Q120 64 240 82 T400 74 L400 120 L0 120 Z" fill="#fffcfa" opacity="0.9"/>
+             <circle cx="320" cy="28" r="14" fill="#c9a227" opacity="0.12"/>
+             <circle cx="350" cy="52" r="9" fill="#c9a227" opacity="0.1"/>
+             <circle cx="280" cy="44" r="6" fill="#0f2d5c" opacity="0.06"/>
+             <circle cx="365" cy="18" r="5" fill="#c4552a" opacity="0.08"/>
+           </svg>
+           """;
+
     private static string ColoredGlyph(string color, string pathBody)
         => $"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{pathBody}</svg>""";
 }
