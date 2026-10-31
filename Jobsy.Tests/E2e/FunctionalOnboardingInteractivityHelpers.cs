@@ -1734,17 +1734,10 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
             if (expectedStep == 8)
             {
-                await page.WaitForFunctionAsync(
-                    """
-                    () => {
-                      const el = document.querySelector('[data-onboarding-step]');
-                      if (!el) return false;
-                      const step = parseInt(el.getAttribute('data-onboarding-step') || '0', 10);
-                      return step >= 9 && (document.querySelector('.test-likert') || document.querySelector('[data-testid=onboarding-mini-likert]'));
-                    }
-                    """,
-                    null,
-                    new() { Timeout = 120_000 });
+                await page.WaitForURLAsync(
+                    "**/candidate/start?step=9**",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+                await page.GetByTestId("onboarding-step-9-mini").WaitForAsync(new() { Timeout = 60_000 });
                 maxStepSeenAfterLeavingLeuk = Math.Max(maxStepSeenAfterLeavingLeuk, await ReadOnboardingWizardStepAsync(page));
                 Assert.True(
                     maxStepSeenAfterLeavingLeuk >= 9,
