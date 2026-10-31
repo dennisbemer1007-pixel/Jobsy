@@ -76,10 +76,42 @@ internal static class PupilPassportIcons
 
     internal static string JobCardIconKey(string jobKey) => jobKey switch
     {
-        "dierenverzorger" or "dierenarts" => "giraffe",
-        "bioloog" or "wetenschapper" => "microscope",
-        "hovenier" => "flower",
-        _ => "brief"
+        "dierenverzorger" or "dierenarts" => "paw",
+        "bioloog" or "wetenschapper" or "laborant" => "microscope",
+        "hovenier" or "boswachter" => "flower",
+        "monteur" or "elektricien" or "installatiemonteur" => "wrench",
+        "kok" or "bakker" => "brief",
+        "programmeur" or "ict-medewerker" => "microscope",
+        "leraar" => "cap",
+        "verpleegkundige" => "heart",
+        "brandweer" or "politie" => "shield",
+        _ => "spark"
+    };
+
+    internal static string RiasecIconKey(string letter) => letter.ToUpperInvariant() switch
+    {
+        "R" => "wrench",
+        "I" => "search",
+        "A" => "pencil",
+        "S" => "heart",
+        "E" => "flag",
+        "C" => "shield",
+        _ => "star"
+    };
+
+    internal static string SubjectIconKey(string subjectKey) => subjectKey.ToLowerInvariant() switch
+    {
+        "natuur-techniek" => "microscope",
+        "rekenen" => "target",
+        "gym" => "users",
+        "geschiedenis" => "cap",
+        "tekenen" or "handvaardigheid" => "pencil",
+        "muziek" => "spark",
+        "spelling" or "schrijven" => "pencil",
+        "lezen" => "bulb",
+        "engels" or "taal" => "world-gem",
+        "aardrijkskunde" => "pin",
+        _ => "star"
     };
 
     internal static string WorldIconKey(int worldNumber) => worldNumber switch
