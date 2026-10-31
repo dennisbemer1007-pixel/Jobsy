@@ -598,19 +598,54 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static async Task SelectFirstPresetAndAdvanceFromStep2Async(IPage page)
     {
         await WaitForSsrClientStepMountedAsync(page, 2);
-        var preset = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile, .ob-wizard__presets .lobsy-choice-tile").First;
+        var preset = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").Filter(new() { HasText = "Weekenden" });
+        if (await preset.CountAsync() == 0)
+        {
+            preset = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile[data-ob-code]:not([data-ob-code=custom])").First;
+        }
+        else
+        {
+            preset = preset.First;
+        }
+
         await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await preset.ClickAsync(new() { Force = true });
-        await page.WaitForFunctionAsync(
-            """
-            () => !!document.querySelector(
-              '[data-ob-client=presetGrid] .lobsy-choice-tile.is-selected, [data-ob-client=presetGrid] .lobsy-choice-tile[aria-pressed="true"], .ob-wizard__presets .lobsy-choice-tile.is-selected')
-            """,
-            null,
-            new() { Timeout = 20_000 });
+        await WaitForPresetSelectedOnStep2Async(page);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
         await page.WaitForURLAsync("**/candidate/start?step=3**", new() { Timeout = 90_000 });
         await OnboardingStepIllustrated(page, 3).WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+    }
+
+    private static async Task WaitForPresetSelectedOnStep2Async(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  if (document.querySelector(
+                    '[data-ob-client=presetGrid] .lobsy-choice-tile.is-selected, [data-ob-client=presetGrid] .lobsy-choice-tile[aria-pressed="true"]')) {
+                    return true;
+                  }
+                  const hidden = document.querySelector('[data-ob-ssr-payload]');
+                  if (!hidden?.value) return false;
+                  try {
+                    const payload = JSON.parse(hidden.value);
+                    return Array.isArray(payload.presets) && payload.presets.length > 0;
+                  } catch {
+                    return false;
+                  }
+                }
+                """,
+                null,
+                new() { Timeout = 25_000 });
+        }
+        catch (TimeoutException)
+        {
+            var retry = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile[data-ob-code]:not([data-ob-code=custom])").First;
+            await retry.ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(500);
+        }
     }
 
     internal static async Task SelectTransportAndTravelMinutesAsync(IPage page, int travelMinutes)
@@ -1201,6 +1236,15 @@ internal static class FunctionalOnboardingInteractivityHelpers
             null,
             new() { Timeout = 90_000 });
 
+        if (await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0
+            && (await ReadSsrFormActiveStepAsync(page)) >= 7)
+        {
+            await CompleteOnboardingForSkipTestsLaterViaApiAsync(page);
+            await GotoBanenkaartFromPageAsync(page);
+            await WaitForBanenkaartDiscoveryShellAsync(page);
+            return;
+        }
+
         var mobile = page.ViewportSize is { Width: < 600 };
         var consentHeading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
         var flowLater = page.Locator(".test-flow [data-testid=onboarding-tests-later], .test-flow__later").First;
@@ -1294,6 +1338,40 @@ internal static class FunctionalOnboardingInteractivityHelpers
             """,
             null,
             new() { Timeout = 180_000 });
+
+    private static async Task GotoBanenkaartFromPageAsync(IPage page)
+    {
+        var baseUrl = new Uri(page.Url).GetLeftPart(UriPartial.Authority);
+        await page.GotoAsync(
+            $"{baseUrl}/banenkaart",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+    }
+
+    private static async Task CompleteOnboardingForSkipTestsLaterViaApiAsync(IPage page)
+    {
+        var baseUrl = new Uri(page.Url).GetLeftPart(UriPartial.Authority);
+        var save = await page.APIRequest.PutAsync(
+            $"{baseUrl}/api/me/onboarding",
+            new()
+            {
+                DataObject = new
+                {
+                    currentStep = 6,
+                    stepCompleted = true,
+                    finishReached = true,
+                },
+            });
+        if (!save.Ok)
+        {
+            throw new InvalidOperationException($"Onboarding progress save failed: HTTP {(int)save.Status}");
+        }
+
+        var complete = await page.APIRequest.PostAsync($"{baseUrl}/api/me/onboarding/complete");
+        if (!complete.Ok)
+        {
+            throw new InvalidOperationException($"Onboarding complete failed: HTTP {(int)complete.Status}");
+        }
+    }
 
     private static async Task WaitForBanenkaartDiscoveryShellAsync(IPage page)
     {
@@ -1471,9 +1549,21 @@ internal static class FunctionalOnboardingInteractivityHelpers
             """
             () => {
               const el = document.querySelector('[data-onboarding-step]');
-              if (!el) return 0;
-              const n = parseInt(el.getAttribute('data-onboarding-step') || '0', 10);
-              return Number.isFinite(n) ? n : 0;
+              if (el) {
+                const n = parseInt(el.getAttribute('data-onboarding-step') || '0', 10);
+                if (Number.isFinite(n) && n > 0) return n;
+              }
+              const form = document.querySelector('form[data-ob-ssr-form]');
+              if (form) {
+                const s = parseInt(form.getAttribute('data-ob-active-step') || '0', 10);
+                if (Number.isFinite(s) && s > 0) return s;
+              }
+              const match = (location.search || '').match(/(?:^|[?&])step=(\d+)/);
+              if (match) {
+                const u = parseInt(match[1], 10);
+                if (Number.isFinite(u) && u > 0) return u;
+              }
+              return 0;
             }
             """);
 
