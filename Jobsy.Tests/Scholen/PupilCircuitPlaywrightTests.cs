@@ -1537,6 +1537,70 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         WriteSterEiland11aSideBySideComparisons(sterCapture);
     }
 
+    [Fact(Timeout = 420_000)]
+    public async Task Groep78_eiland_11b_capture_three_worlds()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var zeeCapture = "/opt/cursor/artifacts/groep78-zee-eiland-11b-capture";
+        var tuinCapture = "/opt/cursor/artifacts/groep78-tuin-eiland-11b-capture";
+        var sterCapture = "/opt/cursor/artifacts/groep78-ster-eiland-11b-capture";
+        Directory.CreateDirectory(zeeCapture);
+        Directory.CreateDirectory(tuinCapture);
+        Directory.CreateDirectory(sterCapture);
+
+        foreach (var (theme, bandTestId, shellClass, captureDir, builtPrefix, mockPrefix) in new[]
+                 {
+                     (PupilJourneyTheme.ZeeExpeditie, "ll-zee-eiland-band", "t-zee", zeeCapture, "zee", "zee"),
+                     (PupilJourneyTheme.Eilandtuin, "ll-tuin-eiland-band", "t-tuin", tuinCapture, "tuin", "eilandtuin"),
+                     (PupilJourneyTheme.Sterrenkust, "ll-ster-eiland-band", "t-ster", sterCapture, "ster", "sterrenkust"),
+                 })
+        {
+            var seed = await SeedGroep78AtAsync(
+                1,
+                answered: 30,
+                chipsSaved: false,
+                completeActivePuzzleGate: true,
+                journeyThemeKey: theme);
+            var pupil = seed[0];
+            foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+            {
+                await using var context = await NewGroep78BrowserContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height },
+                    IsMobile = width < 600,
+                    HasTouch = width < 600,
+                    DeviceScaleFactor = width < 600 ? 2 : 1,
+                });
+                var page = await context.NewPageAsync();
+                page.SetDefaultTimeout(90_000);
+                var loginUrl = $"{baseUrl}/leerling?schoolId={pupil.SchoolId:D}&classId={pupil.ClassId:D}";
+                await LoginAsync(page, loginUrl, pupil.PlainCode, pupil.ClassId, journeyThemeKey: theme);
+                await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                await page.GetByTestId("ll-eiland-continue").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
+                await page.Locator($"[data-testid={bandTestId}]").WaitForAsync();
+                await Assertions.Expect(page.Locator("[data-testid=ll-eiland-nietleuk-card]")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator($".ll-g78-shell.{shellClass}")).ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator(".read-aloud__error >> visible=true")).ToHaveCountAsync(0);
+                await page.GetByTestId("ll-island-dislike-chip-voor-de-klas").ClickAsync();
+                await page.GetByTestId("ll-island-dislike-chip-lang-stilzitten").ClickAsync();
+                await page.GetByTestId("ll-island-dislike-chip-druk-lawaai").ClickAsync();
+                await page.GetByTestId("ll-island-dislike-chip-other").ClickAsync();
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(captureDir, $"built-11b-{builtPrefix}-pauze-niet-leuk-{tag}.png"),
+                    FullPage = true,
+                });
+            }
+        }
+
+        WriteZeeEiland11bSideBySideComparisons(zeeCapture);
+        WriteTuinEiland11bSideBySideComparisons(tuinCapture);
+        WriteSterEiland11bSideBySideComparisons(sterCapture);
+    }
+
     private static int _groep78E2eReportSeq;
     private static readonly SemaphoreSlim Groep78E2eReportLock = new(1, 1);
     private const string Groep78E2eReportPath = "/opt/cursor/artifacts/groep78-e2e-button-results.txt";
@@ -1834,11 +1898,53 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
                 });
 
-                await Step("Island stap 2 finish", async () =>
+                await Step("Island 11b card visible", async () =>
                 {
-                    await page.Locator("fieldset.ll-chips").First
-                        .GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
-                    await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+                    await Assertions.Expect(page.Locator("[data-testid=ll-eiland-nietleuk-card]")).ToBeVisibleAsync();
+                    await page.Locator($"[data-testid={IslandBandTestId(theme)}]").WaitForAsync();
+                });
+
+                await Step("Island 11b lead speaker", async () =>
+                {
+                    await page.Locator(".vr-qrow [data-read-aloud]").First.ClickAsync();
+                });
+
+                await Step("Island 11b coach speaker", async () =>
+                {
+                    var coach = width >= 600
+                        ? page.Locator(".vr-coach-aside [data-read-aloud]")
+                        : page.Locator(".m-only .guide [data-read-aloud]");
+                    await coach.ClickAsync();
+                });
+
+                await Step("Island 11b dislike chips + iets anders", async () =>
+                {
+                    var chips = page.Locator("[data-testid^=ll-island-dislike-chip-]");
+                    var count = await chips.CountAsync();
+                    Assert.True(count >= PupilInterestChipCatalog.DislikeChips.Count + 1);
+                    foreach (var key in new[] { "rekenen", "lang-stilzitten", "druk-lawaai", "__other__" })
+                    {
+                        var testId = key == "__other__" ? "ll-island-dislike-chip-other" : $"ll-island-dislike-chip-{key}";
+                        await page.GetByTestId(testId).ClickAsync();
+                    }
+
+                    await page.Locator("#ll-dislike-other").FillAsync("paardrijden");
+                });
+
+                await Step("Island 11b Vorige to stap 1 and back", async () =>
+                {
+                    await page.GetByTestId("ll-eiland-prev").ClickAsync();
+                    await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
+                    Assert.DoesNotContain("/stap-2", page.Url, StringComparison.OrdinalIgnoreCase);
+                    await page.GetByTestId("ll-eiland-continue").ClickAsync();
+                    await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
+                    await Assertions.Expect(page.Locator("[data-testid=ll-eiland-nietleuk-card]")).ToBeVisibleAsync();
+                });
+
+                await Step("Island 11b Verder finish island", async () =>
+                {
+                    await page.GetByTestId("ll-island-dislike-chip-rekenen").ClickAsync();
+                    await page.GetByTestId("ll-eiland-continue").ClickAsync();
                     await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
                 });
 
@@ -2004,9 +2110,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
             await page.GetByTestId("ll-eiland-continue").ClickAsync();
             await page.WaitForURLAsync("**/leerling/eiland/stap-2**", UrlCommitted);
-            var dislikes = page.Locator("fieldset.ll-chips").First;
-            await dislikes.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
-            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+            await page.GetByTestId("ll-island-dislike-chip-rekenen").ClickAsync();
+            await page.GetByTestId("ll-eiland-continue").ClickAsync();
             await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
             return;
         }
@@ -2587,6 +2692,51 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     "docs/mockups/leerling/werelden/renders/mobile/11a-sterrenkust-pauze-leuk.png",
                     "built-11a-ster-pauze-leuk-390.png",
                     "side-by-side-11a-sterrenkust-pauze-leuk-390.png"),
+            ]);
+
+    private static void WriteZeeEiland11bSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-zee-eiland-11b-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/11b-zee-pauze-niet-leuk.png",
+                    "built-11b-zee-pauze-niet-leuk-1440.png",
+                    "side-by-side-11b-zee-pauze-niet-leuk-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/11b-zee-pauze-niet-leuk.png",
+                    "built-11b-zee-pauze-niet-leuk-390.png",
+                    "side-by-side-11b-zee-pauze-niet-leuk-390.png"),
+            ]);
+
+    private static void WriteTuinEiland11bSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-tuin-eiland-11b-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/11b-eilandtuin-pauze-niet-leuk.png",
+                    "built-11b-tuin-pauze-niet-leuk-1440.png",
+                    "side-by-side-11b-eilandtuin-pauze-niet-leuk-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/11b-eilandtuin-pauze-niet-leuk.png",
+                    "built-11b-tuin-pauze-niet-leuk-390.png",
+                    "side-by-side-11b-eilandtuin-pauze-niet-leuk-390.png"),
+            ]);
+
+    private static void WriteSterEiland11bSideBySideComparisons(string captureDir)
+        => WriteMockupSideBySideComparisons(
+            captureDir,
+            "/opt/cursor/artifacts/groep78-ster-eiland-11b-compare",
+            [
+                (
+                    "docs/mockups/leerling/werelden/renders/desktop/11b-sterrenkust-pauze-niet-leuk.png",
+                    "built-11b-ster-pauze-niet-leuk-1440.png",
+                    "side-by-side-11b-sterrenkust-pauze-niet-leuk-1440.png"),
+                (
+                    "docs/mockups/leerling/werelden/renders/mobile/11b-sterrenkust-pauze-niet-leuk.png",
+                    "built-11b-ster-pauze-niet-leuk-390.png",
+                    "side-by-side-11b-sterrenkust-pauze-niet-leuk-390.png"),
             ]);
 
     private static void WriteZeeResultSideBySideComparisons(string captureDir)

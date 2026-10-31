@@ -576,9 +576,16 @@ public static class UiStringsScholen
         nl["Leerling.Island.Title"] = "Pauze-eiland";
         nl["Leerling.Island.Lead"] = "Even rust. Waar word jij blij van?";
         nl["Leerling.Island.G78.SubLikes"] = "Wat jij leuk vindt";
+        nl["Leerling.Island.G78.SubDislikes"] = "Wat jij niet leuk vindt";
         nl["Leerling.Island.G78.Step1"] = "Stap 1 van 2";
+        nl["Leerling.Island.G78.Step2"] = "Stap 2 van 2";
         nl["Leerling.Island.G78.BandMeta"] = "· {0} · even rust · stap 1 van 2";
+        nl["Leerling.Island.G78.BandMeta2"] = "· {0} · even rust · stap 2 van 2";
+        nl["Leerling.Island.G78.LeadDislikes"] = "Wat vind jij niet leuk?";
         nl["Leerling.Island.G78.Coach"] = "Je bent halverwege. Kies wat jij leuk vindt. Je mag ook niks kiezen.";
+        nl["Leerling.Island.G78.CoachDislikes"] = "Kies wat jij niet leuk vindt. Ook leeg mag.";
+        nl["Leerling.Island.G78.OtherHintBold"] = "Let op.";
+        nl["Leerling.Island.G78.OtherHintRest"] = " Zet hier geen namen, adres of telefoonnummer.";
         nl["Leerling.Island.ReadLead"] = "Lobsy leest de tekst voor";
         nl["Leerling.Island.Likes"] = "Wat vind jij leuk?";
         nl["Leerling.Island.Dislikes"] = "Wat vind je níet leuk?";

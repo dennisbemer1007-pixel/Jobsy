@@ -62,6 +62,23 @@ else if (_themedGroep78 && !_step2)
                                OnContinue="SaveStep1Themed"
                                OnReload="Reload" />
 }
+else if (_themedGroep78 && _step2)
+{
+    <LeerlingGroep78EilandNietLeuk State="_state"
+                                   JourneyThemeKey="@_journeyThemeKey"
+                                   Dislikes="_dislikes"
+                                   DislikeOtherOpen="_dislikeOtherOpen"
+                                   DislikeOther="_dislikeOther"
+                                   Busy="_busy"
+                                   Offline="_offline"
+                                   Error="@_error"
+                                   OnToggleDislike="ToggleDislike"
+                                   OnToggleDislikeOther="ToggleDislikeOtherOpen"
+                                   OnDislikeOtherChanged="SetDislikeOther"
+                                   OnPrev="GoPrevStepThemed"
+                                   OnContinue="SaveStep2Themed"
+                                   OnReload="Reload" />
+}
 else
 {
     <div class="ll-reis ll-island">
@@ -423,9 +440,21 @@ else
         return Task.CompletedTask;
     }
 
+    private Task ToggleDislikeOtherOpen()
+    {
+        _dislikeOtherOpen = !_dislikeOtherOpen;
+        return Task.CompletedTask;
+    }
+
     private Task SetLikeOther(string value)
     {
         _likeOther = value;
+        return Task.CompletedTask;
+    }
+
+    private Task SetDislikeOther(string value)
+    {
+        _dislikeOther = value;
         return Task.CompletedTask;
     }
 
@@ -443,6 +472,17 @@ else
     private async Task SaveStep1Themed()
     {
         await SaveChipsAsync(finalizeIsland: false, navigateToStep2: true);
+    }
+
+    private Task GoPrevStepThemed()
+    {
+        Nav.NavigateTo("/leerling/eiland");
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveStep2Themed()
+    {
+        await SaveChipsAsync(finalizeIsland: true, navigateToStep2: false);
     }
 
     private async Task Save()

@@ -248,6 +248,18 @@
   color: #fff;
 }
 
+.ll-g78-shell .pchip.on.dislike {
+  background: #7a3b2a;
+  border-color: #7a3b2a;
+  color: #fff;
+}
+
+.ll-g78-shell .pchip.on.dislike .ico {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 .ll-g78-shell .pchip.other {
   border-style: dashed;
   color: var(--muted);
@@ -339,6 +351,33 @@
   border: 2px solid var(--sand);
   border-radius: 12px;
   font: inherit;
+}
+
+.ll-g78-shell .is-other-field {
+  display: block;
+  margin-top: 14px;
+}
+
+.ll-g78-shell .is-other-field .island-sub {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.ll-g78-shell .is-other-input--wide {
+  max-width: none;
+  font-size: 19px;
+  padding: 14px 16px;
+  border: 2px solid #cdbf9f;
+  background: #fff;
+}
+
+.ll-g78-shell .is-warn {
+  margin-top: 14px;
+  background: #fbf1dc;
+  border-left: 5px solid var(--brass);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 16px;
 }
 
 .ll-g78-shell .is-jmeta-rest {

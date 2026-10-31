@@ -2,7 +2,7 @@ using Jobsy.Core.Scholen;
 
 namespace Jobsy.Web.Scholen;
 
-/// <summary>Groep 7/8 Pauze-eiland screen 11a (mockups 11a-*).</summary>
+/// <summary>Groep 7/8 Pauze-eiland screens 11a/11b (mockups 11a-*, 11b-*).</summary>
 public static class PupilGroep78IslandPage
 {
     public const int IslandNodeIndex = 4;
