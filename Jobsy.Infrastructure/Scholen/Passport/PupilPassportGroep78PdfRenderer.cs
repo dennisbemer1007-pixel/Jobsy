@@ -459,12 +459,12 @@ internal static class PupilPassportGroep78PdfRenderer
                                         .Svg(PupilPassportG78BijlagenVisuals.JobEmojiGlyph(key)).FitArea();
                                     inner.Item().AlignCenter().PaddingTop(2).Text(TruncateLabel(title, 22)).FontSize(9f).SemiBold()
                                     .FontColor(Ink).LineHeight(1.15f);
-                                if (!string.IsNullOrWhiteSpace(sub))
-                                {
-                                    inner.Item().AlignCenter().PaddingTop(2)
-                                        .Text(TruncateLabel(sub, 28)).FontSize(7f).FontColor(Muted).LineHeight(1.1f);
-                                }
-                            });
+                                    if (!string.IsNullOrWhiteSpace(sub))
+                                    {
+                                        inner.Item().AlignCenter().PaddingTop(2)
+                                            .Text(TruncateLabel(sub, 28)).FontSize(7f).FontColor(Muted).LineHeight(1.1f);
+                                    }
+                                });
                         });
                     }
                 });
@@ -514,7 +514,7 @@ internal static class PupilPassportGroep78PdfRenderer
                     sign.RelativeItem().Element(x => SignColumn(x, T(m, "LeerlingPassport.G78.Sign.Parent")));
                     sign.RelativeItem().Element(x => SignColumn(x, T(m, "LeerlingPassport.G78.Sign.Teacher")));
                 });
-                });
+            });
             });
         });
     }
