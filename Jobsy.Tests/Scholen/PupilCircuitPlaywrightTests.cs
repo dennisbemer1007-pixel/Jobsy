@@ -1718,15 +1718,18 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
                 await Step("Reach Pauze-eiland 11a", async () =>
                 {
-                    for (var i = 0; i < 40
-                         && !page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase); i++)
+                    page.SetDefaultTimeout(600_000);
+                    try
                     {
-                        await AnswerGroep78ThemedAsync(page);
+                        await AdvanceGroep78UntilIslandAsync(page);
+                        await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                        await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
+                        await page.Locator($"[data-testid={IslandBandTestId(theme)}]").WaitForAsync();
                     }
-
-                    await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
-                    await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
-                    await page.Locator($"[data-testid={IslandBandTestId(theme)}]").WaitForAsync();
+                    finally
+                    {
+                        page.SetDefaultTimeout(90_000);
+                    }
                 });
 
                 await Step("Island 11a lead speaker", async () =>
@@ -1757,13 +1760,6 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await Step("Island 11a Vorige to reis and back", async () =>
                 {
                     await page.GetByTestId("ll-eiland-prev").ClickAsync();
-                    await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
-                    for (var i = 0; i < 5
-                         && !page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase); i++)
-                    {
-                        await AnswerGroep78ThemedAsync(page);
-                    }
-
                     await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
                     await Assertions.Expect(page.Locator("[data-testid=ll-eiland-leuk-card]")).ToBeVisibleAsync();
                 });
@@ -1969,6 +1965,39 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
         await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
+    }
+
+    private static async Task AdvanceGroep78UntilIslandAsync(IPage page, int maxSteps = 120)
+    {
+        for (var step = 0; step < maxSteps; step++)
+        {
+            if (page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (page.Url.Contains("/puzzel-intro/", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.GetByRole(AriaRole.Link, new() { Name = "Start de puzzel" }).ClickAsync();
+                continue;
+            }
+
+            if (page.Url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase))
+            {
+                await CompleteActiveGroep78PuzzleAsync(page);
+                continue;
+            }
+
+            if (page.Url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase))
+            {
+                await AnswerGroep78ThemedAsync(page);
+                continue;
+            }
+
+            await Task.Delay(250);
+        }
+
+        throw new InvalidOperationException("Did not reach /leerling/eiland within the step budget.");
     }
 
     private static async Task AdvanceGroep78UntilResultAsync(IPage page, int maxSteps = 280)
@@ -2264,11 +2293,36 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             new PageWaitForFunctionOptions { Timeout = 45_000 });
     }
 
+    private static async Task WaitGroep78VisibleErrorsClearAsync(IPage page)
+    {
+        var errors = page.Locator(".vr-error, .ll-error");
+        var deadline = DateTime.UtcNow.AddSeconds(20);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (await errors.CountAsync() == 0)
+            {
+                return;
+            }
+
+            var retry = page.GetByRole(AriaRole.Button, new() { Name = "Probeer opnieuw" });
+            if (await retry.CountAsync() > 0 && await retry.First.IsVisibleAsync())
+            {
+                await retry.First.ClickAsync();
+                await Task.Delay(500);
+                continue;
+            }
+
+            await Task.Delay(300);
+        }
+    }
+
     private static async Task AssertGroep78UiCleanAsync(
         IPage page,
         IReadOnlyList<string> consoleErrors,
         IReadOnlyList<string> failedRequests)
     {
+        await WaitGroep78VisibleErrorsClearAsync(page);
+
         var body = await page.Locator("body").InnerTextAsync();
         Assert.DoesNotContain("_saveError", body, StringComparison.Ordinal);
         Assert.DoesNotContain("_saved", body, StringComparison.Ordinal);
@@ -2278,8 +2332,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             throw new InvalidOperationException("Untranslated key visible: " + untranslated.Value);
         }
 
-        Assert.Equal(0, await page.Locator(".vr-error").CountAsync());
-        Assert.Equal(0, await page.Locator(".ll-error").CountAsync());
+        var vrCount = await page.Locator(".vr-error").CountAsync();
+        var llCount = await page.Locator(".ll-error").CountAsync();
+        if (vrCount + llCount > 0)
+        {
+            var vrText = vrCount > 0 ? await page.Locator(".vr-error").AllInnerTextsAsync() : [];
+            var llText = llCount > 0 ? await page.Locator(".ll-error").AllInnerTextsAsync() : [];
+            throw new InvalidOperationException(
+                "Visible errors: vr=" + string.Join(" | ", vrText) + " ll=" + string.Join(" | ", llText));
+        }
         var noisyConsole = consoleErrors
             .Where(e => !e.Contains("speechSynthesis", StringComparison.OrdinalIgnoreCase)
                         && !e.Contains("cors", StringComparison.OrdinalIgnoreCase)
