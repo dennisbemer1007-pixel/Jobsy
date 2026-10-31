@@ -618,21 +618,24 @@ combo.save(out)
 
         await ClickNextAsync(page);
         await page.Locator("[data-testid=onboarding-step-2-illustrated]").First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
-        var preset = page.Locator(".ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile, [data-testid=onboarding-step-2-illustrated] .lobsy-choice-tile").First;
+        var preset = page.Locator(
+            ".ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile, [data-ob-client=presetGrid] .lobsy-choice-tile, [data-testid=onboarding-step-2-illustrated] .lobsy-choice-tile").First;
         await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await preset.ClickAsync(new() { Force = true });
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-3-illustrated]").First.WaitForAsync(new()
+        await FunctionalOnboardingInteractivityHelpers.OnboardingStepIllustrated(page, 3).WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
             Timeout = 90_000,
         });
         await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, 3);
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 15_000);
-        var transportTile = page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First;
+        var transportTile = page.Locator(
+            "#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button, [data-ob-client=transportGrid] .lobsy-choice-tile").First;
         await transportTile.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await transportTile.ClickAsync(new() { Force = true });
-        var travel = page.Locator(".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__travel-times button")
+        var travel = page.Locator(
+                ".ob-wizard__travel-times .lobsy-choice-tile, .ob-wizard__travel-times button, [data-ob-client=travelGrid] .lobsy-choice-tile, .ob-wizard__transport .lobsy-choice-tile")
             .Filter(new() { HasText = maxTravelMinutes.ToString() });
         if (await travel.CountAsync() == 0)
         {
@@ -802,6 +805,7 @@ combo.save(out)
                   return Number.isFinite(n) ? n : 0;
                 }
                 """);
+            await FunctionalOnboardingInteractivityHelpers.PrepareSsrStepBeforeNextAsync(page, stepBefore);
         }
 
         if (mobile)

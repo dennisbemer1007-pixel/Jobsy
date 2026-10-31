@@ -567,12 +567,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     await page.WaitForTimeoutAsync(500);
                     break;
                 case 6:
-                    var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Weet ik nog niet", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
-                    if (await unknown.CountAsync() > 0)
-                    {
-                        await unknown.First.ClickAsync(new() { Force = true });
-                    }
-                    else
+                    if (!await TryClickOnboardingDreamUnknownAsync(page))
                     {
                         await ClickWizardNextWhenVisibleAsync(page);
                     }
@@ -1023,52 +1018,102 @@ internal static class FunctionalOnboardingInteractivityHelpers
             // Nearby panel depends on API signal; still advance through steps 4–6.
         }
 
-        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+        await NavigateToOnboardingConsentAsync(page);
     }
 
     internal static async Task AdvanceStepsFourThroughSixToConsentAsync(IPage page)
+        => await NavigateToOnboardingConsentAsync(page);
+
+    internal static async Task NavigateToOnboardingConsentAsync(IPage page)
     {
-        for (var step = 4; step <= 6; step++)
+        for (var attempt = 0; attempt < 14; attempt++)
         {
-            if (await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).IsVisibleAsync())
+            if (await IsOnboardingConsentScreenAsync(page))
             {
                 return;
             }
 
-            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
+            if (await TryClickOnboardingSkipOptionalAsync(page))
             {
-                return;
+                continue;
             }
 
-            if (step is 4 or 5)
+            if (await TryClickOnboardingDreamUnknownAsync(page))
             {
-                var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Overslaan", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
-                if (await skip.CountAsync() > 0)
-                {
-                    await skip.First.ClickAsync(new() { Timeout = 8_000, Force = true });
-                    await page.WaitForTimeoutAsync(450);
-                    continue;
-                }
+                continue;
+            }
 
+            if (await page.Locator("[data-testid=onboarding-next]").CountAsync() > 0)
+            {
                 await VroegResultaatPlaywrightTests.ClickNextAsync(page);
                 await page.WaitForTimeoutAsync(500);
                 continue;
             }
 
-            var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Weet ik nog niet", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
-            if (await unknown.CountAsync() > 0)
-            {
-                await unknown.First.ClickAsync(new() { Timeout = 8_000, Force = true });
-            }
-            else
-            {
-                await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-            }
-
-            await page.WaitForTimeoutAsync(600);
+            break;
         }
 
-        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+        await page.Locator("[data-testid=onboarding-step-7-consent], .ob-wizard__consent input[type=checkbox]").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 120_000 });
+    }
+
+    private static async Task<bool> IsOnboardingConsentScreenAsync(IPage page)
+    {
+        if (await page.GetByTestId("onboarding-step-7-consent").CountAsync() > 0)
+        {
+            return true;
+        }
+
+        if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
+        {
+            return true;
+        }
+
+        return await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).IsVisibleAsync();
+    }
+
+    private static async Task<bool> TryClickOnboardingSkipOptionalAsync(IPage page)
+    {
+        var ssrSkip = page.GetByTestId("onboarding-skip");
+        if (await ssrSkip.CountAsync() > 0 && await ssrSkip.IsVisibleAsync())
+        {
+            var stepBefore = await ReadSsrFormActiveStepAsync(page);
+            await ssrSkip.ClickAsync(new() { Timeout = 8_000, Force = true });
+            await WaitForSsrMainStepAdvanceAsync(page, stepBefore);
+            return true;
+        }
+
+        var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Overslaan", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
+        if (await skip.CountAsync() > 0)
+        {
+            await skip.First.ClickAsync(new() { Timeout = 8_000, Force = true });
+            await page.WaitForTimeoutAsync(450);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static async Task<bool> TryClickOnboardingDreamUnknownAsync(IPage page)
+    {
+        var ssrUnknown = page.GetByTestId("onboarding-dream-unknown");
+        if (await ssrUnknown.CountAsync() > 0 && await ssrUnknown.IsVisibleAsync())
+        {
+            await ssrUnknown.ClickAsync(new() { Timeout = 8_000, Force = true });
+            await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 90_000 });
+            await WaitForCircuitReadyAsync(page, 60_000);
+            return true;
+        }
+
+        var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new System.Text.RegularExpressions.Regex("Weet ik nog niet", System.Text.RegularExpressions.RegexOptions.IgnoreCase) });
+        if (await unknown.CountAsync() > 0)
+        {
+            await unknown.First.ClickAsync(new() { Timeout = 8_000, Force = true });
+            await page.WaitForTimeoutAsync(600);
+            return true;
+        }
+
+        return false;
     }
 
     internal static async Task RunThroughWizardToFinishAsync(IPage page, string baseUrl)
@@ -1078,7 +1123,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
         await AdvanceStepsFourThroughSixToConsentAsync(page);
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" })
+        await page.Locator("[data-testid=onboarding-step-7-consent], .ob-wizard__consent input[type=checkbox]").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 120_000 });
 
         var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
@@ -1381,7 +1426,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AcceptOnboardingTestConsentAsync(IPage page)
     {
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" })
+        await page.Locator("[data-testid=onboarding-step-7-consent], .ob-wizard__consent input[type=checkbox]").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 120_000 });
         var box = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
         await box.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
@@ -1588,7 +1633,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             }
             """);
 
-    private static async Task PrepareSsrStepBeforeNextAsync(IPage page, int stepBefore)
+    internal static async Task PrepareSsrStepBeforeNextAsync(IPage page, int stepBefore)
     {
         if (stepBefore != 6)
         {

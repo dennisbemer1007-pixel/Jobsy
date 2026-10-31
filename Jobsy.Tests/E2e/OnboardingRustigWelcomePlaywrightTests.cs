@@ -43,7 +43,7 @@ public sealed class OnboardingRustigWelcomePlaywrightTests
 
         var begin = page.GetByTestId("onboarding-begin");
         await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, begin, "onboarding-begin");
-        await begin.ClickAsync(new() { Timeout = 30_000, Force = mobile });
+        await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         await FunctionalOnboardingInteractivityHelpers.OnboardingStep1Illustrated(page).WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,

@@ -103,8 +103,16 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
         if (await card.CountAsync() > 0)
         {
-            await card.ScrollIntoViewIfNeededAsync();
-            await card.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            try
+            {
+                await card.ScrollIntoViewIfNeededAsync(new() { Timeout = 5_000 });
+                await card.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            }
+            catch (TimeoutException)
+            {
+                await card.ClickAsync(new() { Force = true, Timeout = 5_000 });
+            }
+
             await page.WaitForTimeoutAsync(1000);
         }
 

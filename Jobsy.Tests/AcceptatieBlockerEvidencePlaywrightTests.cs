@@ -634,52 +634,5 @@ internal static class VroegResultaatPlaywrightTestsHelpers
     }
 
     public static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
-    {
-        for (var step = 0; step < 12; step++)
-        {
-            if (await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).CountAsync() > 0)
-            {
-                return;
-            }
-
-            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
-            {
-                return;
-            }
-
-            if (await page.Locator(".test-likert").CountAsync() > 0)
-            {
-                var laterOnTest = page.Locator(".test-flow [data-testid=onboarding-tests-later]:visible, .test-flow__later:visible").First;
-                if (await laterOnTest.CountAsync() > 0)
-                {
-                    await laterOnTest.ClickAsync(new() { Force = true, Timeout = 15_000 });
-                    return;
-                }
-            }
-
-            var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) });
-            if (await skip.CountAsync() > 0)
-            {
-                await skip.First.ClickAsync(new() { Timeout = 8_000, Force = true });
-                await page.WaitForTimeoutAsync(450);
-                continue;
-            }
-
-            var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Weet ik nog niet", RegexOptions.IgnoreCase) });
-            if (await unknown.CountAsync() > 0)
-            {
-                await unknown.First.ClickAsync(new() { Timeout = 8_000, Force = true });
-                await page.WaitForTimeoutAsync(450);
-                continue;
-            }
-
-            if (await page.Locator("[data-testid=onboarding-next]").CountAsync() > 0)
-            {
-                await ClickNextAsync(page);
-                continue;
-            }
-
-            break;
-        }
-    }
+        => await FunctionalOnboardingInteractivityHelpers.NavigateToOnboardingConsentAsync(page);
 }
