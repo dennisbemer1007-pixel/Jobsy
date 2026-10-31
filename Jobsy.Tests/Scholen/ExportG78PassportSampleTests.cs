@@ -106,15 +106,28 @@ public class ExportG78PassportSampleTests
             return;
         }
 
-        try
+        EnsurePythonCompareDeps();
+        ExecutePythonComparison(samplePdf, mockPath);
+        for (var p = 1; p <= 5; p++)
         {
-            dynamic fitz = ExecutePythonComparison(samplePdf, mockPath);
-            _ = fitz;
+            var path = $"/opt/cursor/artifacts/g78-bijlagen-compare-p{p}-100dpi.png";
+            Assert.True(File.Exists(path), $"Missing comparison artifact: {path}");
         }
-        catch
+    }
+
+    private static void EnsurePythonCompareDeps()
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo
         {
-            // Optional visual artifact; PDF export remains the primary artifact.
-        }
+            FileName = "python3",
+            ArgumentList = { "-m", "pip", "install", "--quiet", "pymupdf", "pillow" },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi);
+        proc!.WaitForExit(180_000);
+        Assert.Equal(0, proc.ExitCode);
     }
 
     private static object ExecutePythonComparison(byte[] samplePdf, string mockPath)
