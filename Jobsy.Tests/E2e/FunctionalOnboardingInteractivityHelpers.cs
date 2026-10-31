@@ -257,10 +257,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
     }
 
     internal static Task WaitForCircuitReadyAsync(IPage page, int timeoutMs = 90_000)
-        => page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = timeoutMs });
+        => KbE2e.WaitForCircuitOrSsrReadyAsync(page, timeoutMs);
 
     internal static async Task AssertChoiceTileTogglesWithinMsAsync(IPage page, ILocator tile, int maxMs = 300)
     {
@@ -671,10 +668,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static async Task OpenStartWelcomeAsync(IPage page, string baseUrl)
     {
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 120_000 });
+        await WaitForCircuitReadyAsync(page, 120_000);
         var rustigStart = page.Locator("[data-ob-rustig-screen=start]");
         var legacyWelcome = page.Locator(".ob-wizard__welcome");
         try
@@ -919,10 +913,10 @@ internal static class FunctionalOnboardingInteractivityHelpers
         for (var attempt = 0; attempt < 2; attempt++)
         {
             await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            await page.WaitForFunctionAsync(
-                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-                null,
-                new() { Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            KbE2e.CircuitOrSsrReadyJavaScript,
+            null,
+            new() { Timeout = 120_000 });
             try
             {
                 if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
@@ -1046,7 +1040,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
 
         await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            KbE2e.CircuitOrSsrReadyJavaScript,
             null,
             new() { Timeout = 90_000 });
 
@@ -1140,10 +1134,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
 
         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 120_000 });
+        await WaitForCircuitReadyAsync(page, 120_000);
 
         await page.Locator(
                 ".jobsy-discovery, [data-testid=uwv-banenkaart-mock], [data-testid=uwv-kansberoepen-toggle], [data-testid=kb-keyword-search], #jobsy-map-boot")

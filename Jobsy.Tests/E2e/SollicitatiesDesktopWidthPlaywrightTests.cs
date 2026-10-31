@@ -49,7 +49,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
         {
             await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
         }
@@ -252,7 +252,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
         {
             await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
         }
@@ -318,7 +318,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
         {
             await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
         }
@@ -402,7 +402,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (UseCiTestSignIn(baseUrl, _localBaseUrl))
         {
             await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications?tab=berichten");
         }
@@ -510,9 +510,13 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public bool HasBack { get; set; }
     }
 
+    private static bool UseCiTestSignIn(string baseUrl, string? localBaseUrl) =>
+        KbE2e.IsLocalCiStack(baseUrl)
+        || (localBaseUrl is not null && string.Equals(baseUrl, localBaseUrl, StringComparison.Ordinal));
+
     private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)
     {
-        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+        var password = KbE2e.ResolveCandidatePassword(baseUrl);
         var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
         if (!string.IsNullOrWhiteSpace(preferred)
             && await KbE2e.TryLoginAsync(page, baseUrl, preferred.Trim(), password))
