@@ -49,7 +49,7 @@ else
     {
         <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
                                     WorldKey="@_bandWorldKey"
-                                    BackgroundPosition="center 82%"
+                                    BackgroundPosition="@PuzzleBandBackgroundPosition(_themeKey)"
                                     CurrentNodeKey="@Key" />
     }
 
@@ -510,4 +510,10 @@ else
 
     private string CardBackStyle =>
         $"background-image:url('{PupilJourneyTheme.PuzzleCardBackAsset(_themeKey)}');";
+
+    /// <summary>Sterrenkust band art is a night sky strip; 82% crops to bright sand and reads as a day beach.</summary>
+    private static string PuzzleBandBackgroundPosition(string? themeKey)
+        => string.Equals(themeKey, PupilJourneyTheme.Sterrenkust, StringComparison.OrdinalIgnoreCase)
+            ? "center 30%"
+            : "center 82%";
 }

@@ -1018,6 +1018,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.Locator(".ll-g78-world-band").First.WaitForAsync();
         var vuurtorenBand = await page.Locator(".ll-g78-world-band").First.GetAttributeAsync("style");
         Assert.Contains("sterren-strand.jpg", vuurtorenBand, StringComparison.Ordinal);
+        Assert.Contains("center 30%", vuurtorenBand, StringComparison.Ordinal);
         await page.ScreenshotAsync(new PageScreenshotOptions
         {
             Path = Path.Combine(outDir, $"03-vuurtoren-band-{label}.png"),
