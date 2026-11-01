@@ -3,6 +3,8 @@
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
@@ -13,6 +15,16 @@
 @inject JobsyApiClient Api
 @implements IDisposable
 
+<PageRouteStylesHead />
+@{
+    var routePath = PageSeoCatalog.Normalize(new Uri(Nav.Uri).AbsolutePath);
+}
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.LeerlingGroep78ThemeStylesheets(routePath))
+    {
+        <link rel="stylesheet" href="@href" data-leerling-g78-theme-css="true" />
+    }
+</HeadContent>
 <div class="ll-g78-shell @_themeClass" lang="@Culture.Language">
     <header class="top">
         <a class="brand" href="/leerling/wereld">

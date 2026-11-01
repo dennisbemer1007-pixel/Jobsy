@@ -2,6 +2,8 @@
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
@@ -11,6 +13,19 @@
 @inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
+<PageRouteStylesHead />
+@{
+    var routePath = PageSeoCatalog.Normalize(new Uri(Nav.Uri).AbsolutePath);
+}
+@if (PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles(routePath))
+{
+    <HeadContent>
+        @foreach (var href in PageAssetCatalog.LeerlingGroep78ThemeStylesheets(routePath))
+        {
+            <link rel="stylesheet" href="@href" data-leerling-g78-theme-css="true" />
+        }
+    </HeadContent>
+}
 <div class="ll-shell" lang="@Culture.Language">
     <header class="ll-topbar">
         <a class="ll-topbar__brand" href="/leerling">

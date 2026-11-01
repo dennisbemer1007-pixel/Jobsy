@@ -4,6 +4,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Hosting
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
@@ -14,8 +15,15 @@
 @inject JobsyApiClient Api
 @implements IDisposable
 
+<PageRouteStylesHead />
 @if (_useGroep78Shell)
 {
+    <HeadContent>
+        @foreach (var href in PageAssetCatalog.LeerlingGroep78ThemeStylesheets(_routePath))
+        {
+            <link rel="stylesheet" href="@href" data-leerling-g78-theme-css="true" />
+        }
+    </HeadContent>
     <div class="ll-g78-shell @_groep78ThemeClass" lang="@Culture.Language">
         <header class="top">
             <a class="brand" href="/leerling/wereld">
@@ -78,6 +86,7 @@ else
 }
 
 @code {
+    private string _routePath = "/leerling/reis";
     private string _chip = "";
     private bool _showPause;
     private bool _useGroep78Shell;
@@ -88,6 +97,7 @@ else
     protected override async Task OnParametersSetAsync()
     {
         var path = Nav.ToBaseRelativePath(Nav.Uri);
+        _routePath = string.IsNullOrEmpty(path) ? "/leerling" : "/" + path.TrimStart('/');
         var onPassport = path.StartsWith("leerling/paspoort", StringComparison.OrdinalIgnoreCase);
         var onLoginGate = path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
                           || path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase);

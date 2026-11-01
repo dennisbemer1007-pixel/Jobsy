@@ -7,7 +7,7 @@ namespace Jobsy.Web.Hosting;
 /// Route-scoped stylesheets and optional scripts so login, banenkaart and other hot paths
 /// do not download every feature bundle.
 /// </summary>
-public static class PageAssetCatalog
+public static partial class PageAssetCatalog
 {
     [Flags]
     public enum Area
@@ -428,20 +428,9 @@ public static class PageAssetCatalog
             return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
         }
 
-        if (path.Equals("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/start", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/paspoort", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/droombaan", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/leerling/puzzel", StringComparison.OrdinalIgnoreCase))
-        {
-            return [WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")];
-        }
-
-        return [];
+        return IncludesLeerlingGroep78ThemeStyles(path)
+            ? LeerlingGroep78ThemeStylesheets(path)
+            : [];
     }
 
     public static bool IncludeMapPreconnect(string? rawPath)

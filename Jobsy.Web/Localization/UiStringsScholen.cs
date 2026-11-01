@@ -598,6 +598,8 @@ public static class UiStringsScholen
         nl["Leerling.Vakken.Goed"] = "Hoe goed ben ik erin?";
         nl["Leerling.Vakken.Progress"] = "Voortgang reis";
         nl["Leerling.Vakken.Bubble"] = "Nog 6 vakken… je bent bijna klaar!";
+        nl["Leerling.Vakken.Bubble.Progress"] = "Nog {0} vakken op deze pagina…";
+        nl["Leerling.Vakken.Bubble.PageDone"] = "Alles ingevuld op deze pagina — ga door!";
         nl["Leerling.Vakken.Back"] = "Terug";
         nl["Leerling.Vakken.Next"] = "Zwem verder";
         nl["Leerling.Vakken.Finish"] = "Klaar!";
