@@ -43,4 +43,7 @@ public class PupilProgress
     public string? VoOwnWords { get; set; }
     /// <summary>JSON array of learning-goal strings (VO flow).</summary>
     public string? VoLearningGoalsJson { get; set; }
+
+    /// <summary>MBO/HBO five-block flow (answers, vak scores, block completion). Wiped after school year.</summary>
+    public string? MboHboProgressJson { get; set; }
 }

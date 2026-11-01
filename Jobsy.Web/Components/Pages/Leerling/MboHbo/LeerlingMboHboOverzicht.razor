@@ -1,0 +1,136 @@
+@page "/leerling/mbo-hbo/overzicht"
+@layout LeerlingMboHboLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen.MboHbo
+@using Jobsy.Web.Components.Layout
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Jouw testen · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <div class="mhbo-wrap"><p>Laden…</p></div>
+}
+else if (_model is null)
+{
+    <div class="mhbo-wrap"><p>Kon je voortgang niet laden. <button type="button" class="mhbo-lnk" @onclick="Reload">Opnieuw</button></p></div>
+}
+else
+{
+    <div class="mhbo-wrap">
+        <h1>Jouw testen</h1>
+        <p class="mhbo-sub">Je hebt @_model.CompletedBlocks van de 5 testen afgerond. Je kunt elke test pauzeren en later verder gaan.</p>
+        <div class="mhbo-bar" style="margin:16px 0 24px;height:10px"><i style="width:@($"{_model.CompletedBlocks * 20}%")"></i></div>
+        <div class="mhbo-grid mhbo-overview-grid" style="grid-template-columns:repeat(3,1fr)">
+            @foreach (var block in _model.Blocks)
+            {
+                <div class="@TileClass(block)">
+                    <span class="st">@StatusLabel(block)</span>
+                    <h3>@block.Title</h3>
+                    <p>@block.Description</p>
+                    <div class="mhbo-meta">@MetaLine(block)</div>
+                    @if (block.Status == PupilMboHboTileStatus.InProgress)
+                    {
+                        <div class="mhbo-bar"><i style="width:@($"{ProgressPct(block)}%")"></i></div>
+                    }
+                    <button type="button" class="mhbo-btn @(block.Status == PupilMboHboTileStatus.Completed ? "o" : null)" @onclick="() => OpenBlock(block)">
+                        @ActionLabel(block)
+                    </button>
+                </div>
+            }
+            @if (_model.PassportUnlocked)
+            {
+                <div class="mhbo-tile grn" style="border-top-color:#c9a24a;background:#fffcf3;border-color:#e8d7a8">
+                    <span class="st" style="background:#f6eccf;color:#7a5a12">Klaar om te bekijken</span>
+                    <h3>Jouw paspoort</h3>
+                    <p>Alle 5 testen zijn af. Bekijk wat bij je past en download je paspoort als PDF.</p>
+                    <a class="mhbo-btn g" href="/leerling/mbo-hbo/paspoort">Open je paspoort</a>
+                </div>
+            }
+            else
+            {
+                <div class="mhbo-lock">
+                    <span style="font-size:22px" aria-hidden="true">🔒</span>
+                    <h3 style="color:#0f2747;font-size:17px">Jouw paspoort</h3>
+                    <p style="font-size:13.5px;flex:1">Je paspoort komt vrij als alle 5 testen af zijn.</p>
+                    <b style="color:#0f2747">Nog @(5 - _model.CompletedBlocks) testen te gaan</b>
+                </div>
+            }
+        </div>
+        <p style="margin-top:20px"><a class="mhbo-lnk" href="/leerling/stop">Pauzeer en uitloggen</a></p>
+    </div>
+}
+
+@code {
+    private PupilMboHboOverviewDto? _model;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        _loading = true;
+        _model = await Api.GetMboHboOverviewAsync();
+        if (_model is not null && !_model.IntroSeen)
+        {
+            Nav.NavigateTo(PupilMboHboEntryPaths.Uitleg, replace: true);
+            return;
+        }
+
+        _loading = false;
+    }
+
+    private static string TileClass(PupilMboHboBlockStatusDto block)
+        => block.Status switch
+        {
+            PupilMboHboTileStatus.Completed => "mhbo-tile grn",
+            PupilMboHboTileStatus.InProgress => "mhbo-tile yel",
+            _ => "mhbo-tile grey"
+        };
+
+    private static string StatusLabel(PupilMboHboBlockStatusDto block)
+        => block.Status switch
+        {
+            PupilMboHboTileStatus.Completed => "✓ Afgerond",
+            PupilMboHboTileStatus.InProgress => "Bezig",
+            _ => "Nog niet gestart"
+        };
+
+    private static string MetaLine(PupilMboHboBlockStatusDto block)
+        => block.Status switch
+        {
+            PupilMboHboTileStatus.Completed => $"{block.QuestionCount} van {block.QuestionCount} vragen",
+            PupilMboHboTileStatus.InProgress => $"{block.AnsweredCount} van {block.QuestionCount} vragen",
+            _ => $"{block.QuestionCount} vragen · ca. 10 minuten"
+        };
+
+    private static int ProgressPct(PupilMboHboBlockStatusDto block)
+        => block.QuestionCount <= 0 ? 0 : block.AnsweredCount * 100 / block.QuestionCount;
+
+    private static string ActionLabel(PupilMboHboBlockStatusDto block)
+        => block.Status switch
+        {
+            PupilMboHboTileStatus.Completed => "Bekijk uitkomst",
+            PupilMboHboTileStatus.InProgress => "Ga verder",
+            _ => "Start"
+        };
+
+    private void OpenBlock(PupilMboHboBlockStatusDto block)
+    {
+        if (block.Status == PupilMboHboTileStatus.Completed)
+        {
+            Nav.NavigateTo(PupilMboHboEntryPaths.Uitkomst(block.Block));
+        }
+        else
+        {
+            Nav.NavigateTo(PupilMboHboEntryPaths.Test(block.Block));
+        }
+    }
+}

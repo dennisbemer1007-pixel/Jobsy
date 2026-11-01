@@ -16,6 +16,9 @@ public class SchoolLevelRulesTests
     [InlineData(SchoolLevel.Vwo, PupilQuestionSet.Vo)]
     [InlineData(SchoolLevel.Mix, PupilQuestionSet.Vo)]
     [InlineData(SchoolLevel.Anders, PupilQuestionSet.Vo)]
+    [InlineData(SchoolLevel.Mbo1, PupilQuestionSet.MboHbo)]
+    [InlineData(SchoolLevel.Mbo4, PupilQuestionSet.MboHbo)]
+    [InlineData(SchoolLevel.Hbo, PupilQuestionSet.MboHbo)]
     public void QuestionSetFor_maps_every_level(SchoolLevel level, PupilQuestionSet expected)
         => Assert.Equal(expected, SchoolLevelRules.QuestionSetFor(level));
 
@@ -25,7 +28,9 @@ public class SchoolLevelRulesTests
         foreach (SchoolLevel level in Enum.GetValues<SchoolLevel>())
         {
             var set = SchoolLevelRules.QuestionSetFor(level);
-            Assert.True(set is PupilQuestionSet.Groep78 or PupilQuestionSet.Vo, level.ToString());
+            Assert.True(
+                set is PupilQuestionSet.Groep78 or PupilQuestionSet.Vo or PupilQuestionSet.MboHbo,
+                level.ToString());
         }
     }
 
@@ -39,6 +44,9 @@ public class SchoolLevelRulesTests
     [InlineData(SchoolLevel.Havo, 0, false)]
     [InlineData(SchoolLevel.Havo, 7, false)]
     [InlineData(SchoolLevel.VmboB, 3, true)]
+    [InlineData(SchoolLevel.Mbo2, 4, true)]
+    [InlineData(SchoolLevel.Mbo2, 5, false)]
+    [InlineData(SchoolLevel.Hbo, 1, true)]
     public void ValidateYear_accepts_and_rejects(SchoolLevel level, int year, bool ok)
     {
         var error = SchoolLevelRules.ValidateYear(level, year);
@@ -49,9 +57,12 @@ public class SchoolLevelRulesTests
         else
         {
             Assert.NotNull(error);
-            Assert.Equal(
-                SchoolLevelRules.IsPrimary(level) ? "Kies groep 7 of groep 8." : "Leerjaar moet 1–6 zijn.",
-                error);
+            var expected = SchoolLevelRules.IsPrimary(level)
+                ? "Kies groep 7 of groep 8."
+                : SchoolLevelRules.IsMboHbo(level)
+                    ? "Leerjaar moet 1–4 zijn."
+                    : "Leerjaar moet 1–6 zijn.";
+            Assert.Equal(expected, error);
         }
     }
 

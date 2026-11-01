@@ -9,6 +9,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -322,9 +323,12 @@ public sealed class PupilPortalService : IPupilPortalService
         await EnsureResultAsync(code, def, cancellationToken);
 
         var answersAtLogin = ParseAnswers(code.Progress?.AnswersJson);
-        var completed = code.Status == PupilCodeStatus.Completed
-                        && code.Result is not null
-                        && def.Bank.AllItems.All(i => answersAtLogin.ContainsKey(i.Id));
+        var completed = schoolClass.QuestionSet == PupilQuestionSet.MboHbo
+            ? code.Status == PupilCodeStatus.Completed
+              && PupilMboHboProgressState.Parse(code.Progress?.MboHboProgressJson).AllBlocksComplete()
+            : code.Status == PupilCodeStatus.Completed
+              && code.Result is not null
+              && def.Bank.AllItems.All(i => answersAtLogin.ContainsKey(i.Id));
         if (schoolClass.TestWindow != TestWindowState.Open && !completed)
         {
             return (null, LoginErr(WindowClosedError, schoolClass.QuestionSet,
@@ -357,7 +361,7 @@ public sealed class PupilPortalService : IPupilPortalService
             }
         }
 
-        var redirect = PupilGroep78EntryPaths.AfterLogin(
+        var redirect = PupilMboHboEntryPaths.AfterLogin(
             schoolClass.QuestionSet,
             code.Status,
             code.Progress,
@@ -1504,6 +1508,11 @@ public sealed class PupilPortalService : IPupilPortalService
         PupilQuestionSetDef def,
         CancellationToken cancellationToken)
     {
+        if (def.Set == PupilQuestionSet.MboHbo)
+        {
+            return code.Result is not null;
+        }
+
         if (code.Result is not null)
         {
             return true;

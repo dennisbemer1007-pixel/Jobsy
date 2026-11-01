@@ -428,6 +428,11 @@ public static partial class PageAssetCatalog
             return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
         }
 
+        if (IncludesLeerlingMboHboStyles(path))
+        {
+            return LeerlingMboHboStylesheets(path);
+        }
+
         return IncludesLeerlingGroep78ThemeStyles(path)
             ? LeerlingGroep78ThemeStylesheets(path)
             : [];

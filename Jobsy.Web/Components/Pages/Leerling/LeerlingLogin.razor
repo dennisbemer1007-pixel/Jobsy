@@ -198,6 +198,12 @@
             return PupilQuestionSet.Vo;
         }
 
+        if (string.Equals(QuestionSetQuery, "MboHbo", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(QuestionSetQuery, "3", StringComparison.Ordinal))
+        {
+            return PupilQuestionSet.MboHbo;
+        }
+
         if (ClassId is Guid cid)
         {
             var match = _classes.FirstOrDefault(c => c.Id == cid);
