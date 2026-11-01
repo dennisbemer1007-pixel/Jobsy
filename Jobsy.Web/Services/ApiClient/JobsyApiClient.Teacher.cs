@@ -16,6 +16,24 @@ public sealed partial class JobsyApiClient
     public async Task<IReadOnlyList<TeacherCodeRowDto>> GetTeacherCodesAsync(Guid classId, CancellationToken ct = default)
         => await GetApiJsonAsync<List<TeacherCodeRowDto>>($"api/teacher/classes/{classId}/codes", ct) ?? [];
 
+    public async Task<SchoolPortalClassDetailDto?> AddTeacherCodesAsync(
+        Guid classId,
+        int count,
+        CancellationToken ct = default)
+    {
+        var response = await PostApiJsonAsync(
+            $"api/teacher/classes/{classId}/codes",
+            new AddCodesRequest(count),
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ActionError(body));
+        }
+
+        return await ReadApiJsonAsync<SchoolPortalClassDetailDto>(response.Content, ct);
+    }
+
     public async Task<TeacherGroupInsightsDto?> GetTeacherGroupAsync(Guid classId, CancellationToken ct = default)
         => await GetApiJsonAsync<TeacherGroupInsightsDto>($"api/teacher/classes/{classId}/group", ct);
 

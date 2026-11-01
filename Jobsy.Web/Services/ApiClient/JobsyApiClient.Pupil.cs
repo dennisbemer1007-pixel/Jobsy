@@ -43,8 +43,13 @@ public sealed partial class JobsyApiClient
             $"api/pupil/progress/answers/{Uri.EscapeDataString(itemId)}",
             new PupilAnswerRequest(value),
             ct);
-        response.EnsureSuccessStatusCode();
-        return await ReadApiJsonAsync<PupilAnswerResponse>(response.Content, ct);
+        if (response.IsSuccessStatusCode)
+        {
+            return await ReadApiJsonAsync<PupilAnswerResponse>(response.Content, ct);
+        }
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        throw new HttpRequestException(body, null, response.StatusCode);
     }
 
     public async Task<PupilChipsResponse?> SavePupilChipsAsync(

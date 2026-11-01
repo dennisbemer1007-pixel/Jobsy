@@ -47,6 +47,26 @@ public sealed class TeacherClassesController : ControllerBase
         return rows is null ? NotFound() : Ok(rows);
     }
 
+    [HttpPost("{classId:guid}/codes")]
+    public async Task<ActionResult<SchoolPortalClassDetailDto>> AddCodes(
+        Guid classId,
+        [FromBody] AddCodesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var (detail, error) = await _portal.AddCodesAsync(User, classId, request.Count, cancellationToken);
+        if (error == "not_found" || detail is null)
+        {
+            return NotFound();
+        }
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            return BadRequest(new { message = error });
+        }
+
+        return Ok(detail);
+    }
+
     [HttpGet("{classId:guid}/group")]
     public async Task<ActionResult<TeacherGroupInsightsDto>> Group(
         Guid classId,

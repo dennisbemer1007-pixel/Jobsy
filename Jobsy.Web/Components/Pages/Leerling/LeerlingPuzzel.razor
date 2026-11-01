@@ -1,10 +1,12 @@
 @page "/leerling/puzzel/{Key}"
-@layout LeerlingLayout
+@layout LeerlingJourneyLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -14,7 +16,10 @@
 
 <PageTitle>@Title · Lobsy</PageTitle>
 
-<LeerlingCoachCue Text="@Culture["Leerling.Puzzle.Coach"]" />
+@if (!_groep78)
+{
+    <LeerlingCoachCue Text="@Culture["Leerling.Puzzle.Coach"]" />
+}
 
 @if (_loading)
 {
@@ -40,7 +45,13 @@ else if (!_known)
 }
 else
 {
-    <section class="ll-card ll-puzzle" data-testid="ll-puzzle-root">
+    @if (_groep78)
+    {
+        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="@_bandWorldKey" BackgroundPosition="center 82%" />
+    }
+
+    <div class="@(_groep78 ? "wrap" : null)">
+    <section class="@(_groep78 ? "card ll-puzzle" : "ll-card ll-puzzle")" data-testid="ll-puzzle-root">
         <p class="ll-question__meta">@Culture["Leerling.Puzzle.Break"]</p>
         <h1 class="ll-question__text">@Title</h1>
         <p class="ll-puzzle__lead">@Lead</p>
@@ -112,6 +123,9 @@ else
             else if (_lampStep > 0)
             {
                 <p class="ll-puzzle__status" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.YourTurn"]</p>
+                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="ReplayLampPattern">
+                    @Culture["Leerling.Puzzle.Replay"]
+                </button>
             }
         }
 
@@ -139,6 +153,7 @@ else
             }
         </div>
     </section>
+    </div>
 }
 
 @code {
@@ -165,22 +180,29 @@ else
     private int _lampStep;
     private int? _lampLit;
     private bool _lampPlayMode;
+    private bool _groep78;
+    private string? _themeKey;
+    private string _bandWorldKey = "koraalrif";
 
-    private string Title => Key.ToLowerInvariant() switch
-    {
-        "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Title"],
-        "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Title"],
-        "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Title"],
-        _ => Culture["Leerling.Puzzle.Title"]
-    };
+    private string Title => _groep78
+        ? Culture[PupilJourneyTheme.PuzzleTitleKey(_themeKey, Key)]
+        : Key.ToLowerInvariant() switch
+        {
+            "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Title"],
+            "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Title"],
+            "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Title"],
+            _ => Culture["Leerling.Puzzle.Title"]
+        };
 
-    private string Lead => Key.ToLowerInvariant() switch
-    {
-        "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Lead"],
-        "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Lead"],
-        "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Lead"],
-        _ => Culture["Leerling.Puzzle.Lead"]
-    };
+    private string Lead => _groep78
+        ? Culture[PupilJourneyTheme.PuzzleLeadKey(_themeKey, Key)]
+        : Key.ToLowerInvariant() switch
+        {
+            "schelpenrij" => Culture["Leerling.Puzzle.Schelpenrij.Lead"],
+            "schatkaart" => Culture["Leerling.Puzzle.Schatkaart.Lead"],
+            "vuurtorenlampen" => Culture["Leerling.Puzzle.Vuurtoren.Lead"],
+            _ => Culture["Leerling.Puzzle.Lead"]
+        };
 
     protected override async Task OnParametersSetAsync()
     {
@@ -219,6 +241,11 @@ else
             {
                 return;
             }
+
+            _groep78 = state.QuestionSet == PupilQuestionSet.Groep78
+                       && PupilJourneyTheme.IsValid(state.JourneyThemeKey);
+            _themeKey = state.JourneyThemeKey;
+            _bandWorldKey = state.CurrentWorldKey ?? "koraalrif";
 
             if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))
@@ -333,6 +360,13 @@ else
         _cardOpen.Remove(b);
         _cardFirst = null;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private Task ReplayLampPattern()
+    {
+        _lampStep = 0;
+        _lampLit = null;
+        return StartLampPatternAsync();
     }
 
     private async Task StartLampPatternAsync()

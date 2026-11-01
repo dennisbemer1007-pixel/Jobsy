@@ -1,11 +1,13 @@
 @page "/leerling/vakken"
-@layout LeerlingLayout
+@layout LeerlingJourneyLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -29,10 +31,17 @@ else if (_state is null)
 }
 else
 {
-    <LeerlingCoachCue Text="@Culture["Leerling.Vakken.Kicker"]" />
-    <LeerlingScene Depth="@SceneDepth" />
+    @if (_groep78)
+    {
+        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="lagune" BackgroundPosition="center 70%" />
+    }
+    else
+    {
+        <LeerlingCoachCue Text="@Culture["Leerling.Vakken.Kicker"]" />
+        <LeerlingScene Depth="@SceneDepth" />
+    }
 
-    <div class="ll-reis ll-vakken" data-testid="leerling-vakken">
+    <div class="ll-reis ll-vakken @(_groep78 ? "wrap" : null)" data-testid="leerling-vakken">
         <section class="ll-card ll-vakken-card">
             <div class="ll-progress-dots" role="group" aria-label="@Culture["Leerling.Vakken.Progress"]">
                 @for (var i = 1; i <= 5; i++)
@@ -146,6 +155,8 @@ else
     private IReadOnlyList<string> _pageKeys = [];
 
     private int SceneDepth => 9;
+    private bool _groep78;
+    private string? _themeKey;
 
     private int LobsterPlatesShed => Math.Clamp(_state?.PlatesShed ?? 10, 0, 10);
 
@@ -195,6 +206,9 @@ else
     private void ApplyLoaded(PupilProgressStateDto state)
     {
         _state = state;
+        _groep78 = state.QuestionSet == PupilQuestionSet.Groep78
+                   && PupilJourneyTheme.IsValid(state.JourneyThemeKey);
+        _themeKey = state.JourneyThemeKey;
         if (state.Completed || string.Equals(state.NextStep, "done", StringComparison.OrdinalIgnoreCase))
         {
             Nav.NavigateTo("/leerling/dit-ben-jij");
