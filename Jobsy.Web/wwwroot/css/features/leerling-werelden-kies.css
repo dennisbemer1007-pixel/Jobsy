@@ -917,12 +917,18 @@
   gap: 10px;
   max-width: min(320px, 42%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .ll-g78-shell .ll-vakken-corner .bubble {
   font-size: 15px;
   padding: 12px 14px;
-  pointer-events: auto;
+  pointer-events: none;
+}
+
+.ll-g78-shell .ll-vakken-card .ll-question__nav {
+  position: relative;
+  z-index: 4;
 }
 
 .ll-g78-shell .ll-vakken-corner .ring {
@@ -1027,6 +1033,36 @@
     position: static;
     max-width: none;
     margin-top: 16px;
-    pointer-events: auto;
+    pointer-events: none;
   }
+}
+
+.ll-g78-shell .ll-puzzle__card {
+  font-size: 0;
+  color: transparent;
+  background-color: var(--navy2);
+  background-size: cover;
+  background-position: center;
+  border: 2px solid color-mix(in srgb, var(--brass2) 70%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.ll-g78-shell .ll-puzzle__card.is-open,
+.ll-g78-shell .ll-puzzle__card.is-matched {
+  background-color: var(--paper);
+}
+
+.ll-g78-shell .ll-puzzle__card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--r-md, 8px) - 2px);
+}
+
+.ll-g78-shell .ll-result--g78 .ll-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
 }

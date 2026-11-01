@@ -22,7 +22,8 @@ public static class PupilStoryPdfLink
             return "/leerling/pdf";
         }
 
-        return $"/leerling/pdf?{string.Join("&", parts)}";
+        var href = $"/leerling/pdf?{string.Join("&", parts)}";
+        return href.TrimEnd('?');
     }
 
     public static string? NormalizeLanguageCode(string? raw)

@@ -109,19 +109,22 @@
                     <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.LikeOwnWord</b></div>
                 }
             </section>
-            <section class="lp-g78__card lp-g78__dis">
-                <h3>@Culture["LeerlingPassport.Section.Dislikes"]</h3>
-                <div class="lp-g78__chips">
-                    @foreach (var chip in Model.Dislikes ?? [])
+            @if (HasDislikes)
+            {
+                <section class="lp-g78__card lp-g78__dis">
+                    <h3>@Culture["LeerlingPassport.Section.Dislikes"]</h3>
+                    <div class="lp-g78__chips">
+                        @foreach (var chip in Model.Dislikes ?? [])
+                        {
+                            <span class="lp-g78__chip is-no">@chip</span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Model.DislikeOwnWord))
                     {
-                        <span class="lp-g78__chip is-no">@chip</span>
+                        <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.DislikeOwnWord</b></div>
                     }
-                </div>
-                @if (!string.IsNullOrWhiteSpace(Model.DislikeOwnWord))
-                {
-                    <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.DislikeOwnWord</b></div>
-                }
-            </section>
+                </section>
+            }
             <section class="lp-g78__card lp-g78__str">
                 <h3>@Culture["LeerlingPassport.Section.Strengths"]</h3>
                 @foreach (var s in Model.Strengths ?? [])
@@ -263,6 +266,10 @@
 
     private string ThemeStripStyle =>
         $"background-image:url('{PupilJourneyTheme.PassportHeroStripPath(JourneyThemeKey)}')";
+
+    private bool HasDislikes =>
+        Model is not null
+        && ((Model.Dislikes?.Count ?? 0) > 0 || !string.IsNullOrWhiteSpace(Model.DislikeOwnWord));
 
     private string? _name;
     private bool _nameEditing;
