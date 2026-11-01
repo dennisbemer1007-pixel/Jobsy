@@ -91,6 +91,121 @@ public sealed class AcceptatieScholenMboHboDemoEnsurerTests
     }
 
     [Fact]
+    public async Task Ensure_assigns_mbo_hbo_to_demo_leraar_jobsy_local()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var demoTeacherId = DemoSchoolIds.TeacherUserId;
+
+        db.Schools.Add(new School
+        {
+            Id = DemoSchoolIds.SchoolId,
+            Name = "Demo College Lobsy",
+            City = "Naaldwijk",
+            AllowedEmailDomains = """["jobsy.local"]""",
+            IsActive = true,
+            IsTestData = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "test"
+        });
+        db.Users.Add(new User
+        {
+            Id = demoTeacherId,
+            Email = AcceptatieScholenMboHboDemoEnsurer.DemoLeraarEmail,
+            FullName = "Demo Leraar",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true,
+            SessionVersion = 0
+        });
+        await db.SaveChangesAsync();
+
+        var config = AcceptatieConfig();
+        var codes = CreatePupilCodeService(db, config);
+        Assert.True(await AcceptatieScholenMboHboDemoEnsurer.TryEnsureAsync(
+            db, codes, config, NullLogger.Instance));
+
+        var mbo = await db.SchoolClasses.SingleAsync(c => c.Id == DemoSchoolIds.ClassMbo2Id);
+        var hbo = await db.SchoolClasses.SingleAsync(c => c.Id == DemoSchoolIds.ClassHboId);
+        Assert.True(await db.TeacherClassAssignments.AnyAsync(
+            a => a.TeacherUserId == demoTeacherId && a.SchoolClassId == mbo.Id));
+        Assert.True(await db.TeacherClassAssignments.AnyAsync(
+            a => a.TeacherUserId == demoTeacherId && a.SchoolClassId == hbo.Id));
+    }
+
+    [Fact]
+    public async Task Ensure_assigns_both_teachers_when_present()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var testTeacherId = Guid.Parse("cccccccc-3333-3333-3333-333333333333");
+        var testSchoolId = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
+
+        db.Schools.Add(new School
+        {
+            Id = DemoSchoolIds.SchoolId,
+            Name = "Demo College Lobsy",
+            City = "Naaldwijk",
+            AllowedEmailDomains = """["jobsy.local","lobsy.nl"]""",
+            IsActive = true,
+            IsTestData = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "test"
+        });
+        db.Schools.Add(new School
+        {
+            Id = testSchoolId,
+            Name = "Testschool",
+            City = "Den Haag",
+            AllowedEmailDomains = """["lobsy.nl"]""",
+            IsActive = true,
+            IsTestData = true,
+            CreatedAtUtc = DateTime.UtcNow,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "test"
+        });
+        db.Users.Add(new User
+        {
+            Id = DemoSchoolIds.TeacherUserId,
+            Email = AcceptatieScholenMboHboDemoEnsurer.DemoLeraarEmail,
+            FullName = "Demo Leraar",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true,
+            SessionVersion = 0
+        });
+        db.Users.Add(new User
+        {
+            Id = testTeacherId,
+            Email = AcceptatieScholenMboHboDemoEnsurer.TestLeraarEmail,
+            FullName = "Test Leraar",
+            Role = UserRole.Teacher,
+            SchoolId = testSchoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true,
+            SessionVersion = 0
+        });
+        await db.SaveChangesAsync();
+
+        var config = AcceptatieConfig();
+        var codes = CreatePupilCodeService(db, config);
+        await AcceptatieScholenMboHboDemoEnsurer.TryEnsureAsync(db, codes, config, NullLogger.Instance);
+
+        var mbo = DemoSchoolIds.ClassMbo2Id;
+        var hbo = DemoSchoolIds.ClassHboId;
+        Assert.Equal(2, await db.TeacherClassAssignments.CountAsync(a => a.SchoolClassId == mbo));
+        Assert.Equal(2, await db.TeacherClassAssignments.CountAsync(a => a.SchoolClassId == hbo));
+    }
+
+    [Fact]
     public async Task Skips_when_demo_school_is_not_test_data()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()

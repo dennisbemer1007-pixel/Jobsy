@@ -13,12 +13,19 @@ namespace Jobsy.Infrastructure.Ops;
 
 /// <summary>
 /// Acceptatie: idempotent MBO/HBO demo classes on <see cref="DemoSchoolIds.SchoolId"/> only,
-/// assigned to <see cref="TestLeraarEmail"/> (cross-school assignment allowed).
+/// assigned to <see cref="TestLeraarEmail"/> and demo <see cref="DemoLeraarEmail"/> when present.
 /// </summary>
 public static class AcceptatieScholenMboHboDemoEnsurer
 {
     public const int MinimumPupilCodes = 10;
     public const string TestLeraarEmail = "test-leraar@lobsy.nl";
+    public const string DemoLeraarEmail = AcceptatieScholenClass2APupilCodesEnsurer.LeraarEmail;
+
+    private static readonly (Guid ClassId, string Name, SchoolLevel Level, int Year)[] DemoClasses =
+    [
+        (DemoSchoolIds.ClassMbo2Id, DemoSchoolIds.ClassMbo2Name, SchoolLevel.Mbo2, 2),
+        (DemoSchoolIds.ClassHboId, DemoSchoolIds.ClassHboName, SchoolLevel.Hbo, 1)
+    ];
 
     public static async Task<bool> TryEnsureAsync(
         JobsyDbContext db,
@@ -47,48 +54,119 @@ public static class AcceptatieScholenMboHboDemoEnsurer
             return false;
         }
 
-        var teacher = await db.Users
-            .FirstOrDefaultAsync(
-                u => u.Email == TestLeraarEmail && u.Role == UserRole.Teacher,
-                cancellationToken);
-        if (teacher is null)
+        var teachers = await ResolveTeachersAsync(db, cancellationToken);
+        if (teachers.Count == 0)
         {
             logger.LogInformation(
-                "Acceptatie MBO/HBO demo: skipped (teacher {Email} missing).",
-                TestLeraarEmail);
+                "Acceptatie MBO/HBO demo: skipped (no teachers {TestEmail} / {DemoEmail}).",
+                TestLeraarEmail,
+                DemoLeraarEmail);
             return false;
         }
 
         var changed = false;
-        changed |= await EnsureClassAsync(
-            db,
-            pupilCodes,
-            logger,
-            teacher,
-            DemoSchoolIds.ClassMbo2Id,
-            DemoSchoolIds.ClassMbo2Name,
-            SchoolLevel.Mbo2,
-            year: 2,
-            cancellationToken);
-        changed |= await EnsureClassAsync(
-            db,
-            pupilCodes,
-            logger,
-            teacher,
-            DemoSchoolIds.ClassHboId,
-            DemoSchoolIds.ClassHboName,
-            SchoolLevel.Hbo,
-            year: 1,
-            cancellationToken);
+        var classIds = new List<Guid>();
+        foreach (var spec in DemoClasses)
+        {
+            var (classChanged, schoolClass) = await EnsureClassAsync(
+                db,
+                pupilCodes,
+                logger,
+                spec.ClassId,
+                spec.Name,
+                spec.Level,
+                spec.Year,
+                cancellationToken);
+            changed |= classChanged;
+            if (schoolClass is null)
+            {
+                continue;
+            }
+
+            classIds.Add(schoolClass.Id);
+            foreach (var teacher in teachers)
+            {
+                if (await EnsureTeacherAssignmentAsync(db, logger, teacher, schoolClass, cancellationToken))
+                {
+                    changed = true;
+                }
+            }
+        }
+
+        if (classIds.Count == DemoClasses.Length)
+        {
+            var linked = new List<string>();
+            foreach (var teacher in teachers)
+            {
+                var onAll = true;
+                foreach (var classId in classIds)
+                {
+                    if (!await db.TeacherClassAssignments.AnyAsync(
+                            a => a.TeacherUserId == teacher.Id && a.SchoolClassId == classId,
+                            cancellationToken))
+                    {
+                        onAll = false;
+                        break;
+                    }
+                }
+
+                if (onAll)
+                {
+                    linked.Add(teacher.Email);
+                }
+            }
+
+            logger.LogInformation(
+                "Acceptatie MBO/HBO demo: applied (demo college MBO/HBO classes; teacher assignments: {Emails}).",
+                linked.Count > 0 ? string.Join(", ", linked) : "(none)");
+        }
 
         return changed;
     }
 
-    private static async Task<bool> EnsureClassAsync(
+    private static async Task<List<User>> ResolveTeachersAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var emails = new[] { TestLeraarEmail, DemoLeraarEmail };
+        return await db.Users
+            .Where(u => u.Role == UserRole.Teacher && emails.Contains(u.Email))
+            .ToListAsync(cancellationToken);
+    }
+
+    private static async Task<bool> EnsureTeacherAssignmentAsync(
+        JobsyDbContext db,
+        ILogger logger,
+        User teacher,
+        SchoolClass schoolClass,
+        CancellationToken cancellationToken)
+    {
+        if (await db.TeacherClassAssignments.AnyAsync(
+                a => a.TeacherUserId == teacher.Id && a.SchoolClassId == schoolClass.Id,
+                cancellationToken))
+        {
+            return false;
+        }
+
+        db.TeacherClassAssignments.Add(new TeacherClassAssignment
+        {
+            TeacherUserId = teacher.Id,
+            SchoolClassId = schoolClass.Id,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Acceptatie MBO/HBO demo: assigned {Email} to class {ClassId} ({Name}).",
+            teacher.Email,
+            schoolClass.Id,
+            schoolClass.Name);
+        return true;
+    }
+
+    private static async Task<(bool Changed, SchoolClass? Class)> EnsureClassAsync(
         JobsyDbContext db,
         IPupilCodeService pupilCodes,
         ILogger logger,
-        User teacher,
         Guid classId,
         string name,
         SchoolLevel level,
@@ -126,7 +204,7 @@ public static class AcceptatieScholenMboHboDemoEnsurer
             logger.LogWarning(
                 "Acceptatie MBO/HBO demo: class {ClassId} exists on another school; skipped.",
                 classId);
-            return false;
+            return (false, null);
         }
         else
         {
@@ -167,20 +245,6 @@ public static class AcceptatieScholenMboHboDemoEnsurer
             }
         }
 
-        if (!await db.TeacherClassAssignments.AnyAsync(
-                a => a.TeacherUserId == teacher.Id && a.SchoolClassId == schoolClass.Id,
-                cancellationToken))
-        {
-            db.TeacherClassAssignments.Add(new TeacherClassAssignment
-            {
-                TeacherUserId = teacher.Id,
-                SchoolClassId = schoolClass.Id,
-                CreatedAtUtc = DateTime.UtcNow
-            });
-            await db.SaveChangesAsync(cancellationToken);
-            changed = true;
-        }
-
         var total = await db.PupilCodes.CountAsync(c => c.SchoolClassId == schoolClass.Id, cancellationToken);
         if (total >= MinimumPupilCodes)
         {
@@ -188,9 +252,10 @@ public static class AcceptatieScholenMboHboDemoEnsurer
             {
                 schoolClass.PupilCount = total;
                 await db.SaveChangesAsync(cancellationToken);
+                changed = true;
             }
 
-            return changed;
+            return (changed, schoolClass);
         }
 
         var missing = MinimumPupilCodes - total;
@@ -207,6 +272,6 @@ public static class AcceptatieScholenMboHboDemoEnsurer
             schoolClass.Id,
             schoolClass.Name,
             level);
-        return true;
+        return (true, schoolClass);
     }
 }
