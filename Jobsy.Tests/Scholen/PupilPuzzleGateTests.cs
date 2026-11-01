@@ -40,6 +40,7 @@ public sealed class PupilPuzzleGateTests : IClassFixture<RoleFunctionalWebAppFac
         var login = await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
             seed.SchoolId, seed.ClassId, seed.PlainCode));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        await PupilGroep78TestHelpers.EnsureJourneyThemeAsync(client);
 
         var bank = new PupilQuestionBank();
         for (var i = 0; i < 15; i++)
