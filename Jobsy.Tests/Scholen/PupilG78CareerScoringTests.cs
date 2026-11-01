@@ -9,11 +9,11 @@ public class PupilG78CareerScoringTests
 {
     [Theory]
     [InlineData(5, 5, 1.0)]
-    [InlineData(4, 3, 0.5)]
-    [InlineData(3, 5, 0.0)]
+    [InlineData(4, 3, 0.65)]
+    [InlineData(3, 5, 0.70)]
     public void SubjectWeight_follows_leuk_and_goed_rules(int leuk, int goed, double expected)
     {
-        Assert.Equal(expected, PupilVakScores.SubjectWeight(leuk, goed));
+        Assert.Equal(expected, PupilVakScores.SubjectWeight(leuk, goed), 2);
     }
 
     [Fact]

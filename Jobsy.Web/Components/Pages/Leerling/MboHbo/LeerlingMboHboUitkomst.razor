@@ -30,8 +30,15 @@ else
                 {
                     <div class="mhbo-hb">
                         <span>@bar.Label</span>
-                        <div class="mhbo-bar"><i style="width:@($"{bar.Percent}%");background:@(bar.Percent > 60 ? "#0f2747" : "#9aa9bf")"></i></div>
-                        <b>@bar.Percent</b>
+                        @if (_model.Block != PupilMboHboBlock.Beroepen)
+                        {
+                            <div class="mhbo-bar"><i style="width:@($"{bar.Percent}%");background:@(bar.Percent > 60 ? "#0f2747" : "#9aa9bf")"></i></div>
+                            <b>@bar.Percent</b>
+                        }
+                        else
+                        {
+                            <span class="mhbo-chip">@($"#{bar.Percent}") past goed bij je</span>
+                        }
                     </div>
                 }
             </div>

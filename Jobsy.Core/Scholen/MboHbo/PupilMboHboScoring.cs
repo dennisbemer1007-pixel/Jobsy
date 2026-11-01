@@ -205,30 +205,16 @@ public static class PupilMboHboScoring
         PupilMboHboCatalog catalog,
         SchoolLevel level)
     {
-        var ranked = catalog.QuestionsFor(PupilMboHboBlock.Beroepen, level)
-            .Select(q =>
-            {
-                progress.Answers.TryGetValue(q.Id, out var v);
-                var name = q.Question
-                    .Replace("Werken als ", "", StringComparison.OrdinalIgnoreCase)
-                    .TrimEnd('.');
-                return (name, v);
-            })
-            .Where(x => x.v >= 4)
-            .OrderByDescending(x => x.v)
-            .ThenBy(x => x.name, StringComparer.OrdinalIgnoreCase)
-            .Take(5)
-            .ToList();
+        var ranked = PupilMboHboOccupationMatch.TopOccupations(progress, level, catalog);
 
         var bars = ranked
-            .Take(5)
-            .Select(x => new NamedScore(x.name, LikertAnswerJson.ToPercent([x.v])))
+            .Select((x, i) => new NamedScore(x.Label, i + 1))
             .ToList();
 
-        var top = ranked.Take(3).Select(x => x.name).ToList();
+        var top = ranked.Take(3).Select(x => x.Label).ToList();
         var summary = top.Count > 0
-            ? $"Beroepen die je aantrekkelijk vindt: {string.Join(", ", top)}."
-            : "Je hebt aangegeven welke beroepen bij je passen.";
+            ? $"Suggesties die nu goed bij je passen: {string.Join(", ", top)}."
+            : "Je hebt aangegeven welke beroepen bij je passen. Dit is een suggestie — jij kiest zelf.";
 
         return new BlockOutcome(PupilMboHboBlock.Beroepen, bars, summary, top);
     }

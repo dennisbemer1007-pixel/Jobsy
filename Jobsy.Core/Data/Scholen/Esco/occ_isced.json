@@ -1,0 +1,1543 @@
+[
+ {
+  "nr": "1",
+  "dim": "Techniek (RIASEC R)",
+  "vraag": "Werken als elektricien.",
+  "esco": "monteur elektrische installaties woningbouw",
+  "uri": "http://data.europa.eu/esco/occupation/5dbb9cf0-b226-402c-a295-2f42ef05ff8b",
+  "isced": {
+   "0713": {
+    "name": "elektriciteit en energie",
+    "items": [
+     "elektrische aansluitschema’s",
+     "elektrische huishoudelijke apparatuur",
+     "elektriciteit"
+    ]
+   },
+   "0714": {
+    "name": "elektronica en automatisering",
+    "items": [
+     "controletechnologie voor gebouwinstallaties"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "2",
+  "dim": "Techniek (RIASEC R)",
+  "vraag": "Werken als monteur werktuigbouw.",
+  "esco": "monteur hydraulische machines",
+  "uri": "http://data.europa.eu/esco/occupation/0b6e1a0d-63fe-42d4-8dff-2ff187a9fea9",
+  "isced": {
+   "0715": {
+    "name": "mechanica en metaal",
+    "items": [
+     "vloeistofmechanica",
+     "hydraulische vloeistof",
+     "hydraulica",
+     "mechanica"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "3",
+  "dim": "Techniek (RIASEC R)",
+  "vraag": "Werken als automonteur.",
+  "esco": "automonteur",
+  "uri": "http://data.europa.eu/esco/occupation/4ad4024e-d1d3-4dea-b6d1-2c7948111dce",
+  "isced": {
+   "0715": {
+    "name": "mechanica en metaal",
+    "items": [
+     "mechanica",
+     "beginselen van werktuigbouwkunde"
+    ]
+   },
+   "0716": {
+    "name": "motorvoertuigen, schepen en vliegtuigen",
+    "items": [
+     "soorten voertuigen",
+     "mechanische vereisten voor voertuigen in stedelijke gebieden",
+     "mechanische componenten van voertuigen",
+     "diagnostische apparatuur voor automobielindustrie"
+    ]
+   },
+   "0713": {
+    "name": "elektriciteit en energie",
+    "items": [
+     "onderdelen van airconditioningsystemen"
+    ]
+   },
+   "0712": {
+    "name": "milieubeschermingstechnologie",
+    "items": [
+     "emissienormen"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "gezondheids- en veiligheidsmaatregelen bij transport"
+    ]
+   },
+   "0031": {
+    "name": "persoonlijke vaardigheden en ontwikkeling",
+    "items": [
+     "principes van teamwerk"
+    ]
+   },
+   "1041": {
+    "name": "vervoersdiensten",
+    "items": [
+     "autobediening"
+    ]
+   },
+   "0714": {
+    "name": "elektronica en automatisering",
+    "items": [
+     "elektrische systemen van voertuigen"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "4",
+  "dim": "Techniek (RIASEC R)",
+  "vraag": "Werken als installateur zonne-energie.",
+  "esco": "monteur zonnepanelen",
+  "uri": "http://data.europa.eu/esco/occupation/75b63949-1b93-4bf2-a777-ccf978dc3e8a",
+  "isced": {
+   "0713": {
+    "name": "elektriciteit en energie",
+    "items": [
+     "elektriciteit",
+     "zonne-energie",
+     "elektrische aansluitschema’s"
+    ]
+   },
+   "0715": {
+    "name": "mechanica en metaal",
+    "items": [
+     "mechanica"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "5",
+  "dim": "Techniek (RIASEC I)",
+  "vraag": "Werken als technicus in een lab.",
+  "esco": "biomedisch laboratoriummedewerker",
+  "uri": "http://data.europa.eu/esco/occupation/0044c991-c26f-4261-a213-4bd1c0564a4c",
+  "isced": {
+   "0914": {
+    "name": "medische diagnose en behandelingstechnologie",
+    "items": [
+     "geautomatiseerde analysatoren in het medische laboratorium"
+    ]
+   },
+   "0912": {
+    "name": "geneeskunde",
+    "items": [
+     "bloedgroepclassificatie"
+    ]
+   },
+   "0511": {
+    "name": "biologie",
+    "items": [
+     "medische microbiologie",
+     "laboratoriumtechnieken"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "technieken voor bloedafnames"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "6",
+  "dim": "Techniek (RIASEC I)",
+  "vraag": "Werken als ingenieur.",
+  "esco": "ingenieur civiele bouwkunde",
+  "uri": "http://data.europa.eu/esco/occupation/d7d986e1-7333-431b-9719-0c5c6939e360",
+  "isced": {}
+ },
+ {
+  "nr": "7",
+  "dim": "Bouw (RIASEC R)",
+  "vraag": "Werken als timmerman.",
+  "esco": "timmerman",
+  "uri": "http://data.europa.eu/esco/occupation/2a22ff9e-de3b-408d-b312-5034896cc4f4",
+  "isced": {
+   "0722": {
+    "name": "materialen (glas, papier, plastic en hout)",
+    "items": [
+     "houtsnijden",
+     "houtbewerkingsgereedschappen"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "8",
+  "dim": "Bouw (RIASEC R)",
+  "vraag": "Werken als tegelzetter.",
+  "esco": "tegelzetter",
+  "uri": "http://data.europa.eu/esco/occupation/02447817-ea01-4d8b-b09c-8bc128e447e6",
+  "isced": {
+   "0724": {
+    "name": "mijnbouw en winning",
+    "items": [
+     "soorten tegellijm"
+    ]
+   },
+   "0722": {
+    "name": "materialen (glas, papier, plastic en hout)",
+    "items": [
+     "zandstraaltechnieken"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "9",
+  "dim": "Bouw (RIASEC C)",
+  "vraag": "Werken als werkvoorbereider bouw.",
+  "esco": "architectuurtekenaar",
+  "uri": "http://data.europa.eu/esco/occupation/364cb5ca-3002-425f-b815-aefa513df78a",
+  "isced": {
+   "0732": {
+    "name": "bouw en weg- en waterbouw",
+    "items": [
+     "technische tekeningen",
+     "tekeningen ontwerpen",
+     "bouwmethoden",
+     "bouwverordeningen"
+    ]
+   },
+   "0541": {
+    "name": "wiskunde",
+    "items": [
+     "wiskunde"
+    ]
+   },
+   "0213": {
+    "name": "schone kunsten",
+    "items": [
+     "handmatige ontwerptechnieken"
+    ]
+   },
+   "0613": {
+    "name": "ontwikkeling en analyse van software en toepassingen",
+    "items": [
+     "CAD-software",
+     "CADD-software"
+    ]
+   },
+   "0731": {
+    "name": "architectuur en stadsplanning",
+    "items": [
+     "zone-indelingscodes"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "rechtsstelsels voor de bouwnijverheid"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "10",
+  "dim": "Bouw (RIASEC A)",
+  "vraag": "Werken als architect.",
+  "esco": "architect",
+  "uri": "http://data.europa.eu/esco/occupation/8c3f536e-ba66-4321-ba40-363dc39f129b",
+  "isced": {
+   "0731": {
+    "name": "architectuur en stadsplanning",
+    "items": [
+     "architectonische theorie",
+     "relatie tussen gebouwen, mensen en het milieu",
+     "architectonisch ontwerp",
+     "stedelijke planning",
+     "zone-indelingscodes"
+    ]
+   },
+   "0732": {
+    "name": "bouw en weg- en waterbouw",
+    "items": [
+     "bouwverordeningen"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "regelgeving voor architectuur"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "11",
+  "dim": "ICT (RIASEC I)",
+  "vraag": "Werken als softwareontwikkelaar.",
+  "esco": "softwareontwikkelaar voor de cloud",
+  "uri": "http://data.europa.eu/esco/occupation/781a6350-e686-45b9-b075-e4c8d5a05ff7",
+  "isced": {}
+ },
+ {
+  "nr": "12",
+  "dim": "ICT (RIASEC R)",
+  "vraag": "Werken als ICT-beheerder.",
+  "esco": "ict systeembeheerder",
+  "uri": "http://data.europa.eu/esco/occupation/9e2e6e1e-363b-4e1b-a673-7bc0f7343300",
+  "isced": {
+   "0613": {
+    "name": "ontwikkeling en analyse van software en toepassingen",
+    "items": [
+     "ICT-systeemprogrammering",
+     "gebruikersvereisten voor ict-systemen",
+     "hardwarecomponenten",
+     "softwareonderdeelbibliotheken"
+    ]
+   },
+   "0714": {
+    "name": "elektronica en automatisering",
+    "items": [
+     "ICT-infrastructuur"
+    ]
+   },
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "organisatorisch beleid"
+    ]
+   },
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "methoden voor kwaliteitsgarantie"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "13",
+  "dim": "ICT (RIASEC I)",
+  "vraag": "Werken als data-analist.",
+  "esco": "data-analist",
+  "uri": "http://data.europa.eu/esco/occupation/d3edb8f8-3a06-47a0-8fb9-9b212c006aa2",
+  "isced": {
+   "0322": {
+    "name": "bibliotheekwetenschappen, informatiewetenschappen en archivistiek",
+    "items": [
+     "documentatietypen",
+     "informatie-indeling"
+    ]
+   },
+   "0211": {
+    "name": "audiovisuele technieken en mediaproductie",
+    "items": [
+     "technieken voor visuele presentatie"
+    ]
+   },
+   "0612": {
+    "name": "ontwerp en beheer van databanken en netwerken",
+    "items": [
+     "vertrouwelijkheid van informatie",
+     "ongestructureerde gegevens",
+     "datamining",
+     "gegevensextractie",
+     "gegevensmodellen",
+     "informatiestructuur"
+    ]
+   },
+   "0613": {
+    "name": "ontwikkeling en analyse van software en toepassingen",
+    "items": [
+     "querytalen",
+     "querytaal voor resource description framework"
+    ]
+   },
+   "0542": {
+    "name": "statistiek",
+    "items": [
+     "statistiek"
+    ]
+   },
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "beoordeling van kwaliteit van gegevens"
+    ]
+   },
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "business intelligence"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "14",
+  "dim": "ICT (RIASEC A)",
+  "vraag": "Werken als webdesigner.",
+  "esco": "webdesigner",
+  "uri": "http://data.europa.eu/esco/occupation/30ed83ba-cc89-4d9f-a59d-5c783c1da56e",
+  "isced": {}
+ },
+ {
+  "nr": "15",
+  "dim": "ICT (RIASEC I)",
+  "vraag": "Werken als cybersecurity-specialist.",
+  "esco": "ethisch hacker",
+  "uri": "http://data.europa.eu/esco/occupation/76ef0a87-6afe-4560-b5d0-9a086abe45c5",
+  "isced": {
+   "0613": {
+    "name": "ontwikkeling en analyse van software en toepassingen",
+    "items": [
+     "hulpmiddelen voor automatisering van ICT-tests",
+     "hulpprogramma voor penetratietesten",
+     "softwareafwijkingen"
+    ]
+   },
+   "0611": {
+    "name": "computergebruik",
+    "items": [
+     "forensische informatica",
+     "veiligheidsdreigingen voor webtoepassingen"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wettelijke vereisten voor ict-producten"
+    ]
+   },
+   "1031": {
+    "name": "leger en defensie",
+    "items": [
+     "maatregelen tegen cyberaanvallen"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "16",
+  "dim": "Zorg (RIASEC S)",
+  "vraag": "Werken als verpleegkundige.",
+  "esco": "algemeen verpleegkundige",
+  "uri": "http://data.europa.eu/esco/occupation/8d3e8aaa-791b-4c75-a465-f3f827028f50",
+  "isced": {
+   "0915": {
+    "name": "therapie en revalidatie",
+    "items": [
+     "diëtetiek"
+    ]
+   },
+   "0111": {
+    "name": "onderwijskunde",
+    "items": [
+     "wetenschappelijke onderzoeksmethodologie",
+     "pedagogie"
+    ]
+   },
+   "0923": {
+    "name": "maatschappelijk werk en counseling",
+    "items": [
+     "betrokkenheid van burgers bij gezondheidszorg",
+     "invloed van de sociale context op de gezondheid"
+    ]
+   },
+   "0912": {
+    "name": "geneeskunde",
+    "items": [
+     "anatomie van de mens",
+     "volksgezondheid",
+     "menselijke fysiologie",
+     "kindergeneeskunde",
+     "chirurgie",
+     "interne geneeskunde",
+     "klinische geriatrie",
+     "psychiatrie",
+     "pathologie"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "leiderschap bij verpleging",
+     "beheersing van infecties",
+     "mensgerichte zorg",
+     "reanimatie",
+     "acute zorg",
+     "empirisch onderbouwde aanpak in de verpleging",
+     "verplegingswetenschap",
+     "EHBO",
+     "autonomie van de patiënt",
+     "primaire zorg",
+     "verzorging van pasgeborenen",
+     "innovaties in de verpleging",
+     "verzorgingsbeginselen",
+     "palliatieve zorg"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "veilig beheer van geneesmiddelen",
+     "hygiëne in de gezondheidszorg"
+    ]
+   },
+   "0922": {
+    "name": "kinderverzorging en jeugdzorg",
+    "items": [
+     "adolescentengeneeskunde"
+    ]
+   },
+   "0512": {
+    "name": "biochemie",
+    "items": [
+     "klinische chemie",
+     "farmacologie"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving inzake gezondheidszorg"
+    ]
+   },
+   "0921": {
+    "name": "zorg voor bejaarden en gehandicapte volwassenen",
+    "items": [
+     "zorg voor personen met een handicap"
+    ]
+   },
+   "0313": {
+    "name": "psychologie",
+    "items": [
+     "psychologie"
+    ]
+   },
+   "0314": {
+    "name": "sociologie en culturele studies",
+    "items": [
+     "sociologie"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "17",
+  "dim": "Zorg (RIASEC S)",
+  "vraag": "Werken als doktersassistent.",
+  "esco": "doktersassistent",
+  "uri": "http://data.europa.eu/esco/occupation/0c041d1e-1841-4acb-b0a1-2c387a61bf65",
+  "isced": {
+   "0415": {
+    "name": "secretariaats- en kantoorwerk",
+    "items": [
+     "beheer van gezondheidsgegevens",
+     "administratieve taken in een medische omgeving"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving inzake gezondheidszorg"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "gezondheidszorg"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "multiprofessionele samenwerking in de gezondheidszorg",
+     "technieken voor bloedafnames",
+     "professionele documentatie in de gezondheidszorg"
+    ]
+   },
+   "0914": {
+    "name": "medische diagnose en behandelingstechnologie",
+    "items": [
+     "medische informatica"
+    ]
+   },
+   "0912": {
+    "name": "geneeskunde",
+    "items": [
+     "chirurgische asepsis",
+     "anesthesiologie",
+     "medische terminologie"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "18",
+  "dim": "Zorg (RIASEC S)",
+  "vraag": "Werken als fysiotherapeut.",
+  "esco": "fysiotherapeut",
+  "uri": "http://data.europa.eu/esco/occupation/006cc1f9-2841-41c3-991a-dc3f2f3bd533",
+  "isced": {
+   "0915": {
+    "name": "therapie en revalidatie",
+    "items": [
+     "ademhalingstherapie",
+     "therapeutische massage",
+     "orthopedische manuele fysiotherapie",
+     "kinetiek",
+     "revalidatie"
+    ]
+   },
+   "0533": {
+    "name": "fysica",
+    "items": [
+     "natuurkunde"
+    ]
+   },
+   "0912": {
+    "name": "geneeskunde",
+    "items": [
+     "kindergeneeskunde",
+     "spoedoperatie",
+     "menselijke fysiologie",
+     "klinische geriatrie",
+     "anatomie van de mens",
+     "chirurgie",
+     "psychiatrie",
+     "interne geneeskunde",
+     "medische terminologie",
+     "intensieve zorg",
+     "obstetrie en gynaecologie",
+     "neurologie",
+     "orthopedie"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "EHBO"
+    ]
+   },
+   "0313": {
+    "name": "psychologie",
+    "items": [
+     "psychologie"
+    ]
+   },
+   "0511": {
+    "name": "biologie",
+    "items": [
+     "biomechanica"
+    ]
+   },
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "leiding geven aan medisch personeel"
+    ]
+   },
+   "0512": {
+    "name": "biochemie",
+    "items": [
+     "farmacologie"
+    ]
+   },
+   "0914": {
+    "name": "medische diagnose en behandelingstechnologie",
+    "items": [
+     "medische informatica"
+    ]
+   },
+   "0314": {
+    "name": "sociologie en culturele studies",
+    "items": [
+     "sociologie"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "19",
+  "dim": "Zorg (RIASEC I)",
+  "vraag": "Werken als analist in een ziekenhuislab.",
+  "esco": "biomedisch analist",
+  "uri": "http://data.europa.eu/esco/occupation/2e8820ba-5b2d-4572-92a1-942dbd02a6d6",
+  "isced": {
+   "0512": {
+    "name": "biochemie",
+    "items": [
+     "biomedische wetenschappen",
+     "klinische chemie",
+     "toxicologie",
+     "bio-ethiek",
+     "biomedische technieken",
+     "klinische biochemie",
+     "bioveiligheid in biomedische laboratoria"
+    ]
+   },
+   "0912": {
+    "name": "geneeskunde",
+    "items": [
+     "menselijke fysiologie",
+     "klinische immunologie",
+     "pathologie",
+     "anatomie van de mens",
+     "immunologie",
+     "biologische hematologie",
+     "immunohematologie",
+     "epidemiologie",
+     "transplantatie",
+     "medische terminologie"
+    ]
+   },
+   "0541": {
+    "name": "wiskunde",
+    "items": [
+     "analytische methoden in biomedische wetenschappen"
+    ]
+   },
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "leiding geven aan medisch personeel"
+    ]
+   },
+   "0511": {
+    "name": "biologie",
+    "items": [
+     "moleculaire biologie",
+     "biologie",
+     "microscopische technieken",
+     "medische genetica",
+     "biofysica",
+     "klinische cytologie",
+     "embryologie",
+     "medische microbiologie"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "bloedtransfusies",
+     "rol van biomedische wetenschappers in de gezondheidszorg",
+     "professionele documentatie in de gezondheidszorg",
+     "kruisproeftechnieken voor bloedtransfusies",
+     "ethiek specifiek voor beroepen in de gezondheidszorg",
+     "technieken voor bloedafnames"
+    ]
+   },
+   "0531": {
+    "name": "chemie",
+    "items": [
+     "chemie"
+    ]
+   },
+   "0542": {
+    "name": "statistiek",
+    "items": [
+     "biostatistiek"
+    ]
+   },
+   "0914": {
+    "name": "medische diagnose en behandelingstechnologie",
+    "items": [
+     "laboratoriummethoden in biomedische wetenschappen",
+     "diagnostische methoden in medisch laboratorium",
+     "bescherming tegen straling",
+     "klinische microbiologie",
+     "medische informatica",
+     "geautomatiseerde analysatoren in het medische laboratorium"
+    ]
+   },
+   "0222": {
+    "name": "geschiedenis en archeologie",
+    "items": [
+     "histopathologie",
+     "histologie"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving inzake gezondheidszorg"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "hygiëne in de gezondheidszorg"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "20",
+  "dim": "Zorg (RIASEC S)",
+  "vraag": "Werken als verzorgende in de thuiszorg.",
+  "esco": "thuiszorgmedewerker",
+  "uri": "http://data.europa.eu/esco/occupation/1391bdf9-bd61-4fb5-91ca-c29036ab2b60",
+  "isced": {
+   "0921": {
+    "name": "zorg voor bejaarden en gehandicapte volwassenen",
+    "items": [
+     "behoeften van oudere volwassenen",
+     "soorten handicaps",
+     "zorg voor personen met een handicap"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "eerste hulp"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "21",
+  "dim": "Welzijn (RIASEC S)",
+  "vraag": "Werken als pedagogisch medewerker.",
+  "esco": "medewerker kinderdagverblijf",
+  "uri": "http://data.europa.eu/esco/occupation/3f74aad8-2d60-4be2-b059-8dba5568d530",
+  "isced": {
+   "1032": {
+    "name": "bescherming van personen en eigendom",
+    "items": [
+     "kinderbescherming"
+    ]
+   },
+   "0314": {
+    "name": "sociologie en culturele studies",
+    "items": [
+     "sociale wetenschappen"
+    ]
+   },
+   "0312": {
+    "name": "politieke wetenschappen en maatschappijleer",
+    "items": [
+     "sociale rechtvaardigheid"
+    ]
+   },
+   "0313": {
+    "name": "psychologie",
+    "items": [
+     "psychologische ontwikkeling van jongeren"
+    ]
+   },
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "klantendiensten",
+     "ondernemingsbeleid"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wettelijke vereisten in de sociale sector"
+    ]
+   },
+   "0922": {
+    "name": "kinderverzorging en jeugdzorg",
+    "items": [
+     "lichamelijke ontwikkeling van kinderen"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "22",
+  "dim": "Welzijn (RIASEC S)",
+  "vraag": "Werken als sociaal werker.",
+  "esco": "maatschappelijk werker",
+  "uri": "http://data.europa.eu/esco/occupation/8d703e8f-1e57-4246-8a6b-cb87a760d4ab",
+  "isced": {
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "ondernemingsbeleid",
+     "klantendiensten"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wettelijke vereisten in de sociale sector"
+    ]
+   },
+   "0312": {
+    "name": "politieke wetenschappen en maatschappijleer",
+    "items": [
+     "sociale rechtvaardigheid"
+    ]
+   },
+   "0314": {
+    "name": "sociologie en culturele studies",
+    "items": [
+     "sociale wetenschappen"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "23",
+  "dim": "Welzijn (RIASEC S)",
+  "vraag": "Werken als jongerenwerker.",
+  "esco": "coördinator jeugdwerk",
+  "uri": "http://data.europa.eu/esco/occupation/a79e7622-2307-44e2-94cc-d1ff1caf655a",
+  "isced": {
+   "0923": {
+    "name": "maatschappelijk werk en counseling",
+    "items": [
+     "invloed van de sociale context op de gezondheid"
+    ]
+   },
+   "0111": {
+    "name": "onderwijskunde",
+    "items": [
+     "pedagogie"
+    ]
+   },
+   "0313": {
+    "name": "psychologie",
+    "items": [
+     "psychologische ontwikkeling van jongeren"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "24",
+  "dim": "Onderwijs (RIASEC S)",
+  "vraag": "Werken als leraar.",
+  "esco": "leerkracht voortgezet onderwijs",
+  "uri": "http://data.europa.eu/esco/occupation/5efb2c08-ba3a-4659-a2e4-1883f54e77b6",
+  "isced": {
+   "0111": {
+    "name": "onderwijskunde",
+    "items": [
+     "curriculumdoelstellingen"
+    ]
+   },
+   "0113": {
+    "name": "opleiding voor leerkrachten zonder vakspecialisatie",
+    "items": [
+     "leerproblemen",
+     "procedures in het hoger onderwijs"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "25",
+  "dim": "Onderwijs (RIASEC S)",
+  "vraag": "Werken als onderwijsassistent.",
+  "esco": "onderwijsassistent",
+  "uri": "http://data.europa.eu/esco/occupation/4d27152a-a8ee-4f5a-9f93-a2fb4fb2b2e3",
+  "isced": {
+   "0922": {
+    "name": "kinderverzorging en jeugdzorg",
+    "items": [
+     "lichamelijke ontwikkeling van kinderen"
+    ]
+   },
+   "1021": {
+    "name": "openbare reinigingsdiensten en sanitaire voorzieningen",
+    "items": [
+     "reiniging van de werkplek"
+    ]
+   },
+   "0112": {
+    "name": "opleiding voor leerkrachten in het kleuteronderwijs",
+    "items": [
+     "kleuterschoolprocedures"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "26",
+  "dim": "Economie (RIASEC C)",
+  "vraag": "Werken als boekhouder.",
+  "esco": "boekhouder",
+  "uri": "http://data.europa.eu/esco/occupation/c3aae59e-1441-4b3e-bdd1-6da50dc7cf42",
+  "isced": {
+   "0421": {
+    "name": "recht",
+    "items": [
+     "commercieel recht",
+     "belastingwetgeving"
+    ]
+   },
+   "0411": {
+    "name": "boekhouding en belastingen",
+    "items": [
+     "boekingen",
+     "boekhoudregelgeving",
+     "afschrijving",
+     "boekhoudkundige technieken",
+     "processen van de boekhoudafdeling"
+    ]
+   },
+   "0412": {
+    "name": "financiën, banken en verzekeringen",
+    "items": [
+     "financiële jaarrekeningen"
+    ]
+   },
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "ondernemingsbeleid"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "27",
+  "dim": "Economie (RIASEC E)",
+  "vraag": "Werken als accountmanager.",
+  "esco": "accountmanager",
+  "uri": "http://data.europa.eu/esco/occupation/2eac08c2-a81a-46fc-8d75-eb0e0f3e0f6d",
+  "isced": {
+   "0722": {
+    "name": "materialen (glas, papier, plastic en hout)",
+    "items": [
+     "eigenschappen van producten"
+    ]
+   },
+   "0416": {
+    "name": "groot- en detailhandel",
+    "items": [
+     "kenmerken van diensten",
+     "productkennis"
+    ]
+   },
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "ondernemingsbeleid",
+     "klantendiensten"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "28",
+  "dim": "Economie (RIASEC E)",
+  "vraag": "Werken als ondernemer.",
+  "esco": "sociaal ondernemer",
+  "uri": "http://data.europa.eu/esco/occupation/73b10c97-b003-45dc-a36d-c1d585c04be1",
+  "isced": {}
+ },
+ {
+  "nr": "29",
+  "dim": "Economie (RIASEC C)",
+  "vraag": "Werken als office manager.",
+  "esco": "office manager",
+  "uri": "http://data.europa.eu/esco/occupation/6e6839b6-099c-4802-906e-7f2c8203ee69",
+  "isced": {
+   "0611": {
+    "name": "computergebruik",
+    "items": [
+     "kantoorsoftware"
+    ]
+   },
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "kostenbeheer"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "30",
+  "dim": "Economie (RIASEC E)",
+  "vraag": "Werken als marketeer.",
+  "esco": "marketingmedewerker",
+  "uri": "http://data.europa.eu/esco/occupation/47e81c7f-2d04-4a60-a8ff-9913c36d8344",
+  "isced": {
+   "0414": {
+    "name": "marketing en reclame",
+    "items": [
+     "marketingmanagement",
+     "marktonderzoek",
+     "processen van de marketingafdeling"
+    ]
+   },
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "beheer van klantrelaties"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "31",
+  "dim": "Economie (RIASEC C)",
+  "vraag": "Werken als HR-medewerker.",
+  "esco": "medewerker personeelszaken",
+  "uri": "http://data.europa.eu/esco/occupation/d8ed1703-9c03-4ea0-83cc-b6169bc54ffd",
+  "isced": {
+   "0417": {
+    "name": "beroepsvaardigheden",
+    "items": [
+     "vacatures op de arbeidsmarkt"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "32",
+  "dim": "Recht & veiligheid (RIASEC C)",
+  "vraag": "Werken als juridisch medewerker.",
+  "esco": "juridisch assistent",
+  "uri": "http://data.europa.eu/esco/occupation/929ef41d-afd0-4d5a-b85b-69eab68fa368",
+  "isced": {
+   "0421": {
+    "name": "recht",
+    "items": [
+     "juridisch onderzoek",
+     "juridische terminologie",
+     "gerechtelijke procedures",
+     "beheer van rechtszaken",
+     "processen van de juridische afdeling"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "33",
+  "dim": "Recht & veiligheid (RIASEC R)",
+  "vraag": "Werken als politieagent.",
+  "esco": "politieagent",
+  "uri": "http://data.europa.eu/esco/occupation/5793c124-c037-47b2-85b6-dd4a705968dc",
+  "isced": {
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wettelijk gebruik van geweld",
+     "verkeerswetgeving"
+    ]
+   },
+   "1032": {
+    "name": "bescherming van personen en eigendom",
+    "items": [
+     "ordehandhaving"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "eerste hulp"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "34",
+  "dim": "Recht & veiligheid (RIASEC R)",
+  "vraag": "Werken als brandweerman of -vrouw.",
+  "esco": "brandweerman",
+  "uri": "http://data.europa.eu/esco/occupation/88721b6c-d2ce-41c6-8878-73c0d3aacf39",
+  "isced": {
+   "1032": {
+    "name": "bescherming van personen en eigendom",
+    "items": [
+     "procedures inzake brandpreventie",
+     "regelgeving inzake brandveiligheid",
+     "brandbestrijdingssystemen"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "gezondheids- en veiligheidsvoorschriften"
+    ]
+   },
+   "0913": {
+    "name": "verpleegkunde en verloskunde",
+    "items": [
+     "EHBO"
+    ]
+   },
+   "0715": {
+    "name": "mechanica en metaal",
+    "items": [
+     "hydraulica"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "35",
+  "dim": "Creatief (RIASEC A)",
+  "vraag": "Werken als grafisch ontwerper.",
+  "esco": "grafisch ontwerper",
+  "uri": "http://data.europa.eu/esco/occupation/69bcbb0a-8d80-4ecd-b0a4-9adea2a40de2",
+  "isced": {
+   "0611": {
+    "name": "computergebruik",
+    "items": [
+     "desktoppublishing"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving inzake auteursrecht"
+    ]
+   },
+   "0211": {
+    "name": "audiovisuele technieken en mediaproductie",
+    "items": [
+     "grafisch ontwerp"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "36",
+  "dim": "Creatief (RIASEC A)",
+  "vraag": "Werken als fotograaf.",
+  "esco": "fotograaf",
+  "uri": "http://data.europa.eu/esco/occupation/66542dd6-05a6-4d9e-97ff-3f4858c31ff9",
+  "isced": {}
+ },
+ {
+  "nr": "37",
+  "dim": "Creatief (RIASEC A)",
+  "vraag": "Werken als contentmaker.",
+  "esco": "vlogger",
+  "uri": "http://data.europa.eu/esco/occupation/51ec004e-aec8-4f89-b114-952bcc56b0b0",
+  "isced": {
+   "0413": {
+    "name": "management en bestuur",
+    "items": [
+     "beheer van sociale media",
+     "onlinemodereertechnieken"
+    ]
+   },
+   "0613": {
+    "name": "ontwikkeling en analyse van software en toepassingen",
+    "items": [
+     "ICT-softwarespecificaties"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving inzake auteursrecht"
+    ]
+   },
+   "0611": {
+    "name": "computergebruik",
+    "items": [
+     "audiobewerkingssoftware"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "38",
+  "dim": "Creatief (RIASEC A)",
+  "vraag": "Werken als kapper of stylist.",
+  "esco": "kapper",
+  "uri": "http://data.europa.eu/esco/occupation/099c6bb0-22d3-4c5d-8bf5-70910af381ef",
+  "isced": {
+   "1012": {
+    "name": "haar- en schoonheidsverzorging",
+    "items": [
+     "haar",
+     "haarkleuring",
+     "haarproducten"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "39",
+  "dim": "Horeca & toerisme (RIASEC R)",
+  "vraag": "Werken als kok.",
+  "esco": "kok",
+  "uri": "http://data.europa.eu/esco/occupation/90f75f67-495d-49fa-ab57-2f320e251d7e",
+  "isced": {}
+ },
+ {
+  "nr": "40",
+  "dim": "Horeca & toerisme (RIASEC S)",
+  "vraag": "Werken als gastheer of gastvrouw.",
+  "esco": "gastheer/gastvrouw",
+  "uri": "http://data.europa.eu/esco/occupation/a1b86a8b-ad91-4192-b386-bbf89bb11699",
+  "isced": {}
+ },
+ {
+  "nr": "41",
+  "dim": "Horeca & toerisme (RIASEC E)",
+  "vraag": "Werken als evenementenorganisator.",
+  "esco": "evenementenorganisator",
+  "uri": "http://data.europa.eu/esco/occupation/21ae429f-a152-46a6-a73c-9ec65c7803f0",
+  "isced": {
+   "0215": {
+    "name": "muziek en uitvoerende kunsten",
+    "items": [
+     "muziekgenres"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "42",
+  "dim": "Logistiek (RIASEC C)",
+  "vraag": "Werken als logistiek medewerker.",
+  "esco": "magazijnmedewerker",
+  "uri": "http://data.europa.eu/esco/occupation/bea705fe-06ac-4147-b8e0-6e8ac1208d8f",
+  "isced": {
+   "0416": {
+    "name": "groot- en detailhandel",
+    "items": [
+     "goederen die worden vervoerd vanuit opslagfaciliteiten",
+     "coderingssysteem voor producten"
+    ]
+   },
+   "1041": {
+    "name": "vervoersdiensten",
+    "items": [
+     "soorten verpakkingen die worden gebruikt bij industrieel vervoer"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "43",
+  "dim": "Logistiek (RIASEC C)",
+  "vraag": "Werken als planner transport.",
+  "esco": "taxiplanner",
+  "uri": "http://data.europa.eu/esco/occupation/61ed67cd-67d7-44d8-bc2d-47fc79110a59",
+  "isced": {
+   "0421": {
+    "name": "recht",
+    "items": [
+     "verkeerswetgeving"
+    ]
+   },
+   "1041": {
+    "name": "vervoersdiensten",
+    "items": [
+     "regelgeving inzake passagiersvervoer"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "44",
+  "dim": "Logistiek (RIASEC R)",
+  "vraag": "Werken als chauffeur.",
+  "esco": "vrachtwagenchauffeur",
+  "uri": "http://data.europa.eu/esco/occupation/45037d43-a8f5-4f46-b332-b2935bc305f4",
+  "isced": {
+   "0421": {
+    "name": "recht",
+    "items": [
+     "verkeerswetgeving",
+     "wetgeving inzake wegvervoer"
+    ]
+   },
+   "1041": {
+    "name": "vervoersdiensten",
+    "items": [
+     "effectieve perceptie van de vervoersomgeving",
+     "capaciteit van de vrachtruimte van voertuigen"
+    ]
+   },
+   "1015": {
+    "name": "reizen, toerisme en vrijetijdsbesteding",
+    "items": [
+     "soorten vracht"
+    ]
+   },
+   "0716": {
+    "name": "motorvoertuigen, schepen en vliegtuigen",
+    "items": [
+     "mechanische componenten van voertuigen"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "45",
+  "dim": "Groen & dier (RIASEC R)",
+  "vraag": "Werken als dierenverzorger.",
+  "esco": "dierverzorger",
+  "uri": "http://data.europa.eu/esco/occupation/5a940ae0-3fa4-40f9-8ca4-17bf792da243",
+  "isced": {
+   "0841": {
+    "name": "diergeneeskunde",
+    "items": [
+     "dierenwelzijn",
+     "fysiologie van dieren",
+     "bioveiligheid met betrekking tot dieren",
+     "tekenen van ziekte bij dieren",
+     "gedrag van dieren"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving op het gebied van dierenwelzijn"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "veilige werkmethoden in veterinaire omgeving"
+    ]
+   },
+   "0511": {
+    "name": "biologie",
+    "items": [
+     "anatomie van dieren",
+     "diersoorten"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "46",
+  "dim": "Groen & dier (RIASEC R)",
+  "vraag": "Werken als hovenier.",
+  "esco": "hovenier",
+  "uri": "http://data.europa.eu/esco/occupation/e7970c7a-7769-4002-87d3-0a8ea94fdd6f",
+  "isced": {
+   "0812": {
+    "name": "tuinbouw",
+    "items": [
+     "tuinbouwbeginselen",
+     "materialen voor tuininrichting",
+     "snoeiwijzen",
+     "snoeitechnieken"
+    ]
+   },
+   "0511": {
+    "name": "biologie",
+    "items": [
+     "plantensoorten"
+    ]
+   },
+   "0521": {
+    "name": "milieuwetenschappen",
+    "items": [
+     "ecologie"
+    ]
+   },
+   "0811": {
+    "name": "landbouw en veeteelt",
+    "items": [
+     "ongediertebestrijding bij planten",
+     "bestrijding van plantenziekten"
+    ]
+   },
+   "0732": {
+    "name": "bouw en weg- en waterbouw",
+    "items": [
+     "beginselen van tuinaanleg"
+    ]
+   },
+   "0212": {
+    "name": "mode-, interieur- en industrieel ontwerp",
+    "items": [
+     "ontwerpbeginselen"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "milieuwetgeving inzake landbouw en bosbouw"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "47",
+  "dim": "Groen & dier (RIASEC I)",
+  "vraag": "Werken als teler in de glastuinbouw.",
+  "esco": "tuinbouwmedewerker",
+  "uri": "http://data.europa.eu/esco/occupation/1a9d99ba-4c08-4864-8f6a-1b0f2b4cf883",
+  "isced": {}
+ },
+ {
+  "nr": "48",
+  "dim": "Groen & dier (RIASEC I)",
+  "vraag": "Werken als dierenarts-assistent.",
+  "esco": "dierenartsassistent",
+  "uri": "http://data.europa.eu/esco/occupation/f00154a5-d27f-429e-b9a4-1d65c672cee7",
+  "isced": {
+   "0841": {
+    "name": "diergeneeskunde",
+    "items": [
+     "bioveiligheid met betrekking tot dieren",
+     "dierenwelzijn",
+     "tekenen van ziekte bij dieren",
+     "diergeneeskundige terminologie"
+    ]
+   },
+   "1022": {
+    "name": "gezondheid en veiligheid op het werk",
+    "items": [
+     "veilige werkmethoden in veterinaire omgeving"
+    ]
+   },
+   "0421": {
+    "name": "recht",
+    "items": [
+     "wetgeving op het gebied van dierenwelzijn"
+    ]
+   }
+  }
+ },
+ {
+  "nr": "49",
+  "dim": "Sport (RIASEC S)",
+  "vraag": "Werken als sportinstructeur.",
+  "esco": "sportinstructeur",
+  "uri": "http://data.europa.eu/esco/occupation/11695786-9fb7-4895-b161-0480419107e4",
+  "isced": {}
+ },
+ {
+  "nr": "50",
+  "dim": "Detailhandel (RIASEC E)",
+  "vraag": "Werken als winkelmanager.",
+  "esco": "winkelmanager",
+  "uri": "http://data.europa.eu/esco/occupation/9e81adde-9983-44fa-b74b-c548d0dbfbdd",
+  "isced": {
+   "0421": {
+    "name": "recht",
+    "items": [
+     "arbeidswet"
+    ]
+   },
+   "0416": {
+    "name": "groot- en detailhandel",
+    "items": [
+     "verkoopactiviteiten"
+    ]
+   }
+  }
+ }
+]
