@@ -60,7 +60,7 @@ else
     private PupilG78PassportWebDto? _model;
     private string? _displayName;
 
-    private string PdfHref => PupilStoryPdfLink.Href(_displayName, _languageQuery);
+    private string PdfHref => PupilStoryPdfLink.Href(_displayName, Culture.Language);
 
     private string? _languageQuery;
     private string? _journeyThemeKey;

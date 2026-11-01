@@ -995,6 +995,12 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(s => s.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "";
 
+        IReadOnlyList<PupilG78JobSuggestionDto>? jobSuggestions = null;
+        if (def.Set == PupilQuestionSet.Groep78 && code.Result is not null)
+        {
+            jobSuggestions = PupilG78JobSuggestions.Build(code.Result, code.Progress);
+        }
+
         return (new PupilResultPageDto(
             ClassLabel: schoolClass.Name,
             CodeDisplay: pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "",
@@ -1003,9 +1009,10 @@ public sealed class PupilPortalService : IPupilPortalService
             Likes: likes,
             Dislikes: dislikes,
             DreamJob: dream,
-            DreamJobKey: code.Result.DreamJobKey ?? code.Progress?.DreamJobKey,
+            DreamJobKey: code.Result?.DreamJobKey ?? code.Progress?.DreamJobKey,
             TotalItems: def.Bank.AllItems.Count,
-            QuestionSet: def.Set), null, 200);
+            QuestionSet: def.Set,
+            JobSuggestions: jobSuggestions), null, 200);
     }
 
     public async Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(

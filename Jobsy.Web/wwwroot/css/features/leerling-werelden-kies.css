@@ -1418,11 +1418,17 @@
   border-radius: calc(var(--r-md, 8px) - 2px);
 }
 
+.ll-g78-shell .ll-result--g78 .card {
+  padding-bottom: 8px;
+}
+
 .ll-g78-shell .ll-result--g78 .ll-result__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 18px;
+  position: static;
+  bottom: auto;
 }
 
 .ll-g78-shell .ll-result--g78 .ll-result__actions .btn-primary,
@@ -1447,6 +1453,84 @@
 }
 
 .ll-g78-shell .ll-result--g78 .ll-result__actions .btn-secondary {
+  min-width: 5rem;
+  background: #fff;
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--brass2) 55%, transparent);
+}
+
+.ll-g78-shell .ll-g78-job-suggestions {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 4px;
+}
+
+.ll-g78-shell .ll-g78-job-suggestion {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 92%, var(--brass2));
+  border: 1px solid color-mix(in srgb, var(--brass2) 35%, transparent);
+}
+
+.ll-g78-shell .ll-g78-job-suggestion__k {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.ll-g78-shell .ll-g78-job-suggestion__title {
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.ll-g78-shell .ll-g78-job-suggestion__match {
+  margin: 0 0 8px;
+  font-weight: 700;
+  color: var(--coral);
+  font-size: 0.92rem;
+}
+
+.ll-g78-shell .ll-g78-job-suggestion__blurb {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.ll-g78-shell .wrap.ll-g78-overlap .ll-dream-ssr__nav.ll-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  position: static;
+  bottom: auto;
+}
+
+.ll-g78-shell .wrap.ll-g78-overlap .ll-dream-ssr__nav.ll-result__actions .btn-primary,
+.ll-g78-shell .wrap.ll-g78-overlap .ll-dream-ssr__nav.ll-result__actions .btn-secondary {
+  min-height: 48px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.ll-g78-shell .wrap.ll-g78-overlap .ll-dream-ssr__nav.ll-result__actions .btn-primary {
+  flex: 1;
+  background: var(--coral);
+  color: #fff;
+  border-color: var(--coral);
+}
+
+.ll-g78-shell .wrap.ll-g78-overlap .ll-dream-ssr__nav.ll-result__actions .btn-secondary {
   min-width: 5rem;
   background: #fff;
   color: var(--ink);

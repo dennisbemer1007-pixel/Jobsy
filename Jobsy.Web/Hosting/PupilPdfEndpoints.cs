@@ -23,8 +23,12 @@ public static class PupilPdfEndpoints
         app.MapGet(Path, async (HttpContext http, JobsyApiClient api) =>
         {
             http.Response.Headers.CacheControl = "no-store";
+            var query = JobsyApiClient.BuildPupilStoryPdfPath(http.Request.QueryString.Value);
+            var apiQuery = query.StartsWith("leerling/pdf?", StringComparison.Ordinal)
+                ? "?" + query["leerling/pdf?".Length..]
+                : string.Empty;
             var (bytes, fileName, status) = await api.GetPupilStoryPdfAsync(
-                http.Request.QueryString.Value,
+                apiQuery,
                 http.RequestAborted);
             if (http.Response.HasStarted)
             {

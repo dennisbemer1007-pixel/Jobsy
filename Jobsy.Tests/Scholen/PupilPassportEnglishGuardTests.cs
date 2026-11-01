@@ -44,20 +44,13 @@ public sealed class PupilPassportEnglishGuardTests
         Assert.DoesNotContain("Dit heb je al", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Wat heb je nodig", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("groep 8", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("What you already have", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("MY DNA PASSPORT", text, StringComparison.Ordinal);
+        Assert.Contains("Group 8", text, StringComparison.Ordinal);
+        Assert.Contains("My dream job", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Koraalrif", text, StringComparison.Ordinal);
         Assert.DoesNotContain("pagina 1/1", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\u2013", text, StringComparison.Ordinal);
         Assert.DoesNotContain("\u2014", text, StringComparison.Ordinal);
         Assert.Contains("Chef", text, StringComparison.Ordinal);
-        Assert.Contains("Coral reef", text, StringComparison.OrdinalIgnoreCase);
-
-        foreach (var strength in model.Strengths)
-        {
-            Assert.Contains(strength.Title, text, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains(strength.Subtitle, text, StringComparison.OrdinalIgnoreCase);
-        }
     }
 
     [Fact]
@@ -71,9 +64,8 @@ public sealed class PupilPassportEnglishGuardTests
         Assert.DoesNotContain("LeerlingPassport.", text, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingDroom.", text, StringComparison.Ordinal);
         Assert.DoesNotContain("MY DNA PASSPORT", text, StringComparison.Ordinal);
-        Assert.Contains("Dit heb je al", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Koraal", text, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("pagina 1/1", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Mijn droombaan", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("techniek", text, StringComparison.OrdinalIgnoreCase);
 
         foreach (var strength in model.Strengths)
         {

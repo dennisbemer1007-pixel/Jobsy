@@ -1,6 +1,7 @@
 using System.Net;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Localization;
@@ -79,15 +80,38 @@ public static class PupilDroombaanFormEndpoints
             ? $"""<input type="hidden" name="{tokens.FormFieldName}" value="{WebUtility.HtmlEncode(token)}" />"""
             : "";
 
+        PupilProgressStateDto? progress = null;
+        try
+        {
+            progress = await api.GetPupilProgressAsync(cancellationToken);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return Results.Redirect("/leerling?error=expired");
+        }
+        catch
+        {
+            // Theme shell is optional; page still works without progress.
+        }
+
+        var useGroep78Shell = result.QuestionSet == PupilQuestionSet.Groep78
+                              && progress?.QuestionSet == PupilQuestionSet.Groep78
+                              && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var journeyThemeKey = progress?.JourneyThemeKey;
+
         var body = PupilDroombaanSsrHtml.BuildBody(
             new PupilDroombaanPageModel(result, result.DreamJob, fieldValue, formError),
             culture,
-            antiforgeryHtml);
+            antiforgeryHtml,
+            useGroep78Shell,
+            journeyThemeKey);
 
         var doc = PupilLeerlingSsrFrame.RenderDocument(
             culture["LeerlingDroom.Title"],
             body,
-            pupil);
+            pupil,
+            useGroep78Shell,
+            journeyThemeKey);
 
         return Results.Content(doc, "text/html; charset=utf-8");
     }

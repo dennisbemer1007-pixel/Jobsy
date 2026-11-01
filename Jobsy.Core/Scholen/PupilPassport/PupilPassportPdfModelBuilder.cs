@@ -191,13 +191,13 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             samen = BuildSamenAssignment(result, lang);
             parentTips =
             [
-                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Parent.1"),
-                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Parent.2"),
+                PupilPassportLocalizedCopy.Get("LeerlingPassport.G78.Usage.Parent.1", lang),
+                PupilPassportLocalizedCopy.Get("LeerlingPassport.G78.Usage.Parent.2", lang),
             ];
             teacherTips =
             [
-                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Teacher.1"),
-                PupilPassportCopy.Get("LeerlingPassport.G78.Usage.Teacher.2"),
+                PupilPassportLocalizedCopy.Get("LeerlingPassport.G78.Usage.Teacher.1", lang),
+                PupilPassportLocalizedCopy.Get("LeerlingPassport.G78.Usage.Teacher.2", lang),
             ];
         }
 

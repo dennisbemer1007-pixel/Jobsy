@@ -482,18 +482,33 @@ public static class PupilDreamJobRoutes
     }
 
     /// <summary>Lower-case "Nu" label: "groep 8", "klas 3 havo", "klas 1".</summary>
-    public static string NowLabel(PupilClassContext ctx)
+    public static string NowLabel(PupilClassContext ctx) => NowLabel(ctx, "nl");
+
+    public static string NowLabel(PupilClassContext ctx, string language)
     {
         ArgumentNullException.ThrowIfNull(ctx);
-        var year = SchoolLevelRules.YearLabel(ctx.Level, ctx.Year).ToLowerInvariant();
+        if (!PupilVerhaalLocalized.IsEnglish(language))
+        {
+            var year = SchoolLevelRules.YearLabel(ctx.Level, ctx.Year).ToLowerInvariant();
+            return ctx.Level switch
+            {
+                SchoolLevel.Groep78 => year,
+                SchoolLevel.VmboB or SchoolLevel.VmboK or SchoolLevel.VmboGt => year + " vmbo",
+                SchoolLevel.Mavo => year + " mavo",
+                SchoolLevel.Havo => year + " havo",
+                SchoolLevel.Vwo => year + " vwo",
+                _ => year
+            };
+        }
+
         return ctx.Level switch
         {
-            SchoolLevel.Groep78 => year,
-            SchoolLevel.VmboB or SchoolLevel.VmboK or SchoolLevel.VmboGt => year + " vmbo",
-            SchoolLevel.Mavo => year + " mavo",
-            SchoolLevel.Havo => year + " havo",
-            SchoolLevel.Vwo => year + " vwo",
-            _ => year
+            SchoolLevel.Groep78 => $"group {ctx.Year}",
+            SchoolLevel.VmboB or SchoolLevel.VmboK or SchoolLevel.VmboGt => $"year {ctx.Year} vmbo",
+            SchoolLevel.Mavo => $"year {ctx.Year} mavo",
+            SchoolLevel.Havo => $"year {ctx.Year} havo",
+            SchoolLevel.Vwo => $"year {ctx.Year} vwo",
+            _ => $"year {ctx.Year}"
         };
     }
 }

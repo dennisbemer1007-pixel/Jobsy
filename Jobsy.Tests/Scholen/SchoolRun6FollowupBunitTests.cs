@@ -96,6 +96,7 @@ public class PupilFirstLoadBunitTests : BunitContext
         {
             BaseAddress = new Uri("http://api.test/")
         }));
+        Services.AddSingleton<IFeatureFlags>(new PupilFirstLoadFeatureFlags());
     }
 
     [Fact]
@@ -164,6 +165,21 @@ public class PupilFirstLoadBunitTests : BunitContext
         await culture.SetLanguageAsync("nl");
         var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
         nav.NavigateTo("http://localhost/leerling/eiland");
+    }
+
+    private sealed class PupilFirstLoadFeatureFlags : IFeatureFlags
+    {
+        private static readonly FeatureFlagSnapshot Snap = new(false, false, SchoolsEnabled: true);
+
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap);
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap.IsEnabled(feature));
+
+        public void Invalidate()
+        {
+        }
     }
 
     private sealed class ScriptedHandler : HttpMessageHandler

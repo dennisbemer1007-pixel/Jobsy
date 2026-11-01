@@ -191,6 +191,11 @@ public sealed partial class JobsyApiClient
         }
 
         raw = raw.TrimStart('?').TrimEnd('?');
+        while (raw.Contains("??", StringComparison.Ordinal))
+        {
+            raw = raw.Replace("??", "?", StringComparison.Ordinal);
+        }
+
         return string.IsNullOrEmpty(raw) ? "leerling/pdf" : $"leerling/pdf?{raw}";
     }
 }

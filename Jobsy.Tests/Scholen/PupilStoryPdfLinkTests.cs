@@ -23,6 +23,14 @@ public sealed class PupilStoryPdfLinkTests
         Assert.Equal(expected, PupilStoryPdfLink.NormalizeLanguageCode(raw));
     }
 
+    [Theory]
+    [InlineData("/leerling/pdf?lang=nl?", "/leerling/pdf?lang=nl")]
+    [InlineData("/leerling/pdf?naam=Noor&lang=nl?", "/leerling/pdf?naam=Noor&lang=nl")]
+    public void SanitizeHref_strips_trailing_question_marks(string raw, string expected)
+    {
+        Assert.Equal(expected, PupilStoryPdfLink.SanitizeHref(raw));
+    }
+
     [Fact]
     public void Href_never_contains_double_question_mark()
     {
