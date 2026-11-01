@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.MboHbo
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
 @using Jobsy.Web.Components.Layout
@@ -121,6 +122,16 @@ else
                            && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
                 _themeKey = progress.JourneyThemeKey;
                 _beginHref = PupilGroep78EntryPaths.Reis;
+                if (progress.QuestionSet == PupilQuestionSet.MboHbo)
+                {
+                    Nav.NavigateTo(
+                        progress.Completed
+                            ? PupilMboHboEntryPaths.Overzicht
+                            : PupilMboHboEntryPaths.Uitleg,
+                        replace: true);
+                    return;
+                }
+
                 if (PupilGroep78Navigation.RedirectIfThemeMissing(Nav, progress))
                 {
                     return;

@@ -177,13 +177,18 @@
 }
 
 .mhbo-tile.mhbo-tile--passport {
-  border-color: #c9d4e3;
-  border-top-color: #0f2747;
-  background: #f0f4f8;
+  border: 2px solid #c9d4e3;
+  border-top: 5px solid #0f2747;
+  background: #eef2f7;
+  box-shadow: 0 2px 0 rgb(15 39 71 / 8%);
 }
 
 .mhbo-tile.mhbo-tile--passport .st {
-  background: #dce6f2;
+  background: #0f2747;
+  color: #fff;
+}
+
+.mhbo-tile.mhbo-tile--passport h3 {
   color: #0f2747;
 }
 

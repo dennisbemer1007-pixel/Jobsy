@@ -12,4 +12,7 @@ public static class PupilSessionDuration
 
     /// <summary>Spelled out for the parent letter.</summary>
     public const string VoLetter = "twee lesdelen";
+
+    /// <summary>MBO/HBO: five blocks, pauzeerbaar (~45–60 min totaal).</summary>
+    public const string MboHbo = "ongeveer 45–60 minuten (5 testen, pauzeerbaar)";
 }

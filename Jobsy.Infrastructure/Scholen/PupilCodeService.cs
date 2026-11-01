@@ -3,6 +3,7 @@ using System.Text;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -129,6 +130,10 @@ public sealed class PupilCodeService : IPupilCodeService
     {
         ArgumentNullException.ThrowIfNull(existing);
 
+        var schoolClass = await _db.SchoolClasses.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == existing.SchoolClassId, cancellationToken);
+        var questionSet = schoolClass?.QuestionSet ?? PupilQuestionSet.Groep78;
+
         var alphabet = PupilCodeFormat.Alphabet.ToCharArray();
         var classHashes = await _db.PupilCodes
             .AsNoTracking()
@@ -150,6 +155,13 @@ public sealed class PupilCodeService : IPupilCodeService
         existing.CodeProtected = Protect(code);
         existing.SessionVersion++;
         existing.LockedUntilUtc = null;
+        if (existing.Result is not null)
+        {
+            _db.PupilResults.Remove(existing.Result);
+            existing.Result = null;
+        }
+
+        PupilMboHboProgressReset.ApplyFreshStart(existing, questionSet);
         await _db.SaveChangesAsync(cancellationToken);
         return existing;
     }

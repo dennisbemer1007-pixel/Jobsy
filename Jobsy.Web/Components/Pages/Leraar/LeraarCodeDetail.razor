@@ -48,6 +48,34 @@ else if (_detail.ResultPending || (_detail.Status == PupilCodeStatus.Completed &
         @Culture["Leraar.Detail.ResultPending"]
     </p>
 }
+else if (_detail.QuestionSet == PupilQuestionSet.MboHbo && _detail.PdfAvailable)
+{
+    <header class="sch-page-header" data-testid="leraar-code-detail-mbo">
+        <p class="sch-breadcrumb">
+            <a href="@($"/leraar/klas/{ClassId:D}")">Klas @_detail.ClassName</a> /
+            <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.Title"]</a> /
+            @_detail.DisplayCode
+        </p>
+        <h1>@_detail.DisplayCode</h1>
+        <p class="muted">
+            MBO/HBO-paspoort · @_detail.ProgressCurrent/@_detail.ProgressTotal testen afgerond
+            @if (_detail.DurationMinutes is int dm)
+            {
+                <span> · @dm min</span>
+            }
+        </p>
+        <div class="sch-admin-toolbar">
+            <button type="button" class="btn-primary" disabled="@_pdfBusy" @onclick="DownloadPdf">
+                @Culture["Leraar.Detail.Pdf"]
+            </button>
+            <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/mbo-hbo")">MBO/HBO-voortgang</a>
+        </div>
+        <p class="sch-banner-info">@Culture["Leraar.Detail.NoNameNote"]</p>
+    </header>
+    <section class="sch-card panel-section">
+        <p>Alle vijf testen zijn afgerond. Download het paspoort-PDF of bekijk het klassenoverzicht.</p>
+    </section>
+}
 else if (_detail.Status != PupilCodeStatus.Completed)
 {
     <header class="sch-page-header">
@@ -58,7 +86,8 @@ else if (_detail.Status != PupilCodeStatus.Completed)
         </p>
         <h1>@_detail.DisplayCode</h1>
     </header>
-    @if (_detail.ProgressTotal == PupilMboHboTeacherProgress.BlockCount
+    @if (_detail.QuestionSet == PupilQuestionSet.MboHbo
+         && _detail.ProgressTotal == PupilMboHboTeacherProgress.BlockCount
          && _detail.ProgressCurrent == PupilMboHboTeacherProgress.BlockCount)
     {
         <p class="sch-empty-state panel-section">

@@ -96,11 +96,17 @@ public sealed class PupilMboHboResultBuilder : IPupilMboHboResultBuilder
     {
         var map = new Dictionary<string, char>(StringComparer.OrdinalIgnoreCase)
         {
+            ["R (Praktisch)"] = 'R',
             ["Praktisch"] = 'R',
+            ["I (Onderzoekend)"] = 'I',
             ["Onderzoekend"] = 'I',
+            ["A (Artistiek)"] = 'A',
             ["Artistiek"] = 'A',
+            ["S (Sociaal)"] = 'S',
             ["Sociaal"] = 'S',
+            ["E (Ondernemend)"] = 'E',
             ["Ondernemend"] = 'E',
+            ["C (Conventioneel)"] = 'C',
             ["Conventioneel"] = 'C'
         };
 
@@ -115,12 +121,12 @@ public sealed class PupilMboHboResultBuilder : IPupilMboHboResultBuilder
     private static string RiasecKey(string label)
         => label switch
         {
-            "Praktisch" => CareerTestCatalog.Realistic,
-            "Onderzoekend" => CareerTestCatalog.Investigative,
-            "Artistiek" => CareerTestCatalog.Artistic,
-            "Sociaal" => CareerTestCatalog.Social,
-            "Ondernemend" => CareerTestCatalog.Enterprising,
-            "Conventioneel" => CareerTestCatalog.Conventional,
+            "R (Praktisch)" or "Praktisch" => CareerTestCatalog.Realistic,
+            "I (Onderzoekend)" or "Onderzoekend" => CareerTestCatalog.Investigative,
+            "A (Artistiek)" or "Artistiek" => CareerTestCatalog.Artistic,
+            "S (Sociaal)" or "Sociaal" => CareerTestCatalog.Social,
+            "E (Ondernemend)" or "Ondernemend" => CareerTestCatalog.Enterprising,
+            "C (Conventioneel)" or "Conventioneel" => CareerTestCatalog.Conventional,
             _ => label
         };
 }
