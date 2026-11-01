@@ -15,9 +15,9 @@ namespace Jobsy.Tests.Scholen;
 public sealed class MboHboFlowPlaywrightTests
 {
     private const string MinDeployCommitPrefix = "e6fce2f7";
-    private const string SchoolAdminEmail = "schoolbeheer@jobsy.local";
-    private const string TeacherEmail = "leraar@jobsy.local";
-    private const string Password = "Jobsy123!";
+    private const string SchoolAdminEmail = "test-schoolbeheerder@lobsy.nl";
+    private const string TeacherEmail = "test-leraar@lobsy.nl";
+    private const string Password = "";
 
     private static readonly string[] BlockOrder =
     [
@@ -237,6 +237,7 @@ public sealed class MboHboFlowPlaywrightTests
             ?? TeacherEmail;
         var password = Environment.GetEnvironmentVariable("JOBSY_E2E_TEACHER_PASSWORD")
             ?? Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_PASSWORD")
+            ?? Environment.GetEnvironmentVariable("TestAccounts__Password__Teacher")
             ?? Password;
         return (email, password);
     }
@@ -244,7 +245,9 @@ public sealed class MboHboFlowPlaywrightTests
     private static (string Email, string Password) ResolveSchoolAdminCredentials()
     {
         var email = Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_EMAIL") ?? SchoolAdminEmail;
-        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_PASSWORD") ?? Password;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_PASSWORD")
+            ?? Environment.GetEnvironmentVariable("TestAccounts__Password__SchoolAdmin")
+            ?? Password;
         return (email, password);
     }
 
