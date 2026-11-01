@@ -229,7 +229,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Jobs.FewSub"] = "Dit zijn de banen die het best bij jou passen.";
         d["LeerlingPassport.G78.Jobs.MatchPercent"] = "{0}% match";
         d["LeerlingPassport.G78.Dream.Heading"] = "Mijn droombaan";
-        d["LeerlingPassport.G78.Dream.Sub"] = "Zo zou je route eruit kunnen zien. Er zijn altijd meerdere wegen!";
+        d["LeerlingPassport.G78.Dream.Sub"] = "Zo zou je route eruit kunnen zien. Er zijn altijd meerdere wegen.";
         d["LeerlingPassport.G78.Dream.Question"] = "Wat lijkt je het leukst aan dit werk? Ken je iemand die dit doet?";
         d["LeerlingPassport.G78.Samen.Heading"] = "Om samen te doen";
         d["LeerlingPassport.G78.Route.Now"] = "nu";
