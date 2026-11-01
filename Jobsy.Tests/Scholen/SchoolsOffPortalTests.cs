@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -18,7 +20,9 @@ public class SchoolsOffPortalTests
     [Fact]
     public async Task Browser_request_redirects_to_the_friendly_page_and_api_stays_json()
     {
-        var middleware = new SchoolsFeatureMiddleware(_ => throw new InvalidOperationException("should not continue"));
+        var middleware = new SchoolsFeatureMiddleware(
+            _ => throw new InvalidOperationException("should not continue"),
+            NullLogger<SchoolsFeatureMiddleware>.Instance);
         var services = new ServiceCollection()
             .AddSingleton<IFeatureFlags>(new FixedFlags(schools: false))
             .BuildServiceProvider();
@@ -38,7 +42,9 @@ public class SchoolsOffPortalTests
         var body = await new StreamReader(api.Response.Body).ReadToEndAsync();
         Assert.Contains("feature_disabled", body, StringComparison.Ordinal);
 
-        var open = new SchoolsFeatureMiddleware(_ => Task.CompletedTask);
+        var open = new SchoolsFeatureMiddleware(
+            _ => Task.CompletedTask,
+            NullLogger<SchoolsFeatureMiddleware>.Instance);
         var allowed = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()
@@ -53,7 +59,9 @@ public class SchoolsOffPortalTests
     [Fact]
     public async Task Missing_flags_fail_closed_for_the_portal()
     {
-        var middleware = new SchoolsFeatureMiddleware(_ => throw new InvalidOperationException("opened"));
+        var middleware = new SchoolsFeatureMiddleware(
+            _ => throw new InvalidOperationException("opened"),
+            NullLogger<SchoolsFeatureMiddleware>.Instance);
         var page = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection().BuildServiceProvider()

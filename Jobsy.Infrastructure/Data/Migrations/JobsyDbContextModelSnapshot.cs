@@ -7705,6 +7705,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("VakScoresJson")
                         .HasColumnType("text");
 
+                    b.Property<string>("MboHboProgressJson")
+                        .HasColumnType("text");
+
                     b.HasKey("PupilCodeId");
 
                     b.ToTable("PupilProgresses", (string)null);
