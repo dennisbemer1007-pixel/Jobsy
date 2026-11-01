@@ -92,8 +92,23 @@ else
                             class="ll-puzzle__card @(open ? "is-open" : null) @(_cardMatched.Contains(face) ? "is-matched" : null)"
                             disabled="@(_busy || open || _cardFirst == idx)"
                             data-testid="ll-puzzle-card"
+                            style="@(_groep78 && !open ? CardBackStyle : null)"
                             @onclick="() => FlipCard(idx)">
-                        @(open ? face : "?")
+                        @if (open)
+                        {
+                            if (_groep78)
+                            {
+                                <img src="@PupilJourneyTheme.PuzzleMatchAsset(_themeKey, face)" alt="" />
+                            }
+                            else
+                            {
+                                @face
+                            }
+                        }
+                        else if (!_groep78)
+                        {
+                            @("?")
+                        }
                     </button>
                 }
             </div>
@@ -279,7 +294,10 @@ else
         _error = null;
         _shellPick = null;
         _shellOrder = [1, 3, 2, 4];
-        _cardFaces = _cardSymbols.OrderBy(_ => Random.Shared.Next()).ToList();
+        var deck = _groep78
+            ? PupilJourneyTheme.PuzzleMatchPairIds(_themeKey).ToList()
+            : _cardSymbols.ToList();
+        _cardFaces = deck.OrderBy(_ => Random.Shared.Next()).ToList();
         _cardOpen = [];
         _cardMatched = [];
         _cardFirst = null;
@@ -489,4 +507,7 @@ else
             _busy = false;
         }
     }
+
+    private string CardBackStyle =>
+        $"background-image:url('{PupilJourneyTheme.PuzzleCardBackAsset(_themeKey)}');";
 }

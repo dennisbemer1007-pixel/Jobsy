@@ -32,6 +32,15 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         var dream = story.RenderDreamRoute(result, progress, ctx, lang);
         var likes = ResolveChipLabels(ParseTagList(progress?.LikesJson), lang);
         var dislikes = ResolveChipLabels(ParseTagList(progress?.DislikesJson), lang);
+        if (!string.IsNullOrWhiteSpace(progress?.LikeOtherWord))
+        {
+            likes = likes.Concat([progress.LikeOtherWord.Trim()]).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(progress?.DislikeOtherWord))
+        {
+            dislikes = dislikes.Concat([progress.DislikeOtherWord.Trim()]).ToList();
+        }
         var likeKeys = ParseTagList(progress?.LikesJson);
         var keys = PupilStoryTemplates.TryParse(result.StoryKeysJson)
                    ?? PupilStoryTemplates.SelectKeys(result, likeKeys, ctx.Set);

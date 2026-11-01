@@ -46,10 +46,23 @@ else if (_result is null)
 }
 else
 {
-    <div class="ll-reis ll-result" data-testid="leerling-dit-ben-jij">
-        <LeerlingCoachCue Text="@Culture["Leerling.Coach.Story"]" />
+    @if (_groep78)
+    {
+        <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
+                                    WorldKey="koraalrif"
+                                    BackgroundPosition="center 30%"
+                                    CurrentNodeKey="koraalrif"
+                                    MetaLine="@Culture["LeerlingStory.Title"]"
+                                    ShowJourney="false" />
+    }
 
-        <section class="ll-card">
+    <div class="@(_groep78 ? "wrap ll-g78-overlap ll-result--g78" : "ll-reis ll-result")" data-testid="leerling-dit-ben-jij">
+        @if (!_groep78)
+        {
+            <LeerlingCoachCue Text="@Culture["Leerling.Coach.Story"]" />
+        }
+
+        <section class="@(_groep78 ? "card" : "ll-card")">
             <p class="ll-question__meta">
                 <span class="ll-pill">@Culture["LeerlingStory.DonePill"]</span>
             </p>
@@ -96,7 +109,7 @@ else
             {
                 <a class="btn-secondary" href="/leerling/paspoort">@Culture["LeerlingPassport.Page.Title"]</a>
             }
-            <a class="btn-secondary" href="/leerling/pdf">@Culture["LeerlingStory.Pdf"]</a>
+            <a class="btn-secondary" href="@PdfHref" data-enhance-nav="false">@Culture["LeerlingStory.Pdf"]</a>
             <a class="btn-primary" href="/leerling/droombaan">@Culture["LeerlingStory.CheckDream"]</a>
         </div>
     </div>
@@ -110,6 +123,10 @@ else
     private bool _sessionLost;
     private PupilResultPageDto? _result;
     private bool _passportV2;
+    private bool _groep78;
+    private string? _themeKey;
+
+    private string PdfHref => PupilStoryPdfLink.Href(null, null);
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,6 +134,17 @@ else
         var flags = await Features.GetAsync();
         _passportV2 = flags.PupilPassportV2Enabled
                       && _result?.QuestionSet == PupilQuestionSet.Groep78;
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            _groep78 = progress?.QuestionSet == PupilQuestionSet.Groep78
+                       && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+            _themeKey = progress?.JourneyThemeKey;
+        }
+        catch
+        {
+            _groep78 = _result?.QuestionSet == PupilQuestionSet.Groep78;
+        }
     }
 
     private async Task RetryOnce()

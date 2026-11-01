@@ -701,6 +701,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     url => url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
@@ -862,11 +863,132 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.CloseAsync();
     }
 
+    [Theory]
+    [InlineData(1440, 900, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task G78_ster_restpunten_capture_evidence(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
+        var seeds = await SeedGroep78AtAsync(
+            1,
+            bankCount,
+            chipsSaved: true,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var outDir = Path.Combine(FindRepoRoot(), "docs", "g78-restpunten-1375");
+        Directory.CreateDirectory(outDir);
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/vakken");
+        await page.Locator("[data-testid=leerling-vakken]").WaitForAsync();
+
+        var band = page.Locator(".ll-g78-world-band").First;
+        await band.WaitForAsync();
+        var bandStyle = await band.GetAttributeAsync("style");
+        Assert.Contains("sterren-strand.jpg", bandStyle, StringComparison.Ordinal);
+
+        var scaleGroups = page.Locator(".ll-vakken__scale-btns");
+        var groupCount = await scaleGroups.CountAsync();
+        for (var i = 0; i < groupCount; i++)
+        {
+            await scaleGroups.Nth(i).Locator(".ll-vakken__btn").Last.ClickAsync();
+        }
+
+        var next = page.GetByRole(AriaRole.Button, new() { Name = "Zwem verder" });
+        await page.WaitForFunctionAsync(
+            "() => { const btn = [...document.querySelectorAll('button')].find(b => (b.textContent || '').includes('Zwem verder')); return btn && !btn.disabled; }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 30_000 });
+        await next.ClickAsync();
+        await page.WaitForURLAsync("**/leerling/vakken?page=2**", UrlCommitted);
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(outDir, $"01-vakken-knop-{label}.png"),
+            FullPage = true
+        });
+
+        var schatSeeds = await SeedGroep78AtAsync(
+            1,
+            30,
+            chipsSaved: false,
+            completeActivePuzzleGate: false,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var schatSeed = schatSeeds[0];
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={schatSeed.SchoolId:D}&classId={schatSeed.ClassId:D}",
+            schatSeed.PlainCode,
+            schatSeed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/schatkaart**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+        var cardStyle = await page.Locator("[data-testid=ll-puzzle-card]").First.GetAttributeAsync("style");
+        Assert.Contains("card-back.jpg", cardStyle, StringComparison.Ordinal);
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(outDir, $"02-schatkaart-{label}.png"),
+            FullPage = true
+        });
+
+        var vuurtSeeds = await SeedGroep78AtAsync(
+            1,
+            45,
+            chipsSaved: false,
+            completeActivePuzzleGate: false,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var vuurtSeed = vuurtSeeds[0];
+        await page.Context.ClearCookiesAsync();
+        var vuurtLogin = $"{baseUrl}/leerling?schoolId={vuurtSeed.SchoolId:D}&classId={vuurtSeed.ClassId:D}";
+        await LoginAsync(page, vuurtLogin, vuurtSeed.PlainCode, vuurtSeed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/vuurtorenlampen**", UrlCommitted);
+        await page.Locator(".ll-g78-world-band").First.WaitForAsync();
+        var vuurtorenBand = await page.Locator(".ll-g78-world-band").First.GetAttributeAsync("style");
+        Assert.Contains("sterren-strand.jpg", vuurtorenBand, StringComparison.Ordinal);
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(outDir, $"03-vuurtoren-band-{label}.png"),
+            FullPage = true
+        });
+
+        await page.CloseAsync();
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Jobsy.sln not found.");
+    }
+
     private async Task<IReadOnlyList<Seed>> SeedGroep78AtAsync(
         int pupils,
         int answered,
         bool chipsSaved,
-        bool completeActivePuzzleGate = false)
+        bool completeActivePuzzleGate = false,
+        string? journeyThemeKey = null)
     {
         await using var scope = _api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -919,6 +1041,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 CurrentIndex = answered,
                 LikesJson = "[]",
                 DislikesJson = "[]",
+                JourneyThemeKey = journeyThemeKey,
                 ChipsSavedAtUtc = chipsSaved ? now : null,
                 StartedAtUtc = now.AddMinutes(-10),
                 UpdatedAtUtc = now
@@ -931,7 +1054,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             .ToList();
     }
 
-    private async Task<Seed> SeedCompletedWithDreamJobAsync(string dreamKey)
+    private async Task<Seed> SeedCompletedWithDreamJobAsync(string dreamKey, string? journeyThemeKey = null)
     {
         await using var scope = _api.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -981,6 +1104,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             LikesJson = """["dieren"]""",
             DislikesJson = """["lang-stilzitten"]""",
             DreamJobKey = dreamKey,
+            JourneyThemeKey = journeyThemeKey,
             StartedAtUtc = now.AddMinutes(-30),
             UpdatedAtUtc = now,
             CompletedAtUtc = now

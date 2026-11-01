@@ -31,6 +31,7 @@ public sealed class PupilStoryPdfLinkTests
             var href = PupilStoryPdfLink.Href("Alex", lang);
             Assert.DoesNotContain("??", href, StringComparison.Ordinal);
             Assert.DoesNotContain("?lang=nl?", href, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotMatch(@"/leerling/pdf\?$", href);
         }
     }
 }

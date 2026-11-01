@@ -38,6 +38,33 @@ public class PupilPassportG78WebTests
         Assert.DoesNotContain("alle vragen", PupilPassportCopy.Get("LeerlingPassport.Kicker"), StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void Web_mapper_includes_dislike_own_word_when_chips_empty()
+    {
+        var result = FixtureResult();
+        var progress = FixtureProgress(result.PupilCodeId);
+        progress.DislikesJson = "[]";
+        progress.DislikeOtherWord = "Spinnen";
+        var code = new PupilCode
+        {
+            Id = result.PupilCodeId,
+            Status = PupilCodeStatus.Completed,
+            Result = result,
+            Progress = progress
+        };
+        var cls = new SchoolClass
+        {
+            Name = "8A",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78
+        };
+        var model = new PupilPassportPdfModelBuilder(_renderer).Build(
+            code, cls, "OBS De Kompasroos (fictief)", "K7Q-M2P", null);
+        var web = PupilPassportWebMapper.ToGroep78Web(model, enabled: true);
+        Assert.Contains("Spinnen", web.Dislikes ?? []);
+    }
+
     private PupilPassportPdfModel BuildModel(string? name)
     {
         var result = FixtureResult();
