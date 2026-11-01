@@ -45,10 +45,14 @@ else
 {
     @if (_groep78)
     {
-        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="pauze-eiland" BackgroundPosition="center 40%" />
+        <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
+                                    WorldKey="pauze-eiland"
+                                    BackgroundPosition="center 40%"
+                                    CurrentNodeKey="pauze-eiland"
+                                    MetaLine="@Culture["Leerling.Island.Lead"]" />
     }
 
-    <div class="ll-reis ll-island @(_groep78 ? "wrap" : null)">
+    <div class="ll-reis ll-island @(_groep78 ? "wrap ll-g78-overlap" : null)">
         <section class="@(_groep78 ? "card ll-island-card" : "ll-card ll-island-card")">
             <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Island.ProgressLabel"]">
                 <span class="ll-progress-bar__fill" style="width:@IslandProgressPercent()"></span>

@@ -1,0 +1,38 @@
+@namespace Jobsy.Web.Components.Leerling
+@inject CultureState Culture
+
+<aside class="ll-g78-coach d-only" aria-label="Lobsy">
+    <div class="bubble tail-b">
+        <span class="who">Lobsy</span>
+        @ChildContent
+        @if (ShowSpeak)
+        {
+            <div class="bt">
+                <LeerlingSpeak Text="@SpeakText" SpeechKey="@SpeechKey" />
+            </div>
+        }
+    </div>
+    <img class="lob" src="/leerling/werelden/img/kreeft-welkom.png" width="250" height="250" alt="" />
+</aside>
+<div class="m-only ll-g78-coach-mobile">
+    <div class="guide">
+        <div class="ring" aria-hidden="true"></div>
+        <div class="bubble tail-l">
+            <span class="who">Lobsy</span>
+            @ChildContent
+            @if (ShowSpeak)
+            {
+                <div class="bt">
+                    <LeerlingSpeak Text="@SpeakText" SpeechKey="@SpeechKey" />
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string SpeakText { get; set; } = "";
+    [Parameter] public string SpeechKey { get; set; } = "ll-g78-coach";
+    [Parameter] public bool ShowSpeak { get; set; } = true;
+}

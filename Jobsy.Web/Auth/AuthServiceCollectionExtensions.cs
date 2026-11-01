@@ -1166,6 +1166,8 @@ public static class AuthServiceCollectionExtensions
             }
 
             await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await http.SignOutAsync(PupilAuthDefaults.Scheme);
+            PupilApiSessionCookie.Clear(http);
             SessionActivityCookie.Clear(http);
             DeviceSessionCookie.Clear(http);
 

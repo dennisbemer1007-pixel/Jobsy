@@ -1,0 +1,29 @@
+@using Jobsy.Core.Scholen
+@namespace Jobsy.Web.Components.Leerling
+
+<section class="ll-g78-scene" data-testid="leerling-g78-scene">
+    <LeerlingGroep78WorldBand ThemeKey="@ThemeKey"
+                              WorldKey="@WorldKey"
+                              BackgroundPosition="@BackgroundPosition" />
+    @if (ShowJourney)
+    {
+        <div class="ll-g78-scene__journey">
+            <LeerlingGroep78JourneyStrip ThemeKey="@ThemeKey"
+                                         CurrentNodeKey="@CurrentNodeKey"
+                                         MetaLine="@MetaLine"
+                                         SegmentCount="@SegmentCount"
+                                         SegmentsFilled="@SegmentsFilled" />
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string? ThemeKey { get; set; }
+    [Parameter, EditorRequired] public string WorldKey { get; set; } = "koraalrif";
+    [Parameter] public string BackgroundPosition { get; set; } = "center 30%";
+    [Parameter] public bool ShowJourney { get; set; } = true;
+    [Parameter, EditorRequired] public string CurrentNodeKey { get; set; } = "koraalrif";
+    [Parameter] public string? MetaLine { get; set; }
+    [Parameter] public int SegmentCount { get; set; }
+    [Parameter] public int SegmentsFilled { get; set; }
+}

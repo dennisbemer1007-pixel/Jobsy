@@ -433,6 +433,9 @@ public static class PageAssetCatalog
             || path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/paspoort", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/droombaan", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/leerling/puzzel", StringComparison.OrdinalIgnoreCase))
         {
             return [WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")];
