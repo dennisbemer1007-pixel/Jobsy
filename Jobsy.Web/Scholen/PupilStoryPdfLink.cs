@@ -14,7 +14,6 @@ public static class PupilStoryPdfLink
         var lang = NormalizeLanguageCode(languageCode);
         if (!string.IsNullOrWhiteSpace(lang))
         {
-            lang = lang.TrimEnd('?');
             parts.Add($"lang={Uri.EscapeDataString(lang)}");
         }
 
@@ -23,8 +22,39 @@ public static class PupilStoryPdfLink
             return "/leerling/pdf";
         }
 
-        var href = $"/leerling/pdf?{string.Join("&", parts)}";
-        return href.TrimEnd('?');
+        return SanitizeHref($"/leerling/pdf?{string.Join("&", parts)}");
+    }
+
+    /// <summary>Removes stray query separators that showed up in the browser bar as <c>?lang=nl?</c>.</summary>
+    public static string SanitizeHref(string href)
+    {
+        if (string.IsNullOrWhiteSpace(href))
+        {
+            return "/leerling/pdf";
+        }
+
+        var s = href.Trim();
+        while (s.EndsWith('?'))
+        {
+            s = s[..^1];
+        }
+
+        s = s.Replace("?&", "?", StringComparison.Ordinal);
+        s = s.Replace("&&", "&", StringComparison.Ordinal);
+        var q = s.IndexOf('?', StringComparison.Ordinal);
+        if (q >= 0 && q < s.Length - 1)
+        {
+            var path = s[..q];
+            var query = s[(q + 1)..].Trim('?');
+            if (string.IsNullOrEmpty(query))
+            {
+                return path;
+            }
+
+            s = $"{path}?{query}";
+        }
+
+        return s;
     }
 
     public static string? NormalizeLanguageCode(string? raw)

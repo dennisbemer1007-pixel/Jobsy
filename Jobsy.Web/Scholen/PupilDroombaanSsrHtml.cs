@@ -21,11 +21,27 @@ public static class PupilDroombaanSsrHtml
     public static string BuildBody(
         PupilDroombaanPageModel model,
         CultureState culture,
-        string antiforgeryFieldHtml)
+        string antiforgeryFieldHtml,
+        bool useGroep78Shell = false,
+        string? journeyThemeKey = null)
     {
         var sb = new StringBuilder();
-        sb.Append("""<div class="ll-reis ll-dream" data-testid="leerling-droombaan">""");
-        sb.Append("""<section class="ll-card ll-dream-ssr">""");
+        if (useGroep78Shell && PupilJourneyTheme.IsValid(journeyThemeKey))
+        {
+            var band = PupilJourneyTheme.WorldBandImagePath(journeyThemeKey, "koraalrif");
+            sb.Append("""<section class="ll-g78-scene" data-testid="leerling-g78-scene">""");
+            sb.Append("""<section class="band ll-g78-world-band" style="background-image:url('""");
+            sb.Append(band);
+            sb.Append("""');background-position:center 30%;" aria-hidden="true"></section>""");
+            sb.Append("</section>");
+            sb.Append("""<div class="wrap ll-g78-overlap">""");
+        }
+        else
+        {
+            sb.Append("""<div class="ll-reis ll-dream" data-testid="leerling-droombaan">""");
+        }
+
+        sb.Append("""<section class="card ll-dream-ssr">""");
         sb.Append("<p class=\"ll-question__world\">");
         sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.Title"]));
         sb.Append("</p><h1>");
@@ -74,7 +90,8 @@ public static class PupilDroombaanSsrHtml
         AppendDreamResult(sb, model, culture);
 
         sb.Append("</section>");
-        sb.Append("<nav class=\"ll-dream-ssr__nav\" aria-label=\"Verder\">");
+        var pdfHref = PupilStoryPdfLink.Href(null, culture.Language);
+        sb.Append("<nav class=\"ll-dream-ssr__nav ll-result__actions\" aria-label=\"Verder\">");
         sb.Append("<a class=\"btn-secondary\" href=\"/leerling/dit-ben-jij\">");
         sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.OtherJob"]));
         sb.Append("</a>");
@@ -85,9 +102,20 @@ public static class PupilDroombaanSsrHtml
             sb.Append("</a>");
         }
 
-        sb.Append("<a class=\"btn-primary\" href=\"/leerling/pdf\">");
+        sb.Append("<a class=\"btn-secondary\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(pdfHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.SavePdf"]));
-        sb.Append("</a></nav></div>");
+        sb.Append("</a></nav>");
+        if (useGroep78Shell)
+        {
+            sb.Append("</div>");
+        }
+        else
+        {
+            sb.Append("</div>");
+        }
+
         return sb.ToString();
     }
 

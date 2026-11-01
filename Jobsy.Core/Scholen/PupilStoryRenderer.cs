@@ -104,7 +104,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             return new DreamJobRouteStubDto(key, title, 0, 5, [], [], [], null, null);
         }
 
-        var now = PupilDreamJobRoutes.NowLabel(classContext);
+        var now = PupilDreamJobRoutes.NowLabel(classContext, language);
         var have = fit.HaveSentenceKeys.Select(k => ResolveCopy(k, classContext, now, language)).ToList();
         var learn = fit.NeedSentenceKeys.Select(k => ResolveNeedNext(k, classContext, now, language)).ToList();
         var steps = fit.RouteStepKeys.Select(k => ResolveRouteStep(k, classContext, now, language)).ToList();

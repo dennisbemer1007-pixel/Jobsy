@@ -17,6 +17,9 @@ public sealed class PupilDroombaanSsrTests
         Assert.Contains("SavePath", endpoints, StringComparison.Ordinal);
         Assert.Contains("name=\\\"DreamJob\\\"", html, StringComparison.Ordinal);
         Assert.Contains("ll-dream-ssr__form", html, StringComparison.Ordinal);
+        Assert.Contains("useGroep78Shell", html, StringComparison.Ordinal);
+        Assert.Contains("ll-g78-scene", html, StringComparison.Ordinal);
+        Assert.Contains("PupilStoryPdfLink", html, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingSpeak", html, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingCoachCue", html, StringComparison.Ordinal);
         Assert.DoesNotContain("_framework/blazor", frame, StringComparison.OrdinalIgnoreCase);

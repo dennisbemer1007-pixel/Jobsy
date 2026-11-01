@@ -132,6 +132,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Page.Pdf"] = "Download PDF";
         d["LeerlingPassport.Page.NamePlaceholder"] = "Naam (optioneel, alleen op scherm en PDF)";
         d["LeerlingPassport.Section.Dislikes"] = "Liever niet";
+        d["LeerlingPassport.Dislikes.Empty"] = "Je hebt niets aangevinkt dat je liever niet doet.";
         d["LeerlingPassport.OwnWord"] = "mijn eigen woord:";
         d["LeerlingPassport.Section.Strengths"] = "Hier ben ik goed in";
         d["LeerlingPassport.Strengths.Sub"] = "zo zie ik mezelf";
@@ -228,6 +229,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Jobs.TitleFew"] = "Banen die bij jou passen";
         d["LeerlingPassport.G78.Jobs.FewSub"] = "Dit zijn de banen die het best bij jou passen.";
         d["LeerlingPassport.G78.Jobs.MatchPercent"] = "{0}% match";
+        d["LeerlingPassport.G78.Jobs.MatchSuggest"] = "Ongeveer {0}% past bij jou, een idee om eens te bekijken.";
         d["LeerlingPassport.G78.Dream.Heading"] = "Mijn droombaan";
         d["LeerlingPassport.G78.Dream.Sub"] = "Zo zou je route eruit kunnen zien. Er zijn altijd meerdere wegen.";
         d["LeerlingPassport.G78.Dream.Question"] = "Wat lijkt je het leukst aan dit werk? Ken je iemand die dit doet?";

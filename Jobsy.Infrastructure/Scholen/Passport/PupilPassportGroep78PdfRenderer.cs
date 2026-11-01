@@ -1031,7 +1031,7 @@ internal static class PupilPassportGroep78PdfRenderer
     private static string FormatJobMatchPercent(PupilPassportPdfModel m, int percent)
         => string.Format(
             System.Globalization.CultureInfo.InvariantCulture,
-            T(m, "LeerlingPassport.G78.Jobs.MatchPercent"),
+            T(m, "LeerlingPassport.G78.Jobs.MatchSuggest"),
             percent);
 
     private static string JobCardSubtitle(PupilPassportPdfModel m, string jobKey)

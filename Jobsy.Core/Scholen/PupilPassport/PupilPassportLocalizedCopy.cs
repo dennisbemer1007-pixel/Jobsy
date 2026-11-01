@@ -146,7 +146,19 @@ public static class PupilPassportLocalizedCopy
         "LeerlingPassport.Discover.Letter.C.3" => "Where do you help others by planning well?",
         "LeerlingPassport.G78.Jobs.TitleFew" => "Jobs that fit you",
         "LeerlingPassport.G78.Jobs.FewSub" => "These are the jobs that fit you best.",
+        "LeerlingPassport.G78.Dream.Heading" => "My dream job: {0}",
+        "LeerlingPassport.G78.Dream.Sub" => "This is one possible route. There are always many paths.",
+        "LeerlingPassport.G78.Dream.Question" => "What appeals to you most in this work? Do you know someone who does it?",
         "LeerlingPassport.G78.Jobs.MatchPercent" => "{0}% match",
+        "LeerlingPassport.G78.Jobs.MatchSuggest" => "About {0}% fits you, an idea to explore.",
+        "LeerlingPassport.G78.Usage.Parent.1" =>
+            "Read it together. Let your child say what they recognise and what not.",
+        "LeerlingPassport.G78.Usage.Parent.2" =>
+            "Pick one thing to explore together, for example a short video about a job.",
+        "LeerlingPassport.G78.Usage.Teacher.1" =>
+            "Use it to prepare for the group 8 advisory talk.",
+        "LeerlingPassport.G78.Usage.Teacher.2" =>
+            "Start with the mirror section: do you recognise this?",
         _ when key.StartsWith("LeerlingPassport.Tip.", StringComparison.Ordinal) && EnTips.TryGetValue(key, out var tip) => tip,
         _ => nl
     };

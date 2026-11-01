@@ -95,7 +95,7 @@
             </div>
         }
 
-        <div class="@(HasDislikes ? "lp-g78__grid3" : "lp-g78__grid2")">
+        <div class="lp-g78__grid3">
             <section class="lp-g78__card lp-g78__like">
                 <h3>@Culture["LeerlingPassport.Section.Likes"]</h3>
                 <div class="lp-g78__chips">
@@ -109,10 +109,10 @@
                     <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.LikeOwnWord</b></div>
                 }
             </section>
-            @if (HasDislikes)
-            {
-                <section class="lp-g78__card lp-g78__dis">
-                    <h3>@Culture["LeerlingPassport.Section.Dislikes"]</h3>
+            <section class="lp-g78__card lp-g78__dis">
+                <h3>@Culture["LeerlingPassport.Section.Dislikes"]</h3>
+                @if (HasDislikes)
+                {
                     <div class="lp-g78__chips">
                         @foreach (var chip in Model.Dislikes ?? [])
                         {
@@ -123,8 +123,12 @@
                     {
                         <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.DislikeOwnWord</b></div>
                     }
-                </section>
-            }
+                }
+                else
+                {
+                    <p class="lp-g78__empty">@Culture["LeerlingPassport.Dislikes.Empty"]</p>
+                }
+            </section>
             <section class="lp-g78__card lp-g78__str">
                 <h3>@Culture["LeerlingPassport.Section.Strengths"]</h3>
                 @foreach (var s in Model.Strengths ?? [])
@@ -210,6 +214,10 @@
                     <article class="lp-g78__card lp-g78__job">
                         <div class="lp-g78__job-k">@job.DomainLabel</div>
                         <h4>@job.Title</h4>
+                        @if (job.MatchPercent is > 0)
+                        {
+                            <p class="lp-g78__job-match">@Culture.Format("LeerlingPassport.G78.Jobs.MatchSuggest", job.MatchPercent.Value)</p>
+                        }
                         <p>@job.Blurb</p>
                         @if (job.FitTags is { Count: > 0 })
                         {

@@ -114,6 +114,12 @@ public sealed record PupilErrorDto(
     string? NextPuzzleKey = null,
     PupilQuestionSet? QuestionSet = null);
 
+public sealed record PupilG78JobSuggestionDto(
+    string Title,
+    string DomainLabel,
+    int MatchPercent,
+    string Blurb);
+
 public sealed record PupilResultPageDto(
     string ClassLabel,
     string CodeDisplay,
@@ -124,7 +130,8 @@ public sealed record PupilResultPageDto(
     DreamJobRouteStubDto? DreamJob,
     string? DreamJobKey,
     int TotalItems = 60,
-    PupilQuestionSet QuestionSet = PupilQuestionSet.Vo);
+    PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
+    IReadOnlyList<PupilG78JobSuggestionDto>? JobSuggestions = null);
 
 public sealed record PupilDreamJobRequest(string? Key, string? DisplayTitle = null);
 
