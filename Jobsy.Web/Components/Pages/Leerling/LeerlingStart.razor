@@ -19,7 +19,12 @@
 
 @if (_groep78)
 {
-    <div class="wrap">
+    <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
+                                WorldKey="koraalrif"
+                                ShowJourney="true"
+                                CurrentNodeKey="koraalrif"
+                                MetaLine="@Culture["Leerling.Start.Title"]" />
+    <div class="wrap ll-g78-overlap">
         <section class="card ll-start ll-start--g78">
             <h1 class="serif">@Culture["Leerling.Start.Title"]</h1>
             <LeerlingSpeak Text="@Spoken" SpeechKey="ll-start" />

@@ -1,0 +1,93 @@
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
+@namespace Jobsy.Web.Components.Leerling
+@inject CultureState Culture
+@inject IPupilQuestionSetRegistry QuestionSets
+
+<div class="journey" data-testid="leerling-g78-journey">
+    <div class="jrow">
+        @if (_progressWidth > 0)
+        {
+            <span class="jdone" style="width:@($"{_progressWidth:0.####}%")"></span>
+        }
+        @foreach (var (node, i) in _nodes.Select((n, idx) => (n, idx)))
+        {
+            var cur = i == _currentIndex;
+            var done = i < _currentIndex;
+            var puzzle = node.Kind == PupilGroep78JourneyNodeKind.Puzzle;
+            var title = Culture[PupilGroep78Journey.TitleKey(ThemeKey, node)];
+            var dotStyle = puzzle
+                ? null
+                : $"background-image:url('{DotUrl(node)}')";
+            <div class="jn @(done ? "done" : null) @(cur ? "cur" : null) @(puzzle ? "p" : null)">
+                @if (cur)
+                {
+                    <span class="here">@Culture["Leerling.G78.Journey.Here"]</span>
+                }
+                <span class="dot" style="@dotStyle">
+                    @if (puzzle)
+                    {
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3a2 2 0 014 0v2h4a1 1 0 011 1v4h-2a2 2 0 000 4h2v4a1 1 0 01-1 1h-4v-2a2 2 0 00-4 0v2H6a1 1 0 01-1-1v-4h2a2 2 0 000-4H5V6a1 1 0 011-1h4V3z"/></svg>
+                    }
+                </span>
+                <b>@title</b>
+            </div>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(MetaLine))
+    {
+        <div class="jmeta">
+            <span>@MetaLine</span>
+            @if (_segmentCount > 0)
+            {
+                <div class="seg" aria-hidden="true">
+                    @for (var s = 0; s < _segmentCount; s++)
+                    {
+                        var cls = s < _segmentsFilled ? "f" : s == _segmentsFilled ? "c" : null;
+                        <i class="@cls"></i>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string? ThemeKey { get; set; }
+    [Parameter, EditorRequired] public string CurrentNodeKey { get; set; } = "koraalrif";
+    [Parameter] public string? MetaLine { get; set; }
+    [Parameter] public int SegmentCount { get; set; }
+    [Parameter] public int SegmentsFilled { get; set; }
+
+    private IReadOnlyList<PupilGroep78JourneyNode> _nodes = [];
+    private int _currentIndex;
+    private double _progressWidth;
+    private int _segmentCount;
+    private int _segmentsFilled;
+
+    protected override void OnParametersSet()
+    {
+        var def = QuestionSets.Get(PupilQuestionSet.Groep78);
+        _nodes = PupilGroep78Journey.BuildNodes(def);
+        _currentIndex = PupilGroep78Journey.IndexOfCurrent(_nodes, CurrentNodeKey);
+        _segmentCount = Math.Max(0, SegmentCount);
+        _segmentsFilled = Math.Clamp(SegmentsFilled, 0, _segmentCount);
+        if (_nodes.Count <= 1)
+        {
+            _progressWidth = 0;
+        }
+        else
+        {
+            var maxIndex = _nodes.Count - 1;
+            var ratio = _currentIndex / (double)maxIndex;
+            _progressWidth = ratio * 100;
+        }
+    }
+
+    private string DotUrl(PupilGroep78JourneyNode node)
+    {
+        var stem = PupilGroep78Journey.DotImageStem(ThemeKey, node);
+        return $"/leerling/werelden/img/{stem}.jpg";
+    }
+}

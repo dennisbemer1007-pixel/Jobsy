@@ -83,10 +83,15 @@ else
 
     @if (_groep78)
     {
-        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="@worldKey" />
+        <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
+                                    WorldKey="@worldKey"
+                                    CurrentNodeKey="@worldKey"
+                                    MetaLine="@JourneyMetaLine(worldKey, item)"
+                                    SegmentCount="@JourneySegmentCount(worldKey)"
+                                    SegmentsFilled="@JourneySegmentsFilled(item)" />
     }
 
-    <div class="ll-reis @(_groep78 ? "ll-reis--g78 wrap" : null)">
+    <div class="ll-reis @(_groep78 ? "ll-reis--g78 wrap ll-g78-overlap" : null)">
         <aside class="ll-rail" aria-label="@Culture["Leerling.Reis.Journey"]">
             <p class="ll-rail__title">@Culture["Leerling.Reis.Journey"]</p>
             <div class="ll-rail__worlds" role="group" aria-label="@Culture["Leerling.Reis.WorldProgress"]">
@@ -135,22 +140,43 @@ else
             <p class="ll-plates__label">@Culture["Leerling.Reis.PlatesGone"]</p>
         </aside>
 
-        <section class="ll-card ll-question" role="group" aria-labelledby="ll-q-title">
+        <div class="@(_groep78 ? "q-layout" : null)">
+        <section class="@(_groep78 ? "card ll-question" : "ll-card ll-question")" role="group" aria-labelledby="ll-q-title">
             <LeerlingCheerToast Text="@Culture[cheerKey]"
                                 Show="_cheerToast"
                                 OnHidden="HideCheerToast" />
-            <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Reis.Progress"]">
-                <span class="ll-progress-bar__fill" style="width:@ProgressPercent()"></span>
-            </div>
-            <p class="ll-question__world">@Culture[worldTitleKey]</p>
+            @if (!_groep78)
+            {
+                <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Reis.Progress"]">
+                    <span class="ll-progress-bar__fill" style="width:@ProgressPercent()"></span>
+                </div>
+            }
+            @if (_groep78)
+            {
+                <div class="qmeta">
+                    <span class="kicker">@Culture[worldTitleKey]</span>
+                    <span aria-hidden="true">·</span>
+                    <span>@JourneyMetaLine(worldKey, item)</span>
+                </div>
+            }
+            else
+            {
+                <p class="ll-question__world">@Culture[worldTitleKey]</p>
+            }
             @if (_groep78)
             {
                 <p class="ll-question__meta">@Culture[worldSubKey]</p>
             }
             <h1 id="ll-q-title"
-                class="ll-question__text"
+                class="@(_groep78 ? "qtitle" : "ll-question__text")"
                 aria-describedby="@(_infoOpen ? infoId : null)">@qLabel</h1>
-            <LeerlingSpeak Text="@qLabel" SpeechKey="@($"ll-q-{item?.Id}")" />
+            <div class="@(_groep78 ? "qrow" : null)">
+                <LeerlingSpeak Text="@qLabel" SpeechKey="@($"ll-q-{item?.Id}")" />
+                @if (_groep78)
+                {
+                    <span class="speak-label">@Culture["Leerling.G78.ReadQuestion"]</span>
+                }
+            </div>
             <button type="button"
                     class="ll-info-btn"
                     aria-label="@Culture["Leerling.Reis.More"]"
@@ -188,10 +214,17 @@ else
                 <p class="ll-saved">@Culture["Leerling.Reis.Saved"]</p>
             }
 
-            <div class="ll-question__nav">
+            <div class="ll-question__nav qfoot">
                 <button type="button" class="btn-secondary" disabled="@(_state.CurrentIndex <= 0)" @onclick="GoPrev">@Culture["Leerling.Reis.Prev"]</button>
             </div>
         </section>
+        @if (_groep78)
+        {
+            <LeerlingGroep78CoachAside SpeakText="@qLabel" SpeechKey="@($"ll-q-{item?.Id}")">
+                @Culture["Leerling.G78.Coach.Question"]
+            </LeerlingGroep78CoachAside>
+        }
+        </div>
 
     </div>
 }
@@ -599,4 +632,22 @@ else
 
         ApplyLoaded(next);
     }
+
+    private string JourneyMetaLine(string worldKey, PupilQuestionItem? item)
+    {
+        if (_def is null || _state is null || item is null)
+        {
+            return "";
+        }
+
+        var idx = _def.IndexInWorld(_state.CurrentIndex) + 1;
+        var total = _def.Worlds.FirstOrDefault(w => string.Equals(w.WorldKey, worldKey, StringComparison.OrdinalIgnoreCase))?.ItemCount ?? 15;
+        return string.Format(Culture["Leerling.G78.Journey.QuestionMeta"], idx, total);
+    }
+
+    private int JourneySegmentCount(string worldKey)
+        => _def?.Worlds.FirstOrDefault(w => string.Equals(w.WorldKey, worldKey, StringComparison.OrdinalIgnoreCase))?.ItemCount ?? 15;
+
+    private int JourneySegmentsFilled(PupilQuestionItem? item)
+        => _def is null || _state is null || item is null ? 0 : _def.IndexInWorld(_state.CurrentIndex) + 1;
 }

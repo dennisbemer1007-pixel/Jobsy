@@ -33,7 +33,11 @@ else
 {
     @if (_groep78)
     {
-        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="lagune" BackgroundPosition="center 70%" />
+        <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
+                                    WorldKey="lagune"
+                                    BackgroundPosition="center 70%"
+                                    CurrentNodeKey="lagune"
+                                    MetaLine="@Culture["Leerling.Vakken.Heading"]" />
     }
     else
     {
@@ -41,8 +45,8 @@ else
         <LeerlingScene Depth="@SceneDepth" />
     }
 
-    <div class="ll-reis ll-vakken @(_groep78 ? "wrap" : null)" data-testid="leerling-vakken">
-        <section class="ll-card ll-vakken-card">
+    <div class="ll-reis ll-vakken @(_groep78 ? "wrap ll-g78-overlap" : null)" data-testid="leerling-vakken">
+        <section class="@(_groep78 ? "card ll-vakken-card" : "ll-card ll-vakken-card")">
             <div class="ll-progress-dots" role="group" aria-label="@Culture["Leerling.Vakken.Progress"]">
                 @for (var i = 1; i <= 5; i++)
                 {
@@ -116,28 +120,39 @@ else
                     @Culture[_page == 1 ? "Leerling.Vakken.Next" : "Leerling.Vakken.Finish"]
                 </button>
             </div>
+
+            @if (_groep78 && _page == 1)
+            {
+                <div class="ll-vakken-corner" aria-hidden="false">
+                    <div class="bubble tail-r">@Culture["Leerling.Vakken.Bubble"]</div>
+                    <div class="ring" aria-hidden="true"></div>
+                </div>
+            }
         </section>
 
-        <aside class="ll-lob-zone" aria-hidden="@(_page != 1)">
-            @if (_page == 1)
-            {
-                <p class="ll-bubble">@Culture["Leerling.Vakken.Bubble"]</p>
-            }
-            <LeerlingLobster PlatesShed="@LobsterPlatesShed"
-                             NewShell="@_state.NewShell"
-                             Label="Lobsy de kreeft" />
-        </aside>
+        @if (!_groep78)
+        {
+            <aside class="ll-lob-zone" aria-hidden="@(_page != 1)">
+                @if (_page == 1)
+                {
+                    <p class="ll-bubble">@Culture["Leerling.Vakken.Bubble"]</p>
+                }
+                <LeerlingLobster PlatesShed="@LobsterPlatesShed"
+                                 NewShell="@_state.NewShell"
+                                 Label="Lobsy de kreeft" />
+            </aside>
 
-        <aside class="ll-lob-zone ll-lob-zone--mobile" aria-hidden="@(_page != 1)">
-            @if (_page == 1)
-            {
-                <p class="ll-bubble">@Culture["Leerling.Vakken.Bubble"]</p>
-            }
-            <LeerlingLobster PlatesShed="@LobsterPlatesShed"
-                             NewShell="@_state.NewShell"
-                             Mobile="true"
-                             Label="Lobsy de kreeft" />
-        </aside>
+            <aside class="ll-lob-zone ll-lob-zone--mobile" aria-hidden="@(_page != 1)">
+                @if (_page == 1)
+                {
+                    <p class="ll-bubble">@Culture["Leerling.Vakken.Bubble"]</p>
+                }
+                <LeerlingLobster PlatesShed="@LobsterPlatesShed"
+                                 NewShell="@_state.NewShell"
+                                 Mobile="true"
+                                 Label="Lobsy de kreeft" />
+            </aside>
+        }
     </div>
 }
 

@@ -406,7 +406,11 @@ public static class UiStringsScholen
         nl["Leerling.Puzzle.Ster.Schatkaart.Lead"] = "Draai sterrenkaarten om en vind de paren.";
         nl["Leerling.Puzzle.Ster.Vuurtoren.Title"] = "Vuurtorenlampen";
         nl["Leerling.Puzzle.Ster.Vuurtoren.Lead"] = "Onthoud het sterrenlicht en tik het patroon na.";
-        nl["Leerling.Puzzle.Replay"] = "Nog een keer";
+        nl["Leerling.Puzzle.Replay"] = "Bekijk opnieuw";
+        nl["Leerling.G78.Journey.Here"] = "Hier ben je";
+        nl["Leerling.G78.Journey.QuestionMeta"] = "Vraag {0} van {1}";
+        nl["Leerling.G78.ReadQuestion"] = "Lobsy leest de vraag voor";
+        nl["Leerling.G78.Coach.Question"] = "Ik lees elke vraag voor. Tik op de luidspreker om het nog eens te horen.";
         nl["Leerling.Wereld.HeaderGrade"] = "Groep 7 en 8";
         nl["Leerling.Wereld.Kicker"] = "Voor je begint";
         nl["Leerling.Wereld.Title"] = "Kies jouw wereld";
@@ -495,6 +499,9 @@ public static class UiStringsScholen
         nl["Leerling.Puzzle.WrongStep"] = "Deze puzzel is nu niet aan de beurt.";
         nl["Leerling.Puzzle.Unknown"] = "Deze puzzel bestaat niet.";
         nl["Leerling.Puzzle.SaveFailed"] = "Opslaan lukte niet. Probeer het nog eens.";
+        nl["Leerling.Puzzle.Schelpenrij.Short"] = "Schelpenrij";
+        nl["Leerling.Puzzle.Schatkaart.Short"] = "Schatkaart";
+        nl["Leerling.Puzzle.Vuurtoren.Short"] = "Lampen";
         nl["Leerling.Puzzle.Schelpenrij.Title"] = "Schelpenrij";
         nl["Leerling.Puzzle.Schelpenrij.Lead"] = "Zet de schelpen van klein naar groot.";
         nl["Leerling.Puzzle.Schelpenrij.Hint"] = "Tik twee schelpen om ze te wisselen.";

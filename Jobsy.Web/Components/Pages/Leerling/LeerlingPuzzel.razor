@@ -47,10 +47,13 @@ else
 {
     @if (_groep78)
     {
-        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="@_bandWorldKey" BackgroundPosition="center 82%" />
+        <LeerlingGroep78SceneHeader ThemeKey="@_themeKey"
+                                    WorldKey="@_bandWorldKey"
+                                    BackgroundPosition="center 82%"
+                                    CurrentNodeKey="@Key" />
     }
 
-    <div class="@(_groep78 ? "wrap" : null)">
+    <div class="@(_groep78 ? "wrap ll-g78-overlap" : null)">
     <section class="@(_groep78 ? "card ll-puzzle" : "ll-card ll-puzzle")" data-testid="ll-puzzle-root">
         <p class="ll-question__meta">@Culture["Leerling.Puzzle.Break"]</p>
         <h1 class="ll-question__text">@Title</h1>
@@ -120,10 +123,10 @@ else
             {
                 <p class="ll-puzzle__status" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.Watch"]</p>
             }
-            else if (_lampStep > 0)
+            else if (_lampPatternReady)
             {
                 <p class="ll-puzzle__status" aria-live="polite">@Culture["Leerling.Puzzle.Vuurtoren.YourTurn"]</p>
-                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="ReplayLampPattern">
+                <button type="button" class="btn-secondary" disabled="@(_busy || _lampPlayMode)" @onclick="ReplayLampPattern">
                     @Culture["Leerling.Puzzle.Replay"]
                 </button>
             }
@@ -180,6 +183,8 @@ else
     private int _lampStep;
     private int? _lampLit;
     private bool _lampPlayMode;
+    private bool _lampPatternReady;
+    private int _lampAttemptSeed;
     private bool _groep78;
     private string? _themeKey;
     private string _bandWorldKey = "koraalrif";
@@ -282,9 +287,11 @@ else
         _lampStep = 0;
         _lampLit = null;
         _lampPlayMode = false;
+        _lampPatternReady = false;
+        _lampAttemptSeed = Random.Shared.Next();
         if (Key.Equals("vuurtorenlampen", StringComparison.OrdinalIgnoreCase))
         {
-            _ = StartLampPatternAsync();
+            _ = StartLampPatternAsync(regeneratePattern: true);
         }
     }
 
@@ -366,32 +373,51 @@ else
     {
         _lampStep = 0;
         _lampLit = null;
-        return StartLampPatternAsync();
+        return StartLampPatternAsync(regeneratePattern: false);
     }
 
-    private async Task StartLampPatternAsync()
+    private void EnsureLampPattern(bool regenerate)
     {
+        if (!regenerate && _lampPattern.Count > 0)
+        {
+            return;
+        }
+
+        var rng = new Random(_lampAttemptSeed);
+        _lampPattern = Enumerable.Range(0, 5).Select(_ => rng.Next(0, 3)).ToList();
+    }
+
+    private async Task StartLampPatternAsync(bool regeneratePattern)
+    {
+        if (regeneratePattern)
+        {
+            _lampAttemptSeed = Random.Shared.Next();
+        }
+
+        EnsureLampPattern(regeneratePattern);
         _lampPlayMode = true;
-        _lampPattern = [Random.Shared.Next(0, 3), Random.Shared.Next(0, 3), Random.Shared.Next(0, 3)];
-        await Task.Delay(400);
+        _lampStep = 0;
+        _lampLit = null;
+        await Task.Delay(700);
         foreach (var lamp in _lampPattern)
         {
             _lampLit = lamp;
             await InvokeAsync(StateHasChanged);
-            await Task.Delay(550);
+            await Task.Delay(950);
             _lampLit = null;
             await InvokeAsync(StateHasChanged);
-            await Task.Delay(200);
+            await Task.Delay(400);
         }
 
         _lampPlayMode = false;
         _lampStep = 0;
+        _lampPatternReady = true;
         await InvokeAsync(StateHasChanged);
     }
 
     private void TapLamp(int lamp)
     {
-        if (_lampPlayMode || _solved)
+        if (_lampPlayMode || _solved || !_lampPatternReady)
         {
             return;
         }
@@ -399,7 +425,8 @@ else
         _lampLit = lamp;
         if (_lampStep >= _lampPattern.Count || _lampPattern[_lampStep] != lamp)
         {
-            _ = StartLampPatternAsync();
+            _lampStep = 0;
+            _ = StartLampPatternAsync(regeneratePattern: false);
             return;
         }
 
