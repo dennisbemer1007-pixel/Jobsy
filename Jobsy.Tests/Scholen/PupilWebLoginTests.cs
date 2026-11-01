@@ -13,8 +13,8 @@ using Jobsy.Web.Auth;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -93,6 +93,51 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Equal(HttpStatusCode.OK, progress.Status);
         Assert.False(progress.Body!.Completed);
         Assert.Equal(60, progress.Body.TotalItems);
+    }
+
+    [Fact]
+    public async Task Groep78_without_theme_gets_redirected_from_reis_to_wereld()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Contains("/leerling/wereld", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var reis = await client.GetAsync("/leerling/reis");
+        Assert.Equal(HttpStatusCode.Redirect, reis.StatusCode);
+        Assert.Contains("/leerling/wereld", reis.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Groep78_with_theme_can_load_reis()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(
+                new PupilJourneyThemeRequest(PupilJourneyTheme.Eilandtuin),
+                options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+
+        var reis = await client.GetAsync("/leerling/reis");
+        var html = await reis.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reis.StatusCode);
+        Assert.DoesNotContain("/leerling/wereld", reis.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        Assert.DoesNotContain("Inloggen bij Lobsy", html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -276,6 +321,15 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
     private static async Task FinishJourneyAsync(HttpClient api, string apiTicket)
     {
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(
+                new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie),
+                options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+
         for (var step = 0; step < 80; step++)
         {
             var progress = await GetProgressAsync(api, apiTicket);
@@ -311,6 +365,21 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
                 puzzle.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
                 var savedPuzzle = await api.SendAsync(puzzle);
                 Assert.Equal(HttpStatusCode.OK, savedPuzzle.StatusCode);
+                continue;
+            }
+
+            if (string.Equals(progress.Body.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                var inputs = PupilVakScores.AllSubjectKeys
+                    .Select(k => new PupilVakScoreInput(k, 4, 4))
+                    .ToList();
+                var vakken = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/vakscores")
+                {
+                    Content = JsonContent.Create(new PupilVakScoresRequest(inputs), options: JobsyApiClient.ApiJson)
+                };
+                vakken.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+                var savedVakken = await api.SendAsync(vakken);
+                Assert.Equal(HttpStatusCode.OK, savedVakken.StatusCode);
                 continue;
             }
 

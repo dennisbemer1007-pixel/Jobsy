@@ -45,4 +45,21 @@ public static class PupilGroep78EntryPaths
         => status == PupilCodeStatus.NotStarted && (progress is null || progress.CurrentIndex == 0)
             ? Start
             : Reis;
+
+    public static bool RequiresThemeChoice(PupilQuestionSet questionSet, string? journeyThemeKey)
+        => questionSet == PupilQuestionSet.Groep78
+           && !PupilJourneyTheme.IsValid(journeyThemeKey);
+
+    /// <summary>G78 journey steps that must not run without a chosen visual theme.</summary>
+    public static bool IsThemeGatedPath(ReadOnlySpan<char> path)
+    {
+        if (path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.StartsWith("/leerling/puzzel", StringComparison.OrdinalIgnoreCase);
+    }
 }

@@ -14,7 +14,6 @@ public static class OccupationDayDagtekstenImport
     {
         dutch = null!;
         english = null!;
-        error = null;
 
         if (tekst.Nl is null || tekst.En is null)
         {

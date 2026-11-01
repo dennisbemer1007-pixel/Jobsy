@@ -365,6 +365,21 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_answer_without_theme_returns_theme_required()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync(
+            level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
+        using var client = await LoginPupilAsync(seed);
+        var blocked = await client.PutAsJsonAsync(
+            "api/pupil/progress/answers/9001",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+        var body = await blocked.Content.ReadAsStringAsync();
+        Assert.Contains("theme_required", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Groep78_login_redirects_to_wereld_until_theme_chosen()
     {
         await EnableSchoolsAsync(true);
@@ -394,6 +409,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         var seed = await SeedOpenClassAsync(
             level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
         using var client = await LoginPupilAsync(seed);
+        await ChooseJourneyThemeAsync(client, PupilJourneyTheme.ZeeExpeditie);
         var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
         Assert.Equal(60, progress!.TotalItems);
 
@@ -473,6 +489,14 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             seed.SchoolId, seed.ClassId, seed.PlainCode));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         return client;
+    }
+
+    private static async Task ChooseJourneyThemeAsync(HttpClient client, string themeKey)
+    {
+        var theme = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(themeKey));
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
     }
 
     private async Task EnableSchoolsAsync(bool enabled)

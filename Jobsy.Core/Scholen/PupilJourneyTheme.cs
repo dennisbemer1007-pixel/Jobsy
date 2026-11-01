@@ -21,4 +21,7 @@ public static class PupilJourneyTheme
         var match = All.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase));
         return match ?? throw new ArgumentOutOfRangeException(nameof(key), "Unknown journey theme.");
     }
+
+    public static string ShellCssClass(string? key)
+        => IsValid(key) ? "ll-theme-" + Normalize(key!) : string.Empty;
 }

@@ -23,6 +23,15 @@ public class PupilPdfProxyTests
 {
     private static readonly byte[] PdfBytes = "%PDF-1.4 verhaal"u8.ToArray();
 
+    [Theory]
+    [InlineData(null, "leerling/pdf")]
+    [InlineData("", "leerling/pdf")]
+    [InlineData("?lang=nl", "leerling/pdf?lang=nl")]
+    [InlineData("lang=nl", "leerling/pdf?lang=nl")]
+    [InlineData("?lang=nl?", "leerling/pdf?lang=nl")]
+    public void BuildPupilStoryPdfPath_normalizes_query(string? query, string expected)
+        => Assert.Equal(expected, JobsyApiClient.BuildPupilStoryPdfPath(query));
+
     [Fact]
     public void Pupil_cookie_is_forwarded_for_the_story_pdf_and_pupil_api()
     {

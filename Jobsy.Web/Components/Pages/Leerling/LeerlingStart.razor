@@ -68,10 +68,8 @@
             if (progress is not null)
             {
                 _def = Registry.Get(progress.QuestionSet);
-                if (progress.QuestionSet == PupilQuestionSet.Groep78
-                    && !PupilJourneyTheme.IsValid(progress.JourneyThemeKey))
+                if (PupilGroep78Navigation.RedirectIfThemeMissing(Nav, progress))
                 {
-                    Nav.NavigateTo(PupilGroep78EntryPaths.Wereld, replace: true);
                     return;
                 }
             }

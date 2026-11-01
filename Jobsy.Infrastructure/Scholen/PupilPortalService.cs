@@ -4,9 +4,9 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
@@ -533,6 +533,11 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } themeErr)
+        {
+            return (null, themeErr, 409);
+        }
+
         var def = _registry.ForClass(schoolClass);
         var item = def.Bank.GetById(itemId);
         if (item is null)
@@ -688,6 +693,11 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } vakThemeErr)
+        {
+            return (null, vakThemeErr, 409);
+        }
+
         var def = _registry.ForClass(schoolClass);
         if (def.Set != PupilQuestionSet.Groep78)
         {
@@ -792,6 +802,11 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } chipsThemeErr)
+        {
+            return (null, chipsThemeErr, 409);
+        }
+
         var now = _clock.GetUtcNow().UtcDateTime;
 
         if (code.Status == PupilCodeStatus.Completed || code.Progress?.CompletedAtUtc is not null)
@@ -870,6 +885,11 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } puzzleThemeErr)
+        {
+            return (null, puzzleThemeErr, 409);
+        }
+
         var def = _registry.ForClass(schoolClass);
         if (def.Set != PupilQuestionSet.Groep78
             || !def.PuzzleSlots.Any(s => string.Equals(s.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase)))
@@ -1533,6 +1553,11 @@ public sealed class PupilPortalService : IPupilPortalService
     private static (PupilLoginResponse? Ok, PupilErrorDto? Error, int StatusCode) GenericFail(
         PupilQuestionSet set)
         => (null, LoginErr(GenericCodeError, set, PupilCopy.LoginInvalid(set)), 400);
+
+    private static PupilErrorDto? Groep78ThemeRequired(PupilQuestionSet set, string? journeyThemeKey)
+        => PupilGroep78EntryPaths.RequiresThemeChoice(set, journeyThemeKey)
+            ? new PupilErrorDto("theme_required", "Kies eerst jouw wereld.")
+            : null;
 
     private static PupilErrorDto LoginErr(string code, PupilQuestionSet set, string message)
         => new(code, message, QuestionSet: set);
