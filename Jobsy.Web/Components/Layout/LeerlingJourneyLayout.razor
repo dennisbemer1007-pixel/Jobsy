@@ -1,0 +1,176 @@
+@namespace Jobsy.Web.Components.Layout
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Security
+@using Jobsy.Web.Services
+@inherits LayoutComponentBase
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@inject JobsyApiClient Api
+@implements IDisposable
+
+@if (_useGroep78Shell)
+{
+    <div class="ll-g78-shell @_groep78ThemeClass" lang="@Culture.Language">
+        <header class="top">
+            <a class="brand" href="/leerling/wereld">
+                <img src="/leerling/werelden/img/embleem.png" width="40" height="40" alt="" />
+                Lobsy
+                <small>@Culture["Leerling.Wereld.HeaderGrade"]</small>
+            </a>
+            <div class="sp"></div>
+            @if (!string.IsNullOrEmpty(_chip))
+            {
+                <span class="chip-code">@_chip</span>
+            }
+            @if (_showPause)
+            {
+                <form method="post" action="/leerling/pauze">
+                    <AntiforgeryToken />
+                    <button type="submit" class="btn-pauze">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                        <span>@Culture["Leerling.Pause"]</span>
+                    </button>
+                </form>
+            }
+        </header>
+        @Body
+        <footer>
+            <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
+            <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
+        </footer>
+    </div>
+}
+else
+{
+    <div class="ll-shell @_classicThemeClass" lang="@Culture.Language">
+        <header class="ll-topbar">
+            <a class="ll-topbar__brand" href="/leerling">
+                <img class="ll-topbar__logo" src="@("/" + Jobsy.Web.Media.BrandImages.Webp64)" width="28" height="28" alt="" />
+                <span>Lobsy</span>
+            </a>
+            @if (!string.IsNullOrEmpty(_chip))
+            {
+                <span class="ll-topbar__chip">@_chip</span>
+            }
+            @if (_showPause)
+            {
+                <form method="post" action="/leerling/pauze" class="ll-topbar__pause-form">
+                    <AntiforgeryToken />
+                    <button type="submit" class="ll-topbar__pause">@Culture["Leerling.Pause"]</button>
+                </form>
+            }
+        </header>
+        <main class="ll-main">
+            @Body
+        </main>
+        <footer class="ll-legal">
+            <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
+            <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
+        </footer>
+        <LeerlingCoach />
+    </div>
+}
+
+@code {
+    private string _chip = "";
+    private bool _showPause;
+    private bool _useGroep78Shell;
+    private string _groep78ThemeClass = PupilJourneyTheme.Groep78ShellClass(PupilJourneyTheme.ZeeExpeditie);
+    private string _classicThemeClass = "";
+    private IDisposable? _displayLanguage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri);
+        var onPassport = path.StartsWith("leerling/paspoort", StringComparison.OrdinalIgnoreCase);
+        var onLoginGate = path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
+                          || path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase);
+        if (onPassport)
+        {
+            _displayLanguage?.Dispose();
+            _displayLanguage = null;
+            await Culture.InitializeAsync();
+        }
+        else if (onLoginGate)
+        {
+            _displayLanguage?.Dispose();
+            _displayLanguage = null;
+            Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
+        }
+        else
+        {
+            _displayLanguage ??= Culture.PushDisplayLanguage("nl");
+        }
+
+        _chip = "";
+        _showPause = false;
+        _useGroep78Shell = false;
+        _classicThemeClass = "";
+
+        var pupil = PupilFromRequest();
+        if (pupil is null)
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (JobsyApiAuthHandler.IsPupilPrincipal(state.User))
+            {
+                pupil = state.User;
+            }
+        }
+
+        if (pupil is null)
+        {
+            return;
+        }
+
+        var cls = pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+        var code = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+        if (!string.IsNullOrWhiteSpace(cls) && !string.IsNullOrWhiteSpace(code))
+        {
+            _chip = $"{cls} · {code}";
+        }
+
+        _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
+                     && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
+                     && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
+
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            if (progress?.QuestionSet == PupilQuestionSet.Groep78
+                && PupilJourneyTheme.IsValid(progress.JourneyThemeKey))
+            {
+                _useGroep78Shell = true;
+                _groep78ThemeClass = PupilJourneyTheme.Groep78ShellClass(progress.JourneyThemeKey);
+            }
+            else if (PupilJourneyTheme.IsValid(progress?.JourneyThemeKey))
+            {
+                _classicThemeClass = PupilJourneyTheme.ShellCssClass(progress!.JourneyThemeKey);
+            }
+        }
+        catch
+        {
+            // Offline / prerender: classic shell without theme tint.
+        }
+    }
+
+    private ClaimsPrincipal? PupilFromRequest()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is ClaimsPrincipal pupil
+            && pupil.Identity?.IsAuthenticated == true
+            && JobsyApiAuthHandler.IsPupilPrincipal(pupil))
+        {
+            return pupil;
+        }
+
+        return null;
+    }
+
+    public void Dispose() => _displayLanguage?.Dispose();
+}

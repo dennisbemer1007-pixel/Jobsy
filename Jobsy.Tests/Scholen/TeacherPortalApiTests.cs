@@ -47,6 +47,14 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Equal(HttpStatusCode.OK,
             (await client.GetAsync($"api/teacher/classes/{class3A}/codes")).StatusCode);
 
+        var before = await client.GetFromJsonAsync<List<TeacherCodeRowDto>>($"api/teacher/classes/{class2B}/codes", Json);
+        Assert.NotNull(before);
+        var add = await client.PostAsJsonAsync($"api/teacher/classes/{class2B}/codes", new AddCodesRequest(1));
+        Assert.Equal(HttpStatusCode.OK, add.StatusCode);
+        var after = await client.GetFromJsonAsync<List<TeacherCodeRowDto>>($"api/teacher/classes/{class2B}/codes", Json);
+        Assert.NotNull(after);
+        Assert.Equal(before!.Count + 1, after!.Count);
+
         Assert.Equal(HttpStatusCode.NotFound,
             (await client.GetAsync($"api/teacher/classes/{foreignClass}/overview")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,

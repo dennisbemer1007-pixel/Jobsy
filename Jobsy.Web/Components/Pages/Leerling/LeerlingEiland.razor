@@ -1,11 +1,13 @@
 @page "/leerling/eiland"
-@layout LeerlingLayout
+@layout LeerlingJourneyLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -41,8 +43,13 @@ else if (_state is null)
 }
 else
 {
-    <div class="ll-reis ll-island">
-        <section class="ll-card ll-island-card">
+    @if (_groep78)
+    {
+        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="pauze-eiland" BackgroundPosition="center 40%" />
+    }
+
+    <div class="ll-reis ll-island @(_groep78 ? "wrap" : null)">
+        <section class="@(_groep78 ? "card ll-island-card" : "ll-card ll-island-card")">
             <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Island.ProgressLabel"]">
                 <span class="ll-progress-bar__fill" style="width:@IslandProgressPercent()"></span>
             </div>
@@ -155,6 +162,8 @@ else
     private bool _partBreak;
     private bool _offline;
     private bool _sessionLost;
+    private bool _groep78;
+    private string? _themeKey;
     private string? _error;
     private readonly HashSet<string> _likes = new(StringComparer.Ordinal);
     private readonly HashSet<string> _dislikes = new(StringComparer.Ordinal);
@@ -212,6 +221,9 @@ else
         _state = state;
         _offline = false;
         _def = Registry.Get(state.QuestionSet);
+        _groep78 = state.QuestionSet == PupilQuestionSet.Groep78
+                   && PupilJourneyTheme.IsValid(state.JourneyThemeKey);
+        _themeKey = state.JourneyThemeKey;
 
         if (state.Completed)
         {
@@ -353,7 +365,19 @@ else
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            _windowClosed = true;
+            if (PupilGroep78ConflictHandling.TryHandleProgressConflict(Nav, _state, ex))
+            {
+                return;
+            }
+
+            if (PupilGroep78ConflictHandling.IsWindowClosed(ex))
+            {
+                _windowClosed = true;
+            }
+            else
+            {
+                _error = Culture["Leerling.Reis.SaveFailed"];
+            }
         }
         catch
         {

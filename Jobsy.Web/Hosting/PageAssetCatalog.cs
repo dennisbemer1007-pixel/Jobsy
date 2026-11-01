@@ -428,7 +428,12 @@ public static class PageAssetCatalog
             return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
         }
 
-        if (path.Equals("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
+        if (path.Equals("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/start", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/leerling/puzzel", StringComparison.OrdinalIgnoreCase))
         {
             return [WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")];
         }

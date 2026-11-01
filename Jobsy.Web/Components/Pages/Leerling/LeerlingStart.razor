@@ -1,5 +1,5 @@
 @page "/leerling/start"
-@layout LeerlingLayout
+@layout LeerlingJourneyLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
@@ -7,6 +7,7 @@
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -16,42 +17,85 @@
 
 <PageTitle>@Culture["Leerling.Start.Title"] · Lobsy</PageTitle>
 
-<div class="ll-start">
-    <LeerlingCoachCue Text="@Culture["Leerling.Coach.Start"]" />
-    <section class="ll-card">
-        <h1>@Culture["Leerling.Start.Title"]</h1>
-        <LeerlingSpeak Text="@Spoken" SpeechKey="ll-start" />
-        <p class="muted">@Culture["Leerling.Start.Lead"]</p>
-        <ol class="ll-worlds">
-            @foreach (var plan in (_def?.Worlds ?? Array.Empty<PupilWorldPlan>()))
-            {
-                var w = PupilWorldCatalog.Find(plan.WorldKey);
-                if (w is null)
+@if (_groep78)
+{
+    <div class="wrap">
+        <section class="card ll-start ll-start--g78">
+            <h1 class="serif">@Culture["Leerling.Start.Title"]</h1>
+            <LeerlingSpeak Text="@Spoken" SpeechKey="ll-start" />
+            <p class="muted">@Culture["Leerling.Start.Lead"]</p>
+            <ol class="ll-worlds">
+                @foreach (var plan in (_def?.Worlds ?? Array.Empty<PupilWorldPlan>()))
                 {
-                    continue;
-                }
+                    var w = PupilWorldCatalog.Find(plan.WorldKey);
+                    if (w is null)
+                    {
+                        continue;
+                    }
 
-                var n = PupilWorldCatalog.TestWorldNumber(w.Key);
-                <li>
-                    <span class="ll-worlds__n">@n</span>
-                    <div>
-                        <strong>@Culture[w.TitleKey]</strong>
-                        <small>@Culture[w.SubtitleKey]</small>
-                    </div>
-                </li>
-            }
-        </ol>
-        <ul class="ll-start__notes">
-            <li>@Culture[_def?.StartTimeKey ?? "Leerling.Start.NoteTime"]</li>
-            <li>@Culture["Leerling.Start.NoteNoWrong"]</li>
-            <li>@Culture["Leerling.Start.NotePause"]</li>
-        </ul>
-        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Start.Begin"]</a>
-    </section>
-</div>
+                    var n = PupilWorldCatalog.TestWorldNumber(w.Key);
+                    var titleKey = PupilJourneyTheme.WorldTitleKey(_themeKey, w.Key);
+                    var subKey = PupilJourneyTheme.WorldSubtitleKey(_themeKey, w.Key);
+                    <li>
+                        <span class="ll-worlds__n">@n</span>
+                        <div>
+                            <strong>@Culture[titleKey]</strong>
+                            <small>@Culture[subKey]</small>
+                        </div>
+                    </li>
+                }
+            </ol>
+            <ul class="ll-start__notes">
+                <li>@Culture[_def?.StartTimeKey ?? "Leerling.Start.NoteTime"]</li>
+                <li>@Culture["Leerling.Start.NoteNoWrong"]</li>
+                <li>@Culture["Leerling.Start.NotePause"]</li>
+            </ul>
+            <a class="btn-primary" href="@_beginHref">@Culture["Leerling.Start.Begin"]</a>
+        </section>
+    </div>
+}
+else
+{
+    <div class="ll-start">
+        <LeerlingCoachCue Text="@Culture["Leerling.Coach.Start"]" />
+        <section class="ll-card">
+            <h1>@Culture["Leerling.Start.Title"]</h1>
+            <LeerlingSpeak Text="@Spoken" SpeechKey="ll-start" />
+            <p class="muted">@Culture["Leerling.Start.Lead"]</p>
+            <ol class="ll-worlds">
+                @foreach (var plan in (_def?.Worlds ?? Array.Empty<PupilWorldPlan>()))
+                {
+                    var w = PupilWorldCatalog.Find(plan.WorldKey);
+                    if (w is null)
+                    {
+                        continue;
+                    }
+
+                    var n = PupilWorldCatalog.TestWorldNumber(w.Key);
+                    <li>
+                        <span class="ll-worlds__n">@n</span>
+                        <div>
+                            <strong>@Culture[w.TitleKey]</strong>
+                            <small>@Culture[w.SubtitleKey]</small>
+                        </div>
+                    </li>
+                }
+            </ol>
+            <ul class="ll-start__notes">
+                <li>@Culture[_def?.StartTimeKey ?? "Leerling.Start.NoteTime"]</li>
+                <li>@Culture["Leerling.Start.NoteNoWrong"]</li>
+                <li>@Culture["Leerling.Start.NotePause"]</li>
+            </ul>
+            <a class="btn-primary" href="@_beginHref">@Culture["Leerling.Start.Begin"]</a>
+        </section>
+    </div>
+}
 
 @code {
     private PupilQuestionSetDef? _def;
+    private bool _groep78;
+    private string? _themeKey;
+    private string _beginHref = PupilGroep78EntryPaths.Reis;
 
     private string Spoken => SpokenText.Join(
         Culture["Leerling.Start.Title"],
@@ -68,6 +112,10 @@
             if (progress is not null)
             {
                 _def = Registry.Get(progress.QuestionSet);
+                _groep78 = progress.QuestionSet == PupilQuestionSet.Groep78
+                           && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+                _themeKey = progress.JourneyThemeKey;
+                _beginHref = PupilGroep78EntryPaths.Reis;
                 if (PupilGroep78Navigation.RedirectIfThemeMissing(Nav, progress))
                 {
                     return;
@@ -78,7 +126,5 @@
         {
             _def = null;
         }
-
-        _def ??= Registry.Get(PupilQuestionSet.Vo);
     }
 }

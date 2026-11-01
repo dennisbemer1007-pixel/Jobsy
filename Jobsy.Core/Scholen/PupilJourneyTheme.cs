@@ -1,3 +1,6 @@
+using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen.QuestionSets;
+
 namespace Jobsy.Core.Scholen;
 
 /// <summary>
@@ -22,6 +25,179 @@ public static class PupilJourneyTheme
         return match ?? throw new ArgumentOutOfRangeException(nameof(key), "Unknown journey theme.");
     }
 
+    public static string NormalizeOrDefault(string? key)
+        => IsValid(key) ? Normalize(key!) : ZeeExpeditie;
+
     public static string ShellCssClass(string? key)
         => IsValid(key) ? "ll-theme-" + Normalize(key!) : string.Empty;
+
+    public static string Groep78ShellClass(string? key) => "t-" + NormalizeOrDefault(key);
+
+    public static string WorldTitleKey(string? themeKey, string worldKey)
+    {
+        themeKey = NormalizeOrDefault(themeKey);
+        if (string.Equals(worldKey, "pauze-eiland", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Leerling.World.Island.Title";
+        }
+
+        return (themeKey, worldKey.ToLowerInvariant()) switch
+        {
+            (Eilandtuin, "koraalrif") => "Leerling.Theme.Tuin.Reef.Title",
+            (Eilandtuin, "schatgrot") => "Leerling.Theme.Tuin.Cave.Title",
+            (Eilandtuin, "vuurtoren") => "Leerling.Theme.Tuin.Lighthouse.Title",
+            (Eilandtuin, "lagune") => "Leerling.Theme.Tuin.Lagoon.Title",
+            (Sterrenkust, "koraalrif") => "Leerling.Theme.Ster.Reef.Title",
+            (Sterrenkust, "schatgrot") => "Leerling.Theme.Ster.Cave.Title",
+            (Sterrenkust, "vuurtoren") => "Leerling.Theme.Ster.Lighthouse.Title",
+            (Sterrenkust, "lagune") => "Leerling.Theme.Ster.Lagoon.Title",
+            _ => PupilWorldCatalog.Find(worldKey)?.TitleKey ?? "Leerling.World.Reef.Title",
+        };
+    }
+
+    public static string WorldSubtitleKey(string? themeKey, string worldKey)
+    {
+        themeKey = NormalizeOrDefault(themeKey);
+        if (string.Equals(worldKey, "pauze-eiland", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Leerling.World.Island.Sub";
+        }
+
+        return themeKey switch
+        {
+            Eilandtuin => "Leerling.Theme.Tuin.World.Sub",
+            Sterrenkust => "Leerling.Theme.Ster.World.Sub",
+            _ => PupilWorldCatalog.Find(worldKey)?.SubtitleKey ?? "Leerling.World.Reef.Sub",
+        };
+    }
+
+    public static string WorldBandImageStem(string? themeKey, string worldKey)
+    {
+        themeKey = NormalizeOrDefault(themeKey);
+        var w = worldKey.ToLowerInvariant();
+        if (w == "pauze-eiland")
+        {
+            return "eiland";
+        }
+
+        return (themeKey, w) switch
+        {
+            (Eilandtuin, "koraalrif") => "tuin-koraal",
+            (Eilandtuin, "schatgrot") => "grot",
+            (Eilandtuin, "vuurtoren") => "vuurtoren",
+            (Eilandtuin, "lagune") => "tuin-baai",
+            (Sterrenkust, "koraalrif") => "sterren-strand",
+            (Sterrenkust, "schatgrot") => "grot",
+            (Sterrenkust, "vuurtoren") => "vuurtoren",
+            (Sterrenkust, "lagune") => "lagune",
+            (ZeeExpeditie, "koraalrif") => "rif",
+            (ZeeExpeditie, "schatgrot") => "grot",
+            (ZeeExpeditie, "vuurtoren") => "vuurtoren",
+            (ZeeExpeditie, "lagune") => "lagune",
+            _ => "rif",
+        };
+    }
+
+    public static string WorldBandImagePath(string? themeKey, string worldKey)
+        => $"/leerling/werelden/img/{WorldBandImageStem(themeKey, worldKey)}.jpg";
+
+    public static string PuzzleTitleKey(string? themeKey, string puzzleKey)
+    {
+        var puzzle = puzzleKey.Trim().ToLowerInvariant();
+        themeKey = NormalizeOrDefault(themeKey);
+        return (themeKey, puzzle) switch
+        {
+            (Eilandtuin, "schelpenrij") => "Leerling.Puzzle.Tuin.Schelpenrij.Title",
+            (Eilandtuin, "schatkaart") => "Leerling.Puzzle.Tuin.Schatkaart.Title",
+            (Eilandtuin, "vuurtorenlampen") => "Leerling.Puzzle.Tuin.Vuurtoren.Title",
+            (Sterrenkust, "schelpenrij") => "Leerling.Puzzle.Ster.Schelpenrij.Title",
+            (Sterrenkust, "schatkaart") => "Leerling.Puzzle.Ster.Schatkaart.Title",
+            (Sterrenkust, "vuurtorenlampen") => "Leerling.Puzzle.Ster.Vuurtoren.Title",
+            (_, "schelpenrij") => "Leerling.Puzzle.Schelpenrij.Title",
+            (_, "schatkaart") => "Leerling.Puzzle.Schatkaart.Title",
+            (_, "vuurtorenlampen") => "Leerling.Puzzle.Vuurtoren.Title",
+            _ => "Leerling.Puzzle.Title",
+        };
+    }
+
+    public static string PuzzleLeadKey(string? themeKey, string puzzleKey)
+    {
+        var puzzle = puzzleKey.Trim().ToLowerInvariant();
+        themeKey = NormalizeOrDefault(themeKey);
+        return (themeKey, puzzle) switch
+        {
+            (Eilandtuin, "schelpenrij") => "Leerling.Puzzle.Tuin.Schelpenrij.Lead",
+            (Eilandtuin, "schatkaart") => "Leerling.Puzzle.Tuin.Schatkaart.Lead",
+            (Eilandtuin, "vuurtorenlampen") => "Leerling.Puzzle.Tuin.Vuurtoren.Lead",
+            (Sterrenkust, "schelpenrij") => "Leerling.Puzzle.Ster.Schelpenrij.Lead",
+            (Sterrenkust, "schatkaart") => "Leerling.Puzzle.Ster.Schatkaart.Lead",
+            (Sterrenkust, "vuurtorenlampen") => "Leerling.Puzzle.Ster.Vuurtoren.Lead",
+            (_, "schelpenrij") => "Leerling.Puzzle.Schelpenrij.Lead",
+            (_, "schatkaart") => "Leerling.Puzzle.Schatkaart.Lead",
+            (_, "vuurtorenlampen") => "Leerling.Puzzle.Vuurtoren.Lead",
+            _ => "Leerling.Puzzle.Lead",
+        };
+    }
+
+    public static IReadOnlyList<string> PuzzleMatchPairIds(string? themeKey)
+    {
+        _ = NormalizeOrDefault(themeKey);
+        return ["1", "2", "3", "1", "2", "3"];
+    }
+
+    public static string PuzzleSortAsset(string? themeKey, int size)
+    {
+        var theme = NormalizeOrDefault(themeKey);
+        var clamped = Math.Clamp(size, 1, 4);
+        var ext = theme == ZeeExpeditie ? "png" : "jpg";
+        return $"/images/leerling/werelden/puzzles/{theme}/sort-{clamped}.{ext}";
+    }
+
+    public static string PuzzleMatchAsset(string? themeKey, string pairId)
+    {
+        var theme = NormalizeOrDefault(themeKey);
+        var id = pairId.Trim();
+        if (id is not ("1" or "2" or "3"))
+        {
+            id = "1";
+        }
+
+        return $"/images/leerling/werelden/puzzles/{theme}/match-{id}.jpg";
+    }
+
+    public static string PuzzleLampAsset(string? themeKey, int lampIndex)
+    {
+        var theme = NormalizeOrDefault(themeKey);
+        var n = Math.Clamp(lampIndex + 1, 1, 3);
+        return $"/images/leerling/werelden/puzzles/{theme}/lamp-{n}.jpg";
+    }
+
+    public static string PuzzleCardBackAsset(string? themeKey)
+    {
+        var theme = NormalizeOrDefault(themeKey);
+        return $"/images/leerling/werelden/puzzles/{theme}/card-back.jpg";
+    }
+
+    public static IEnumerable<string> AllPuzzleAssetPaths()
+    {
+        foreach (var theme in All)
+        {
+            for (var size = 1; size <= 4; size++)
+            {
+                yield return PuzzleSortAsset(theme, size).TrimStart('/');
+            }
+
+            for (var pair = 1; pair <= 3; pair++)
+            {
+                yield return PuzzleMatchAsset(theme, pair.ToString()).TrimStart('/');
+            }
+
+            for (var lamp = 1; lamp <= 3; lamp++)
+            {
+                yield return PuzzleLampAsset(theme, lamp - 1).TrimStart('/');
+            }
+
+            yield return PuzzleCardBackAsset(theme).TrimStart('/');
+        }
+    }
 }

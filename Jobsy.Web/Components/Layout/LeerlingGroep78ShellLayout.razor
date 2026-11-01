@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Layout
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
@@ -8,9 +10,10 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 @inject AuthenticationStateProvider AuthState
+@inject JobsyApiClient Api
 @implements IDisposable
 
-<div class="ll-g78-shell t-zee" lang="@Culture.Language">
+<div class="ll-g78-shell @_themeClass" lang="@Culture.Language">
     <header class="top">
         <a class="brand" href="/leerling/wereld">
             <img src="/leerling/werelden/img/embleem.png" width="40" height="40" alt="" />
@@ -43,21 +46,12 @@
 @code {
     private string _chip = "";
     private bool _showPause = true;
+    private string _themeClass = PupilJourneyTheme.Groep78ShellClass(PupilJourneyTheme.ZeeExpeditie);
     private IDisposable? _displayLanguage;
 
     protected override async Task OnParametersSetAsync()
     {
-        var http = HttpContextAccessor.HttpContext;
-        var lang = http?.Request.Query["lang"].ToString();
-        if (!string.IsNullOrWhiteSpace(lang))
-        {
-            _displayLanguage?.Dispose();
-            _displayLanguage = Culture.PushDisplayLanguage(lang);
-        }
-        else
-        {
-            _displayLanguage ??= Culture.PushDisplayLanguage("nl");
-        }
+        _displayLanguage ??= Culture.PushDisplayLanguage("nl");
 
         _chip = "";
         var pupil = PupilFromRequest();
@@ -78,6 +72,19 @@
             {
                 _chip = $"{cls} · {code}";
             }
+        }
+
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            if (PupilJourneyTheme.IsValid(progress?.JourneyThemeKey))
+            {
+                _themeClass = PupilJourneyTheme.Groep78ShellClass(progress!.JourneyThemeKey);
+            }
+        }
+        catch
+        {
+            // Prerender / offline: default zee shell.
         }
     }
 

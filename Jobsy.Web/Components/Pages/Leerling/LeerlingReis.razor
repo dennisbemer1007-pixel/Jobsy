@@ -1,11 +1,13 @@
 @page "/leerling/reis"
-@layout LeerlingLayout
+@layout LeerlingJourneyLayout
 @attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.QuestionSets
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -17,7 +19,10 @@
 
 <PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
 
-<LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+@if (!_groep78)
+{
+    <LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+}
 
 @if (_windowClosed)
 {
@@ -69,8 +74,19 @@ else
     var plates = _state.PlatesShed;
     var infoId = "ll-imagine-" + (item?.Id ?? "x");
     var cheerKey = _def.CheerKey(_state.AnsweredCount);
+    var worldTitleKey = _groep78
+        ? PupilJourneyTheme.WorldTitleKey(_themeKey, worldKey)
+        : world?.TitleKey ?? "Leerling.World.Reef.Title";
+    var worldSubKey = _groep78
+        ? PupilJourneyTheme.WorldSubtitleKey(_themeKey, worldKey)
+        : world?.SubtitleKey ?? "Leerling.World.Reef.Sub";
 
-    <div class="ll-reis">
+    @if (_groep78)
+    {
+        <LeerlingGroep78WorldBand ThemeKey="@_themeKey" WorldKey="@worldKey" />
+    }
+
+    <div class="ll-reis @(_groep78 ? "ll-reis--g78 wrap" : null)">
         <aside class="ll-rail" aria-label="@Culture["Leerling.Reis.Journey"]">
             <p class="ll-rail__title">@Culture["Leerling.Reis.Journey"]</p>
             <div class="ll-rail__worlds" role="group" aria-label="@Culture["Leerling.Reis.WorldProgress"]">
@@ -98,9 +114,15 @@ else
 
                     var done = IsWorldDone(w.Key);
                     var current = string.Equals(w.Key, worldKey, StringComparison.OrdinalIgnoreCase);
+                    var railTitleKey = _groep78
+                        ? PupilJourneyTheme.WorldTitleKey(_themeKey, w.Key)
+                        : w.TitleKey;
+                    var railSubKey = _groep78
+                        ? PupilJourneyTheme.WorldSubtitleKey(_themeKey, w.Key)
+                        : w.SubtitleKey;
                     <li class="@(done ? "is-done" : null) @(current ? "is-now" : null)">
-                        <strong>@Culture[w.TitleKey]</strong>
-                        <small>@Culture[w.SubtitleKey]</small>
+                        <strong>@Culture[railTitleKey]</strong>
+                        <small>@Culture[railSubKey]</small>
                     </li>
                 }
             </ol>
@@ -120,7 +142,11 @@ else
             <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Reis.Progress"]">
                 <span class="ll-progress-bar__fill" style="width:@ProgressPercent()"></span>
             </div>
-            <p class="ll-question__world">@(world is null ? "" : Culture[world.TitleKey])</p>
+            <p class="ll-question__world">@Culture[worldTitleKey]</p>
+            @if (_groep78)
+            {
+                <p class="ll-question__meta">@Culture[worldSubKey]</p>
+            }
             <h1 id="ll-q-title"
                 class="ll-question__text"
                 aria-describedby="@(_infoOpen ? infoId : null)">@qLabel</h1>
@@ -188,6 +214,8 @@ else
     private bool _busy;
     private bool _cheerToast;
     private int _platesSeen = int.MinValue;
+    private bool _groep78;
+    private string? _themeKey;
 
     protected override async Task OnInitializedAsync()
     {
@@ -238,6 +266,9 @@ else
         _state = state;
         _offline = false;
         _def = Registry.Get(state.QuestionSet);
+        _groep78 = state.QuestionSet == PupilQuestionSet.Groep78
+                   && PupilJourneyTheme.IsValid(state.JourneyThemeKey);
+        _themeKey = state.JourneyThemeKey;
 
         if (!state.WindowOpen && !state.Completed)
         {
@@ -411,7 +442,19 @@ else
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            _windowClosed = true;
+            if (PupilGroep78ConflictHandling.TryHandleProgressConflict(Nav, _state, ex))
+            {
+                return;
+            }
+
+            if (PupilGroep78ConflictHandling.IsWindowClosed(ex))
+            {
+                _windowClosed = true;
+            }
+            else
+            {
+                _saveError = Culture["Leerling.Reis.SaveFailed"];
+            }
         }
         catch
         {

@@ -39,6 +39,12 @@ else
         <p class="muted">@Culture["Leraar.Codes.NamesNote"]</p>
     </header>
 
+    <div class="sch-page-actions">
+        <button type="button" class="btn-compact" disabled="@_busy" @onclick="AddCodeAsync">
+            @Culture["Leraar.Codes.Add"]
+        </button>
+    </div>
+
     <EntFilterBar @bind-Query="_query" Placeholder="@Culture["Leraar.Codes.Filter"]">
         <Chips>
             <button type="button" class="btn-compact @(_statusFilter is null ? "is-active" : null)" @onclick="() => SetFilter(null)">@Culture["School.Filter.All"]</button>
@@ -219,6 +225,25 @@ else
         if (id is Guid codeId)
         {
             await Replace(codeId);
+        }
+    }
+
+    private async Task AddCodeAsync()
+    {
+        _busy = true;
+        _actionError = null;
+        try
+        {
+            await Api.AddTeacherCodesAsync(ClassId, 1);
+            _codes = (await Api.GetTeacherCodesAsync(ClassId)).ToList();
+        }
+        catch (Exception error)
+        {
+            _actionError = PortalActionError.From(error.Message);
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

@@ -113,6 +113,33 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_with_theme_start_begin_links_to_reis()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(
+                new PupilJourneyThemeRequest(PupilJourneyTheme.Eilandtuin),
+                options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+
+        var start = await client.GetAsync("/leerling/start");
+        var html = await start.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, start.StatusCode);
+        Assert.Contains("href=\"/leerling/reis\"", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Groep78_with_theme_can_load_reis()
     {
         await EnableSchoolsAsync();

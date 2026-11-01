@@ -52,6 +52,12 @@ public interface ITeacherPortalService
         Guid codeId,
         CancellationToken cancellationToken = default);
 
+    Task<(SchoolPortalClassDetailDto? Detail, string? Error)> AddCodesAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        int count,
+        CancellationToken cancellationToken = default);
+
     Task<(SchoolPortalClassDetailDto? Detail, string? Error, string? ErrorCode)> SetTestWindowAsync(
         ClaimsPrincipal user,
         Guid classId,
@@ -589,6 +595,43 @@ public sealed class TeacherPortalService : ITeacherPortalService
         CancellationToken cancellationToken = default)
         => ReplaceCodeAsTeacherAsync(user, classId, codeId, cancellationToken);
 
+    public async Task<(SchoolPortalClassDetailDto? Detail, string? Error)> AddCodesAsync(
+        ClaimsPrincipal user,
+        Guid classId,
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _scope.CanTeachClassAsync(user, classId, cancellationToken))
+        {
+            return (null, "not_found");
+        }
+
+        if (count < 1)
+        {
+            return (null, "Aantal moet minstens 1 zijn.");
+        }
+
+        var entity = await _db.SchoolClasses
+            .Include(c => c.PupilCodes)
+            .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (entity is null)
+        {
+            return (null, "not_found");
+        }
+
+        var current = entity.PupilCodes.Count;
+        if (current + count > SchoolPortalService.MaxCodesPerClass)
+        {
+            return (null, $"Maximaal {SchoolPortalService.MaxCodesPerClass} codes per klas (nu {current}).");
+        }
+
+        await _codes.GenerateAsync(count, entity, cancellationToken);
+        entity.PupilCount = current + count;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return (await MapTeacherClassDetailAsync(classId, cancellationToken), null);
+    }
+
     public async Task<(SchoolPortalClassDetailDto? Detail, string? Error, string? ErrorCode)> SetTestWindowAsync(
         ClaimsPrincipal user,
         Guid classId,
@@ -667,8 +710,6 @@ public sealed class TeacherPortalService : ITeacherPortalService
         CancellationToken cancellationToken)
     {
         _ = user;
-        // Reuse school portal rules (409 parental / processor) by temporarily allowing teach scope.
-        // SchoolPortalService.SetTestWindowAsync only allows CanManageClass — call shared logic via DB here.
         var entity = await _db.SchoolClasses
             .Include(c => c.School)
             .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
@@ -708,17 +749,31 @@ public sealed class TeacherPortalService : ITeacherPortalService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        return (await MapTeacherClassDetailAsync(classId, cancellationToken), null, null);
+    }
 
-        // Map a minimal detail for the teacher UI (codes not required on test-window response).
+    private async Task<SchoolPortalClassDetailDto?> MapTeacherClassDetailAsync(
+        Guid classId,
+        CancellationToken cancellationToken)
+    {
+        var entity = await _db.SchoolClasses.AsNoTracking()
+            .Include(c => c.School)
+            .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
+        if (entity is null)
+        {
+            return null;
+        }
+
         var codes = await _db.PupilCodes.AsNoTracking()
             .Include(c => c.Progress)
+            .Include(c => c.Result)
             .Where(c => c.SchoolClassId == classId)
             .OrderBy(c => c.Number)
             .ToListAsync(cancellationToken);
 
         var levelLocked = codes.Any(c =>
             c.Status != PupilCodeStatus.NotStarted || c.Progress is not null || c.Result is not null);
-        var dto = new SchoolPortalClassDetailDto(
+        return new SchoolPortalClassDetailDto(
             entity.Id,
             entity.Name,
             entity.Level,
@@ -752,8 +807,6 @@ public sealed class TeacherPortalService : ITeacherPortalService
             }).ToList(),
             entity.QuestionSet,
             levelLocked);
-
-        return (dto, null, null);
     }
 
     private TeacherGroupInsightsDto MapGroupInsights(
