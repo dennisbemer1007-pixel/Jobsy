@@ -265,7 +265,7 @@ else
             _groep78 = state.QuestionSet == PupilQuestionSet.Groep78
                        && PupilJourneyTheme.IsValid(state.JourneyThemeKey);
             _themeKey = state.JourneyThemeKey;
-            _bandWorldKey = state.CurrentWorldKey ?? "koraalrif";
+            _bandWorldKey = PupilJourneyTheme.BandWorldKeyForProgress(state.CurrentWorldKey, Key);
 
             if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))

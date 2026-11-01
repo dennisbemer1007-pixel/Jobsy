@@ -1424,3 +1424,31 @@
   gap: 12px;
   margin-top: 18px;
 }
+
+.ll-g78-shell .ll-result--g78 .ll-result__actions .btn-primary,
+.ll-g78-shell .ll-result--g78 .ll-result__actions .btn-secondary {
+  min-height: 48px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.ll-g78-shell .ll-result--g78 .ll-result__actions .btn-primary {
+  flex: 1;
+  background: var(--coral);
+  color: #fff;
+  border-color: var(--coral);
+}
+
+.ll-g78-shell .ll-result--g78 .ll-result__actions .btn-secondary {
+  min-width: 5rem;
+  background: #fff;
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--brass2) 55%, transparent);
+}

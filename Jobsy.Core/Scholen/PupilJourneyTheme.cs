@@ -99,9 +99,34 @@ public static class PupilJourneyTheme
             (ZeeExpeditie, "schatgrot") => "grot",
             (ZeeExpeditie, "vuurtoren") => "vuurtoren",
             (ZeeExpeditie, "lagune") => "lagune",
-            _ => "rif",
+            _ => themeKey switch
+            {
+                Sterrenkust => "sterren-strand",
+                Eilandtuin => "tuin-baai",
+                _ => "rif",
+            },
         };
     }
+
+    /// <summary>Maps progress world keys that are puzzle route ids back to a journey world for band art.</summary>
+    public static string BandWorldKeyForProgress(string? currentWorldKey, string? puzzleKey = null)
+    {
+        var w = (currentWorldKey ?? "").Trim();
+        if (IsPuzzleRouteKey(w))
+        {
+            w = "";
+        }
+
+        if (string.IsNullOrEmpty(w) && !string.IsNullOrWhiteSpace(puzzleKey))
+        {
+            w = "koraalrif";
+        }
+
+        return string.IsNullOrEmpty(w) ? "koraalrif" : w;
+    }
+
+    public static bool IsPuzzleRouteKey(string? key)
+        => key?.Trim().ToLowerInvariant() is "schelpenrij" or "schatkaart" or "vuurtorenlampen";
 
     public static string WorldBandImagePath(string? themeKey, string worldKey)
         => $"/leerling/werelden/img/{WorldBandImageStem(themeKey, worldKey)}.jpg";

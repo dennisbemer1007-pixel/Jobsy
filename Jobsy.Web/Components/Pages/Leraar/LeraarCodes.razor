@@ -40,7 +40,7 @@ else
     </header>
 
     <div class="sch-page-actions">
-        <button type="button" class="btn-compact" disabled="@_busy" @onclick="AddCodeAsync">
+        <button type="button" class="btn-compact" disabled="@(_busy || _loading)" @onclick="AddCodeAsync">
             @Culture["Leraar.Codes.Add"]
         </button>
     </div>

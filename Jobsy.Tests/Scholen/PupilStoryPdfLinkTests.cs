@@ -26,12 +26,13 @@ public sealed class PupilStoryPdfLinkTests
     [Fact]
     public void Href_never_contains_double_question_mark()
     {
-        foreach (var lang in new[] { "nl", "?lang=nl", "lang=nl?", "nl?" })
+        foreach (var lang in new[] { "nl", "?lang=nl", "lang=nl?", "nl?", "nl? " })
         {
             var href = PupilStoryPdfLink.Href("Alex", lang);
             Assert.DoesNotContain("??", href, StringComparison.Ordinal);
             Assert.DoesNotContain("?lang=nl?", href, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotMatch(@"/leerling/pdf\?$", href);
+            Assert.DoesNotMatch(@"/leerling/pdf\?lang=nl\?$", href);
         }
     }
 }

@@ -17,7 +17,8 @@ public class PageRouteStylesHeadTests
         Assert.Contains("PageAssetCatalog.StylesheetsFor", head, StringComparison.Ordinal);
         Assert.Contains("data-page-route-css", head, StringComparison.Ordinal);
         Assert.Contains("LocationChanged", head, StringComparison.Ordinal);
-        Assert.Contains("_injectRouteStyles", head, StringComparison.Ordinal);
+        Assert.Contains("data-leerling-g78-theme-css", head, StringComparison.Ordinal);
+        Assert.Contains("LeerlingGroep78ThemeStylesheets", head, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

@@ -66,6 +66,17 @@ public class LeerlingGroep78ThemeCssCatalogTests
         }
     }
 
+    [Theory]
+    [InlineData("/leerling/vakken?page=2")]
+    public void RouteStylesheets_includes_g78_theme_css_with_query(string path)
+    {
+        Assert.True(PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles(path));
+        var sheets = PageAssetCatalog.RouteStylesheets(path);
+        Assert.Contains(
+            sheets,
+            s => s.Contains("leerling-werelden-kies.css", StringComparison.Ordinal));
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
