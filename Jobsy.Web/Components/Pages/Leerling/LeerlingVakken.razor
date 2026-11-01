@@ -45,7 +45,7 @@ else
         <LeerlingScene Depth="@SceneDepth" />
     }
 
-    <div class="ll-reis ll-vakken @(_groep78 ? "wrap ll-g78-overlap" : null)" data-testid="leerling-vakken">
+    <div class="@(_groep78 ? "ll-g78-vakken wrap ll-g78-overlap" : "ll-reis ll-vakken")" data-testid="leerling-vakken">
         <section class="@(_groep78 ? "card ll-vakken-card" : "ll-card ll-vakken-card")">
             <div class="ll-progress-dots" role="group" aria-label="@Culture["Leerling.Vakken.Progress"]">
                 @for (var i = 1; i <= 5; i++)

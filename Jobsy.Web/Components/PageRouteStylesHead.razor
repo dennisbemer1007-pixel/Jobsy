@@ -31,6 +31,10 @@
     {
         _lastUri = Navigation.Uri;
         Navigation.LocationChanged += OnLocationChanged;
+        if (PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles(CurrentPath()))
+        {
+            _injectRouteStyles = true;
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

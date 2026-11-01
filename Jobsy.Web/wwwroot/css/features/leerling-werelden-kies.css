@@ -625,7 +625,8 @@
   padding: 0 32px;
 }
 
-.ll-g78-shell .journey {
+.ll-g78-shell .g78-journey,
+.g78-journey {
   position: relative;
   z-index: 3;
   margin: 0 auto;
@@ -638,14 +639,21 @@
   color: var(--cream);
 }
 
-.ll-g78-shell .jrow {
+.ll-g78-shell.t-ster .g78-journey {
+  background: rgba(20, 28, 54, 0.92);
+  border-color: rgba(217, 199, 154, 0.5);
+}
+
+.ll-g78-shell .g78-jrow,
+.g78-journey .g78-jrow {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   position: relative;
 }
 
-.ll-g78-shell .jrow::before {
+.ll-g78-shell .g78-jrow::before,
+.g78-journey .g78-jrow::before {
   content: "";
   position: absolute;
   left: 26px;
@@ -654,7 +662,8 @@
   border-top: 3px dashed rgba(226, 194, 122, 0.55);
 }
 
-.ll-g78-shell .jdone {
+.ll-g78-shell .g78-jdone,
+.g78-journey .g78-jdone {
   position: absolute;
   left: 26px;
   top: 24px;
@@ -664,7 +673,8 @@
   max-width: calc(100% - 52px);
 }
 
-.ll-g78-shell .jn {
+.ll-g78-shell .g78-jn,
+.g78-journey .g78-jn {
   position: relative;
   z-index: 2;
   display: flex;
@@ -677,7 +687,8 @@
   color: rgba(250, 246, 239, 0.75);
 }
 
-.ll-g78-shell .jn .dot {
+.ll-g78-shell .g78-jn .g78-dot,
+.g78-journey .g78-jn .g78-dot {
   width: 52px;
   height: 52px;
   border-radius: 50%;
@@ -685,9 +696,11 @@
   background-position: center;
   border: 3px solid rgba(226, 194, 122, 0.6);
   filter: saturate(0.35) brightness(0.75);
+  flex: none;
 }
 
-.ll-g78-shell .jn.p .dot {
+.ll-g78-shell .g78-jn.is-puzzle .g78-dot,
+.g78-journey .g78-jn.is-puzzle .g78-dot {
   width: 38px;
   height: 38px;
   margin: 7px 0;
@@ -700,14 +713,18 @@
   filter: none;
 }
 
-.ll-g78-shell .jn.p .dot svg {
+.ll-g78-shell .g78-jn.is-puzzle .g78-dot svg,
+.g78-journey .g78-jn.is-puzzle .g78-dot svg {
   transform: rotate(-45deg);
   width: 20px;
   height: 20px;
+  max-width: 20px;
+  max-height: 20px;
   color: var(--brass2);
 }
 
-.ll-g78-shell .jn b {
+.ll-g78-shell .g78-jn b,
+.g78-journey .g78-jn b {
   display: block;
   margin-top: 6px;
   font-weight: 600;
@@ -715,22 +732,27 @@
   font-size: 14px;
 }
 
-.ll-g78-shell .jn.done .dot,
-.ll-g78-shell .jn.cur .dot {
+.ll-g78-shell .g78-jn.is-done .g78-dot,
+.ll-g78-shell .g78-jn.is-cur .g78-dot,
+.g78-journey .g78-jn.is-done .g78-dot,
+.g78-journey .g78-jn.is-cur .g78-dot {
   filter: none;
   border-color: var(--brass2);
 }
 
-.ll-g78-shell .jn.cur .dot {
+.ll-g78-shell .g78-jn.is-cur .g78-dot,
+.g78-journey .g78-jn.is-cur .g78-dot {
   box-shadow: 0 0 0 5px rgba(226, 194, 122, 0.35), 0 0 18px rgba(226, 194, 122, 0.7);
   border-color: #ffd98a;
 }
 
-.ll-g78-shell .jn.cur b {
+.ll-g78-shell .g78-jn.is-cur b,
+.g78-journey .g78-jn.is-cur b {
   color: #ffd98a;
 }
 
-.ll-g78-shell .jn .here {
+.ll-g78-shell .g78-jn .g78-here,
+.g78-journey .g78-jn .g78-here {
   position: absolute;
   top: -30px;
   background: var(--coral);
@@ -742,7 +764,8 @@
   white-space: nowrap;
 }
 
-.ll-g78-shell .jmeta {
+.ll-g78-shell .g78-jmeta,
+.g78-journey .g78-jmeta {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -752,7 +775,8 @@
   gap: 12px;
 }
 
-.ll-g78-shell .seg {
+.ll-g78-shell .g78-seg,
+.g78-journey .g78-seg {
   display: flex;
   gap: 4px;
   flex: 1;
@@ -760,7 +784,8 @@
   margin-left: 16px;
 }
 
-.ll-g78-shell .seg i {
+.ll-g78-shell .g78-seg i,
+.g78-journey .g78-seg i {
   flex: 1;
   height: 7px;
   border-radius: 4px;
@@ -768,11 +793,13 @@
   font-style: normal;
 }
 
-.ll-g78-shell .seg i.f {
+.ll-g78-shell .g78-seg i.is-filled,
+.g78-journey .g78-seg i.is-filled {
   background: var(--brass2);
 }
 
-.ll-g78-shell .seg i.c {
+.ll-g78-shell .g78-seg i.is-cur,
+.g78-journey .g78-seg i.is-cur {
   background: #ffd98a;
   box-shadow: 0 0 0 2px rgba(255, 217, 138, 0.4);
 }
@@ -841,6 +868,8 @@
   display: none !important;
 }
 
+.ll-g78-shell .ll-g78-vakken,
+.ll-g78-shell .ll-g78-island,
 .ll-g78-shell .ll-reis.ll-vakken,
 .ll-g78-shell .ll-reis.ll-island {
   display: block !important;
@@ -850,6 +879,8 @@
   box-sizing: border-box;
 }
 
+.ll-g78-shell .ll-g78-vakken > .ll-vakken-card,
+.ll-g78-shell .ll-g78-island > .ll-island-card,
 .ll-g78-shell .ll-reis.ll-vakken > .ll-vakken-card,
 .ll-g78-shell .ll-reis.ll-island > .ll-island-card {
   width: 100%;
@@ -915,6 +946,7 @@
 }
 
 @media (min-width: 900px) {
+  .ll-g78-shell .ll-g78-vakken,
   .ll-g78-shell .ll-reis.ll-vakken {
     display: block !important;
     grid-template-columns: minmax(0, 1fr) !important;
@@ -922,6 +954,7 @@
     max-width: none;
   }
 
+  .ll-g78-shell .ll-g78-vakken > .ll-vakken-card,
   .ll-g78-shell .ll-reis.ll-vakken > .ll-vakken-card {
     grid-column: auto !important;
     max-width: none !important;
@@ -934,54 +967,54 @@
     padding: 0 14px;
   }
 
-  .ll-g78-shell .journey {
+  .ll-g78-shell .g78-journey {
     border-radius: 14px;
     padding: 12px 10px 10px;
   }
 
-  .ll-g78-shell .jn {
+  .ll-g78-shell .g78-jn {
     width: 34px;
     font-size: 0;
   }
 
-  .ll-g78-shell .jn b {
+  .ll-g78-shell .g78-jn b {
     display: none;
   }
 
-  .ll-g78-shell .jn .dot {
+  .ll-g78-shell .g78-jn .g78-dot {
     width: 30px;
     height: 30px;
     border-width: 2px;
   }
 
-  .ll-g78-shell .jn.p .dot {
+  .ll-g78-shell .g78-jn.is-puzzle .g78-dot {
     width: 20px;
     height: 20px;
     margin: 5px 0;
     border-radius: 5px;
   }
 
-  .ll-g78-shell .jrow::before {
+  .ll-g78-shell .g78-jrow::before {
     left: 14px;
     right: 14px;
     top: 15px;
     border-top-width: 2px;
   }
 
-  .ll-g78-shell .jdone {
+  .ll-g78-shell .g78-jdone {
     left: 14px;
     top: 14px;
     height: 4px;
   }
 
-  .ll-g78-shell .jmeta {
+  .ll-g78-shell .g78-jmeta {
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
     font-size: 14px;
   }
 
-  .ll-g78-shell .seg {
+  .ll-g78-shell .g78-seg {
     margin-left: 0;
     max-width: none;
   }

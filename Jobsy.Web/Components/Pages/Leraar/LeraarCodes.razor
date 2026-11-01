@@ -54,6 +54,11 @@ else
         </Chips>
     </EntFilterBar>
 
+    @if (!string.IsNullOrEmpty(_actionSuccess))
+    {
+        <p class="state-message" role="status">@_actionSuccess</p>
+    }
+
     @if (!string.IsNullOrEmpty(_actionError))
     {
         <p class="state-message error">@_actionError</p>
@@ -115,6 +120,7 @@ else
     private string? _loadError;
     private bool _busy;
     private string? _actionError;
+    private string? _actionSuccess;
     private string _query = "";
     private PupilCodeStatus? _statusFilter;
     private string _sort = "num";
@@ -232,10 +238,26 @@ else
     {
         _busy = true;
         _actionError = null;
+        _actionSuccess = null;
         try
         {
-            await Api.AddTeacherCodesAsync(ClassId, 1);
-            _codes = (await Api.GetTeacherCodesAsync(ClassId)).ToList();
+            var before = _codes.Select(c => c.Id).ToHashSet();
+            var detail = await Api.AddTeacherCodesAsync(ClassId, 1);
+            if (detail?.Codes is { Count: > 0 })
+            {
+                _codes = detail.Codes
+                    .Select(c => new TeacherCodeRowDto(
+                        c.Id, c.Number, c.DisplayCode, c.Status,
+                        c.ProgressCurrent, c.ProgressTotal, c.LastSeenAtUtc))
+                    .ToList();
+                var added = _codes.FirstOrDefault(c => !before.Contains(c.Id))
+                            ?? _codes.OrderByDescending(c => c.Number).First();
+                _actionSuccess = $"Code toegevoegd: {added.DisplayCode}";
+            }
+            else
+            {
+                _codes = (await Api.GetTeacherCodesAsync(ClassId)).ToList();
+            }
         }
         catch (Exception error)
         {

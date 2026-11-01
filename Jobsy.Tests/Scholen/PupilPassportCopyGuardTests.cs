@@ -38,6 +38,24 @@ public sealed class PupilPassportCopyGuardTests
     [InlineData('S')]
     [InlineData('E')]
     [InlineData('C')]
+    public void All_riasec_discover_letter_keys_resolve(char letter)
+    {
+        var questions = PupilPassportCopy.DiscoveryQuestions(null, letter.ToString());
+        Assert.Equal(3, questions.Count);
+        Assert.All(questions, q =>
+        {
+            Assert.DoesNotContain("LeerlingPassport.", q, StringComparison.Ordinal);
+            Assert.DoesNotContain('\u2014', q);
+        });
+    }
+
+    [Theory]
+    [InlineData('R')]
+    [InlineData('I')]
+    [InlineData('A')]
+    [InlineData('S')]
+    [InlineData('E')]
+    [InlineData('C')]
     public void All_riasec_tip_letter_keys_resolve(char letter)
     {
         var tips = PupilPassportCopy.HomeClassTips(null, letter);
