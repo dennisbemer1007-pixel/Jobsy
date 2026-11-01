@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.MboHbo
 @using Jobsy.Web.Components.Ui.Enterprise
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -87,7 +88,9 @@ else
                     </td>
                     <td data-label="@Culture["School.Col.LastActive"]">@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
                     <td class="sch-row-actions" data-label="">
-                        @if (row.Status == PupilCodeStatus.Completed)
+                        @if (row.Status == PupilCodeStatus.Completed
+                             || (row.ProgressTotal == PupilMboHboTeacherProgress.BlockCount
+                                 && row.ProgressCurrent == PupilMboHboTeacherProgress.BlockCount))
                         {
                             <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
                         }

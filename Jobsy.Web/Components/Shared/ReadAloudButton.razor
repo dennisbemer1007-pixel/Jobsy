@@ -104,6 +104,8 @@
             return;
         }
 
+        _show = true;
+        StateHasChanged();
         try
         {
             var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);

@@ -6,6 +6,7 @@
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject CultureState Culture
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
@@ -216,6 +217,37 @@
             _roleLabel = Culture["School.RoleChip"];
             _scopeLabel = ScopeName(user) ?? _roleLabel;
         }
+
+        if (_shellKind == SchShellKind.Teacher && !_featureOff)
+        {
+            Nav.LocationChanged += OnTeacherLocationChanged;
+        }
+    }
+
+    private async void OnTeacherLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (_featureOff || _shellKind != SchShellKind.Teacher)
+        {
+            return;
+        }
+
+        try
+        {
+            _assigned = await Api.GetTeacherClassesAsync();
+            var path = CurrentPath();
+            _currentClassId = ExtractClassId(path) ?? _assigned.FirstOrDefault()?.Id;
+            RefreshTeacherNav();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            /* Best-effort refresh after login or new class assignment. */
+        }
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnTeacherLocationChanged;
     }
 
     protected override void OnParametersSet()

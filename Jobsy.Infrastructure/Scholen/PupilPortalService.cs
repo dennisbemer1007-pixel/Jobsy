@@ -1155,17 +1155,32 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        if (code.Status != PupilCodeStatus.Completed || code.Result is null)
-        {
-            return (null, null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
-        }
-
         var schoolName = await _db.Schools.AsNoTracking()
             .Where(s => s.Id == schoolClass.SchoolId)
             .Select(s => s.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "";
         var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
         displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
+
+        if (schoolClass.QuestionSet == PupilQuestionSet.MboHbo)
+        {
+            var mhboState = PupilMboHboProgressState.Parse(code.Progress?.MboHboProgressJson);
+            if (!mhboState.AllBlocksComplete())
+            {
+                return (null, null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+            }
+
+            var mhboBytes = Passport.PupilMboHboPassportPdfRenderer.Render(
+                code, schoolClass, schoolName, display, displayNameOnPdf);
+            var mhboName = $"lobsy-mbo-hbo-paspoort-{SanitizeFilePart(schoolClass.Name)}.pdf";
+            return (mhboBytes, mhboName, null, 200);
+        }
+
+        if (code.Status != PupilCodeStatus.Completed || code.Result is null)
+        {
+            return (null, null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
         var features = await _features.GetAsync(cancellationToken);
         byte[] bytes;
         if (features.PupilPassportV2Enabled)

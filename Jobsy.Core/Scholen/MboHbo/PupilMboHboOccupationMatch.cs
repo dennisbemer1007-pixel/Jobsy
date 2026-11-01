@@ -15,41 +15,66 @@ public static class PupilMboHboOccupationMatch
         int maxCount = PupilCareerMatchWeights.MaxSuggestions)
     {
         catalog ??= PupilMboHboCatalog.Default;
+        var ranked = RankAll(progress, level, catalog);
+        return SelectForDisplay(ranked, maxCount, PupilCareerMatchWeights.DefaultMinMatch);
+    }
+
+    /// <summary>Outcome screen: always show ranked suggestions (no 70% cutoff).</summary>
+    public static IReadOnlyList<RankedOccupation> TopOccupationsForOutcome(
+        PupilMboHboProgressState progress,
+        SchoolLevel level,
+        PupilMboHboCatalog? catalog = null,
+        int maxCount = PupilCareerMatchWeights.MaxSuggestions)
+    {
+        catalog ??= PupilMboHboCatalog.Default;
+        var ranked = RankAll(progress, level, catalog);
+        return SelectForDisplay(ranked, maxCount, minMatch: 0);
+    }
+
+    private static IReadOnlyList<RankedOccupation> RankAll(
+        PupilMboHboProgressState progress,
+        SchoolLevel level,
+        PupilMboHboCatalog catalog)
+    {
         var riasec = BuildRiasec(progress, catalog, level);
         var vakScores = BuildVakScores(progress, catalog, level);
         var competence = BlockAverage(progress, catalog, level, PupilMboHboBlock.Competentie);
         var values = BlockAverage(progress, catalog, level, PupilMboHboBlock.Werkwaarden);
 
         var questions = catalog.QuestionsFor(PupilMboHboBlock.Beroepen, level);
-        var ranked = questions.Select(q =>
-        {
-            progress.Answers.TryGetValue(q.Id, out var answer);
-            var name = q.Question
-                .Replace("Werken als ", "", StringComparison.OrdinalIgnoreCase)
-                .TrimEnd('.');
-            var letter = ParseRiasecLetter(q.Dimension);
-            var riasecFit = RiasecFit(riasec, letter);
-            var subjectFit = PupilSubjectOccupationFit.FitForMboHboOccupation(q.EscoUri, vakScores);
-            var beroepFit = answer <= 0 ? 0 : (answer - 1) / 4.0;
-            var score = PupilCareerMatchWeights.Riasec * riasecFit
-                        + PupilCareerMatchWeights.Vakken * subjectFit
-                        + PupilCareerMatchWeights.MboBeroepentest * beroepFit
-                        + PupilCareerMatchWeights.MboCompetentie * competence
-                        + PupilCareerMatchWeights.MboWerkwaarden * values;
-            return new RankedOccupation(name, SectorGroupKey(q.Dimension), Math.Clamp(score, 0, 1));
-        })
-        .OrderByDescending(x => x.Score)
-        .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
-        .ToList();
+        return questions.Select(q =>
+            {
+                progress.Answers.TryGetValue(q.Id, out var answer);
+                var name = q.Question
+                    .Replace("Werken als ", "", StringComparison.OrdinalIgnoreCase)
+                    .TrimEnd('.');
+                var letter = ParseRiasecLetter(q.Dimension);
+                var riasecFit = RiasecFit(riasec, letter);
+                var subjectFit = PupilSubjectOccupationFit.FitForMboHboOccupation(q.EscoUri, vakScores);
+                var beroepFit = answer <= 0 ? 0 : (answer - 1) / 4.0;
+                var score = PupilCareerMatchWeights.Riasec * riasecFit
+                            + PupilCareerMatchWeights.Vakken * subjectFit
+                            + PupilCareerMatchWeights.MboBeroepentest * beroepFit
+                            + PupilCareerMatchWeights.MboCompetentie * competence
+                            + PupilCareerMatchWeights.MboWerkwaarden * values;
+                return new RankedOccupation(name, SectorGroupKey(q.Dimension), Math.Clamp(score, 0, 1));
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 
-        return PupilCareerMatchSelection.SelectTop(
+    private static IReadOnlyList<RankedOccupation> SelectForDisplay(
+        IReadOnlyList<RankedOccupation> ranked,
+        int maxCount,
+        double minMatch)
+        => PupilCareerMatchSelection.SelectTop(
             ranked,
             r => r.Score,
             r => r.SectorKey,
-            PupilCareerMatchWeights.DefaultMinMatch,
+            minMatch,
             maxCount,
             PupilCareerMatchWeights.MaxPerGroup);
-    }
 
     private static string SectorGroupKey(string dimension)
     {

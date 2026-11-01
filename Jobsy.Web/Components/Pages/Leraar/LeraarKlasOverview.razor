@@ -299,6 +299,12 @@ else
         try
         {
             _overview = await Api.GetTeacherOverviewAsync(ClassId);
+            if (_overview is null)
+            {
+                await Task.Delay(1500);
+                _overview = await Api.GetTeacherOverviewAsync(ClassId);
+            }
+
             if (_overview is not null)
             {
                 var codes = await Api.GetTeacherCodesAsync(ClassId);
