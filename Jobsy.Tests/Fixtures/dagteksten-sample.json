@@ -1,0 +1,528 @@
+{
+ "versie": "2026-10-31",
+ "model": "gpt-4o",
+ "aantal_teksten": 2,
+ "aantal_beroepen": 13,
+ "teksten": [
+  {
+   "id": "kid-kok",
+   "type": "kid",
+   "isco": "5120",
+   "cluster": "5120",
+   "esco_uri": "http://data.europa.eu/esco/occupation/90f75f67-495d-49fa-ab57-2f320e251d7e",
+   "beroep": "kok",
+   "beroepen": [
+    "kok"
+   ],
+   "geslaagd": true,
+   "problemen": [],
+   "check_stats": {
+    "nl": {
+     "zinnen": 32,
+     "gem_woorden": 6.2,
+     "max_woorden": 9,
+     "lange_woorden": [],
+     "tijden": [
+      "08:00",
+      "09:00",
+      "10:30",
+      "12:00",
+      "14:00",
+      "14:30",
+      "16:00",
+      "18:00",
+      "20:00"
+     ]
+    },
+    "en": {
+     "zinnen": 32,
+     "gem_woorden": 5.4,
+     "max_woorden": 9,
+     "lange_woorden": [],
+     "tijden": [
+      "08:00",
+      "09:00",
+      "10:30",
+      "12:00",
+      "14:00",
+      "14:30",
+      "16:00",
+      "18:00",
+      "20:00"
+     ]
+    }
+   },
+   "persona": {
+    "nl": {
+     "kind": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 2,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is goed te begrijpen, maar sommige zinnen zijn wat lang."
+     },
+     "migrant": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 3,
+      "moeilijke_woorden": [
+       "ingrediënten",
+       "voorraad",
+       "creatief"
+      ],
+      "opmerking": "De tekst is duidelijk, maar enkele woorden zijn moeilijk voor mij."
+     },
+     "volwassene": {
+      "begrijpelijk": 5,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is helder en informatief over het werk van een kok."
+     }
+    },
+    "en": {
+     "kind": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 2,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is goed te begrijpen, maar sommige zinnen zijn iets te volwassen voor een kind van 12."
+     },
+     "migrant": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [
+       "ingrediënten",
+       "creatief",
+       "voorbereiding",
+       "precies"
+      ],
+      "opmerking": "De tekst is duidelijk, maar enkele woorden zijn moeilijk voor iemand met B1-niveau."
+     },
+     "volwassene": {
+      "begrijpelijk": 5,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is helder en goed gestructureerd voor een volwassene die de functie van kok wil begrijpen."
+     }
+    }
+   },
+   "nl": {
+    "titel": "Een dag als kok",
+    "intro": "Als kok maak je elke dag andere gerechten. Je werkt vaak in een team. Schoon en veilig werken is erg belangrijk.",
+    "blokken": [
+     {
+      "tijd": "08:00",
+      "kop": "Voorbereiding",
+      "tekst": "Je begint met het kijken in de keuken. Alles moet schoon zijn. Je kijkt of al het gereedschap klaar is."
+     },
+     {
+      "tijd": "09:00",
+      "kop": "Ingrediënten verzamelen",
+      "tekst": "Je verzamelt de ingrediënten voor de gerechten van vandaag. Alles moet vers zijn. Je kijkt naar de voorraad."
+     },
+     {
+      "tijd": "10:30",
+      "kop": "Koken voor de lunch",
+      "tekst": "Je begint met het koken van de lunch. Alles moet op tijd klaar zijn. Je gebruikt verschillende manieren om te koken."
+     },
+     {
+      "tijd": "12:00",
+      "kop": "Lunchdrukte",
+      "tekst": "Tijdens de lunch serveer je de gerechten. Het kan erg druk zijn. Je werkt snel en precies."
+     },
+     {
+      "tijd": "14:00",
+      "kop": "Pauze",
+      "tekst": "Na de lunch neem je een korte pauze. Even rusten is belangrijk. Je praat met collega's."
+     },
+     {
+      "tijd": "14:30",
+      "kop": "Voorbereiding diner",
+      "tekst": "Je begint met de voorbereiding voor het diner. Alles moet goed geregeld zijn. Je maakt een plan."
+     },
+     {
+      "tijd": "16:00",
+      "kop": "Koken voor het diner",
+      "tekst": "Je kookt de gerechten voor het diner. Je gebruikt verschillende manieren om te koken. Je werkt samen met het team."
+     },
+     {
+      "tijd": "18:00",
+      "kop": "Dinerdrukte",
+      "tekst": "Tijdens het diner serveer je de gerechten. Je werkt snel en precies. Het team helpt elkaar."
+     },
+     {
+      "tijd": "20:00",
+      "kop": "Opruimen",
+      "tekst": "Na het diner maak je de keuken schoon. Alles moet netjes zijn. Je kijkt of het schoon is."
+     }
+    ],
+    "slot": "Als kok geniet je van creatief koken. Het kan soms ook druk zijn."
+   },
+   "en": {
+    "titel": "A day as a cook",
+    "intro": "As a cook, you make different meals every day. You often work in a team. Clean and safe work is very important.",
+    "blokken": [
+     {
+      "tijd": "08:00",
+      "kop": "Preparation",
+      "tekst": "You start by checking the kitchen. Everything must be clean. You check all tools are ready."
+     },
+     {
+      "tijd": "09:00",
+      "kop": "Gather ingredients",
+      "tekst": "You gather ingredients for today's dishes. Everything must be fresh. You check the stock."
+     },
+     {
+      "tijd": "10:30",
+      "kop": "Cooking for lunch",
+      "tekst": "You start cooking lunch dishes. Everything must be ready on time. You use different ways to cook."
+     },
+     {
+      "tijd": "12:00",
+      "kop": "Lunch rush",
+      "tekst": "During lunch, you serve the dishes. It can be very busy. You work quickly and precisely."
+     },
+     {
+      "tijd": "14:00",
+      "kop": "Break",
+      "tekst": "After lunch, you take a short break. Resting is important. You chat with colleagues."
+     },
+     {
+      "tijd": "14:30",
+      "kop": "Dinner preparation",
+      "tekst": "You start preparing for dinner. Everything must be well planned. You make a plan."
+     },
+     {
+      "tijd": "16:00",
+      "kop": "Cooking for dinner",
+      "tekst": "You cook the dinner dishes. You use different ways to cook. You work with the team."
+     },
+     {
+      "tijd": "18:00",
+      "kop": "Dinner rush",
+      "tekst": "During dinner, you serve the dishes. You work quickly and precisely. The team helps each other."
+     },
+     {
+      "tijd": "20:00",
+      "kop": "Cleanup",
+      "tekst": "After dinner, you clean the kitchen. Everything must be tidy. You check if it's clean."
+     }
+    ],
+    "slot": "As a cook, you enjoy creative cooking. It can also be busy sometimes."
+   },
+   "model": "gpt-4o"
+  },
+  {
+   "id": "cluster-2114-onderzoek-en-analyse",
+   "type": "cluster",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "esco_uri": null,
+   "beroep": null,
+   "beroepen": [
+    "delfstofkundige",
+    "exploratiegeoloog",
+    "geochemicus",
+    "geofysicus",
+    "geoloog",
+    "hydrogeoloog",
+    "hydroloog",
+    "milieugeoloog",
+    "mineraloog",
+    "mud logger",
+    "oceanograaf",
+    "seismoloog"
+   ],
+   "geslaagd": true,
+   "problemen": [],
+   "check_stats": {
+    "nl": {
+     "zinnen": 18,
+     "gem_woorden": 5.8,
+     "max_woorden": 11,
+     "lange_woorden": [
+      "toekomstplannen"
+     ],
+     "tijden": [
+      "08:00",
+      "09:00",
+      "11:30",
+      "13:00",
+      "13:30",
+      "15:00",
+      "16:30"
+     ]
+    },
+    "en": {
+     "zinnen": 18,
+     "gem_woorden": 5.4,
+     "max_woorden": 9,
+     "lange_woorden": [],
+     "tijden": [
+      "08:00",
+      "09:00",
+      "11:30",
+      "13:00",
+      "13:30",
+      "15:00",
+      "16:30"
+     ]
+    }
+   },
+   "persona": {
+    "nl": {
+     "kind": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 2,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is leuk en begrijpelijk, maar sommige woorden zijn misschien nog te moeilijk."
+     },
+     "migrant": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [
+       "onderzoeker",
+       "teamgesprek",
+       "informatie",
+       "collega's",
+       "toekomstplannen"
+      ],
+      "opmerking": "De tekst is duidelijk, maar er zijn enkele woorden die ik niet begrijp."
+     },
+     "volwassene": {
+      "begrijpelijk": 5,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is helder en goed gestructureerd, met een duidelijke beschrijving van de werkzaamheden."
+     }
+    },
+    "en": {
+     "kind": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 2,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is leuk en interessant, maar sommige woorden zijn misschien moeilijk."
+     },
+     "migrant": {
+      "begrijpelijk": 4,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [
+       "onderzoek",
+       "collega's",
+       "adviezen",
+       "projecten"
+      ],
+      "opmerking": "De tekst is goed te begrijpen, maar er zijn enkele woorden die ik niet ken."
+     },
+     "volwassene": {
+      "begrijpelijk": 5,
+      "te_kinderlijk": 1,
+      "moeilijke_woorden": [],
+      "opmerking": "De tekst is duidelijk en informatief voor volwassenen die geïnteresseerd zijn in dit werk."
+     }
+    }
+   },
+   "nl": {
+    "titel": "Een dag als onderzoeker",
+    "intro": "Onderzoekers bestuderen de aarde. Ze werken met stenen, water of aardbevingen. Elke dag is anders en vol nieuwe dingen.",
+    "blokken": [
+     {
+      "tijd": "08:00",
+      "kop": "Begin de dag",
+      "tekst": "Je start met een teamgesprek. Bespreek wat je vandaag gaat doen."
+     },
+     {
+      "tijd": "09:00",
+      "kop": "Buiten werken",
+      "tekst": "Je gaat naar een plek voor onderzoek. Je verzamelt stenen."
+     },
+     {
+      "tijd": "11:30",
+      "kop": "Onderzoek doen",
+      "tekst": "Terug op kantoor kijk je naar de verzamelde informatie. Gebruik een computer."
+     },
+     {
+      "tijd": "13:00",
+      "kop": "Lunchpauze",
+      "tekst": "Je eet samen met collega's. Tijd om even te rusten."
+     },
+     {
+      "tijd": "13:30",
+      "kop": "Schrijven",
+      "tekst": "Schrijf op wat je hebt gevonden. Dit helpt bij keuzes maken."
+     },
+     {
+      "tijd": "15:00",
+      "kop": "Praten met anderen",
+      "tekst": "Je praat met mensen die bouwen. Dit helpt bij toekomstplannen."
+     },
+     {
+      "tijd": "16:30",
+      "kop": "Dag afsluiten",
+      "tekst": "Je bespreekt de dag met je team. Plannen voor morgen maken."
+     }
+    ],
+    "slot": "Je geniet van het afwisselende werk en de samenwerking met collega's."
+   },
+   "en": {
+    "titel": "A day as an earth researcher",
+    "intro": "Earth researchers study the planet and its resources. They work with rocks, water, or earthquakes. Every day is different and full of new discoveries.",
+    "blokken": [
+     {
+      "tijd": "08:00",
+      "kop": "Start the day",
+      "tekst": "You begin with a team meeting. Discuss the day's plan."
+     },
+     {
+      "tijd": "09:00",
+      "kop": "Fieldwork",
+      "tekst": "Go to a site for research. Collect rocks."
+     },
+     {
+      "tijd": "11:30",
+      "kop": "Research",
+      "tekst": "Back at the office, look at the collected data. Use a computer."
+     },
+     {
+      "tijd": "13:00",
+      "kop": "Lunch break",
+      "tekst": "Eat with colleagues. Time to relax a bit."
+     },
+     {
+      "tijd": "13:30",
+      "kop": "Write findings",
+      "tekst": "Write down what you found. This helps in making choices."
+     },
+     {
+      "tijd": "15:00",
+      "kop": "Giving advice",
+      "tekst": "Talk with builders. This helps with future projects."
+     },
+     {
+      "tijd": "16:30",
+      "kop": "End the day",
+      "tekst": "Discuss the day with your team. Plan for tomorrow."
+     }
+    ],
+    "slot": "You enjoy the varied work and teamwork with colleagues."
+   },
+   "model": "gpt-4o"
+  }
+ ],
+ "mapping": [
+  {
+   "beroep": "delfstofkundige",
+   "esco_id": "1790c821-c582-4944-8597-d2d4a66f6a6d",
+   "esco_uri": "http://data.europa.eu/esco/occupation/1790c821-c582-4944-8597-d2d4a66f6a6d",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "exploratiegeoloog",
+   "esco_id": "ad14ec64-128c-4a72-9c1a-257a5f3b180c",
+   "esco_uri": "http://data.europa.eu/esco/occupation/ad14ec64-128c-4a72-9c1a-257a5f3b180c",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "geochemicus",
+   "esco_id": "c8e6cdcc-824e-4887-8ee2-197e7d794258",
+   "esco_uri": "http://data.europa.eu/esco/occupation/c8e6cdcc-824e-4887-8ee2-197e7d794258",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "geofysicus",
+   "esco_id": "a92a3e24-93f0-42b3-9ebb-d2d7d8a72cc5",
+   "esco_uri": "http://data.europa.eu/esco/occupation/a92a3e24-93f0-42b3-9ebb-d2d7d8a72cc5",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "geoloog",
+   "esco_id": "c6196b21-20f9-4608-83fb-6f143afc740d",
+   "esco_uri": "http://data.europa.eu/esco/occupation/c6196b21-20f9-4608-83fb-6f143afc740d",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "hydrogeoloog",
+   "esco_id": "6336c205-46bd-42f6-9e67-6b0be6e7618c",
+   "esco_uri": "http://data.europa.eu/esco/occupation/6336c205-46bd-42f6-9e67-6b0be6e7618c",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "hydroloog",
+   "esco_id": "55167849-82cf-484e-b818-fa702a4e69e9",
+   "esco_uri": "http://data.europa.eu/esco/occupation/55167849-82cf-484e-b818-fa702a4e69e9",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "milieugeoloog",
+   "esco_id": "92efb42f-6b0a-44d8-94ea-0141555e6c3b",
+   "esco_uri": "http://data.europa.eu/esco/occupation/92efb42f-6b0a-44d8-94ea-0141555e6c3b",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "mineraloog",
+   "esco_id": "86a0c9ab-c3fa-41a3-ad3e-d0083036b3d6",
+   "esco_uri": "http://data.europa.eu/esco/occupation/86a0c9ab-c3fa-41a3-ad3e-d0083036b3d6",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "mud logger",
+   "esco_id": "d8ff83c0-be8b-47f9-93e3-b13e261e7da5",
+   "esco_uri": "http://data.europa.eu/esco/occupation/d8ff83c0-be8b-47f9-93e3-b13e261e7da5",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "oceanograaf",
+   "esco_id": "4b759f0e-8fec-4cf5-80d4-d112a9fd4e51",
+   "esco_uri": "http://data.europa.eu/esco/occupation/4b759f0e-8fec-4cf5-80d4-d112a9fd4e51",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "seismoloog",
+   "esco_id": "b79cfd33-6e46-4b71-b180-c9a84422f047",
+   "esco_uri": "http://data.europa.eu/esco/occupation/b79cfd33-6e46-4b71-b180-c9a84422f047",
+   "isco": "2114",
+   "cluster": "2114 | Onderzoek en Analyse",
+   "tekst_id": "cluster-2114-onderzoek-en-analyse",
+   "tekst_type": "cluster"
+  },
+  {
+   "beroep": "kok",
+   "esco_id": "90f75f67-495d-49fa-ab57-2f320e251d7e",
+   "esco_uri": "http://data.europa.eu/esco/occupation/90f75f67-495d-49fa-ab57-2f320e251d7e",
+   "isco": "5120",
+   "cluster": "5120",
+   "tekst_id": "kid-kok",
+   "tekst_type": "kid"
+  }
+ ]
+}

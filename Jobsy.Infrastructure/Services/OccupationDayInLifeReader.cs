@@ -138,7 +138,9 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
         }
 
         var translatedBlocks = translated.Blocks is { Count: > 0 }
-            ? OccupationDayBlocks.Normalize(translated.Blocks)
+            ? OccupationDayBlocks.UsesNumberedTimeline(translated.Blocks)
+                ? OccupationDayBlocks.NormalizeNumbered(translated.Blocks)
+                : OccupationDayBlocks.Normalize(translated.Blocks)
             : [];
         return view with
         {

@@ -9,6 +9,11 @@ namespace Jobsy.Core.Careers;
 /// </summary>
 public static partial class OccupationDayTimeline
 {
+    public const int DagtekstenMinBlocks = 7;
+    public const int DagtekstenMaxBlocks = 10;
+    public const int DagtekstenMaxGapMinutes = 150;
+    public const int DagtekstenMinGapMinutes = 15;
+
     /// <summary>Minutes from midnight for 4–8 timeline blocks (≈90 min steps; 12:30→13:30 is 60 min).</summary>
     private static readonly int[][] Schedules =
     [
@@ -24,6 +29,11 @@ public static partial class OccupationDayTimeline
         if (blocks is not { Count: > 0 })
         {
             return blocks ?? [];
+        }
+
+        if (ShouldPreserveLabels(blocks))
+        {
+            return blocks;
         }
 
         var schedule = ScheduleFor(blocks.Count);
@@ -83,6 +93,68 @@ public static partial class OccupationDayTimeline
         }
 
         return true;
+    }
+
+    /// <summary>7–10 blocks, strict order, gaps up to 2,5 uur; hours may start before 08:00 or end after 17:00.</summary>
+    public static bool TryValidateDagteksten(IReadOnlyList<OccupationDayBlock> blocks, out string? reason)
+    {
+        reason = null;
+        if (blocks is not { Count: >= DagtekstenMinBlocks and <= DagtekstenMaxBlocks })
+        {
+            reason = "tijdlijn-dagteksten-aantal";
+            return false;
+        }
+
+        var minutes = new List<int>(blocks.Count);
+        foreach (var block in blocks)
+        {
+            if (!TryParseLabelMinutes(block.Label, out var m))
+            {
+                reason = "tijd-onleesbaar";
+                return false;
+            }
+
+            minutes.Add(m);
+        }
+
+        for (var i = 1; i < minutes.Count; i++)
+        {
+            var delta = ForwardDelta(minutes[i - 1], minutes[i]);
+            if (delta <= 0)
+            {
+                reason = "tijd-niet-stijgend";
+                return false;
+            }
+
+            if (delta > DagtekstenMaxGapMinutes)
+            {
+                reason = "tijd-gat-te-groot";
+                return false;
+            }
+
+            if (delta < DagtekstenMinGapMinutes)
+            {
+                reason = "tijd-gat-te-klein";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static bool ShouldPreserveLabels(IReadOnlyList<OccupationDayBlock>? blocks)
+        => blocks is { Count: > 0 }
+           && (OccupationDayBlocks.UsesNumberedTimeline(blocks) || TryValidateDagteksten(blocks, out _));
+
+    private static int ForwardDelta(int previous, int next)
+    {
+        var delta = next - previous;
+        if (delta <= 0)
+        {
+            delta += 24 * 60;
+        }
+
+        return delta;
     }
 
     private static int[] ScheduleFor(int count)

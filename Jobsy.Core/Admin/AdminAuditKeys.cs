@@ -56,6 +56,7 @@ public static class AdminAuditKeys
     public const string OccupationDayStart = "occupation-day.start";
     public const string OccupationDayStop = "occupation-day.stop";
     public const string OccupationDayImport = "occupation-day.import";
+    public const string OccupationDayDagtekstenImport = "occupation-day.import-dagteksten";
     public const string OccupationDayExport = "occupation-day.export";
     public const string OccupationDayProbe = "occupation-day.probe";
 

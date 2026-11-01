@@ -47,17 +47,24 @@ public static partial class OccupationDayInLifeValidator
         if (draft.Blocks is { Count: > 0 } blocks)
         {
             ValidateBlocks(found, blocks, facts.IsThin);
-            var timed = blocks.Count(block => OccupationDayTimeline.TryParseLabelMinutes(block.Label, out _));
-            if (timed == blocks.Count)
+            if (OccupationDayBlocks.UsesNumberedTimeline(blocks))
             {
-                if (!OccupationDayTimeline.TryValidate(blocks, out var timelineReason))
-                {
-                    found.Add(timelineReason ?? "tijdlijn");
-                }
+                ValidateNumberedBlocks(found, blocks);
             }
-            else if (timed > 0)
+            else
             {
-                found.Add("tijd-onleesbaar");
+                var timed = blocks.Count(block => OccupationDayTimeline.TryParseLabelMinutes(block.Label, out _));
+                if (timed == blocks.Count)
+                {
+                    if (!OccupationDayTimeline.TryValidate(blocks, out var timelineReason))
+                    {
+                        found.Add(timelineReason ?? "tijdlijn");
+                    }
+                }
+                else if (timed > 0)
+                {
+                    found.Add("tijd-onleesbaar");
+                }
             }
         }
 
@@ -175,6 +182,18 @@ public static partial class OccupationDayInLifeValidator
             {
                 found.Add("blok");
             }
+            else if (OccupationDayBlocks.UsesNumberedTimeline(source.Blocks))
+            {
+                foreach (var block in translatedBlocks)
+                {
+                    RequireTranslationSection(found, block.Text);
+                    if (string.IsNullOrWhiteSpace(block.Label) || block.Label.Length > 32)
+                    {
+                        found.Add("blok");
+                        break;
+                    }
+                }
+            }
             else
             {
                 foreach (var block in translatedBlocks)
@@ -290,8 +309,48 @@ public static partial class OccupationDayInLifeValidator
         }
     }
 
+    private static void ValidateNumberedBlocks(List<string> found, IReadOnlyList<OccupationDayBlock> blocks)
+    {
+        if (blocks.Count is < OccupationDayTimeline.DagtekstenMinBlocks or > OccupationDayTimeline.DagtekstenMaxBlocks)
+        {
+            found.Add("blok: " + blocks.Count + " blokken, verwacht 7–10");
+            return;
+        }
+
+        if (!OccupationDayTimeline.TryValidateDagteksten(blocks, out var timelineReason))
+        {
+            found.Add(timelineReason ?? "tijdlijn");
+        }
+
+        for (var i = 0; i < blocks.Count; i++)
+        {
+            var block = blocks[i];
+            var label = (block.Label ?? "").Trim();
+            var text = (block.Text ?? "").Trim();
+            if (label.Length is < 2 or > 32)
+            {
+                found.Add("blok " + (i + 1) + ": label");
+            }
+
+            if (text.Length < 12)
+            {
+                found.Add("blok " + (i + 1) + ": tekst te kort");
+            }
+            else if (LongestSentence(text) > MaxWordsPerSentence)
+            {
+                found.Add("blok " + (i + 1) + ": zin te lang");
+            }
+        }
+    }
+
     private static void ValidateBlocks(List<string> found, IReadOnlyList<OccupationDayBlock> blocks, bool thin)
     {
+        if (OccupationDayBlocks.UsesNumberedTimeline(blocks))
+        {
+            ValidateNumberedBlocks(found, blocks);
+            return;
+        }
+
         var noted = 0;
         var min = thin ? OccupationDayBlocks.MinThin : OccupationDayBlocks.MinNormal;
         if (blocks.Count < min)

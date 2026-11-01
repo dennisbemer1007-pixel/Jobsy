@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
@@ -24,6 +25,7 @@ public static class OccupationDayBlocks
     public const int MinNormal = 5;
     public const int MinThin = 4;
     public const int Max = 8;
+    public const int MaxDagteksten = 10;
 
     public static string DefaultLabel(string? key) => (key ?? "").Trim().ToLowerInvariant() switch
     {
@@ -39,7 +41,17 @@ public static class OccupationDayBlocks
     };
 
     public static bool IsKnown(string? key)
-        => Keys.Contains((key ?? "").Trim(), StringComparer.OrdinalIgnoreCase);
+        => Keys.Contains((key ?? "").Trim(), StringComparer.OrdinalIgnoreCase) || IsNumberedKey(key);
+
+    public static bool IsNumberedKey(string? key)
+    {
+        var raw = (key ?? "").Trim();
+        return int.TryParse(raw, NumberStyles.None, CultureInfo.InvariantCulture, out var n)
+               && n is >= 1 and <= MaxDagteksten;
+    }
+
+    public static bool UsesNumberedTimeline(IReadOnlyList<OccupationDayBlock>? blocks)
+        => blocks is { Count: > 0 } && blocks.All(block => IsNumberedKey(block.Key));
 
     /// <summary>
     /// Maps a model key onto the stored key. Dutch names and a clock time in the key are accepted.
@@ -75,7 +87,7 @@ public static class OccupationDayBlocks
         try
         {
             var rows = JsonSerializer.Deserialize<List<OccupationDayBlock>>(json, OccupationDayJson.Options) ?? [];
-            return Normalize(rows);
+            return UsesNumberedTimeline(rows) ? NormalizeNumbered(rows) : Normalize(rows);
         }
         catch (JsonException)
         {
@@ -84,7 +96,54 @@ public static class OccupationDayBlocks
     }
 
     public static string Serialize(IReadOnlyList<OccupationDayBlock>? blocks)
-        => JsonSerializer.Serialize(Normalize(blocks ?? []), OccupationDayJson.Options);
+    {
+        var list = blocks ?? [];
+        return JsonSerializer.Serialize(
+            UsesNumberedTimeline(list) ? NormalizeNumbered(list) : Normalize(list),
+            OccupationDayJson.Options);
+    }
+
+    public static IReadOnlyList<OccupationDayBlock> NormalizeNumbered(IEnumerable<OccupationDayBlock>? blocks)
+    {
+        var found = new List<OccupationDayBlock>();
+        foreach (var block in blocks ?? [])
+        {
+            if (block is null || !IsNumberedKey(block.Key))
+            {
+                continue;
+            }
+
+            var key = block.Key.Trim();
+            if (found.Any(item => string.Equals(item.Key, key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var text = (block.Text ?? "").Trim();
+            if (text.Length == 0)
+            {
+                continue;
+            }
+
+            var label = (block.Label ?? "").Trim();
+            if (label.Length == 0)
+            {
+                label = DefaultLabel(key);
+            }
+
+            if (label.Length > 32)
+            {
+                label = label[..32].Trim();
+            }
+
+            found.Add(new OccupationDayBlock(key, label, text));
+        }
+
+        return found
+            .OrderBy(item => int.Parse(item.Key, CultureInfo.InvariantCulture))
+            .Take(MaxDagteksten)
+            .ToList();
+    }
 
     public static IReadOnlyList<OccupationDayBlock> Normalize(IEnumerable<OccupationDayBlock>? blocks)
     {
@@ -142,6 +201,11 @@ public static class OccupationDayBlocks
             return draft;
         }
 
+        if (UsesNumberedTimeline(blocks))
+        {
+            return WithDerivedFromNumbered(draft, blocks);
+        }
+
         var morning = Text(blocks, "morning") ?? Text(blocks, "start") ?? draft.Morning;
         var midday = Text(blocks, "plan") ?? Text(blocks, "talk") ?? Text(blocks, "pause") ?? draft.Midday;
         var afternoon = Text(blocks, "afternoon") ?? draft.Afternoon;
@@ -153,6 +217,56 @@ public static class OccupationDayBlocks
             Afternoon = string.IsNullOrWhiteSpace(afternoon) ? draft.Afternoon : afternoon,
             Closing = string.IsNullOrWhiteSpace(closing) ? draft.Closing : closing
         };
+    }
+
+    private static OccupationDayDraft WithDerivedFromNumbered(OccupationDayDraft draft, IReadOnlyList<OccupationDayBlock> blocks)
+    {
+        var ordered = NormalizeNumbered(blocks);
+        var texts = ordered.Select(block => block.Text).ToList();
+        var parts = SplitIntoFour(texts);
+        return draft with
+        {
+            Blocks = ordered.ToList(),
+            Morning = parts[0],
+            Midday = parts[1],
+            Afternoon = parts[2],
+            Closing = parts[3]
+        };
+    }
+
+    internal static string[] SplitIntoFour(IReadOnlyList<string> texts)
+    {
+        var count = texts.Count;
+        if (count == 0)
+        {
+            return ["", "", "", ""];
+        }
+
+        var sizes = QuarterSizes(count);
+        var parts = new string[4];
+        var index = 0;
+        for (var quarter = 0; quarter < 4; quarter++)
+        {
+            var take = sizes[quarter];
+            var slice = texts.Skip(index).Take(take).ToList();
+            index += take;
+            parts[quarter] = slice.Count == 0 ? "" : string.Join(" ", slice);
+        }
+
+        return parts;
+    }
+
+    private static int[] QuarterSizes(int count)
+    {
+        var baseSize = count / 4;
+        var extra = count % 4;
+        var sizes = new int[4];
+        for (var i = 0; i < 4; i++)
+        {
+            sizes[i] = baseSize + (i < extra ? 1 : 0);
+        }
+
+        return sizes;
     }
 
     public static IReadOnlyList<OccupationDayBlock> FromLegacy(string? morning, string? midday, string? afternoon, string? closing)

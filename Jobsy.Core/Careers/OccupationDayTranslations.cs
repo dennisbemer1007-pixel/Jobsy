@@ -82,7 +82,9 @@ public static class OccupationDayTranslations
             Afternoon = (draft.Afternoon ?? "").Trim(),
             Closing = (draft.Closing ?? "").Trim(),
             Highlights = draft.Highlights.Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(4).ToList(),
-            Blocks = OccupationDayBlocks.Normalize(draft.Blocks).ToList(),
+            Blocks = OccupationDayBlocks.UsesNumberedTimeline(draft.Blocks)
+                ? OccupationDayBlocks.NormalizeNumbered(draft.Blocks).ToList()
+                : OccupationDayBlocks.Normalize(draft.Blocks).ToList(),
             Tasks = (draft.Tasks ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(8).ToList(),
             Skills = (draft.Skills ?? []).Where(line => !string.IsNullOrWhiteSpace(line)).Select(line => line.Trim()).Take(8).ToList(),
             Varies = (draft.VariesNote ?? "").Trim(),

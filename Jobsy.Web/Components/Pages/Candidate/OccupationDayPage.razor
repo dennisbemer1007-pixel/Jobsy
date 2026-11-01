@@ -56,11 +56,21 @@
             {
                 <p class="day-life__lead">@Culture["Day.Thin"]</p>
             }
-            <ol class="day-life__timeline">
+            <ol class="day-life__timeline @(Timeline.Count >= 9 ? "day-life__timeline--long" : null)">
                 @foreach (var block in Timeline)
                 {
                     <li class="day-life__block">
-                        <h2 class="day-life__chip">@block.Label</h2>
+                        @if (TrySplitClockLabel(block.Label, out var clock, out var moment))
+                        {
+                            <h2 class="day-life__chip">
+                                <span class="day-life__time">@clock</span>
+                                <span class="day-life__moment">@moment</span>
+                            </h2>
+                        }
+                        else
+                        {
+                            <h2 class="day-life__chip">@block.Label</h2>
+                        }
                         <p>@block.Text</p>
                     </li>
                 }
@@ -163,15 +173,7 @@
                 return Culture["Day.Eyebrow"];
             }
 
-            var title = Job.Nl;
-            if (!JobsyLanguages.AreSame(Culture.Language, "nl")
-                && _day is { Found: true, TitleNl: { Length: > 0 } translated }
-                && !JobsyLanguages.AreSame(_day.Language, "nl"))
-            {
-                title = translated;
-            }
-
-            return Culture.Format("Day.Title", title);
+            return Culture.Format("Day.Title", Job.Nl);
         }
     }
 
@@ -214,6 +216,28 @@
                 }
             }
         }
+    }
+
+    private static bool TrySplitClockLabel(string? label, out string clock, out string moment)
+    {
+        clock = "";
+        moment = "";
+        var text = (label ?? "").Trim();
+        var space = text.IndexOf(' ');
+        if (space <= 0 || space >= text.Length - 1)
+        {
+            return false;
+        }
+
+        var head = text[..space];
+        if (!OccupationDayTimeline.TryParseLabelMinutes(head, out _))
+        {
+            return false;
+        }
+
+        clock = head;
+        moment = text[(space + 1)..].Trim();
+        return moment.Length > 0;
     }
 
     protected override async Task OnParametersSetAsync()

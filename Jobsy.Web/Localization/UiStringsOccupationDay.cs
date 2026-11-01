@@ -60,6 +60,7 @@ public static class UiStringsOccupationDay
         Add("Admin.Day.UnknownJob", "Dit beroep kennen we niet: {0}", "We do not know this occupation: {0}", "Nie znamy tego zawodu: {0}", "Nu cunoaștem această meserie: {0}", "لا نعرف هذه المهنة: {0}");
         Add("Admin.Day.Export", "JSON downloaden", "Download JSON", "Pobierz JSON", "Descarcă JSON", "تنزيل JSON");
         Add("Admin.Day.Import", "Importeer JSON", "Import JSON", "Importuj JSON", "Importă JSON", "استيراد JSON");
+        Add("Admin.Day.ImportDagteksten", "Importeer dagteksten.json", "Import dagteksten.json", "Importuj dagteksten.json", "Importă dagteksten.json", "استيراد dagteksten.json");
         Add("Admin.Day.Stored", "{0} van {1} beroepen hebben een Nederlandse dag. Nog {2} zonder volledige tekst of vertaling.", "{0} of {1} occupations have a Dutch day. {2} still need the full text or a translation.", "{0} z {1} zawodów ma niderlandzki dzień. Zostało {2}.", "{0} din {1} meserii au o zi în olandeză. Mai sunt {2}.", "{0} من {1} مهنة لها يوم هولندي. تبقى {2}.");
         Add("Admin.Day.Running", "Bezig: {0} nieuw, {1} mislukt.", "Running: {0} new, {1} failed.", "W toku: {0} nowych, {1} błędów.", "În curs: {0} noi, {1} eșuate.", "جارٍ: {0} جديد، {1} فشل.");
         Add("Admin.Day.Key", "OpenAI-sleutel ontbreekt. Zet OpenAI__ApiKey of de integratie-sleutel. Mistral wordt voor deze vulling niet gebruikt.", "The OpenAI key is missing. Set OpenAI__ApiKey or the integration key. This fill does not use Mistral.", "Brak klucza OpenAI.", "Lipsește cheia OpenAI.", "مفتاح OpenAI غير موجود.");

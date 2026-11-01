@@ -54,6 +54,10 @@
             @Culture["Admin.Day.Import"]
             <InputFile OnChange="ImportAsync" accept=".json,application/json" />
         </label>
+        <label>
+            @Culture["Admin.Day.ImportDagteksten"]
+            <InputFile OnChange="ImportDagtekstenAsync" accept=".json,application/json" />
+        </label>
     }
 </AdminPageShell>
 
@@ -277,6 +281,29 @@
             _message = result is null
                 ? Culture["Common.Error"]
                 : $"{result.Inserted} nieuw, {result.Updated} bijgewerkt, {result.Unchanged} gelijk, {result.Rejected} afgekeurd.";
+            await RefreshAsync();
+        }
+        catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+        {
+            _message = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ImportDagtekstenAsync(InputFileChangeEventArgs args)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await using var stream = args.File.OpenReadStream(15_000_000);
+            var result = await Api.ImportOccupationDayDagtekstenAsync(stream);
+            _message = result is null
+                ? Culture["Common.Error"]
+                : $"{result.Mapped} gekoppeld, {result.Inserted} nieuw, {result.Updated} bijgewerkt, {result.Unchanged} gelijk, {result.Rejected} afgekeurd.";
             await RefreshAsync();
         }
         catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
