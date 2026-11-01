@@ -1,5 +1,6 @@
 using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Web.Security;
 
@@ -12,8 +13,13 @@ namespace Jobsy.Web.Security;
 public sealed class SchoolsFeatureMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<SchoolsFeatureMiddleware> _logger;
 
-    public SchoolsFeatureMiddleware(RequestDelegate next) => _next = next;
+    public SchoolsFeatureMiddleware(RequestDelegate next, ILogger<SchoolsFeatureMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -34,10 +40,15 @@ public sealed class SchoolsFeatureMiddleware
         {
             var features = context.RequestServices.GetService<IFeatureFlags>();
             // Fail closed: a missing flag service must not open the portal.
-            var enabled = features is not null
+            var schoolsEnabled = features is not null
                 && await SchoolsFeatureGate.IsEnabledAsync(features, context.RequestAborted);
-            if (!enabled)
+            if (!schoolsEnabled)
             {
+                _logger.LogWarning(
+                    "Schools portal gated off for {Path}: featureFlagsServiceMissing={FlagsMissing}, schoolsEnabled={SchoolsEnabled} (browser redirect reason=schools-off; web flags often false when GET api/settings/feature-flags fails because lobsy-acc-api is down).",
+                    path,
+                    features is null,
+                    schoolsEnabled);
                 if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
                 {
                     context.Response.StatusCode = StatusCodes.Status404NotFound;

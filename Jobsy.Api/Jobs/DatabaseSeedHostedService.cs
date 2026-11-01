@@ -42,7 +42,9 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Database migrate failed during startup.");
+            _logger.LogError(
+                ex,
+                "Database migrate failed during startup (search logs for PendingModelChanges or column already exists; API auth and feature-flags endpoints stay down until fixed).");
             throw;
         }
 

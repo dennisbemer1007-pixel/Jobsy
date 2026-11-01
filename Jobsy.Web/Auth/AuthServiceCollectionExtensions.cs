@@ -519,8 +519,10 @@ public static class AuthServiceCollectionExtensions
             DemoUserStore users,
             IConfiguration configuration,
             IAntiforgery antiforgery,
-            IDataProtectionProvider dataProtection) =>
+            IDataProtectionProvider dataProtection,
+            ILoggerFactory loggerFactory) =>
         {
+            var loginLogger = loggerFactory.CreateLogger("Jobsy.Web.Auth.LocalLogin");
             var form = await http.Request.ReadFormAsync();
             var returnUrl = AuthRedirects.ResolveRequestedReturnUrl(
                 form["returnUrl"], form["returnTo"], form["redirect"]);
@@ -574,6 +576,12 @@ public static class AuthServiceCollectionExtensions
                         LocalLoginFailureKind.SchoolsPaused => "schools-paused",
                         _ => "invalid"
                     };
+                    if (failure == LocalLoginFailureKind.Unavailable)
+                    {
+                        loginLogger.LogWarning(
+                            "Local login redirected to /login?error=unavailable (auth API unreachable, timeout, or non-auth HTTP error — check lobsy-acc-api /health and startup logs for Database migrate failed or PendingModelChanges).");
+                    }
+
                     if (error is "invalid" or "locked" or "too-many")
                     {
                         LoginHintCookie.Set(http, dataProtection, email);

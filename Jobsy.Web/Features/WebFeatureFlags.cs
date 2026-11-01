@@ -96,8 +96,12 @@ public sealed class WebFeatureFlags : IFeatureFlags
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load feature flags from API; using last known or defaults.");
             var fallback = ApplyAcceptatieConfigOverrides(_lastKnown ?? FeatureFlagSnapshot.Defaults);
+            _logger.LogWarning(
+                ex,
+                "Failed to load feature flags from API; using fallback (schoolsEnabled={SchoolsEnabled}, employersEnabled={EmployersEnabled}). Check lobsy-acc-api /health and migrate logs when SchoolsEnabled is false on acceptatie.",
+                fallback.SchoolsEnabled,
+                fallback.EmployersEnabled);
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;
         }
