@@ -375,15 +375,18 @@ public sealed class MboHboFlowPlaywrightTests
             new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await WaitBlazorAsync(page);
         var tile = page.Locator(".mhbo-tile").Filter(new() { Has = page.Locator("button.mhbo-btn") });
-        var start = tile.Filter(new() { HasText = blockKey switch
+        var start = tile.Filter(new()
         {
-            "vakken" => "Vakkenpakket",
-            "interesse" => "Interessetest",
-            "competentie" => "Competentietest",
-            "beroepen" => "Beroepentest",
-            "werkwaarden" => "Werkwaarden",
-            _ => blockKey
-        } }).GetByRole(AriaRole.Button).First;
+            HasText = blockKey switch
+            {
+                "vakken" => "Vakkenpakket",
+                "interesse" => "Interessetest",
+                "competentie" => "Competentietest",
+                "beroepen" => "Beroepentest",
+                "werkwaarden" => "Werkwaarden",
+                _ => blockKey
+            }
+        }).GetByRole(AriaRole.Button).First;
         if (await start.CountAsync() == 0)
         {
             start = page.Locator(".mhbo-tile button.mhbo-btn").Nth(blockKey switch
