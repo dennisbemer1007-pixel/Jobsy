@@ -20,6 +20,10 @@ public static class DemoSchoolIds
     /// <summary>Demo groep 7/8 klas (apart van VMBO 2A).</summary>
     public static readonly Guid ClassGroep78Id = Guid.Parse("99999999-3333-3333-3333-333333333333");
     public const string ClassGroep78Name = "8B";
+    public static readonly Guid ClassMbo2Id = Guid.Parse("99999999-4444-4444-4444-444444444444");
+    public const string ClassMbo2Name = "MBO 2";
+    public static readonly Guid ClassHboId = Guid.Parse("99999999-5555-5555-5555-555555555555");
+    public const string ClassHboName = "HBO";
     public static readonly Guid SchoolAdminUserId = Guid.Parse("bbbbbbbb-2222-2222-2222-222222222222");
     public static readonly Guid TeacherUserId = Guid.Parse("bbbbbbbb-3333-3333-3333-333333333333");
     public static readonly Guid WerkcoachUserId = Guid.Parse("bbbbbbbb-4444-4444-4444-444444444444");
@@ -660,9 +664,32 @@ internal static class DemoUsersSeeder
             groep78.TestWindow = TestWindowState.Open;
         }
 
+        added += await EnsureDemoMboHboClassAsync(
+            db,
+            DemoSchoolIds.ClassMbo2Id,
+            DemoSchoolIds.ClassMbo2Name,
+            SchoolLevel.Mbo2,
+            year: 2,
+            yearStart,
+            now);
+        added += await EnsureDemoMboHboClassAsync(
+            db,
+            DemoSchoolIds.ClassHboId,
+            DemoSchoolIds.ClassHboName,
+            SchoolLevel.Hbo,
+            year: 1,
+            yearStart,
+            now);
+
         foreach (var uid in new[] { teacherId, coachId })
         {
-            foreach (var classId in new[] { DemoSchoolIds.ClassGroep78Id, DemoSchoolIds.Class1AId })
+            foreach (var classId in new[]
+                     {
+                         DemoSchoolIds.ClassGroep78Id,
+                         DemoSchoolIds.Class1AId,
+                         DemoSchoolIds.ClassMbo2Id,
+                         DemoSchoolIds.ClassHboId
+                     })
             {
                 if (!await db.TeacherClassAssignments.AnyAsync(
                         a => a.TeacherUserId == uid && a.SchoolClassId == classId))
@@ -676,6 +703,47 @@ internal static class DemoUsersSeeder
                     added++;
                 }
             }
+        }
+
+        return added;
+    }
+
+    private static async Task<int> EnsureDemoMboHboClassAsync(
+        JobsyDbContext db,
+        Guid classId,
+        string name,
+        SchoolLevel level,
+        int year,
+        int schoolYearStart,
+        DateTime now)
+    {
+        var added = 0;
+        var questionSet = SchoolLevelRules.QuestionSetFor(level);
+        var schoolClass = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == classId);
+        if (schoolClass is null)
+        {
+            db.SchoolClasses.Add(new SchoolClass
+            {
+                Id = classId,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = name,
+                Level = level,
+                QuestionSet = questionSet,
+                Year = year,
+                SchoolYearStart = schoolYearStart,
+                PupilCount = 5,
+                TestWindow = TestWindowState.Open,
+                IsTestData = true,
+                CreatedAtUtc = now
+            });
+            added++;
+        }
+        else
+        {
+            schoolClass.Name = name;
+            schoolClass.Level = level;
+            schoolClass.QuestionSet = questionSet;
+            schoolClass.TestWindow = TestWindowState.Open;
         }
 
         return added;

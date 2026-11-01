@@ -86,6 +86,7 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         await TryEnsureDemoRecordingCandidatesAsync(stoppingToken);
         await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
         await TryEnsureAcceptatieScholenClass2ACodesAsync(stoppingToken);
+        await TryEnsureAcceptatieScholenMboHboDemoAsync(stoppingToken);
 
         try
         {
@@ -193,6 +194,38 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Acceptatie scholen 2A pupil codes ensure failed; API continues.");
+        }
+    }
+
+    private async Task TryEnsureAcceptatieScholenMboHboDemoAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var pupilCodes = scope.ServiceProvider.GetService<IPupilCodeService>();
+            if (pupilCodes is null)
+            {
+                _logger.LogInformation(
+                    "Acceptatie MBO/HBO demo: skipped (Scholen:CodeHmacKey / IPupilCodeService unavailable).");
+                return;
+            }
+
+            await AcceptatieScholenMboHboDemoEnsurer.TryEnsureAsync(
+                db,
+                pupilCodes,
+                _configuration,
+                _logger,
+                stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Acceptatie MBO/HBO demo ensure failed; API continues.");
         }
     }
 
