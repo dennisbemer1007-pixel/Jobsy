@@ -864,7 +864,68 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Theory]
-    [InlineData(1440, 900, "desktop")]
+    [InlineData(1280, 800, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task G78_vakkentest_mockup_compare_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
+        var seeds = await SeedGroep78AtAsync(
+            1,
+            bankCount,
+            chipsSaved: true,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var outDir = Path.Combine(FindRepoRoot(), "docs", "g78-vakkentest-mockup");
+        Directory.CreateDirectory(outDir);
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/vakken");
+        await page.Locator("[data-testid=ll-vt-scene-bar]").WaitForAsync();
+
+        await FillVakkenPageLikeMockAsync(page);
+
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(outDir, $"impl-{label}.png"),
+            FullPage = false
+        });
+        await page.CloseAsync();
+    }
+
+    private static async Task FillVakkenPageLikeMockAsync(IPage page)
+    {
+        var cards = page.Locator(".ll-vt-card");
+        var cardCount = await cards.CountAsync();
+        int[] leuk = [3, 4, 2, 0, 5, 0];
+        int[] goed = [4, 3, 3, 0, 0, 0];
+        for (var c = 0; c < cardCount && c < leuk.Length; c++)
+        {
+            if (leuk[c] < 1 || goed[c] < 1)
+            {
+                continue;
+            }
+
+            var card = cards.Nth(c);
+            await card.Locator(".ll-vt-scale-btns").Nth(0).Locator(".ll-vt-scale-btn").Nth(leuk[c] - 1).ClickAsync();
+            await card.Locator(".ll-vt-scale-btns").Nth(1).Locator(".ll-vt-scale-btn").Nth(goed[c] - 1).ClickAsync();
+        }
+    }
+
+    [Theory]
     [InlineData(390, 844, "mobile")]
     public async Task G78_ster_restpunten_capture_evidence(int width, int height, string label)
     {
@@ -896,19 +957,18 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.GotoAsync($"{baseUrl}/leerling/vakken");
         await page.Locator("[data-testid=leerling-vakken]").WaitForAsync();
 
-        var band = page.Locator(".ll-g78-world-band").First;
-        await band.WaitForAsync();
-        var bandStyle = await band.GetAttributeAsync("style");
-        Assert.Contains("sterren-strand.jpg", bandStyle, StringComparison.Ordinal);
+        var sceneBar = page.Locator("[data-testid=ll-vt-scene-bar]");
+        await sceneBar.WaitForAsync();
+        await Assertions.Expect(sceneBar).ToContainTextAsync("Sterrenkust");
 
-        var scaleGroups = page.Locator(".ll-vakken__scale-btns");
+        var scaleGroups = page.Locator(".ll-vt-scale-btns");
         var groupCount = await scaleGroups.CountAsync();
         for (var i = 0; i < groupCount; i++)
         {
-            await scaleGroups.Nth(i).Locator(".ll-vakken__btn").Last.ClickAsync();
+            await scaleGroups.Nth(i).Locator(".ll-vt-scale-btn").Last.ClickAsync();
         }
 
-        var next = page.GetByRole(AriaRole.Button, new() { Name = "Zwem verder" });
+        var next = page.Locator("[data-testid=ll-vt-next]");
         await page.WaitForFunctionAsync(
             "() => { const btn = [...document.querySelectorAll('button')].find(b => (b.textContent || '').includes('Zwem verder')); return btn && !btn.disabled; }",
             null,
