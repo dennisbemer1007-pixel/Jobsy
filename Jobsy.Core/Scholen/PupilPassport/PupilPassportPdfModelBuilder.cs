@@ -59,7 +59,9 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             })
             .ToList();
 
-        var jobKeys = keys.JobIdeaKeys;
+        var jobKeys = ctx.Set == PupilQuestionSet.Vo
+            ? PupilVoCareerScoring.TopJobKeys(result, progress, take: 3)
+            : keys.JobIdeaKeys;
         IReadOnlyList<PupilPassportOccupationCard> cards;
         var strengths = PupilPassportStrengths.For(result, lang);
         var discovery = PupilPassportLocalizedCopy.DiscoveryQuestions(dream.JobKey, holland, lang);

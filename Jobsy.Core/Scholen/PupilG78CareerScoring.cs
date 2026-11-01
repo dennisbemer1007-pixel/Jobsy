@@ -2,6 +2,7 @@ using System.Text.Json;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen.Matching;
 
 namespace Jobsy.Core.Scholen;
 
@@ -14,7 +15,7 @@ public sealed record PupilG78JobMatch(string JobKey, double MatchScore);
 /// <summary>Deterministic G78 job and beroepssoort ranking (no AI).</summary>
 public static class PupilG78CareerScoring
 {
-    private const double DefaultMinJobMatch = 0.70;
+    private const double DefaultMinJobMatch = PupilCareerMatchWeights.DefaultMinMatch;
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
     public static IReadOnlyList<PupilG78JobMatch> TopJobMatches(
@@ -27,14 +28,21 @@ public static class PupilG78CareerScoring
         var riasec = Deserialize<RiasecScores>(result.RiasecScoresJson);
         var likes = ParseChips(progress?.LikesJson);
         var threshold = Math.Clamp(minMatch, 0, 1);
-        return CandidateJobKeys(likes)
+        var ranked = CandidateJobKeys(likes)
             .Select(key => (Key: key, Score: ScoreJob(key, riasec, likes, vakScores)))
             .Where(x => x.Score >= threshold)
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
-            .Take(maxCount)
             .Select(x => new PupilG78JobMatch(x.Key, x.Score))
             .ToList();
+
+        return PupilCareerMatchSelection.SelectTop(
+            ranked,
+            m => m.MatchScore,
+            m => PrimaryBeroepssoortKey(m.JobKey) ?? "",
+            threshold,
+            maxCount,
+            PupilCareerMatchWeights.MaxPerGroup);
     }
 
     /// <summary>Rounded 0–100 display percent from the same 0–1 score used for ranking and threshold.</summary>
@@ -156,7 +164,9 @@ public static class PupilG78CareerScoring
         var riasecFit = JobRiasecFit(jobKey, riasec);
         var subjectFit = JobSubjectFit(jobKey, vakScores);
         var chipFit = JobChipFit(jobKey, likes);
-        return 0.5 * riasecFit + 0.3 * subjectFit + 0.2 * chipFit;
+        return PupilCareerMatchWeights.Riasec * riasecFit
+               + PupilCareerMatchWeights.Vakken * subjectFit
+               + PupilCareerMatchWeights.Overige * chipFit;
     }
 
     private static double JobRiasecFit(string jobKey, RiasecScores? riasec)
@@ -195,53 +205,10 @@ public static class PupilG78CareerScoring
     {
         if (vakScores.Count == 0)
         {
-            return 0;
+            return PupilCareerMatchWeights.NeutralSubjectFit;
         }
 
-        var sum = 0.0;
-        var weightSum = 0.0;
-        foreach (var vak in vakScores)
-        {
-            var w = PupilVakScores.SubjectWeight(vak);
-            if (w <= 0)
-            {
-                continue;
-            }
-
-            var map = PupilSubjectMap.TryGet(vak.SubjectKey);
-            if (map is null)
-            {
-                continue;
-            }
-
-            weightSum += w;
-            if (JobMatchesBeroepssoort(jobKey, map.BeroepssoortKeys))
-            {
-                sum += w;
-            }
-        }
-
-        if (weightSum <= 0)
-        {
-            return 0;
-        }
-
-        return Math.Clamp(sum / weightSum, 0, 1);
-    }
-
-    private static bool JobMatchesBeroepssoort(string jobKey, IReadOnlyList<string> beroepen)
-    {
-        foreach (var b in beroepen)
-        {
-            if (BeroepJobHints(b).Any(h =>
-                    jobKey.Contains(h, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(jobKey, h, StringComparison.OrdinalIgnoreCase)))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return PupilSubjectOccupationFit.FitForDreamJob(jobKey, vakScores);
     }
 
     private static IEnumerable<string> BeroepJobHints(string beroepKey) => beroepKey switch

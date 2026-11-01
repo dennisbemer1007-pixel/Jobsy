@@ -16,7 +16,14 @@ public static class PupilPassportJobCards
         foreach (var key in jobKeys.Take(set == PupilQuestionSet.Groep78 ? 5 : 3))
         {
             var title = PupilPassportLocalizedCopy.JobTitle(key, language);
-            var domain = PupilPassportLocalizedCopy.JobDomain(key, language);
+            var domain = set == PupilQuestionSet.Vo
+                ? rank switch
+                {
+                    1 => "Past goed bij je",
+                    2 => "Ook interessant",
+                    _ => "Wil je verkennen"
+                }
+                : PupilPassportLocalizedCopy.JobDomain(key, language);
             var blurb = PupilPassportLocalizedCopy.JobBlurb(key, set, language);
             var tags = FitTags(likeLabels);
             cards.Add(new PupilPassportOccupationCard(

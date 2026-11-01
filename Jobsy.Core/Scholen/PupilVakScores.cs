@@ -120,26 +120,31 @@ public static class PupilVakScores
         return seen.Count == AllSubjectKeys.Count;
     }
 
-    /// <summary>1.0 when leuk and goed are both 4+, 0.5 when only leuk is 4+, else 0.</summary>
+    /// <summary>0.6 × leuk + 0.4 × goed (beide 1–5 → 0–1).</summary>
     public static double SubjectWeight(int leuk, int goed)
+    {
+        return SubjectScore(leuk, goed);
+    }
+
+    public static double SubjectWeight(PupilVakScoreEntry entry)
+        => SubjectScore(entry.Leuk, entry.Goed);
+
+    /// <summary>Combined vak rating 0–1 (Dennis optie A).</summary>
+    public static double SubjectScore(int leuk, int goed)
     {
         if (!IsValidScore(leuk) || !IsValidScore(goed))
         {
             return 0;
         }
 
-        var leukHigh = leuk >= 4;
-        var goedHigh = goed >= 4;
-        if (leukHigh && goedHigh)
-        {
-            return 1;
-        }
-
-        return leukHigh ? 0.5 : 0;
+        var leukNorm = (leuk - 1) / 4.0;
+        var goedNorm = (goed - 1) / 4.0;
+        return Math.Clamp(0.6 * leukNorm + 0.4 * goedNorm, 0, 1);
     }
 
-    public static double SubjectWeight(PupilVakScoreEntry entry)
-        => SubjectWeight(entry.Leuk, entry.Goed);
+    /// <summary>True when the vak contributes signal (any valid leuk/goed pair).</summary>
+    public static bool HasRating(PupilVakScoreEntry entry)
+        => IsValidScore(entry.Leuk) && IsValidScore(entry.Goed);
 
     public static bool IsStrong(PupilVakScoreEntry entry)
         => entry.Leuk >= 4 && entry.Goed >= 4;
