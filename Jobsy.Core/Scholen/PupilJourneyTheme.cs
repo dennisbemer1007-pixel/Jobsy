@@ -77,7 +77,12 @@ public static class PupilJourneyTheme
         var w = worldKey.ToLowerInvariant();
         if (w == "pauze-eiland")
         {
-            return "eiland";
+            return themeKey switch
+            {
+                Sterrenkust => "sterren-strand",
+                Eilandtuin => "tuin-baai",
+                _ => "eiland",
+            };
         }
 
         return (themeKey, w) switch
@@ -100,6 +105,18 @@ public static class PupilJourneyTheme
 
     public static string WorldBandImagePath(string? themeKey, string worldKey)
         => $"/leerling/werelden/img/{WorldBandImageStem(themeKey, worldKey)}.jpg";
+
+    /// <summary>Hero strip on DNA-paspoort (per journey theme).</summary>
+    public static string PassportHeroStripPath(string? themeKey)
+    {
+        themeKey = NormalizeOrDefault(themeKey);
+        return themeKey switch
+        {
+            Eilandtuin => "/leerling/werelden/img/tuin-baai.jpg",
+            Sterrenkust => "/leerling/werelden/img/sterren-strand.jpg",
+            _ => "/images/leerling-paspoort-g78/g78-strip.jpg",
+        };
+    }
 
     public static string PuzzleTitleKey(string? themeKey, string puzzleKey)
     {

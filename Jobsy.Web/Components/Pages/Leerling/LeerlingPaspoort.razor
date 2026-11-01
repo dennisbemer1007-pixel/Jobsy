@@ -6,6 +6,7 @@
 @using Jobsy.Core.Scholen.PupilPassport
 @using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
 @using Jobsy.Web.Services
 @implements IDisposable
 @inject CultureState Culture
@@ -41,6 +42,7 @@ else
             <LanguageSelector />
         </div>
         <LeerlingPaspoortG78View Model="_model"
+                                 JourneyThemeKey="@_journeyThemeKey"
                                  AllowNameEdit="true"
                                  DisplayName="@_displayName"
                                  DisplayNameChanged="OnNameChanged" />
@@ -58,26 +60,10 @@ else
     private PupilG78PassportWebDto? _model;
     private string? _displayName;
 
-    private string PdfHref
-    {
-        get
-        {
-            var parts = new List<string>();
-            if (!string.IsNullOrWhiteSpace(_displayName))
-            {
-                parts.Add($"naam={Uri.EscapeDataString(_displayName)}");
-            }
-
-            if (!string.IsNullOrWhiteSpace(_languageQuery))
-            {
-                parts.Add($"lang={Uri.EscapeDataString(_languageQuery)}");
-            }
-
-            return parts.Count == 0 ? "/leerling/pdf" : $"/leerling/pdf?{string.Join("&", parts)}";
-        }
-    }
+    private string PdfHref => PupilStoryPdfLink.Href(_displayName, _languageQuery);
 
     private string? _languageQuery;
+    private string? _journeyThemeKey;
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,13 +79,24 @@ else
         }
 
         await ReloadPassportAsync();
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            _journeyThemeKey = progress?.JourneyThemeKey;
+        }
+        catch
+        {
+            _journeyThemeKey = null;
+        }
+
         _loading = false;
     }
 
     private async Task ReloadPassportAsync()
     {
         _languageQuery = Culture.Language;
-        _model = await Api.GetPupilG78PassportAsync(language: _languageQuery);
+        var lang = PupilStoryPdfLink.NormalizeLanguageCode(_languageQuery) ?? _languageQuery;
+        _model = await Api.GetPupilG78PassportAsync(language: lang);
         _enabled = _model?.Enabled == true;
         _displayName = _model?.DisplayName;
     }

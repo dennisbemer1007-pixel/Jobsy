@@ -52,7 +52,7 @@ else
                                     MetaLine="@Culture["Leerling.Island.Lead"]" />
     }
 
-    <div class="ll-reis ll-island @(_groep78 ? "wrap ll-g78-overlap" : null)">
+    <div class="@(_groep78 ? "ll-g78-island wrap ll-g78-overlap" : "ll-reis ll-island")">
         <section class="@(_groep78 ? "card ll-island-card" : "ll-card ll-island-card")">
             <div class="ll-progress-bar" role="progressbar" aria-label="@Culture["Leerling.Island.ProgressLabel"]">
                 <span class="ll-progress-bar__fill" style="width:@IslandProgressPercent()"></span>

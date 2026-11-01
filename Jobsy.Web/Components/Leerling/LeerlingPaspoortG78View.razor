@@ -1,3 +1,4 @@
+@using Jobsy.Core.Scholen
 @using Jobsy.Core.Scholen.PupilPassport
 @inject CultureState Culture
 
@@ -17,7 +18,7 @@
             <span class="lp-g78__code">@Model.DisplayCode</span>
         </div>
     </header>
-    <div class="lp-g78__strip" role="presentation"></div>
+    <div class="lp-g78__strip @ThemeStripClass" style="@ThemeStripStyle" role="presentation"></div>
     <div class="lp-g78__body">
         <div class="lp-g78__title-row">
             <div>
@@ -251,9 +252,17 @@
 
 @code {
     [Parameter] public PupilG78PassportWebDto? Model { get; set; }
+    [Parameter] public string? JourneyThemeKey { get; set; }
     [Parameter] public bool AllowNameEdit { get; set; }
     [Parameter] public string? DisplayName { get; set; }
     [Parameter] public EventCallback<string?> DisplayNameChanged { get; set; }
+
+    private string ThemeStripClass => PupilJourneyTheme.IsValid(JourneyThemeKey)
+        ? $"lp-g78__strip--{PupilJourneyTheme.Normalize(JourneyThemeKey!)}"
+        : "";
+
+    private string ThemeStripStyle =>
+        $"background-image:url('{PupilJourneyTheme.PassportHeroStripPath(JourneyThemeKey)}')";
 
     private string? _name;
     private bool _nameEditing;

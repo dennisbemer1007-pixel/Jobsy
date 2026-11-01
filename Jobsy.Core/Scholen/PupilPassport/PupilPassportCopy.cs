@@ -310,12 +310,24 @@ public static class PupilPassportCopy
             "Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.";
         d["LeerlingPassport.Tip.dierenarts.2"] = "Vraag wat het leukst was. Er is geen goed of fout antwoord.";
 
-        d["LeerlingPassport.Discover.Letter.S.1"] = "Bij welk beroep help je anderen het meest?";
-        d["LeerlingPassport.Discover.Letter.S.2"] = "Wanneer voel jij je het meest nuttig?";
-        d["LeerlingPassport.Discover.Letter.S.3"] = "Welke stage of uitje past bij zorg of dieren?";
+        d["LeerlingPassport.Discover.Letter.R.1"] = "Waarmee zou jij graag met je handen werken?";
+        d["LeerlingPassport.Discover.Letter.R.2"] = "Welke technische uitdaging lijkt jou interessant?";
+        d["LeerlingPassport.Discover.Letter.R.3"] = "Welk beroep doe je het liefst buiten of met gereedschap?";
         d["LeerlingPassport.Discover.Letter.I.1"] = "Welk vraagstuk zou jij willen uitzoeken?";
         d["LeerlingPassport.Discover.Letter.I.2"] = "Welke proef of onderzoeksopdracht vond je leuk?";
         d["LeerlingPassport.Discover.Letter.I.3"] = "Welk vak geeft je het meeste 'weten hoe het zit'?";
+        d["LeerlingPassport.Discover.Letter.A.1"] = "Welk vak vind je het leukst om iets te maken of te bedenken?";
+        d["LeerlingPassport.Discover.Letter.A.2"] = "Waar zou jij graag iets moois of nieuws maken?";
+        d["LeerlingPassport.Discover.Letter.A.3"] = "Welk beroep past bij tekenen, spelen of optreden?";
+        d["LeerlingPassport.Discover.Letter.S.1"] = "Bij welk beroep help je anderen het meest?";
+        d["LeerlingPassport.Discover.Letter.S.2"] = "Wanneer voel jij je het meest nuttig?";
+        d["LeerlingPassport.Discover.Letter.S.3"] = "Welke stage of uitje past bij zorg of dieren?";
+        d["LeerlingPassport.Discover.Letter.E.1"] = "Wat zou jij willen organiseren op school of thuis?";
+        d["LeerlingPassport.Discover.Letter.E.2"] = "Bij welk beroep mag jij leiding geven of beslissen?";
+        d["LeerlingPassport.Discover.Letter.E.3"] = "Welke stage laat je zien hoe ondernemen werkt?";
+        d["LeerlingPassport.Discover.Letter.C.1"] = "Welke taken doe je het liefst netjes en op volgorde?";
+        d["LeerlingPassport.Discover.Letter.C.2"] = "Welk beroep past bij precies werken met cijfers of regels?";
+        d["LeerlingPassport.Discover.Letter.C.3"] = "Waar help jij anderen door goed plannen?";
         d["LeerlingPassport.Tip.Letter.R.1"] =
             "Kijk samen naar iets dat je met je handen hebt gemaakt of gerepareerd. Wat vond je het leukst?";
         d["LeerlingPassport.Tip.Letter.I.1"] =
