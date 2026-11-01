@@ -12,6 +12,8 @@ namespace Jobsy.Web.Security;
 public static class JobsyContentSecurityPolicy
 {
     public const string OpenFreeMap = "https://tiles.openfreemap.org";
+    private const string GoogleFontsCss = "https://fonts.googleapis.com";
+    private const string GoogleFontsStatic = "https://fonts.gstatic.com";
 
     /// <param name="allowUnsafeEval">
     /// CI/Playwright only: <c>WaitForFunctionAsync</c> evaluates predicates via <c>eval</c>.
@@ -31,8 +33,8 @@ public static class JobsyContentSecurityPolicy
             "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com;",
             "object-src 'none';",
             $"img-src 'self' data: blob: {OpenFreeMap};",
-            $"font-src 'self' data: {OpenFreeMap};",
-            $"style-src-elem 'self' {n};",
+            $"font-src 'self' data: {OpenFreeMap} {GoogleFontsStatic};",
+            $"style-src-elem 'self' {n} {GoogleFontsCss};",
             "style-src-attr 'unsafe-inline';",
             scriptSrc,
             "script-src-attr 'none';",
