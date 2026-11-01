@@ -1,0 +1,43 @@
+@namespace Jobsy.Web.Components.Layout
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
+@using Jobsy.Web.Services
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+
+<PageRouteStylesHead />
+<div class="mhbo-root" lang="nl">
+    <div class="mhbo-top">
+        <a href="/leerling/mbo-hbo/overzicht">
+            <img src="/brand/svg/lobsy-logo-horizontaal.svg" alt="Lobsy" />
+        </a>
+        <span class="sp"></span>
+        @if (_showOverviewLink)
+        {
+            <a class="mhbo-lnk" href="/leerling/mbo-hbo/overzicht">Naar overzicht</a>
+        }
+        @if (!string.IsNullOrEmpty(_code))
+        {
+            <span class="mhbo-chip">Code @_code</span>
+        }
+    </div>
+    @Body
+</div>
+
+@code {
+    private string? _code;
+    private bool _showOverviewLink;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var path = PageSeoCatalog.Normalize(new Uri(Nav.Uri).AbsolutePath);
+        _showOverviewLink = !path.Equals("/leerling/mbo-hbo/overzicht", StringComparison.OrdinalIgnoreCase)
+                            && !path.Equals("/leerling/mbo-hbo/uitleg", StringComparison.OrdinalIgnoreCase);
+
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _code = auth.User.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+    }
+}

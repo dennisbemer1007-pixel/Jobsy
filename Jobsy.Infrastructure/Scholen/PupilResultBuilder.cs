@@ -41,6 +41,11 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
         }
 
         var def = _registry.ForClass(code.SchoolClass);
+        if (def.Set == PupilQuestionSet.MboHbo)
+        {
+            return;
+        }
+
         if (def.Set == PupilQuestionSet.Groep78
             && !PupilVakScores.IsComplete(code.Progress.VakScoresJson))
         {

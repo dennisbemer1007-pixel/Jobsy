@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen.MboHbo;
 
 namespace Jobsy.Core.Scholen.QuestionSets;
 
@@ -85,10 +86,36 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             StartTimeKey: "Leerling.Vo.Start.NoteTime",
             LabelKey: "School.QuestionSet.Vo");
 
+        var mboLabels = new (int Value, string Key)[]
+        {
+            (1, "Leerling.MboHbo.Answer.1"),
+            (2, "Leerling.MboHbo.Answer.2"),
+            (3, "Leerling.MboHbo.Answer.3"),
+            (4, "Leerling.MboHbo.Answer.4"),
+            (5, "Leerling.MboHbo.Answer.5"),
+        };
+        var mboHbo = new PupilQuestionSetDef(
+            Set: PupilQuestionSet.MboHbo,
+            Key: "mbo-hbo",
+            ScoringVersion: PupilMboHboCatalog.ScoringVersion,
+            Bank: new PupilQuestionBankMboHbo(),
+            Worlds: [],
+            IslandAfter: int.MaxValue,
+            PuzzleSlots: [],
+            AnswerLabels: mboLabels,
+            ItemsPerPlate: 1,
+            PlateCount: 1,
+            CheerKeyPrefix: "Leerling.MboHbo.Cheer.",
+            CheerCount: 1,
+            PartBreakAfterIsland: false,
+            StartTimeKey: "Leerling.MboHbo.Start.NoteTime",
+            LabelKey: "School.QuestionSet.MboHbo");
+
         _bySet = new Dictionary<PupilQuestionSet, PupilQuestionSetDef>
         {
             [PupilQuestionSet.Groep78] = g78,
             [PupilQuestionSet.Vo] = vo,
+            [PupilQuestionSet.MboHbo] = mboHbo,
         };
         All = _bySet.Values.ToList();
     }

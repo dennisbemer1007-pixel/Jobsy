@@ -11,6 +11,7 @@
     <EmbeddedResource Include="Data/SampleReports/*.json" />
     <EmbeddedResource Include="Data/DeepItems/*.json" />
     <EmbeddedResource Include="Scholen/Resources/dutch-first-names.txt" />
+    <EmbeddedResource Include="Data/Scholen/MboHbo/*.csv" />
     <Content Remove="Rules/DeepItems/**" />
     <None Remove="Rules/DeepItems/**" />
   </ItemGroup>

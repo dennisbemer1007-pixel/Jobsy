@@ -1,0 +1,331 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.mhbo-root {
+  box-sizing: border-box;
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f4f6f9;
+  color: #1b2433;
+  font-size: 15px;
+  line-height: 1.45;
+  min-height: 100vh;
+}
+
+.mhbo-root *,
+.mhbo-root *::before,
+.mhbo-root *::after {
+  box-sizing: border-box;
+}
+
+.mhbo-top {
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid #e3e7ed;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  gap: 24px;
+}
+
+.mhbo-top img {
+  height: 30px;
+}
+
+.mhbo-top .sp {
+  flex: 1;
+}
+
+.mhbo-chip {
+  font-size: 13px;
+  color: #4a5568;
+  background: #f4f6f9;
+  border: 1px solid #e3e7ed;
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+
+.mhbo-lnk {
+  color: #0f2747;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mhbo-wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 40px;
+}
+
+.mhbo-wrap h1 {
+  font-size: 28px;
+  color: #0f2747;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.mhbo-sub {
+  color: #5a6576;
+  margin-top: 6px;
+}
+
+.mhbo-card {
+  background: #fff;
+  border: 1px solid #e3e7ed;
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.mhbo-btn {
+  display: inline-block;
+  background: #0f2747;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mhbo-btn.o {
+  background: #fff;
+  color: #0f2747;
+  border: 1px solid #c9d1dc;
+}
+
+.mhbo-btn.g {
+  background: #c9a24a;
+  color: #0f2747;
+}
+
+.mhbo-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.mhbo-bar {
+  height: 8px;
+  background: #e3e7ed;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.mhbo-bar i {
+  display: block;
+  height: 100%;
+  background: #c9a24a;
+}
+
+.mhbo-tile {
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+  background: #fff;
+}
+
+.mhbo-tile .st {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-radius: 12px;
+  padding: 3px 10px;
+  align-self: flex-start;
+}
+
+.mhbo-tile.grey {
+  border-color: #d5dbe3;
+  border-top: 5px solid #9aa5b4;
+}
+
+.mhbo-tile.grey .st {
+  background: #eef1f5;
+  color: #5a6576;
+}
+
+.mhbo-tile.yel {
+  border-color: #eed9a0;
+  border-top: 5px solid #e2b33c;
+}
+
+.mhbo-tile.yel .st {
+  background: #fbf1d6;
+  color: #8a6411;
+}
+
+.mhbo-tile.yel .mhbo-bar i {
+  background: #e2b33c;
+}
+
+.mhbo-tile.grn {
+  border-color: #bfe0cb;
+  border-top: 5px solid #2e8b57;
+}
+
+.mhbo-tile.grn .st {
+  background: #e3f3e9;
+  color: #1f6b41;
+}
+
+.mhbo-tile h3 {
+  font-size: 17px;
+  color: #0f2747;
+}
+
+.mhbo-tile p {
+  font-size: 13.5px;
+  color: #5a6576;
+  flex: 1;
+}
+
+.mhbo-meta {
+  font-size: 12.5px;
+  color: #7a8595;
+}
+
+.mhbo-lock {
+  background: #eef1f5;
+  border: 1px dashed #b5bfcc;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #5a6576;
+}
+
+.mhbo-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.mhbo-dot.d0 {
+  background: #c3cbd6;
+}
+
+.mhbo-dot.d1 {
+  background: #e2b33c;
+}
+
+.mhbo-dot.d2 {
+  background: #2e8b57;
+}
+
+.mhbo-hb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+  font-size: 13.5px;
+}
+
+.mhbo-hb span:first-child {
+  width: 150px;
+}
+
+.mhbo-hb .mhbo-bar {
+  flex: 1;
+  height: 12px;
+}
+
+.mhbo-hb b {
+  width: 34px;
+  text-align: right;
+  color: #0f2747;
+}
+
+.mhbo-scale {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.mhbo-scale-opt {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid #d5dbe3;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 8px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.mhbo-scale-opt.is-on {
+  border: 2px solid #0f2747;
+  background: #eef2f8;
+}
+
+.mhbo-scale-opt .dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  border: 2px solid #0f2747;
+}
+
+.mhbo-scale-opt.is-on .dot {
+  background: #0f2747;
+}
+
+.mhbo-vak-scales {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mhbo-vak-row {
+  display: grid;
+  gap: 8px;
+}
+
+.mhbo-speak-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mhbo-scenario {
+  background: #f4f6f9;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #4a5568;
+  margin-top: 12px;
+}
+
+.mhbo-foot {
+  font-size: 12px;
+  color: #7a8595;
+  margin-top: 14px;
+}
+
+@media (max-width: 720px) {
+  .mhbo-top {
+    padding: 0 16px;
+  }
+
+  .mhbo-wrap {
+    padding: 20px 16px;
+  }
+
+  .mhbo-wrap h1 {
+    font-size: 22px;
+  }
+
+  .mhbo-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

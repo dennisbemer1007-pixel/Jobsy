@@ -209,4 +209,14 @@ public sealed class TeacherClassesController : ControllerBase
         Response.Headers.CacheControl = "no-store";
         return Ok(new { ok = true });
     }
+
+    [HttpGet("{classId:guid}/mbo-hbo-progress")]
+    public async Task<ActionResult<TeacherMboHboClassProgressDto>> MboHboProgress(
+        Guid classId,
+        [FromServices] IPupilMboHboPortalService mboHbo,
+        CancellationToken cancellationToken)
+    {
+        var dto = await mboHbo.GetTeacherClassProgressAsync(User, classId, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
 }

@@ -43,6 +43,8 @@ public static class ClassResultsAggregator
             PupilQuestionSet.Vo =>
                 v.StartsWith("vo-", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(v, "1", StringComparison.Ordinal),
+            PupilQuestionSet.MboHbo =>
+                v.StartsWith("mbo-hbo", StringComparison.OrdinalIgnoreCase),
             _ => false
         };
     }

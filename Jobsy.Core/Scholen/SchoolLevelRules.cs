@@ -20,10 +20,37 @@ public static class SchoolLevelRules
         SchoolLevel.Anders
     ];
 
+    public static IReadOnlyList<SchoolLevel> MboHboLevels { get; } =
+    [
+        SchoolLevel.Mbo1,
+        SchoolLevel.Mbo2,
+        SchoolLevel.Mbo3,
+        SchoolLevel.Mbo4,
+        SchoolLevel.Hbo
+    ];
+
     public static PupilQuestionSet QuestionSetFor(SchoolLevel level)
-        => level == SchoolLevel.Groep78 ? PupilQuestionSet.Groep78 : PupilQuestionSet.Vo;
+    {
+        if (level == SchoolLevel.Groep78)
+        {
+            return PupilQuestionSet.Groep78;
+        }
+
+        if (IsMboHbo(level))
+        {
+            return PupilQuestionSet.MboHbo;
+        }
+
+        return PupilQuestionSet.Vo;
+    }
 
     public static bool IsPrimary(SchoolLevel level) => level == SchoolLevel.Groep78;
+
+    public static bool IsMboHbo(SchoolLevel level)
+        => level is SchoolLevel.Mbo1 or SchoolLevel.Mbo2 or SchoolLevel.Mbo3 or SchoolLevel.Mbo4
+            or SchoolLevel.Hbo;
+
+    public static bool IsHbo(SchoolLevel level) => level == SchoolLevel.Hbo;
 
     /// <summary>
     /// True when changing level would switch the question set (G78 ↔ VO).
@@ -39,6 +66,11 @@ public static class SchoolLevelRules
             return year is 7 or 8 ? null : "Kies groep 7 of groep 8.";
         }
 
+        if (IsMboHbo(level))
+        {
+            return year is >= 1 and <= 4 ? null : "Leerjaar moet 1–4 zijn.";
+        }
+
         return year is >= 1 and <= 6 ? null : "Leerjaar moet 1–6 zijn.";
     }
 
@@ -49,5 +81,10 @@ public static class SchoolLevelRules
         => IsPrimary(level) ? $"Groep {year}" : $"Klas {year}";
 
     public static string QuestionSetPillLabel(PupilQuestionSet set)
-        => set == PupilQuestionSet.Groep78 ? "Groep 7/8" : "VO";
+        => set switch
+        {
+            PupilQuestionSet.Groep78 => "Groep 7/8",
+            PupilQuestionSet.MboHbo => "MBO/HBO",
+            _ => "VO"
+        };
 }

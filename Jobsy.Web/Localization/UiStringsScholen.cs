@@ -48,6 +48,7 @@ public static class UiStringsScholen
         nl["School.Col.QuestionSet"] = "Vragenlijst";
         nl["School.QuestionSet.Groep78"] = "Vragenlijst groep 7/8 (60 vragen)";
         nl["School.QuestionSet.Vo"] = "Vragenlijst VO (100 vragen)";
+        nl["School.QuestionSet.MboHbo"] = "Vragenlijst MBO/HBO (5 testen)";
         nl["School.Results.TestSwitch"] = "Vragenlijst";
         nl["School.Col.Teacher"] = "Leraar";
         nl["School.Col.Codes"] = "Codes";
@@ -69,6 +70,11 @@ public static class UiStringsScholen
         nl["School.Level.Mix"] = "Gemengd";
         nl["School.Level.Anders"] = "Anders";
         nl["School.Level.Groep78"] = "Groep 7/8";
+        nl["School.Level.Mbo1"] = "Mbo niveau 1";
+        nl["School.Level.Mbo2"] = "Mbo niveau 2";
+        nl["School.Level.Mbo3"] = "Mbo niveau 3";
+        nl["School.Level.Mbo4"] = "Mbo niveau 4";
+        nl["School.Level.Hbo"] = "Hbo";
 
         nl["School.Class.Title"] = "Klassen & codes";
         nl["School.Class.Lead"] = "Maak klassen aan, print de codelijst en beheer het testvenster.";
@@ -83,6 +89,10 @@ public static class UiStringsScholen
         nl["School.Class.Kind.PrimaryHint"] = "Groep 7 of groep 8";
         nl["School.Class.Kind.Secondary"] = "Middelbare school";
         nl["School.Class.Kind.SecondaryHint"] = "Vmbo, mavo, havo, vwo";
+        nl["School.Class.Kind.MboHbo"] = "MBO / HBO";
+        nl["School.Class.Kind.MboHboHint"] = "Vijf testen · paspoort na afloop";
+        nl["School.Class.SetNote.MboHbo.Title"] = "Vragenlijst: MBO/HBO";
+        nl["School.Class.SetNote.MboHbo.Body"] = "5 testen (vakken, interesse, competentie, beroepen, werkwaarden) · ca. 50 minuten totaal.";
         nl["School.Class.Field.Group"] = "Groep";
         nl["School.Class.Group.7"] = "Groep 7";
         nl["School.Class.Group.8"] = "Groep 8";

@@ -23,19 +23,29 @@
                    value="primary"
                    checked="@_isPrimary"
                    disabled="@LevelLocked"
-                   @onchange="() => SetKind(primary: true)" />
+                   @onchange="() => SetKind(ClassKind.Primary)" />
             <span class="sch-kind-card__title">@Culture["School.Class.Kind.Primary"]</span>
             <span class="sch-kind-card__hint">@Culture["School.Class.Kind.PrimaryHint"]</span>
         </label>
-        <label class="sch-kind-card @(!_isPrimary ? "is-on" : null)">
+        <label class="sch-kind-card @(_kind == ClassKind.Vo ? "is-on" : null)">
             <input type="radio"
                    name="@_kindGroup"
                    value="secondary"
-                   checked="@(!_isPrimary)"
+                   checked="@(_kind == ClassKind.Vo)"
                    disabled="@LevelLocked"
-                   @onchange="() => SetKind(primary: false)" />
+                   @onchange="() => SetKind(ClassKind.Vo)" />
             <span class="sch-kind-card__title">@Culture["School.Class.Kind.Secondary"]</span>
             <span class="sch-kind-card__hint">@Culture["School.Class.Kind.SecondaryHint"]</span>
+        </label>
+        <label class="sch-kind-card @(_kind == ClassKind.MboHbo ? "is-on" : null)">
+            <input type="radio"
+                   name="@_kindGroup"
+                   value="mbo-hbo"
+                   checked="@(_kind == ClassKind.MboHbo)"
+                   disabled="@LevelLocked"
+                   @onchange="() => SetKind(ClassKind.MboHbo)" />
+            <span class="sch-kind-card__title">@Culture["School.Class.Kind.MboHbo"]</span>
+            <span class="sch-kind-card__hint">@Culture["School.Class.Kind.MboHboHint"]</span>
         </label>
     </div>
 </fieldset>
@@ -58,7 +68,7 @@
         </div>
     </fieldset>
 }
-else
+else if (_kind == ClassKind.Vo)
 {
     <label>
         @Culture["School.Class.Field.Level"]
@@ -84,12 +94,38 @@ else
         </div>
     </fieldset>
 }
+else
+{
+    <label>
+        @Culture["School.Class.Field.Level"]
+        <InputSelect class="sch-field" @bind-Value="Level" @bind-Value:after="OnVoLevelBound">
+            @foreach (var level in SchoolLevelRules.MboHboLevels)
+            {
+                <option value="@level">@Culture[SchoolLevelRules.LabelKey(level)]</option>
+            }
+        </InputSelect>
+    </label>
+    <fieldset class="sch-seg-fieldset">
+        <legend>@Culture["School.Class.Field.Year"]</legend>
+        <div class="sch-seg" role="radiogroup" aria-label="@Culture["School.Class.Field.Year"]">
+            @for (var y = 1; y <= 4; y++)
+            {
+                var year = y;
+                <label class="sch-seg__opt @(_year == year ? "is-on" : null)">
+                    <input type="radio" name="@_yearGroup" value="@year" checked="@(_year == year)"
+                           @onchange="OnYearRadio" />
+                    @year
+                </label>
+            }
+        </div>
+    </fieldset>
+}
 
 <div class="sch-set-note" role="status">
-    <strong>@(_isPrimary ? Culture["School.Class.SetNote.G78.Title"] : Culture["School.Class.SetNote.Vo.Title"])</strong>
+    <strong>@SetNoteTitle()</strong>
     <ul>
         <li>@Culture["School.Class.SetNote.Shared"]</li>
-        <li>@(_isPrimary ? Culture["School.Class.SetNote.G78.Body"] : Culture["School.Class.SetNote.Vo.Body"])</li>
+        <li>@SetNoteBody()</li>
     </ul>
 </div>
 
@@ -122,6 +158,9 @@ else
     private readonly string _kindGroup = $"kind-{Guid.NewGuid():N}";
     private readonly string _groupGroup = $"group-{Guid.NewGuid():N}";
     private readonly string _yearGroup = $"year-{Guid.NewGuid():N}";
+    private enum ClassKind { Primary, Vo, MboHbo }
+
+    private ClassKind _kind = ClassKind.Vo;
     private bool _isPrimary;
     private int _year = 2;
     private bool _seen;
@@ -147,6 +186,11 @@ else
     protected override async Task OnParametersSetAsync()
     {
         _isPrimary = SchoolLevelRules.IsPrimary(Level);
+        _kind = _isPrimary
+            ? ClassKind.Primary
+            : SchoolLevelRules.IsMboHbo(Level)
+                ? ClassKind.MboHbo
+                : ClassKind.Vo;
         if (!_seen)
         {
             _year = Year;
@@ -199,9 +243,9 @@ else
         await NotifyChanged();
     }
 
-    private async Task SetKind(bool primary)
+    private async Task SetKind(ClassKind kind)
     {
-        if (LevelLocked || _isPrimary == primary)
+        if (LevelLocked || _kind == kind)
         {
             return;
         }
@@ -209,11 +253,22 @@ else
         _kindChanging = true;
         var epoch = ++_kindEpoch;
         _yearLocked = false;
-        _isPrimary = primary;
-        var intended = primary ? 7 : 1;
+        _kind = kind;
+        _isPrimary = kind == ClassKind.Primary;
+        var intended = kind switch
+        {
+            ClassKind.Primary => 7,
+            ClassKind.MboHbo => 1,
+            _ => 1
+        };
         _year = intended;
         Year = intended;
-        Level = primary ? SchoolLevel.Groep78 : SchoolLevel.Havo;
+        Level = kind switch
+        {
+            ClassKind.Primary => SchoolLevel.Groep78,
+            ClassKind.MboHbo => SchoolLevel.Mbo2,
+            _ => SchoolLevel.Havo
+        };
 
         await LevelChanged.InvokeAsync(Level);
         if (epoch == _kindEpoch && !_yearLocked)
@@ -261,6 +316,22 @@ else
     }
 
     private Task NotifyChanged() => StateChanged.HasDelegate ? StateChanged.InvokeAsync() : Task.CompletedTask;
+
+    private string SetNoteTitle()
+        => _kind switch
+        {
+            ClassKind.Primary => Culture["School.Class.SetNote.G78.Title"],
+            ClassKind.MboHbo => Culture["School.Class.SetNote.MboHbo.Title"],
+            _ => Culture["School.Class.SetNote.Vo.Title"]
+        };
+
+    private string SetNoteBody()
+        => _kind switch
+        {
+            ClassKind.Primary => Culture["School.Class.SetNote.G78.Body"],
+            ClassKind.MboHbo => Culture["School.Class.SetNote.MboHbo.Body"],
+            _ => Culture["School.Class.SetNote.Vo.Body"]
+        };
 
     public sealed record TeacherOption(Guid UserId, string DisplayName);
 }

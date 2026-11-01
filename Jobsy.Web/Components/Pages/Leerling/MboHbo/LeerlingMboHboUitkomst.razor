@@ -1,0 +1,64 @@
+@page "/leerling/mbo-hbo/uitkomst/{BlockKey}"
+@layout LeerlingMboHboLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen.MboHbo
+@using Jobsy.Web.Components.Layout
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+
+<PageTitle>Uitkomst · Lobsy</PageTitle>
+
+@if (_model is null)
+{
+    <div class="mhbo-wrap"><p>Laden…</p></div>
+}
+else
+{
+    <div class="mhbo-wrap">
+        <a class="mhbo-lnk" href="/leerling/mbo-hbo/overzicht">← Terug naar overzicht</a>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+            <h1>Uitkomst @_model.Title</h1>
+            <span class="mhbo-chip" style="background:#e3f3e9;color:#1f6b41;border-color:#bfe0cb">✓ Afgerond</span>
+        </div>
+        <p class="mhbo-sub">@_model.AnsweredCount van @_model.QuestionCount vragen beantwoord. @_model.Summary</p>
+        <div class="mhbo-grid" style="grid-template-columns:1.3fr 1fr;margin-top:24px">
+            <div class="mhbo-card">
+                <h2 style="font-size:18px;color:#0f2747">Scores</h2>
+                @foreach (var bar in _model.Bars)
+                {
+                    <div class="mhbo-hb">
+                        <span>@bar.Label</span>
+                        <div class="mhbo-bar"><i style="width:@($"{bar.Percent}%");background:@(bar.Percent > 60 ? "#0f2747" : "#9aa9bf")"></i></div>
+                        <b>@bar.Percent</b>
+                    </div>
+                }
+            </div>
+            <div class="mhbo-card">
+                <h2 style="font-size:18px;color:#0f2747">Wat valt op</h2>
+                <p class="mhbo-sub" style="margin:0">@_model.Summary</p>
+                @if (_model.Highlights.Count > 0)
+                {
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+                        @foreach (var h in _model.Highlights)
+                        {
+                            <span class="mhbo-chip">@h</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+        <p class="mhbo-foot">Dit is een beeld van wat je nu aangeeft. Het kan later veranderen.</p>
+    </div>
+}
+
+@code {
+    [Parameter] public string BlockKey { get; set; } = "";
+    private PupilMboHboOutcomeDto? _model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _model = await Api.GetMboHboOutcomeAsync(BlockKey);
+    }
+}

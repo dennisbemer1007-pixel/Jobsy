@@ -11,5 +11,8 @@ public enum PupilQuestionSet
     Groep78 = 1,
 
     /// <summary>Middelbare school (VO) test.</summary>
-    Vo = 2
+    Vo = 2,
+
+    /// <summary>MBO/HBO: vijf losse testblokken (vakken, RIASEC, competentie, beroepen, werkwaarden).</summary>
+    MboHbo = 3
 }
