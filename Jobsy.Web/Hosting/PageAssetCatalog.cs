@@ -428,6 +428,11 @@ public static class PageAssetCatalog
             return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
         }
 
+        if (path.Equals("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
+        {
+            return [WwwrootAssetCatalog.Url("css/features/leerling-werelden-kies.css")];
+        }
+
         return [];
     }
 

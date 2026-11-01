@@ -180,6 +180,10 @@ else
         {
             _state = null;
         }
+        else if (PupilGroep78Navigation.RedirectIfThemeMissing(Nav, outcome.Value))
+        {
+            return;
+        }
         else
         {
             ApplyLoaded(outcome.Value);

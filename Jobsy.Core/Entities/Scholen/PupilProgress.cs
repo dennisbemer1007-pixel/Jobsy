@@ -5,6 +5,9 @@ public class PupilProgress
 {
     public Guid PupilCodeId { get; set; }
     public PupilCode? PupilCode { get; set; }
+    /// <summary>Groep 7/8 visual theme (<see cref="Jobsy.Core.Scholen.PupilJourneyTheme"/>).</summary>
+    public string? JourneyThemeKey { get; set; }
+
     /// <summary>JSON map item id → Likert 1..5.</summary>
     public string AnswersJson { get; set; } = "{}";
     public int CurrentIndex { get; set; }

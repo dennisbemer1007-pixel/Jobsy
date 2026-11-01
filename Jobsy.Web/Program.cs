@@ -1,7 +1,6 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
 using Jobsy.Core.Localization;
-using Jobsy.Web.Hosting;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
 using Jobsy.Core.Security;
@@ -9,11 +8,12 @@ using Jobsy.Web.Auth;
 using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
 using Jobsy.Web.Discovery;
+using Jobsy.Web.Hosting;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
 using Jobsy.Web.Seo;
-using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -637,6 +637,7 @@ app.UseMiddleware<SchoolsFeatureMiddleware>();
 // Authentication has already run, so the pupil principal is available.
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<PupilGroep78ThemeGuardMiddleware>();
 app.UseDiscoverySsrRedirect();
 // After auth so the admin bypass reads the cookie principal (errors 05).
 app.UseMiddleware<MaintenanceMiddleware>();

@@ -365,12 +365,51 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_answer_without_theme_returns_theme_required()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync(
+            level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
+        using var client = await LoginPupilAsync(seed);
+        var blocked = await client.PutAsJsonAsync(
+            "api/pupil/progress/answers/9001",
+            new PupilAnswerRequest(3));
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+        var body = await blocked.Content.ReadAsStringAsync();
+        Assert.Contains("theme_required", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Groep78_login_redirects_to_wereld_until_theme_chosen()
+    {
+        await EnableSchoolsAsync(true);
+        var seed = await SeedOpenClassAsync(
+            level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+        var login = await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
+            seed.SchoolId, seed.ClassId, seed.PlainCode));
+        var body = await login.Content.ReadFromJsonAsync<PupilLoginResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Wereld, body!.RedirectPath);
+
+        var theme = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(PupilJourneyTheme.Sterrenkust));
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
+        var saved = await theme.Content.ReadFromJsonAsync<PupilJourneyThemeResponse>(Json);
+        Assert.Equal(PupilGroep78EntryPaths.Start, saved!.RedirectPath);
+
+        var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
+        Assert.Equal(PupilJourneyTheme.Sterrenkust, progress!.JourneyThemeKey);
+    }
+
+    [Fact]
     public async Task Groep78_class_rejects_9101_as_wrong_set_and_has_60_items()
     {
         await EnableSchoolsAsync(true);
         var seed = await SeedOpenClassAsync(
             level: SchoolLevel.Groep78, year: 8, questionSet: PupilQuestionSet.Groep78);
         using var client = await LoginPupilAsync(seed);
+        await ChooseJourneyThemeAsync(client, PupilJourneyTheme.ZeeExpeditie);
         var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
         Assert.Equal(60, progress!.TotalItems);
 
@@ -450,6 +489,14 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             seed.SchoolId, seed.ClassId, seed.PlainCode));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         return client;
+    }
+
+    private static async Task ChooseJourneyThemeAsync(HttpClient client, string themeKey)
+    {
+        var theme = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(themeKey));
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
     }
 
     private async Task EnableSchoolsAsync(bool enabled)

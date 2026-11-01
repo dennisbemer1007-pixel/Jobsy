@@ -167,6 +167,10 @@
     "sha256": "b8c8ebe7ac11ba2ccc445300496c26c652b4044397452912d0306be80467ef69",
     "v": "20261028-59"
   },
+  "css/features/leerling-werelden-kies.css": {
+    "sha256": "85915f8532de08908d97aacc80fa4d074501e7a44a66996c70013215ce83af4f",
+    "v": "20261101-catalog"
+  },
   "css/features/lobsy-assistant-panel.css": {
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"
@@ -200,7 +204,7 @@
     "v": "20261025-87"
   },
   "css/features/occupation-day.css": {
-    "sha256": "67c63d1ebe8081d03e2760199b0d1419358d5b61bb5a10f5f92723c0b1170bb9",
+    "sha256": "e1a1f56d697c6da1d66c36f82ee033c482ae28b7add11fcff72e4e331e259f18",
     "v": "20261005-23"
   },
   "css/features/onboarding-client-nav.css": {
@@ -308,7 +312,7 @@
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "671648e3b0f39d25967e288634ceb38b3c3302b3225f6beb503b4475bc14684d",
+    "sha256": "780503e791d5f3b6f3e190916d9e6ca8dbc639878097b57ba3182237631d14b2",
     "v": "20261030-1"
   },
   "css/features/signup-static.css": {

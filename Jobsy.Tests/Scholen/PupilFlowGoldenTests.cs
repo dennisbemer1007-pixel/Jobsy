@@ -78,6 +78,7 @@ public class PupilFlowGoldenTests : IClassFixture<RoleFunctionalWebAppFactory>
         var login = await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
             seed.SchoolId, seed.ClassId, seed.PlainCode));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        await PupilGroep78TestHelpers.EnsureJourneyThemeAsync(client);
 
         var bank = new PupilQuestionBank();
         var frames = new List<GoldenFrame>();

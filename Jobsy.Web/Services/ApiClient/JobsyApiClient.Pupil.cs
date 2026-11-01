@@ -18,6 +18,22 @@ public sealed partial class JobsyApiClient
     public async Task<PupilProgressStateDto?> GetPupilProgressAsync(CancellationToken ct = default)
         => await GetApiJsonAsync<PupilProgressStateDto>("api/pupil/progress", ct);
 
+    public async Task<PupilJourneyThemeResponse?> SavePupilJourneyThemeAsync(
+        string themeKey,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(themeKey),
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilJourneyThemeResponse>(response.Content, ct);
+    }
+
     public async Task<PupilAnswerResponse?> SavePupilAnswerAsync(
         string itemId,
         int value,
@@ -138,7 +154,7 @@ public sealed partial class JobsyApiClient
         string? queryString = null,
         CancellationToken ct = default)
     {
-        var path = string.IsNullOrWhiteSpace(queryString) ? "leerling/pdf" : $"leerling/pdf{queryString}";
+        var path = BuildPupilStoryPdfPath(queryString);
         using var response = await _http.GetAsync(path, ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -159,5 +175,17 @@ public sealed partial class JobsyApiClient
             null,
             ct);
         response.EnsureSuccessStatusCode();
+    }
+
+    internal static string BuildPupilStoryPdfPath(string? queryString)
+    {
+        var raw = queryString?.Trim();
+        if (string.IsNullOrEmpty(raw))
+        {
+            return "leerling/pdf";
+        }
+
+        raw = raw.TrimStart('?').TrimEnd('?');
+        return string.IsNullOrEmpty(raw) ? "leerling/pdf" : $"leerling/pdf?{raw}";
     }
 }

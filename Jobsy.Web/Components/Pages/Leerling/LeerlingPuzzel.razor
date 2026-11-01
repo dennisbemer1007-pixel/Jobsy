@@ -215,6 +215,11 @@ else
             }
 
             var state = outcome.Value;
+            if (PupilGroep78Navigation.RedirectIfThemeMissing(Nav, state))
+            {
+                return;
+            }
+
             if (!string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(state.NextPuzzleKey, Key, StringComparison.OrdinalIgnoreCase))
             {
