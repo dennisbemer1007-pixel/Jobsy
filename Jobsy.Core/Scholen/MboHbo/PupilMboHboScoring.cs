@@ -205,7 +205,7 @@ public static class PupilMboHboScoring
         PupilMboHboCatalog catalog,
         SchoolLevel level)
     {
-        var ranked = PupilMboHboOccupationMatch.TopOccupations(progress, level, catalog);
+        var ranked = PupilMboHboOccupationMatch.TopOccupationsForOutcome(progress, level, catalog);
 
         var bars = ranked
             .Select((x, i) => new NamedScore(x.Label, i + 1))
@@ -232,7 +232,7 @@ public static class PupilMboHboScoring
                 continue;
             }
 
-            var key = ShortValueLabel(q.Dimension);
+            var key = PupilMboHboDimensionLabels.BarGroupKey(q.Dimension);
             if (!byDim.TryGetValue(key, out var list))
             {
                 list = [];
@@ -265,53 +265,4 @@ public static class PupilMboHboScoring
         return LikertAnswerJson.ToPercent(values);
     }
 
-    private static string ShortValueLabel(string dimension)
-    {
-        if (dimension.Contains("Zelfstandigheid", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Zelfstandigheid";
-        }
-
-        if (dimension.Contains("Verbinding", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Verbinding";
-        }
-
-        if (dimension.Contains("Prestatie", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Prestatie";
-        }
-
-        if (dimension.Contains("Zekerheid", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Zekerheid";
-        }
-
-        if (dimension.Contains("Impact", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Impact";
-        }
-
-        if (dimension.Contains("salaris", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Salaris";
-        }
-
-        if (dimension.Contains("parttime", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Parttime";
-        }
-
-        if (dimension.Contains("thuis", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Thuiswerken";
-        }
-
-        if (dimension.Contains("vaste plek", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Vaste plek";
-        }
-
-        return dimension.Length > 28 ? dimension[..28] : dimension;
-    }
 }

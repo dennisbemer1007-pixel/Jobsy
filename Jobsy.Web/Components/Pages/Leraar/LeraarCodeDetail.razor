@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.MboHbo
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -57,9 +58,20 @@ else if (_detail.Status != PupilCodeStatus.Completed)
         </p>
         <h1>@_detail.DisplayCode</h1>
     </header>
-    <p class="sch-empty-state panel-section">
-        @string.Format(Culture["Leraar.Detail.InProgress"], _detail.ProgressCurrent, _detail.ProgressTotal)
-    </p>
+    @if (_detail.ProgressTotal == PupilMboHboTeacherProgress.BlockCount
+         && _detail.ProgressCurrent == PupilMboHboTeacherProgress.BlockCount)
+    {
+        <p class="sch-empty-state panel-section">
+            Alle MBO/HBO-testen zijn ingevuld.
+            <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/mbo-hbo")">Bekijk MBO/HBO-voortgang</a>
+        </p>
+    }
+    else
+    {
+        <p class="sch-empty-state panel-section">
+            @string.Format(Culture["Leraar.Detail.InProgress"], _detail.ProgressCurrent, _detail.ProgressTotal)
+        </p>
+    }
 }
 else
 {

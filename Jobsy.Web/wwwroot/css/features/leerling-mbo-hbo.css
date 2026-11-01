@@ -176,6 +176,17 @@
   color: #1f6b41;
 }
 
+.mhbo-tile.mhbo-tile--passport {
+  border-color: #c9d4e3;
+  border-top-color: #0f2747;
+  background: #f0f4f8;
+}
+
+.mhbo-tile.mhbo-tile--passport .st {
+  background: #dce6f2;
+  color: #0f2747;
+}
+
 .mhbo-tile h3 {
   font-size: 17px;
   color: #0f2747;

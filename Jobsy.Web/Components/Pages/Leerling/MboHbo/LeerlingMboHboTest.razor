@@ -29,7 +29,7 @@ else
         </div>
         <div class="mhbo-bar" style="margin:10px 0 28px"><i style="width:@($"{Pct(_q.Index, _q.Total)}%")"></i></div>
         <div class="mhbo-card" style="padding:40px">
-            <p class="mhbo-meta" style="text-transform:uppercase;letter-spacing:.6px">@_q.Dimension</p>
+            <p class="mhbo-meta" style="text-transform:uppercase;letter-spacing:.6px">@PupilMboHboDimensionLabels.Display(_q.Dimension)</p>
             <div class="mhbo-speak-row">
                 <h1 style="font-size:24px;margin:10px 0 8px;flex:1">@_q.Question</h1>
                 <LeerlingSpeak Text="@SpeakText" SpeechKey="@($"mhbo-{_q.ItemId}")" />
@@ -54,7 +54,7 @@ else
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;flex-wrap:wrap;gap:12px">
             <button type="button" class="mhbo-btn o" disabled="@(_busy || _q.Index <= 1)" @onclick="PrevAsync">← Vorige</button>
             <a class="mhbo-lnk" href="/leerling/mbo-hbo/overzicht">Pauzeer en terug naar overzicht</a>
-            <button type="button" class="mhbo-btn" disabled="@(_busy || !CanContinue())" @onclick="NextAsync">Volgende →</button>
+            <button type="button" class="mhbo-btn" disabled="@(_busy || !CanContinue())" @onclick="NextAsync">@NextLabel</button>
         </div>
     </div>
 }
@@ -71,6 +71,8 @@ else
     private readonly List<string> _history = [];
 
     private string SpeakText => _q is null ? "" : $"{_q.Question} {_q.Scenario}";
+
+    private string NextLabel => _q is not null && _q.Index >= _q.Total ? "Afronden →" : "Volgende →";
 
     protected override async Task OnParametersSetAsync()
     {

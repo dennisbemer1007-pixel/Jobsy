@@ -56,6 +56,29 @@ public sealed class PupilMboHboCatalogTests
     }
 
     [Fact]
+    public void Beroepen_outcome_lists_ranked_suggestions_without_min_match_cutoff()
+    {
+        var cat = PupilMboHboCatalog.Default;
+        var state = new PupilMboHboProgressState();
+        foreach (var q in cat.QuestionsFor(PupilMboHboBlock.Beroepen, SchoolLevel.Mbo2))
+        {
+            state.Answers[q.Id] = 3;
+        }
+
+        var outcome = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Beroepen, state, SchoolLevel.Mbo2);
+        Assert.NotEmpty(outcome.Bars);
+        Assert.NotEmpty(outcome.Highlights);
+    }
+
+    [Fact]
+    public void Werkwaarden_dimension_labels_are_dutch_without_english_codes()
+    {
+        var sample = "Werkcultuur – Mensgericht (PeopleFirst)";
+        Assert.Equal("Mensgericht", PupilMboHboDimensionLabels.Display(sample));
+        Assert.DoesNotContain("PeopleFirst", PupilMboHboDimensionLabels.Display(sample));
+    }
+
+    [Fact]
     public void Werkwaarden_outcome_bars_have_unique_labels_for_storage()
     {
         var cat = PupilMboHboCatalog.Default;
