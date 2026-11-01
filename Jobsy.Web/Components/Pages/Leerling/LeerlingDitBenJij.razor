@@ -150,7 +150,8 @@ else
     private bool _groep78;
     private string? _themeKey;
 
-    private string PdfHref => PupilStoryPdfLink.Href(null, Culture.Language);
+    private string PdfHref =>
+        PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(Culture.Language) ?? Culture.Language);
 
     protected override async Task OnInitializedAsync()
     {

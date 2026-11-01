@@ -3,6 +3,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 
@@ -23,6 +24,11 @@ public static class PupilPdfEndpoints
         app.MapGet(Path, async (HttpContext http, JobsyApiClient api) =>
         {
             http.Response.Headers.CacheControl = "no-store";
+            if (PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request))
+            {
+                return Results.Redirect(PupilStoryPdfLink.HrefFromQuery(http.Request.Query));
+            }
+
             var query = JobsyApiClient.BuildPupilStoryPdfPath(http.Request.QueryString.Value);
             var apiQuery = query.StartsWith("leerling/pdf?", StringComparison.Ordinal)
                 ? "?" + query["leerling/pdf?".Length..]

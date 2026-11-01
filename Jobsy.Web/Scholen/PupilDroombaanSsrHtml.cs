@@ -90,7 +90,9 @@ public static class PupilDroombaanSsrHtml
         AppendDreamResult(sb, model, culture);
 
         sb.Append("</section>");
-        var pdfHref = PupilStoryPdfLink.Href(null, culture.Language);
+        var pdfHref = PupilStoryPdfLink.Href(
+            null,
+            PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
         sb.Append("<nav class=\"ll-dream-ssr__nav ll-result__actions\" aria-label=\"Verder\">");
         sb.Append("<a class=\"btn-secondary\" href=\"/leerling/dit-ben-jij\">");
         sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.OtherJob"]));

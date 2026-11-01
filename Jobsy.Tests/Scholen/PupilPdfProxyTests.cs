@@ -76,12 +76,33 @@ public class PupilPdfProxyTests
         var client = app.GetTestClient();
         var cookie = await SignInAsync(client);
 
-        var request = new HttpRequestMessage(HttpMethod.Get, "/leerling/pdf?lang=en&naam=Alex");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/leerling/pdf?naam=Alex&lang=en");
         request.Headers.TryAddWithoutValidation("Cookie", cookie);
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("/leerling/pdf?lang=en&naam=Alex", app.Services.GetRequiredService<PdfHandler>().RequestPath);
+        Assert.Equal("/leerling/pdf?naam=Alex&lang=en", app.Services.GetRequiredService<PdfHandler>().RequestPath);
+    }
+
+    [Fact]
+    public async Task Malformed_pdf_query_redirects_to_canonical_url()
+    {
+        await using var app = await StartAsync(schoolsEnabled: true);
+        var client = app.GetTestClient();
+        var cookie = await SignInAsync(client);
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/leerling/pdf?lang=nl?");
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/leerling/pdf?lang=nl", response.Headers.Location?.OriginalString);
+
+        request = new HttpRequestMessage(HttpMethod.Get, response.Headers.Location!);
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("/leerling/pdf?lang=nl", app.Services.GetRequiredService<PdfHandler>().RequestPath);
     }
 
     [Fact]

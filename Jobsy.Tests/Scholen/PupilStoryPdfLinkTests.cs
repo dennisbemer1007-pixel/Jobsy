@@ -1,4 +1,5 @@
 using Jobsy.Web.Scholen;
+using Microsoft.AspNetCore.Http;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -42,5 +43,24 @@ public sealed class PupilStoryPdfLinkTests
             Assert.DoesNotMatch(@"/leerling/pdf\?$", href);
             Assert.DoesNotMatch(@"/leerling/pdf\?lang=nl\?$", href);
         }
+    }
+
+    [Fact]
+    public void HrefFromQuery_rebuilds_canonical_link()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.QueryString = new QueryString("?lang=nl?&naam=Noor");
+        Assert.Equal("/leerling/pdf?naam=Noor&lang=nl", PupilStoryPdfLink.HrefFromQuery(http.Request.Query));
+        http.Request.Path = PupilStoryPdfLink.Path;
+        Assert.True(PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request));
+    }
+
+    [Fact]
+    public void NeedsCanonicalRedirect_false_for_clean_url()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Path = PupilStoryPdfLink.Path;
+        http.Request.QueryString = new QueryString("?lang=nl");
+        Assert.False(PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request));
     }
 }
