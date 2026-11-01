@@ -15,7 +15,7 @@ namespace Jobsy.Tests.Scholen;
 public sealed class MboHboFlowPlaywrightTests
 {
     /// <summary>Acc MBO/HBO fixes (#1386). Use env JOBSY_E2E_MIN_COMMIT to override.</summary>
-    private const string MinDeployCommitPrefix = "3e44220d";
+    private const string MinDeployCommitPrefix = "5f6f593c";
     private const string SchoolAdminEmail = "test-schoolbeheerder@lobsy.nl";
     private const string TeacherEmail = "test-leraar@lobsy.nl";
     private const string Password = "";
