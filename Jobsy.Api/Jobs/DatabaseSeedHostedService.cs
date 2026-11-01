@@ -44,7 +44,8 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         {
             _logger.LogError(
                 ex,
-                "Database migrate failed during startup (search logs for PendingModelChanges or column already exists; API auth and feature-flags endpoints stay down until fixed).");
+                "Database migrate failed during startup (see JobsyDbSeeder logs for EF Database.MigrateAsync exception detail and pending migration id).");
+            _logger.LogError("Database migrate failed during startup — full exception: {ExceptionDetail}", ex.ToString());
             throw;
         }
 

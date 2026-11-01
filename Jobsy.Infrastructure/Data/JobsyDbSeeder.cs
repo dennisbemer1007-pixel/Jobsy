@@ -29,6 +29,24 @@ public static class JobsyDbSeeder
         }
     }
 
+    /// <summary>
+    /// Idempotent pupil/school columns before EF migrate (same SQL as post-migrate ensure; safe if migrate aborts early).
+    /// </summary>
+    public static async Task EnsurePupilProgressSchemaColumnsAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Pupil progress schema column ensure failed; migrate may repair.");
+        }
+    }
+
     public static async Task SeedAsync(IServiceProvider services)
     {
         await MigrateAsync(services);
@@ -54,6 +72,7 @@ public static class JobsyDbSeeder
     {
         await EnsurePassportPdfDnaBlocksColumnAsync(services);
         await EnsureFeatureFlagAdminOverrideColumnsAsync(services);
+        await EnsurePupilProgressSchemaColumnsAsync(services);
 
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -62,7 +81,24 @@ public static class JobsyDbSeeder
         var knownMigrations = db.Database.GetMigrations().ToList();
         if (knownMigrations.Count > 0)
         {
-            await db.Database.MigrateAsync();
+            var appliedBefore = (await db.Database.GetAppliedMigrationsAsync()).ToList();
+            var pendingBefore = (await db.Database.GetPendingMigrationsAsync()).ToList();
+            await MigrationStartupDiagnostics.LogPreflightAsync(db, logger);
+
+            try
+            {
+                await db.Database.MigrateAsync();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                MigrationStartupDiagnostics.LogMigrateFailure(
+                    ex,
+                    pendingBefore,
+                    appliedBefore.LastOrDefault(),
+                    logger);
+                throw;
+            }
+
             await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
             await db.Database.ExecuteSqlRawAsync(Migrations.JobSearchActivitySchemaIdempotentSql.EnsureSchema);
             try
