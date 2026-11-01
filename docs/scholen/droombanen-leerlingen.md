@@ -15,7 +15,7 @@ Route:
 - Nu: {nu}|Kies straks biologie en scheikunde
 - Havo of vwo afmaken|Zit je op vmbo? Via mbo Dierenartsassistent kan je ook verder.
 - Diergeneeskunde studeren|Universiteit Utrecht · 6 jaar
-- Goal: Dierenarts!|In een praktijk, dierentuin of op de boerderij
+- Goal: Dierenarts|In een praktijk, dierentuin of op de boerderij
 - Alt: Zit je op vmbo? Via mbo Dierenartsassistent (niveau 4) kan je ook verder.
 
 ## Piloot (`piloot`)
@@ -106,7 +106,7 @@ Needs:
 Route:
 - Nu: {nu}|Kies straks consumptief of economie
 - Vmbo of havo|Praktijkervaring telt mee
-- Mbo Kok|Mbo niveau 2 tot 4 · 2 tot 4 jaar
+- Mbo Kok|Mbo niveau 2 tot 4, opleiding duurt 2 tot 4 jaar
 - Goal: Kok|In een restaurant, keuken of catering
 - Alt: Via mbo Kok of Gastheer/-vrouw kun je snel aan de slag.
 
@@ -255,7 +255,7 @@ Needs:
 - `Logica` (RiasecI ≥ 60): Je denkt logisch / Los puzzels of rekenopgaven op
 - `Ordenen` (RiasecC ≥ 60): Je houdt van ordenen / Maak een nette planning
 - `Doorzetten` (CompetenceResultaat ≥ 60): Je zet door / Maak een lastige taak af
-- `Nieuw` (CompetenceInnovatie ≥ 60): Je staat open voor nieuw / Probeer een nieuwe werkwijze
+- `Rekenen` (SubjectRekenen ≥ 60): Je houdt van rekenen / Oefen rekenen tot het soepel gaat
 - `Computers` (ChipProgrammeren ≥ 60): Je vindt computers interessant / Probeer een eenvoudig digitaal project
 
 Route:
