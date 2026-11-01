@@ -1,4 +1,7 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -42,7 +45,21 @@ public static class PupilPdfEndpoints
                 return Results.Redirect("/leerling?error=expired");
             }
 
-            return Results.Redirect("/leerling/start");
+            var progress = await api.GetPupilProgressAsync(http.RequestAborted);
+            if (progress?.QuestionSet == PupilQuestionSet.MboHbo)
+            {
+                var dest = status == 409
+                    ? $"{PupilMboHboEntryPaths.Paspoort}?pdf=locked"
+                    : $"{PupilMboHboEntryPaths.Paspoort}?pdf=error";
+                return Results.Redirect(dest);
+            }
+
+            if (progress?.QuestionSet == PupilQuestionSet.Vo)
+            {
+                return Results.Redirect("/leerling/paspoort?pdf=error");
+            }
+
+            return Results.Redirect(PupilGroep78EntryPaths.Start);
         }).RequireAuthorization(JobsyPolicies.PupilSession);
 
         return app;

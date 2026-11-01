@@ -137,12 +137,12 @@ public static class PupilMboHboScoring
 
         var labels = new Dictionary<char, string>
         {
-            ['R'] = "Praktisch",
-            ['I'] = "Onderzoekend",
-            ['A'] = "Artistiek",
-            ['S'] = "Sociaal",
-            ['E'] = "Ondernemend",
-            ['C'] = "Conventioneel"
+            ['R'] = "R (Praktisch)",
+            ['I'] = "I (Onderzoekend)",
+            ['A'] = "A (Artistiek)",
+            ['S'] = "S (Sociaal)",
+            ['E'] = "E (Ondernemend)",
+            ['C'] = "C (Conventioneel)"
         };
 
         var bars = letters

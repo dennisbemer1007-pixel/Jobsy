@@ -22,6 +22,17 @@ public static class PupilMboHboDimensionLabels
             s = s[(dash + 1)..].Trim();
         }
 
+        var riasec = System.Text.RegularExpressions.Regex.Match(
+            s,
+            @"^([RISCE])\s*\(([^)]+)\)\s*$",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (riasec.Success)
+        {
+            var letter = riasec.Groups[1].Value.ToUpperInvariant();
+            var name = riasec.Groups[2].Value.Trim();
+            return $"{letter} ({name})";
+        }
+
         var paren = s.IndexOf('(', StringComparison.Ordinal);
         if (paren > 0)
         {

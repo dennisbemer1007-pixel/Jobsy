@@ -50,6 +50,7 @@ public class SchoolPortalRetestTests
         UiStringsScholen.MergeNl(nl);
         Assert.Contains(PupilSessionDuration.Groep78, nl["Leerling.Start.NoteTime"], StringComparison.Ordinal);
         Assert.Contains(PupilSessionDuration.VoLessons, nl["Leerling.Vo.Start.NoteTime"], StringComparison.Ordinal);
+        Assert.Contains(PupilSessionDuration.MboHbo, nl["Leerling.MboHbo.Start.NoteTime"], StringComparison.Ordinal);
         Assert.Contains(PupilSessionDuration.Groep78, nl["School.Material.Step4"], StringComparison.Ordinal);
         Assert.Contains(PupilSessionDuration.VoLessons, nl["School.Material.Step4"], StringComparison.Ordinal);
         Assert.Contains("(100 vragen)", nl["School.QuestionSet.Vo"], StringComparison.Ordinal);

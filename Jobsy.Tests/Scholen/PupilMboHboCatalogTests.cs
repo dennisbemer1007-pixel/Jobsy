@@ -71,6 +71,12 @@ public sealed class PupilMboHboCatalogTests
     }
 
     [Fact]
+    public void Interesse_dimension_keeps_riasec_letter_and_dutch_name()
+    {
+        Assert.Equal("R (Praktisch)", PupilMboHboDimensionLabels.Display("R (Praktisch)"));
+    }
+
+    [Fact]
     public void Werkwaarden_dimension_labels_are_dutch_without_english_codes()
     {
         var sample = "Werkcultuur – Mensgericht (PeopleFirst)";

@@ -116,6 +116,7 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilLoginProtection _protection;
     private readonly IPupilQuestionSetRegistry _registry;
     private readonly IPupilResultBuilder _results;
+    private readonly IPupilMboHboResultBuilder _mboResults;
     private readonly ISchoolScopeService _scope;
     private readonly IMemoryCache _cache;
     private readonly IPupilStoryRenderer _story;
@@ -133,6 +134,7 @@ public sealed class PupilPortalService : IPupilPortalService
         IPupilLoginProtection protection,
         IPupilQuestionSetRegistry registry,
         IPupilResultBuilder results,
+        IPupilMboHboResultBuilder mboResults,
         ISchoolScopeService scope,
         IMemoryCache cache,
         IPupilStoryRenderer story,
@@ -149,6 +151,7 @@ public sealed class PupilPortalService : IPupilPortalService
         _protection = protection;
         _registry = registry;
         _results = results;
+        _mboResults = mboResults;
         _scope = scope;
         _cache = cache;
         _story = story;
@@ -1167,8 +1170,10 @@ public sealed class PupilPortalService : IPupilPortalService
             var mhboState = PupilMboHboProgressState.Parse(code.Progress?.MboHboProgressJson);
             if (!mhboState.AllBlocksComplete())
             {
-                return (null, null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+                return (null, null, new PupilErrorDto("not_completed", "Je paspoort komt vrij als alle 5 testen af zijn."), 409);
             }
+
+            await _mboResults.BuildAsync(code.Id, cancellationToken);
 
             var mhboBytes = Passport.PupilMboHboPassportPdfRenderer.Render(
                 code, schoolClass, schoolName, display, displayNameOnPdf);

@@ -390,6 +390,7 @@ public static class UiStringsScholen
         nl["Leerling.Start.Lead"] = "Je gaat op reis door 4 werelden. Lobsy leert jou kennen — zonder namen.";
         nl["Leerling.Start.NoteTime"] = "Duurt " + PupilSessionDuration.Groep78 + ".";
         nl["Leerling.Vo.Start.NoteTime"] = "Duurt " + PupilSessionDuration.VoLessons + ".";
+        nl["Leerling.MboHbo.Start.NoteTime"] = "Duurt " + PupilSessionDuration.MboHbo + ".";
         nl["Leerling.Start.NoteNoWrong"] = "Er zijn geen foute antwoorden.";
         nl["Leerling.Start.NotePause"] = "Je kunt stoppen en later verder.";
         nl["Leerling.Start.Begin"] = "Beginnen";

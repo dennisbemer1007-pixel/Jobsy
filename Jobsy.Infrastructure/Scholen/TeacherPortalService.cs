@@ -201,10 +201,15 @@ public sealed class TeacherPortalService : ITeacherPortalService
         if (completed >= 1)
         {
             var durations = codes
-                .Where(c => c.Status == PupilCodeStatus.Completed && c.Progress?.StartedAtUtc is not null
-                            && c.Progress.CompletedAtUtc is not null)
-                .Select(c => (c.Progress!.CompletedAtUtc!.Value - c.Progress.StartedAtUtc).TotalMinutes)
-                .Where(m => m > 0 && m < 24 * 60)
+                .Where(c => c.Status == PupilCodeStatus.Completed
+                            || PupilMboHboTeacherProgress.IsFullyComplete(c, schoolClass))
+                .Select(c => schoolClass.QuestionSet == PupilQuestionSet.MboHbo
+                    ? PupilMboHboProgressReset.ActiveMinutes(c.Progress)
+                    : c.Progress?.StartedAtUtc is DateTime started && c.Progress.CompletedAtUtc is DateTime done
+                        ? (int?)Math.Round((done - started).TotalMinutes)
+                        : null)
+                .Where(m => m is > 0 and < 24 * 60)
+                .Select(m => m!.Value)
                 .ToList();
             if (durations.Count >= 1)
             {
@@ -359,11 +364,11 @@ public sealed class TeacherPortalService : ITeacherPortalService
                             && (code.Status == PupilCodeStatus.Completed
                                 || (totalQuestions > 0 && progressCurrent >= totalQuestions));
 
-        int? duration = null;
-        if (code.Progress?.StartedAtUtc is DateTime started && code.Progress.CompletedAtUtc is DateTime done)
-        {
-            duration = (int)Math.Round((done - started).TotalMinutes);
-        }
+        int? duration = code.SchoolClass!.QuestionSet == PupilQuestionSet.MboHbo
+            ? PupilMboHboProgressReset.ActiveMinutes(code.Progress)
+            : code.Progress?.StartedAtUtc is DateTime started && code.Progress.CompletedAtUtc is DateTime done
+                ? (int)Math.Round((done - started).TotalMinutes)
+                : null;
 
         PupilStoryViewDto? story = null;
         DreamJobRouteStubDto? dream = null;
@@ -373,7 +378,13 @@ public sealed class TeacherPortalService : ITeacherPortalService
         string? likeOther = null;
         string? dislikeOther = null;
 
-        if (code.Status == PupilCodeStatus.Completed && code.Result is not null)
+        var questionSet = code.SchoolClass.QuestionSet;
+        var mboComplete = questionSet == PupilQuestionSet.MboHbo
+                          && PupilMboHboTeacherProgress.IsFullyComplete(code, code.SchoolClass);
+
+        if (questionSet != PupilQuestionSet.MboHbo
+            && code.Status == PupilCodeStatus.Completed
+            && code.Result is not null)
         {
             story = _story.Render(code.Result, code.Progress);
             dream = EnrichDreamTitle(_story.RenderDreamRoute(code.Result, code.Progress, PupilClassContext.From(code.SchoolClass!)));
@@ -385,6 +396,14 @@ public sealed class TeacherPortalService : ITeacherPortalService
 
             await LogPupilCodeViewAsync(user, codeId, cancellationToken);
         }
+        else if (mboComplete)
+        {
+            await LogPupilCodeViewAsync(user, codeId, cancellationToken);
+        }
+
+        var pdfAvailable = questionSet == PupilQuestionSet.MboHbo
+            ? mboComplete
+            : code.Result is not null;
 
         return new TeacherCodeDetailDto(
             CodeId: code.Id,
@@ -403,8 +422,9 @@ public sealed class TeacherPortalService : ITeacherPortalService
             DislikeOtherWord: dislikeOther,
             ConversationStarterKeys: starters,
             DreamJob: dream,
-            PdfAvailable: code.Result is not null,
-            ResultPending: resultPending);
+            PdfAvailable: pdfAvailable,
+            ResultPending: resultPending,
+            QuestionSet: questionSet);
     }
 
     public async Task<(byte[]? Bytes, string? FileName, string? Error)> BuildPupilReportPdfAsync(

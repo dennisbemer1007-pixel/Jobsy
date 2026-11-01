@@ -83,7 +83,8 @@ public sealed record TeacherCodeDetailDto(
     IReadOnlyList<string> ConversationStarterKeys,
     DreamJobRouteStubDto? DreamJob,
     bool PdfAvailable,
-    bool ResultPending = false);
+    bool ResultPending = false,
+    PupilQuestionSet QuestionSet = PupilQuestionSet.Groep78);
 
 /// <summary>Rendered "Dit ben jij" story (text regenerated from templates).</summary>
 public sealed record PupilStoryViewDto(
