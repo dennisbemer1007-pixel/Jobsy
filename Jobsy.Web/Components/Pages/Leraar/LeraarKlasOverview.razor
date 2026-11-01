@@ -64,6 +64,10 @@ else
             <p class="sch-pill sch-pill--ok">@Culture["School.TestWindow.StatusOpen"] · @Culture["School.TestWindow.Until"] @until.ToString("dd-MM-yyyy")</p>
         }
         <div class="sch-admin-toolbar sch-toolbar-wrap">
+            @if (_overview.QuestionSet == PupilQuestionSet.MboHbo)
+            {
+                <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/mbo-hbo")">MBO/HBO voortgang</a>
+            }
             <button type="button" class="btn-compact" @ref="_windowTrigger" @onclick="() => _windowOpen = true">@Culture["School.Col.Window"]</button>
             <button type="button" class="btn-compact" @onclick="DownloadPdf" disabled="@_busy">@Culture["School.CodeList.Pdf"]</button>
             <button type="button" class="btn-compact" @onclick="DownloadCsv" disabled="@_busy">@Culture["School.CodeList.Csv"]</button>
