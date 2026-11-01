@@ -57,7 +57,9 @@ public sealed class PupilMboHboResultBuilder : IPupilMboHboResultBuilder
 
         var values = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Werkwaarden, state, level);
         var valuesJson = JsonSerializer.Serialize(
-            values.Bars.ToDictionary(b => b.Label, b => b.Percent),
+            values.Bars
+                .GroupBy(b => b.Label, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.Max(x => x.Percent), StringComparer.OrdinalIgnoreCase),
             Json);
 
         var holland = BuildHolland(interesse.Bars);

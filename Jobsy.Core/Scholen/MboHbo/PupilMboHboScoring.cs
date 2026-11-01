@@ -246,7 +246,7 @@ public static class PupilMboHboScoring
                 continue;
             }
 
-            var key = q.Dimension.Split('(')[0].Trim();
+            var key = ShortValueLabel(q.Dimension);
             if (!byDim.TryGetValue(key, out var list))
             {
                 list = [];
@@ -257,7 +257,7 @@ public static class PupilMboHboScoring
         }
 
         var bars = byDim
-            .Select(kv => new NamedScore(ShortValueLabel(kv.Key), AveragePercent(kv.Value)))
+            .Select(kv => new NamedScore(kv.Key, AveragePercent(kv.Value)))
             .OrderByDescending(b => b.Percent)
             .ToList();
 

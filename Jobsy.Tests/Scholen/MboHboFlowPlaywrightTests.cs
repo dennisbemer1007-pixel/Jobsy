@@ -1,23 +1,531 @@
+using System.Text.RegularExpressions;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Tests.E2e;
+using Microsoft.Playwright;
+
 namespace Jobsy.Tests.Scholen;
 
 /// <summary>
-/// Full MBO/HBO pupil route (uitleg → overzicht → test → uitkomst → paspoort) runs on Acceptatie
-/// with a fresh pupil code. Enable locally with RUN_MBO_HBO_E2E=1 and BASE_URL set.
+/// Full MBO/HBO pupil + teacher route on Acceptatie. Run:
+/// RUN_MBO_HBO_E2E=1 JOBSY_E2E_BASE_URL=https://acceptatie.lobsy.nl
+/// JOBSY_WALKTHROUGH_ARTIFACTS=/opt/cursor/artifacts/mbo-hbo-acc
+/// dotnet test --filter MboHbo_acc_full_flow
 /// </summary>
+[Collection("PlaywrightSmoke")]
 public sealed class MboHboFlowPlaywrightTests
 {
-    [Fact(Skip = "Requires Acceptatie deploy and RUN_MBO_HBO_E2E=1")]
-    public Task Full_flow_with_new_code_captures_screenshots()
+    private const string MinDeployCommitPrefix = "e6fce2f7";
+    private const string SchoolAdminEmail = "test-schoolbeheerder@lobsy.nl";
+    private const string TeacherEmail = "test-leraar@lobsy.nl";
+    private const string Password = "";
+
+    private static readonly string[] BlockOrder =
+    [
+        "vakken",
+        "interesse",
+        "competentie",
+        "beroepen",
+        "werkwaarden"
+    ];
+
+    [Fact(Timeout = 2_400_000, DisplayName = "MboHbo_acc_full_flow")]
+    public async Task Full_flow_with_new_code_captures_screenshots()
     {
-        var enabled = string.Equals(
-            Environment.GetEnvironmentVariable("RUN_MBO_HBO_E2E"),
-            "1",
-            StringComparison.Ordinal);
-        if (!enabled)
+        _ = TestContext.Current.CancellationToken;
+        if (!string.Equals(Environment.GetEnvironmentVariable("RUN_MBO_HBO_E2E"), "1", StringComparison.Ordinal))
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        return Task.CompletedTask;
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "https://acceptatie.lobsy.nl").TrimEnd('/');
+        if (!await KbE2e.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        var liveCommit = await WaitForDeployCommitAsync(baseUrl, TimeSpan.FromMinutes(20));
+        TestContext.Current.SendDiagnosticMessage($"Acceptatie lobsy-commit: {liveCommit}");
+
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (string.IsNullOrWhiteSpace(artifactDir))
+        {
+            artifactDir = Path.Combine("/opt/cursor/artifacts", "mbo-hbo-acc-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmm"));
+        }
+
+        Directory.CreateDirectory(artifactDir);
+        await File.WriteAllTextAsync(Path.Combine(artifactDir, "lobsy-commit.txt"), liveCommit);
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        Guid classId;
+        string plainCode;
+
+        var schoolId = DemoSchoolIds.SchoolId;
+        var preClass = Environment.GetEnvironmentVariable("JOBSY_ACC_MBO_HBO_CLASS_ID");
+        var preCode = Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CODE");
+        if (Guid.TryParse(preClass, out var preClassId) && !string.IsNullOrWhiteSpace(preCode))
+        {
+            classId = preClassId;
+            plainCode = preCode.Trim();
+            var preSchool = Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_SCHOOL_ID");
+            if (Guid.TryParse(preSchool, out var preSchoolId))
+            {
+                schoolId = preSchoolId;
+            }
+        }
+        else
+        {
+            await using (var adminCtx = await browser.NewContextAsync(KbE2e.DesktopContext()))
+            {
+                var adminPage = await adminCtx.NewPageAsync();
+                adminPage.SetDefaultTimeout(180_000);
+                classId = await EnsureMboHboClassReadyAsync(adminPage, baseUrl);
+            }
+
+            await using (var teacherCtx = await browser.NewContextAsync(KbE2e.DesktopContext()))
+            {
+                var teacherPage = await teacherCtx.NewPageAsync();
+                teacherPage.SetDefaultTimeout(180_000);
+                var (teacherEmail, teacherPassword) = ResolveTeacherCredentials();
+                var loggedIn = await KbE2e.TryLoginAsync(teacherPage, baseUrl, teacherEmail, teacherPassword);
+                Assert.True(
+                    loggedIn,
+                    $"Teacher login failed on Acceptatie (need JOBSY_E2E_TEACHER_EMAIL/PASSWORD or test-leraar@lobsy.nl Dashboard secret). Url={teacherPage.Url}");
+                plainCode = await AddFreshPupilCodeAsync(teacherPage, baseUrl, classId);
+                await OpenTeacherTestWindowIfNeededAsync(teacherPage, baseUrl, classId);
+            }
+        }
+
+        await RunPupilAndTeacherFlowAsync(
+            browser,
+            baseUrl,
+            schoolId,
+            classId,
+            teacherId: null,
+            plainCode,
+            artifactDir,
+            staffSignIn: false);
+    }
+
+    internal static async Task RunPupilAndTeacherFlowAsync(
+        IBrowser browser,
+        string baseUrl,
+        Guid schoolId,
+        Guid classId,
+        Guid? teacherId,
+        string plainCode,
+        string artifactDir,
+        bool staffSignIn)
+    {
+        await using (var pupilCtx = await browser.NewContextAsync(KbE2e.DesktopContext()))
+        {
+            var page = await pupilCtx.NewPageAsync();
+            page.SetDefaultTimeout(180_000);
+            var loginUrl = $"{baseUrl}/leerling?schoolId={schoolId:D}&classId={classId:D}";
+            await PupilLoginAsync(page, loginUrl, plainCode, classId);
+            await WaitBlazorAsync(page);
+
+            await page.WaitForURLAsync("**/leerling/mbo-hbo/**", new() { Timeout = 120_000 });
+            await ShotAsync(page, artifactDir, "01-after-login");
+
+            if (page.Url.Contains("/uitleg", StringComparison.OrdinalIgnoreCase))
+            {
+                await AssertMhboThemeAsync(page);
+                await AssertClickableAsync(page.GetByRole(AriaRole.Button, new() { Name = "Naar mijn testen →" }));
+                await page.GetByRole(AriaRole.Button, new() { Name = "Naar mijn testen →" }).ClickAsync();
+                await page.WaitForURLAsync("**/mbo-hbo/overzicht**", new() { Timeout = 60_000 });
+                await WaitBlazorAsync(page);
+                await ShotAsync(page, artifactDir, "02-uitleg-started");
+            }
+
+            await page.GotoAsync($"{baseUrl}/leerling/mbo-hbo/overzicht", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await WaitBlazorAsync(page);
+            await AssertMhboThemeAsync(page);
+            await ShotAsync(page, artifactDir, "03-overzicht-start");
+
+            var pauseDone = false;
+            for (var bi = 0; bi < BlockOrder.Length; bi++)
+            {
+                var block = BlockOrder[bi];
+                await StartBlockFromOverviewAsync(page, block);
+                await WaitBlazorAsync(page);
+                await ShotAsync(page, artifactDir, $"04-test-{block}-start");
+
+                if (block == "interesse" && !pauseDone)
+                {
+                    await AnswerQuestionsAsync(page, block, pickValue: 3, maxSteps: 6);
+                    await page.GetByRole(AriaRole.Link, new() { Name = "Pauzeer en terug naar overzicht" }).ClickAsync();
+                    await page.WaitForURLAsync("**/mbo-hbo/overzicht**", new() { Timeout = 60_000 });
+                    await WaitBlazorAsync(page);
+                    await ShotAsync(page, artifactDir, "05-overzicht-paused-interesse");
+                    await StartBlockFromOverviewAsync(page, block);
+                    await WaitBlazorAsync(page);
+                    var meta = await page.Locator(".mhbo-meta").Filter(new() { HasText = "Vraag" }).InnerTextAsync();
+                    Assert.Contains("Vraag", meta, StringComparison.Ordinal);
+                    Assert.DoesNotContain("Vraag 1 van", meta, StringComparison.Ordinal);
+                    pauseDone = true;
+                }
+
+                var patternPick = block == "competentie" ? 5 : 3;
+                await AnswerQuestionsAsync(page, block, pickValue: patternPick);
+                await page.WaitForURLAsync($"**/mbo-hbo/uitkomst/{block}**", new() { Timeout = 300_000 });
+                await WaitBlazorAsync(page);
+                await AssertMhboThemeAsync(page);
+                await ShotAsync(page, artifactDir, $"06-uitkomst-{block}");
+                await page.GetByRole(AriaRole.Link, new() { Name = "← Terug naar overzicht" }).ClickAsync();
+                await page.WaitForURLAsync("**/mbo-hbo/overzicht**", new() { Timeout = 60_000 });
+                await WaitBlazorAsync(page);
+            }
+
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Open je paspoort" })).ToBeVisibleAsync();
+            await page.GetByRole(AriaRole.Link, new() { Name = "Open je paspoort" }).ClickAsync();
+            await page.WaitForURLAsync("**/mbo-hbo/paspoort**", new() { Timeout = 60_000 });
+            await WaitBlazorAsync(page);
+            await AssertMhboThemeAsync(page);
+            await ShotAsync(page, artifactDir, "07-paspoort");
+
+            var pdfLink = page.GetByRole(AriaRole.Link, new() { Name = "Download als PDF" });
+            await AssertClickableAsync(pdfLink);
+            var pdfResp = await page.Context.APIRequest.GetAsync(baseUrl + "/leerling/pdf");
+            Assert.True(pdfResp.Ok, $"PDF HTTP {(int)pdfResp.Status}");
+            var pdfBytes = await pdfResp.BodyAsync();
+            Assert.True(pdfBytes.Length > 200 && pdfBytes[0] == (byte)'%');
+            await File.WriteAllBytesAsync(Path.Combine(artifactDir, "08-paspoort.pdf"), pdfBytes);
+
+            await page.GotoAsync($"{baseUrl}/leerling/mbo-hbo/overzicht", new() { WaitUntil = WaitUntilState.Load });
+            await WaitBlazorAsync(page);
+            await AssertMhboThemeAsync(page);
+            await ShotAsync(page, artifactDir, "09-overzicht-after-enhanced-nav");
+        }
+
+        await using (var teacherCtx = await browser.NewContextAsync(KbE2e.DesktopContext()))
+        {
+            var page = await teacherCtx.NewPageAsync();
+            page.SetDefaultTimeout(180_000);
+            if (staffSignIn && teacherId is Guid tid)
+            {
+                var mboPath = $"/leraar/klas/{classId:D}/mbo-hbo";
+                await page.GotoAsync(
+                    $"{baseUrl}/__test/staff?user={tid:D}&school={schoolId:D}&role=Teacher&return={Uri.EscapeDataString(mboPath)}",
+                    new() { WaitUntil = WaitUntilState.Load });
+                await page.WaitForURLAsync("**/mbo-hbo**", new() { Timeout = 120_000 });
+            }
+            else
+            {
+                var (teacherEmail, teacherPassword) = ResolveTeacherCredentials();
+                Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, teacherEmail, teacherPassword));
+                await page.GotoAsync($"{baseUrl}/leraar/klas/{classId:D}/mbo-hbo", new() { WaitUntil = WaitUntilState.Load });
+            }
+
+            await WaitBlazorAsync(page);
+            await page.Locator("table").WaitForAsync(new() { Timeout = 120_000 });
+            await ShotAsync(page, artifactDir, "10-docent-mbo-hbo");
+            var pattern = page.Locator(".mhbo-chip", new() { HasText = "⚠" });
+            Assert.True(await pattern.CountAsync() > 0, "Expected pattern-warning icon for uniform answers on competentie block.");
+            await page.GotoAsync($"{baseUrl}/leraar/klas/{classId:D}/codes", new() { WaitUntil = WaitUntilState.Load });
+            await WaitBlazorAsync(page);
+            await ShotAsync(page, artifactDir, "11-docent-codes");
+        }
+    }
+
+    private static (string Email, string Password) ResolveTeacherCredentials()
+    {
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_TEACHER_EMAIL")
+            ?? Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_EMAIL")
+            ?? TeacherEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_TEACHER_PASSWORD")
+            ?? Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_PASSWORD")
+            ?? Environment.GetEnvironmentVariable("TestAccounts__Password__Teacher")
+            ?? Password;
+        return (email, password);
+    }
+
+    private static (string Email, string Password) ResolveSchoolAdminCredentials()
+    {
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_EMAIL") ?? SchoolAdminEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_SCHOOLADMIN_PASSWORD")
+            ?? Environment.GetEnvironmentVariable("TestAccounts__Password__SchoolAdmin")
+            ?? Password;
+        return (email, password);
+    }
+
+    private static async Task<string> WaitForDeployCommitAsync(string baseUrl, TimeSpan maxWait)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var deadline = DateTime.UtcNow + maxWait;
+        string? last = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            var html = await http.GetStringAsync(baseUrl + "/");
+            var m = Regex.Match(html, @"name=""lobsy-commit""\s+content=""([0-9a-f]{40})""", RegexOptions.IgnoreCase);
+            if (m.Success)
+            {
+                last = m.Groups[1].Value;
+                if (last.StartsWith(MinDeployCommitPrefix, StringComparison.OrdinalIgnoreCase)
+                    || string.Compare(last, MinDeployCommitPrefix, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return last;
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(30));
+        }
+
+        throw new InvalidOperationException(
+            $"Acceptatie still on commit {last ?? "(unknown)"}; need prefix {MinDeployCommitPrefix} within {maxWait.TotalMinutes} min.");
+    }
+
+    private static async Task<Guid> EnsureMboHboClassReadyAsync(IPage page, string baseUrl)
+    {
+        var (adminEmail, adminPassword) = ResolveSchoolAdminCredentials();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, adminEmail, adminPassword));
+        await page.GotoAsync($"{baseUrl}/school/klassen", new() { WaitUntil = WaitUntilState.Load });
+        await WaitBlazorAsync(page);
+
+        var mboRow = page.Locator("tr.ent-data-table__row", new() { HasText = "MBO/HBO" }).First;
+        if (await mboRow.CountAsync() > 0)
+        {
+            await mboRow.ClickAsync();
+            await page.WaitForURLAsync("**/school/klassen/**", new() { Timeout = 60_000 });
+            await WaitBlazorAsync(page);
+            await EnsureParentsAndWindowAsync(page);
+            return Guid.Parse(new Uri(page.Url).AbsolutePath.Split('/').Last());
+        }
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Nieuwe klas" }).ClickAsync();
+        await page.Locator("input.sch-field").First.WaitForAsync();
+        var className = "MH" + DateTime.UtcNow.ToString("HHmm");
+        await page.Locator("input.sch-field").First.FillAsync(className);
+        await page.Locator("label.sch-kind-card", new() { HasText = "MBO / HBO" }).ClickAsync();
+        var teacherCheckbox = page.Locator("label", new() { HasText = "Demo Leraar" }).Locator("input[type=checkbox]");
+        if (await teacherCheckbox.CountAsync() > 0)
+        {
+            await teacherCheckbox.CheckAsync();
+        }
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Opslaan" }).ClickAsync();
+        await page.WaitForURLAsync("**/school/klassen/**", new() { Timeout = 120_000 });
+        await WaitBlazorAsync(page);
+        await EnsureParentsAndWindowAsync(page);
+        return Guid.Parse(new Uri(page.Url).AbsolutePath.Split('/').Last());
+    }
+
+    private static async Task EnsureParentsAndWindowAsync(IPage page)
+    {
+        var confirmed = page.Locator(".sch-pill--ok", new() { HasText = "Bevestigd" });
+        if (await confirmed.CountAsync() == 0)
+        {
+            await page.Locator("input[type=checkbox]").First.CheckAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Bevestigen" }).ClickAsync();
+            await page.WaitForTimeoutAsync(2000);
+        }
+
+        var openPill = page.Locator(".sch-pill--ok", new() { HasText = "Open" });
+        if (await openPill.CountAsync() == 0)
+        {
+            await page.GetByRole(AriaRole.Button, new() { Name = "Testvenster" }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Openen" }).ClickAsync();
+            await page.WaitForTimeoutAsync(2000);
+        }
+    }
+
+    private static async Task OpenTeacherTestWindowIfNeededAsync(IPage page, string baseUrl, Guid classId)
+    {
+        await page.GotoAsync($"{baseUrl}/leraar/klas/{classId:D}", new() { WaitUntil = WaitUntilState.Load });
+        await WaitBlazorAsync(page);
+        var openPill = page.Locator(".sch-pill--ok", new() { HasText = "Open" });
+        if (await openPill.CountAsync() > 0)
+        {
+            return;
+        }
+
+        var windowBtn = page.GetByRole(AriaRole.Button, new() { Name = "Testvenster" });
+        if (await windowBtn.CountAsync() > 0)
+        {
+            await windowBtn.ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Openen" }).ClickAsync();
+            await page.WaitForTimeoutAsync(1500);
+        }
+    }
+
+    private static async Task<string> AddFreshPupilCodeAsync(IPage page, string baseUrl, Guid classId)
+    {
+        await page.GotoAsync($"{baseUrl}/leraar/klas/{classId:D}/codes", new() { WaitUntil = WaitUntilState.Load });
+        await WaitBlazorAsync(page);
+        await page.Locator("[data-testid=\"leraar-code-table\"] .sch-code").First.WaitForAsync(new() { Timeout = 120_000 });
+        var addBtn = page.GetByRole(AriaRole.Button, new() { Name = "Code toevoegen" });
+        if (await addBtn.CountAsync() == 0)
+        {
+            addBtn = page.GetByRole(AriaRole.Button, new() { Name = "Nieuwe code" });
+        }
+
+        if (await addBtn.CountAsync() > 0)
+        {
+            await addBtn.ClickAsync();
+            await page.WaitForTimeoutAsync(1500);
+        }
+
+        var code = (await page.Locator("[data-testid=\"leraar-code-table\"] .sch-code").Last.InnerTextAsync()).Trim();
+        Assert.Matches(@"^[A-Z0-9]{3}-[A-Z0-9]{3}$", code);
+        return code;
+    }
+
+    private static async Task StartBlockFromOverviewAsync(IPage page, string blockKey)
+    {
+        await page.GotoAsync(new Uri(page.Url).GetLeftPart(UriPartial.Authority) + "/leerling/mbo-hbo/overzicht",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await WaitBlazorAsync(page);
+        var tile = page.Locator(".mhbo-tile").Filter(new() { Has = page.Locator("button.mhbo-btn") });
+        var start = tile.Filter(new()
+        {
+            HasText = blockKey switch
+            {
+                "vakken" => "Vakkenpakket",
+                "interesse" => "Interessetest",
+                "competentie" => "Competentietest",
+                "beroepen" => "Beroepentest",
+                "werkwaarden" => "Werkwaarden",
+                _ => blockKey
+            }
+        }).GetByRole(AriaRole.Button).First;
+        if (await start.CountAsync() == 0)
+        {
+            start = page.Locator(".mhbo-tile button.mhbo-btn").Nth(blockKey switch
+            {
+                "vakken" => 0,
+                "interesse" => 1,
+                "competentie" => 2,
+                "beroepen" => 3,
+                "werkwaarden" => 4,
+                _ => 0
+            });
+        }
+
+        await start.ClickAsync();
+        await page.WaitForURLAsync($"**/mbo-hbo/test/{blockKey}**", new() { Timeout = 60_000 });
+    }
+
+    private static async Task AnswerQuestionsAsync(IPage page, string blockKey, int pickValue, int? maxSteps = null)
+    {
+        var steps = 0;
+        var deadline = DateTime.UtcNow.AddMinutes(10);
+        while (page.Url.Contains($"/test/{blockKey}", StringComparison.OrdinalIgnoreCase)
+               && DateTime.UtcNow < deadline
+               && (maxSteps is null || steps < maxSteps.Value))
+        {
+            await page.Locator(".mhbo-scale-opt").First.WaitForAsync(new() { Timeout = 60_000 });
+            var scaleCount = await page.Locator(".mhbo-scale").CountAsync();
+            for (var s = 0; s < scaleCount; s++)
+            {
+                await PickScaleValueAsync(page, s, pickValue);
+            }
+
+            var next = page.GetByRole(AriaRole.Button, new() { Name = "Volgende →" });
+            await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 30_000 });
+            await next.ClickAsync();
+            await page.WaitForTimeoutAsync(250);
+            steps++;
+        }
+
+        if (maxSteps is null)
+        {
+            Assert.DoesNotContain(
+                $"/test/{blockKey}",
+                page.Url,
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private static async Task PickScaleValueAsync(IPage page, int scaleIndex, int value)
+    {
+        var scale = page.Locator(".mhbo-scale").Nth(scaleIndex);
+        if (await scale.CountAsync() == 0)
+        {
+            return;
+        }
+
+        var opt = scale.Locator(".mhbo-scale-opt").Nth(value - 1);
+        await opt.ClickAsync();
+        await Assertions.Expect(opt).ToHaveClassAsync(new Regex(@"\bis-on\b"));
+    }
+
+    private static async Task AssertMhboThemeAsync(IPage page)
+    {
+        var json = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const sheets = [...document.querySelectorAll('link[rel=stylesheet]')]
+                .map(l => l.getAttribute('href') || '');
+              const hasMhboCss = sheets.some(h => h.includes('leerling-mbo-hbo'));
+              const root = document.querySelector('.mhbo-root, .mhbo-wrap');
+              const btn = document.querySelector('.mhbo-btn:not(.o):not(.g)');
+              if (!hasMhboCss || !root) return JSON.stringify({ ok:false, hasMhboCss, hasRoot:!!root });
+              const btnRgb = btn ? getComputedStyle(btn).backgroundColor : '';
+              const h1 = document.querySelector('h1');
+              const h1Color = h1 ? getComputedStyle(h1).color : '';
+              const bare = (document.body.innerText || '').includes('<table>') || document.body.innerHTML.includes('<table border');
+              return JSON.stringify({ ok: hasMhboCss && !!root && !bare, hasMhboCss, btnRgb, h1Color, bare });
+            }
+            """);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        Assert.True(root.GetProperty("ok").GetBoolean(), json);
+    }
+
+    private static async Task AssertClickableAsync(ILocator locator)
+    {
+        await locator.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        Assert.True(await locator.IsEnabledAsync());
+    }
+
+    private static async Task WaitBlazorAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'", null, new() { Timeout = 180_000 });
+        await page.WaitForTimeoutAsync(800);
+    }
+
+    private static async Task ShotAsync(IPage page, string dir, string name)
+    {
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{name}.png"), FullPage = true });
+    }
+
+    private static async Task PupilLoginAsync(IPage page, string loginUrl, string code, Guid classId)
+    {
+        var classValue = classId.ToString("D");
+        await page.Context.ClearCookiesAsync();
+        await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.EvaluateAsync(
+            """
+            ([id, code]) => new Promise((resolve, reject) => {
+              const deadline = performance.now() + 30000;
+              const tick = () => {
+                const select = document.querySelector('select[name=classId]');
+                const input = document.querySelector('input[name=code]');
+                const option = select && [...select.options].find(o => o.value === id);
+                if (select && input && option) {
+                  option.selected = true;
+                  select.value = id;
+                  input.value = code;
+                  const form = input.closest('form');
+                  if (!form) { reject(new Error('no form')); return; }
+                  if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                  else form.submit();
+                  resolve(true);
+                  return;
+                }
+                if (performance.now() > deadline) reject(new Error('login timeout'));
+                else setTimeout(tick, 50);
+              };
+              tick();
+            })
+            """,
+            new object[] { classValue, code });
+        await page.WaitForURLAsync(
+            url => !url.Contains("/leerling?", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("error=", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 90_000 });
+        Assert.DoesNotContain("error=", page.Url, StringComparison.OrdinalIgnoreCase);
     }
 }

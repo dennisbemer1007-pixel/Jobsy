@@ -26,6 +26,21 @@ public sealed class PupilMboHboCatalogTests
     }
 
     [Fact]
+    public void Werkwaarden_outcome_bars_have_unique_labels_for_storage()
+    {
+        var cat = PupilMboHboCatalog.Default;
+        var state = new PupilMboHboProgressState();
+        foreach (var q in cat.QuestionsFor(PupilMboHboBlock.Werkwaarden, SchoolLevel.Mbo2))
+        {
+            state.Answers[q.Id] = 3;
+        }
+
+        var outcome = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Werkwaarden, state, SchoolLevel.Mbo2);
+        var dupes = outcome.Bars.GroupBy(b => b.Label).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        Assert.Empty(dupes);
+    }
+
+    [Fact]
     public void Pattern_signal_detects_uniform_answers()
     {
         var vals = Enumerable.Repeat(3, 45).ToList();
