@@ -14,6 +14,7 @@ public static class PupilStoryPdfLink
         var lang = NormalizeLanguageCode(languageCode);
         if (!string.IsNullOrWhiteSpace(lang))
         {
+            lang = lang.TrimEnd('?');
             parts.Add($"lang={Uri.EscapeDataString(lang)}");
         }
 

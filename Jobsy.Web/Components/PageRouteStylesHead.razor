@@ -14,6 +14,10 @@
             {
                 <link rel="stylesheet" href="@href" data-app-css data-page-route-css="true" />
             }
+            else if (href.Contains("leerling-werelden-kies.css", StringComparison.Ordinal))
+            {
+                <link rel="stylesheet" href="@href" data-page-route-css="true" data-leerling-g78-theme-css="true" />
+            }
             else
             {
                 <link rel="stylesheet" href="@href" data-page-route-css="true" />
@@ -31,10 +35,7 @@
     {
         _lastUri = Navigation.Uri;
         Navigation.LocationChanged += OnLocationChanged;
-        if (PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles(CurrentPath()))
-        {
-            _injectRouteStyles = true;
-        }
+        _injectRouteStyles = ShouldInjectRouteStyles(CurrentPath());
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -53,8 +54,20 @@
     {
         var path = CurrentPath();
         var areas = PageAssetCatalog.ResolveAreas(path);
-        return PageAssetCatalog.StylesheetsFor(areas, path);
+        var list = PageAssetCatalog.StylesheetsFor(areas, path).ToList();
+        foreach (var href in PageAssetCatalog.LeerlingGroep78ThemeStylesheets(path))
+        {
+            if (!list.Contains(href, StringComparer.Ordinal))
+            {
+                list.Add(href);
+            }
+        }
+
+        return list;
     }
+
+    private static bool ShouldInjectRouteStyles(string path)
+        => PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles(path);
 
     private string CurrentPath()
     {

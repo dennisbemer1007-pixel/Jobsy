@@ -17,6 +17,7 @@ public sealed class PupilJourneyThemeTests
     [InlineData(PupilJourneyTheme.Sterrenkust, "vuurtoren", "/leerling/werelden/img/sterren-strand.jpg")]
     [InlineData(PupilJourneyTheme.Sterrenkust, "lagune", "/leerling/werelden/img/sterren-strand.jpg")]
     [InlineData(PupilJourneyTheme.Sterrenkust, "schatgrot", "/leerling/werelden/img/sterren-strand.jpg")]
+    [InlineData(PupilJourneyTheme.Sterrenkust, "schelpenrij", "/leerling/werelden/img/sterren-strand.jpg")]
     public void World_band_image_uses_theme(string theme, string world, string expected)
     {
         Assert.Equal(expected, PupilJourneyTheme.WorldBandImagePath(theme, world));
