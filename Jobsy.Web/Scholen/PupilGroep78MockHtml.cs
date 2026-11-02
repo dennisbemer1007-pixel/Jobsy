@@ -9,6 +9,15 @@ namespace Jobsy.Web.Scholen;
 
 internal static class PupilGroep78MockHtml
 {
+    internal static readonly (string Key, string TitleNl, string Domain, string Blurb)[] FallbackJobPicks =
+    [
+        ("dierenverzorger", "Dierenverzorger", "Dieren en leven", "Je zorgt voor dieren: eten geven, verzorgen en kijken of ze gezond zijn."),
+        ("bioloog", "Bioloog", "Uitzoeken en wetenschap", "Je ontdekt hoe planten en dieren leven. Soms buiten, soms in een lab."),
+        ("grafisch-ontwerper", "Grafisch ontwerper", "Creatief en ontwerpen", "Je bedenkt en maakt plaatjes, logo's en andere creatieve dingen."),
+        ("hovenier", "Hovenier", "Natuur en buiten", "Je maakt tuinen en parken mooi. Je bent bijna de hele dag buiten."),
+        ("brandweer", "Brandweerman/-vrouw", "Veiligheid en hulp", "Je helpt mensen als er brand is of als iemand in de knel zit."),
+    ];
+
     internal static string PchipButton(
         CultureState culture,
         PupilInterestChipCatalog.Chip chip,
@@ -54,16 +63,17 @@ internal static class PupilGroep78MockHtml
         string title,
         string domain,
         string blurb,
-        bool selected)
+        bool selected,
+        string? journeyThemeKey = null)
     {
-        var job = DreamJobCatalog.All.FirstOrDefault(j => string.Equals(j.Key, jobKey, StringComparison.OrdinalIgnoreCase));
-        var icon = job is null ? DreamJobIcons.Briefcase : DreamJobIcons.TryGet(job.IconKey) ?? DreamJobIcons.Briefcase;
+        var paintClass = PupilGroep78JobPaint.PaintThemeClass(journeyThemeKey);
+        var img = PupilGroep78JobPaint.PaintImagePath(jobKey);
         var mark = selected
             ? """<span class="jmark">✓ Jouw keuze</span>"""
             : "";
         return $"""
             <button type="button" class="jpick{(selected ? " sel" : "")}" data-ll-job-pick="{PupilLeerlingSsrParts.E(title)}" aria-pressed="{selected.ToString().ToLowerInvariant()}">
-            <span class="jico">{icon}</span>
+            <figure class="jpick-paint {paintClass}"><img src="{PupilLeerlingSsrParts.E(img)}" alt="" width="400" height="400" loading="lazy" /></figure>
             <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p></div>
             <span class="jspeak">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, $"ll-job-{jobKey}", culture)}</span>
             {mark}

@@ -150,7 +150,7 @@ public static class PupilDroombaanSsrHtml
             culture, registry, journeyThemeKey, "dit-ben-jij", culture["Leerling.G78.Dream.JourneyMeta"], 0, 0, sceneMetaIsHtml: true));
         sb.Append("</div></section>");
         sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey" data-testid="leerling-droombaan"><div class="q-layout">""");
-        sb.Append("""<section class="card ll-dream-ssr ll-dream-pick">""");
+        sb.Append("""<section class="card ll-dream-ssr ll-dream-pick card-deco">""");
         if (!string.IsNullOrEmpty(model.FormError))
         {
             sb.Append("<p class=\"ll-error\" role=\"alert\">").Append(WebUtility.HtmlEncode(model.FormError)).Append("</p>");
@@ -166,42 +166,21 @@ public static class PupilDroombaanSsrHtml
         sb.Append(antiforgeryFieldHtml);
         sb.Append("""<input type="hidden" name="DreamJob" value="" data-ll-job-pick-value="1" />""");
         sb.Append("""<div class="job-picks" role="radiogroup" data-testid="ll-g78-job-picks" aria-label="Kies een beroep">""");
-        var suggestions = model.Result.JobSuggestions ?? [];
+        var picks = BuildJobPickList(model);
         var pickIndex = 0;
-        var rendered = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var job in suggestions)
+        foreach (var (key, title, domain, blurb) in picks)
         {
-            var key = PupilGroep78MockHtml.ResolveJobKey(job.Title);
-            if (!rendered.Add(key))
-            {
-                continue;
-            }
-
             var selected = pickIndex == 0;
-            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, job.Title, job.DomainLabel, job.Blurb, selected));
-            pickIndex++;
-        }
-
-        foreach (var jobTitle in model.Result.Story.JobIdeas)
-        {
-            if (pickIndex >= 5)
-            {
-                break;
-            }
-
-            var key = PupilGroep78MockHtml.ResolveJobKey(jobTitle);
-            if (!rendered.Add(key))
-            {
-                continue;
-            }
-
-            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, jobTitle, "", "", pickIndex == 0));
+            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, title, domain, blurb, selected, journeyThemeKey));
             pickIndex++;
         }
 
         sb.Append(PupilGroep78MockHtml.JobPickNone(culture, selected: false));
-        sb.Append("</div><div class=\"qfoot\"><a class=\"btn btn-ghost\" href=\"/leerling/dit-ben-jij\">");
-        sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.OtherJob"])).Append("</a>");
+        sb.Append("</div>");
+        sb.Append("""<p class="note jpick-next" data-ll-jpick-none-note hidden role="status">""");
+        sb.Append(culture["Leerling.G78.Dream.NoneNext"]);
+        sb.Append("</p><div class=\"qfoot\"><a class=\"btn btn-ghost\" href=\"/leerling/dit-ben-jij\">");
+        sb.Append(PupilGroep78SsrParts.BackSvg).Append(WebUtility.HtmlEncode(culture["Leerling.Reis.Prev"])).Append("</a>");
         sb.Append("""<button type="submit" class="btn btn-main">""").Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.Confirm"]));
         sb.Append(PupilGroep78SsrParts.NextSvg).Append("</button></div></form>");
         sb.Append("<p class=\"jpick-hint\">").Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.ConfirmHint"])).Append("</p></section>");
@@ -213,6 +192,49 @@ public static class PupilDroombaanSsrHtml
             "kreeft-kijker.png"));
         sb.Append("</div></div>");
         return sb.ToString();
+    }
+
+    private static IReadOnlyList<(string Key, string Title, string Domain, string Blurb)> BuildJobPickList(PupilDroombaanPageModel model)
+    {
+        var list = new List<(string Key, string Title, string Domain, string Blurb)>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        void Add(string key, string title, string domain, string blurb)
+        {
+            if (list.Count >= 5 || !seen.Add(key))
+            {
+                return;
+            }
+
+            list.Add((key, title, domain, blurb));
+        }
+
+        foreach (var job in model.Result.JobSuggestions ?? [])
+        {
+            Add(PupilGroep78MockHtml.ResolveJobKey(job.Title), job.Title, job.DomainLabel, job.Blurb);
+        }
+
+        foreach (var jobTitle in model.Result.Story.JobIdeas)
+        {
+            if (list.Count >= 5)
+            {
+                break;
+            }
+
+            var key = PupilGroep78MockHtml.ResolveJobKey(jobTitle);
+            Add(key, jobTitle, "", "");
+        }
+
+        foreach (var fallback in PupilGroep78MockHtml.FallbackJobPicks)
+        {
+            if (list.Count >= 5)
+            {
+                break;
+            }
+
+            Add(fallback.Key, fallback.TitleNl, fallback.Domain, fallback.Blurb);
+        }
+
+        return list;
     }
 
     private static void AppendDreamResult(StringBuilder sb, PupilDroombaanPageModel model, CultureState culture)

@@ -56,13 +56,13 @@ public static class PupilDitBenJijSsrHtml
 
         sb.Append("</div><h2 class=\"rsub\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.JobsTitle"])).Append("</h2>");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(string.Join(", ", result.Story.JobIdeas), "ll-jobs", culture, "Leerling.G78.Result.ReadJobs"));
-        sb.Append("<div class=\"chips\">");
-        foreach (var job in result.Story.JobIdeas)
+        sb.Append("<div class=\"chips\" data-testid=\"ll-g78-result-jobs\">");
+        foreach (var job in JobChipLabels(result))
         {
             sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(job)).Append("</span>");
         }
 
-        sb.Append("</div><p class=\"note\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.TeacherNote"])).Append("</p></div>");
+        sb.Append("</div><p class=\"note note-teacher\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.TeacherNote"])).Append("</p></div>");
         sb.Append("""<div class="qfoot res-foot">""");
         if (passportV2)
         {
@@ -81,6 +81,47 @@ public static class PupilDitBenJijSsrHtml
             "kreeft-kijker.png"));
         sb.Append("</div></div>");
         return sb.ToString();
+    }
+
+    private static IEnumerable<string> JobChipLabels(PupilResultPageDto result)
+    {
+        var labels = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var job in result.Story.JobIdeas)
+        {
+            if (seen.Add(job))
+            {
+                labels.Add(job);
+            }
+        }
+
+        foreach (var suggestion in result.JobSuggestions ?? [])
+        {
+            if (labels.Count >= 5)
+            {
+                break;
+            }
+
+            if (seen.Add(suggestion.Title))
+            {
+                labels.Add(suggestion.Title);
+            }
+        }
+
+        foreach (var fallback in PupilGroep78MockHtml.FallbackJobPicks)
+        {
+            if (labels.Count >= 5)
+            {
+                break;
+            }
+
+            if (seen.Add(fallback.TitleNl))
+            {
+                labels.Add(fallback.TitleNl);
+            }
+        }
+
+        return labels.Take(5);
     }
 
     private static string BuildLegacy(PupilResultPageDto result, CultureState culture, bool passportV2, string pdfHref)

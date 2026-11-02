@@ -502,6 +502,7 @@ public static class UiStringsScholen
         nl["Leerling.G78.Dream.Confirm"] = "Bevestigen";
         nl["Leerling.G78.Dream.None"] = "Ik vind er geen leuk";
         nl["Leerling.G78.Dream.NoneBlurb"] = "Geen van deze vijf? Dat mag. Je gaat gewoon verder.";
+        nl["Leerling.G78.Dream.NoneNext"] = "Dan ga je naar <b>Check je droombaan</b>. Daar zoek je zelf een beroep. Dat mag — je hoeft nu niet te kiezen.";
         nl["Leerling.G78.Dream.JourneyMeta"] = "<b>Klaar!</b> · tijd om een beroep te kiezen";
         nl["Leerling.G78.Dream.Coach"] = "Dit zijn 5 beroepen die goed bij jou passen. Dat zien we aan jouw antwoorden! Kies er één. Of tik: Ik vind er geen leuk. Druk daarna op Bevestigen.";
         nl["Leerling.Wereld.HeaderGrade"] = "Groep 7 en 8";

@@ -643,9 +643,17 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
                 await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
             }, fullPage: true)));
+        Assert.True(await page.Locator("[data-testid=leerling-g78-journey] .g78-jn.is-done").CountAsync() >= 7);
+        Assert.Equal(4, await page.Locator(".ll-result-chips .chips .chip.on").CountAsync());
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-result-jobs] .chip").CountAsync());
+        Assert.True(await page.Locator(".note-teacher").CountAsync() > 0);
 
         await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=ll-g78-job-picks]").WaitForAsync();
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-job-picks] .jpick:not(.jpick-none)").CountAsync());
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-job-picks] .jpick-paint img").CountAsync());
+        Assert.True(await page.GetByRole(AriaRole.Link, new() { Name = "Vorige" }).IsVisibleAsync());
+        Assert.DoesNotContain("Andere baan", await page.Locator(".ll-dream-pick .qfoot").InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
         Row("12-droombaan", "load+screenshot", VisualResult(
             await CaptureAsync("12-droombaan", "12-zee-beroep-kiezen.png", async () => { }, fullPage: true)));
 
@@ -1523,7 +1531,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             PuzzlesJson = BuildPuzzlesJson(def, bank.AllItems.Count, completeActiveGate: true),
             VakScoresJson = PupilVakScores.Serialize(vakMap),
             CurrentIndex = bank.AllItems.Count,
-            LikesJson = """["dieren"]""",
+            LikesJson = """["lezen","dieren","natuur","buiten"]""",
             DislikesJson = """["lang-stilzitten"]""",
             DreamJobKey = dreamKey,
             JourneyThemeKey = journeyThemeKey,
