@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Security;
 using Jobsy.Web.Services;
@@ -161,6 +162,10 @@ public class PupilPdfProxyTests
         });
         var handler = new PdfHandler();
         builder.Services.AddSingleton(handler);
+        builder.Services.AddHttpClient(PupilPdfEndpoints.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri("http://api.test/");
+        }).ConfigurePrimaryHttpMessageHandler(() => handler);
         builder.Services.AddSingleton(new JobsyApiClient(
             new HttpClient(handler) { BaseAddress = new Uri("http://api.test/") }));
         builder.Services.AddSingleton<IFeatureFlags>(new FixedFlags(schoolsEnabled));
@@ -173,6 +178,7 @@ public class PupilPdfProxyTests
         app.MapGet("/leerling/sign-in", async (HttpContext ctx) =>
         {
             await ctx.SignInAsync(PupilAuthDefaults.Scheme, PupilPrincipal());
+            PupilApiSessionCookie.Set(ctx, "test-api-ticket");
             return Results.NoContent();
         });
         app.MapPupilPdfEndpoints();
