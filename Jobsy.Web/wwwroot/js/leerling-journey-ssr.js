@@ -152,8 +152,20 @@
         if (!card) return;
         var intro = card.querySelector('[data-ll-puzzle-phase="intro"]');
         var play = card.querySelector('[data-ll-puzzle-phase="play"]');
-        if (intro) intro.hidden = true;
-        if (play) play.hidden = false;
+        if (intro) {
+          intro.hidden = true;
+          intro.setAttribute("hidden", "");
+        }
+        if (play) {
+          play.hidden = false;
+          play.removeAttribute("hidden");
+        }
+        var kind = card.getAttribute("data-ll-puzzle-kind") || "";
+        if (kind === "vuurtorenlampen") {
+          card.removeAttribute("data-ll-bound");
+          card.removeAttribute("data-ll-lamp-game-ready");
+          bindPuzzle(card);
+        }
       });
     });
   }
@@ -217,8 +229,86 @@
     });
   }
 
+  function bindSchelpenPatternPick(root) {
+    if (root.getAttribute("data-ll-schelp-pattern-bound") === "1") return;
+    root.setAttribute("data-ll-schelp-pattern-bound", "1");
+    root.addEventListener("click", function (evt) {
+      var btn = evt.target.closest("[data-ll-schelp-choice]");
+      if (!btn) return;
+      var card = btn.closest('.ll-puzzle-g78[data-ll-puzzle-mode="pattern"]');
+      if (!card || card.getAttribute("data-ll-schelp-solved") === "1") return;
+      var form = btn.closest("form[data-ll-puzzle-form]");
+      if (!form) return;
+      var playSection = btn.closest("[data-ll-puzzle-play-section]") || card;
+      var answer = parseInt(card.getAttribute("data-ll-puzzle-answer") || "0", 10);
+      var choice = parseInt(btn.getAttribute("data-ll-schelp-choice") || "0", 10);
+      playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (b) {
+        b.classList.remove("sel");
+        b.setAttribute("aria-pressed", "false");
+      });
+      btn.classList.add("sel");
+      btn.setAttribute("aria-pressed", "true");
+      if (choice !== answer) return;
+      card.setAttribute("data-ll-schelp-solved", "1");
+      var outcome = form.querySelector('input[name="Outcome"]');
+      if (outcome) outcome.value = "done";
+      var qSlot = playSection.querySelector("[data-ll-puzzle-slot-q]");
+      if (qSlot) {
+        qSlot.classList.remove("q");
+        qSlot.innerHTML =
+          '<img src="/leerling/werelden/img/schelp-' +
+          choice +
+          '.png" alt="" width="56" height="56" loading="lazy" decoding="async" />';
+      }
+      var success = playSection.querySelector("[data-ll-puzzle-success]");
+      if (success) success.hidden = false;
+      var continueBtn = playSection.querySelector("[data-ll-puzzle-continue]");
+      if (continueBtn) {
+        continueBtn.disabled = false;
+        continueBtn.removeAttribute("aria-disabled");
+      }
+    });
+  }
+
+  function shuffleInPlace(list) {
+    for (var i = list.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = list[i];
+      list[i] = list[j];
+      list[j] = tmp;
+    }
+    return list;
+  }
+
+  function openPuzzleCard(btn) {
+    btn.classList.add("is-open");
+    var src = btn.getAttribute("data-ll-match-src");
+    if (src) {
+      btn.style.backgroundImage = "none";
+      if (!btn.querySelector("img")) {
+        btn.innerHTML = '<img src="' + src + '" alt="" loading="lazy" decoding="async" />';
+      }
+    }
+  }
+
+  function closePuzzleCard(btn) {
+    btn.classList.remove("is-open");
+    if (!btn.getAttribute("data-ll-match-src")) return;
+    var back = btn.getAttribute("data-ll-card-back");
+    if (back) btn.style.backgroundImage = "url('" + back + "')";
+    btn.innerHTML = "";
+  }
+
+  function isPuzzlePlayVisible(section) {
+    var play = section.querySelector('[data-ll-puzzle-phase="play"]');
+    return !play || (!play.hidden && !play.hasAttribute("hidden"));
+  }
+
   function bindPuzzle(root) {
-    var puzzleRoots = root.querySelectorAll("[data-ll-puzzle-root], .ll-puzzle-g78[data-ll-puzzle-kind]");
+    var puzzleRoots =
+      root.matches && root.matches(".ll-puzzle-g78[data-ll-puzzle-kind]")
+        ? [root]
+        : root.querySelectorAll("[data-ll-puzzle-root], .ll-puzzle-g78[data-ll-puzzle-kind]");
     puzzleRoots.forEach(function (section) {
       if (section.getAttribute("data-ll-bound") === "1") return;
       section.setAttribute("data-ll-bound", "1");
@@ -227,8 +317,31 @@
       var outcome = form.querySelector('input[name="Outcome"]');
       var kind = section.getAttribute("data-ll-puzzle-kind") || "";
       var playSection = section.querySelector("[data-ll-puzzle-play-section]") || section;
+      var continueBtn = playSection.querySelector("[data-ll-puzzle-continue]");
 
-      if (kind === "schelpenrij") {
+      function syncContinue() {
+        if (!continueBtn) return;
+        var ready = outcome && outcome.value;
+        continueBtn.disabled = !ready;
+        if (ready) {
+          continueBtn.removeAttribute("aria-disabled");
+        } else {
+          continueBtn.setAttribute("aria-disabled", "true");
+        }
+      }
+
+      function markSolved() {
+        if (outcome) outcome.value = "done";
+        var success = playSection.querySelector("[data-ll-puzzle-success]");
+        if (success) success.hidden = false;
+        syncContinue();
+      }
+
+      syncContinue();
+
+      if (kind === "schelpenrij" && section.getAttribute("data-ll-puzzle-mode") === "pattern") {
+        /* Pattern picks handled by bindSchelpenPatternPick on document. */
+      } else if (kind === "schelpenrij") {
         var order = [1, 3, 2, 4];
         var pick = null;
         playSection.querySelectorAll("[data-ll-shell-index]").forEach(function (btn) {
@@ -255,13 +368,32 @@
               section.querySelectorAll(".ll-puzzle__shell").forEach(function (s) {
                 s.classList.add("is-done");
               });
-              if (outcome) outcome.value = "done";
+              markSolved();
             }
           });
         });
       }
 
-      if (kind === "schatkaart") {
+      if (kind === "schatkaart" && section.getAttribute("data-ll-schatkaart-bound") !== "1") {
+        section.setAttribute("data-ll-schatkaart-bound", "1");
+        var cardBtns = Array.from(playSection.querySelectorAll("[data-ll-card-index]"));
+        if (cardBtns.length > 0 && cardBtns[0].getAttribute("data-ll-match-src")) {
+          cardBtns.forEach(function (btn) {
+            var style = btn.getAttribute("style") || "";
+            var m = style.match(/url\(['"]?([^'")]+)/);
+            if (m) btn.setAttribute("data-ll-card-back", m[1]);
+          });
+          shuffleInPlace(cardBtns).forEach(function (btn, idx) {
+            btn.setAttribute("data-ll-card-index", String(idx));
+          });
+          var grid = playSection.querySelector(".ll-puzzle__cards");
+          if (grid) {
+            cardBtns.forEach(function (btn) {
+              grid.appendChild(btn);
+            });
+          }
+        }
+
         var open = new Set();
         var matched = new Set();
         var first = null;
@@ -273,25 +405,29 @@
             if (first === null) {
               first = idx;
               open.add(idx);
-              btn.classList.add("is-open");
+              openPuzzleCard(btn);
               return;
             }
             open.add(idx);
-            btn.classList.add("is-open");
+            openPuzzleCard(btn);
             var firstBtn = playSection.querySelector('[data-ll-card-index="' + first + '"]');
             var firstFace = firstBtn ? firstBtn.getAttribute("data-ll-card-face") : "";
             if (firstFace === face) {
               matched.add(face);
+              open.delete(first);
+              open.delete(idx);
+              firstBtn.classList.add("is-matched");
+              btn.classList.add("is-matched");
               first = null;
               if (matched.size >= 3) {
-                if (outcome) outcome.value = "done";
+                markSolved();
               }
             } else {
               setTimeout(function () {
                 open.delete(first);
                 open.delete(idx);
-                if (firstBtn) firstBtn.classList.remove("is-open");
-                btn.classList.remove("is-open");
+                if (firstBtn) closePuzzleCard(firstBtn);
+                closePuzzleCard(btn);
                 first = null;
               }, 650);
             }
@@ -299,21 +435,38 @@
         });
       }
 
-      if (kind === "vuurtorenlampen") {
+      if (kind === "vuurtorenlampen" && isPuzzlePlayVisible(section) && section.getAttribute("data-ll-lamp-game-ready") !== "1") {
+        section.setAttribute("data-ll-lamp-game-ready", "1");
         var pattern = [];
-        for (var i = 0; i < 5; i++) pattern.push(Math.floor(Math.random() * 3));
+        for (var pi = 0; pi < 5; pi++) pattern.push(Math.floor(Math.random() * 3));
+        playSection.setAttribute("data-ll-lamp-pattern", pattern.join(","));
         var step = 0;
         var playMode = false;
         var ready = false;
+        var watchEl = playSection.querySelector("[data-ll-lamp-watch]");
+        var turnEl = playSection.querySelector("[data-ll-lamp-turn]");
+        var replayBtn = playSection.querySelector("[data-ll-puzzle-replay]");
+
+        function setLampUi(state) {
+          if (watchEl) watchEl.hidden = state !== "watch";
+          if (turnEl) turnEl.hidden = state !== "turn";
+          if (replayBtn) replayBtn.hidden = state !== "turn";
+        }
 
         function playPattern() {
           playMode = true;
+          ready = false;
           step = 0;
+          setLampUi("watch");
+          playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (b) {
+            b.classList.remove("is-lit");
+          });
           var i = 0;
           function nextLamp() {
             if (i >= pattern.length) {
               playMode = false;
               ready = true;
+              setLampUi("turn");
               return;
             }
             var lamp = pattern[i];
@@ -329,11 +482,21 @@
         }
 
         playPattern();
+        if (replayBtn) {
+          replayBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            playPattern();
+          });
+        }
+
         playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             if (playMode || !ready) return;
             var lamp = parseInt(btn.getAttribute("data-ll-lamp-index"), 10);
             btn.classList.add("is-lit");
+            setTimeout(function () {
+              btn.classList.remove("is-lit");
+            }, 350);
             if (pattern[step] !== lamp) {
               step = 0;
               playPattern();
@@ -341,7 +504,8 @@
             }
             step++;
             if (step >= pattern.length) {
-              if (outcome) outcome.value = "done";
+              setLampUi("done");
+              markSolved();
             }
           });
         });
@@ -358,7 +522,7 @@
       playSection.querySelectorAll("[data-ll-puzzle-continue]").forEach(function (btn) {
         btn.addEventListener("click", function (e) {
           e.preventDefault();
-          if (outcome) outcome.value = "done";
+          if (btn.disabled) return;
           form.submit();
         });
       });
@@ -395,6 +559,7 @@
     bindVakkenScale(root);
     bindWereld(root);
     bindPuzzleIntro(root);
+    bindSchelpenPatternPick(root);
     bindPuzzle(root);
     bindIslandSteps(root);
     bindJobPicks(root);
