@@ -1,7 +1,6 @@
 @page "/leraar/klas/{ClassId:guid}"
-@implements IDisposable
 @layout SchoolLayout
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Authorize(Roles = "Teacher,SchoolAdmin")]
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Core.Enums
@@ -16,6 +15,7 @@
 @inject IJSRuntime Js
 @inject IFeatureFlags Features
 @inject ILogger<LeraarKlasOverview> Log
+@implements IDisposable
 
 <PageTitle>@( _overview is null ? Culture["Leraar.Overview.Title"] : $"Klas {_overview.ClassName}") · Lobsy</PageTitle>
 
@@ -248,7 +248,8 @@ else
     private int _pendingTotal;
     private IReadOnlyList<TeacherCodeRowDto> _pendingPreview = [];
     private CancellationTokenSource? _pollCts;
-
+    private CancellationTokenSource? _loadCts;
+    private Guid _loadedClassId;
     private IReadOnlyList<TeacherOverviewChartSvg.Segment> ProgressDonutSegments =>
         _overview is null
             ? []
@@ -305,43 +306,83 @@ else
             return;
         }
 
+        if (_overview is not null && ClassId == _loadedClassId)
+        {
+            RestartPoll();
+            return;
+        }
+
         await LoadAsync();
         RestartPoll();
     }
 
     private async Task LoadAsync()
     {
-        _loading = true;
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+        var ct = _loadCts.Token;
+
+        var firstPaint = _overview is null || ClassId != _loadedClassId;
+        if (firstPaint)
+        {
+            _loading = true;
+        }
+
         _actionError = null;
         _loadError = null;
         try
         {
-            _overview = await Api.GetTeacherOverviewAsync(ClassId);
-            if (_overview is null)
+            ct.ThrowIfCancellationRequested();
+            var overview = await Api.GetTeacherOverviewAsync(ClassId, ct);
+            if (overview is null)
             {
-                await Task.Delay(1500);
-                _overview = await Api.GetTeacherOverviewAsync(ClassId);
+                await Task.Delay(1500, ct);
+                overview = await Api.GetTeacherOverviewAsync(ClassId, ct);
             }
 
-            if (_overview is not null)
+            ct.ThrowIfCancellationRequested();
+            if (overview is not null)
             {
-                var codes = await Api.GetTeacherCodesAsync(ClassId);
+                var codes = await Api.GetTeacherCodesAsync(ClassId, ct);
                 var pending = codes
                     .Where(c => c.Status != PupilCodeStatus.Completed)
                     .OrderBy(c => c.Number)
                     .ToList();
                 _pendingTotal = pending.Count;
                 _pendingPreview = pending.Take(PendingPreviewMax).ToList();
-                _mboCharts = _overview.QuestionSet == PupilQuestionSet.MboHbo
-                    ? (await Api.GetTeacherMboHboProgressAsync(ClassId))?.Charts
-                    : null;
+                _overview = overview;
+                _loadedClassId = ClassId;
+
+                if (_overview.QuestionSet == PupilQuestionSet.MboHbo)
+                {
+                    try
+                    {
+                        _mboCharts = (await Api.GetTeacherMboHboProgressAsync(ClassId, ct))?.Charts;
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        _mboCharts = null;
+                        Log.LogWarning(ex, "Teacher MBO/HBO charts failed for {ClassId}", ClassId);
+                    }
+                }
+                else
+                {
+                    _mboCharts = null;
+                }
             }
             else
             {
+                _overview = null;
+                _mboCharts = null;
                 _pendingTotal = 0;
                 _pendingPreview = [];
-                _mboCharts = null;
+                _loadedClassId = ClassId;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (Exception ex)
         {
@@ -357,7 +398,10 @@ else
         }
         finally
         {
-            _loading = false;
+            if (!ct.IsCancellationRequested)
+            {
+                _loading = false;
+            }
         }
     }
 
@@ -468,5 +512,10 @@ else
         _ => "sch-pill--muted"
     };
 
-    public void Dispose() => _pollCts?.Cancel();
+    public void Dispose()
+    {
+        _pollCts?.Cancel();
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+    }
 }

@@ -15,6 +15,7 @@
 @using Jobsy.Core.Scholen.PupilPassport
 @using Jobsy.Web.Components.Leerling
 @inject IJSRuntime Js
+@implements IDisposable
 
 <PageTitle>@(_detail?.DisplayCode ?? Culture["Leraar.Detail.Title"]) · Lobsy</PageTitle>
 
@@ -22,7 +23,7 @@
 {
     <p class="state-message error">@Culture["School.FeatureDisabled"]</p>
 }
-else if (_loading)
+else if (_loading && _detail is null)
 {
     <p class="state-message">@Culture["Common.Loading"]</p>
 }
@@ -298,6 +299,9 @@ else
     private bool _pdfBusy;
     private bool _passportV2;
     private PupilG78PassportWebDto? _g78Passport;
+    private Guid _loadedClassId;
+    private Guid _loadedCodeId;
+    private CancellationTokenSource? _loadCts;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -308,13 +312,30 @@ else
             return;
         }
 
-        _loading = true;
+        if (_detail is not null && ClassId == _loadedClassId && CodeId == _loadedCodeId)
+        {
+            return;
+        }
+
+        var firstPaint = _detail is null || ClassId != _loadedClassId || CodeId != _loadedCodeId;
+        if (firstPaint)
+        {
+            _loading = true;
+        }
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+        var ct = _loadCts.Token;
+
         _loadError = null;
         _missingCode = false;
         _passportV2 = (await Features.GetAsync()).PupilPassportV2Enabled;
         try
         {
+            ct.ThrowIfCancellationRequested();
             _detail = await Api.GetTeacherCodeDetailAsync(ClassId, CodeId);
+            _loadedClassId = ClassId;
+            _loadedCodeId = CodeId;
             if (_passportV2
                 && _detail?.Status == PupilCodeStatus.Completed
                 && _detail.QuestionSet == PupilQuestionSet.Groep78)
@@ -325,6 +346,10 @@ else
             {
                 _g78Passport = null;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
         catch (Exception ex)
         {
@@ -352,7 +377,13 @@ else
                 Log.LogWarning(ex, "Teacher code detail failed for {ClassId}", ClassId);
             }
         }
-        finally { _loading = false; }
+        finally
+        {
+            if (!ct.IsCancellationRequested)
+            {
+                _loading = false;
+            }
+        }
     }
 
     private async Task DownloadPdf()
@@ -401,4 +432,10 @@ else
 
     private string OwnWord(string word)
         => $"{word} ({Culture["Leraar.Detail.OwnWord"]})";
+
+    public void Dispose()
+    {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+    }
 }
