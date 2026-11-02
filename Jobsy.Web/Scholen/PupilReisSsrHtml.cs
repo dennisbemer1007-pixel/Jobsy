@@ -46,7 +46,7 @@ public static class PupilReisSsrHtml
             var partTotal = def.Worlds.Count;
             var sceneMeta = PupilGroep78SsrParts.SceneJourneyMetaLine(culture, worldTitle, partIndex, partTotal, qInWorld, qWorldTotal);
             var segCount = qWorldTotal;
-            var segFilled = qInWorld;
+            var segFilled = Math.Max(0, qInWorld - 1);
             sb.Append(PupilLeerlingSsrParts.Groep78SceneHeader(
                 culture, registry, themeKey, worldKey, worldKey, sceneMeta, true, "center 30%", segCount, segFilled, sceneMetaIsHtml: true));
         }

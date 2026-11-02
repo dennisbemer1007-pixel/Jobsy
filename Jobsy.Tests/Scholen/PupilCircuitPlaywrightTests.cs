@@ -422,7 +422,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         var root = FindRepoRoot();
-        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v4", tag);
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v5", tag);
         Directory.CreateDirectory(artifactDir);
         var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
         var results = new List<string>();
@@ -576,7 +576,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await FollowReisRedirectAsync();
                 await page.WaitForURLAsync("**/leerling/puzzel/**", UrlCommitted);
                 await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
-            })));
+            }, fullPage: true)));
         Assert.True(await page.Locator("[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile]").CountAsync() > 0);
         Assert.True(await page.Locator(".prev-row-box").CountAsync() > 0);
 
