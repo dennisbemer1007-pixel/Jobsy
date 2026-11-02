@@ -28,6 +28,16 @@ public class LeerlingGroep78ThemeCssCatalogTests
             s => s.Contains("leerling-werelden-kies.css", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Pupil_ssr_paspoort_includes_g78_passport_stylesheet_with_leading_slash()
+    {
+        var sheets = PageAssetCatalog.StylesheetsForPupilSsr("/leerling/paspoort");
+        Assert.Contains(
+            sheets,
+            s => s.Contains("leerling-paspoort-g78.css", StringComparison.Ordinal)
+                 && s.StartsWith("/css/", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData("/leerling")]
     [InlineData("/leerling/stop")]
@@ -75,6 +85,18 @@ public class LeerlingGroep78ThemeCssCatalogTests
         Assert.Contains(
             sheets,
             s => s.Contains("leerling-werelden-kies.css", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Wereld_choice_css_sizes_info_box_checkmark_outside_mobile_only()
+    {
+        var cssPath = Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/leerling-werelden-kies.css");
+        var css = File.ReadAllText(cssPath);
+        var firstMobile = css.IndexOf("@media (max-width: 600px)", StringComparison.Ordinal);
+        Assert.True(firstMobile > 0);
+        var sameSvg = css.IndexOf(".ll-g78-shell .same svg", StringComparison.Ordinal);
+        Assert.InRange(sameSvg, 0, firstMobile);
+        Assert.Contains("width: 32px", css[sameSvg..firstMobile], StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
