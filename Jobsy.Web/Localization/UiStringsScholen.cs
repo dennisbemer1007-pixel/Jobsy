@@ -461,6 +461,8 @@ public static class UiStringsScholen
         nl["Leerling.G78.Route.Puzzle.Vuurtorenlampen"] = "Vuurtorenlampen";
         nl["Leerling.G78.Puzzle.JourneyMeta"] = "<b>Puzzel {0} van 3</b> · {1} · na vraag 15";
         nl["Leerling.G78.Puzzle.IntroSub.Zee"] = "Vind het patroon in de rij schelpen op het rif.";
+        nl["Leerling.G78.Puzzle.IntroSub.Ster"] = "Vind het patroon in de rij schelpen op het maanstrand.";
+        nl["Leerling.G78.Puzzle.PatternDone"] = "Goed! Je hebt het patroon gevonden.";
         nl["Leerling.G78.Puzzle.IntroBubble"] = "Eerste deel klaar. Even je hoofd gebruiken.";
         nl["Leerling.G78.Puzzle.Step1"] = "Kijk goed naar de rij.";
         nl["Leerling.G78.Puzzle.Step2"] = "Zoek wat er steeds terugkomt.";

@@ -212,6 +212,47 @@
     });
   }
 
+  function bindSchelpenPatternPick(root) {
+    if (root.getAttribute("data-ll-schelp-pattern-bound") === "1") return;
+    root.setAttribute("data-ll-schelp-pattern-bound", "1");
+    root.addEventListener("click", function (evt) {
+      var btn = evt.target.closest("[data-ll-schelp-choice]");
+      if (!btn) return;
+      var card = btn.closest(".ll-puzzle-g78[data-ll-puzzle-mode=\"pattern\"]");
+      if (!card || card.getAttribute("data-ll-schelp-solved") === "1") return;
+      var form = btn.closest("form[data-ll-puzzle-form]");
+      if (!form) return;
+      var playSection = btn.closest("[data-ll-puzzle-play-section]") || card;
+      var answer = parseInt(card.getAttribute("data-ll-puzzle-answer") || "0", 10);
+      var choice = parseInt(btn.getAttribute("data-ll-schelp-choice") || "0", 10);
+      playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (b) {
+        b.classList.remove("sel");
+        b.setAttribute("aria-pressed", "false");
+      });
+      btn.classList.add("sel");
+      btn.setAttribute("aria-pressed", "true");
+      if (choice !== answer) return;
+      card.setAttribute("data-ll-schelp-solved", "1");
+      var outcome = form.querySelector('input[name="Outcome"]');
+      if (outcome) outcome.value = "done";
+      var qSlot = playSection.querySelector("[data-ll-puzzle-slot-q]");
+      if (qSlot) {
+        qSlot.classList.remove("q");
+        qSlot.innerHTML =
+          '<img src="/leerling/werelden/img/schelp-' +
+          choice +
+          '.png" alt="" width="56" height="56" loading="lazy" decoding="async" />';
+      }
+      var success = playSection.querySelector("[data-ll-puzzle-success]");
+      if (success) success.hidden = false;
+      var continueBtn = playSection.querySelector("[data-ll-puzzle-continue]");
+      if (continueBtn) {
+        continueBtn.disabled = false;
+        continueBtn.removeAttribute("aria-disabled");
+      }
+    });
+  }
+
   function bindPuzzle(root) {
     var puzzleRoots = root.querySelectorAll("[data-ll-puzzle-root], .ll-puzzle-g78[data-ll-puzzle-kind]");
     puzzleRoots.forEach(function (section) {
@@ -222,8 +263,24 @@
       var outcome = form.querySelector('input[name="Outcome"]');
       var kind = section.getAttribute("data-ll-puzzle-kind") || "";
       var playSection = section.querySelector("[data-ll-puzzle-play-section]") || section;
+      var continueBtn = playSection.querySelector("[data-ll-puzzle-continue]");
 
-      if (kind === "schelpenrij") {
+      function syncContinue() {
+        if (!continueBtn) return;
+        var ready = outcome && outcome.value;
+        continueBtn.disabled = !ready;
+        if (ready) {
+          continueBtn.removeAttribute("aria-disabled");
+        } else {
+          continueBtn.setAttribute("aria-disabled", "true");
+        }
+      }
+
+      syncContinue();
+
+      if (kind === "schelpenrij" && section.getAttribute("data-ll-puzzle-mode") === "pattern") {
+        /* Pattern picks handled by bindSchelpenPatternPick on document. */
+      } else if (kind === "schelpenrij") {
         var order = [1, 3, 2, 4];
         var pick = null;
         playSection.querySelectorAll("[data-ll-shell-index]").forEach(function (btn) {
@@ -251,6 +308,7 @@
                 s.classList.add("is-done");
               });
               if (outcome) outcome.value = "done";
+              syncContinue();
             }
           });
         });
@@ -280,6 +338,7 @@
               first = null;
               if (matched.size >= 3) {
                 if (outcome) outcome.value = "done";
+                syncContinue();
               }
             } else {
               setTimeout(function () {
@@ -337,6 +396,7 @@
             step++;
             if (step >= pattern.length) {
               if (outcome) outcome.value = "done";
+              syncContinue();
             }
           });
         });
@@ -353,7 +413,7 @@
       playSection.querySelectorAll("[data-ll-puzzle-continue]").forEach(function (btn) {
         btn.addEventListener("click", function (e) {
           e.preventDefault();
-          if (outcome) outcome.value = "done";
+          if (!outcome || !outcome.value) return;
           form.submit();
         });
       });
@@ -390,6 +450,7 @@
     bindVakkenScale(root);
     bindWereld(root);
     bindPuzzleIntro(root);
+    bindSchelpenPatternPick(root);
     bindPuzzle(root);
     bindIslandSteps(root);
     bindJobPicks(root);

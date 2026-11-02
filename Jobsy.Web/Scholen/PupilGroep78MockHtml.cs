@@ -31,16 +31,36 @@ internal static class PupilGroep78MockHtml
             """;
     }
 
-    internal static string PuzzlePreviewRow()
+    internal static string PuzzlePreviewRow(bool ariaHidden = true)
     {
-        var shells = new[] { 1, 2, 2, 3, 1 };
-        var sb = new StringBuilder("""<div class="prev-row-box"><div class="prev-row" aria-hidden="true">""");
-        foreach (var n in shells)
+        var sb = new StringBuilder("""<div class="prev-row-box"><div class="prev-row" """);
+        sb.Append(ariaHidden ? "aria-hidden=\"true\"" : "");
+        sb.Append('>');
+        foreach (var n in PupilJourneyTheme.SchelpenrijPatternSequence())
         {
             sb.Append("<div class=\"slot\"><img src=\"/leerling/werelden/img/schelp-").Append(n).Append(".png\" alt=\"\" /></div>");
         }
 
-        sb.Append("""<div class="slot q">?</div></div></div>""");
+        sb.Append("""<div class="slot q" data-ll-puzzle-slot-q="1">?</div></div></div>""");
+        return sb.ToString();
+    }
+
+    internal static string PuzzlePatternPlay(CultureState culture)
+    {
+        var sb = new StringBuilder();
+        sb.Append(PuzzlePreviewRow(ariaHidden: false));
+        sb.Append("<p class=\"ll-puzzle__hint\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.Step3"])).Append("</p>");
+        sb.Append("""<div class="answers ll-puzzle-schelp-choices" role="group" aria-label="Kies een schelp">""");
+        foreach (var n in PupilJourneyTheme.SchelpenrijPatternChoices())
+        {
+            sb.Append("<button type=\"button\" class=\"ans\" data-ll-schelp-choice=\"").Append(n)
+                .Append("\" data-testid=\"ll-puzzle-shell\"><img src=\"/leerling/werelden/img/schelp-")
+                .Append(n).Append(".png\" alt=\"\" width=\"56\" height=\"56\" loading=\"lazy\" decoding=\"async\" /></button>");
+        }
+
+        sb.Append("</div><p class=\"ll-puzzle__status ll-puzzle__status--calm\" data-ll-puzzle-success hidden aria-live=\"polite\">")
+            .Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.PatternDone"]))
+            .Append("</p>");
         return sb.ToString();
     }
 

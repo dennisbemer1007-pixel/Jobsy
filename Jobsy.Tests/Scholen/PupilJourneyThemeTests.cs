@@ -28,4 +28,21 @@ public sealed class PupilJourneyThemeTests
     {
         Assert.Contains("sort-1.png", PupilJourneyTheme.PuzzleSortAsset(PupilJourneyTheme.ZeeExpeditie, 1));
     }
+
+    [Fact]
+    public void Schelpenrij_pattern_matches_mockup_row()
+    {
+        Assert.Equal([1, 2, 2, 3, 1], PupilJourneyTheme.SchelpenrijPatternSequence());
+        Assert.Equal(2, PupilJourneyTheme.SchelpenrijPatternAnswer());
+        Assert.Equal(5, PupilJourneyTheme.SchelpenrijPatternChoices().Count);
+    }
+
+    [Theory]
+    [InlineData(PupilJourneyTheme.ZeeExpeditie, "Leerling.G78.Puzzle.IntroSub.Zee")]
+    [InlineData(PupilJourneyTheme.Eilandtuin, "Leerling.Puzzle.Tuin.Schelpenrij.Lead")]
+    [InlineData(PupilJourneyTheme.Sterrenkust, "Leerling.G78.Puzzle.IntroSub.Ster")]
+    public void Schelpenrij_intro_sub_key_per_theme(string theme, string expectedKey)
+    {
+        Assert.Equal(expectedKey, PupilJourneyTheme.SchelpenrijIntroSubKey(theme));
+    }
 }

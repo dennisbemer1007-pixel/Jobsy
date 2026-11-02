@@ -930,6 +930,33 @@
   background: var(--brass2);
 }
 
+.ll-g78-shell .ll-puzzle-schelp-choices .ans {
+  min-height: 112px;
+  padding: 12px 8px;
+}
+
+.ll-g78-shell .ll-puzzle-schelp-choices .ans img {
+  display: block;
+  max-width: 56px;
+  max-height: 56px;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+.ll-g78-shell .ll-puzzle-play-inner .ll-puzzle__hint {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+
+.ll-g78-shell .ll-puzzle-play-inner .ll-puzzle__status {
+  margin-top: 14px;
+  font-size: 18px;
+  color: var(--navy);
+  font-weight: 700;
+}
+
 .ll-g78-shell .btn {
   display: inline-flex;
   align-items: center;

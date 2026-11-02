@@ -44,11 +44,20 @@ public static class PupilPuzzelSsrHtml
         var kind = PuzzleKind(key);
         if (groep78)
         {
-            sb.Append("""<div class="card ll-puzzle ll-puzzle-g78" data-testid="ll-puzzle-root" data-ll-puzzle-kind=""").Append(kind).Append("\">");
+            sb.Append("""<div class="card ll-puzzle ll-puzzle-g78" data-testid="ll-puzzle-root" data-ll-puzzle-kind=""").Append(kind).Append('"');
+            if (kind == "schelpenrij")
+            {
+                sb.Append(" data-ll-puzzle-mode=\"pattern\" data-ll-puzzle-answer=\"")
+                    .Append(PupilJourneyTheme.SchelpenrijPatternAnswer())
+                    .Append('"');
+            }
+
+            sb.Append('>');
             sb.Append("""<div class="ll-puzzle-intro" data-ll-puzzle-phase="intro">""");
             sb.Append("<p class=\"kicker\">Puzzel ").Append(puzzleNo).Append(" van 3</p>");
             sb.Append("<h1 class=\"in-h\">").Append(PupilLeerlingSsrParts.E(title)).Append("</h1>");
-            sb.Append("<p class=\"ll-puzzle-intro-sub\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.IntroSub.Zee"])).Append("</p>");
+            var introSubKey = PupilJourneyTheme.SchelpenrijIntroSubKey(themeKey);
+            sb.Append("<p class=\"ll-puzzle-intro-sub\">").Append(PupilLeerlingSsrParts.E(culture[introSubKey])).Append("</p>");
             if (kind == "schelpenrij")
             {
                 sb.Append(PupilGroep78MockHtml.PuzzlePreviewRow());
@@ -60,7 +69,7 @@ public static class PupilPuzzelSsrHtml
             sb.Append("<div class=\"facts\"><span>").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactNoClock"]));
             sb.Append("</span><span>").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactSkip"])).Append("</span></div>");
             sb.Append("""<div class="qfoot ll-puzzle-intro-foot">""");
-            sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(culture["Leerling.G78.Puzzle.IntroSub.Zee"], "ll-puzzle-intro", culture, "Leerling.G78.Puzzle.ReadIntro"));
+            sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(culture[introSubKey], "ll-puzzle-intro", culture, "Leerling.G78.Puzzle.ReadIntro"));
             sb.Append("""<button type="button" class="btn btn-main btn-big" data-ll-puzzle-start="1">""").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.Start"]));
             sb.Append(PupilGroep78SsrParts.NextSvg).Append("</button></div></div>");
             sb.Append("""<div class="ll-puzzle-play" data-ll-puzzle-phase="play" hidden>""");
@@ -82,12 +91,16 @@ public static class PupilPuzzelSsrHtml
             sb.Append("<h1 class=\"ll-question__text\">").Append(PupilLeerlingSsrParts.E(title)).Append("</h1>");
             sb.Append("<p class=\"ll-puzzle__lead\">").Append(PupilLeerlingSsrParts.E(lead)).Append("</p>");
         }
-        else
+        else if (groep78 && kind == "schelpenrij")
+        {
+            sb.Append("<h1 class=\"qtitle\">").Append(PupilLeerlingSsrParts.E(culture[PupilJourneyTheme.SchelpenrijIntroSubKey(themeKey)])).Append("</h1>");
+        }
+        else if (groep78)
         {
             sb.Append("<h1 class=\"qtitle\">").Append(PupilLeerlingSsrParts.E(lead)).Append("</h1>");
         }
 
-        AppendPlayUi(sb, kind, groep78, themeKey);
+        AppendPlayUi(sb, kind, groep78, themeKey, culture);
         if (!string.IsNullOrEmpty(error))
         {
             sb.Append("<p class=\"ll-error\" role=\"alert\">").Append(PupilLeerlingSsrParts.E(error)).Append("</p>");
@@ -95,7 +108,7 @@ public static class PupilPuzzelSsrHtml
 
         sb.Append("""<div class="ll-puzzle__actions qfoot"><button type="button" class="btn btn-ghost" data-ll-puzzle-skip="1">""");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Puzzle.Skip"])).Append("</button>");
-        sb.Append("""<button type="button" class="btn btn-main" data-ll-puzzle-continue="1" data-testid="ll-puzzle-continue">""");
+        sb.Append("""<button type="button" class="btn btn-main" data-ll-puzzle-continue="1" data-testid="ll-puzzle-continue" disabled aria-disabled="true">""");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Puzzle.Continue"])).Append("</button></div></section>");
         if (groep78)
         {
@@ -116,8 +129,14 @@ public static class PupilPuzzelSsrHtml
         return sb.ToString();
     }
 
-    private static void AppendPlayUi(StringBuilder sb, string kind, bool groep78, string? themeKey)
+    private static void AppendPlayUi(StringBuilder sb, string kind, bool groep78, string? themeKey, CultureState culture)
     {
+        if (kind == "schelpenrij" && groep78)
+        {
+            sb.Append(PupilGroep78MockHtml.PuzzlePatternPlay(culture));
+            return;
+        }
+
         if (kind == "schelpenrij")
         {
             sb.Append("<div class=\"ll-puzzle__shells answers\">");

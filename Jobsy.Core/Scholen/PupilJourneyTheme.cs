@@ -180,10 +180,11 @@ public static class PupilJourneyTheme
         themeKey = NormalizeOrDefault(themeKey);
         return (themeKey, puzzle) switch
         {
+            (ZeeExpeditie, "schelpenrij") => "Leerling.G78.Puzzle.IntroSub.Zee",
             (Eilandtuin, "schelpenrij") => "Leerling.Puzzle.Tuin.Schelpenrij.Lead",
             (Eilandtuin, "schatkaart") => "Leerling.Puzzle.Tuin.Schatkaart.Lead",
             (Eilandtuin, "vuurtorenlampen") => "Leerling.Puzzle.Tuin.Vuurtoren.Lead",
-            (Sterrenkust, "schelpenrij") => "Leerling.Puzzle.Ster.Schelpenrij.Lead",
+            (Sterrenkust, "schelpenrij") => "Leerling.G78.Puzzle.IntroSub.Ster",
             (Sterrenkust, "schatkaart") => "Leerling.Puzzle.Ster.Schatkaart.Lead",
             (Sterrenkust, "vuurtorenlampen") => "Leerling.Puzzle.Ster.Vuurtoren.Lead",
             (_, "schelpenrij") => "Leerling.Puzzle.Schelpenrij.Lead",
@@ -255,6 +256,23 @@ public static class PupilJourneyTheme
             "schatkaart" => 2,
             "vuurtorenlampen" => 3,
             _ => 1,
+        };
+
+    /// <summary>Fixed preview row for G78 schelpenrij (mockup <c>prev-row</c>).</summary>
+    public static IReadOnlyList<int> SchelpenrijPatternSequence() => [1, 2, 2, 3, 1];
+
+    /// <summary>Correct shell size after the sequence (mockup pattern).</summary>
+    public static int SchelpenrijPatternAnswer() => 2;
+
+    /// <summary>Five tap targets shown under the row (mockup <c>answers</c> grid).</summary>
+    public static IReadOnlyList<int> SchelpenrijPatternChoices() => [1, 2, 3, 2, 1];
+
+    public static string SchelpenrijIntroSubKey(string? themeKey)
+        => NormalizeOrDefault(themeKey) switch
+        {
+            Eilandtuin => "Leerling.Puzzle.Tuin.Schelpenrij.Lead",
+            Sterrenkust => "Leerling.G78.Puzzle.IntroSub.Ster",
+            _ => "Leerling.G78.Puzzle.IntroSub.Zee",
         };
 
     public static IEnumerable<string> AllPuzzleAssetPaths()
