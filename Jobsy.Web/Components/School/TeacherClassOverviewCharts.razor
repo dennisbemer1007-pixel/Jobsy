@@ -1,0 +1,42 @@
+@using Jobsy.Web.Scholen
+
+<div class="sch-overview-charts" data-testid="leraar-overview-charts">
+    <section class="sch-card sch-chart-card sch-chart-donut">
+        <h2>@DonutTitle</h2>
+        <div class="sch-chart-donut__wrap">
+            @((MarkupString)TeacherOverviewChartSvg.Donut(DonutSegments, DonutEmptyLabel))
+            <ul class="sch-chart-donut__legend">
+                @foreach (var seg in DonutSegments)
+                {
+                    <li>
+                        <span class="sch-chart-donut__swatch" style="background:@seg.Color"></span>
+                        <span>@seg.Label</span>
+                        <strong class="tabular">@seg.Value</strong>
+                    </li>
+                }
+            </ul>
+        </div>
+    </section>
+    <section class="sch-card sch-chart-card sch-chart-bars">
+        <h2>@BarTitle</h2>
+        @if (BarItems.Count == 0)
+        {
+            <p class="sch-chart-empty">@BarEmptyLabel</p>
+        }
+        else
+        {
+            @((MarkupString)TeacherOverviewChartSvg.HorizontalBars(BarItems, BarEmptyLabel, barColor: BarColor))
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string DonutTitle { get; set; } = "";
+    [Parameter, EditorRequired] public string DonutEmptyLabel { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<TeacherOverviewChartSvg.Segment> DonutSegments { get; set; } = [];
+
+    [Parameter, EditorRequired] public string BarTitle { get; set; } = "";
+    [Parameter, EditorRequired] public string BarEmptyLabel { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<TeacherOverviewChartSvg.BarItem> BarItems { get; set; } = [];
+    [Parameter] public string BarColor { get; set; } = "#0f2747";
+}

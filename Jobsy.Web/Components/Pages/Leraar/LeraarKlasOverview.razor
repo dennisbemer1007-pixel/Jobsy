@@ -78,168 +78,148 @@ else
         }
     </header>
 
-    <div class="sch-kpi-row" data-testid="leraar-kpi-row">
-        <EntKpiCard Label="@Culture["Leraar.Kpi.Codes"]" Value="@_overview.CodeCount.ToString()" />
+    <div class="sch-kpi-row sch-kpi-row--overview" data-testid="leraar-kpi-row">
+        <EntKpiCard Label="@Culture["Leraar.Kpi.Pupils"]" Value="@_overview.CodeCount.ToString()" />
         <EntKpiCard Label="@Culture["Leraar.Kpi.Completed"]" Value="@($"{_overview.CompletedCount}/{_overview.CodeCount}")" Delta="@($"{_overview.CompletedPercent:0}%")" DeltaTone="positive" />
         <EntKpiCard Label="@Culture["Leraar.Kpi.InProgress"]" Value="@_overview.InProgressCount.ToString()" />
-        <EntKpiCard Label="@Culture["Leraar.Kpi.NotStarted"]" Value="@_overview.NotStartedCount.ToString()" />
         <EntKpiCard Label="@Culture["Leraar.Kpi.AvgTime"]" Value="@(_overview.AverageMinutes is int m ? $"{m} min" : "n.v.t.")" />
     </div>
 
-    @if (_overview.CodeCount > 0)
+    <TeacherClassOverviewCharts DonutTitle="@Culture["Leraar.Overview.Chart.Status"]"
+                                DonutEmptyLabel="@Culture["Leraar.Overview.Chart.Empty"]"
+                                DonutSegments="@ProgressDonutSegments"
+                                BarTitle="@BarChartTitle"
+                                BarEmptyLabel="@BarChartEmptyLabel"
+                                BarItems="@BarChartItems" />
+
+    @if (_pendingTotal > 0)
     {
-        <section class="sch-card sch-class-progress" data-testid="leraar-class-progress">
-            <h2>@Culture["Leraar.Overview.ProgressTitle"]</h2>
-            <div class="sch-class-progress__bar" role="img"
-                 aria-label="@($"{_overview.CompletedCount} afgerond, {_overview.InProgressCount} bezig, {_overview.NotStartedCount} nog niet gestart")">
-                <span class="is-done" style="width:@($"{CompletedShare:0.##}")%"></span>
-                <span class="is-busy" style="width:@($"{InProgressShare:0.##}")%"></span>
-                <span class="is-idle" style="width:@($"{NotStartedShare:0.##}")%"></span>
+        <section class="sch-card sch-pending-banner" data-testid="leraar-pending-codes">
+            <div class="sch-card__head">
+                <h2>@Culture["Leraar.Pending.Title"]</h2>
+                <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.All"]</a>
             </div>
-            <ul class="sch-class-progress__legend">
-                <li><i class="is-done" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.Completed"] (@_overview.CompletedCount)</li>
-                <li><i class="is-busy" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.InProgress"] (@_overview.InProgressCount)</li>
-                <li><i class="is-idle" aria-hidden="true"></i>@Culture["Leraar.Overview.ProgressLegend.NotStarted"] (@_overview.NotStartedCount)</li>
+            <p class="muted">
+                @if (_pendingTotal <= _pendingPreview.Count)
+                {
+                    @Culture.Format("Leraar.Pending.Subtitle", _pendingTotal)
+                }
+                else
+                {
+                    @Culture.Format("Leraar.Pending.Partial", _pendingPreview.Count, _pendingTotal)
+                }
+            </p>
+            <ul class="sch-pending-list">
+                @foreach (var row in _pendingPreview)
+                {
+                    <li>
+                        <a class="sch-pending-list__link" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">
+                            <code>@row.DisplayCode</code>
+                            <small>@PendingDetail(row)</small>
+                        </a>
+                        @if (row.Status == PupilCodeStatus.NotStarted)
+                        {
+                            <span class="sch-pill sch-pill--muted">@Culture["Leraar.Kpi.NotStarted"]</span>
+                        }
+                    </li>
+                }
             </ul>
         </section>
     }
 
-    <div class="sch-overview-grid">
-        <section class="sch-card">
-            <div class="sch-card__head">
-                <h2>@Culture["Leraar.Codes.Title"]</h2>
-                <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.All"]</a>
-            </div>
-            <p class="muted">@Culture["Leraar.Codes.NamesNote"]</p>
-            <EntDataTable Loading="false" Empty="@(_overview.CodesPreview.Count == 0)" EmptyText="@Culture["School.Codes.Empty"]">
-                <Header>
-                    <th scope="col">#</th>
-                    <th scope="col">@Culture["School.Col.Code"]</th>
-                    <th scope="col">@Culture["School.Col.Status"]</th>
-                    <th scope="col">@Culture["School.Col.Progress"]</th>
-                    <th scope="col">@Culture["School.Col.LastActive"]</th>
-                    <th scope="col"></th>
-                </Header>
-                <Rows>
-                    @foreach (var row in _overview.CodesPreview)
-                    {
-                        <tr class="ent-data-table__row">
-                            <td class="tabular" data-label="#">@row.Number</td>
-                            <td data-label="@Culture["School.Col.Code"]"><span class="sch-code">@row.DisplayCode</span></td>
-                            <td data-label="@Culture["School.Col.Status"]"><span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span></td>
-                            <td data-label="@Culture["School.Col.Progress"]">
-                                <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"
-                                          aria-label="@($"{row.ProgressCurrent}/{row.ProgressTotal}")"></progress>
-                                <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
-                            </td>
-                            <td data-label="@Culture["School.Col.LastActive"]">@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
-                            <td data-label="">
-                                @if (row.Status == PupilCodeStatus.Completed)
-                                {
-                                    <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </Rows>
-            </EntDataTable>
-        </section>
-
-        <aside class="sch-overview-side">
-            @if (_pendingTotal > 0)
-            {
-                <section class="sch-card" data-testid="leraar-pending-codes">
-                    <h2>@Culture["Leraar.Pending.Title"]</h2>
-                    <p class="muted">
-                        @if (_pendingTotal <= _pendingPreview.Count)
-                        {
-                            @Culture.Format("Leraar.Pending.Subtitle", _pendingTotal)
-                        }
-                        else
-                        {
-                            @Culture.Format("Leraar.Pending.Partial", _pendingPreview.Count, _pendingTotal)
-                        }
-                    </p>
-                    <ul class="sch-pending-list">
-                        @foreach (var row in _pendingPreview)
-                        {
-                            <li>
-                                <a class="sch-pending-list__link" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">
-                                    <code>@row.DisplayCode</code>
-                                    <small>@PendingDetail(row)</small>
-                                </a>
-                                @if (row.Status == PupilCodeStatus.NotStarted)
-                                {
-                                    <span class="sch-pill sch-pill--muted">@Culture["Leraar.Kpi.NotStarted"]</span>
-                                }
-                            </li>
-                        }
-                    </ul>
-                    <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.All"]</a>
-                </section>
-            }
-            <section class="sch-card">
-                <h2>@Culture["Leraar.Group.Interests"]</h2>
-                @if (!_overview.GroupInsights.Visible)
+    <section class="sch-card sch-codes-table" data-testid="leraar-class-progress">
+        <div class="sch-card__head">
+            <h2>@Culture["Leraar.Codes.Title"]</h2>
+            <a href="@($"/leraar/klas/{ClassId:D}/codes")">@Culture["Leraar.Codes.All"]</a>
+        </div>
+        <p class="muted">@Culture["Leraar.Codes.NamesNote"]</p>
+        <EntDataTable Loading="false" Empty="@(_overview.CodesPreview.Count == 0)" EmptyText="@Culture["School.Codes.Empty"]">
+            <Header>
+                <th scope="col">#</th>
+                <th scope="col">@Culture["School.Col.Code"]</th>
+                <th scope="col">@Culture["School.Col.Status"]</th>
+                <th scope="col">@Culture["School.Col.Progress"]</th>
+                <th scope="col">@Culture["School.Col.LastActive"]</th>
+                <th scope="col"></th>
+            </Header>
+            <Rows>
+                @foreach (var row in _overview.CodesPreview)
                 {
-                    <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
-                }
-                else
-                {
-                    <ul class="sch-bar-list">
-                        @foreach (var bar in _overview.GroupInsights.RiasecBars)
-                        {
-                            var max = Math.Max(1, _overview.GroupInsights.RiasecBars.Max(b => b.Count));
-                            <li>
-                                <span>@Culture[bar.KidLabelKey]</span>
-                                <progress class="sch-progress-meter" max="@max" value="@bar.Count"></progress>
-                                <span class="tabular">@bar.Count</span>
-                            </li>
-                        }
-                    </ul>
-                }
-            </section>
-            <section class="sch-card">
-                <h2>@Culture["Leraar.Group.Drivers"]</h2>
-                @if (!_overview.GroupInsights.Visible)
-                {
-                    <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
-                }
-                else
-                {
-                    <ol class="sch-rank-list">
-                        @foreach (var v in _overview.GroupInsights.TopValues)
-                        {
-                            <li>@($"{PupilDimensionText.Value(Culture, v.Key)} · {v.Count}")</li>
-                        }
-                    </ol>
-                }
-            </section>
-            <section class="sch-card">
-                <h2>@Culture["Leraar.Group.DreamJobs"]</h2>
-                @if (!_overview.GroupInsights.Visible)
-                {
-                    <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
-                }
-                else
-                {
-                    @if (_overview.GroupInsights.DreamJobs.Count > 0)
-                    {
-                        <div class="sch-chip-list">
-                            @foreach (var d in _overview.GroupInsights.DreamJobs)
+                    <tr class="ent-data-table__row">
+                        <td class="tabular" data-label="#">@row.Number</td>
+                        <td data-label="@Culture["School.Col.Code"]"><span class="sch-code">@row.DisplayCode</span></td>
+                        <td data-label="@Culture["School.Col.Status"]"><span class="sch-pill @StatusPill(row.Status)">@StatusLabel(row)</span></td>
+                        <td data-label="@Culture["School.Col.Progress"]">
+                            <progress class="sch-progress-meter" max="@row.ProgressTotal" value="@row.ProgressCurrent"
+                                      aria-label="@($"{row.ProgressCurrent}/{row.ProgressTotal}")"></progress>
+                            <span class="tabular muted">@row.ProgressCurrent/@row.ProgressTotal</span>
+                        </td>
+                        <td data-label="@Culture["School.Col.LastActive"]">@(row.LastSeenAtUtc is DateTime t ? SchoolActivityTime.Format(t) : "—")</td>
+                        <td data-label="">
+                            @if (row.Status == PupilCodeStatus.Completed)
                             {
-                                <span class="sch-chip">@DreamJobChipLabel(d)</span>
+                                <a class="btn-compact" href="@($"/leraar/klas/{ClassId:D}/code/{row.Id:D}")">@Culture["Leraar.Codes.View"]</a>
                             }
-                        </div>
-                    }
-                    <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_overview.GroupInsights.UndecidedDreamJobCount</p>
-                    @if (_overview.GroupInsights.NotFilledDreamJobCount > 0)
-                    {
-                        <p class="muted">@Culture["Leraar.DreamJobs.NotFilled"]: @_overview.GroupInsights.NotFilledDreamJobCount</p>
-                    }
+                        </td>
+                    </tr>
                 }
+            </Rows>
+        </EntDataTable>
+    </section>
+
+    <div class="sch-overview-insights">
+        <section class="sch-card">
+            <h2>@Culture["Leraar.Group.Drivers"]</h2>
+            @if (!_overview.GroupInsights.Visible)
+            {
+                <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
+            }
+            else
+            {
+                <ol class="sch-rank-list">
+                    @foreach (var v in _overview.GroupInsights.TopValues)
+                    {
+                        <li>@($"{PupilDimensionText.Value(Culture, v.Key)} · {v.Count}")</li>
+                    }
+                </ol>
+            }
+        </section>
+        <section class="sch-card">
+            <h2>@Culture["Leraar.Group.DreamJobs"]</h2>
+            @if (!_overview.GroupInsights.Visible)
+            {
+                <p class="muted">@string.Format(Culture["Leraar.Group.Hidden"], _overview.GroupInsights.CompletedCount)</p>
+            }
+            else
+            {
+                @if (_overview.GroupInsights.DreamJobs.Count > 0)
+                {
+                    <div class="sch-chip-list">
+                        @foreach (var d in _overview.GroupInsights.DreamJobs)
+                        {
+                            <span class="sch-chip">@DreamJobChipLabel(d)</span>
+                        }
+                    </div>
+                }
+                <p class="muted">@Culture["Leraar.DreamJobs.Undecided"]: @_overview.GroupInsights.UndecidedDreamJobCount</p>
+                @if (_overview.GroupInsights.NotFilledDreamJobCount > 0)
+                {
+                    <p class="muted">@Culture["Leraar.DreamJobs.NotFilled"]: @_overview.GroupInsights.NotFilledDreamJobCount</p>
+                }
+            }
+        </section>
+        @if (_overview.GroupInsights.Visible && _overview.GroupInsights.TopCultures.Count > 0)
+        {
+            <section class="sch-card">
+                <h2>@Culture["Leraar.Group.Cultures"]</h2>
+                <ol class="sch-rank-list">
+                    @foreach (var c in _overview.GroupInsights.TopCultures)
+                    {
+                        <li>@($"{PupilDimensionText.Culture(Culture, c.Key)} · {c.Count}")</li>
+                    }
+                </ol>
             </section>
-        </aside>
+        }
     </div>
 }
 
@@ -263,19 +243,57 @@ else
     private string? _loadError;
     private string? _windowError;
     private TeacherClassOverviewDto? _overview;
+    private TeacherMboHboGroupChartsDto? _mboCharts;
     private const int PendingPreviewMax = 8;
     private int _pendingTotal;
     private IReadOnlyList<TeacherCodeRowDto> _pendingPreview = [];
     private CancellationTokenSource? _pollCts;
 
-    private double CompletedShare => Share(_overview?.CompletedCount);
-    private double InProgressShare => Share(_overview?.InProgressCount);
-    private double NotStartedShare => Share(_overview?.NotStartedCount);
+    private IReadOnlyList<TeacherOverviewChartSvg.Segment> ProgressDonutSegments =>
+        _overview is null
+            ? []
+            :
+            [
+                new(Culture["Leraar.Overview.ProgressLegend.Completed"], _overview.CompletedCount, "#33505f"),
+                new(Culture["Leraar.Overview.ProgressLegend.InProgress"], _overview.InProgressCount, "#c4552a"),
+                new(Culture["Leraar.Overview.ProgressLegend.NotStarted"], _overview.NotStartedCount, "#ddd8cf")
+            ];
 
-    private double Share(int? count)
+    private string BarChartTitle => _overview?.QuestionSet == PupilQuestionSet.MboHbo
+        ? Culture["Leraar.Overview.Chart.Tests"]
+        : Culture["Leraar.Overview.Chart.Interests"];
+
+    private string BarChartEmptyLabel => _overview?.QuestionSet == PupilQuestionSet.MboHbo
+        ? Culture["Leraar.Overview.Chart.Empty"]
+        : string.Format(Culture["Leraar.Group.Hidden"], _overview?.GroupInsights.CompletedCount ?? 0);
+
+    private IReadOnlyList<TeacherOverviewChartSvg.BarItem> BarChartItems
     {
-        var total = _overview?.CodeCount ?? 0;
-        return total == 0 ? 0 : 100d * (count ?? 0) / total;
+        get
+        {
+            if (_overview is null)
+            {
+                return [];
+            }
+
+            if (_overview.QuestionSet == PupilQuestionSet.MboHbo)
+            {
+                return _mboCharts?.BlockCompletion
+                           .Select(b => new TeacherOverviewChartSvg.BarItem(b.BlockKey, b.CompletedPercent, 100))
+                           .ToList()
+                       ?? [];
+            }
+
+            if (!_overview.GroupInsights.Visible || _overview.GroupInsights.RiasecBars.Count == 0)
+            {
+                return [];
+            }
+
+            var max = Math.Max(1, _overview.GroupInsights.RiasecBars.Max(b => b.Count));
+            return _overview.GroupInsights.RiasecBars
+                .Select(b => new TeacherOverviewChartSvg.BarItem(Culture[b.KidLabelKey], b.Count, max))
+                .ToList();
+        }
     }
 
     protected override async Task OnParametersSetAsync()
@@ -314,16 +332,21 @@ else
                     .ToList();
                 _pendingTotal = pending.Count;
                 _pendingPreview = pending.Take(PendingPreviewMax).ToList();
+                _mboCharts = _overview.QuestionSet == PupilQuestionSet.MboHbo
+                    ? (await Api.GetTeacherMboHboProgressAsync(ClassId))?.Charts
+                    : null;
             }
             else
             {
                 _pendingTotal = 0;
                 _pendingPreview = [];
+                _mboCharts = null;
             }
         }
         catch (Exception ex)
         {
             _overview = null;
+            _mboCharts = null;
             _pendingTotal = 0;
             _pendingPreview = [];
             _loadError = PortalLoad.IsNotFound(ex) ? null : Culture["Leraar.LoadFailed"];

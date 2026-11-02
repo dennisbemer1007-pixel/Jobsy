@@ -86,10 +86,23 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
 
         await page.Locator("[data-testid='leraar-class-progress']").WaitForAsync(new() { Timeout = 60_000 });
         await page.Locator("[data-testid='leraar-kpi-row']").WaitForAsync();
+        await page.Locator("[data-testid='leraar-overview-charts']").WaitForAsync(new() { Timeout = 60_000 });
 
-        var barWidth = await page.Locator(".sch-class-progress__bar").EvaluateAsync<double>(
+        var donutWidth = await page.Locator(".sch-chart-donut__svg").First.EvaluateAsync<double>(
             "el => el.getBoundingClientRect().width");
-        Assert.True(barWidth > 100);
+        Assert.True(donutWidth > 40);
+
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (!string.IsNullOrWhiteSpace(artifactDir))
+        {
+            Directory.CreateDirectory(artifactDir);
+            var suffix = width <= 400 ? "390" : "1440";
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"after-{suffix}.png"),
+                FullPage = true
+            });
+        }
 
         var pendingVisible = await page.Locator("[data-testid='leraar-pending-codes']").CountAsync();
         Assert.True(pendingVisible >= 0);
