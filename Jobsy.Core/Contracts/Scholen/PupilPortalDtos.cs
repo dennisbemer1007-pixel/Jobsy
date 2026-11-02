@@ -52,7 +52,8 @@ public sealed record PupilProgressStateDto(
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
     string NextStep = "question",
     string? NextPuzzleKey = null,
-    string? JourneyThemeKey = null);
+    string? JourneyThemeKey = null,
+    DateTime? JourneyThemeChosenAtUtc = null);
 
 public sealed record PupilJourneyThemeRequest(string Key);
 

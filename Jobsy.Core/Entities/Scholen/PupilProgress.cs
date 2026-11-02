@@ -8,6 +8,9 @@ public class PupilProgress
     /// <summary>Groep 7/8 visual theme (<see cref="Jobsy.Core.Scholen.PupilJourneyTheme"/>).</summary>
     public string? JourneyThemeKey { get; set; }
 
+    /// <summary>Set when the pupil confirms screen 00 (Kies je wereld); styling fallbacks must not set this.</summary>
+    public DateTime? JourneyThemeChosenAtUtc { get; set; }
+
     /// <summary>JSON map item id → Likert 1..5.</summary>
     public string AnswersJson { get; set; } = "{}";
     public int CurrentIndex { get; set; }

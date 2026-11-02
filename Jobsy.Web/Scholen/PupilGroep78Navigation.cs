@@ -23,8 +23,7 @@ public static class PupilGroep78Navigation
     /// <summary>SSR equivalent of <see cref="RedirectIfThemeMissing"/> — returns redirect URL or null.</summary>
     public static string? ThemeRedirectPath(PupilProgressStateDto? progress)
     {
-        if (progress is not null
-            && PupilGroep78EntryPaths.RequiresThemeChoice(progress.QuestionSet, progress.JourneyThemeKey))
+        if (progress is not null && PupilGroep78EntryPaths.RequiresThemeChoice(progress))
         {
             return PupilGroep78EntryPaths.Wereld;
         }

@@ -1,3 +1,4 @@
+using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 
@@ -31,7 +32,7 @@ public static class PupilGroep78EntryPaths
             return Result;
         }
 
-        if (!PupilJourneyTheme.IsValid(progress?.JourneyThemeKey))
+        if (!HasExplicitJourneyThemeChoice(progress))
         {
             return Wereld;
         }
@@ -41,19 +42,49 @@ public static class PupilGroep78EntryPaths
             : Reis;
     }
 
+    public static string AfterLogin(PupilProgressStateDto progress, bool completed)
+        => AfterLogin(
+            progress.QuestionSet,
+            progress.Status,
+            MapProgress(progress),
+            completed);
+
+    private static PupilProgress MapProgress(PupilProgressStateDto progress)
+        => new()
+        {
+            CurrentIndex = progress.CurrentIndex,
+            JourneyThemeKey = progress.JourneyThemeKey,
+            JourneyThemeChosenAtUtc = progress.JourneyThemeChosenAtUtc,
+        };
+
     public static string AfterThemeChosen(PupilCodeStatus status, PupilProgress? progress)
         => status == PupilCodeStatus.NotStarted && (progress is null || progress.CurrentIndex == 0)
             ? Start
             : Reis;
 
-    public static bool RequiresThemeChoice(PupilQuestionSet questionSet, string? journeyThemeKey)
+    public static bool HasExplicitJourneyThemeChoice(PupilProgress? progress)
+        => progress?.JourneyThemeChosenAtUtc is not null
+           && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+
+    public static bool HasExplicitJourneyThemeChoice(PupilProgressStateDto progress)
+        => HasExplicitJourneyThemeChoice(MapProgress(progress));
+
+    public static bool RequiresThemeChoice(PupilQuestionSet questionSet, PupilProgress? progress)
         => questionSet == PupilQuestionSet.Groep78
-           && !PupilJourneyTheme.IsValid(journeyThemeKey);
+           && !HasExplicitJourneyThemeChoice(progress);
+
+    public static bool RequiresThemeChoice(PupilQuestionSet questionSet, string? journeyThemeKey, DateTime? journeyThemeChosenAtUtc)
+        => questionSet == PupilQuestionSet.Groep78
+           && !(journeyThemeChosenAtUtc is not null && PupilJourneyTheme.IsValid(journeyThemeKey));
+
+    public static bool RequiresThemeChoice(PupilProgressStateDto progress)
+        => RequiresThemeChoice(progress.QuestionSet, progress.JourneyThemeKey, progress.JourneyThemeChosenAtUtc);
 
     /// <summary>G78 journey steps that must not run without a chosen visual theme.</summary>
     public static bool IsThemeGatedPath(ReadOnlySpan<char> path)
     {
-        if (path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+        if (path.Equals("/leerling/start", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
         {

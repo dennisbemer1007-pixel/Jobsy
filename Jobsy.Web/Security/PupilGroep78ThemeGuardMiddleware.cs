@@ -26,8 +26,7 @@ public sealed class PupilGroep78ThemeGuardMiddleware
                 && JobsyApiAuthHandler.IsPupilPrincipal(context.User))
             {
                 var progress = await api.GetPupilProgressAsync(context.RequestAborted);
-                if (progress is not null
-                    && PupilGroep78EntryPaths.RequiresThemeChoice(progress.QuestionSet, progress.JourneyThemeKey))
+                if (progress is not null && PupilGroep78EntryPaths.RequiresThemeChoice(progress))
                 {
                     context.Response.Redirect(PupilGroep78EntryPaths.Wereld);
                     return;

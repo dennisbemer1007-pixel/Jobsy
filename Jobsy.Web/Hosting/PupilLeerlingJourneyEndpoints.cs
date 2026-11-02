@@ -28,6 +28,7 @@ public static class PupilLeerlingJourneyEndpoints
     {
         var pupil = new AuthorizeAttribute { Policy = JobsyPolicies.PupilSession };
 
+        app.MapGet("/leerling/verder", GetVerderAsync).RequireAuthorization(pupil);
         app.MapGet("/leerling/start", GetStartAsync).RequireAuthorization(pupil);
         app.MapGet("/leerling/stop", GetStopAsync).AllowAnonymous();
         app.MapGet("/leerling/wereld", GetWereldAsync).RequireAuthorization(pupil);
@@ -54,6 +55,18 @@ public static class PupilLeerlingJourneyEndpoints
         return app;
     }
 
+    private static async Task<IResult> GetVerderAsync(HttpContext http, JobsyApiClient api, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var progress = await LoadProgressAsync(api, ct);
+        if (progress is null)
+        {
+            return Results.Redirect("/leerling?error=expired");
+        }
+
+        return Results.Redirect(PupilGroep78EntryPaths.AfterLogin(progress, progress.Completed));
+    }
+
     private static async Task<IResult> GetStartAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
@@ -64,13 +77,18 @@ public static class PupilLeerlingJourneyEndpoints
             return PlainError("Kon start niet laden.");
         }
 
+        if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
+        {
+            return Results.Redirect(themeRedir);
+        }
+
         if (PupilLeerlingProgressRouting.RedirectForStart(progress) is { } redir)
         {
             return Results.Redirect(redir);
         }
 
         var def = registry.Get(progress.QuestionSet);
-        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilStartSsrHtml.BuildBody(def, culture, groep78, progress.JourneyThemeKey, registry);
         var title = groep78 ? culture["Leerling.G78.Route.Title"] : culture["Leerling.Start.Title"];
@@ -149,7 +167,7 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var def = registry.Get(progress.QuestionSet);
-        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         if (!progress.WindowOpen && !progress.Completed)
         {
             var closedAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
@@ -240,7 +258,7 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var def = registry.Get(progress.QuestionSet);
-        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var error = http.Request.Query["error"].ToString() == "save" ? culture["Leerling.Reis.SaveFailed"] : null;
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilEilandSsrHtml.BuildBody(progress, def, culture, registry, afHtml, EilandSavePath, error, groep78, progress.JourneyThemeKey);
@@ -307,7 +325,7 @@ public static class PupilLeerlingJourneyEndpoints
 
         var page = http.Request.Query["page"].ToString() == "2" ? 2 : 1;
         var scores = BuildVakScores(progress, page);
-        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78;
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var themeKey = groep78 ? PupilJourneyTheme.NormalizeOrDefault(progress.JourneyThemeKey) : null;
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78, themeKey);
@@ -380,7 +398,7 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect(redir);
         }
 
-        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var savePath = $"/leerling/puzzel/{Uri.EscapeDataString(key)}/save";
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilPuzzelSsrHtml.BuildBody(key, culture, afHtml, savePath, groep78, progress.JourneyThemeKey, registry, null);
@@ -434,7 +452,7 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var progress = await LoadProgressAsync(api, ct);
-        var groep78 = progress?.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var groep78 = progress?.QuestionSet == PupilQuestionSet.Groep78 && progress is not null && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var flag = await features.GetAsync(ct);
         var passportV2 = flag.PupilPassportV2Enabled && result.QuestionSet == PupilQuestionSet.Groep78;
         var pdfHref = PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);

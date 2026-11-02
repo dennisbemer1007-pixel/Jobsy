@@ -31,7 +31,7 @@ public static class PupilGroep78ConflictHandling
 
         if (progress is not null
             && ex.Message.Contains("theme_required", StringComparison.OrdinalIgnoreCase)
-            && PupilGroep78EntryPaths.RequiresThemeChoice(progress.QuestionSet, progress.JourneyThemeKey))
+            && PupilGroep78EntryPaths.RequiresThemeChoice(progress))
         {
             nav.NavigateTo(PupilGroep78EntryPaths.Wereld);
             return true;
