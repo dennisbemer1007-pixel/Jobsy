@@ -447,12 +447,14 @@ public static class PupilLeerlingJourneyEndpoints
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
         await culture.InitializeAsync();
+        var progress = await LoadProgressAsync(api, ct);
         var flag = await features.GetAsync(ct);
         if (!flag.PupilPassportV2Enabled)
         {
+            var (disabledShell, disabledTheme) = ResolvePaspoortG78Shell(progress, g78PassportContent: false);
             var disabled = """<div class="ll-reis" data-testid="leerling-paspoort-disabled"><section class="ll-card"><a class="btn-primary" href="/leerling/dit-ben-jij">Terug</a></section></div>""";
             var disabledAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", false, null, disabledAf);
+            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", disabledShell, disabledTheme, disabledAf);
         }
 
         var lang = PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language;
@@ -460,14 +462,30 @@ public static class PupilLeerlingJourneyEndpoints
         var model = await api.GetPupilG78PassportAsync(string.IsNullOrWhiteSpace(naam) ? null : naam, lang, ct);
         if (model is null || !model.Enabled)
         {
+            var (emptyShell, emptyTheme) = ResolvePaspoortG78Shell(progress, g78PassportContent: false);
             var emptyAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", false, null, emptyAf);
+            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", emptyShell, emptyTheme, emptyAf);
         }
 
+        var (useG78Shell, themeKey) = ResolvePaspoortG78Shell(progress, g78PassportContent: true);
         var pdfHref = PupilStoryPdfLink.Href(naam, lang);
         var body = PupilPaspoortSsrHtml.BuildPage(culture, model, naam, pdfHref);
         var pasAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", false, null, pasAf);
+        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", useG78Shell, themeKey, pasAf);
+    }
+
+    /// <summary>G78 passport SSR always uses the journey shell; theme defaults when unset (e.g. legacy progress rows).</summary>
+    private static (bool UseGroep78Shell, string? JourneyThemeKey) ResolvePaspoortG78Shell(
+        PupilProgressStateDto? progress,
+        bool g78PassportContent)
+    {
+        var groep78Pupil = progress?.QuestionSet == PupilQuestionSet.Groep78;
+        if (!groep78Pupil && !g78PassportContent)
+        {
+            return (false, null);
+        }
+
+        return (true, PupilJourneyTheme.NormalizeOrDefault(progress?.JourneyThemeKey));
     }
 
     private static async Task<IResult> GetVoPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IAntiforgery af, CancellationToken ct)

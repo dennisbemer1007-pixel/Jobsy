@@ -39,10 +39,27 @@ public sealed class PupilJourneyThemeTests
 
     [Theory]
     [InlineData(PupilJourneyTheme.ZeeExpeditie, "Leerling.G78.Puzzle.IntroSub.Zee")]
-    [InlineData(PupilJourneyTheme.Eilandtuin, "Leerling.Puzzle.Tuin.Schelpenrij.Lead")]
+    [InlineData(PupilJourneyTheme.Eilandtuin, "Leerling.G78.Puzzle.IntroSub.Tuin")]
     [InlineData(PupilJourneyTheme.Sterrenkust, "Leerling.G78.Puzzle.IntroSub.Ster")]
     public void Schelpenrij_intro_sub_key_per_theme(string theme, string expectedKey)
     {
         Assert.Equal(expectedKey, PupilJourneyTheme.SchelpenrijIntroSubKey(theme));
+    }
+
+    [Theory]
+    [InlineData("schelpenrij", 15)]
+    [InlineData("schatkaart", 30)]
+    [InlineData("vuurtorenlampen", 45)]
+    public void Puzzle_gate_question_matches_journey_slots(string key, int expected)
+    {
+        Assert.Equal(expected, PupilJourneyTheme.PuzzleGateQuestion(key));
+    }
+
+    [Fact]
+    public void Schatkaart_intro_sub_uses_theme_lead()
+    {
+        Assert.Equal(
+            "Leerling.Puzzle.Tuin.Schatkaart.Lead",
+            PupilJourneyTheme.PuzzleIntroSubKey(PupilJourneyTheme.Eilandtuin, "schatkaart"));
     }
 }

@@ -12,9 +12,9 @@ namespace Jobsy.Tests.Scholen;
 public sealed class PupilPuzzelSsrHtmlTests
 {
     [Fact]
-    public async Task Groep78_schelpenrij_play_markup_uses_pattern_choices_not_sort_stub()
+    public void Groep78_schelpenrij_play_markup_uses_pattern_choices_not_sort_stub()
     {
-        var culture = await NlCultureAsync();
+        var culture = NlCulture();
         var registry = new PupilQuestionSetRegistry();
         var html = PupilPuzzelSsrHtml.BuildBody(
             "schelpenrij",
@@ -33,7 +33,53 @@ public sealed class PupilPuzzelSsrHtmlTests
         Assert.Contains("Vind het patroon in de rij schelpen op het rif.", html, StringComparison.Ordinal);
     }
 
-    private static async Task<CultureState> NlCultureAsync()
+    [Fact]
+    public void Groep78_schatkaart_intro_uses_match_preview_not_schelpen_copy()
+    {
+        var culture = NlCulture();
+        var registry = new PupilQuestionSetRegistry();
+        var html = PupilPuzzelSsrHtml.BuildBody(
+            "schatkaart",
+            culture,
+            antiforgery: "",
+            savePath: "/leerling/puzzel/schatkaart/save",
+            groep78: true,
+            themeKey: PupilJourneyTheme.ZeeExpeditie,
+            registry,
+            error: null);
+
+        Assert.Contains("Vind de bij elkaar horende symbolen.", html, StringComparison.Ordinal);
+        Assert.Contains("prev-row--cards", html, StringComparison.Ordinal);
+        Assert.Contains("card-back.jpg", html, StringComparison.Ordinal);
+        Assert.Contains("Bekijk de kaarten op tafel.", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vind het patroon in de rij schelpen", html, StringComparison.Ordinal);
+        Assert.Contains("data-ll-match-src", html, StringComparison.Ordinal);
+        Assert.Contains("data-ll-puzzle-kind=\"schatkaart\"", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Groep78_vuurtorenlampen_intro_uses_lamp_preview()
+    {
+        var culture = NlCulture();
+        var registry = new PupilQuestionSetRegistry();
+        var html = PupilPuzzelSsrHtml.BuildBody(
+            "vuurtorenlampen",
+            culture,
+            antiforgery: "",
+            savePath: "/leerling/puzzel/vuurtorenlampen/save",
+            groep78: true,
+            themeKey: PupilJourneyTheme.Sterrenkust,
+            registry,
+            error: null);
+
+        Assert.Contains("Onthoud het sterrenlicht en tik het patroon na.", html, StringComparison.Ordinal);
+        Assert.Contains("prev-row--lamps", html, StringComparison.Ordinal);
+        Assert.Contains("/puzzles/ster/lamp-", html, StringComparison.Ordinal);
+        Assert.Contains("data-ll-lamp-watch", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("prev-row--cards", html, StringComparison.Ordinal);
+    }
+
+    private static CultureState NlCulture()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IJSRuntime, NoJs>();
@@ -43,7 +89,7 @@ public sealed class PupilPuzzelSsrHtmlTests
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         var culture = services.BuildServiceProvider().GetRequiredService<CultureState>();
-        await culture.SetLanguageAsync("nl");
+        culture.SetLanguageAsync("nl").GetAwaiter().GetResult();
         return culture;
     }
 
