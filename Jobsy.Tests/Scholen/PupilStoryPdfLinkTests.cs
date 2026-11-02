@@ -1,5 +1,6 @@
 using Jobsy.Web.Scholen;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -56,11 +57,37 @@ public sealed class PupilStoryPdfLinkTests
     }
 
     [Fact]
+    public void NeedsCanonicalRedirect_true_when_raw_target_has_trailing_question_mark()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Path = PupilStoryPdfLink.Path;
+        http.Request.QueryString = new QueryString("?lang=nl");
+        http.Features.Set<IHttpRequestFeature>(
+            new RawTargetFeature("/leerling/pdf?lang=nl?"));
+        Assert.True(PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request));
+    }
+
+    private sealed class RawTargetFeature(string rawTarget) : IHttpRequestFeature
+    {
+        public string Protocol { get; set; } = "HTTP/1.1";
+        public string Scheme { get; set; } = "https";
+        public string Method { get; set; } = "GET";
+        public string PathBase { get; set; } = "";
+        public string Path { get; set; } = PupilStoryPdfLink.Path;
+        public string QueryString { get; set; } = "?lang=nl";
+        public string RawTarget { get; set; } = rawTarget;
+        public IHeaderDictionary Headers { get; set; } = new HeaderDictionary();
+        public Stream Body { get; set; } = Stream.Null;
+    }
+
+    [Fact]
     public void NeedsCanonicalRedirect_false_for_clean_url()
     {
         var http = new DefaultHttpContext();
         http.Request.Path = PupilStoryPdfLink.Path;
         http.Request.QueryString = new QueryString("?lang=nl");
+        http.Features.Set<IHttpRequestFeature>(
+            new RawTargetFeature("/leerling/pdf?lang=nl"));
         Assert.False(PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request));
     }
 }
