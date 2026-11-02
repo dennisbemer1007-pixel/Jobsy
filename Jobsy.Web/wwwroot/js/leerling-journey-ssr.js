@@ -83,6 +83,10 @@
           if (panel) panel.hidden = !panel.hidden;
         });
       });
+
+      form.addEventListener("submit", function () {
+        sync();
+      });
     });
   }
 

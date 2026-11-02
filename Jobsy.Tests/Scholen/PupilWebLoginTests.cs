@@ -719,7 +719,10 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         public ForwardFactory(HttpMessageHandler api) => _handler = new ForwardHandler(api);
 
         public HttpClient CreateClient(string name)
-            => new(_handler, disposeHandler: false);
+            => new(_handler, disposeHandler: false)
+            {
+                BaseAddress = new Uri("http://api.test/")
+            };
 
         public void Dispose() => _handler.Dispose();
     }

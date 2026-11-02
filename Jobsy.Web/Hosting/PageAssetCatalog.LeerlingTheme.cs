@@ -44,6 +44,6 @@ public static partial class PageAssetCatalog
 
     public static IReadOnlyList<string> LeerlingGroep78ThemeStylesheets(string? rawPath)
         => IncludesLeerlingGroep78ThemeStyles(rawPath)
-            ? [WwwrootAssetCatalog.Url(LeerlingGroep78ThemeStylesheetPath)]
+            ? [WwwrootAssetCatalog.UrlLeadingSlash(LeerlingGroep78ThemeStylesheetPath)]
             : [];
 }

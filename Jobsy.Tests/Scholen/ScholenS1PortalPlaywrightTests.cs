@@ -518,7 +518,10 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
     {
         private readonly ForwardHandler _handler = new(api);
 
-        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false);
+        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false)
+        {
+            BaseAddress = new Uri("http://api.test/")
+        };
 
         public void Dispose() => _handler.Dispose();
     }

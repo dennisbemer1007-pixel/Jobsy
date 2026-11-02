@@ -71,8 +71,9 @@ public static class PupilLeerlingJourneyEndpoints
 
         var def = registry.Get(progress.QuestionSet);
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilStartSsrHtml.BuildBody(def, culture, groep78, progress.JourneyThemeKey, registry);
-        return Html(http, culture["Leerling.Start.Title"], body, "/leerling/start", groep78, progress.JourneyThemeKey, af);
+        return Html(http, culture["Leerling.Start.Title"], body, "/leerling/start", groep78, progress.JourneyThemeKey, afHtml);
     }
 
     private static Task<IResult> GetStopAsync(HttpContext http, CultureState culture, IAntiforgery af)
@@ -110,7 +111,7 @@ public static class PupilLeerlingJourneyEndpoints
 
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilWereldSsrHtml.BuildBody(culture, afHtml, progress.JourneyThemeKey, WereldSavePath);
-        return Html(http, culture["Leerling.Wereld.Title"], body, "/leerling/wereld", useG78: true, progress.JourneyThemeKey, af, showPause: false);
+        return Html(http, culture["Leerling.Wereld.Title"], body, "/leerling/wereld", useG78: true, progress.JourneyThemeKey, afHtml, showPause: false);
     }
 
     private static async Task<IResult> PostWereldAsync(HttpContext http, JobsyApiClient api, IAntiforgery af, CancellationToken ct)
@@ -150,13 +151,15 @@ public static class PupilLeerlingJourneyEndpoints
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
         if (!progress.WindowOpen && !progress.Completed)
         {
+            var closedAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
             var closed = PupilReisSsrHtml.WindowClosed(culture, progress.QuestionSet);
-            return Html(http, culture["Leerling.Reis.Title"], closed, "/leerling/reis", groep78, progress.JourneyThemeKey, af);
+            return Html(http, culture["Leerling.Reis.Title"], closed, "/leerling/reis", groep78, progress.JourneyThemeKey, closedAf);
         }
 
         if (progress.Completed)
         {
-            return Html(http, culture["Leerling.Reis.Title"], PupilReisSsrHtml.DoneCard(culture), "/leerling/reis", groep78, progress.JourneyThemeKey, af);
+            var doneAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["Leerling.Reis.Title"], PupilReisSsrHtml.DoneCard(culture), "/leerling/reis", groep78, progress.JourneyThemeKey, doneAf);
         }
 
         var error = http.Request.Query["error"].ToString() switch
@@ -166,7 +169,7 @@ public static class PupilLeerlingJourneyEndpoints
         };
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilReisSsrHtml.BuildBody(progress, def, culture, registry, afHtml, ReisAnswerPath, error, groep78, progress.JourneyThemeKey);
-        return Html(http, culture["Leerling.Reis.Title"], body, "/leerling/reis", groep78, progress.JourneyThemeKey, af);
+        return Html(http, culture["Leerling.Reis.Title"], body, "/leerling/reis", groep78, progress.JourneyThemeKey, afHtml);
     }
 
     private static async Task<IResult> PostReisAnswerAsync(
@@ -176,9 +179,9 @@ public static class PupilLeerlingJourneyEndpoints
         IAntiforgery af,
         CancellationToken ct)
     {
-        if (!http.Request.HasFormContentType)
+        if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
         {
-            return Results.Redirect("/leerling/reis");
+            return Results.Redirect("/leerling/reis?error=save");
         }
 
         var form = await http.Request.ReadFormAsync(ct);
@@ -215,8 +218,8 @@ public static class PupilLeerlingJourneyEndpoints
         culture.InitializeFromRequest(http);
         if (string.Equals(http.Request.Query["part"], "1", StringComparison.Ordinal))
         {
-            var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-            return Html(http, culture["Leerling.Vo.PartBreak.DocumentTitle"], PupilEilandSsrHtml.PartBreak(culture, afHtml), "/leerling/eiland", false, null, af);
+            var partAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["Leerling.Vo.PartBreak.DocumentTitle"], PupilEilandSsrHtml.PartBreak(culture, partAf), "/leerling/eiland", false, null, partAf);
         }
 
         var progress = await LoadProgressAsync(api, ct);
@@ -238,8 +241,9 @@ public static class PupilLeerlingJourneyEndpoints
         var def = registry.Get(progress.QuestionSet);
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
         var error = http.Request.Query["error"].ToString() == "save" ? culture["Leerling.Reis.SaveFailed"] : null;
-        var body = PupilEilandSsrHtml.BuildBody(progress, def, culture, registry, PupilLeerlingSsrParts.AntiforgeryField(af, http), EilandSavePath, error, groep78, progress.JourneyThemeKey);
-        return Html(http, culture["Leerling.Island.Title"], body, "/leerling/eiland", groep78, progress.JourneyThemeKey, af);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilEilandSsrHtml.BuildBody(progress, def, culture, registry, afHtml, EilandSavePath, error, groep78, progress.JourneyThemeKey);
+        return Html(http, culture["Leerling.Island.Title"], body, "/leerling/eiland", groep78, progress.JourneyThemeKey, afHtml);
     }
 
     private static async Task<IResult> PostEilandAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)
@@ -303,8 +307,9 @@ public static class PupilLeerlingJourneyEndpoints
         var page = http.Request.Query["page"].ToString() == "2" ? 2 : 1;
         var scores = BuildVakScores(progress, page);
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
-        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, PupilLeerlingSsrParts.AntiforgeryField(af, http), VakkenSavePath, null, groep78);
-        return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, progress.JourneyThemeKey, af);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78);
+        return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, progress.JourneyThemeKey, afHtml);
     }
 
     private static async Task<IResult> PostVakkenAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
@@ -353,7 +358,8 @@ public static class PupilLeerlingJourneyEndpoints
         culture.InitializeFromRequest(http);
         if (!PupilPuzzleRoutes.IsBuilt(key))
         {
-            return Html(http, culture["Leerling.Puzzle.Title"], """<section class="ll-card"><a class="btn-primary" href="/leerling/reis">Terug</a></section>""", $"/leerling/puzzel/{key}", false, null, af);
+            var missingAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["Leerling.Puzzle.Title"], """<section class="ll-card"><a class="btn-primary" href="/leerling/reis">Terug</a></section>""", $"/leerling/puzzel/{key}", false, null, missingAf);
         }
 
         var progress = await LoadProgressAsync(api, ct);
@@ -374,8 +380,9 @@ public static class PupilLeerlingJourneyEndpoints
 
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
         var savePath = $"/leerling/puzzel/{Uri.EscapeDataString(key)}/save";
-        var body = PupilPuzzelSsrHtml.BuildBody(key, culture, PupilLeerlingSsrParts.AntiforgeryField(af, http), savePath, groep78, progress.JourneyThemeKey, registry, null);
-        return Html(http, culture["Leerling.Puzzle.Title"], body, $"/leerling/puzzel/{key}", groep78, progress.JourneyThemeKey, af);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilPuzzelSsrHtml.BuildBody(key, culture, afHtml, savePath, groep78, progress.JourneyThemeKey, registry, null);
+        return Html(http, culture["Leerling.Puzzle.Title"], body, $"/leerling/puzzel/{key}", groep78, progress.JourneyThemeKey, afHtml);
     }
 
     private static async Task<IResult> PostPuzzelAsync(HttpContext http, JobsyApiClient api, string key, CancellationToken ct)
@@ -414,7 +421,8 @@ public static class PupilLeerlingJourneyEndpoints
         if (!response.IsSuccessStatusCode)
         {
             var pending = """<section class="ll-card"><p class="ll-error" role="alert">"""+culture["Leerling.Reis.ResultPending"]+"""</p><a class="btn-primary" href="/leerling/dit-ben-jij">Opnieuw</a></section>""";
-            return Html(http, culture["LeerlingStory.Title"], pending, "/leerling/dit-ben-jij", false, null, af);
+            var pendingAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["LeerlingStory.Title"], pending, "/leerling/dit-ben-jij", false, null, pendingAf);
         }
 
         var result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson, ct);
@@ -429,7 +437,8 @@ public static class PupilLeerlingJourneyEndpoints
         var passportV2 = flag.PupilPassportV2Enabled && result.QuestionSet == PupilQuestionSet.Groep78;
         var pdfHref = PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
         var body = PupilDitBenJijSsrHtml.BuildBody(result, culture, groep78, progress?.JourneyThemeKey, registry, passportV2, pdfHref);
-        return Html(http, culture["LeerlingStory.Title"], body, "/leerling/dit-ben-jij", groep78, progress?.JourneyThemeKey, af);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        return Html(http, culture["LeerlingStory.Title"], body, "/leerling/dit-ben-jij", groep78, progress?.JourneyThemeKey, afHtml);
     }
 
     private static async Task<IResult> GetPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IFeatureFlags features, IAntiforgery af, CancellationToken ct)
@@ -441,7 +450,8 @@ public static class PupilLeerlingJourneyEndpoints
         if (!flag.PupilPassportV2Enabled)
         {
             var disabled = """<div class="ll-reis" data-testid="leerling-paspoort-disabled"><section class="ll-card"><a class="btn-primary" href="/leerling/dit-ben-jij">Terug</a></section></div>""";
-            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", false, null, af);
+            var disabledAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", false, null, disabledAf);
         }
 
         var lang = PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language;
@@ -449,12 +459,14 @@ public static class PupilLeerlingJourneyEndpoints
         var model = await api.GetPupilG78PassportAsync(string.IsNullOrWhiteSpace(naam) ? null : naam, lang, ct);
         if (model is null || !model.Enabled)
         {
-            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", false, null, af);
+            var emptyAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", false, null, emptyAf);
         }
 
         var pdfHref = PupilStoryPdfLink.Href(naam, lang);
         var body = PupilPaspoortSsrHtml.BuildPage(culture, model, naam, pdfHref);
-        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", false, null, af);
+        var pasAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", false, null, pasAf);
     }
 
     private static async Task<IResult> GetVoPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IAntiforgery af, CancellationToken ct)
@@ -474,8 +486,9 @@ public static class PupilLeerlingJourneyEndpoints
             dto.TravelModeKey ?? "",
             string.Join("\n", dto.LearningGoals),
             dto.OwnWords ?? "");
-        var body = PupilVoPaspoortSsrHtml.BuildBody(culture, PupilLeerlingSsrParts.AntiforgeryField(af, http), VoPaspoortSavePath, model, null);
-        return Html(http, culture["LeerlingPassport.Vo.Form.Title"], body, "/leerling/vo-paspoort", false, null, af);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilVoPaspoortSsrHtml.BuildBody(culture, afHtml, VoPaspoortSavePath, model, null);
+        return Html(http, culture["LeerlingPassport.Vo.Form.Title"], body, "/leerling/vo-paspoort", false, null, afHtml);
     }
 
     private static async Task<IResult> PostVoPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
@@ -613,9 +626,8 @@ public static class PupilLeerlingJourneyEndpoints
         return dict;
     }
 
-    private static IResult Html(HttpContext http, string title, string body, string route, bool useG78, string? themeKey, IAntiforgery af, bool showPause = true)
+    private static IResult Html(HttpContext http, string title, string body, string route, bool useG78, string? themeKey, string pauseAntiforgeryHtml, bool showPause = true)
     {
-        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
         {
             PageTitle = title,
@@ -625,7 +637,7 @@ public static class PupilLeerlingJourneyEndpoints
             UseGroep78Shell = useG78,
             JourneyThemeKey = themeKey,
             ShowPause = showPause,
-            PauseFormHtml = PupilLeerlingSsrFrame.PauseForm(afHtml, "Pauze"),
+            PauseFormHtml = showPause ? PupilLeerlingSsrFrame.PauseForm(pauseAntiforgeryHtml, "Pauze") : "",
         });
         return Results.Content(doc, "text/html; charset=utf-8");
     }
