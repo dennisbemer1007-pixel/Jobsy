@@ -196,6 +196,86 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
             $".sch-sidebar__link.is-active[href=\"{overviewHref}\"], .sch-bottom-nav__item.is-active[href=\"{overviewHref}\"]")
             .CountAsync();
         Assert.Equal(0, overviewActive);
+
+        var blazorScript = await page.Locator("script[src*='blazor.web']").CountAsync();
+        Assert.Equal(0, blazorScript);
+
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (!string.IsNullOrWhiteSpace(artifactDir))
+        {
+            Directory.CreateDirectory(artifactDir);
+            var suffix = width <= 400 ? "codes-390" : "codes-1440";
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"{suffix}.png"),
+                FullPage = true
+            });
+        }
+    }
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Teacher_testvenster_ssr_without_blazor(int width, int height)
+    {
+        var seed = _seed!;
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        var path = $"/leraar/klas/{seed.ClassId:D}/testvenster";
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(
+            $"{baseUrl}/__test/staff?user={seed.TeacherId:D}&school={seed.SchoolId:D}&role=Teacher&return={Uri.EscapeDataString(path)}",
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.Locator("h1").Filter(new() { HasText = "Testvenster" }).WaitForAsync(new() { Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator("script[src*='blazor.web']").CountAsync());
+
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (!string.IsNullOrWhiteSpace(artifactDir))
+        {
+            Directory.CreateDirectory(artifactDir);
+            var suffix = width <= 400 ? "testvenster-390" : "testvenster-1440";
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, suffix + ".png"),
+                FullPage = true
+            });
+        }
+    }
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task School_admin_dashboard_ssr_without_blazor(int width, int height)
+    {
+        var seed = _seed!;
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(
+            $"{baseUrl}/__test/staff?user={seed.SchoolAdminId:D}&school={seed.SchoolId:D}&role=SchoolAdmin&return={Uri.EscapeDataString("/school")}",
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.Locator("h1").First.WaitForAsync(new() { Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator("script[src*='blazor.web']").CountAsync());
+
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (!string.IsNullOrWhiteSpace(artifactDir))
+        {
+            Directory.CreateDirectory(artifactDir);
+            var suffix = width <= 400 ? "school-390" : "school-1440";
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, suffix + ".png"),
+                FullPage = true
+            });
+        }
     }
 
     private async Task EnableSchoolsAsync()
@@ -226,6 +306,7 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
         var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
         var schoolId = Guid.NewGuid();
         var teacherId = Guid.NewGuid();
+        var schoolAdminId = Guid.NewGuid();
         var classId = Guid.NewGuid();
         var domain = "s1test.nl";
         db.Schools.Add(new School
@@ -268,6 +349,17 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
             AuthenticatorEnabled = true,
             SessionVersion = 0
         });
+        db.Users.Add(new User
+        {
+            Id = schoolAdminId,
+            Email = $"admin-s1@{domain}",
+            FullName = "S1 Schooladmin",
+            Role = UserRole.SchoolAdmin,
+            SchoolId = schoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true,
+            SessionVersion = 0
+        });
         db.TeacherClassAssignments.Add(new TeacherClassAssignment
         {
             TeacherUserId = teacherId,
@@ -276,10 +368,10 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
         });
         await db.SaveChangesAsync();
         await codes.GenerateAsync(3, cls);
-        return new TeacherSeed(schoolId, classId, teacherId);
+        return new TeacherSeed(schoolId, classId, teacherId, schoolAdminId);
     }
 
-    private sealed record TeacherSeed(Guid SchoolId, Guid ClassId, Guid TeacherId);
+    private sealed record TeacherSeed(Guid SchoolId, Guid ClassId, Guid TeacherId, Guid SchoolAdminId);
 
     private sealed class ScholenS1WebFactory : WebWebApplicationFactory
     {
