@@ -1209,6 +1209,87 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task G78_vakken_ssr_styled_evidence(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
+        var seeds = await SeedGroep78AtAsync(
+            1,
+            bankCount,
+            chipsSaved: true,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var artifacts = "/opt/cursor/artifacts/screenshots";
+        Directory.CreateDirectory(artifacts);
+        var mockDir = Path.Combine(FindRepoRoot(), "docs", "g78-vakkentest-mockup");
+        var mockSrc = width <= 400 ? "02-mobiel.png" : "01-desktop.png";
+        File.Copy(Path.Combine(mockDir, mockSrc), Path.Combine(artifacts, $"vakken-mockup-{width}.png"), overwrite: true);
+
+        var consoleErrors = new List<string>();
+        var failedRequests = new List<string>();
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.RequestFailed += (_, req) => failedRequests.Add($"{req.Method} {req.Url} {req.Failure}");
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.Locator("[data-testid=ll-vt-scene-bar]").WaitForAsync();
+        await Assertions.Expect(page.Locator("[data-testid=leerling-g78-shell]")).ToBeVisibleAsync();
+        Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
+        Assert.Contains("leerling-werelden-kies.css", await page.ContentAsync(), StringComparison.Ordinal);
+
+        var next = page.Locator("[data-testid=ll-vt-next]");
+        await Assertions.Expect(next).ToBeDisabledAsync();
+        await FillVakkenPageLikeMockAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => { const b = document.querySelector('[data-testid=ll-vt-next]'); return b && !b.disabled; }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 30_000 });
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(artifacts, $"vakken-after-p1-{width}.png"),
+            FullPage = width <= 400,
+        });
+
+        await next.ClickAsync();
+        await page.WaitForURLAsync("**/leerling/vakken?page=2**", UrlCommitted);
+        await page.Locator("[data-testid=ll-vt-scene-bar]").WaitForAsync();
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(artifacts, $"vakken-after-p2-{width}.png"),
+            FullPage = width <= 400,
+        });
+        await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "← Terug" })).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Link, new() { Name = "← Terug" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/vakken**", UrlCommitted);
+        Assert.DoesNotContain("page=2", page.Url, StringComparison.Ordinal);
+
+        Assert.Empty(consoleErrors);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    [Theory]
     [InlineData(1280, 800, "desktop")]
     [InlineData(390, 844, "mobile")]
     public async Task G78_vakkentest_mockup_compare_screenshots(int width, int height, string label)

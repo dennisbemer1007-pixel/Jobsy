@@ -307,10 +307,11 @@ public static class PupilLeerlingJourneyEndpoints
 
         var page = http.Request.Query["page"].ToString() == "2" ? 2 : 1;
         var scores = BuildVakScores(progress, page);
-        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78;
+        var themeKey = groep78 ? PupilJourneyTheme.NormalizeOrDefault(progress.JourneyThemeKey) : null;
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78);
-        return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, progress.JourneyThemeKey, afHtml);
+        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78, themeKey);
+        return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, themeKey, afHtml);
     }
 
     private static async Task<IResult> PostVakkenAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
