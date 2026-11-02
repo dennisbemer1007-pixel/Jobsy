@@ -103,7 +103,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.Locator(".ll-question, .ll-card.ll-question").WaitForAsync();
         Assert.Contains("/leerling/reis", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
-        await Assertions.Expect(page.Locator(".ll-question__meta")).ToContainTextAsync("Vraag 2");
+        await Assertions.Expect(page.Locator(".g78-jmeta span").First).ToContainTextAsync("Vraag 2");
 
         for (var step = 0; step < 80 && !page.Url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
              && !page.Url.Contains("/leerling/droombaan", StringComparison.OrdinalIgnoreCase); step++)
@@ -733,16 +733,24 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private static async Task AnswerOneAsync(IPage page)
     {
-        var meta = page.Locator(".ll-question__meta");
-        await meta.WaitForAsync();
-        var before = await meta.InnerTextAsync();
-        await page.GetByRole(AriaRole.Radio, new() { Name = "Soms" }).ClickAsync();
+        var progress = page.Locator(".g78-jmeta span").First;
+        if (await progress.CountAsync() == 0)
+        {
+            progress = page.Locator(".ll-question__meta").First;
+        }
+
+        await progress.WaitForAsync();
+        var before = await progress.InnerTextAsync();
+        var soms = page.Locator("form.ll-answers-form button.ll-answer", new() { HasText = "Soms" });
+        await soms.WaitForAsync();
+        await soms.ClickAsync();
+        await page.WaitForURLAsync("**/leerling/**", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.WaitForFunctionAsync(
             """
             prev => {
-                const meta = document.querySelector('.ll-question__meta');
+                const el = document.querySelector('.g78-jmeta span') || document.querySelector('.ll-question__meta');
                 const path = location.pathname;
-                return (meta && meta.innerText !== prev) || !path.includes('/leerling/reis');
+                return (el && el.innerText !== prev) || !path.includes('/leerling/reis');
             }
             """,
             before);

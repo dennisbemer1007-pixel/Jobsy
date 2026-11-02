@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using Jobsy.Core.Enums;
@@ -194,7 +195,9 @@ public static class PupilLeerlingSsrParts
         {
             var label = culture[key];
             var isSel = selected == value;
-            sb.Append("<button type=\"button\" class=\"ll-answer");
+            sb.Append("<button type=\"submit\" name=\"Value\" value=\"");
+            sb.Append(value.ToString(CultureInfo.InvariantCulture));
+            sb.Append("\" class=\"ll-answer");
             if (def.Set == PupilQuestionSet.Vo)
             {
                 sb.Append(" ll-answer--vo");
@@ -205,8 +208,6 @@ public static class PupilLeerlingSsrParts
                 sb.Append(" is-selected");
             }
 
-            sb.Append("\" data-ll-answer-value=\"");
-            sb.Append(value);
             sb.Append("\" role=\"radio\" aria-checked=\"");
             sb.Append(isSel ? "true" : "false");
             sb.Append("\">");
@@ -230,9 +231,7 @@ public static class PupilLeerlingSsrParts
             sb.Append("</span></button>");
         }
 
-        sb.Append("</div><input type=\"hidden\" name=\"Value\" value=\"");
-        sb.Append(selected?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "");
-        sb.Append("\" /></form>");
+        sb.Append("</div></form>");
         if (!string.IsNullOrEmpty(error))
         {
             sb.Append("<p class=\"ll-error\" role=\"alert\">");

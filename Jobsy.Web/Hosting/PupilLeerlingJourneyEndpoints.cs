@@ -169,7 +169,12 @@ public static class PupilLeerlingJourneyEndpoints
         return Html(http, culture["Leerling.Reis.Title"], body, "/leerling/reis", groep78, progress.JourneyThemeKey, af);
     }
 
-    private static async Task<IResult> PostReisAnswerAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
+    private static async Task<IResult> PostReisAnswerAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        IAntiforgery af,
+        CancellationToken ct)
     {
         if (!http.Request.HasFormContentType)
         {
