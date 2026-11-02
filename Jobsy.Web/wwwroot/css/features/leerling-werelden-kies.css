@@ -2691,7 +2691,8 @@
   margin: 0;
 }
 
-.ll-g78-shell .jpick.sel {
+.ll-g78-shell .jpick.sel,
+.ll-g78-shell .jpick:has(input[type="radio"]:checked) {
   border-color: var(--ok);
   box-shadow: 0 0 0 4px rgba(47, 125, 91, 0.22), 0 6px 18px rgba(47, 138, 150, 0.15);
   background: #f6fbf8;
@@ -2707,7 +2708,7 @@
   color: var(--ok);
 }
 
-.ll-g78-shell .jpick:not(.sel) .jmark {
+.ll-g78-shell .jpick:not(.sel):not(:has(input[type="radio"]:checked)) .jmark {
   display: none;
 }
 
@@ -2789,4 +2790,69 @@
     grid-column: 1 / -1;
     grid-row: 3;
   }
+}
+
+.ll-g78-shell .ll-dream-check .field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.ll-g78-shell .ll-dream-check .field span {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 17px;
+}
+
+.ll-g78-shell .ll-dream-check .inp {
+  width: 100%;
+  font: inherit;
+  font-size: 19px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #cdbf9f;
+  background: #fff;
+  color: var(--ink);
+}
+
+.ll-g78-shell .ll-dream-check__save-row {
+  margin-top: 4px;
+}
+
+.ll-g78-shell .ll-dream-check__save-row .btn-main {
+  margin-left: auto;
+}
+
+.ll-g78-shell .ll-dream-check__catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+
+.ll-g78-shell .ll-dream-check__result {
+  margin-top: 20px;
+}
+
+.ll-g78-shell .ll-dream-check__result .ll-result__sub {
+  font-family: Lexend, sans-serif;
+  font-size: 1.15rem;
+  margin: 16px 0 8px;
+}
+
+.ll-g78-shell .ll-dream-check__result .ll-dream__list,
+.ll-g78-shell .ll-dream-check__result .ll-dream__route {
+  margin: 0 0 12px;
+  padding-inline-start: 1.2rem;
+  line-height: 1.5;
+}
+
+.ll-g78-shell .ll-dream-check__nav.res-foot {
+  margin-top: 22px;
+}
+
+.ll-g78-shell .ll-g78-job-suggestion .btn-ghost {
+  margin-top: 10px;
+  width: 100%;
+  justify-content: center;
 }

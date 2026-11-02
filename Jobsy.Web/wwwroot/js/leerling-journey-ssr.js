@@ -184,7 +184,6 @@
     root.querySelectorAll("form[data-ll-job-pick-form]").forEach(function (form) {
       if (form.getAttribute("data-ll-bound") === "1") return;
       form.setAttribute("data-ll-bound", "1");
-      var hidden = form.querySelector("[data-ll-job-pick-value]");
       var noneNote = form.querySelector("[data-ll-jpick-none-note]");
       function syncNoneNote() {
         if (!noneNote) return;
@@ -192,10 +191,20 @@
         noneNote.removeAttribute("hidden");
         noneNote.classList.add("on");
       }
+      form.querySelectorAll('input[name="DreamJob"][type="radio"]').forEach(function (radio) {
+        radio.addEventListener("change", function () {
+          form.querySelectorAll(".jpick").forEach(function (card) {
+            var on = card.contains(radio) && radio.checked;
+            card.classList.toggle("sel", on);
+          });
+          syncNoneNote();
+        });
+      });
       form.querySelectorAll("[data-ll-job-pick]").forEach(function (btn) {
+        if (btn.querySelector('input[name="DreamJob"][type="radio"]')) {
+          return;
+        }
         btn.addEventListener("click", function () {
-          var val = btn.getAttribute("data-ll-job-pick") || "";
-          if (hidden) hidden.value = val;
           form.querySelectorAll(".jpick").forEach(function (b) {
             var sel = b === btn;
             b.classList.toggle("sel", sel);
@@ -204,10 +213,6 @@
           syncNoneNote();
         });
       });
-      var first = form.querySelector(".jpick.sel[data-ll-job-pick]");
-      if (first && hidden && !hidden.value) {
-        hidden.value = first.getAttribute("data-ll-job-pick") || "";
-      }
       syncNoneNote();
     });
   }

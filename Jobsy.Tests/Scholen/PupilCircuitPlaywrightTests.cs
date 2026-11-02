@@ -734,6 +734,75 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task G78_droombaan_before_and_after_bevestigen_at_1440_and_390()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.ZeeExpeditie);
+        var mockRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "docs", "mockups", "leerling", "werelden", "renders"));
+        var artifactDir = "/opt/cursor/artifacts/g78-droombaan-fix";
+        Directory.CreateDirectory(artifactDir);
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        var consoleErrors = new List<string>();
+        var failedRequests = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.RequestFailed += (_, req) => failedRequests.Add($"{req.Failure} {req.Url}");
+
+        async Task CaptureViewportAsync(int width, int height, string tag)
+        {
+            var mockFolder = width >= 800 ? "desktop" : "mobile";
+            File.Copy(
+                Path.Combine(mockRoot, mockFolder, "12-zee-beroep-kiezen.png"),
+                Path.Combine(artifactDir, $"mockup-before-bevestigen-{tag}.png"),
+                overwrite: true);
+            await page.SetViewportSizeAsync(width, height);
+            await page.GotoAsync($"{baseUrl}/leerling/droombaan?pick=1", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=ll-g78-job-picks]").WaitForAsync();
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"built-before-bevestigen-{tag}.png"),
+                FullPage = true
+            });
+            await page.Locator("[data-testid=ll-g78-job-picks] .jpick:not(.jpick-none)").First.ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Bevestigen" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/droombaan?dream=*", new() { Timeout = 60_000 });
+            await page.Locator("[data-testid=leerling-droombaan-check]").WaitForAsync(new() { Timeout = 30_000 });
+            Assert.DoesNotContain("blazor.web.js", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(0, await page.Locator(".ll-dream-ssr__save.btn-primary").CountAsync());
+            Assert.True(await page.Locator(".ll-dream-check .btn.btn-main").CountAsync() >= 1);
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"built-after-bevestigen-{tag}.png"),
+                FullPage = true
+            });
+        }
+
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await CaptureViewportAsync(1440, 900, "1440");
+        await CaptureViewportAsync(390, 844, "390");
+
+        var hardConsole = consoleErrors
+            .Where(e => !e.Contains("Cache-Control", StringComparison.OrdinalIgnoreCase)
+                        && !e.Contains("Pragma", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Empty(hardConsole);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Wereld_choice_matches_mockup_layout_at_1440_and_390()
     {
         _ = TestContext.Current.CancellationToken;
