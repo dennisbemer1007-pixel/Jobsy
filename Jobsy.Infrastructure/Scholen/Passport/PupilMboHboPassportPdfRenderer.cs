@@ -3,6 +3,7 @@ using Jobsy.Core.Scholen.MboHbo;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using LicenseType = QuestPDF.Infrastructure.LicenseType;
 
 namespace Jobsy.Infrastructure.Scholen.Passport;
 
@@ -20,6 +21,7 @@ internal static class PupilMboHboPassportPdfRenderer
         string displayCode,
         string? displayNameOnPdf)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
         PupilPassportFonts.EnsureRegistered();
         var state = PupilMboHboProgressState.Parse(code.Progress?.MboHboProgressJson);
         var level = schoolClass.Level;
