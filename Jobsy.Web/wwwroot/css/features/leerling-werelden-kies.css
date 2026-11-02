@@ -137,7 +137,7 @@
   margin: 0 auto;
   padding: 0 32px;
   width: 100%;
-  flex: 1;
+  flex: none;
 }
 
 .ll-g78-shell .wrap.kz-overlap {
@@ -811,6 +811,14 @@
   z-index: 4;
 }
 
+.ll-g78-shell .wrap.ll-g78-overlap--below-journey {
+  margin-top: 22px;
+}
+
+.ll-g78-shell .ll-g78-scene__journey {
+  margin-bottom: 4px;
+}
+
 .ll-g78-shell .qmeta {
   display: flex;
   align-items: center;
@@ -1004,7 +1012,12 @@
   margin: 0;
 }
 
-.ll-g78-shell .kb-head {
+.ll-g78-shell .band.kb {
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.ll-g78-shell .band.kb .wrap.kb-hero {
   padding-top: 44px;
   position: relative;
   z-index: 2;
@@ -1146,7 +1159,7 @@
     font-size: 34px !important;
   }
 
-  .ll-g78-shell .kb-head {
+  .ll-g78-shell .band.kb .wrap.kb-hero {
     padding-top: 24px;
   }
 
@@ -1160,6 +1173,22 @@
   grid-template-columns: minmax(0, 1fr) 250px;
   gap: 28px;
   align-items: start;
+  max-width: 100%;
+}
+
+.ll-g78-shell .ll-reis--g78 .q-layout {
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ll-g78-shell .ll-reis--g78 .q-layout > .card {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ll-g78-shell .ll-reis--g78 .ll-g78-coach {
+  margin-top: 10px;
 }
 
 .ll-g78-shell .q-layout > .ll-g78-coach {

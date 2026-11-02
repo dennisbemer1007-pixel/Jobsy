@@ -36,7 +36,7 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             (2, "Leerling.Answer.NotReally"),
             (3, "Leerling.Answer.Sometimes"),
             (4, "Leerling.Answer.Quite"),
-            (5, "Leerling.Answer.Yes"),
+            (5, "Leerling.G78.Answer.Yes"),
         };
         var voLabels = new (int Value, string Key)[]
         {

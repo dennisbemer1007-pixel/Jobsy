@@ -515,9 +515,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var note01 = await CaptureAsync("01-start", "01-zee-route.png", async () =>
         {
             await page.Locator("h1.rk-h").WaitForAsync();
-        });
+        }, fullPage: true);
         Assert.Contains("De route", await page.Locator("h1.rk-h").InnerTextAsync());
-        Assert.True(await page.Locator(".rk-stops li").CountAsync() >= 8);
+        Assert.Contains("Zo vaar je", await page.Locator(".band.kb .rk-sub").InnerTextAsync());
+        Assert.True(await page.Locator(".band.kb h1.rk-h").CountAsync() > 0);
+        Assert.True(await page.Locator(".rk-overlay text").CountAsync() >= 10);
+        Assert.True(await page.Locator(".rk-stops li").CountAsync() >= 10);
+        Assert.True(await page.Locator(".rk-go").IsVisibleAsync());
+        Assert.True(await page.Locator("a.btn-quiet").Filter(new() { HasText = "Andere wereld" }).IsVisibleAsync());
         Row("01-start", "mockup elements", "pass", note01);
 
         var q1Seeds = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
@@ -534,6 +539,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.Equal(5, await page.Locator("[data-testid=ll-g78-answers] .ans").CountAsync());
         Assert.True(await page.Locator("[data-testid=ll-reis-prev]").CountAsync() > 0);
         Assert.Contains("van 60", await page.Locator(".qmeta").InnerTextAsync());
+        Assert.Contains("Ja!", await page.Locator("[data-testid=ll-g78-answers] .ans").Last.InnerTextAsync());
+        Assert.Contains("0%", await page.Locator("[data-testid=ll-g78-answers] .ans .lvl i").First.GetAttributeAsync("style") ?? "");
+        Assert.Contains("100%", await page.Locator("[data-testid=ll-g78-answers] .ans .lvl i").Last.GetAttributeAsync("style") ?? "");
+        var stripLabels = await page.Locator("[data-testid=leerling-g78-journey] .g78-jn b").AllInnerTextsAsync();
+        Assert.Contains("Koraalrif", stripLabels);
+        Assert.DoesNotContain("Het koraalrif", stripLabels);
         Row("02-reis", "mockup elements", "pass", note02);
 
         var reisSeeds = await SeedGroep78AtAsync(1, answered: 2, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);

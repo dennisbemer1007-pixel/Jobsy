@@ -108,7 +108,7 @@ public static class PupilGroep78SsrParts
             sb.Append("\" role=\"radio\" aria-checked=\"");
             sb.Append(isSel ? "true" : "false");
             sb.Append("\"><span class=\"lvl\"><i style=\"height:");
-            sb.Append(value.ToString(CultureInfo.InvariantCulture));
+            sb.Append(AnswerFillPercent(value).ToString(CultureInfo.InvariantCulture));
             sb.Append("%\"></i></span>");
             sb.Append(PupilLeerlingSsrParts.E(label));
             sb.Append("</button>");
@@ -145,6 +145,16 @@ public static class PupilGroep78SsrParts
         int qIndex,
         int qTotal)
         => $"<b>{PupilLeerlingSsrParts.E(worldTitle)}</b> · {PupilLeerlingSsrParts.E(string.Format(culture["Leerling.G78.Journey.PartMeta"], partIndex, partTotal))} · {PupilLeerlingSsrParts.E(string.Format(culture["Leerling.G78.Journey.SceneQuestionMeta"], qIndex, qTotal))}";
+
+    public static int AnswerFillPercent(int answerValue) => answerValue switch
+    {
+        1 => 0,
+        2 => 25,
+        3 => 50,
+        4 => 75,
+        5 => 100,
+        _ => 0,
+    };
 
     public static int WorldPartIndex(PupilQuestionSetDef def, string worldKey)
     {

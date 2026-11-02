@@ -33,6 +33,30 @@ public static class PupilJourneyTheme
 
     public static string Groep78ShellClass(string? key) => "t-" + NormalizeOrDefault(key);
 
+    /// <summary>Short node label on the journey strip (mockup <c>jrow</c>, no “Het/De”).</summary>
+    public static string StripTitleKey(string? themeKey, PupilGroep78JourneyNode node)
+    {
+        _ = NormalizeOrDefault(themeKey);
+        if (node.Kind == PupilGroep78JourneyNodeKind.Puzzle)
+        {
+            return node.Key.ToLowerInvariant() switch
+            {
+                "schelpenrij" => "Leerling.Puzzle.Schelpenrij.Short",
+                "schatkaart" => "Leerling.Puzzle.Schatkaart.Short",
+                "vuurtorenlampen" => "Leerling.G78.Strip.lampen",
+                _ => "Leerling.Puzzle.Title",
+            };
+        }
+
+        if (node.Kind == PupilGroep78JourneyNodeKind.Result)
+        {
+            return "LeerlingStory.Title";
+        }
+
+        var w = node.Key.ToLowerInvariant();
+        return $"Leerling.G78.Strip.{w}";
+    }
+
     public static string WorldTitleKey(string? themeKey, string worldKey)
     {
         themeKey = NormalizeOrDefault(themeKey);

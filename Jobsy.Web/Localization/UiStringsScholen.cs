@@ -450,6 +450,15 @@ public static class UiStringsScholen
         nl["Leerling.G78.Route.PuzzleN"] = "Puzzel {0}";
         nl["Leerling.G78.Route.IslandSub"] = "Wat vind jij leuk?";
         nl["Leerling.G78.Route.FinalSub"] = "Jouw eiland";
+        nl["Leerling.G78.Answer.Yes"] = "Ja!";
+        nl["Leerling.G78.Strip.koraalrif"] = "Koraalrif";
+        nl["Leerling.G78.Strip.schatgrot"] = "Schatgrot";
+        nl["Leerling.G78.Strip.vuurtoren"] = "Vuurtoren";
+        nl["Leerling.G78.Strip.lagune"] = "Lagune";
+        nl["Leerling.G78.Strip.pauze-eiland"] = "Pauze-eiland";
+        nl["Leerling.G78.Strip.dit-ben-jij"] = "Dit ben jij";
+        nl["Leerling.G78.Strip.lampen"] = "Lampen";
+        nl["Leerling.G78.Route.Puzzle.Vuurtorenlampen"] = "Vuurtorenlampen";
         nl["Leerling.Wereld.HeaderGrade"] = "Groep 7 en 8";
         nl["Leerling.Wereld.Kicker"] = "Voor je begint";
         nl["Leerling.Wereld.Title"] = "Kies jouw wereld";

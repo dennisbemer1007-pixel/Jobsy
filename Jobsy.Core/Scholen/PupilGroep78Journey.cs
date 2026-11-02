@@ -46,7 +46,6 @@ public static class PupilGroep78Journey
             list.Add(new("pauze-eiland", PupilGroep78JourneyNodeKind.Island));
         }
 
-        list.Add(new("lagune", PupilGroep78JourneyNodeKind.Vakken));
         list.Add(new("dit-ben-jij", PupilGroep78JourneyNodeKind.Result));
         return list;
     }

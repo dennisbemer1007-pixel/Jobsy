@@ -51,7 +51,7 @@ public static class PupilReisSsrHtml
                 culture, registry, themeKey, worldKey, worldKey, sceneMeta, true, "center 30%", segCount, segFilled, sceneMetaIsHtml: true));
         }
 
-        sb.Append(groep78 ? """<div class="ll-reis ll-reis--g78 wrap ll-g78-overlap">""" : """<div class="ll-reis">""");
+        sb.Append(groep78 ? """<div class="ll-reis ll-reis--g78 wrap ll-g78-overlap ll-g78-overlap--below-journey">""" : """<div class="ll-reis">""");
         if (!groep78)
         {
             sb.Append(Rail(def, state, culture, groep78, themeKey, worldKey));

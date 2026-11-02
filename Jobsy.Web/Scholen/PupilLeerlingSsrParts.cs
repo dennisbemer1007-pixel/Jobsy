@@ -101,7 +101,7 @@ public static class PupilLeerlingSsrParts
             var cur = i == currentIndex;
             var done = i < currentIndex;
             var puzzle = node.Kind == PupilGroep78JourneyNodeKind.Puzzle;
-            var title = culture[PupilGroep78Journey.TitleKey(themeKey, node)];
+            var title = culture[PupilJourneyTheme.StripTitleKey(themeKey, node)];
             var dotStyle = puzzle
                 ? ""
                 : $"background-image:url('/leerling/werelden/img/{PupilGroep78Journey.DotImageStem(themeKey, node)}.jpg')";
