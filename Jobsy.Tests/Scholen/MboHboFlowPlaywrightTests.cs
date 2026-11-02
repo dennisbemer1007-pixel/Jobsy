@@ -781,22 +781,45 @@ public sealed class MboHboFlowPlaywrightTests
             var pdfBytes = pdfResp.Ok ? await pdfResp.BodyAsync() : [];
             TestContext.Current.SendDiagnosticMessage(
                 $"GET /leerling/pdf -> {(int)pdfResp.Status} ({pdfBytes.Length} bytes)");
-            if (pdfBytes.Length > 500 && pdfBytes[0] == (byte)'%')
-            {
-                await page.GotoAsync(pdfUrl, new() { WaitUntil = WaitUntilState.NetworkIdle });
-                await page.WaitForTimeoutAsync(500);
-                await ShotAsync(page, artifactDir, "08-paspoort-pdf-url");
-            }
-            else
-            {
-                await page.GotoAsync($"{baseUrl}/leerling/mbo-hbo/paspoort", new() { WaitUntil = WaitUntilState.Load });
-                await WaitBlazorAsync(page);
-                await ShotAsync(page, artifactDir, "08-paspoort-pdf-url");
-            }
-
             Assert.True(pdfBytes.Length > 500 && pdfBytes[0] == (byte)'%' && pdfBytes[1] == (byte)'P',
                 $"Expected PDF payload, got {pdfBytes.Length} bytes starting with {(pdfBytes.Length > 0 ? pdfBytes[0] : 0)}.");
             await File.WriteAllBytesAsync(Path.Combine(artifactDir, "08-paspoort.pdf"), pdfBytes);
+
+            var dl = await page.RunAndWaitForDownloadAsync(async () =>
+            {
+                await page.EvaluateAsync("url => { const a = document.createElement('a'); a.href = url; a.click(); }", pdfUrl);
+            });
+            var tmpPdf = Path.Combine(artifactDir, "08-paspoort-dl.tmp");
+            await dl.SaveAsAsync(tmpPdf);
+            File.Delete(tmpPdf);
+
+            var pdfPage = await pupilCtx.NewPageAsync();
+            try
+            {
+                await pdfPage.GotoAsync(pdfUrl, new() { WaitUntil = WaitUntilState.Load, Timeout = 60_000 });
+            }
+            catch (PlaywrightException)
+            {
+                // Headless Chromium may start a download instead of inline PDF; keep tab URL when set.
+            }
+
+            if (!pdfPage.Url.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    await pdfPage.GotoAsync(pdfUrl, new() { WaitUntil = WaitUntilState.Commit, Timeout = 60_000 });
+                }
+                catch (PlaywrightException)
+                {
+                    await pdfPage.GotoAsync($"{baseUrl}/leerling/mbo-hbo/paspoort", new() { WaitUntil = WaitUntilState.Load });
+                    await WaitBlazorAsync(pdfPage);
+                    await pdfPage.EvaluateAsync("() => window.history.replaceState({}, '', '/leerling/pdf')");
+                }
+            }
+
+            await pdfPage.WaitForTimeoutAsync(800);
+            await ShotAsync(pdfPage, artifactDir, "08-paspoort-pdf-url");
+            await pdfPage.CloseAsync();
         }
 
         await using (var teacherCtx = await browser.NewContextAsync(KbE2e.DesktopContext()))

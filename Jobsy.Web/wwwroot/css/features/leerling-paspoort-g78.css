@@ -80,12 +80,6 @@
     color: var(--lp-brass2);
 }
 
-.lp-g78__strip {
-    height: 88px;
-    background: url("/images/leerling-paspoort-g78/g78-strip.jpg") center / cover no-repeat;
-    border-radius: 0;
-}
-
 .lp-g78__body {
     background: var(--lp-cream);
     border: 1px solid var(--lp-line);
@@ -277,7 +271,11 @@
 
 @media (min-width: 720px) {
     .lp-g78__grid3 {
-        grid-template-columns: 1fr 1fr 2fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+    }
+
+    .lp-g78__grid3 > .lp-g78__dis {
+        min-width: 0;
     }
 }
 

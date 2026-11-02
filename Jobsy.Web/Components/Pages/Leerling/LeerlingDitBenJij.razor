@@ -93,26 +93,33 @@ else
             }
 
             <h2 class="ll-result__sub">@Culture["LeerlingStory.JobsTitle"]</h2>
-            @if (_result.JobSuggestions is { Count: > 0 })
+            @if (_result.QuestionSet == PupilQuestionSet.Groep78)
             {
-                <p class="ll-result__jobs-lead">@Culture["LeerlingPassport.G78.Jobs.FewSub"]</p>
-                <div class="ll-g78-job-suggestions" data-testid="leerling-g78-job-suggestions">
-                    @foreach (var job in _result.JobSuggestions)
-                    {
-                        <article class="ll-g78-job-suggestion">
-                            @if (!string.IsNullOrWhiteSpace(job.DomainLabel))
-                            {
-                                <div class="ll-g78-job-suggestion__k">@job.DomainLabel</div>
-                            }
-                            <h3 class="ll-g78-job-suggestion__title">@job.Title</h3>
-                            @if (job.MatchPercent > 0)
-                            {
-                                <p class="ll-g78-job-suggestion__match">@Culture.Format("LeerlingPassport.G78.Jobs.MatchSuggest", job.MatchPercent)</p>
-                            }
-                            <p class="ll-g78-job-suggestion__blurb">@job.Blurb</p>
-                        </article>
-                    }
-                </div>
+                @if (_result.JobSuggestions is { Count: > 0 })
+                {
+                    <p class="ll-result__jobs-lead">@Culture["LeerlingPassport.G78.Jobs.FewSub"]</p>
+                    <div class="ll-g78-job-suggestions" data-testid="leerling-g78-job-suggestions">
+                        @foreach (var job in _result.JobSuggestions)
+                        {
+                            <article class="ll-g78-job-suggestion">
+                                @if (!string.IsNullOrWhiteSpace(job.DomainLabel))
+                                {
+                                    <div class="ll-g78-job-suggestion__k">@job.DomainLabel</div>
+                                }
+                                <h3 class="ll-g78-job-suggestion__title">@job.Title</h3>
+                                @if (job.MatchPercent >= 70)
+                                {
+                                    <p class="ll-g78-job-suggestion__match">@Culture.Format("LeerlingPassport.G78.Jobs.MatchSuggest", job.MatchPercent)</p>
+                                }
+                                <p class="ll-g78-job-suggestion__blurb">@job.Blurb</p>
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="ll-result__jobs-lead muted">@Culture["LeerlingPassport.G78.Jobs.NoneYet"]</p>
+                }
             }
             else
             {

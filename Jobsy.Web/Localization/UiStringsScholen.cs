@@ -278,6 +278,7 @@ public static class UiStringsScholen
         nl["Leraar.Class.NotFound"] = "Klas niet gevonden.";
         nl["Leraar.Code.NotFound"] = "Code niet gevonden.";
         nl["Leraar.Kpi.Codes"] = "Codes";
+        nl["Leraar.Kpi.Pupils"] = "Leerlingen";
         nl["Leraar.Kpi.Completed"] = "Afgerond";
         nl["Leraar.Kpi.InProgress"] = "Bezig";
         nl["Leraar.Kpi.NotStarted"] = "Nog niet gestart";
@@ -286,6 +287,11 @@ public static class UiStringsScholen
         nl["Leraar.Overview.ProgressLegend.Completed"] = "Afgerond";
         nl["Leraar.Overview.ProgressLegend.InProgress"] = "Bezig";
         nl["Leraar.Overview.ProgressLegend.NotStarted"] = "Nog niet gestart";
+        nl["Leraar.Overview.Chart.Status"] = "Voortgang van de klas";
+        nl["Leraar.Overview.Chart.Interests"] = "Interesses in de klas";
+        nl["Leraar.Overview.Chart.Tests"] = "Voortgang per test";
+        nl["Leraar.Overview.Chart.Empty"] = "Nog geen gegevens";
+        nl["Leraar.Overview.Insights"] = "Groepsbeeld";
         nl["Leraar.Pending.Title"] = "Nog niet klaar";
         nl["Leraar.Pending.Subtitle"] = "{0} codes · zoek de naam op je eigen lijst";
         nl["Leraar.Pending.Partial"] = "Eerste {0} van {1} · zoek de naam op je eigen lijst";

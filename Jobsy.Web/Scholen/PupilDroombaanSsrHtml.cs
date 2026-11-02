@@ -26,9 +26,10 @@ public static class PupilDroombaanSsrHtml
         string? journeyThemeKey = null)
     {
         var sb = new StringBuilder();
-        if (useGroep78Shell && PupilJourneyTheme.IsValid(journeyThemeKey))
+        if (useGroep78Shell)
         {
-            var band = PupilJourneyTheme.WorldBandImagePath(journeyThemeKey, "koraalrif");
+            var theme = PupilJourneyTheme.NormalizeOrDefault(journeyThemeKey);
+            var band = PupilJourneyTheme.WorldBandImagePath(theme, "koraalrif");
             sb.Append("""<section class="ll-g78-scene" data-testid="leerling-g78-scene">""");
             sb.Append("""<section class="band ll-g78-world-band" style="background-image:url('""");
             sb.Append(band);

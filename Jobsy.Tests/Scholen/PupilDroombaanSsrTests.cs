@@ -19,6 +19,8 @@ public sealed class PupilDroombaanSsrTests
         Assert.Contains("ll-dream-ssr__form", html, StringComparison.Ordinal);
         Assert.Contains("useGroep78Shell", html, StringComparison.Ordinal);
         Assert.Contains("ll-g78-scene", html, StringComparison.Ordinal);
+        Assert.Contains("result.QuestionSet == PupilQuestionSet.Groep78", endpoints, StringComparison.Ordinal);
+        Assert.Contains("NormalizeOrDefault", endpoints, StringComparison.Ordinal);
         Assert.Contains("PupilStoryPdfLink", html, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingSpeak", html, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingCoachCue", html, StringComparison.Ordinal);
@@ -39,5 +41,7 @@ public sealed class PupilDroombaanSsrTests
         Assert.DoesNotContain("ll-result__actions", paspoort, StringComparison.Ordinal);
         Assert.Contains(".lp-g78-paspoort-actions", css, StringComparison.Ordinal);
         Assert.Contains("position: static", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("lp-g78__strip", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("g78-strip.jpg", css, StringComparison.Ordinal);
     }
 }

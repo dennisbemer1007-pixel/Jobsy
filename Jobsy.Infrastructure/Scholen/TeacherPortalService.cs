@@ -200,20 +200,31 @@ public sealed class TeacherPortalService : ITeacherPortalService
         int? avgMinutes = null;
         if (completed >= 1)
         {
-            var durations = codes
-                .Where(c => c.Status == PupilCodeStatus.Completed
-                            || PupilMboHboTeacherProgress.IsFullyComplete(c, schoolClass))
-                .Select(c => schoolClass.QuestionSet == PupilQuestionSet.MboHbo
-                    ? PupilMboHboProgressReset.ActiveMinutes(c.Progress)
-                    : c.Progress?.StartedAtUtc is DateTime started && c.Progress.CompletedAtUtc is DateTime done
+            if (schoolClass.QuestionSet == PupilQuestionSet.MboHbo)
+            {
+                var mboDurations = codes
+                    .Where(c => c.Status == PupilCodeStatus.Completed
+                                || PupilMboHboTeacherProgress.IsFullyComplete(c, schoolClass))
+                    .Select(c => PupilMboHboProgressReset.ActiveMinutes(c.Progress))
+                    .Where(m => m is > 0 and <= PupilMboHboProgressReset.MaxActiveMinutesForAverage)
+                    .Select(m => m!.Value)
+                    .ToList();
+                avgMinutes = PupilMboHboProgressReset.MedianMinutes(mboDurations);
+            }
+            else
+            {
+                var durations = codes
+                    .Where(c => c.Status == PupilCodeStatus.Completed)
+                    .Select(c => c.Progress?.StartedAtUtc is DateTime started && c.Progress.CompletedAtUtc is DateTime done
                         ? (int?)Math.Round((done - started).TotalMinutes)
                         : null)
-                .Where(m => m is > 0 and < 24 * 60)
-                .Select(m => m!.Value)
-                .ToList();
-            if (durations.Count >= 1)
-            {
-                avgMinutes = (int)Math.Round(durations.Average());
+                    .Where(m => m is > 0 and < 24 * 60)
+                    .Select(m => m!.Value)
+                    .ToList();
+                if (durations.Count >= 1)
+                {
+                    avgMinutes = (int)Math.Round(durations.Average());
+                }
             }
         }
 
@@ -407,6 +418,24 @@ public sealed class TeacherPortalService : ITeacherPortalService
             ? mboComplete
             : code.Result is not null;
 
+        IReadOnlyList<TeacherMboHboBlockOutcomeDto>? mboOutcomes = null;
+        if (questionSet == PupilQuestionSet.MboHbo && mboComplete)
+        {
+            var state = PupilMboHboProgressState.Parse(code.Progress?.MboHboProgressJson);
+            var level = code.SchoolClass!.Level;
+            mboOutcomes = PupilMboHboCatalog.AllBlocks.Select(block =>
+            {
+                var (title, _, _) = PupilMboHboCopy.BlockMeta(block);
+                var outcome = PupilMboHboScoring.BuildOutcome(block, state, level);
+                IReadOnlyList<TeacherMboHboScoreBarDto> bars = block == PupilMboHboBlock.Beroepen
+                    ? []
+                    : outcome.Bars.Take(5)
+                        .Select(b => new TeacherMboHboScoreBarDto(b.Label, b.Percent))
+                        .ToList();
+                return new TeacherMboHboBlockOutcomeDto(title, outcome.Summary, outcome.Highlights, bars);
+            }).ToList();
+        }
+
         return new TeacherCodeDetailDto(
             CodeId: code.Id,
             ClassId: classId,
@@ -426,7 +455,8 @@ public sealed class TeacherPortalService : ITeacherPortalService
             DreamJob: dream,
             PdfAvailable: pdfAvailable,
             ResultPending: resultPending,
-            QuestionSet: questionSet);
+            QuestionSet: questionSet,
+            MboHboOutcomes: mboOutcomes);
     }
 
     public async Task<(byte[]? Bytes, string? FileName, string? Error)> BuildPupilReportPdfAsync(

@@ -57,6 +57,9 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
         cut.WaitForAssertion(() =>
         {
             Assert.Contains("data-testid=\"leerling-paspoort-g78\"", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("data-testid=\"leerling-paspoort-dislikes\"", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains("Liever niet", cut.Markup, StringComparison.Ordinal);
+            Assert.DoesNotContain("lp-g78__strip", cut.Markup, StringComparison.Ordinal);
             Assert.DoesNotContain("_displayName", cut.Markup, StringComparison.Ordinal);
             Assert.Contains("value=\"Noor\"", cut.Markup, StringComparison.Ordinal);
         }, TimeSpan.FromSeconds(5));

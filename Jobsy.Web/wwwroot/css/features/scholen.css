@@ -395,6 +395,74 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: var(--space-3);
     margin-bottom: var(--space-5);
+}.sch-kpi-row--overview {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}.sch-overview-charts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}.sch-chart-card h2 {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-md, 1rem);
+    font-weight: 600;
+    color: #0f2747;
+}.sch-chart-donut__wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+}.sch-chart-donut__svg {
+    width: min(11rem, 42vw);
+    height: auto;
+    flex-shrink: 0;
+}.sch-chart-donut__legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1 1 10rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}.sch-chart-donut__legend li {
+    display: grid;
+    grid-template-columns: 0.75rem 1fr auto;
+    gap: var(--space-2);
+    align-items: center;
+}.sch-chart-donut__swatch {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 2px;
+}.sch-chart-bars__svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}.sch-chart-bars__label,
+.sch-chart-bars__value {
+    font-size: 11px;
+    fill: #5a6576;
+}.sch-chart-bars__value {
+    font-weight: 600;
+    fill: #0f2747;
+}.sch-chart-empty,
+.sch-chart-empty-inline {
+    font-size: var(--text-sm);
+    color: var(--muted);
+    margin: 0;
+}.sch-chart-empty-inline {
+    font-size: 10px;
+}.sch-overview-insights {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}.sch-overview-insights .sch-card {
+    margin-bottom: 0;
+}.sch-codes-table .ent-data-table {
+    font-size: var(--text-sm);
+}.sch-pending-banner {
+    margin-bottom: var(--space-4);
 }.sch-class-progress {
     margin-bottom: var(--space-4);
 }.sch-class-progress h2 {
@@ -574,11 +642,15 @@
 }@media (max-width: 1023px) {.sch-dash-grid,
     .sch-results-layout,
     .sch-overview-grid,
+    .sch-overview-charts,
+    .sch-overview-insights,
     .sch-detail-grid,
     .sch-group-grid,
     .sch-kpi-row,
     .sch-tile-grid {
         grid-template-columns: 1fr;
+    }.sch-kpi-row--overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }}.ll-shell {
     --sky: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
     --sea-0: color-mix(in srgb, var(--accent-soft) 75%, var(--surface));

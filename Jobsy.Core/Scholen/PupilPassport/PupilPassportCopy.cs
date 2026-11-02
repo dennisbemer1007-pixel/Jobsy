@@ -228,6 +228,8 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Jobs.Title"] = "5 banen die bij jou passen";
         d["LeerlingPassport.G78.Jobs.TitleFew"] = "Banen die bij jou passen";
         d["LeerlingPassport.G78.Jobs.FewSub"] = "Dit zijn de banen die het best bij jou passen.";
+        d["LeerlingPassport.G78.Jobs.NoneYet"] =
+            "Nog geen beroepen met minstens 70% match. Vul je vakken-test af; dan worden de suggesties scherper.";
         d["LeerlingPassport.G78.Jobs.MatchPercent"] = "{0}% match";
         d["LeerlingPassport.G78.Jobs.MatchSuggest"] = "Ongeveer {0}% past bij jou, een idee om eens te bekijken.";
         d["LeerlingPassport.G78.Dream.Heading"] = "Mijn droombaan";

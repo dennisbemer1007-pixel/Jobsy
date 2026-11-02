@@ -42,7 +42,6 @@ else
             <LanguageSelector />
         </div>
         <LeerlingPaspoortG78View Model="_model"
-                                 JourneyThemeKey="@_journeyThemeKey"
                                  AllowNameEdit="true"
                                  DisplayName="@_displayName"
                                  DisplayNameChanged="OnNameChanged" />
@@ -65,7 +64,6 @@ else
         PupilStoryPdfLink.NormalizeLanguageCode(Culture.Language) ?? Culture.Language);
 
     private string? _languageQuery;
-    private string? _journeyThemeKey;
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,16 +79,6 @@ else
         }
 
         await ReloadPassportAsync();
-        try
-        {
-            var progress = await Api.GetPupilProgressAsync();
-            _journeyThemeKey = progress?.JourneyThemeKey;
-        }
-        catch
-        {
-            _journeyThemeKey = null;
-        }
-
         _loading = false;
     }
 

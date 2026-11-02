@@ -5,6 +5,7 @@
 @using Jobsy.Core.Contracts.Scholen
 @using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Services
+@using Jobsy.Web.Scholen
 @inject JobsyApiClient Api
 
 <PageTitle>Jouw Lobsy-paspoort · Lobsy</PageTitle>
@@ -22,7 +23,7 @@ else
                 <h1 style="margin-top:10px">Jouw Lobsy-paspoort</h1>
                 <p class="mhbo-sub">Code @_model.CodeDisplay · @_model.SchoolName · @_model.ClassLabel</p>
             </div>
-            <a class="mhbo-btn g" href="/leerling/pdf">Download als PDF</a>
+            <a class="mhbo-btn" href="@PupilStoryPdfLink.Path">Download als PDF</a>
         </div>
         <div class="mhbo-grid" style="grid-template-columns:repeat(3,1fr);margin-top:22px">
             @foreach (var sec in _model.Sections)

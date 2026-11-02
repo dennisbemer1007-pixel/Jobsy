@@ -35,7 +35,8 @@ public static class PupilPdfEndpoints
         http.Response.Headers.CacheControl = "no-store";
         if (PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request))
         {
-            return Results.Redirect(PupilStoryPdfLink.HrefFromQuery(http.Request.Query));
+            return Results.Redirect(PupilStoryPdfLink.SanitizeHref(
+                PupilStoryPdfLink.HrefFromQuery(http.Request.Query)));
         }
 
         var (bytes, fileName, status) = await FetchStoryPdfAsync(http, httpClientFactory);

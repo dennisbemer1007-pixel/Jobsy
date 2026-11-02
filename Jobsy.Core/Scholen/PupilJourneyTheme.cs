@@ -131,18 +131,6 @@ public static class PupilJourneyTheme
     public static string WorldBandImagePath(string? themeKey, string worldKey)
         => $"/leerling/werelden/img/{WorldBandImageStem(themeKey, worldKey)}.jpg";
 
-    /// <summary>Hero strip on DNA-paspoort (per journey theme).</summary>
-    public static string PassportHeroStripPath(string? themeKey)
-    {
-        themeKey = NormalizeOrDefault(themeKey);
-        return themeKey switch
-        {
-            Eilandtuin => "/leerling/werelden/img/tuin-baai.jpg",
-            Sterrenkust => "/leerling/werelden/img/sterren-strand.jpg",
-            _ => "/images/leerling-paspoort-g78/g78-strip.jpg",
-        };
-    }
-
     public static string PuzzleTitleKey(string? themeKey, string puzzleKey)
     {
         var puzzle = puzzleKey.Trim().ToLowerInvariant();

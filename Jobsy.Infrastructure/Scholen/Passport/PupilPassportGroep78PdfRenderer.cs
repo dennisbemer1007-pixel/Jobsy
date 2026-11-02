@@ -238,9 +238,7 @@ internal static class PupilPassportGroep78PdfRenderer
         InnerPage(page, m, pageNo,
             T(m, "LeerlingPassport.G78.Header.Part1"),
             T(m, "LeerlingPassport.G78.Page.Who"),
-            T(m, "LeerlingPassport.G78.Footer.Label.Part1"),
-            PupilPassportG78Art.KreeftKijker,
-            artHeightMm: 22);
+            T(m, "LeerlingPassport.G78.Footer.Label.Part1"));
 
         page.Content().Column(col =>
         {
@@ -275,9 +273,7 @@ internal static class PupilPassportGroep78PdfRenderer
         InnerPage(page, m, pageNo,
             T(m, "LeerlingPassport.G78.Header.Part2"),
             T(m, "LeerlingPassport.G78.Page.Subjects"),
-            T(m, "LeerlingPassport.G78.Footer.Label.Part2"),
-            PupilPassportG78Art.KreeftSchild,
-            artHeightMm: 22);
+            T(m, "LeerlingPassport.G78.Footer.Label.Part2"));
 
         page.Content().Column(col =>
         {
@@ -378,9 +374,7 @@ internal static class PupilPassportGroep78PdfRenderer
         InnerPage(page, m, pageNo,
             T(m, "LeerlingPassport.G78.Header.Where"),
             T(m, "LeerlingPassport.G78.Page.Where"),
-            T(m, "LeerlingPassport.G78.Footer.Label.Where"),
-            PupilPassportG78Art.KreeftKaart,
-            artHeightMm: 22);
+            T(m, "LeerlingPassport.G78.Footer.Label.Where"));
 
         page.Content().Column(col =>
         {
@@ -583,12 +577,10 @@ internal static class PupilPassportGroep78PdfRenderer
         int pageNo,
         string kicker,
         string title,
-        string footerLabel,
-        PupilPassportG78Art art = PupilPassportG78Art.None,
-        float? artHeightMm = null)
+        string footerLabel)
     {
         ApplyPageShell(page, m);
-        page.Header().Element(c => InnerHeader(c, m, kicker, title, art, artHeightMm));
+        page.Header().Element(c => InnerHeader(c, m, kicker, title));
         page.Footer().Element(c => PageFooter(c, m, footerLabel, pageNo));
     }
 
@@ -596,11 +588,8 @@ internal static class PupilPassportGroep78PdfRenderer
         IContainer c,
         PupilPassportPdfModel m,
         string kicker,
-        string title,
-        PupilPassportG78Art art,
-        float? artHeightMm)
+        string title)
     {
-        var artHeight = Mm(artHeightMm ?? 18);
         c.PaddingBottom(Mm(4)).BorderBottom(1).BorderColor(Navy).Row(row =>
         {
             row.RelativeItem().MinWidth(0).Column(left =>
@@ -618,11 +607,6 @@ internal static class PupilPassportGroep78PdfRenderer
                 right.Item().AlignRight().Text($"{m.ClassLabel} · {DateLine(m)}").FontSize(8f).FontColor(Muted);
             });
 
-            var artBytes = PupilPassportAssets.Groep78ArtPng(art);
-            if (artBytes.Length > 0)
-            {
-                row.ConstantItem(artHeight).Height(artHeight).Image(artBytes).FitArea();
-            }
         });
     }
 
