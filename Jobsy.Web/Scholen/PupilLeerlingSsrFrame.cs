@@ -70,7 +70,7 @@ public static class PupilLeerlingSsrFrame
             sb.Append("\" data-testid=\"leerling-g78-shell\"><header class=\"top\"><a class=\"brand\" href=\"/leerling/wereld\">");
             sb.Append("<img src=\"/leerling/werelden/img/embleem.png\" width=\"40\" height=\"40\" alt=\"\" />");
             sb.Append("Lobsy<small>");
-            sb.Append(WebUtility.HtmlEncode("Groep 7 en 8"));
+            sb.Append(WebUtility.HtmlEncode(BrandSmallLabel(options)));
             sb.Append("</small></a><div class=\"sp\"></div>");
             sb.Append(chip);
             if (options.ShowPause)
@@ -165,6 +165,26 @@ public static class PupilLeerlingSsrFrame
         sb.Append(WebUtility.HtmlEncode(label));
         sb.Append("</span></button></form>");
         return sb.ToString();
+    }
+
+    private static string BrandSmallLabel(PupilLeerlingSsrDocumentOptions options)
+    {
+        if (string.Equals(options.RoutePath, "/leerling/wereld", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Groep 7 en 8";
+        }
+
+        if (options.UseGroep78Shell && PupilJourneyTheme.IsValid(options.JourneyThemeKey))
+        {
+            return options.JourneyThemeKey switch
+            {
+                PupilJourneyTheme.Eilandtuin => "Eilandtuin",
+                PupilJourneyTheme.Sterrenkust => "Sterrenkust",
+                _ => "Expeditie",
+            };
+        }
+
+        return "Groep 7 en 8";
     }
 
     private static string BuildChip(ClaimsPrincipal pupil)

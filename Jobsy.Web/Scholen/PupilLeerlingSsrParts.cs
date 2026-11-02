@@ -54,7 +54,8 @@ public static class PupilLeerlingSsrParts
         bool showJourney = true,
         string backgroundPosition = "center 30%",
         int segmentCount = 0,
-        int segmentsFilled = 0)
+        int segmentsFilled = 0,
+        bool sceneMetaIsHtml = false)
     {
         var sb = new StringBuilder();
         sb.Append("""<section class="ll-g78-scene" data-testid="leerling-g78-scene">""");
@@ -62,7 +63,7 @@ public static class PupilLeerlingSsrParts
         if (showJourney)
         {
             sb.Append("""<div class="ll-g78-scene__journey">""");
-            sb.Append(Groep78JourneyStrip(culture, registry, themeKey, currentNodeKey, metaLine, segmentCount, segmentsFilled));
+            sb.Append(Groep78JourneyStrip(culture, registry, themeKey, currentNodeKey, metaLine, segmentCount, segmentsFilled, sceneMetaIsHtml));
             sb.Append("</div>");
         }
 
@@ -77,7 +78,8 @@ public static class PupilLeerlingSsrParts
         string currentNodeKey,
         string? metaLine,
         int segmentCount,
-        int segmentsFilled)
+        int segmentsFilled,
+        bool sceneMetaIsHtml = false)
     {
         var def = registry.Get(PupilQuestionSet.Groep78);
         var nodes = PupilGroep78Journey.BuildNodes(def);
@@ -144,7 +146,15 @@ public static class PupilLeerlingSsrParts
         if (!string.IsNullOrEmpty(metaLine))
         {
             sb.Append("<div class=\"g78-jmeta\"><span>");
-            sb.Append(E(metaLine));
+            if (sceneMetaIsHtml)
+            {
+                sb.Append(metaLine);
+            }
+            else
+            {
+                sb.Append(E(metaLine));
+            }
+
             sb.Append("</span>");
             if (segmentCount > 0)
             {

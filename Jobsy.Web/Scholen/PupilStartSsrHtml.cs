@@ -15,25 +15,17 @@ public static class PupilStartSsrHtml
         CultureState culture,
         bool groep78,
         string? themeKey,
-        IPupilQuestionSetRegistry registry)
+        IPupilQuestionSetRegistry _)
     {
-        var sb = new StringBuilder();
-        if (groep78)
+        if (groep78 && def is not null)
         {
-            sb.Append(PupilLeerlingSsrParts.Groep78SceneHeader(
-                culture, registry, themeKey, "koraalrif", "koraalrif",
-                culture["Leerling.Start.Title"], showJourney: true));
-            sb.Append("""<div class="wrap ll-g78-overlap"><section class="card ll-start ll-start--g78">""");
-        }
-        else
-        {
-            sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Start"]));
-            sb.Append("""<div class="ll-start"><section class="ll-card">""");
+            return PupilGroep78RouteSsrHtml.BuildBody(def, culture, themeKey);
         }
 
-        sb.Append("<h1");
-        if (groep78) sb.Append(" class=\"serif\"");
-        sb.Append('>');
+        var sb = new StringBuilder();
+        sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Start"]));
+        sb.Append("""<div class="ll-start"><section class="ll-card">""");
+        sb.Append("<h1>");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Start.Title"]));
         sb.Append("</h1>");
         sb.Append(PupilLeerlingSsrParts.SpeakButton(
@@ -52,16 +44,11 @@ public static class PupilStartSsrHtml
             var w = PupilWorldCatalog.Find(plan.WorldKey);
             if (w is null) continue;
             var n = PupilWorldCatalog.TestWorldNumber(w.Key);
-            var titleKey = groep78
-                ? PupilJourneyTheme.WorldTitleKey(themeKey, w.Key)
-                : w.TitleKey;
-            var subKey = groep78
-                ? PupilJourneyTheme.WorldSubtitleKey(themeKey, w.Key)
-                : w.SubtitleKey;
             sb.Append("<li><span class=\"ll-worlds__n\">").Append(n).Append("</span><div><strong>");
-            sb.Append(PupilLeerlingSsrParts.E(culture[titleKey])).Append("</strong><small>");
-            sb.Append(PupilLeerlingSsrParts.E(culture[subKey])).Append("</small></div></li>");
+            sb.Append(PupilLeerlingSsrParts.E(culture[w.TitleKey])).Append("</strong><small>");
+            sb.Append(PupilLeerlingSsrParts.E(culture[w.SubtitleKey])).Append("</small></div></li>");
         }
+
         sb.Append("</ol><ul class=\"ll-start__notes\"><li>");
         sb.Append(PupilLeerlingSsrParts.E(culture[def?.StartTimeKey ?? "Leerling.Start.NoteTime"]));
         sb.Append("</li><li>").Append(PupilLeerlingSsrParts.E(culture["Leerling.Start.NoteNoWrong"]));

@@ -73,7 +73,8 @@ public static class PupilLeerlingJourneyEndpoints
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilStartSsrHtml.BuildBody(def, culture, groep78, progress.JourneyThemeKey, registry);
-        return Html(http, culture["Leerling.Start.Title"], body, "/leerling/start", groep78, progress.JourneyThemeKey, afHtml);
+        var title = groep78 ? culture["Leerling.G78.Route.Title"] : culture["Leerling.Start.Title"];
+        return Html(http, title, body, "/leerling/start", groep78, progress.JourneyThemeKey, afHtml);
     }
 
     private static Task<IResult> GetStopAsync(HttpContext http, CultureState culture, IAntiforgery af)
