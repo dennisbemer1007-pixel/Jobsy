@@ -104,12 +104,16 @@ public static class PupilDroombaanFormEndpoints
             useGroep78Shell,
             journeyThemeKey);
 
-        var doc = PupilLeerlingSsrFrame.RenderDocument(
-            culture["LeerlingDroom.Title"],
-            body,
-            pupil,
-            useGroep78Shell,
-            journeyThemeKey);
+        var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
+        {
+            PageTitle = culture["LeerlingDroom.Title"],
+            BodyHtml = body,
+            Pupil = pupil,
+            RoutePath = PupilDroombaanFormEndpoints.PagePath,
+            UseGroep78Shell = useGroep78Shell,
+            JourneyThemeKey = journeyThemeKey,
+            PauseFormHtml = PupilLeerlingSsrFrame.PauseForm(antiforgeryHtml, culture["Leerling.Pause"]),
+        });
 
         return Results.Content(doc, "text/html; charset=utf-8");
     }

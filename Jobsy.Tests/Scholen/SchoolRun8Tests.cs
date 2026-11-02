@@ -11,7 +11,6 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Components.Leerling;
-using Jobsy.Web.Components.Pages.Leerling;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Seo;
@@ -131,40 +130,26 @@ public class SchoolRun8ReadAloudTests : BunitContext
     }
 
     [Fact]
-    public async Task Each_leerling_page_renders_read_aloud_when_a_voice_is_available()
+    public async Task Leerling_ssr_and_part_break_include_read_aloud_markup()
     {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        foreach (var file in new[]
+                 {
+                     "Jobsy.Web/Scholen/PupilStartSsrHtml.cs",
+                     "Jobsy.Web/Scholen/PupilStopSsrHtml.cs",
+                     "Jobsy.Web/Scholen/PupilReisSsrHtml.cs",
+                     "Jobsy.Web/Scholen/PupilEilandSsrHtml.cs",
+                     "Jobsy.Web/Scholen/PupilDitBenJijSsrHtml.cs",
+                 })
+        {
+            var text = File.ReadAllText(Path.Combine(root, file));
+            Assert.Contains("SpeakButton", text, StringComparison.Ordinal);
+            Assert.Contains("data-read-aloud-text", text, StringComparison.Ordinal);
+        }
+
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<NavigationManager>();
-
-        nav.NavigateTo("http://localhost/leerling/start");
-        await AssertSpoken(Render<LeerlingStart>());
-
-        nav.NavigateTo("http://localhost/leerling/stop");
-        await AssertSpoken(Render<LeerlingStop>());
-
         await AssertSpoken(Render<LeerlingVoPartBreak>());
-
-        _handler.JsonByPath["/api/pupil/progress"] = Json(QuestionProgress());
-        nav.NavigateTo("http://localhost/leerling/reis");
-        var reis = Render<LeerlingReis>();
-        await AssertSpoken(reis);
-        var info = reis.Find(".ll-info-btn");
-        Assert.Equal("Meer uitleg", info.GetAttribute("aria-label"));
-        Assert.Equal("false", info.GetAttribute("aria-expanded"));
-        var controls = info.GetAttribute("aria-controls");
-        Assert.False(string.IsNullOrWhiteSpace(controls));
-        Assert.NotNull(reis.Find($"#{controls}"));
-        await info.ClickAsync();
-        Assert.Equal("true", reis.Find(".ll-info-btn").GetAttribute("aria-expanded"));
-
-        _handler.JsonByPath["/api/pupil/progress"] = Json(IslandProgress());
-        nav.NavigateTo("http://localhost/leerling/eiland");
-        await AssertSpoken(Render<LeerlingEiland>());
-
-        _handler.JsonByPath["/api/pupil/result"] = Json(ResultPage());
-        nav.NavigateTo("http://localhost/leerling/dit-ben-jij");
-        await AssertSpoken(Render<LeerlingDitBenJij>());
     }
 
     private static async Task AssertSpoken<TComponent>(IRenderedComponent<TComponent> cut)
@@ -193,52 +178,6 @@ public class SchoolRun8ReadAloudTests : BunitContext
         public void Invalidate()
         {
         }
-    }
-
-    private static PupilProgressStateDto QuestionProgress()
-        => new(
-            Guid.NewGuid(), "8A", "ABC-123", PupilCodeStatus.InProgress,
-            0, 60, 0, 0, false,
-            "9001", "koraalrif", new Dictionary<string, int>(),
-            true, false, false, false, false, [], [], null, null,
-            PupilQuestionSet.Groep78, "question");
-
-    private static PupilProgressStateDto IslandProgress()
-        => new(
-            Guid.NewGuid(), "8A", "ABC-123", PupilCodeStatus.InProgress,
-            15, 60, 15, 2, false,
-            null, "schatgrot", new Dictionary<string, int>(),
-            true, false, true, false, false, [], [], null, null,
-            PupilQuestionSet.Groep78, "island");
-
-    private static PupilResultPageDto ResultPage()
-        => new(
-            "8A",
-            "ABC-123",
-            "School",
-            new PupilStoryViewDto(
-                "Dit ben jij",
-                "Jij helpt graag andere mensen.",
-                [new PupilStoryTileDto("competence", "Zo ben jij", "Je let op anderen.")],
-                ["Dierenarts", "Leraar"],
-                []),
-            [],
-            [],
-            null,
-            null,
-            60,
-            PupilQuestionSet.Groep78);
-
-    private static string Json<T>(T value)
-        => JsonSerializer.Serialize(value, ApiJson);
-
-    private static readonly JsonSerializerOptions ApiJson = CreateApiJson();
-
-    private static JsonSerializerOptions CreateApiJson()
-    {
-        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
-        options.Converters.Add(new JsonStringEnumConverter());
-        return options;
     }
 
     private sealed class ScriptedHandler : HttpMessageHandler

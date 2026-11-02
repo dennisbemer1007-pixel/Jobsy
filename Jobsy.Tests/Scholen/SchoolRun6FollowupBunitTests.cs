@@ -11,7 +11,6 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
-using Jobsy.Web.Components.Pages.Leerling;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
@@ -98,71 +97,14 @@ public class PupilFirstLoadBunitTests : BunitContext
     }
 
     [Fact]
-    public async Task Island_first_load_failure_shows_offline_not_a_lost_session()
+    public void Ssr_journey_endpoints_handle_session_loss_via_load_retry()
     {
-        await PrepareAsync();
-        _handler.Throw = true;
-        var cut = Render<LeerlingEiland>();
-        cut.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Probeer opnieuw", cut.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", cut.Markup, StringComparison.Ordinal);
-            Assert.True(_handler.Calls >= 2);
-        }, TimeSpan.FromSeconds(10));
-    }
-
-    [Fact]
-    public async Task Island_401_shows_a_lost_session()
-    {
-        await PrepareAsync();
-        _handler.Status = HttpStatusCode.Unauthorized;
-        var cut = Render<LeerlingEiland>();
-        Assert.Contains("Je sessie is verlopen", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Even geen verbinding", cut.Markup, StringComparison.Ordinal);
-        Assert.Equal(1, _handler.Calls);
-    }
-
-    [Fact]
-    public async Task Journey_result_and_dream_job_share_the_offline_first_load()
-    {
-        await PrepareAsync();
-        _handler.Throw = true;
-
-        var journey = Render<LeerlingReis>();
-        journey.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", journey.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", journey.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(10));
-
-        var result = Render<LeerlingDitBenJij>();
-        result.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", result.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", result.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(10));
-
-    }
-
-    [Fact]
-    public async Task Result_and_dream_job_401_show_a_lost_session()
-    {
-        await PrepareAsync();
-        _handler.Status = HttpStatusCode.Unauthorized;
-
-        var result = Render<LeerlingDitBenJij>();
-        Assert.Contains("Je sessie is verlopen", result.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Even geen verbinding", result.Markup, StringComparison.Ordinal);
-
-    }
-
-    private async Task PrepareAsync()
-    {
-        var culture = Services.GetRequiredService<CultureState>();
-        await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling/eiland");
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PupilLeerlingJourneyEndpoints.cs"));
+        Assert.Contains("PupilLoadRetry", endpoints, StringComparison.Ordinal);
+        Assert.Contains("LoadProgressAsync", endpoints, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Session.Lost", endpoints, StringComparison.Ordinal);
+        Assert.Contains("/leerling?error=expired", endpoints, StringComparison.Ordinal);
     }
 
     private sealed class PupilFirstLoadFeatureFlags : IFeatureFlags

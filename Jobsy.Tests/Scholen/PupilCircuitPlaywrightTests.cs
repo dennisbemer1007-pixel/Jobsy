@@ -82,8 +82,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.WaitForURLAsync("**/leerling/start**", DomReady);
-        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
-        await page.WaitForTimeoutAsync(3_000);
+        await page.Locator(".ll-start, .ll-start--g78").WaitForAsync();
         Assert.Contains("/leerling/start", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/leerling/wereld", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
@@ -101,8 +100,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.WaitForURLAsync("**/leerling/reis**", DomReady);
-        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
-        await page.WaitForTimeoutAsync(3_000);
+        await page.Locator(".ll-question, .ll-card.ll-question").WaitForAsync();
         Assert.Contains("/leerling/reis", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
         await Assertions.Expect(page.Locator(".ll-question__meta")).ToContainTextAsync("Vraag 2");

@@ -691,6 +691,7 @@ app.MapSchoolPortalFormEndpoints();
 app.MapSchoolCodeListFileEndpoints();
 app.MapParentPassportAuthEndpoints();
 app.MapPupilDroombaanFormEndpoints();
+app.MapPupilLeerlingJourneyEndpoints();
 app.MapPupilPdfEndpoints();
 app.MapParentPassportPdfEndpoints();
 app.MapAdminFrameEndpoints();

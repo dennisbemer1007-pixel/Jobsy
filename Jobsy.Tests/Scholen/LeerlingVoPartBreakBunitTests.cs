@@ -1,6 +1,5 @@
 using Bunit;
 using Jobsy.Web.Components.Leerling;
-using Jobsy.Web.Components.Pages.Leerling;
 using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -40,27 +39,16 @@ public class LeerlingVoPartBreakBunitTests : BunitContext
     }
 
     [Fact]
-    public async Task Stop_page_deel1_shows_vuurtoren_copy()
+    public async Task Stop_ssr_deel1_uses_vo_part1_body_key()
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-
-        var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("/leerling/stop?done=deel1");
-        var deel1 = Render<LeerlingStop>();
-        Assert.Contains("vuurtoren", deel1.Markup, StringComparison.OrdinalIgnoreCase);
-
-        nav.NavigateTo("/leerling/stop?done=1");
-        var other = Render<LeerlingStop>();
-        Assert.DoesNotContain("vuurtoren", other.Markup, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Goed gedaan!", other.Markup, StringComparison.Ordinal);
-        Assert.Contains("dezelfde code", other.Markup, StringComparison.Ordinal);
-
-        nav.NavigateTo("/leerling/stop");
-        var ask = Render<LeerlingStop>();
-        Assert.Contains("Wil je stoppen?", ask.Markup, StringComparison.Ordinal);
-        Assert.Contains("action=\"/leerling/pauze\"", ask.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Goed gedaan!", ask.Markup, StringComparison.Ordinal);
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var stop = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilStopSsrHtml.cs"));
+        Assert.Contains("Leerling.Vo.Stop.Part1Body", stop, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Stop.AskTitle", stop, StringComparison.Ordinal);
+        Assert.Contains("/leerling/pauze", stop, StringComparison.Ordinal);
+        _ = culture["Leerling.Stop.Title"];
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

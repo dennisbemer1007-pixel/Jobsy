@@ -1,0 +1,178 @@
+using System.Globalization;
+using System.Text;
+using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
+using Jobsy.Web.Localization;
+using Jobsy.Web.Services;
+
+namespace Jobsy.Web.Scholen;
+
+public static class PupilReisSsrHtml
+{
+    public static string BuildBody(
+        PupilProgressStateDto state,
+        PupilQuestionSetDef def,
+        CultureState culture,
+        IPupilQuestionSetRegistry registry,
+        string antiforgeryHtml,
+        string answerSavePath,
+        string? error,
+        bool groep78,
+        string? themeKey)
+    {
+        var item = state.CurrentItemId is null ? null : def.Bank.GetById(state.CurrentItemId);
+        if (item is null)
+        {
+            return StateCard(culture["Leerling.Reis.ResultPending"], culture);
+        }
+
+        var worldKey = item.WorldKey ?? state.CurrentWorldKey ?? "koraalrif";
+        var world = PupilWorldCatalog.Find(worldKey);
+        var qLabel = culture[item.TextKey];
+        var sb = new StringBuilder();
+        if (!groep78)
+        {
+            sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Reis"]));
+        }
+
+        if (groep78)
+        {
+            var meta = JourneyMetaLine(def, state, worldKey, item, culture);
+            var segCount = def.Worlds.FirstOrDefault(w => string.Equals(w.WorldKey, worldKey, StringComparison.OrdinalIgnoreCase))?.ItemCount ?? 15;
+            var segFilled = def.IndexInWorld(state.CurrentIndex) + 1;
+            sb.Append(PupilLeerlingSsrParts.Groep78SceneHeader(
+                culture, registry, themeKey, worldKey, worldKey, meta, true, "center 30%", segCount, segFilled));
+        }
+
+        sb.Append(groep78 ? """<div class="ll-reis ll-reis--g78 wrap ll-g78-overlap">""" : """<div class="ll-reis">""");
+        sb.Append(Rail(def, state, culture, groep78, themeKey, worldKey));
+        sb.Append(groep78 ? """<div class="q-layout">""" : "");
+        sb.Append(groep78 ? """<section class="card ll-question">""" : """<section class="ll-card ll-question">""");
+        if (!groep78)
+        {
+            var pct = state.TotalItems <= 0 ? 0 : 100.0 * state.AnsweredCount / state.TotalItems;
+            sb.Append("<div class=\"ll-progress-bar\" role=\"progressbar\"><span class=\"ll-progress-bar__fill\" style=\"width:");
+            sb.Append(pct.ToString("0.#", CultureInfo.InvariantCulture)).Append("%\"></span></div>");
+        }
+
+        var worldTitleKey = groep78
+            ? PupilJourneyTheme.WorldTitleKey(themeKey, worldKey)
+            : world?.TitleKey ?? "Leerling.World.Reef.Title";
+        var worldSubKey = groep78
+            ? PupilJourneyTheme.WorldSubtitleKey(themeKey, worldKey)
+            : world?.SubtitleKey ?? "Leerling.World.Reef.Sub";
+        if (groep78)
+        {
+            sb.Append("<div class=\"qmeta\"><span class=\"kicker\">").Append(PupilLeerlingSsrParts.E(culture[worldTitleKey]));
+            sb.Append("</span></div><p class=\"ll-question__meta\">").Append(PupilLeerlingSsrParts.E(culture[worldSubKey])).Append("</p>");
+        }
+        else
+        {
+            sb.Append("<p class=\"ll-question__world\">").Append(PupilLeerlingSsrParts.E(culture[worldTitleKey])).Append("</p>");
+        }
+
+        state.Answers.TryGetValue(item.Id, out var selected);
+        sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(groep78 ? "qtitle" : "ll-question__text").Append("\">");
+        sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</h1>");
+        sb.Append(PupilLeerlingSsrParts.SpeakButton(qLabel, $"ll-q-{item.Id}", culture));
+        sb.Append(PupilLeerlingSsrParts.AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error));
+        if (state.CurrentIndex > 0)
+        {
+            sb.Append("""<div class="ll-question__nav qfoot"><a class="btn-secondary" href="/leerling/reis?prev=1">""");
+            sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Prev"])).Append("</a></div>");
+        }
+
+        sb.Append("</section>");
+        if (groep78)
+        {
+            sb.Append("</div>");
+        }
+
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+
+    public static string WindowClosed(CultureState culture, PupilQuestionSet set)
+        => StateCard(culture["Leerling.WindowClosed.Title"], culture, PupilCopy.Key(set, "Leerling.WindowClosed.Body"));
+
+    public static string DoneCard(CultureState culture)
+    {
+        var sb = new StringBuilder("""<section class="ll-card"><h1>""");
+        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</h1><p>");
+        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.DoneLead"])).Append("</p>");
+        sb.Append("""<a class="btn-primary" href="/leerling/dit-ben-jij">""");
+        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.ToResult"])).Append("</a></section>");
+        return sb.ToString();
+    }
+
+    private static string StateCard(string title, CultureState culture, string? bodyKey = null)
+    {
+        var sb = new StringBuilder("""<section class="ll-card"><h1>""");
+        sb.Append(PupilLeerlingSsrParts.E(title)).Append("</h1>");
+        if (bodyKey is not null)
+        {
+            sb.Append("<p>").Append(PupilLeerlingSsrParts.E(culture[bodyKey])).Append("</p>");
+        }
+
+        sb.Append("</section>");
+        return sb.ToString();
+    }
+
+    private static string Rail(
+        PupilQuestionSetDef def,
+        PupilProgressStateDto state,
+        CultureState culture,
+        bool groep78,
+        string? themeKey,
+        string worldKey)
+    {
+        var sb = new StringBuilder("<aside class=\"ll-rail\" aria-label=\"");
+        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Journey"]));
+        sb.Append("\"><p class=\"ll-rail__title\">");
+        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Journey"])).Append("</p><ol class=\"ll-rail__list\">");
+        foreach (var railKey in def.RailWorldKeys())
+        {
+            var w = PupilWorldCatalog.Find(railKey);
+            if (w is null)
+            {
+                continue;
+            }
+
+            var done = IsWorldDone(def, state, w.Key);
+            var current = string.Equals(w.Key, worldKey, StringComparison.OrdinalIgnoreCase);
+            var railTitleKey = groep78
+                ? PupilJourneyTheme.WorldTitleKey(themeKey, w.Key)
+                : w.TitleKey;
+            sb.Append("<li class=\"").Append(done ? "is-done " : "").Append(current ? "is-now" : "").Append("\"><strong>");
+            sb.Append(PupilLeerlingSsrParts.E(culture[railTitleKey])).Append("</strong></li>");
+        }
+
+        sb.Append("</ol></aside>");
+        return sb.ToString();
+    }
+
+    private static bool IsWorldDone(PupilQuestionSetDef def, PupilProgressStateDto state, string worldKey)
+    {
+        if (string.Equals(worldKey, "pauze-eiland", StringComparison.OrdinalIgnoreCase))
+        {
+            return state.IslandDone;
+        }
+
+        var items = def.Bank.AllItems.Where(i => i.WorldKey == worldKey).ToList();
+        return items.Count > 0 && items.All(i => state.Answers.ContainsKey(i.Id));
+    }
+
+    private static string JourneyMetaLine(
+        PupilQuestionSetDef def,
+        PupilProgressStateDto state,
+        string worldKey,
+        PupilQuestionItem _,
+        CultureState culture)
+    {
+        var idx = def.IndexInWorld(state.CurrentIndex) + 1;
+        var total = def.Worlds.FirstOrDefault(w => string.Equals(w.WorldKey, worldKey, StringComparison.OrdinalIgnoreCase))?.ItemCount ?? 15;
+        return string.Format(culture["Leerling.G78.Journey.QuestionMeta"], idx, total);
+    }
+}

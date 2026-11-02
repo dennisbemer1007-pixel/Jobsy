@@ -51,10 +51,10 @@ public class PupilPagesNoCandidateChromeTests : BunitContext
     public void Reis_uses_answer_scale_component_without_aria_pressed()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingReis.razor"));
-        Assert.Contains("<LeerlingAnswerScale", reis, StringComparison.Ordinal);
+        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingSsrParts.cs"));
+        Assert.Contains("data-ll-answer-scale", reis, StringComparison.Ordinal);
+        Assert.Contains("role=\"radio\"", reis, StringComparison.Ordinal);
         Assert.DoesNotContain("aria-pressed", reis, StringComparison.Ordinal);
-        Assert.DoesNotContain("@onkeydown=\"OnKey\"", reis, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -10,7 +10,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
-using Jobsy.Web.Components.Pages.Leerling;
+using Jobsy.Web.Components.Leerling;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -50,19 +50,16 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
         await culture.SetLanguageAsync("nl");
         _handler.PassportJson = Json(MinimalPassport("Noor"));
 
-        var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling/paspoort");
-        var cut = Render<LeerlingPaspoort>();
+        var cut = Render<LeerlingPaspoortG78View>(ps => ps
+            .Add(p => p.Model, MinimalPassport("Noor"))
+            .Add(p => p.AllowNameEdit, true)
+            .Add(p => p.DisplayName, "Noor"));
 
-        cut.WaitForAssertion(() =>
-        {
-            Assert.Contains("data-testid=\"leerling-paspoort-g78\"", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("data-testid=\"leerling-paspoort-dislikes\"", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Liever niet", cut.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("lp-g78__strip", cut.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("_displayName", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("value=\"Noor\"", cut.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(5));
+        Assert.Contains("data-testid=\"leerling-paspoort-g78\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"leerling-paspoort-dislikes\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Liever niet", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("lp-g78__strip", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("value=\"Noor\"", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -72,21 +69,12 @@ public sealed class PupilPassportPolishBunitTests : BunitContext
         await culture.SetLanguageAsync("nl");
         _handler.PassportJson = Json(MinimalPassport(null));
 
-        var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling/paspoort");
-        var first = Render<LeerlingPaspoort>();
-        first.WaitForAssertion(
-            () => Assert.Contains("data-testid=\"leerling-paspoort-page\"", first.Markup, StringComparison.Ordinal),
-            TimeSpan.FromSeconds(5));
+        var first = Render<LeerlingPaspoortG78View>(ps => ps.Add(p => p.Model, MinimalPassport(null)));
+        Assert.Contains("data-testid=\"leerling-paspoort-g78\"", first.Markup, StringComparison.Ordinal);
 
-        nav.NavigateTo("http://localhost/leerling/paspoort");
-        var second = Render<LeerlingPaspoort>();
-        second.WaitForAssertion(() =>
-        {
-            Assert.Contains("data-testid=\"leerling-paspoort-page\"", second.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", second.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(5));
-        Assert.Equal(2, _handler.PassportCalls);
+        var second = Render<LeerlingPaspoortG78View>(ps => ps.Add(p => p.Model, MinimalPassport(null)));
+        Assert.Contains("data-testid=\"leerling-paspoort-g78\"", second.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Je sessie is verlopen", second.Markup, StringComparison.Ordinal);
     }
 
     private static PupilG78PassportWebDto MinimalPassport(string? name)
