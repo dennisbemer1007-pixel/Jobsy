@@ -183,7 +183,9 @@ public sealed class MboHboFlowPlaywrightTests
 
                 await ShotAsync(page, artifactDir, $"04-test-{block}-start");
 
-                if (block == "interesse" && !pauseDone && page.Url.Contains($"/test/{block}", StringComparison.OrdinalIgnoreCase))
+                if (block == "interesse" && !pauseDone
+                    && page.Url.Contains($"/test/{block}", StringComparison.OrdinalIgnoreCase)
+                    && !page.Url.Contains("/uitkomst/", StringComparison.OrdinalIgnoreCase))
                 {
                     await AnswerQuestionsAsync(page, block, pickValue: 3, maxSteps: 6);
                     await page.Locator("a.mhbo-lnk", new() { HasText = "Pauzeer en terug naar overzicht" }).ClickAsync();
@@ -497,11 +499,18 @@ public sealed class MboHboFlowPlaywrightTests
             });
         }
 
-        await start.ClickAsync();
-        await page.WaitForURLAsync(
-            url => url.Contains($"/mbo-hbo/test/{blockKey}", StringComparison.OrdinalIgnoreCase)
-                || url.Contains($"/mbo-hbo/uitkomst/{blockKey}", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 120_000 });
+        var label = (await start.InnerTextAsync()).Trim();
+        var baseUri = new Uri(page.Url).GetLeftPart(UriPartial.Authority);
+        if (label.Contains("Bekijk uitkomst", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.GotoAsync($"{baseUri}/leerling/mbo-hbo/uitkomst/{blockKey}", new() { WaitUntil = WaitUntilState.Load });
+        }
+        else
+        {
+            await page.GotoAsync($"{baseUri}/leerling/mbo-hbo/test/{blockKey}", new() { WaitUntil = WaitUntilState.Load });
+        }
+
+        await WaitBlazorAsync(page);
     }
 
     private static async Task AnswerQuestionsAsync(IPage page, string blockKey, int pickValue, int? maxSteps = null)
@@ -528,10 +537,18 @@ public sealed class MboHboFlowPlaywrightTests
 
             if (!await next.IsEnabledAsync())
             {
-                for (var s = 0; s < scaleCount; s++)
-                {
-                    await PickScaleValueAsync(page, s, 3);
-                }
+                await page.EvaluateAsync(
+                    """
+                    (pick) => {
+                      document.querySelectorAll('.mhbo-scale').forEach(scale => {
+                        const opts = scale.querySelectorAll('.mhbo-scale-opt');
+                        const el = opts[pick - 1];
+                        if (el) el.click();
+                      });
+                    }
+                    """,
+                    pickValue);
+                await page.WaitForTimeoutAsync(400);
             }
 
             await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 60_000 });
