@@ -100,7 +100,7 @@ public static class PupilLeerlingLoginSsrHtml
             sb.Append(WebUtility.HtmlEncode(culture["Leerling.Login.AlreadyIn"]));
             sb.Append("</h1><p>");
             sb.Append(WebUtility.HtmlEncode(culture["Leerling.Login.AlreadyLead"]));
-            sb.Append("</p><div class=\"ll-question__nav\"><a class=\"btn-primary\" href=\"/leerling/start\">");
+            sb.Append("</p><div class=\"ll-question__nav\"><a class=\"btn-primary\" href=\"/leerling/verder\">");
             sb.Append(WebUtility.HtmlEncode(culture["Leerling.Login.Continue"]));
             sb.Append("</a><a class=\"btn-secondary\" href=\"/leerling/stop\">");
             sb.Append(WebUtility.HtmlEncode(culture["Leerling.Login.Stop"]));

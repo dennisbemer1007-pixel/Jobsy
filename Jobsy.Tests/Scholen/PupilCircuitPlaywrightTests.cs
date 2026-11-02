@@ -734,6 +734,58 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Fact(Timeout = 300_000)]
+    public async Task Groep78_new_pupil_login_lands_on_wereld_then_resumes_after_world_choice()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var baseUrl = EnsureWeb();
+        var outDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "artifacts", "g78-wereld-landing");
+        Directory.CreateDirectory(outDir);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+            page.SetDefaultTimeout(90_000);
+            await page.Context.ClearCookiesAsync();
+            await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+            await page.WaitForURLAsync("**/leerling/wereld**", DomReady);
+            await page.Locator("[data-testid=ll-wereld-zee]").WaitForAsync();
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(outDir, $"landing-{tag}.png"),
+                FullPage = true
+            });
+            Assert.DoesNotContain("/leerling/start", page.Url, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("blazor.web.js", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+            await page.CloseAsync();
+        }
+
+        var resume = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        resume.SetDefaultTimeout(90_000);
+        await resume.Context.ClearCookiesAsync();
+        await resume.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await LoginAsync(resume, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+        await resume.WaitForURLAsync("**/leerling/wereld**", DomReady);
+        await resume.Locator("[data-testid=ll-wereld-ster]").ClickAsync();
+        await resume.WaitForURLAsync("**/leerling/start**", DomReady);
+        await resume.GetByRole(AriaRole.Button, new() { Name = "Pauze" }).ClickAsync();
+        await resume.WaitForURLAsync("**/leerling/stop**", DomReady);
+        await LoginAsync(resume, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+        await resume.WaitForURLAsync("**/leerling/start**", DomReady);
+        Assert.DoesNotContain("/leerling/wereld", resume.Url, StringComparison.OrdinalIgnoreCase);
+        await resume.CloseAsync();
+    }
+
+    [Fact(Timeout = 300_000)]
     public async Task Wereld_choice_matches_mockup_layout_at_1440_and_390()
     {
         _ = TestContext.Current.CancellationToken;
@@ -1479,6 +1531,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 LikesJson = "[]",
                 DislikesJson = "[]",
                 JourneyThemeKey = journeyThemeKey,
+                JourneyThemeChosenAtUtc = string.IsNullOrWhiteSpace(journeyThemeKey) ? null : now,
                 ChipsSavedAtUtc = chipsSaved ? now : null,
                 StartedAtUtc = now.AddMinutes(-10),
                 UpdatedAtUtc = now
@@ -1546,6 +1599,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             DislikesJson = """["lang-stilzitten"]""",
             DreamJobKey = dreamKey,
             JourneyThemeKey = journeyThemeKey,
+            JourneyThemeChosenAtUtc = string.IsNullOrWhiteSpace(journeyThemeKey) ? null : now,
             ChipsSavedAtUtc = now,
             StartedAtUtc = now.AddMinutes(-30),
             UpdatedAtUtc = now,

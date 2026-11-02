@@ -7663,6 +7663,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
+                    b.Property<DateTime?>("JourneyThemeChosenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("LikeOtherWord")
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)");

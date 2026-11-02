@@ -467,7 +467,8 @@ public sealed class PupilPortalService : IPupilPortalService
             schoolClass.QuestionSet,
             nextStep,
             step.PuzzleKey,
-            code.Progress?.JourneyThemeKey), null, 200);
+            code.Progress?.JourneyThemeKey,
+            code.Progress?.JourneyThemeChosenAtUtc), null, 200);
     }
 
     public async Task<(PupilJourneyThemeResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveJourneyThemeAsync(
@@ -513,6 +514,7 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         progress.JourneyThemeKey = PupilJourneyTheme.Normalize(themeKey);
+        progress.JourneyThemeChosenAtUtc = now;
         progress.UpdatedAtUtc = now;
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -540,7 +542,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } themeErr)
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress) is { } themeErr)
         {
             return (null, themeErr, 409);
         }
@@ -700,7 +702,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } vakThemeErr)
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress) is { } vakThemeErr)
         {
             return (null, vakThemeErr, 409);
         }
@@ -809,7 +811,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } chipsThemeErr)
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress) is { } chipsThemeErr)
         {
             return (null, chipsThemeErr, 409);
         }
@@ -892,7 +894,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress?.JourneyThemeKey) is { } puzzleThemeErr)
+        if (Groep78ThemeRequired(schoolClass.QuestionSet, code.Progress) is { } puzzleThemeErr)
         {
             return (null, puzzleThemeErr, 409);
         }
@@ -1590,8 +1592,8 @@ public sealed class PupilPortalService : IPupilPortalService
         PupilQuestionSet set)
         => (null, LoginErr(GenericCodeError, set, PupilCopy.LoginInvalid(set)), 400);
 
-    private static PupilErrorDto? Groep78ThemeRequired(PupilQuestionSet set, string? journeyThemeKey)
-        => PupilGroep78EntryPaths.RequiresThemeChoice(set, journeyThemeKey)
+    private static PupilErrorDto? Groep78ThemeRequired(PupilQuestionSet set, PupilProgress? progress)
+        => PupilGroep78EntryPaths.RequiresThemeChoice(set, progress)
             ? new PupilErrorDto("theme_required", "Kies eerst jouw wereld.")
             : null;
 
