@@ -65,6 +65,14 @@ public sealed record TeacherDreamJobsDto(
     int UndecidedCount,
     int NotFilledCount = 0);
 
+public sealed record TeacherMboHboScoreBarDto(string Label, int Percent);
+
+public sealed record TeacherMboHboBlockOutcomeDto(
+    string Title,
+    string Summary,
+    IReadOnlyList<string> Highlights,
+    IReadOnlyList<TeacherMboHboScoreBarDto> TopBars);
+
 public sealed record TeacherCodeDetailDto(
     Guid CodeId,
     Guid ClassId,
@@ -84,7 +92,8 @@ public sealed record TeacherCodeDetailDto(
     DreamJobRouteStubDto? DreamJob,
     bool PdfAvailable,
     bool ResultPending = false,
-    PupilQuestionSet QuestionSet = PupilQuestionSet.Groep78);
+    PupilQuestionSet QuestionSet = PupilQuestionSet.Groep78,
+    IReadOnlyList<TeacherMboHboBlockOutcomeDto>? MboHboOutcomes = null);
 
 /// <summary>Rendered "Dit ben jij" story (text regenerated from templates).</summary>
 public sealed record PupilStoryViewDto(
