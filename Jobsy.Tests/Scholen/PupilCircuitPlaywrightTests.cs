@@ -346,6 +346,33 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+        await Assertions.Expect(page.Locator("[data-testid=leerling-g78-shell]")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".ll-g78-shell header.top .btn-pauze")).ToBeVisibleAsync();
+        var cardsHeadJson = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const head = document.querySelector('.lp-g78__cards-head');
+              const sub = head?.querySelector('small');
+              if (!head || !sub) {
+                return JSON.stringify({ ok: false, reason: 'missing-cards-head' });
+              }
+              const hr = head.getBoundingClientRect();
+              const sr = sub.getBoundingClientRect();
+              const subDisplay = window.getComputedStyle(sub).display;
+              return JSON.stringify({
+                subDisplay,
+                subOnOwnLine: subDisplay === 'block' && sr.top > hr.top + 10,
+                overlapPx: Math.max(0, hr.bottom - sr.top - sr.height)
+              });
+            }
+            """);
+        using (var cardsHead = System.Text.Json.JsonDocument.Parse(cardsHeadJson))
+        {
+            var cardsRoot = cardsHead.RootElement;
+            Assert.Equal("block", cardsRoot.GetProperty("subDisplay").GetString());
+            Assert.True(cardsRoot.GetProperty("subOnOwnLine").GetBoolean(), cardsHeadJson);
+        }
+
         var layoutJson = await page.EvaluateAsync<string>(
             """
             () => {

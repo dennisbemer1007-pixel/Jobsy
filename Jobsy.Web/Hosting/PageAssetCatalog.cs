@@ -460,6 +460,15 @@ public static partial class PageAssetCatalog
             return LeerlingMboHboStylesheets(path);
         }
 
+        if (path.Equals("/leerling/paspoort", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                .. LeerlingGroep78ThemeStylesheets(path),
+                WwwrootAssetCatalog.UrlLeadingSlash("css/features/leerling-paspoort-g78.css"),
+            ];
+        }
+
         return IncludesLeerlingGroep78ThemeStyles(path)
             ? LeerlingGroep78ThemeStylesheets(path)
             : [];

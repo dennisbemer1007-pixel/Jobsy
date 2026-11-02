@@ -203,9 +203,9 @@
 
         @if (Model.OccupationCards is { Count: > 0 })
         {
-            <h2 style="font-size:1rem;color:var(--lp-navy);margin:12px 0 8px;">
+            <h2 class="lp-g78__cards-head">
                 @Culture["LeerlingPassport.Section.Cards"]
-                <small style="font-weight:400;font-size:0.75rem;color:var(--lp-muted);">@Culture["LeerlingPassport.Cards.Sub"]</small>
+                <small>@Culture["LeerlingPassport.Cards.Sub"]</small>
             </h2>
             <div class="lp-g78__jobs">
                 @foreach (var job in Model.OccupationCards)

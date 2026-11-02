@@ -266,9 +266,9 @@ public static class PupilG78PassportSsrHtml
 
         if (model.OccupationCards is { Count: > 0 })
         {
-            sb.Append("<h2 style=\"font-size:1rem;color:var(--lp-navy);margin:12px 0 8px;\">");
+            sb.Append("<h2 class=\"lp-g78__cards-head\">");
             sb.Append(E(culture["LeerlingPassport.Section.Cards"]));
-            sb.Append("<small style=\"font-weight:400;font-size:0.75rem;color:var(--lp-muted);\">");
+            sb.Append("<small>");
             sb.Append(E(culture["LeerlingPassport.Cards.Sub"]));
             sb.Append("</small></h2><div class=\"lp-g78__jobs\">");
             foreach (var job in model.OccupationCards)
