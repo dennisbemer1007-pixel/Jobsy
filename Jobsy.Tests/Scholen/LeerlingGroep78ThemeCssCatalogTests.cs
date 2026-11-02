@@ -77,6 +77,18 @@ public class LeerlingGroep78ThemeCssCatalogTests
             s => s.Contains("leerling-werelden-kies.css", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Wereld_choice_css_sizes_info_box_checkmark_outside_mobile_only()
+    {
+        var cssPath = Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/features/leerling-werelden-kies.css");
+        var css = File.ReadAllText(cssPath);
+        var firstMobile = css.IndexOf("@media (max-width: 600px)", StringComparison.Ordinal);
+        Assert.True(firstMobile > 0);
+        var sameSvg = css.IndexOf(".ll-g78-shell .same svg", StringComparison.Ordinal);
+        Assert.InRange(sameSvg, 0, firstMobile);
+        Assert.Contains("width: 32px", css[sameSvg..firstMobile], StringComparison.Ordinal);
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

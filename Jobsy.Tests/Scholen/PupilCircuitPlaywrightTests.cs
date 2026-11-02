@@ -412,6 +412,116 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.DoesNotContain("/leerling?error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact(Timeout = 240_000)]
+    public async Task Wereld_screen_00_checkmark_sized_mockup_and_controls()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var root = FindRepoRoot();
+
+        foreach (var (width, height, tag) in new[] { (1440, 957, "desktop"), (390, 844, "mobile") })
+        {
+            var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-screen-00-fix", tag);
+            Directory.CreateDirectory(artifactDir);
+            var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
+            const string mockFile = "00-kies-je-wereld.png";
+
+            await using var context = width <= 400
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height }
+                });
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            var consoleOnWereld = new List<string>();
+            var failedOnWereld = new List<string>();
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type == "error"
+                    && page.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
+                {
+                    consoleOnWereld.Add(msg.Text);
+                }
+            };
+            page.RequestFailed += (_, req) =>
+            {
+                if (req.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
+                    || req.Url.Contains("/leerling/werelden/", StringComparison.OrdinalIgnoreCase)
+                    || req.Url.Contains("leerling-werelden-kies.css", StringComparison.OrdinalIgnoreCase))
+                {
+                    failedOnWereld.Add($"{req.Method} {req.Url} → {req.Failure}");
+                }
+            };
+
+            var seed = await SeedOpenClassAsync();
+            var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+            await page.WaitForURLAsync("**/leerling/wereld**", UrlCommitted);
+            await page.Locator("[data-testid=ll-wereld-zee]").WaitForAsync();
+
+            var scripts = await page.EvaluateAsync<string[]>(
+                "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
+            Assert.DoesNotContain(scripts, s => s.Contains("blazor.web.js", StringComparison.OrdinalIgnoreCase));
+
+            var checkBox = await page.Locator(".same svg").First.BoundingBoxAsync();
+            Assert.NotNull(checkBox);
+            Assert.InRange(checkBox!.Width, 24, 40);
+            Assert.InRange(checkBox.Height, 24, 40);
+
+            var speakKey = width <= 400 ? "ll-wereld-coach-m" : "ll-wereld-coach";
+            await page.Locator($"[data-speech-key={speakKey}]").ClickAsync();
+
+            foreach (var testId in new[] { "ll-wereld-zee", "ll-wereld-tuin", "ll-wereld-ster" })
+            {
+                await page.GotoAsync($"{baseUrl}/leerling/wereld", new() { WaitUntil = WaitUntilState.Commit });
+                await page.Locator($"[data-testid={testId}]").WaitForAsync();
+                await page.Locator($"[data-testid={testId}]").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+                await page.Locator("h1.rk-h, .kz-h").First.WaitForAsync();
+            }
+
+            await page.GotoAsync($"{baseUrl}/leerling/wereld", new() { WaitUntil = WaitUntilState.Commit });
+            await page.Locator(".same svg").First.WaitForAsync();
+
+            var built = Path.Combine(artifactDir, "00-kies-je-wereld-built.png");
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = built,
+                FullPage = tag == "mobile"
+            });
+
+            var mock = Path.Combine(mockDir, mockFile);
+            var sideBySide = Path.Combine(artifactDir, "00-kies-je-wereld-mockup-vs-built.png");
+            if (File.Exists(mock))
+            {
+                var compareScript = Path.Combine(root, "tools", "scholen-ssr-final-qa", "compare_mockup_side_by_side.py");
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "python3",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                };
+                psi.ArgumentList.Add(compareScript);
+                psi.ArgumentList.Add(mock);
+                psi.ArgumentList.Add(built);
+                psi.ArgumentList.Add(sideBySide);
+                using var proc = System.Diagnostics.Process.Start(psi)!;
+                var diffOut = await proc.StandardOutput.ReadToEndAsync();
+                await proc.WaitForExitAsync();
+                Assert.Equal(0, proc.ExitCode);
+                var diff = double.Parse(diffOut.Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                Assert.True(diff < 35, $"mockup diff {diff:F1}% too high for {tag}");
+            }
+
+            AssertNoMeaningfulConsoleErrors(consoleOnWereld);
+            Assert.Empty(failedOnWereld);
+            await page.CloseAsync();
+        }
+    }
+
     [Theory(Timeout = 600_000)]
     [InlineData(1440, 957, "desktop")]
     [InlineData(390, 844, "mobile")]

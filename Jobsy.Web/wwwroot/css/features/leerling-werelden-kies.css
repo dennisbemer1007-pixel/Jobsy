@@ -361,6 +361,13 @@
   margin-top: 22px;
 }
 
+.ll-g78-shell .same svg {
+  width: 32px;
+  height: 32px;
+  color: var(--ok);
+  flex: none;
+}
+
 .ll-g78-shell footer {
   text-align: center;
   font-size: 14px;
