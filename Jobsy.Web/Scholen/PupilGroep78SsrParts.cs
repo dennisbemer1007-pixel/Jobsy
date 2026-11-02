@@ -56,9 +56,15 @@ public static class PupilGroep78SsrParts
         string bubbleText,
         string speakText,
         string speechKey,
-        string lobsterImage = "kreeft-welkom.png")
+        string lobsterImage = "kreeft-welkom.png",
+        bool mobileGuideFirst = false)
     {
         var sb = new StringBuilder();
+        if (mobileGuideFirst)
+        {
+            sb.Append(MobileCoachGuide(culture, bubbleText, speakText, speechKey));
+        }
+
         sb.Append("""<aside class="ll-g78-coach d-only" aria-label="Lobsy" data-testid="ll-g78-coach">""");
         sb.Append("""<div class="bubble tail-b"><span class="who">Lobsy</span>""");
         sb.Append(PupilLeerlingSsrParts.E(bubbleText));
@@ -66,6 +72,17 @@ public static class PupilGroep78SsrParts
         sb.Append("<span class=\"speak-label\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Wereld.ReadAloud"])).Append("</span></div></div>");
         sb.Append("<img class=\"lob\" src=\"/leerling/werelden/img/").Append(PupilLeerlingSsrParts.E(lobsterImage));
         sb.Append("\" width=\"250\" height=\"250\" alt=\"\" /></aside>");
+        if (!mobileGuideFirst)
+        {
+            sb.Append(MobileCoachGuide(culture, bubbleText, speakText, speechKey));
+        }
+
+        return sb.ToString();
+    }
+
+    private static string MobileCoachGuide(CultureState culture, string bubbleText, string speakText, string speechKey)
+    {
+        var sb = new StringBuilder();
         sb.Append("""<div class="m-only ll-g78-coach-mobile" data-testid="ll-g78-coach-mobile"><div class="guide"><div class="ring" aria-hidden="true"></div><div class="bubble tail-l"><span class="who">Lobsy</span>""");
         sb.Append(PupilLeerlingSsrParts.E(bubbleText));
         sb.Append("""<div class="bt">""").Append(Groep78SpeakButton(speakText, speechKey, culture));

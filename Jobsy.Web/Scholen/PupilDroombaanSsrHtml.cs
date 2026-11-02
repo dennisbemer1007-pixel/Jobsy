@@ -149,7 +149,7 @@ public static class PupilDroombaanSsrHtml
         sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
             culture, registry, journeyThemeKey, "dit-ben-jij", culture["Leerling.G78.Dream.JourneyMeta"], 0, 0, sceneMetaIsHtml: true));
         sb.Append("</div></section>");
-        sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey" data-testid="leerling-droombaan"><div class="q-layout">""");
+        sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-g78-dream-wrap" data-testid="leerling-droombaan"><div class="q-layout">""");
         sb.Append("""<section class="card ll-dream-ssr ll-dream-pick card-deco">""");
         if (!string.IsNullOrEmpty(model.FormError))
         {

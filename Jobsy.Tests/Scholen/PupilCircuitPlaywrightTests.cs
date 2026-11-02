@@ -422,7 +422,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         var root = FindRepoRoot();
-        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v5", tag);
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v6", tag);
         Directory.CreateDirectory(artifactDir);
         var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
         var results = new List<string>();
@@ -651,6 +651,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.Equal(4, await page.Locator(".ll-result-chips .chips .chip.on").CountAsync());
         Assert.Equal(5, await page.Locator("[data-testid=ll-g78-result-jobs] .chip").CountAsync());
         Assert.True(await page.Locator(".note-teacher").CountAsync() > 0);
+        var likeChip = page.Locator(".ll-result-chips .chip.on").First;
+        var likeBefore = await likeChip.EvaluateAsync<string>(
+            "el => window.getComputedStyle(el, '::before').content");
+        Assert.Contains("✓", likeBefore ?? "", StringComparison.Ordinal);
+        Assert.True(await page.Locator("[data-testid=ll-g78-coach]:visible .bubble, [data-testid=ll-g78-coach-mobile]:visible .bubble").CountAsync() > 0);
 
         await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=ll-g78-job-picks]").WaitForAsync();

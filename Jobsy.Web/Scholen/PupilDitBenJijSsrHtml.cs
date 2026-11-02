@@ -26,8 +26,8 @@ public static class PupilDitBenJijSsrHtml
         var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
         var tileStems = PupilJourneyTheme.ResultTileStems(themeKey);
         var sb = new StringBuilder();
-        sb.Append("<section class=\"band rb ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
-        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append(";min-height:460px\">");
+        sb.Append("<section class=\"band rb dark ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
+        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append("\">");
         sb.Append("""<div class="wrap ll-g78-result-band__journey">""");
         sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
             culture, registry, themeKey, "dit-ben-jij", culture["Leerling.G78.Result.JourneyMeta"], 0, 0, sceneMetaIsHtml: true));
@@ -35,7 +35,15 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("""<div class="wrap rs-hdr"><div class="rs-title"><span class="pill-done">""");
         sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.DonePill"]));
         sb.Append("""</span><h1 class="rs-h serif">""").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1></div></div>");
-        sb.Append("""<div class="wrap ll-g78-overlap ll-result--g78" data-testid="leerling-dit-ben-jij"><div class="q-layout"><div>""");
+        sb.Append("""<div class="wrap ll-g78-overlap ll-result--g78" data-testid="leerling-dit-ben-jij"><div class="q-layout">""");
+        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
+            culture,
+            culture["Leerling.G78.Result.Coach"],
+            culture["Leerling.G78.Result.Coach"],
+            "ll-result-coach",
+            "kreeft-kijker.png",
+            mobileGuideFirst: true));
+        sb.Append("<div class=\"ll-result-main\">");
         sb.Append("""<div class="card ll-result-story"><div class="qrow">""");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(result.Story.Body, "ll-story", culture, "Leerling.G78.Result.ReadStory"));
         sb.Append("</div><p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(result.Story.Body)).Append("</p></div>");
@@ -72,14 +80,8 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("<a class=\"btn btn-ghost\" href=\"").Append(PupilLeerlingSsrParts.E(pdfHref)).Append("\" data-enhance-nav=\"false\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Pdf"])).Append("</a>");
         sb.Append("""<a class="btn btn-main" href="/leerling/droombaan">""").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.CheckDream"]));
-        sb.Append(PupilGroep78SsrParts.NextSvg).Append("</a></div></div>");
-        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
-            culture,
-            culture["Leerling.G78.Result.Coach"],
-            culture["Leerling.G78.Result.Coach"],
-            "ll-result-coach",
-            "kreeft-kijker.png"));
-        sb.Append("</div></div>");
+        sb.Append(PupilGroep78SsrParts.NextSvg).Append("</a></div></div></div>");
+        sb.Append("</div>");
         return sb.ToString();
     }
 
