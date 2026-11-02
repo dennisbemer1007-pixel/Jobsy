@@ -457,6 +457,21 @@
     color: var(--lp-muted);
 }
 
+.lp-g78__cards-head {
+    font-size: 1rem;
+    color: var(--lp-navy);
+    margin: 12px 0 8px;
+    line-height: 1.35;
+}
+
+.lp-g78__cards-head small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--lp-muted);
+    margin-top: 4px;
+}
+
 .lp-g78__jobs {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
