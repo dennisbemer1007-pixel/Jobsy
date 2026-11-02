@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
@@ -93,6 +94,15 @@ public sealed partial class JobsyApiClient
 
     public Task DownloadTeacherCodeListCsvAsync(IJSRuntime js, Guid classId, CancellationToken ct = default)
         => DownloadNamedFileAsync($"api/teacher/classes/{classId}/codelist.csv", js, "codelijst.csv", ct);
+
+    public Task<HttpResponseMessage> GetTeacherCodeListFileAsync(
+        Guid classId,
+        string extension,
+        CancellationToken ct = default)
+        => _http.GetAsync(
+            $"api/teacher/classes/{classId:D}/codelist.{extension}",
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
 
     public async Task DownloadTeacherPupilReportPdfAsync(
         IJSRuntime js,

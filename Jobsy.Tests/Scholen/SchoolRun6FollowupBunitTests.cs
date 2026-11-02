@@ -339,11 +339,11 @@ public class TeacherSchoolLabelBunitTests : BunitContext
         await culture.SetLanguageAsync("nl");
         var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
 
-        nav.NavigateTo($"http://localhost/leraar/klas/{ClassId:D}/groep");
-        var group = Render<LeraarGroup>(p => p.Add(x => x.ClassId, ClassId));
-        AssertNoRawEnums(group.Markup);
-        Assert.Contains("Informeel en open", group.Markup, StringComparison.Ordinal);
-        Assert.Contains("Iets goed afmaken", group.Markup, StringComparison.Ordinal);
+        var groupDto = JsonSerializer.Deserialize<TeacherGroupInsightsDto>(PortalHandler.GroupJson, JobsyApiClient.ApiJson)!;
+        var groupMarkup = TeacherPortalReadOnlySsrHtml.BuildGroupBody(ClassId, groupDto, culture);
+        AssertNoRawEnums(groupMarkup);
+        Assert.Contains("Informeel en open", groupMarkup, StringComparison.Ordinal);
+        Assert.Contains("Iets goed afmaken", groupMarkup, StringComparison.Ordinal);
 
         nav.NavigateTo($"http://localhost/leraar/klas/{ClassId:D}");
         var overview = Render<LeraarKlasOverview>(p => p.Add(x => x.ClassId, ClassId));
@@ -397,7 +397,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
 
     private sealed class PortalHandler : HttpMessageHandler
     {
-        private static readonly string GroupJson = JsonSerializer.Serialize(
+        internal static readonly string GroupJson = JsonSerializer.Serialize(
             new TeacherGroupInsightsDto(
                 true,
                 6,
