@@ -104,6 +104,15 @@ public sealed partial class JobsyApiClient
             HttpCompletionOption.ResponseHeadersRead,
             ct);
 
+    public Task<HttpResponseMessage> GetTeacherPupilReportFileAsync(
+        Guid classId,
+        Guid codeId,
+        CancellationToken ct = default)
+        => _http.GetAsync(
+            $"api/teacher/classes/{classId:D}/codes/{codeId:D}/report.pdf",
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+
     public async Task DownloadTeacherPupilReportPdfAsync(
         IJSRuntime js,
         Guid classId,

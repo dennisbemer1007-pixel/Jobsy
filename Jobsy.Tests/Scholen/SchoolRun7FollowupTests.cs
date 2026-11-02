@@ -8,7 +8,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Localization;
-using Jobsy.Web.Components.Pages.Leraar;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -111,11 +111,10 @@ public class SchoolRun7CodeDetailTests : BunitContext
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-        var cut = Render<LeraarCodeDetail>(p => p
-            .Add(x => x.ClassId, ClassId)
-            .Add(x => x.CodeId, CodeId));
-        Assert.Contains("Vindt het leuk", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Vindt het niet leuk", cut.Markup, StringComparison.Ordinal);
+        var detail = JsonSerializer.Deserialize<TeacherCodeDetailDto>(DetailHandler.Json, JobsyApiClient.ApiJson)!;
+        var markup = TeacherCodeDetailSsrHtml.BuildBody(ClassId, CodeId, detail, null, false, culture);
+        Assert.Contains("Vindt het leuk", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Vindt het niet leuk", markup, StringComparison.Ordinal);
     }
 
     private sealed class AnonymousAuth : AuthenticationStateProvider
@@ -141,7 +140,7 @@ public class SchoolRun7CodeDetailTests : BunitContext
 
     private sealed class DetailHandler : HttpMessageHandler
     {
-        private static readonly string Json = JsonSerializer.Serialize(
+        internal static readonly string Json = JsonSerializer.Serialize(
             new TeacherCodeDetailDto(
                 CodeId,
                 ClassId,

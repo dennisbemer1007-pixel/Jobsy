@@ -11,7 +11,6 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
-using Jobsy.Web.Components.Pages.Leraar;
 using Jobsy.Web.Components.Pages.Leerling;
 using Jobsy.Web.Components.Pages.School;
 using Jobsy.Web.Localization;
@@ -345,12 +344,12 @@ public class TeacherSchoolLabelBunitTests : BunitContext
         Assert.Contains("Informeel en open", groupMarkup, StringComparison.Ordinal);
         Assert.Contains("Iets goed afmaken", groupMarkup, StringComparison.Ordinal);
 
-        nav.NavigateTo($"http://localhost/leraar/klas/{ClassId:D}");
-        var overview = Render<LeraarKlasOverview>(p => p.Add(x => x.ClassId, ClassId));
-        AssertNoRawEnums(overview.Markup);
-        Assert.Contains("Rust en duidelijkheid", overview.Markup, StringComparison.Ordinal);
-        Assert.Contains("Weet ik nog niet: 4", overview.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("sch-chip-list\"></div>", overview.Markup, StringComparison.Ordinal);
+        var overviewDto = JsonSerializer.Deserialize<TeacherClassOverviewDto>(PortalHandler.OverviewJson, JobsyApiClient.ApiJson)!;
+        var overviewMarkup = TeacherKlasOverviewSsrHtml.BuildBody(ClassId, overviewDto, 0, [], null, culture);
+        AssertNoRawEnums(overviewMarkup);
+        Assert.Contains("Rust en duidelijkheid", overviewMarkup, StringComparison.Ordinal);
+        Assert.Contains("Weet ik nog niet: 4", overviewMarkup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sch-chip-list\"></div>", overviewMarkup, StringComparison.Ordinal);
 
         nav.NavigateTo("http://localhost/school/resultaten");
         var school = Render<SchoolResults>();
@@ -418,7 +417,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
                 PupilQuestionSet.Vo),
             JobsyApiClient.ApiJson);
 
-        private static readonly string OverviewJson = JsonSerializer.Serialize(
+        internal static readonly string OverviewJson = JsonSerializer.Serialize(
             new TeacherClassOverviewDto(
                 ClassId,
                 "2B",
