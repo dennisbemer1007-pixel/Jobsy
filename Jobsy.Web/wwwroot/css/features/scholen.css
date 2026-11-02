@@ -1715,3 +1715,34 @@ html.using-keyboard .ll-question__text:focus-visible {
     color: #fff;
     border-color: var(--brand);
 }
+
+/* SSR teacher bottom nav: "Meer" without Blazor drawer */
+.sch-bottom-nav__more-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.sch-bottom-nav__more-wrap > summary {
+    list-style: none;
+}
+
+.sch-bottom-nav__more-wrap > summary::-webkit-details-marker {
+    display: none;
+}
+
+.sch-bottom-nav__more-panel {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md, 0 8px 24px rgb(0 0 0 / 12%));
+}

@@ -133,6 +133,18 @@ public static partial class PageAssetCatalog
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/scholen.css"),
     ];
 
+    /// <summary>Lean bundles for school / teacher portal pages rendered outside the Blazor shell.</summary>
+    private static readonly string[] SchoolSsrCoreCss =
+    [
+        WwwrootAssetCatalog.UrlLeadingSlash("css/tokens.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/app.min.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/stijl-a.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/form-fields.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/enterprise-ui.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/scholen.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/leerling-paspoort-g78.css"),
+    ];
+
     public static readonly string[] AccountCss =
     [
         WwwrootAssetCatalog.Url("css/features/account-mfa.css"),
@@ -255,6 +267,21 @@ public static partial class PageAssetCatalog
     {
         var list = new List<string>(PupilSsrCoreCss.Length + 4);
         list.AddRange(PupilSsrCoreCss);
+        foreach (var url in RouteStylesheets(rawPath))
+        {
+            if (!list.Contains(url, StringComparer.Ordinal))
+            {
+                list.Add(url);
+            }
+        }
+
+        return list;
+    }
+
+    public static IReadOnlyList<string> StylesheetsForSchoolSsr(string? rawPath = null)
+    {
+        var list = new List<string>(SchoolSsrCoreCss.Length + 4);
+        list.AddRange(SchoolSsrCoreCss);
         foreach (var url in RouteStylesheets(rawPath))
         {
             if (!list.Contains(url, StringComparer.Ordinal))
