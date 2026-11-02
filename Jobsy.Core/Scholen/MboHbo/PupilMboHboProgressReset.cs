@@ -6,6 +6,9 @@ namespace Jobsy.Core.Scholen.MboHbo;
 /// <summary>Clears MBO/HBO session data when a pupil code is reused (replace / fresh start).</summary>
 public static class PupilMboHboProgressReset
 {
+    /// <summary>Class KPI average: ignore implausible single-pupil totals (open/stale sessions).</summary>
+    public const int MaxActiveMinutesForAverage = 120;
+
     public static void ApplyFreshStart(PupilCode code, PupilQuestionSet questionSet)
     {
         if (questionSet != PupilQuestionSet.MboHbo)
@@ -64,12 +67,39 @@ public static class PupilMboHboProgressReset
             return null;
         }
 
-        if (stamps.Count == 1)
+        var total = 0d;
+        for (var i = 0; i < stamps.Count; i++)
         {
-            return 1;
+            if (i == 0)
+            {
+                total += 1;
+                continue;
+            }
+
+            var gap = (stamps[i] - stamps[i - 1]).TotalMinutes;
+            if (gap <= 0)
+            {
+                continue;
+            }
+
+            // Long idle between blocks = new session; don't count days/weeks as active time.
+            total += gap > 45 ? 1 : gap;
         }
 
-        var minutes = (stamps[^1] - stamps[0]).TotalMinutes;
-        return (int)Math.Clamp(Math.Round(minutes), 1, 180);
+        return (int)Math.Clamp(Math.Round(total), 1, 180);
+    }
+
+    public static int? MedianMinutes(IReadOnlyList<int> durations)
+    {
+        if (durations.Count == 0)
+        {
+            return null;
+        }
+
+        var sorted = durations.OrderBy(m => m).ToList();
+        var mid = sorted.Count / 2;
+        return sorted.Count % 2 == 1
+            ? sorted[mid]
+            : (int)Math.Round((sorted[mid - 1] + sorted[mid]) / 2.0);
     }
 }

@@ -81,6 +81,18 @@ public sealed class PupilStoryPdfLinkTests
     }
 
     [Fact]
+    public void NeedsCanonicalRedirect_true_for_bare_trailing_question_mark()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Path = PupilStoryPdfLink.Path;
+        http.Request.QueryString = new QueryString("?");
+        http.Features.Set<IHttpRequestFeature>(
+            new RawTargetFeature("/leerling/pdf?"));
+        Assert.True(PupilStoryPdfLink.NeedsCanonicalRedirect(http.Request));
+        Assert.Equal("/leerling/pdf", PupilStoryPdfLink.SanitizeHref("/leerling/pdf?"));
+    }
+
+    [Fact]
     public void NeedsCanonicalRedirect_false_for_clean_url()
     {
         var http = new DefaultHttpContext();

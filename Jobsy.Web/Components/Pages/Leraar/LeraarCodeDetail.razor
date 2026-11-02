@@ -73,9 +73,42 @@ else if (_detail.QuestionSet == PupilQuestionSet.MboHbo && _detail.PdfAvailable)
         </div>
         <p class="sch-banner-info">@Culture["Leraar.Detail.NoNameNote"]</p>
     </header>
-    <section class="sch-card panel-section">
-        <p>Alle vijf testen zijn afgerond. Download het paspoort-PDF of bekijk het klassenoverzicht.</p>
-    </section>
+    @if (_detail.MboHboOutcomes is { Count: > 0 } mboOutcomes)
+    {
+        <div class="sch-detail-grid">
+            @foreach (var block in mboOutcomes)
+            {
+                <section class="sch-card">
+                    <h2>@block.Title</h2>
+                    <p>@block.Summary</p>
+                    @if (block.TopBars.Count > 0)
+                    {
+                        <ul class="sch-prompt-list">
+                            @foreach (var bar in block.TopBars)
+                            {
+                                <li>@bar.Label · @bar.Percent%</li>
+                            }
+                        </ul>
+                    }
+                    else if (block.Highlights.Count > 0)
+                    {
+                        <div class="sch-chip-list">
+                            @foreach (var highlight in block.Highlights)
+                            {
+                                <span class="sch-chip">@highlight</span>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+    }
+    else
+    {
+        <section class="sch-card panel-section">
+            <p>Alle vijf testen zijn afgerond. Download het paspoort-PDF of bekijk het klassenoverzicht.</p>
+        </section>
+    }
 }
 else if (_detail.Status != PupilCodeStatus.Completed)
 {
