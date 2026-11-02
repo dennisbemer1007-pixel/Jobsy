@@ -156,9 +156,12 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
             """);
         Assert.True(hasEnterpriseUi);
 
-        var chipBorder = await page.Locator(".ent-scope-chip__btn").First.EvaluateAsync<string>(
-            "el => getComputedStyle(el).borderTopWidth");
-        Assert.NotEqual("0px", chipBorder);
+        var scopeName = page.Locator(".sch-topbar__scope-name").First;
+        await scopeName.WaitForAsync(new() { Timeout = 30_000 });
+        await Assertions.Expect(scopeName).ToContainTextAsync("Klas");
+
+        var blazorScript = await page.Locator("script[src*='blazor.web']").CountAsync();
+        Assert.Equal(0, blazorScript);
     }
 
     [Theory]
