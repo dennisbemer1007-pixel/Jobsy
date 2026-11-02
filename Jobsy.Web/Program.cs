@@ -689,6 +689,7 @@ app.MapTeacherPupilReportPdfEndpoints();
 app.MapSchoolPortalEndpoints();
 app.MapSchoolPortalFormEndpoints();
 app.MapSchoolCodeListFileEndpoints();
+app.MapParentPortalEndpoints();
 app.MapParentPassportAuthEndpoints();
 app.MapPupilDroombaanFormEndpoints();
 app.MapPupilLeerlingJourneyEndpoints();
