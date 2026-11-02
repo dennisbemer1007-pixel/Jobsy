@@ -60,7 +60,7 @@ public sealed class MboHboAccPdfDiagnosticTest
 
         var respFollow = await ctx.APIRequest.GetAsync(pdfUrl);
         var bodyFollow = await respFollow.BodyAsync();
-        sb.AppendLine($"GET /leerling/pdf follow redirects -> {(int)respFollow.Status}, len={bodyFollow.Length}, first={ (bodyFollow.Length > 0 ? bodyFollow[0] : 0)}");
+        sb.AppendLine($"GET /leerling/pdf follow redirects -> {(int)respFollow.Status}, len={bodyFollow.Length}, first={(bodyFollow.Length > 0 ? bodyFollow[0] : 0)}");
 
         await File.WriteAllTextAsync(Path.Combine(artifactDir, "pdf-diagnostic.txt"), sb.ToString());
         TestContext.Current.SendDiagnosticMessage(sb.ToString());
