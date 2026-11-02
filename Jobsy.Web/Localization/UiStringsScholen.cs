@@ -505,6 +505,14 @@ public static class UiStringsScholen
         nl["Leerling.G78.Dream.NoneNext"] = "Dan ga je naar <b>Check je droombaan</b>. Daar zoek je zelf een beroep. Dat mag — je hoeft nu niet te kiezen.";
         nl["Leerling.G78.Dream.JourneyMeta"] = "<b>Klaar!</b> · tijd om een beroep te kiezen";
         nl["Leerling.G78.Dream.Coach"] = "Dit zijn 5 beroepen die goed bij jou passen. Dat zien we aan jouw antwoorden! Kies er één. Of tik: Ik vind er geen leuk. Druk daarna op Bevestigen.";
+        nl["Leerling.G78.Dream.CheckJourneyMeta"] = "<b>Check je droombaan</b> · zoek of kies";
+        nl["Leerling.G78.Dream.CheckKicker"] = "Zoek of kies";
+        nl["Leerling.G78.Dream.CheckCoach"] = "Typ een beroep of kies er één uit de lijst. Druk op Bewaar. Dan zie je wat je al hebt en wat je nog kunt leren.";
+        nl["Leerling.G78.Dream.ReadCheck"] = "Lobsy leest de uitleg voor";
+        nl["Leerling.G78.Dream.SuggestionsLead"] = "Deze beroepen passen goed bij jou:";
+        nl["Leerling.G78.Dream.PickSuggestion"] = "Kies dit beroep";
+        nl["Leerling.G78.Dream.ChangePick"] = "Andere keuze";
+        nl["Leerling.G78.Dream.ContinuePassport"] = "Verder naar paspoort";
         nl["Leerling.Wereld.HeaderGrade"] = "Groep 7 en 8";
         nl["Leerling.Wereld.Kicker"] = "Voor je begint";
         nl["Leerling.Wereld.Title"] = "Kies jouw wereld";

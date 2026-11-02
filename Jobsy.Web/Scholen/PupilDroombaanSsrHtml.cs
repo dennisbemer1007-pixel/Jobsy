@@ -25,29 +25,21 @@ public static class PupilDroombaanSsrHtml
         string antiforgeryFieldHtml,
         bool useGroep78Shell = false,
         string? journeyThemeKey = null,
-        IPupilQuestionSetRegistry? registry = null)
+        IPupilQuestionSetRegistry? registry = null,
+        bool forceJobPick = false)
     {
-        if (useGroep78Shell && registry is not null && ShouldShowJobPick(model))
+        if (useGroep78Shell && registry is not null)
         {
-            return BuildGroep78JobPick(model, culture, antiforgeryFieldHtml, journeyThemeKey, registry);
+            if (forceJobPick || ShouldShowJobPick(model))
+            {
+                return BuildGroep78JobPick(model, culture, antiforgeryFieldHtml, journeyThemeKey, registry);
+            }
+
+            return BuildGroep78DreamCheck(model, culture, antiforgeryFieldHtml, journeyThemeKey, registry);
         }
 
         var sb = new StringBuilder();
-        if (useGroep78Shell)
-        {
-            var theme = PupilJourneyTheme.NormalizeOrDefault(journeyThemeKey);
-            var band = PupilJourneyTheme.WorldBandImagePath(theme, "koraalrif");
-            sb.Append("""<section class="ll-g78-scene" data-testid="leerling-g78-scene">""");
-            sb.Append("""<section class="band ll-g78-world-band" style="background-image:url('""");
-            sb.Append(band);
-            sb.Append("""');background-position:center 30%;" aria-hidden="true"></section>""");
-            sb.Append("</section>");
-            sb.Append("""<div class="wrap ll-g78-overlap">""");
-        }
-        else
-        {
-            sb.Append("""<div class="ll-reis ll-dream" data-testid="leerling-droombaan">""");
-        }
+        sb.Append("""<div class="ll-reis ll-dream" data-testid="leerling-droombaan">""");
 
         sb.Append("""<section class="card ll-dream-ssr">""");
         sb.Append("<p class=\"ll-question__world\">");
@@ -116,15 +108,7 @@ public static class PupilDroombaanSsrHtml
         sb.Append(WebUtility.HtmlEncode(pdfHref));
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.SavePdf"]));
-        sb.Append("</a></nav>");
-        if (useGroep78Shell)
-        {
-            sb.Append("</div>");
-        }
-        else
-        {
-            sb.Append("</div>");
-        }
+        sb.Append("</a></nav></div>");
 
         return sb.ToString();
     }
@@ -164,17 +148,13 @@ public static class PupilDroombaanSsrHtml
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(culture["Leerling.G78.Dream.Coach"], "ll-dream-intro", culture, "Leerling.G78.Dream.ReadIntro"));
         sb.Append($"""<form method="post" action="{PupilDroombaanFormEndpoints.SavePath}" class="ll-dream-ssr__form" data-ll-job-pick-form="1" autocomplete="off">""");
         sb.Append(antiforgeryFieldHtml);
-        sb.Append("""<input type="hidden" name="DreamJob" value="" data-ll-job-pick-value="1" />""");
         sb.Append("""<div class="job-picks" role="radiogroup" data-testid="ll-g78-job-picks" aria-label="Kies een beroep">""");
         var picks = BuildJobPickList(model);
-        var pickIndex = 0;
         var likes = model.Result.Likes ?? [];
         foreach (var (key, title, domain, blurb) in picks)
         {
-            var selected = pickIndex == 0;
             var why = PupilGroep78MockHtml.JobPickWhyHtml(culture, key, likes);
-            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, title, domain, blurb, selected, journeyThemeKey, why));
-            pickIndex++;
+            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, title, domain, blurb, selected: false, journeyThemeKey, why));
         }
 
         sb.Append(PupilGroep78MockHtml.JobPickNone(culture, selected: false));
@@ -191,6 +171,125 @@ public static class PupilDroombaanSsrHtml
             culture["Leerling.G78.Dream.Coach"],
             culture["Leerling.G78.Dream.Coach"],
             "ll-dream-coach",
+            "kreeft-kijker.png"));
+        sb.Append("</div></div>");
+        return sb.ToString();
+    }
+
+    private static string BuildGroep78DreamCheck(
+        PupilDroombaanPageModel model,
+        CultureState culture,
+        string antiforgeryFieldHtml,
+        string? journeyThemeKey,
+        IPupilQuestionSetRegistry registry)
+    {
+        var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(journeyThemeKey);
+        var sb = new StringBuilder();
+        sb.Append("<section class=\"band jb ll-g78-dream-band\" style=\"background-image:url('/leerling/werelden/img/");
+        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append(";min-height:360px\">");
+        sb.Append("""<div class="wrap ll-g78-dream-band__journey">""");
+        sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
+            culture, registry, journeyThemeKey, "dit-ben-jij", culture["Leerling.G78.Dream.CheckJourneyMeta"], 0, 0, sceneMetaIsHtml: true));
+        sb.Append("</div></section>");
+        sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-g78-dream-wrap" data-testid="leerling-droombaan-check"><div class="q-layout">""");
+        sb.Append("""<section class="card ll-dream-ssr ll-dream-check card-deco">""");
+        if (!string.IsNullOrEmpty(model.FormError))
+        {
+            sb.Append("<p class=\"ll-error\" role=\"alert\">").Append(WebUtility.HtmlEncode(model.FormError)).Append("</p>");
+        }
+
+        sb.Append("<div class=\"qmeta\"><span class=\"kicker\">").Append(WebUtility.HtmlEncode(culture["LeerlingDroom.Title"]));
+        sb.Append("</span><span aria-hidden=\"true\">·</span><span>").Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.CheckKicker"])).Append("</span></div>");
+        sb.Append("<h1 class=\"island-lead\">").Append(WebUtility.HtmlEncode(culture["LeerlingDroom.Lead"])).Append("</h1>");
+        sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(culture["Leerling.G78.Dream.CheckCoach"], "ll-dream-check-coach", culture, "Leerling.G78.Dream.ReadCheck"));
+        sb.Append($"""<form id="leerling-droombaan-form" method="post" action="{PupilDroombaanFormEndpoints.SavePath}" class="ll-dream-ssr__form ll-dream-check__form" autocomplete="off">""");
+        sb.Append(antiforgeryFieldHtml);
+        sb.Append("<label class=\"field\"><span>").Append(WebUtility.HtmlEncode(culture["LeerlingDroom.Search"]));
+        sb.Append("</span><input class=\"inp\" type=\"text\" name=\"DreamJob\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(model.DreamJobFieldValue));
+        sb.Append("\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.Search"]));
+        sb.Append("\" autocomplete=\"off\" data-testid=\"leerling-droombaan-search\" /></label>");
+        sb.Append("""<div class="qfoot ll-dream-check__save-row">""");
+        sb.Append("""<button type="submit" class="btn btn-main" data-testid="leerling-droombaan-save">""");
+        sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.Save"]));
+        sb.Append(PupilGroep78SsrParts.NextSvg).Append("</button></div></form>");
+
+        var suggestions = model.Result.JobSuggestions ?? [];
+        if (suggestions.Count > 0)
+        {
+            sb.Append("<p class=\"jpick-hint\">").Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.SuggestionsLead"])).Append("</p>");
+            sb.Append("""<div class="ll-g78-job-suggestions" data-testid="ll-g78-dream-suggestions">""");
+            foreach (var job in suggestions)
+            {
+                sb.Append("<article class=\"ll-g78-job-suggestion\"><form method=\"post\" action=\"");
+                sb.Append(PupilDroombaanFormEndpoints.SavePath);
+                sb.Append("\">");
+                sb.Append(antiforgeryFieldHtml);
+                sb.Append("<input type=\"hidden\" name=\"DreamJob\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(job.Title));
+                sb.Append("\" /><p class=\"ll-g78-job-suggestion__k\">").Append(WebUtility.HtmlEncode(job.DomainLabel));
+                sb.Append("</p><p class=\"ll-g78-job-suggestion__title\">").Append(WebUtility.HtmlEncode(job.Title));
+                sb.Append("</p><p class=\"ll-g78-job-suggestion__match\">").Append(job.MatchPercent).Append("% match</p>");
+                sb.Append("<p class=\"ll-g78-job-suggestion__blurb\">").Append(WebUtility.HtmlEncode(job.Blurb));
+                sb.Append("</p><button type=\"submit\" class=\"btn btn-ghost\">").Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.PickSuggestion"]));
+                sb.Append("</button></form></article>");
+            }
+
+            sb.Append("</div>");
+        }
+        else
+        {
+            sb.Append("<p class=\"jpick-hint\">").Append(WebUtility.HtmlEncode(culture["LeerlingDroom.PickFromList"])).Append("</p>");
+            sb.Append("""<div class="ll-dream-check__catalog">""");
+            foreach (var job in DreamJobCatalog.All.Take(12))
+            {
+                sb.Append("<form method=\"post\" action=\"");
+                sb.Append(PupilDroombaanFormEndpoints.SavePath);
+                sb.Append("\">");
+                sb.Append(antiforgeryFieldHtml);
+                sb.Append("<input type=\"hidden\" name=\"DreamJob\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(job.TitleNl));
+                sb.Append("\" /><button type=\"submit\" class=\"btn btn-ghost\">");
+                sb.Append(WebUtility.HtmlEncode(job.TitleNl));
+                sb.Append("</button></form>");
+            }
+
+            sb.Append("</div>");
+        }
+
+        sb.Append("""<div class="ll-dream-check__result">""");
+        AppendDreamResult(sb, model, culture);
+        sb.Append("</div>");
+
+        var pdfHref = PupilStoryPdfLink.Href(
+            null,
+            PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
+        var hasDream = model.Dream is not null
+                       && !string.IsNullOrWhiteSpace(model.Dream.JobKey)
+                       && !string.Equals(model.Dream.JobKey, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase);
+        sb.Append("""<div class="qfoot res-foot ll-dream-check__nav" aria-label="Verder">""");
+        sb.Append("""<a class="btn btn-ghost" href="/leerling/droombaan?pick=1" data-testid="leerling-droombaan-change-pick">""");
+        sb.Append(PupilGroep78SsrParts.BackSvg).Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.ChangePick"])).Append("</a>");
+        sb.Append("""<a class="btn btn-ghost" href="/leerling/dit-ben-jij">""");
+        sb.Append(WebUtility.HtmlEncode(culture["Leerling.Reis.Prev"])).Append("</a>");
+        sb.Append("<a class=\"btn btn-ghost\" href=\"");
+        sb.Append(WebUtility.HtmlEncode(pdfHref));
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["LeerlingDroom.SavePdf"])).Append("</a>");
+        if (hasDream)
+        {
+            sb.Append("""<a class="btn btn-main" href="/leerling/paspoort" style="margin-left:auto">""");
+            sb.Append(WebUtility.HtmlEncode(culture["Leerling.G78.Dream.ContinuePassport"]));
+            sb.Append(PupilGroep78SsrParts.NextSvg).Append("</a>");
+        }
+
+        sb.Append("</div></section>");
+        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
+            culture,
+            culture["Leerling.G78.Dream.CheckCoach"],
+            culture["Leerling.G78.Dream.CheckCoach"],
+            "ll-dream-check-coach-aside",
             "kreeft-kijker.png"));
         sb.Append("</div></div>");
         return sb.ToString();

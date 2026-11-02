@@ -100,13 +100,16 @@ public static class PupilDroombaanFormEndpoints
         var journeyThemeKey = PupilJourneyTheme.NormalizeOrDefault(progress?.JourneyThemeKey);
 
         var registry = http.RequestServices.GetRequiredService<IPupilQuestionSetRegistry>();
+        var forceJobPick = string.Equals(http.Request.Query["pick"], "1", StringComparison.Ordinal)
+                           || string.Equals(http.Request.Query["pick"], "true", StringComparison.OrdinalIgnoreCase);
         var body = PupilDroombaanSsrHtml.BuildBody(
             new PupilDroombaanPageModel(result, result.DreamJob, fieldValue, formError),
             culture,
             antiforgeryHtml,
             useGroep78Shell,
             journeyThemeKey,
-            registry);
+            registry,
+            forceJobPick);
 
         var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
         {
