@@ -69,7 +69,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         // Identity is the Jobsy ES256 access token only — do not overwrite with IdP access_token.
 
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        ApplyDefaultAccept(request);
 
         byte[]? bodyBytes = null;
         if (request.Content is not null
@@ -121,7 +121,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyTrustedClientIp(retry, httpContext);
         user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
         ApplyParentCookie(retry, httpContext, user);
-        retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        ApplyDefaultAccept(retry);
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
         CaptureRenewedApiTicket(retriedResponse, httpContext, user);
         CaptureRenewedParentApiTicket(retriedResponse, httpContext, user);
@@ -676,5 +676,20 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         return httpUser ?? new ClaimsPrincipal(new ClaimsIdentity());
+    }
+
+    private static void ApplyDefaultAccept(HttpRequestMessage request)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (path.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/ouder/antwoorden/pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/pdf"));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*", 0.8));
+            return;
+        }
+
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 }

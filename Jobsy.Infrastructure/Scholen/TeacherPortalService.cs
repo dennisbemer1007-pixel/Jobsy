@@ -360,11 +360,17 @@ public sealed class TeacherPortalService : ITeacherPortalService
             : "******";
 
         var (progressCurrent, totalQuestions) = ResolveProgressCounts(code, code.SchoolClass!);
-        var resultPending = code.Result is null
+        var questionSet = code.SchoolClass!.QuestionSet;
+        var mboComplete = questionSet == PupilQuestionSet.MboHbo
+                          && PupilMboHboTeacherProgress.IsFullyComplete(code, code.SchoolClass);
+
+        // MBO/HBO has no PupilResult story until optional PDF build; 5/5 blocks is the real completion signal.
+        var resultPending = !mboComplete
+                            && code.Result is null
                             && (code.Status == PupilCodeStatus.Completed
                                 || (totalQuestions > 0 && progressCurrent >= totalQuestions));
 
-        int? duration = code.SchoolClass!.QuestionSet == PupilQuestionSet.MboHbo
+        int? duration = questionSet == PupilQuestionSet.MboHbo
             ? PupilMboHboProgressReset.ActiveMinutes(code.Progress)
             : code.Progress?.StartedAtUtc is DateTime started && code.Progress.CompletedAtUtc is DateTime done
                 ? (int)Math.Round((done - started).TotalMinutes)
@@ -377,10 +383,6 @@ public sealed class TeacherPortalService : ITeacherPortalService
         IReadOnlyList<string> dislikes = [];
         string? likeOther = null;
         string? dislikeOther = null;
-
-        var questionSet = code.SchoolClass.QuestionSet;
-        var mboComplete = questionSet == PupilQuestionSet.MboHbo
-                          && PupilMboHboTeacherProgress.IsFullyComplete(code, code.SchoolClass);
 
         if (questionSet != PupilQuestionSet.MboHbo
             && code.Status == PupilCodeStatus.Completed
