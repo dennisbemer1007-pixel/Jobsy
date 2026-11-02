@@ -58,6 +58,7 @@ public sealed class ScholenSsrPhase7Tests
         var frame = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilLeerlingSsrFrame.cs"));
         Assert.DoesNotContain("_framework/blazor", frame, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("leerling-journey-ssr.js", frame, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.UrlLeadingSlash(\"js/leerling-journey-ssr.js\")", frame, StringComparison.Ordinal);
         Assert.Contains("read-aloud.js", frame, StringComparison.Ordinal);
 
         Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web/wwwroot/js/leerling-journey-ssr.js")));

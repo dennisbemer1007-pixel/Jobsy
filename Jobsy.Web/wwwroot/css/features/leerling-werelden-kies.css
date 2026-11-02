@@ -1997,6 +1997,19 @@
   box-shadow: none;
 }
 
+.ll-g78-shell .btn-main:disabled,
+.ll-g78-shell [data-ll-puzzle-continue]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.15);
+  box-shadow: none;
+}
+
+.ll-g78-shell [data-ll-schelp-choice].is-wrong {
+  outline: 2px solid var(--coral, #d4532f);
+  outline-offset: 2px;
+}
+
 .ll-vt-lob {
   display: flex;
   align-items: center;

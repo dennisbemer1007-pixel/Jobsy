@@ -71,10 +71,11 @@ public static class PupilReisSsrHtml
             : world?.TitleKey ?? "Leerling.World.Reef.Title";
         if (groep78)
         {
-            var bankIndex = state.CurrentIndex + 1;
+            var qInWorldMeta = def.IndexInWorld(state.CurrentIndex) + 1;
+            var qWorldTotalMeta = def.Worlds.FirstOrDefault(w => string.Equals(w.WorldKey, worldKey, StringComparison.OrdinalIgnoreCase))?.ItemCount ?? 15;
             sb.Append("<div class=\"qmeta\"><span class=\"kicker\">").Append(PupilLeerlingSsrParts.E(culture[worldTitleKey]));
             sb.Append("</span><span aria-hidden=\"true\">·</span><span>");
-            sb.Append(PupilLeerlingSsrParts.E(string.Format(culture["Leerling.G78.Journey.QuestionMeta"], bankIndex, state.TotalItems)));
+            sb.Append(PupilLeerlingSsrParts.E(string.Format(culture["Leerling.G78.Journey.QuestionMeta"], qInWorldMeta, qWorldTotalMeta)));
             sb.Append("</span></div>");
         }
         else
