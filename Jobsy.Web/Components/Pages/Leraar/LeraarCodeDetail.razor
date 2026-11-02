@@ -34,7 +34,8 @@ else if (_detail is null)
 {
     <p class="state-message error">@(_missingCode ? Culture["Leraar.Code.NotFound"] : Culture["Leraar.Class.NotFound"])</p>
 }
-else if (_detail.ResultPending || (_detail.Status == PupilCodeStatus.Completed && _detail.Story is null))
+else if ((_detail.ResultPending || (_detail.Status == PupilCodeStatus.Completed && _detail.Story is null))
+         && !(_detail.QuestionSet == PupilQuestionSet.MboHbo && _detail.PdfAvailable))
 {
     <header class="sch-page-header">
         <p class="sch-breadcrumb">

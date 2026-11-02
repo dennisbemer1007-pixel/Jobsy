@@ -7,6 +7,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
@@ -231,6 +232,45 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Mbo_hbo_five_blocks_without_pupil_result_shows_pdf_not_pending()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (_, schoolId, classId) = await SeedMboHboClassAsync(codeCount: 1);
+        var teacherId = await SeedTeacherAsync(schoolId, [classId]);
+        Guid codeId;
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            codeId = await db.PupilCodes.Where(c => c.SchoolClassId == classId).Select(c => c.Id).FirstAsync();
+            var state = new PupilMboHboProgressState();
+            var now = DateTime.UtcNow.ToString("O");
+            foreach (var block in PupilMboHboCatalog.AllBlocks)
+            {
+                state.BlocksCompleted[PupilMboHboProgressState.BlockKey(block)] = now;
+            }
+
+            db.PupilProgresses.Add(new PupilProgress
+            {
+                PupilCodeId = codeId,
+                MboHboProgressJson = state.ToJson(),
+                StartedAtUtc = DateTime.UtcNow.AddMinutes(-45),
+                UpdatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+        var detail = await client.GetFromJsonAsync<TeacherCodeDetailDto>(
+            $"api/teacher/classes/{classId}/codes/{codeId}", Json);
+        Assert.NotNull(detail);
+        Assert.False(detail!.ResultPending);
+        Assert.True(detail.PdfAvailable);
+        Assert.Equal(PupilQuestionSet.MboHbo, detail.QuestionSet);
+        Assert.Equal(5, detail.ProgressCurrent);
+        Assert.Null(detail.Story);
+    }
+
+    [Fact]
     public async Task Parental_info_missing_blocks_teacher_open_window()
     {
         await EnableSchoolsAsync(true, perCode: true);
@@ -393,6 +433,55 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         row.SchoolsEnabled = enabled;
         row.SchoolPerCodeResultsEnabled = perCode;
         await db.SaveChangesAsync();
+    }
+
+    private async Task<(Guid AdminId, Guid SchoolId, Guid ClassId)> SeedMboHboClassAsync(int codeCount)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var schoolId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var domain = $"m{schoolId:N}.nl"[..20] + ".nl";
+        db.Schools.Add(new School
+        {
+            Id = schoolId,
+            Name = "MBO Teacher College",
+            City = "Naaldwijk",
+            AllowedEmailDomains = JsonSerializer.Serialize(new[] { domain }),
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _factory.AdminId
+        });
+        db.Users.Add(new User
+        {
+            Id = adminId,
+            Email = $"sa-{adminId:N}@{domain}",
+            FullName = "J. Visser",
+            Role = UserRole.SchoolAdmin,
+            SchoolId = schoolId,
+            IsActive = true,
+            AuthenticatorEnabled = true
+        });
+        var classId = Guid.NewGuid();
+        var schoolClass = new SchoolClass
+        {
+            Id = classId,
+            SchoolId = schoolId,
+            Name = "M2T",
+            Level = SchoolLevel.Mbo2,
+            Year = 2,
+            QuestionSet = PupilQuestionSet.MboHbo,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = codeCount,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.SchoolClasses.Add(schoolClass);
+        await db.SaveChangesAsync();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        await codes.GenerateAsync(codeCount, schoolClass);
+        return (adminId, schoolId, classId);
     }
 
     private async Task<(Guid AdminId, Guid SchoolId, Guid ClassId)> SeedSchoolWithClassAsync(
