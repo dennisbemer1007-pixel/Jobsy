@@ -1535,9 +1535,15 @@
   }
 
   .ll-g78-shell .res-foot .btn-ghost {
-    flex: 1;
-    min-width: calc(50% - 8px);
+    flex: 1 1 calc(50% - 8px);
+    width: auto !important;
+    max-width: calc(50% - 8px);
+    min-width: 0;
     justify-content: center;
+  }
+
+  .ll-g78-shell .res-foot .btn-main {
+    flex: 1 1 100%;
   }
 
   .ll-g78-shell .ll-g78-dream-wrap {
