@@ -146,6 +146,8 @@ public static class PupilPassportLocalizedCopy
         "LeerlingPassport.Discover.Letter.C.3" => "Where do you help others by planning well?",
         "LeerlingPassport.G78.Jobs.TitleFew" => "Jobs that fit you",
         "LeerlingPassport.G78.Jobs.FewSub" => "These are the jobs that fit you best.",
+        "LeerlingPassport.G78.Jobs.NoneYet" =>
+            "No occupations at 70% match yet. Finish your subjects test to sharpen suggestions.",
         "LeerlingPassport.G78.Dream.Heading" => "My dream job: {0}",
         "LeerlingPassport.G78.Dream.Sub" => "This is one possible route. There are always many paths.",
         "LeerlingPassport.G78.Dream.Question" => "What appeals to you most in this work? Do you know someone who does it?",

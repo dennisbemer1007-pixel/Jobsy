@@ -277,7 +277,11 @@
 
 @media (min-width: 720px) {
     .lp-g78__grid3 {
-        grid-template-columns: 1fr 1fr 2fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+    }
+
+    .lp-g78__grid3 > .lp-g78__dis {
+        min-width: 0;
     }
 }
 

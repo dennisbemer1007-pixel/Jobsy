@@ -109,7 +109,7 @@
                     <div class="lp-g78__own">@Culture["LeerlingPassport.OwnWord"]<b>@Model.LikeOwnWord</b></div>
                 }
             </section>
-            <section class="lp-g78__card lp-g78__dis">
+            <section class="lp-g78__card lp-g78__dis" data-testid="leerling-paspoort-dislikes">
                 <h3>@Culture["LeerlingPassport.Section.Dislikes"]</h3>
                 @if (HasDislikes)
                 {
@@ -214,7 +214,7 @@
                     <article class="lp-g78__card lp-g78__job">
                         <div class="lp-g78__job-k">@job.DomainLabel</div>
                         <h4>@job.Title</h4>
-                        @if (job.MatchPercent is > 0)
+                        @if (job.MatchPercent is >= 70)
                         {
                             <p class="lp-g78__job-match">@Culture.Format("LeerlingPassport.G78.Jobs.MatchSuggest", job.MatchPercent.Value)</p>
                         }

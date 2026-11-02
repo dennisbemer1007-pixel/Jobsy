@@ -74,6 +74,7 @@ public sealed class PupilMboHboCatalogTests
     public void Interesse_dimension_keeps_riasec_letter_and_dutch_name()
     {
         Assert.Equal("R (Praktisch)", PupilMboHboDimensionLabels.Display("R (Praktisch)"));
+        Assert.Equal("R (Praktisch)", PupilMboHboDimensionLabels.Display("R"));
     }
 
     [Fact]

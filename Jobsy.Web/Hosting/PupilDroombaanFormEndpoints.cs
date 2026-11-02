@@ -94,10 +94,8 @@ public static class PupilDroombaanFormEndpoints
             // Theme shell is optional; page still works without progress.
         }
 
-        var useGroep78Shell = result.QuestionSet == PupilQuestionSet.Groep78
-                              && progress?.QuestionSet == PupilQuestionSet.Groep78
-                              && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
-        var journeyThemeKey = progress?.JourneyThemeKey;
+        var useGroep78Shell = result.QuestionSet == PupilQuestionSet.Groep78;
+        var journeyThemeKey = PupilJourneyTheme.NormalizeOrDefault(progress?.JourneyThemeKey);
 
         var body = PupilDroombaanSsrHtml.BuildBody(
             new PupilDroombaanPageModel(result, result.DreamJob, fieldValue, formError),

@@ -3,6 +3,16 @@ namespace Jobsy.Core.Scholen.MboHbo;
 /// <summary>Dutch labels from CSV dimensie column (no English codes, no truncation).</summary>
 public static class PupilMboHboDimensionLabels
 {
+    private static readonly Dictionary<char, string> RiasecShortLabels = new()
+    {
+        ['R'] = "R (Praktisch)",
+        ['I'] = "I (Onderzoekend)",
+        ['A'] = "A (Artistiek)",
+        ['S'] = "S (Sociaal)",
+        ['E'] = "E (Ondernemend)",
+        ['C'] = "C (Conventioneel)",
+    };
+
     public static string Display(string dimension)
     {
         if (string.IsNullOrWhiteSpace(dimension))
@@ -11,6 +21,10 @@ public static class PupilMboHboDimensionLabels
         }
 
         var s = dimension.Trim();
+        if (s.Length == 1 && RiasecShortLabels.TryGetValue(char.ToUpperInvariant(s[0]), out var shortLabel))
+        {
+            return shortLabel;
+        }
         var dash = s.IndexOf('–', StringComparison.Ordinal);
         if (dash < 0)
         {

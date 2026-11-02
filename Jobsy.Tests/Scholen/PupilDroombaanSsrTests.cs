@@ -19,6 +19,8 @@ public sealed class PupilDroombaanSsrTests
         Assert.Contains("ll-dream-ssr__form", html, StringComparison.Ordinal);
         Assert.Contains("useGroep78Shell", html, StringComparison.Ordinal);
         Assert.Contains("ll-g78-scene", html, StringComparison.Ordinal);
+        Assert.Contains("result.QuestionSet == PupilQuestionSet.Groep78", endpoints, StringComparison.Ordinal);
+        Assert.Contains("NormalizeOrDefault", endpoints, StringComparison.Ordinal);
         Assert.Contains("PupilStoryPdfLink", html, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingSpeak", html, StringComparison.Ordinal);
         Assert.DoesNotContain("LeerlingCoachCue", html, StringComparison.Ordinal);
