@@ -661,6 +661,55 @@ public sealed class MboHboFlowPlaywrightTests
     /// After deploy: capture uitkomst + PDF for an already-completed pupil code (acc walkthrough).
     /// JOBSY_ACC_PUPIL_CODE=C8X-2MK JOBSY_WALKTHROUGH_ARTIFACTS=/cursor/stores/bot/mbohbo2/post-deploy-acc
     /// </summary>
+    [Fact(Timeout = 300_000, DisplayName = "MboHbo_acc_teacher_bekijk")]
+    public async Task Capture_teacher_bekijk_on_acc()
+    {
+        _ = TestContext.Current.CancellationToken;
+        if (!string.Equals(Environment.GetEnvironmentVariable("RUN_MBO_HBO_E2E"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "https://acceptatie.lobsy.nl").TrimEnd('/');
+        if (!await KbE2e.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS")
+            ?? "/cursor/stores/bot/mbohbo3";
+        Directory.CreateDirectory(artifactDir);
+        var liveCommit = await WaitForDeployCommitAsync(baseUrl, TimeSpan.FromMinutes(2));
+        await File.WriteAllTextAsync(Path.Combine(artifactDir, "lobsy-commit.txt"), liveCommit);
+
+        var classId = Guid.TryParse(Environment.GetEnvironmentVariable("JOBSY_ACC_MBO_HBO_CLASS_ID"), out var cid)
+            ? cid
+            : DemoSchoolIds.ClassMbo2Id;
+        var plainCode = (Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CODE") ?? "4CY-VND").Trim();
+
+        _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(KbE2e.DesktopContext());
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(180_000);
+        var (teacherEmail, teacherPassword) = ResolveTeacherCredentials();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, teacherEmail, teacherPassword));
+        await page.GotoAsync($"{baseUrl}/leraar/klas/{classId:D}/codes", new() { WaitUntil = WaitUntilState.Load });
+        await WaitBlazorAsync(page);
+        await ShotAsync(page, artifactDir, "11-docent-codes");
+        var codeRow = page.Locator("tr.ent-data-table__row", new() { HasText = plainCode });
+        Assert.True(await codeRow.CountAsync() > 0, $"Code {plainCode} not in teacher table.");
+        await codeRow.GetByRole(AriaRole.Link, new() { Name = "Bekijk" }).ClickAsync();
+        await WaitBlazorAsync(page);
+        await page.Locator("[data-testid=\"leraar-code-detail-mbo\"], [data-testid=\"leraar-code-detail\"]")
+            .First.WaitForAsync(new() { Timeout = 120_000 });
+        var body = await page.Locator("body").InnerTextAsync();
+        Assert.DoesNotContain("Code niet gevonden", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("niet gevonden", body, StringComparison.OrdinalIgnoreCase);
+        await ShotAsync(page, artifactDir, "12-docent-bekijk");
+    }
+
     [Fact(Timeout = 600_000, DisplayName = "MboHbo_acc_outcome_snapshots")]
     public async Task Capture_completed_pupil_outcomes_on_acc()
     {
