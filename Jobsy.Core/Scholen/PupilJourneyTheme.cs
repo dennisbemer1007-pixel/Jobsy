@@ -232,6 +232,31 @@ public static class PupilJourneyTheme
         return $"/images/leerling/werelden/puzzles/{theme}/card-back.jpg";
     }
 
+    public static (string Stem, string Position) ResultSceneBand(string? themeKey)
+        => NormalizeOrDefault(themeKey) switch
+        {
+            Eilandtuin => ("dot-tuin-6", "center 55%"),
+            Sterrenkust => ("dot-ster-5", "center 45%"),
+            _ => ("lagune", "center 40%"),
+        };
+
+    public static IReadOnlyList<string> ResultTileStems(string? themeKey)
+        => NormalizeOrDefault(themeKey) switch
+        {
+            Eilandtuin => ["dot-tuin-1", "dot-tuin-2", "dot-tuin-4", "dot-tuin-6"],
+            Sterrenkust => ["dot-ster-1", "dot-ster-2", "dot-ster-4", "dot-ster-5"],
+            _ => ["rif", "grot", "vuurtoren", "lagune"],
+        };
+
+    public static int PuzzleOrdinal(string puzzleKey)
+        => puzzleKey.Trim().ToLowerInvariant() switch
+        {
+            "schelpenrij" => 1,
+            "schatkaart" => 2,
+            "vuurtorenlampen" => 3,
+            _ => 1,
+        };
+
     public static IEnumerable<string> AllPuzzleAssetPaths()
     {
         foreach (var theme in All)

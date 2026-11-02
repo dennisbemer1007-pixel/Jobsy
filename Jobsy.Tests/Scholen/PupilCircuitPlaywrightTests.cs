@@ -596,15 +596,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             {
                 await FollowReisRedirectAsync();
                 await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
-                var likes = page.Locator("fieldset.ll-chips").Nth(0);
-                await likes.GetByRole(AriaRole.Button, new() { Name = "Sport", Exact = true }).ClickAsync();
+                await page.Locator("[data-ll-chip-like=\"sport\"]").ClickAsync();
             })));
         Row("11b-eiland-niet-leuk", "load+screenshot", VisualResult(
             await CaptureAsync("11b-eiland-niet-leuk", "11b-zee-pauze-niet-leuk.png", async () =>
             {
                 await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
-                var dislikes = page.Locator("fieldset.ll-chips").Nth(1);
-                await dislikes.GetByRole(AriaRole.Button, new() { Name = "Rekenen", Exact = true }).ClickAsync();
+                await page.Locator("[data-ll-island-next]").ClickAsync();
+                await page.Locator("[data-ll-chip-dislike=\"rekenen\"]").ClickAsync();
             })));
 
         var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
@@ -643,12 +642,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 }
 
                 await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
-            })));
+            }, fullPage: true)));
 
         await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.Locator("[data-testid=leerling-droombaan-search]").WaitForAsync();
+        await page.Locator("[data-testid=ll-g78-job-picks]").WaitForAsync();
         Row("12-droombaan", "load+screenshot", VisualResult(
-            await CaptureAsync("12-droombaan", "12-zee-beroep-kiezen.png", async () => { })));
+            await CaptureAsync("12-droombaan", "12-zee-beroep-kiezen.png", async () => { }, fullPage: true)));
 
         var passport = await SeedCompletedWithDreamJobAsync("kok", PupilJourneyTheme.ZeeExpeditie);
         await page.Context.ClearCookiesAsync();

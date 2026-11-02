@@ -57,6 +57,8 @@
           }
           btn.classList.toggle("is-on", likeSet.has(key));
           btn.classList.toggle("is-like", likeSet.has(key));
+          btn.classList.toggle("on", likeSet.has(key));
+          btn.classList.toggle("like", likeSet.has(key));
           sync();
         });
       });
@@ -72,6 +74,8 @@
           }
           btn.classList.toggle("is-on", dislikeSet.has(key));
           btn.classList.toggle("is-dislike", dislikeSet.has(key));
+          btn.classList.toggle("on", dislikeSet.has(key));
+          btn.classList.toggle("dislike", dislikeSet.has(key));
           sync();
         });
       });
@@ -86,6 +90,19 @@
 
       form.addEventListener("submit", function () {
         sync();
+      });
+
+      form.querySelectorAll("[data-ll-chip-like]").forEach(function (btn) {
+        var key = btn.getAttribute("data-ll-chip-like");
+        if (!key) return;
+        btn.classList.toggle("on", likeSet.has(key));
+        btn.classList.toggle("like", likeSet.has(key));
+      });
+      form.querySelectorAll("[data-ll-chip-dislike]").forEach(function (btn) {
+        var key = btn.getAttribute("data-ll-chip-dislike");
+        if (!key) return;
+        btn.classList.toggle("on", dislikeSet.has(key));
+        btn.classList.toggle("dislike", dislikeSet.has(key));
       });
     });
   }
@@ -126,19 +143,81 @@
     });
   }
 
+  function bindPuzzleIntro(root) {
+    root.querySelectorAll("[data-ll-puzzle-start]").forEach(function (btn) {
+      if (btn.getAttribute("data-ll-bound") === "1") return;
+      btn.setAttribute("data-ll-bound", "1");
+      btn.addEventListener("click", function () {
+        var card = btn.closest(".ll-puzzle-g78");
+        if (!card) return;
+        var intro = card.querySelector('[data-ll-puzzle-phase="intro"]');
+        var play = card.querySelector('[data-ll-puzzle-phase="play"]');
+        if (intro) intro.hidden = true;
+        if (play) play.hidden = false;
+      });
+    });
+  }
+
+  function bindIslandSteps(root) {
+    root.querySelectorAll("form[data-ll-chips-form]").forEach(function (form) {
+      if (form.getAttribute("data-ll-island-bound") === "1") return;
+      if (!form.querySelector("[data-ll-island-step]")) return;
+      form.setAttribute("data-ll-island-bound", "1");
+      var s1 = form.querySelector('[data-ll-island-step="1"]');
+      var s2 = form.querySelector('[data-ll-island-step="2"]');
+      form.querySelectorAll("[data-ll-island-next]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (s1) s1.hidden = true;
+          if (s2) s2.hidden = false;
+        });
+      });
+      form.querySelectorAll("[data-ll-island-prev]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (s2) s2.hidden = true;
+          if (s1) s1.hidden = false;
+        });
+      });
+    });
+  }
+
+  function bindJobPicks(root) {
+    root.querySelectorAll("form[data-ll-job-pick-form]").forEach(function (form) {
+      if (form.getAttribute("data-ll-bound") === "1") return;
+      form.setAttribute("data-ll-bound", "1");
+      var hidden = form.querySelector("[data-ll-job-pick-value]");
+      form.querySelectorAll("[data-ll-job-pick]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var val = btn.getAttribute("data-ll-job-pick") || "";
+          if (hidden) hidden.value = val;
+          form.querySelectorAll(".jpick").forEach(function (b) {
+            var sel = b === btn;
+            b.classList.toggle("sel", sel);
+            b.setAttribute("aria-pressed", sel ? "true" : "false");
+          });
+        });
+      });
+      var first = form.querySelector(".jpick.sel[data-ll-job-pick]");
+      if (first && hidden && !hidden.value) {
+        hidden.value = first.getAttribute("data-ll-job-pick") || "";
+      }
+    });
+  }
+
   function bindPuzzle(root) {
-    root.querySelectorAll("[data-ll-puzzle-root]").forEach(function (section) {
+    var puzzleRoots = root.querySelectorAll("[data-ll-puzzle-root], .ll-puzzle-g78[data-ll-puzzle-kind]");
+    puzzleRoots.forEach(function (section) {
       if (section.getAttribute("data-ll-bound") === "1") return;
       section.setAttribute("data-ll-bound", "1");
       var form = section.closest("form") || section.querySelector("form[data-ll-puzzle-form]");
       if (!form) return;
       var outcome = form.querySelector('input[name="Outcome"]');
       var kind = section.getAttribute("data-ll-puzzle-kind") || "";
+      var playSection = section.querySelector("[data-ll-puzzle-play-section]") || section;
 
       if (kind === "schelpenrij") {
         var order = [1, 3, 2, 4];
         var pick = null;
-        section.querySelectorAll("[data-ll-shell-index]").forEach(function (btn) {
+        playSection.querySelectorAll("[data-ll-shell-index]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             var idx = parseInt(btn.getAttribute("data-ll-shell-index"), 10);
             if (pick === null) {
@@ -172,7 +251,7 @@
         var open = new Set();
         var matched = new Set();
         var first = null;
-        section.querySelectorAll("[data-ll-card-index]").forEach(function (btn) {
+        playSection.querySelectorAll("[data-ll-card-index]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             var idx = parseInt(btn.getAttribute("data-ll-card-index"), 10);
             var face = btn.getAttribute("data-ll-card-face") || "";
@@ -185,7 +264,7 @@
             }
             open.add(idx);
             btn.classList.add("is-open");
-            var firstBtn = section.querySelector('[data-ll-card-index="' + first + '"]');
+            var firstBtn = playSection.querySelector('[data-ll-card-index="' + first + '"]');
             var firstFace = firstBtn ? firstBtn.getAttribute("data-ll-card-face") : "";
             if (firstFace === face) {
               matched.add(face);
@@ -224,7 +303,7 @@
               return;
             }
             var lamp = pattern[i];
-            var el = section.querySelector('[data-ll-lamp-index="' + lamp + '"]');
+            var el = playSection.querySelector('[data-ll-lamp-index="' + lamp + '"]');
             if (el) el.classList.add("is-lit");
             setTimeout(function () {
               if (el) el.classList.remove("is-lit");
@@ -236,7 +315,7 @@
         }
 
         playPattern();
-        section.querySelectorAll("[data-ll-lamp-index]").forEach(function (btn) {
+        playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             if (playMode || !ready) return;
             var lamp = parseInt(btn.getAttribute("data-ll-lamp-index"), 10);
@@ -254,7 +333,7 @@
         });
       }
 
-      section.querySelectorAll("[data-ll-puzzle-skip]").forEach(function (btn) {
+      playSection.querySelectorAll("[data-ll-puzzle-skip]").forEach(function (btn) {
         btn.addEventListener("click", function (e) {
           e.preventDefault();
           if (outcome) outcome.value = "skipped";
@@ -262,7 +341,7 @@
         });
       });
 
-      section.querySelectorAll("[data-ll-puzzle-continue]").forEach(function (btn) {
+      playSection.querySelectorAll("[data-ll-puzzle-continue]").forEach(function (btn) {
         btn.addEventListener("click", function (e) {
           e.preventDefault();
           if (outcome) outcome.value = "done";
@@ -301,7 +380,10 @@
     bindChips(root);
     bindVakkenScale(root);
     bindWereld(root);
+    bindPuzzleIntro(root);
     bindPuzzle(root);
+    bindIslandSteps(root);
+    bindJobPicks(root);
     bindMhboScale(root);
   }
 
