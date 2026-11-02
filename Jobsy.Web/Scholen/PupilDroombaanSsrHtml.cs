@@ -168,16 +168,18 @@ public static class PupilDroombaanSsrHtml
         sb.Append("""<div class="job-picks" role="radiogroup" data-testid="ll-g78-job-picks" aria-label="Kies een beroep">""");
         var picks = BuildJobPickList(model);
         var pickIndex = 0;
+        var likes = model.Result.Likes ?? [];
         foreach (var (key, title, domain, blurb) in picks)
         {
             var selected = pickIndex == 0;
-            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, title, domain, blurb, selected, journeyThemeKey));
+            var why = PupilGroep78MockHtml.JobPickWhyHtml(culture, key, likes);
+            sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, title, domain, blurb, selected, journeyThemeKey, why));
             pickIndex++;
         }
 
         sb.Append(PupilGroep78MockHtml.JobPickNone(culture, selected: false));
         sb.Append("</div>");
-        sb.Append("""<p class="note jpick-next" data-ll-jpick-none-note hidden role="status">""");
+        sb.Append("""<p class="note jpick-next on" data-ll-jpick-none-note role="status">""");
         sb.Append(culture["Leerling.G78.Dream.NoneNext"]);
         sb.Append("</p><div class=\"qfoot\"><a class=\"btn btn-ghost\" href=\"/leerling/dit-ben-jij\">");
         sb.Append(PupilGroep78SsrParts.BackSvg).Append(WebUtility.HtmlEncode(culture["Leerling.Reis.Prev"])).Append("</a>");

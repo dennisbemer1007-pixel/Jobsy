@@ -422,7 +422,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         var root = FindRepoRoot();
-        var artifactDir = Path.Combine(root, "artifacts", "scholen-ssr-final-qa", tag);
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v4", tag);
         Directory.CreateDirectory(artifactDir);
         var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
         var results = new List<string>();
@@ -577,6 +577,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await page.WaitForURLAsync("**/leerling/puzzel/**", UrlCommitted);
                 await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
             })));
+        Assert.True(await page.Locator("[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile]").CountAsync() > 0);
+        Assert.True(await page.Locator(".prev-row-box").CountAsync() > 0);
 
         var islandSeeds = await SeedGroep78AtAsync(
             1,
@@ -597,14 +599,16 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await FollowReisRedirectAsync();
                 await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
                 await page.Locator("[data-ll-chip-like=\"sport\"]").ClickAsync();
-            })));
+            }, fullPage: true)));
+        Assert.True(await page.Locator(".pchip.on.like").CountAsync() >= 1);
+        Assert.True(await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).IsVisibleAsync());
         Row("11b-eiland-niet-leuk", "load+screenshot", VisualResult(
             await CaptureAsync("11b-eiland-niet-leuk", "11b-zee-pauze-niet-leuk.png", async () =>
             {
                 await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
                 await page.Locator("[data-ll-island-next]").ClickAsync();
                 await page.Locator("[data-ll-chip-dislike=\"rekenen\"]").ClickAsync();
-            })));
+            }, fullPage: true)));
 
         var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
         var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
@@ -654,6 +658,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.Equal(5, await page.Locator("[data-testid=ll-g78-job-picks] .jpick-paint img").CountAsync());
         Assert.True(await page.GetByRole(AriaRole.Link, new() { Name = "Vorige" }).IsVisibleAsync());
         Assert.DoesNotContain("Andere baan", await page.Locator(".ll-dream-pick .qfoot").InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
+        Assert.True(await page.Locator(".jpick .jwhy").CountAsync() >= 5);
+        Assert.True(await page.Locator(".jpick-next.on").IsVisibleAsync());
         Row("12-droombaan", "load+screenshot", VisualResult(
             await CaptureAsync("12-droombaan", "12-zee-beroep-kiezen.png", async () => { }, fullPage: true)));
 

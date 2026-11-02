@@ -35,7 +35,7 @@ public static class PupilPuzzelSsrHtml
                 puzzleShort);
             sb.Append(PupilLeerlingSsrParts.Groep78SceneHeader(
                 culture, registry, themeKey, bandWorld, key, journeyMeta, true, PuzzleBandPosition(themeKey), sceneMetaIsHtml: true));
-            sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey"><div class="q-layout">""");
+            sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey"><div class="q-layout"><div class="ll-g78-q-main">""");
         }
 
         sb.Append("<form method=\"post\" action=\"").Append(PupilLeerlingSsrParts.E(savePath)).Append("\" data-ll-puzzle-form=\"1\">");
@@ -99,7 +99,7 @@ public static class PupilPuzzelSsrHtml
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Puzzle.Continue"])).Append("</button></div></section>");
         if (groep78)
         {
-            sb.Append("</div></div>");
+            sb.Append("</div></div></form></div>");
             sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
                 culture,
                 culture["Leerling.G78.Puzzle.IntroBubble"],
@@ -108,11 +108,9 @@ public static class PupilPuzzelSsrHtml
                 "kreeft-kaart.png"));
             sb.Append("</div></div>");
         }
-
-        sb.Append("</form>");
-        if (groep78)
+        else
         {
-            sb.Append("</div>");
+            sb.Append("</form>");
         }
 
         return sb.ToString();

@@ -34,13 +34,13 @@ internal static class PupilGroep78MockHtml
     internal static string PuzzlePreviewRow()
     {
         var shells = new[] { 1, 2, 2, 3, 1 };
-        var sb = new StringBuilder("""<div class="prev-row" aria-hidden="true">""");
+        var sb = new StringBuilder("""<div class="prev-row-box"><div class="prev-row" aria-hidden="true">""");
         foreach (var n in shells)
         {
             sb.Append("<div class=\"slot\"><img src=\"/leerling/werelden/img/schelp-").Append(n).Append(".png\" alt=\"\" /></div>");
         }
 
-        sb.Append("""<div class="slot q">?</div></div>""");
+        sb.Append("""<div class="slot q">?</div></div></div>""");
         return sb.ToString();
     }
 
@@ -64,21 +64,53 @@ internal static class PupilGroep78MockHtml
         string domain,
         string blurb,
         bool selected,
-        string? journeyThemeKey = null)
+        string? journeyThemeKey = null,
+        string? whyHtml = null)
     {
         var paintClass = PupilGroep78JobPaint.PaintThemeClass(journeyThemeKey);
         var img = PupilGroep78JobPaint.PaintImagePath(jobKey);
         var mark = selected
             ? """<span class="jmark">✓ Jouw keuze</span>"""
             : "";
+        var whyBlock = string.IsNullOrWhiteSpace(whyHtml)
+            ? ""
+            : $"""<p class="jwhy">{whyHtml}</p>""";
         return $"""
             <button type="button" class="jpick{(selected ? " sel" : "")}" data-ll-job-pick="{PupilLeerlingSsrParts.E(title)}" aria-pressed="{selected.ToString().ToLowerInvariant()}">
             <figure class="jpick-paint {paintClass}"><img src="{PupilLeerlingSsrParts.E(img)}" alt="" width="400" height="400" loading="lazy" /></figure>
-            <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p></div>
+            <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p>{whyBlock}</div>
             <span class="jspeak">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, $"ll-job-{jobKey}", culture)}</span>
             {mark}
             </button>
             """;
+    }
+
+    internal static string JobPickWhyHtml(CultureState culture, string jobKey, IReadOnlyList<string> likeKeys)
+    {
+        var beroepKey = PupilG78CareerScoring.PrimaryBeroepssoortKey(jobKey);
+        var omdat = beroepKey is null ? "" : PupilG78BeroepssoortCatalog.Omdat(beroepKey, english: false);
+        if (string.IsNullOrWhiteSpace(omdat))
+        {
+            return "";
+        }
+
+        var likeLabel = "";
+        foreach (var likeKey in likeKeys)
+        {
+            var chip = PupilInterestChipCatalog.LikeChips.FirstOrDefault(c => c.Key == likeKey);
+            if (chip is not null)
+            {
+                likeLabel = culture[chip.LabelKey];
+                break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(likeLabel))
+        {
+            return $"Leuk voor jou omdat {char.ToLowerInvariant(omdat[0])}{omdat[1..]}";
+        }
+
+        return $"Leuk voor jou omdat jij van <b>{PupilLeerlingSsrParts.E(likeLabel.ToLowerInvariant())}</b> houdt. {omdat}";
     }
 
     internal static string JobPickNone(CultureState culture, bool selected)

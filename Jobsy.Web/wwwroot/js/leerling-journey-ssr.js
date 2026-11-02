@@ -186,15 +186,11 @@
       form.setAttribute("data-ll-bound", "1");
       var hidden = form.querySelector("[data-ll-job-pick-value]");
       var noneNote = form.querySelector("[data-ll-jpick-none-note]");
-      function syncNoneNote(val) {
+      function syncNoneNote() {
         if (!noneNote) return;
-        if (val === "") {
-          noneNote.removeAttribute("hidden");
-          noneNote.classList.add("on");
-        } else {
-          noneNote.setAttribute("hidden", "");
-          noneNote.classList.remove("on");
-        }
+        // G78 mock: keep “Dan ga je naar Check je droombaan…” visible above the footer.
+        noneNote.removeAttribute("hidden");
+        noneNote.classList.add("on");
       }
       form.querySelectorAll("[data-ll-job-pick]").forEach(function (btn) {
         btn.addEventListener("click", function () {
@@ -205,14 +201,14 @@
             b.classList.toggle("sel", sel);
             b.setAttribute("aria-pressed", sel ? "true" : "false");
           });
-          syncNoneNote(val);
+          syncNoneNote();
         });
       });
       var first = form.querySelector(".jpick.sel[data-ll-job-pick]");
       if (first && hidden && !hidden.value) {
         hidden.value = first.getAttribute("data-ll-job-pick") || "";
       }
-      syncNoneNote(hidden ? hidden.value : "");
+      syncNoneNote();
     });
   }
 

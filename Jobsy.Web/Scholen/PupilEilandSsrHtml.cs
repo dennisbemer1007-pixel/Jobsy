@@ -42,14 +42,14 @@ public static class PupilEilandSsrHtml
             sb.Append(PupilLeerlingSsrParts.Groep78SceneHeader(
                 culture, registry, themeKey, "pauze-eiland", "pauze-eiland",
                 islandMeta, true, "center 45%", sceneMetaIsHtml: true));
-            sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey"><div class="q-layout">""");
+            sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-g78-island-wrap"><div class="q-layout"><div class="ll-g78-q-main">""");
         }
         else
         {
             sb.Append("""<div class="ll-reis ll-island">""");
         }
 
-        sb.Append(groep78 ? """<section class="card ll-island-card">""" : """<section class="ll-card ll-island-card">""");
+        sb.Append(groep78 ? """<section class="card ll-island-card card-deco">""" : """<section class="ll-card ll-island-card">""");
         sb.Append("<form method=\"post\" action=\"").Append(PupilLeerlingSsrParts.E(savePath)).Append("\" data-ll-chips-form=\"1\" data-testid=\"ll-island-form\">");
         sb.Append(antiforgery);
         sb.Append("<input type=\"hidden\" name=\"Likes\" value=\"").Append(PupilLeerlingSsrParts.E(string.Join(",", state.Likes))).Append("\" />");
@@ -63,7 +63,7 @@ public static class PupilEilandSsrHtml
             AppendLegacyIsland(sb, state, culture, error);
         }
 
-        sb.Append("</form></section>");
+        sb.Append("</form></section></div>");
         if (groep78)
         {
             sb.Append(PupilGroep78SsrParts.Groep78CoachAside(

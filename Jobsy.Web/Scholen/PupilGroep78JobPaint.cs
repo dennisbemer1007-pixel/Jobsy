@@ -6,23 +6,24 @@ internal static class PupilGroep78JobPaint
 {
     internal static string PaintImagePath(string jobKey)
     {
-        var beroep = PupilG78CareerScoring.PrimaryBeroepssoortKey(jobKey);
-        var stem = beroep switch
+        var key = jobKey.ToLowerInvariant();
+        var (stem, hero) = key switch
         {
-            "dieren-leven" => "zorg-dieren",
-            "zorg-mensen" => "zorg-dieren",
-            "exact-wetenschap" => "onderzoek",
-            "creatief-design" => "creatief",
-            "media-digital" => "creatief",
-            "taal-verhalen" => "creatief",
-            "natuur-buiten" => "buiten-groen",
-            "sport-bewegen" => "buiten-groen",
-            "veiligheid-hulp" => "helpen",
-            "techniek-maken" => "buiten-groen",
-            _ => JobKeyStem(jobKey)
+            "dierenverzorger" => ("zorg-dieren", false),
+            "dierenarts" => ("zorg-dieren", true),
+            "bioloog" or "wetenschapper" => ("onderzoek", false),
+            "boswachter" => ("onderzoek", true),
+            "grafisch-ontwerper" or "fotograaf" or "contentmaker" => ("creatief", false),
+            "hovenier" => ("buiten-groen", false),
+            "brandweer" or "verpleegkundige" => ("helpen", false),
+            "politie" => ("helpen", true),
+            "kok" or "bakker" => ("creatief", true),
+            "programmeur" or "ict-medewerker" => ("onderzoek", true),
+            _ => ("onderzoek", false)
         };
 
-        return $"/leerling/werelden/img/jobs/{stem}.jpg";
+        var file = hero ? $"{stem}-hero.jpg" : $"{stem}.jpg";
+        return $"/leerling/werelden/img/jobs/{file}";
     }
 
     internal static string PaintThemeClass(string? journeyThemeKey)
@@ -35,14 +36,4 @@ internal static class PupilGroep78JobPaint
             _ => "jpick-paint-w-zee"
         };
     }
-
-    private static string JobKeyStem(string jobKey) => jobKey.ToLowerInvariant() switch
-    {
-        "dierenverzorger" or "dierenarts" => "zorg-dieren",
-        "bioloog" or "wetenschapper" or "boswachter" => "onderzoek",
-        "grafisch-ontwerper" or "fotograaf" or "contentmaker" => "creatief",
-        "hovenier" => "buiten-groen",
-        "brandweer" or "verpleegkundige" or "politie" => "helpen",
-        _ => "onderzoek"
-    };
 }

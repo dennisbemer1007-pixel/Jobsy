@@ -1909,11 +1909,26 @@
 }
 
 /* G78 mock blocks: puzzel intro, rtiles, pchip, jpick, result/dream bands */
+.ll-g78-shell .ll-g78-q-main {
+  min-width: 0;
+}
+
+.ll-g78-shell .prev-row-box {
+  background: linear-gradient(180deg, #eef8f6 0%, #dff3f0 100%);
+  border: 2px solid #8ec4bc;
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin: 16px 0 18px;
+}
+
+.ll-g78-shell .prev-row-box .prev-row {
+  margin: 0;
+}
+
 .ll-g78-shell .prev-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 16px 0 18px;
 }
 
 .ll-g78-shell .slot {
@@ -1979,9 +1994,12 @@
 }
 
 .ll-g78-shell .facts span {
-  background: #f4efe4;
+  background: #fff;
+  border: 2px solid #8ec4bc;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 6px 14px;
+  color: var(--navy);
+  font-weight: 600;
 }
 
 .ll-g78-shell .ll-puzzle-intro-foot {
@@ -2014,43 +2032,46 @@
 .ll-g78-shell .pchip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: 2px solid #d4c6aa;
-  background: #fff;
+  gap: 10px;
+  border: 2px solid #8ec4bc;
+  background: linear-gradient(180deg, #fff 0%, #eef8f6 100%);
   border-radius: 999px;
-  padding: 9px 15px 9px 12px;
+  padding: 9px 16px 9px 10px;
   font-size: 16px;
   font-weight: 600;
   color: var(--ink);
   font-family: inherit;
   cursor: pointer;
+  box-shadow: 0 3px 10px rgba(47, 138, 150, 0.14);
 }
 
 .ll-g78-shell .pchip .ico {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #eef5f4;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #dff3f0, #9fd4cc);
+  border: 1.5px solid #6fb8ae;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  color: var(--teal);
+  color: #0f5b66;
 }
 
 .ll-g78-shell .pchip .ico svg {
-  width: 15px;
-  height: 15px;
+  width: 28px;
+  height: 28px;
 }
 
 .ll-g78-shell .pchip.on.like {
-  background: var(--teal);
-  border-color: var(--teal);
+  background: linear-gradient(145deg, #0f5b66, #2f8a96);
+  border-color: #0a4a52;
   color: #fff;
 }
 
 .ll-g78-shell .pchip.on.like .ico {
-  background: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.12));
+  border-color: rgba(255, 255, 255, 0.45);
   color: #fff;
 }
 
@@ -2239,6 +2260,27 @@
 
 .ll-g78-shell .jpick-next[hidden] {
   display: none !important;
+}
+
+.ll-g78-shell .jpick-next.on {
+  display: block;
+}
+
+.ll-g78-shell .jpick .jwhy {
+  font-size: 15px;
+  color: var(--ink);
+  line-height: 1.4;
+  margin: 8px 0 0;
+}
+
+.ll-g78-shell .jpick .jwhy b {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.ll-g78-shell .ll-g78-island-wrap {
+  overflow: visible;
+  padding-bottom: 24px;
 }
 
 .ll-g78-shell .res-foot {
