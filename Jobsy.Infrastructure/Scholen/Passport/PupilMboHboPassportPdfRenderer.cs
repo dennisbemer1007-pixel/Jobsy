@@ -83,9 +83,20 @@ internal static class PupilMboHboPassportPdfRenderer
                                         r.RelativeItem(2).Text(bar.Label);
                                         r.RelativeItem(3).Height(8).Background(Line).Row(barRow =>
                                         {
-                                            barRow.RelativeItem(Math.Clamp(bar.Percent, 0, 100))
-                                                .Background(Navy);
-                                            barRow.RelativeItem(Math.Max(0, 100 - bar.Percent));
+                                            var fill = Math.Clamp(bar.Percent, 0, 100);
+                                            if (fill <= 0)
+                                            {
+                                                barRow.RelativeItem(1);
+                                            }
+                                            else if (fill >= 100)
+                                            {
+                                                barRow.RelativeItem(1).Background(Navy);
+                                            }
+                                            else
+                                            {
+                                                barRow.RelativeItem(fill).Background(Navy);
+                                                barRow.RelativeItem(100 - fill);
+                                            }
                                         });
                                         r.ConstantItem(28).AlignRight().Text($"{bar.Percent}%");
                                     });
