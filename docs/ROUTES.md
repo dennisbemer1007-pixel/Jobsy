@@ -246,11 +246,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/leraar` | `Pages/Leraar/LeraarDashboard.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}` | `Pages/Leraar/LeraarKlasOverview.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/code/{CodeId:guid}` | `Pages/Leraar/LeraarCodeDetail.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/codes` | `Pages/Leraar/LeraarCodes.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/codes` | SSR `TeacherPortalCodesEndpoints` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/droombanen` | `Pages/Leraar/LeraarDreamJobs.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/groep` | `Pages/Leraar/LeraarGroup.razor` | Teacher, SchoolAdmin |
 | `/leraar/klas/{ClassId:guid}/materiaal` | `Pages/Leraar/LeraarMaterials.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/testvenster` | `Pages/Leraar/LeraarTestWindow.razor` | Teacher, SchoolAdmin |
+| `/leraar/klas/{ClassId:guid}/testvenster` | SSR `TeacherPortalTestWindowEndpoints` | Teacher, SchoolAdmin |
 | `/login` | `Pages/Login.razor` | anonymous |
 | `/mail/afmelden` | `Pages/Public/MailUnsubscribe.razor` | anonymous |
 | `/melden` | `Pages/Public/Melden.razor` | anonymous |

@@ -682,6 +682,8 @@ app.MapPupilLoginPageEndpoints();
 app.MapTeacherPortalEntryEndpoints();
 app.MapTeacherPortalReadOnlyEndpoints();
 app.MapTeacherPortalOverviewEndpoints();
+app.MapTeacherPortalCodesEndpoints();
+app.MapTeacherPortalTestWindowEndpoints();
 app.MapTeacherCodeListFileEndpoints();
 app.MapTeacherPupilReportPdfEndpoints();
 app.MapParentPassportAuthEndpoints();

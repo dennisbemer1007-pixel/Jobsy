@@ -8,7 +8,6 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Auth;
-using Jobsy.Web.Components.Pages.Leraar;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;

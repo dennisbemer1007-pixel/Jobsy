@@ -182,7 +182,6 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
             $"{baseUrl}/__test/staff?user={seed.TeacherId:D}&school={seed.SchoolId:D}&role=Teacher&return={Uri.EscapeDataString(codesPath)}",
             new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
         await page.WaitForURLAsync("**/codes**", new() { Timeout = 90_000 });
-        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
         var codeCell = page.Locator("[data-testid=\"leraar-code-table\"] .sch-code").First;
         await codeCell.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
