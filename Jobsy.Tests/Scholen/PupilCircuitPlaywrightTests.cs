@@ -1602,6 +1602,77 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     [Theory]
     [InlineData(1440, 900, "desktop")]
     [InlineData(390, 844, "mobile")]
+    public async Task G78_schelpenrij_pattern_puzzle_playable_with_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 15, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var repoRoot = FindRepoRoot();
+        var mockDir = Path.Combine(repoRoot, "docs", "mockups", "leerling", "werelden", "renders", label == "mobile" ? "mobile" : "desktop");
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-puzzel1-schelpenrij", label);
+        Directory.CreateDirectory(artifactDir);
+
+        var consoleErrors = new List<string>();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        var failedRequests = new List<string>();
+        page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/schelpenrij**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+
+        var mockIntro = Path.Combine(mockDir, "03-zee-puzzel-intro.png");
+        if (File.Exists(mockIntro))
+        {
+            File.Copy(mockIntro, Path.Combine(artifactDir, "mockup-intro.png"), overwrite: true);
+        }
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=intro] .prev-row-box")).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden]) .prev-row-box")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Vind het patroon in de rij schelpen op het rif." })).ToBeVisibleAsync();
+        Assert.True(await page.Locator(".ll-puzzle-schelp-choices img").CountAsync() >= 5);
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-mid-game.png"), FullPage = true });
+
+        await page.Locator("[data-ll-puzzle-phase=play]:not([hidden]) [data-ll-schelp-choice=\"2\"]").First.ClickAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-success]")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" })).ToBeEnabledAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-end.png"), FullPage = true });
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
+
+        var html = await page.ContentAsync();
+        Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(consoleErrors);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(1440, 900, "desktop")]
+    [InlineData(390, 844, "mobile")]
     public async Task G78_schatkaart_puzzle_playable_with_screenshots(int width, int height, string label)
     {
         _ = TestContext.Current.CancellationToken;

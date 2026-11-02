@@ -28,6 +28,7 @@ public sealed class PupilPuzzelSsrHtmlTests
 
         Assert.Contains("data-ll-puzzle-mode=\"pattern\"", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-schelp-choice=\"2\"", html, StringComparison.Ordinal);
+        Assert.Contains("/leerling/werelden/img/schelp-2.png", html, StringComparison.Ordinal);
         Assert.DoesNotContain("data-ll-shell-index", html, StringComparison.Ordinal);
         Assert.Contains("Vind het patroon in de rij schelpen op het rif.", html, StringComparison.Ordinal);
     }
