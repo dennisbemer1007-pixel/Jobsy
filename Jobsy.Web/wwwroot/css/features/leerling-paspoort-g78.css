@@ -80,12 +80,6 @@
     color: var(--lp-brass2);
 }
 
-.lp-g78__strip {
-    height: 88px;
-    background: url("/images/leerling-paspoort-g78/g78-strip.jpg") center / cover no-repeat;
-    border-radius: 0;
-}
-
 .lp-g78__body {
     background: var(--lp-cream);
     border: 1px solid var(--lp-line);

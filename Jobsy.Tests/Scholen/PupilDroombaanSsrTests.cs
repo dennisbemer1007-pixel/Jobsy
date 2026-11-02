@@ -41,5 +41,7 @@ public sealed class PupilDroombaanSsrTests
         Assert.DoesNotContain("ll-result__actions", paspoort, StringComparison.Ordinal);
         Assert.Contains(".lp-g78-paspoort-actions", css, StringComparison.Ordinal);
         Assert.Contains("position: static", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("lp-g78__strip", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("g78-strip.jpg", css, StringComparison.Ordinal);
     }
 }
