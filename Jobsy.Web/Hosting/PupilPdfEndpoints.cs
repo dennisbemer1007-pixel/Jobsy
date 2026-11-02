@@ -44,6 +44,16 @@ public static class PupilPdfEndpoints
             return Results.Empty;
         }
 
+        if (!IsPdfPayload(bytes))
+        {
+            if (status == StatusCodes.Status200OK)
+            {
+                status = StatusCodes.Status500InternalServerError;
+            }
+
+            bytes = null;
+        }
+
         if (bytes is { Length: > 0 })
         {
             return Results.File(bytes, "application/pdf", fileName);
@@ -107,6 +117,13 @@ public static class PupilPdfEndpoints
                        ?? "lobsy-verhaal.pdf";
         return (bytes, fileName, (int)response.StatusCode);
     }
+
+    private static bool IsPdfPayload(byte[]? bytes)
+        => bytes is { Length: > 4 }
+           && bytes[0] == (byte)'%'
+           && bytes[1] == (byte)'P'
+           && bytes[2] == (byte)'D'
+           && bytes[3] == (byte)'F';
 
     private static string? ResolveApiTicket(HttpContext http)
     {
