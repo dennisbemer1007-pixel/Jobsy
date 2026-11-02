@@ -28,6 +28,16 @@ public class LeerlingGroep78ThemeCssCatalogTests
             s => s.Contains("leerling-werelden-kies.css", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Pupil_ssr_paspoort_includes_g78_passport_stylesheet_with_leading_slash()
+    {
+        var sheets = PageAssetCatalog.StylesheetsForPupilSsr("/leerling/paspoort");
+        Assert.Contains(
+            sheets,
+            s => s.Contains("leerling-paspoort-g78.css", StringComparison.Ordinal)
+                 && s.StartsWith("/css/", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData("/leerling")]
     [InlineData("/leerling/stop")]

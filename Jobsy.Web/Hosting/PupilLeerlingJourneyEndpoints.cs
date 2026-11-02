@@ -447,12 +447,15 @@ public static class PupilLeerlingJourneyEndpoints
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
         await culture.InitializeAsync();
+        var progress = await LoadProgressAsync(api, ct);
+        var groep78 = progress?.QuestionSet == PupilQuestionSet.Groep78 && PupilJourneyTheme.IsValid(progress.JourneyThemeKey);
+        var themeKey = groep78 ? progress!.JourneyThemeKey : null;
         var flag = await features.GetAsync(ct);
         if (!flag.PupilPassportV2Enabled)
         {
             var disabled = """<div class="ll-reis" data-testid="leerling-paspoort-disabled"><section class="ll-card"><a class="btn-primary" href="/leerling/dit-ben-jij">Terug</a></section></div>""";
             var disabledAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", false, null, disabledAf);
+            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", groep78, themeKey, disabledAf);
         }
 
         var lang = PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language;
@@ -461,13 +464,13 @@ public static class PupilLeerlingJourneyEndpoints
         if (model is null || !model.Enabled)
         {
             var emptyAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", false, null, emptyAf);
+            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", groep78, themeKey, emptyAf);
         }
 
         var pdfHref = PupilStoryPdfLink.Href(naam, lang);
         var body = PupilPaspoortSsrHtml.BuildPage(culture, model, naam, pdfHref);
         var pasAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", false, null, pasAf);
+        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", groep78, themeKey, pasAf);
     }
 
     private static async Task<IResult> GetVoPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IAntiforgery af, CancellationToken ct)
