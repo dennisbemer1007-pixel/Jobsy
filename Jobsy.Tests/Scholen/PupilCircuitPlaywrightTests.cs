@@ -870,6 +870,109 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.CloseAsync();
     }
 
+    [Fact(Timeout = 600_000)]
+    public async Task G78_route_screen_all_worlds_clean_console_and_mockup_pairs()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var root = FindRepoRoot();
+        var compareScript = Path.Combine(root, "tools", "scholen-ssr-final-qa", "compare_mockup_side_by_side.py");
+        var artifactRoot = Path.Combine("/opt/cursor/artifacts", "g78-route-screen-fix");
+        Directory.CreateDirectory(artifactRoot);
+
+        var worlds = new (string TestId, string MockFile)[]
+        {
+            ("ll-wereld-zee", "01-zee-route.png"),
+            ("ll-wereld-tuin", "04-eilandtuin-route.png"),
+            ("ll-wereld-ster", "07-sterrenkust-route.png"),
+        };
+
+        foreach (var (width, height, tag, fullPage) in new[]
+                 {
+                     (1440, 900, "desktop", false),
+                     (390, 844, "mobile", true),
+                 })
+        {
+            var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag);
+            var outDir = Path.Combine(artifactRoot, tag);
+            Directory.CreateDirectory(outDir);
+
+            await using var context = width <= 400
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height }
+                });
+
+            foreach (var (testId, mockFile) in worlds)
+            {
+                var seed = await SeedOpenClassAsync();
+                var page = await context.NewPageAsync();
+                page.SetDefaultTimeout(90_000);
+                var consoleIssues = new List<string>();
+                var failedRequests = new List<string>();
+                page.Console += (_, msg) =>
+                {
+                    if (msg.Type is "error" or "warning")
+                    {
+                        consoleIssues.Add($"{msg.Type}: {msg.Text}");
+                    }
+                };
+                page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+                await page.Context.ClearCookiesAsync();
+                var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+                await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+                await page.WaitForURLAsync("**/leerling/wereld**", DomReady);
+                await page.Locator($"[data-testid={testId}]").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+                await page.Locator("h1.rk-h").WaitForAsync();
+
+                var html = await page.ContentAsync();
+                Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+
+                var built = Path.Combine(outDir, $"{testId}-{width}.png");
+                await page.ScreenshotAsync(new PageScreenshotOptions { Path = built, FullPage = fullPage });
+
+                var mock = Path.Combine(mockDir, mockFile);
+                var sideBySide = Path.Combine(outDir, $"{testId}-{width}-mockup-vs-built.png");
+                if (File.Exists(mock))
+                {
+                    var psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "python3",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false
+                    };
+                    psi.ArgumentList.Add(compareScript);
+                    psi.ArgumentList.Add(mock);
+                    psi.ArgumentList.Add(built);
+                    psi.ArgumentList.Add(sideBySide);
+                    using var proc = System.Diagnostics.Process.Start(psi)!;
+                    var diffOut = await proc.StandardOutput.ReadToEndAsync();
+                    await proc.WaitForExitAsync();
+                    Assert.Equal(0, proc.ExitCode);
+                    var diff = double.Parse(diffOut.Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                    var maxDiff = width <= 400 ? 16.0 : 12.0;
+                    Assert.True(diff <= maxDiff, $"{testId} @ {width} mockup diff {diff:F1}% (max {maxDiff}%)");
+                }
+
+                await page.Locator("a.btn-quiet").Filter(new() { HasText = "Andere wereld" }).ClickAsync();
+                await page.WaitForURLAsync("**/leerling/wereld**", UrlCommitted);
+                await page.Locator($"[data-testid={testId}]").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+                await page.Locator(".rk-go").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
+
+                Assert.Empty(consoleIssues);
+                Assert.Empty(failedRequests);
+                await page.CloseAsync();
+            }
+        }
+    }
+
     [Fact(Timeout = 300_000)]
     public async Task G78_droombaan_before_and_after_bevestigen_at_1440_and_390()
     {

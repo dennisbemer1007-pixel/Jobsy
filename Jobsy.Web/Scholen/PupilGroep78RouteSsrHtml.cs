@@ -221,9 +221,8 @@ public static class PupilGroep78RouteSsrHtml
             if (t == 'p')
             {
                 sb.Append("<rect x=\"").Append(x - 14).Append("\" y=\"").Append(y - 14).Append("\" width=\"28\" height=\"28\" rx=\"5\" transform=\"rotate(45 ")
-                    .Append(x).Append(' ').Append(y).Append("\" fill=\"").Append(col).Append("\" stroke=\"").Append(stroke).Append("\" stroke-width=\"3\"/>");
-                sb.Append("<text x=\"").Append(x).Append("\" y=\"").Append(y + 6).Append("\" text-anchor=\"middle\" font-family=\"Lexend\" font-weight=\"700\" font-size=\"17\" fill=\"#fff\" transform=\"rotate(-45 ")
-                    .Append(x).Append(' ').Append(y).Append("\">").Append(i + 1).Append("</text>");
+                    .Append(x).Append(' ').Append(y).Append(")\" fill=\"").Append(col).Append("\" stroke=\"").Append(stroke).Append("\" stroke-width=\"3\"/>");
+                sb.Append("<text x=\"").Append(x).Append("\" y=\"").Append(y + 6).Append("\" text-anchor=\"middle\" font-family=\"Lexend\" font-weight=\"700\" font-size=\"17\" fill=\"#fff\">").Append(i + 1).Append("</text>");
             }
             else
             {
