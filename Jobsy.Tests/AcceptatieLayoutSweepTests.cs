@@ -8,7 +8,6 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Auth;
-using Jobsy.Web.Components.Pages.Leraar;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -197,64 +196,15 @@ public class AcceptatieLayoutSweepTests
     }
 }
 
-public class LeraarDashboardBunitTests : BunitContext
+public class LeraarDashboardSsrTests
 {
-    public LeraarDashboardBunitTests()
-    {
-        JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddSingleton<IFeatureFlags>(new FixedFeatureFlags(employersEnabled: false, schoolsEnabled: true));
-        Services.AddSingleton(sp => new CultureState(
-            sp.GetRequiredService<IJSRuntime>(),
-            sp,
-            new FakeAuth()));
-        Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
-        Services.AddAuthorizationCore();
-        this.AddAuthorization().SetAuthorized("leraar").SetRoles("Teacher");
-    }
-
     [Fact]
-    public void Schools_on_renders_the_empty_class_state()
+    public void Leraar_entry_is_ssr_endpoint_not_blazor_page()
     {
-        Services.AddSingleton(new JobsyApiClient(new HttpClient(new EmptyClassesHandler())
-        {
-            BaseAddress = new Uri("http://jobsy.test/")
-        }));
-        var cut = Render<LeraarDashboard>();
-        cut.WaitForAssertion(() =>
-            Assert.Contains("Je hebt nog geen klas", cut.Markup, StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void Schools_on_shows_a_load_error_when_the_class_list_fails()
-    {
-        Services.AddSingleton(new JobsyApiClient(new HttpClient
-        {
-            BaseAddress = new Uri("http://127.0.0.1:9"),
-            Timeout = TimeSpan.FromSeconds(2)
-        }));
-        var cut = Render<LeraarDashboard>();
-        cut.WaitForAssertion(() =>
-            Assert.Contains("De klasgegevens konden niet geladen worden", cut.Markup, StringComparison.Ordinal));
-    }
-
-    private sealed class EmptyClassesHandler : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
-            {
-                Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json")
-            });
-    }
-
-    private sealed class FakeAuth : AuthenticationStateProvider
-    {
-        public override Task<AuthenticationState> GetAuthenticationStateAsync()
-            => Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(
-            [
-                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString("D")),
-                new Claim(ClaimTypes.Role, "Teacher"),
-                new Claim(ClaimTypes.Name, "Leraar")
-            ], "test"))));
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        Assert.False(File.Exists(Path.Combine(root, "Jobsy.Web/Components/Pages/Leraar/LeraarDashboard.razor")));
+        var entry = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/TeacherPortalEntryEndpoints.cs"));
+        Assert.Contains("Leraar.NoClass", entry, StringComparison.Ordinal);
+        Assert.Contains("Leraar.LoadFailed", entry, StringComparison.Ordinal);
     }
 }

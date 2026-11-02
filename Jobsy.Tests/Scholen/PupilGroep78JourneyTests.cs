@@ -15,7 +15,7 @@ public class PupilGroep78JourneyTests
         Assert.Contains(nodes, n => n.Key == "koraalrif" && n.Kind == PupilGroep78JourneyNodeKind.World);
         Assert.Contains(nodes, n => n.Key == "schelpenrij" && n.Kind == PupilGroep78JourneyNodeKind.Puzzle);
         Assert.Contains(nodes, n => n.Key == "pauze-eiland" && n.Kind == PupilGroep78JourneyNodeKind.Island);
-        Assert.Contains(nodes, n => n.Key == "lagune" && n.Kind == PupilGroep78JourneyNodeKind.Vakken);
+        Assert.Contains(nodes, n => n.Key == "lagune" && n.Kind == PupilGroep78JourneyNodeKind.World);
         Assert.Contains(nodes, n => n.Key == "dit-ben-jij" && n.Kind == PupilGroep78JourneyNodeKind.Result);
     }
 

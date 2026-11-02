@@ -11,9 +11,6 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
-using Jobsy.Web.Components.Pages.Leraar;
-using Jobsy.Web.Components.Pages.Leerling;
-using Jobsy.Web.Components.Pages.School;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
@@ -100,71 +97,14 @@ public class PupilFirstLoadBunitTests : BunitContext
     }
 
     [Fact]
-    public async Task Island_first_load_failure_shows_offline_not_a_lost_session()
+    public void Ssr_journey_endpoints_handle_session_loss_via_load_retry()
     {
-        await PrepareAsync();
-        _handler.Throw = true;
-        var cut = Render<LeerlingEiland>();
-        cut.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Probeer opnieuw", cut.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", cut.Markup, StringComparison.Ordinal);
-            Assert.True(_handler.Calls >= 2);
-        }, TimeSpan.FromSeconds(10));
-    }
-
-    [Fact]
-    public async Task Island_401_shows_a_lost_session()
-    {
-        await PrepareAsync();
-        _handler.Status = HttpStatusCode.Unauthorized;
-        var cut = Render<LeerlingEiland>();
-        Assert.Contains("Je sessie is verlopen", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Even geen verbinding", cut.Markup, StringComparison.Ordinal);
-        Assert.Equal(1, _handler.Calls);
-    }
-
-    [Fact]
-    public async Task Journey_result_and_dream_job_share_the_offline_first_load()
-    {
-        await PrepareAsync();
-        _handler.Throw = true;
-
-        var journey = Render<LeerlingReis>();
-        journey.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", journey.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", journey.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(10));
-
-        var result = Render<LeerlingDitBenJij>();
-        result.WaitForAssertion(() =>
-        {
-            Assert.Contains("Even geen verbinding", result.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Je sessie is verlopen", result.Markup, StringComparison.Ordinal);
-        }, TimeSpan.FromSeconds(10));
-
-    }
-
-    [Fact]
-    public async Task Result_and_dream_job_401_show_a_lost_session()
-    {
-        await PrepareAsync();
-        _handler.Status = HttpStatusCode.Unauthorized;
-
-        var result = Render<LeerlingDitBenJij>();
-        Assert.Contains("Je sessie is verlopen", result.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Even geen verbinding", result.Markup, StringComparison.Ordinal);
-
-    }
-
-    private async Task PrepareAsync()
-    {
-        var culture = Services.GetRequiredService<CultureState>();
-        await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling/eiland");
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PupilLeerlingJourneyEndpoints.cs"));
+        Assert.Contains("PupilLoadRetry", endpoints, StringComparison.Ordinal);
+        Assert.Contains("LoadProgressAsync", endpoints, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Session.Lost", endpoints, StringComparison.Ordinal);
+        Assert.Contains("/leerling?error=expired", endpoints, StringComparison.Ordinal);
     }
 
     private sealed class PupilFirstLoadFeatureFlags : IFeatureFlags
@@ -254,16 +194,13 @@ public class LoggedInPupilIntroBunitTests : BunitContext
     }
 
     [Fact]
-    public async Task Already_logged_in_hides_the_pick_a_school_intro()
+    public void Leerling_login_is_ssr_not_blazor()
     {
-        var culture = Services.GetRequiredService<CultureState>();
-        await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling");
-
-        var cut = Render<LeerlingLogin>();
-        Assert.Contains("Je bent al ingelogd", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Kies je school en je klas", cut.Markup, StringComparison.Ordinal);
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        Assert.False(File.Exists(Path.Combine(root, "Jobsy.Web/Components/Pages/Leerling/LeerlingLogin.razor")));
+        var html = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilLeerlingLoginSsrHtml.cs"));
+        Assert.Contains("Leerling.Login.AlreadyIn", html, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Login.Heading", html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -340,27 +277,34 @@ public class TeacherSchoolLabelBunitTests : BunitContext
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
 
-        nav.NavigateTo($"http://localhost/leraar/klas/{ClassId:D}/groep");
-        var group = Render<LeraarGroup>(p => p.Add(x => x.ClassId, ClassId));
-        AssertNoRawEnums(group.Markup);
-        Assert.Contains("Informeel en open", group.Markup, StringComparison.Ordinal);
-        Assert.Contains("Iets goed afmaken", group.Markup, StringComparison.Ordinal);
+        var groupDto = JsonSerializer.Deserialize<TeacherGroupInsightsDto>(PortalHandler.GroupJson, JobsyApiClient.ApiJson)!;
+        var groupMarkup = TeacherPortalReadOnlySsrHtml.BuildGroupBody(ClassId, groupDto, culture);
+        AssertNoRawEnums(groupMarkup);
+        Assert.Contains("Informeel en open", groupMarkup, StringComparison.Ordinal);
+        Assert.Contains("Iets goed afmaken", groupMarkup, StringComparison.Ordinal);
 
-        nav.NavigateTo($"http://localhost/leraar/klas/{ClassId:D}");
-        var overview = Render<LeraarKlasOverview>(p => p.Add(x => x.ClassId, ClassId));
-        AssertNoRawEnums(overview.Markup);
-        Assert.Contains("Rust en duidelijkheid", overview.Markup, StringComparison.Ordinal);
-        Assert.Contains("Weet ik nog niet: 4", overview.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("sch-chip-list\"></div>", overview.Markup, StringComparison.Ordinal);
+        var overviewDto = JsonSerializer.Deserialize<TeacherClassOverviewDto>(PortalHandler.OverviewJson, JobsyApiClient.ApiJson)!;
+        var overviewMarkup = TeacherKlasOverviewSsrHtml.BuildBody(ClassId, overviewDto, 0, [], null, culture);
+        AssertNoRawEnums(overviewMarkup);
+        Assert.Contains("Rust en duidelijkheid", overviewMarkup, StringComparison.Ordinal);
+        Assert.Contains("Weet ik nog niet: 4", overviewMarkup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sch-chip-list\"></div>", overviewMarkup, StringComparison.Ordinal);
 
-        nav.NavigateTo("http://localhost/school/resultaten");
-        var school = Render<SchoolResults>();
-        AssertNoRawEnums(school.Markup);
-        Assert.Contains("Iets goed afmaken", school.Markup, StringComparison.Ordinal);
-        Assert.Contains("Zelf kiezen", school.Markup, StringComparison.Ordinal);
-        Assert.Contains("Weet ik nog niet: 6", school.Markup, StringComparison.Ordinal);
+        var classes = JsonSerializer.Deserialize<List<SchoolPortalClassListItemDto>>(PortalHandler.ClassesJson, JobsyApiClient.ApiJson)!;
+        var results = JsonSerializer.Deserialize<SchoolPortalResultsDto>(PortalHandler.ResultsJson, JobsyApiClient.ApiJson)!;
+        var schoolMarkup = SchoolPortalSsrHtml.Results(
+            classes,
+            PupilQuestionSet.Vo,
+            false,
+            ClassId,
+            results,
+            null,
+            culture);
+        AssertNoRawEnums(schoolMarkup);
+        Assert.Contains("Iets goed afmaken", schoolMarkup, StringComparison.Ordinal);
+        Assert.Contains("Zelf kiezen", schoolMarkup, StringComparison.Ordinal);
+        Assert.Contains("Weet ik nog niet: 6", schoolMarkup, StringComparison.Ordinal);
     }
 
     private static void AssertNoRawEnums(string markup)
@@ -400,7 +344,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
 
     private sealed class PortalHandler : HttpMessageHandler
     {
-        private static readonly string GroupJson = JsonSerializer.Serialize(
+        internal static readonly string GroupJson = JsonSerializer.Serialize(
             new TeacherGroupInsightsDto(
                 true,
                 6,
@@ -421,7 +365,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
                 PupilQuestionSet.Vo),
             JobsyApiClient.ApiJson);
 
-        private static readonly string OverviewJson = JsonSerializer.Serialize(
+        internal static readonly string OverviewJson = JsonSerializer.Serialize(
             new TeacherClassOverviewDto(
                 ClassId,
                 "2B",
@@ -457,7 +401,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
                 PupilQuestionSet.Vo),
             JobsyApiClient.ApiJson);
 
-        private static readonly string ClassesJson = JsonSerializer.Serialize(
+        internal static readonly string ClassesJson = JsonSerializer.Serialize(
             new List<SchoolPortalClassListItemDto>
             {
                 new(
@@ -477,7 +421,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
             },
             JobsyApiClient.ApiJson);
 
-        private static readonly string ResultsJson = JsonSerializer.Serialize(
+        internal static readonly string ResultsJson = JsonSerializer.Serialize(
             new SchoolPortalResultsDto(
                 ClassId,
                 "2B",

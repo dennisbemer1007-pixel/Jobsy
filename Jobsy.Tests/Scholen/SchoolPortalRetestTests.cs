@@ -5,8 +5,9 @@ using Bunit;
 using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Scholen;
-using Jobsy.Web.Components.Pages.School;
 using Jobsy.Web.Localization;
+using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -64,7 +65,7 @@ public class SchoolPortalRetestTests
         Assert.Contains(PupilSessionDuration.VoLessons, lesbrief, StringComparison.Ordinal);
         Assert.DoesNotContain("on-demand", lesbrief, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("niet vooraf gegenereerd", lesbrief, StringComparison.OrdinalIgnoreCase);
-        var materials = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "School", "SchoolMaterials.razor"));
+        var materials = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "SchoolPortalSsrHtml.cs"));
         Assert.DoesNotContain("OnDemandNote", materials, StringComparison.Ordinal);
     }
 
@@ -74,7 +75,6 @@ public class SchoolPortalRetestTests
         var root = RepoRoot();
         var folders = new[]
         {
-            Path.Combine(root, "Jobsy.Web", "Components", "Pages", "School"),
             Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leraar"),
             Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling"),
             Path.Combine(root, "Jobsy.Web", "Components", "School")
@@ -83,6 +83,11 @@ public class SchoolPortalRetestTests
         var hits = new List<string>();
         foreach (var folder in folders)
         {
+            if (!Directory.Exists(folder))
+            {
+                continue;
+            }
+
             foreach (var file in Directory.EnumerateFiles(folder, "*.razor", SearchOption.AllDirectories))
             {
                 var text = File.ReadAllText(file);
@@ -128,70 +133,45 @@ public class SchoolResultsInitTests : BunitContext
             sp.GetRequiredService<IJSRuntime>(),
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
-        Services.AddSingleton<IFeatureFlags>(new SchoolPortalRetestTestsFlags());
-        Services.AddSingleton(new JobsyApiClient(new HttpClient(new ResultsFailHandler())
-        {
-            BaseAddress = new Uri("http://api.test/")
-        }));
     }
 
     [Fact]
-    public async Task Direct_load_does_not_redirect_and_leaves_the_loading_state()
+    public async Task Results_ssr_shows_class_error_without_per_code_table()
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
-        nav.NavigateTo("http://localhost/school/resultaten");
-
-        var cut = Render<SchoolResults>();
-
-        Assert.DoesNotContain("klas=", nav.Uri, StringComparison.Ordinal);
-        Assert.DoesNotContain("Laden", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("De resultaten van deze klas konden niet geladen worden", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("sch-code", cut.Markup, StringComparison.Ordinal);
+        var classes = new List<SchoolPortalClassListItemDto>
+        {
+            new(
+                Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                "7A",
+                SchoolLevel.Groep78,
+                7,
+                2026,
+                "2026-2027",
+                [],
+                1,
+                0,
+                true,
+                TestWindowState.Open,
+                null,
+                PupilQuestionSet.Groep78)
+        };
+        var html = SchoolPortalSsrHtml.Results(
+            classes,
+            PupilQuestionSet.Groep78,
+            false,
+            classes[0].Id,
+            null,
+            culture["School.Results.ClassFailed"],
+            culture);
+        Assert.Contains("De resultaten van deze klas konden niet geladen worden", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("sch-code", html, StringComparison.Ordinal);
     }
 
     private sealed class AnonymousAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
             => Task.FromResult(new AuthenticationState(new System.Security.Claims.ClaimsPrincipal()));
-    }
-
-    private sealed class ResultsFailHandler : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            var path = request.RequestUri?.AbsolutePath ?? "";
-            if (path.Contains("/results", StringComparison.Ordinal))
-            {
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)
-                {
-                    Content = new StringContent("{}", Encoding.UTF8, "application/json")
-                });
-            }
-
-            const string json = """
-                [{"id":"11111111-1111-1111-1111-111111111111","className":"7A","level":"Groep78","year":7,"schoolYearStart":2026,"schoolYearLabel":"2026-2027","teacherNames":[],"codeCount":1,"completedCount":0,"parentalInfoConfirmed":true,"testWindow":"Open","questionSet":"Groep78"}]
-                """;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(json, Encoding.UTF8, "application/json")
-            });
-        }
-    }
-}
-
-file sealed class SchoolPortalRetestTestsFlags : IFeatureFlags
-{
-    private static readonly FeatureFlagSnapshot Snap = new(false, false, SchoolsEnabled: true);
-
-    public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-        => ValueTask.FromResult(Snap);
-
-    public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-        => ValueTask.FromResult(Snap.IsEnabled(feature));
-
-    public void Invalidate()
-    {
     }
 }

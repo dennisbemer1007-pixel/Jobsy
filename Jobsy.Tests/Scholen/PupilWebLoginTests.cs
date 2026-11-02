@@ -275,6 +275,111 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.DoesNotContain("/login", pdf.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Reis_answer_form_post_advances_to_next_question()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(
+                new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie),
+                options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+
+        var firstItem = (await GetProgressAsync(api, apiTicket)).Body!.CurrentItemId;
+        Assert.False(string.IsNullOrWhiteSpace(firstItem));
+
+        var reisGet = await client.GetAsync("/leerling/reis");
+        var html = await reisGet.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reisGet.StatusCode);
+        Assert.Contains("ll-answers-form", html, StringComparison.Ordinal);
+        Assert.Contains("name=\"ItemId\"", html, StringComparison.Ordinal);
+        var artifactDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "artifacts", "scholen-ssr-final-qa");
+        Directory.CreateDirectory(artifactDir);
+        await File.WriteAllTextAsync(Path.Combine(artifactDir, "reis-sample.html"), html);
+        var tokenField = ExtractFormFieldName(html, "hidden");
+        Assert.False(string.IsNullOrWhiteSpace(tokenField));
+        var token = ExtractHiddenInput(html, tokenField!)
+                    ?? ExtractHiddenInputReversed(html, tokenField!);
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        var post = await client.PostAsync(
+            "/leerling/reis/answer",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField!] = token!,
+                ["ItemId"] = firstItem!,
+                ["Value"] = "3"
+            }));
+        Assert.Equal(HttpStatusCode.Redirect, post.StatusCode);
+        Assert.Contains("/leerling/reis", post.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        Assert.DoesNotContain("error=save", post.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var progress = await GetProgressAsync(api, apiTicket);
+        Assert.Equal(1, progress.Body!.AnsweredCount);
+        Assert.NotEqual(firstItem, progress.Body.CurrentItemId);
+    }
+
+    private static string? ExtractFormFieldName(string html, string type)
+    {
+        var marker = $"type=\"{type}\" name=\"";
+        var idx = html.IndexOf(marker, StringComparison.Ordinal);
+        if (idx < 0)
+        {
+            return null;
+        }
+
+        idx += marker.Length;
+        var end = html.IndexOf('"', idx);
+        return end < 0 ? null : html[idx..end];
+    }
+
+    private static string? ExtractHiddenInput(string html, string name)
+    {
+        var marker = $"name=\"{name}\" value=\"";
+        var idx = html.IndexOf(marker, StringComparison.Ordinal);
+        if (idx < 0)
+        {
+            return null;
+        }
+
+        idx += marker.Length;
+        var end = html.IndexOf('"', idx);
+        return end < 0 ? null : html[idx..end];
+    }
+
+    private static string? ExtractHiddenInputReversed(string html, string name)
+    {
+        var nameMarker = $"name=\"{name}\"";
+        var idx = html.IndexOf(nameMarker, StringComparison.Ordinal);
+        if (idx < 0)
+        {
+            return null;
+        }
+
+        var windowStart = Math.Max(0, idx - 120);
+        var chunk = html[windowStart..idx];
+        var valIdx = chunk.LastIndexOf("value=\"", StringComparison.Ordinal);
+        if (valIdx < 0)
+        {
+            return null;
+        }
+
+        valIdx += windowStart + "value=\"".Length;
+        var end = html.IndexOf('"', valIdx);
+        return end < 0 ? null : html[valIdx..end];
+    }
+
     private static HttpClient HtmlClient(PupilWebFactory web)
     {
         var client = web.CreateClient(new WebApplicationFactoryClientOptions
@@ -614,7 +719,10 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         public ForwardFactory(HttpMessageHandler api) => _handler = new ForwardHandler(api);
 
         public HttpClient CreateClient(string name)
-            => new(_handler, disposeHandler: false);
+            => new(_handler, disposeHandler: false)
+            {
+                BaseAddress = new Uri("http://api.test/")
+            };
 
         public void Dispose() => _handler.Dispose();
     }

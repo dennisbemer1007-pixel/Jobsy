@@ -116,6 +116,18 @@ public sealed class PupilCircuitAuthenticationMiddleware
                 }
             }
         }
+        else if (global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(context.User))
+        {
+            var codeId = context.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+            var ticket = PupilApiSessionCookie.Read(context);
+            context.RequestServices.GetService<PupilApiTicketStore>()?.Set(codeId, ticket);
+        }
+        else if (global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(context.User))
+        {
+            var codeId = context.User.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+            var ticket = ParentApiSessionCookie.Read(context);
+            context.RequestServices.GetService<ParentApiTicketStore>()?.Set(codeId, ticket);
+        }
 
         await _next(context);
     }

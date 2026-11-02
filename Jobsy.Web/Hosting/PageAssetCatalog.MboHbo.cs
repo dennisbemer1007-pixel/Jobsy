@@ -10,7 +10,8 @@ public static partial class PageAssetCatalog
     {
         var path = PageSeoCatalog.Normalize(rawPath);
         return !string.IsNullOrEmpty(path)
-               && path.StartsWith("/leerling/mbo-hbo", StringComparison.OrdinalIgnoreCase);
+               && (path.StartsWith("/leerling/mbo-hbo", StringComparison.OrdinalIgnoreCase)
+                   || path.EndsWith("/mbo-hbo", StringComparison.OrdinalIgnoreCase));
     }
 
     public static IReadOnlyList<string> LeerlingMboHboStylesheets(string? rawPath)

@@ -40,11 +40,13 @@ public class LeerlingCircuitAuthTests : BunitContext
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "LeerlingLayout.razor"));
-        var login = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingLogin.razor"));
+        var login = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "PupilLoginPageEndpoints.cs"));
+        var loginHtml = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingLoginSsrHtml.cs"));
         Assert.DoesNotContain(".AuthenticateAsync", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("OnStarting", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("Response.Headers", layout, StringComparison.Ordinal);
-        Assert.DoesNotContain(".AuthenticateAsync", login, StringComparison.Ordinal);
+        Assert.DoesNotContain(".AuthenticateAsync", loginHtml, StringComparison.Ordinal);
+        Assert.Contains("MapGet(PagePath", login, StringComparison.Ordinal);
     }
 
     [Fact]

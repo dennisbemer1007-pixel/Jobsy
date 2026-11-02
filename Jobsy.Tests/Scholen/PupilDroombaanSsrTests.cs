@@ -34,7 +34,8 @@ public sealed class PupilDroombaanSsrTests
     public void Paspoort_actions_use_new_static_bar_not_ll_result_actions()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var paspoort = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Leerling/LeerlingPaspoort.razor"));
+        Assert.False(File.Exists(Path.Combine(root, "Jobsy.Web/Components/Pages/Leerling/LeerlingPaspoort.razor")));
+        var paspoort = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilPaspoortSsrHtml.cs"));
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/leerling-paspoort-g78.css"));
         Assert.Contains("lp-g78-paspoort-actions", paspoort, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"leerling-paspoort-actions\"", paspoort, StringComparison.Ordinal);

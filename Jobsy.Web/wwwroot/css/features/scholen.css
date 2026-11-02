@@ -402,6 +402,12 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-4);
     margin-bottom: var(--space-4);
+    min-width: 0;
+    max-width: 100%;
+}.sch-chart-card {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }.sch-chart-card h2 {
     margin: 0 0 var(--space-3);
     font-size: var(--text-md, 1rem);
@@ -412,6 +418,8 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-4);
+    min-width: 0;
+    max-width: 100%;
 }.sch-chart-donut__svg {
     width: min(11rem, 42vw);
     height: auto;
@@ -436,6 +444,7 @@
     border-radius: 2px;
 }.sch-chart-bars__svg {
     width: 100%;
+    max-width: 100%;
     height: auto;
     display: block;
 }.sch-chart-bars__label,
@@ -1714,4 +1723,35 @@ html.using-keyboard .ll-question__text:focus-visible {
     background: var(--brand);
     color: #fff;
     border-color: var(--brand);
+}
+
+/* SSR teacher bottom nav: "Meer" without Blazor drawer */
+.sch-bottom-nav__more-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.sch-bottom-nav__more-wrap > summary {
+    list-style: none;
+}
+
+.sch-bottom-nav__more-wrap > summary::-webkit-details-marker {
+    display: none;
+}
+
+.sch-bottom-nav__more-panel {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md, 0 8px 24px rgb(0 0 0 / 12%));
 }

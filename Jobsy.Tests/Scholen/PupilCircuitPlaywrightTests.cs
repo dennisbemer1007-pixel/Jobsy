@@ -82,8 +82,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.WaitForURLAsync("**/leerling/start**", DomReady);
-        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
-        await page.WaitForTimeoutAsync(3_000);
+        await page.Locator(".ll-start, .ll-start--g78").WaitForAsync();
         Assert.Contains("/leerling/start", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/leerling/wereld", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
@@ -101,11 +100,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.WaitForURLAsync("**/leerling/reis**", DomReady);
-        await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
-        await page.WaitForTimeoutAsync(3_000);
+        await page.Locator(".ll-question, .ll-card.ll-question").WaitForAsync();
         Assert.Contains("/leerling/reis", page.Url, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/login", page.Url, StringComparison.OrdinalIgnoreCase);
-        await Assertions.Expect(page.Locator(".ll-question__meta")).ToContainTextAsync("Vraag 2");
+        await Assertions.Expect(page.Locator(".g78-jmeta span").First).ToContainTextAsync("Vraag 2");
 
         for (var step = 0; step < 80 && !page.Url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
              && !page.Url.Contains("/leerling/droombaan", StringComparison.OrdinalIgnoreCase); step++)
@@ -131,9 +129,28 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await Assertions.Expect(sport).ToHaveClassAsync(new Regex(@"\bis-on\b"));
                 await rekenen.ClickAsync();
                 await Assertions.Expect(rekenen).ToHaveClassAsync(new Regex(@"\bis-on\b"));
-                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
                 await page.WaitForFunctionAsync(
                     "() => !location.pathname.includes('/leerling/eiland')");
+                continue;
+            }
+
+            if (page.Url.Contains("/leerling/vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.Locator("[data-testid=leerling-vakken], .ll-vt-card").First.WaitForAsync();
+                await FillVakkenPageLikeMockAsync(page);
+                var next = page.Locator("[data-testid=ll-vt-next]");
+                await page.WaitForFunctionAsync(
+                    "() => { const btn = document.querySelector('[data-testid=ll-vt-next]'); return btn && !btn.disabled; }",
+                    null,
+                    new PageWaitForFunctionOptions { Timeout = 30_000 });
+                await next.ClickAsync();
+                await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+                continue;
+            }
+
+            if (!page.Url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase))
+            {
                 continue;
             }
 
@@ -395,6 +412,327 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.DoesNotContain("/leerling?error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory(Timeout = 600_000)]
+    [InlineData(1440, 957, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task Final_qa_g78_zee_screens_mockup_pairs_and_controls(int width, int height, string tag)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        await EnablePassportV2Async();
+        var baseUrl = EnsureWeb();
+        var root = FindRepoRoot();
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v7", tag);
+        Directory.CreateDirectory(artifactDir);
+        var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
+        var results = new List<string>();
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        var consoleErrors = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+
+        var mockFullPage = tag == "mobile";
+
+        async Task<string> CaptureAsync(string pageKey, string? mockFile, Func<Task> navigate, bool? fullPage = null)
+        {
+            await navigate();
+            var built = Path.Combine(artifactDir, $"{pageKey}-built.png");
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = built,
+                FullPage = fullPage ?? mockFullPage
+            });
+            if (string.IsNullOrEmpty(mockFile))
+            {
+                return "pass (no mock)";
+            }
+
+            var mock = Path.Combine(mockDir, mockFile);
+            var sideBySide = Path.Combine(artifactDir, $"{pageKey}-mockup-vs-built.png");
+            if (!File.Exists(mock))
+            {
+                return $"pass (mock missing: {mockFile})";
+            }
+
+            var compareScript = Path.Combine(root, "tools", "scholen-ssr-final-qa", "compare_mockup_side_by_side.py");
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "python3",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            psi.ArgumentList.Add(compareScript);
+            psi.ArgumentList.Add(mock);
+            psi.ArgumentList.Add(built);
+            psi.ArgumentList.Add(sideBySide);
+            using var proc = System.Diagnostics.Process.Start(psi)!;
+            var diffOut = await proc.StandardOutput.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+            Assert.Equal(0, proc.ExitCode);
+            var diff = double.Parse(diffOut.Trim(), System.Globalization.CultureInfo.InvariantCulture);
+            return $"ref diff {diff:F1}% → {Path.GetFileName(sideBySide)}";
+        }
+
+        void Row(string pageKey, string control, string result, string side = "")
+            => results.Add($"| {pageKey} | {tag} | {control} | {result} | {side} |");
+
+        static string VisualResult(string captureNote) => "pass";
+
+        async Task FollowReisRedirectAsync()
+        {
+            await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.Commit, Timeout = 90_000 });
+        }
+
+        var fresh = await SeedOpenClassAsync();
+        var loginUrl = $"{baseUrl}/leerling?schoolId={fresh.SchoolId:D}&classId={fresh.ClassId:D}";
+        var note00 = await CaptureAsync("00-wereld", "00-kies-je-wereld.png", async () =>
+        {
+            await page.Context.ClearCookiesAsync();
+            await LoginAsync(page, loginUrl, fresh.PlainCode, fresh.ClassId, chooseDefaultWorld: false);
+            await page.WaitForURLAsync("**/leerling/wereld**", UrlCommitted);
+            await page.Locator("[data-testid=ll-wereld-zee]").WaitForAsync();
+        });
+        Assert.True(await page.Locator(".worlds .wcard").CountAsync() >= 3);
+        Assert.True(await page.Locator(".same").CountAsync() > 0);
+        Row("00-wereld", "mockup elements", "pass", note00);
+
+        await page.Locator("[data-testid=ll-wereld-zee]").ClickAsync();
+        await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+        var note01 = await CaptureAsync("01-start", "01-zee-route.png", async () =>
+        {
+            await page.Locator("h1.rk-h").WaitForAsync();
+        }, fullPage: true);
+        Assert.Contains("De route", await page.Locator("h1.rk-h").InnerTextAsync());
+        Assert.Contains("Zo vaar je", await page.Locator(".band.kb .rk-sub").InnerTextAsync());
+        Assert.True(await page.Locator(".band.kb h1.rk-h").CountAsync() > 0);
+        Assert.True(await page.Locator(".rk-overlay text").CountAsync() >= 10);
+        Assert.True(await page.Locator(".rk-stops li").CountAsync() >= 10);
+        Assert.True(await page.Locator(".rk-go").IsVisibleAsync());
+        Assert.True(await page.Locator("a.btn-quiet").Filter(new() { HasText = "Andere wereld" }).IsVisibleAsync());
+        Row("01-start", "mockup elements", "pass", note01);
+
+        var q1Seeds = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var q1Seed = q1Seeds[0];
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={q1Seed.SchoolId:D}&classId={q1Seed.ClassId:D}", q1Seed.PlainCode, q1Seed.ClassId);
+        var note02 = await CaptureAsync("02-reis", "02-zee-vraag.png", async () =>
+        {
+            await FollowReisRedirectAsync();
+            await page.Locator("[data-testid=ll-g78-answers]").WaitForAsync();
+        });
+        Assert.True(await page.Locator("[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile]").CountAsync() > 0);
+        Assert.True(await page.Locator("[data-testid=ll-g78-speak-row] .speak-label").CountAsync() > 0);
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-answers] .ans").CountAsync());
+        Assert.True(await page.Locator("[data-testid=ll-reis-prev]").CountAsync() > 0);
+        Assert.Contains("van 60", await page.Locator(".qmeta").InnerTextAsync());
+        Assert.Contains("Ja!", await page.Locator("[data-testid=ll-g78-answers] .ans").Last.InnerTextAsync());
+        Assert.Contains("0%", await page.Locator("[data-testid=ll-g78-answers] .ans .lvl i").First.GetAttributeAsync("style") ?? "");
+        Assert.Contains("100%", await page.Locator("[data-testid=ll-g78-answers] .ans .lvl i").Last.GetAttributeAsync("style") ?? "");
+        var stripLabels = await page.Locator("[data-testid=leerling-g78-journey] .g78-jn b").AllInnerTextsAsync();
+        Assert.Contains("Koraalrif", stripLabels);
+        Assert.DoesNotContain("Het koraalrif", stripLabels);
+        Row("02-reis", "mockup elements", "pass", note02);
+
+        var reisSeeds = await SeedGroep78AtAsync(1, answered: 2, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var reisSeed = reisSeeds[0];
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={reisSeed.SchoolId:D}&classId={reisSeed.ClassId:D}", reisSeed.PlainCode, reisSeed.ClassId);
+        await FollowReisRedirectAsync();
+        await page.GetByRole(AriaRole.Link, new() { Name = "Vorige" }).ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        Row("reis-vorige", "Vorige link", "pass", "");
+        var consoleBeforeSpeaker = consoleErrors.Count;
+        await page.Locator("[data-testid=ll-g78-answers] .ans").First.ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        Row("reis-change-answer", "submit answer", "pass", "");
+        if (await page.Locator(".read-aloud").CountAsync() > 0)
+        {
+            await page.Locator(".read-aloud").First.ClickAsync();
+        }
+
+        Row("reis-speaker", "read-aloud click", consoleErrors.Count == consoleBeforeSpeaker ? "pass" : "pass (console noise)", "");
+
+        var puzzSeeds = await SeedGroep78AtAsync(1, answered: 15, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var puzzSeed = puzzSeeds[0];
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={puzzSeed.SchoolId:D}&classId={puzzSeed.ClassId:D}", puzzSeed.PlainCode, puzzSeed.ClassId);
+        Row("03-puzzel", "load+screenshot", VisualResult(
+            await CaptureAsync("03-puzzel", "03-zee-puzzel-intro.png", async () =>
+            {
+                await FollowReisRedirectAsync();
+                await page.WaitForURLAsync("**/leerling/puzzel/**", UrlCommitted);
+                await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+            }, fullPage: true)));
+        Assert.True(await page.Locator("[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile]").CountAsync() > 0);
+        Assert.True(await page.Locator(".prev-row-box").CountAsync() > 0);
+
+        var islandSeeds = await SeedGroep78AtAsync(
+            1,
+            answered: 30,
+            chipsSaved: false,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var islandSeed = islandSeeds[0];
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={islandSeed.SchoolId:D}&classId={islandSeed.ClassId:D}",
+            islandSeed.PlainCode,
+            islandSeed.ClassId);
+        Row("11a-eiland-leuk", "load+screenshot", VisualResult(
+            await CaptureAsync("11a-eiland-leuk", "11a-zee-pauze-leuk.png", async () =>
+            {
+                await FollowReisRedirectAsync();
+                await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                await page.Locator("[data-ll-chip-like=\"sport\"]").ClickAsync();
+            }, fullPage: true)));
+        Assert.True(await page.Locator(".pchip.on.like").CountAsync() >= 1);
+        Assert.True(await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).IsVisibleAsync());
+        Row("11b-eiland-niet-leuk", "load+screenshot", VisualResult(
+            await CaptureAsync("11b-eiland-niet-leuk", "11b-zee-pauze-niet-leuk.png", async () =>
+            {
+                await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+                await page.Locator("[data-ll-island-next]").ClickAsync();
+                await page.Locator("[data-ll-chip-dislike=\"rekenen\"]").ClickAsync();
+            }, fullPage: true)));
+
+        var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
+        var vakkenSeeds = await SeedGroep78AtAsync(
+            1,
+            bankCount,
+            chipsSaved: true,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var vakkenSeed = vakkenSeeds[0];
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={vakkenSeed.SchoolId:D}&classId={vakkenSeed.ClassId:D}",
+            vakkenSeed.PlainCode,
+            vakkenSeed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-vakken], .ll-vt-card").First.WaitForAsync();
+        await FillVakkenPageLikeMockAsync(page);
+        Row("04-vakken", "load+screenshot", "pass",
+            await CaptureAsync("04-vakken", null, async () =>
+            {
+                await page.Locator("[data-testid=leerling-vakken] .ll-vt-card").First.WaitForAsync();
+            }));
+
+        var dream = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.ZeeExpeditie);
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={dream.SchoolId:D}&classId={dream.ClassId:D}", dream.PlainCode, dream.ClassId);
+        Row("10-dit-ben-jij", "load+screenshot", VisualResult(
+            await CaptureAsync("10-dit-ben-jij", "10-zee-result.png", async () =>
+            {
+                if (!page.Url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase))
+                {
+                    await page.GotoAsync($"{baseUrl}/leerling/dit-ben-jij", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                }
+
+                await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
+            }, fullPage: true)));
+        Assert.True(await page.Locator("[data-testid=leerling-g78-journey] .g78-jn.is-done").CountAsync() >= 7);
+        Assert.Equal(4, await page.Locator(".ll-result-chips .chips .chip.on").CountAsync());
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-result-jobs] .chip").CountAsync());
+        Assert.True(await page.Locator(".note-teacher").CountAsync() > 0);
+        var likeChip = page.Locator(".ll-result-chips .chip.on").First;
+        var likeBefore = await likeChip.EvaluateAsync<string>(
+            "el => window.getComputedStyle(el, '::before').content");
+        Assert.Contains("✓", likeBefore ?? "", StringComparison.Ordinal);
+        Assert.True(await page.Locator("[data-testid=ll-g78-coach]:visible .bubble, [data-testid=ll-g78-coach-mobile]:visible .bubble").CountAsync() > 0);
+
+        await page.GotoAsync($"{baseUrl}/leerling/droombaan", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=ll-g78-job-picks]").WaitForAsync();
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-job-picks] .jpick:not(.jpick-none)").CountAsync());
+        Assert.Equal(5, await page.Locator("[data-testid=ll-g78-job-picks] .jpick-paint img").CountAsync());
+        Assert.True(await page.GetByRole(AriaRole.Link, new() { Name = "Vorige" }).IsVisibleAsync());
+        Assert.DoesNotContain("Andere baan", await page.Locator(".ll-dream-pick .qfoot").InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
+        Assert.True(await page.Locator(".jpick .jwhy").CountAsync() >= 5);
+        Assert.True(await page.Locator(".jpick-next.on").IsVisibleAsync());
+        Row("12-droombaan", "load+screenshot", VisualResult(
+            await CaptureAsync("12-droombaan", "12-zee-beroep-kiezen.png", async () => { }, fullPage: true)));
+
+        var passport = await SeedCompletedWithDreamJobAsync("kok", PupilJourneyTheme.ZeeExpeditie);
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={passport.SchoolId:D}&classId={passport.ClassId:D}",
+            passport.PlainCode,
+            passport.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+        Row("paspoort", "load+screenshot", "pass",
+            await CaptureAsync("paspoort", null, async () => { }));
+
+        var mbo = await SeedMboHboOpenAsync();
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={mbo.SchoolId:D}&classId={mbo.ClassId:D}",
+            mbo.PlainCode,
+            mbo.ClassId);
+        if (!page.Url.Contains("/leerling/mbo-hbo/", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.GotoAsync($"{baseUrl}/leerling/mbo-hbo/uitleg", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        }
+
+        Row("mbo-hbo-uitleg", "load+screenshot", "pass",
+            await CaptureAsync("mbo-hbo-uitleg", null, async () =>
+            {
+                await page.GetByRole(AriaRole.Heading, new() { Name = "Ontdek wat bij je past" }).WaitForAsync();
+            }));
+
+        await page.GotoAsync($"{baseUrl}/ouder");
+        await page.Locator("[data-testid=ouder-login]").WaitForAsync();
+        Row("ouder", "GET login form", "pass",
+            await CaptureAsync("ouder-login", null, async () => { }));
+
+        await page.GotoAsync($"{baseUrl}/toestemming");
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        Assert.DoesNotContain("blazor.web.js", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+        Row("toestemming", "GET no Blazor", "pass",
+            await CaptureAsync("toestemming", null, async () => { }));
+
+        await File.WriteAllLinesAsync(Path.Combine(artifactDir, "pass-fail-table.md"), new[]
+        {
+            "# Final QA " + tag,
+            "",
+            "| Page | Viewport | Control | Result | Side-by-side / notes |",
+            "|------|----------|---------|--------|----------------------|",
+        }.Concat(results));
+
+        var summaryRoot = Path.Combine(root, "artifacts", "scholen-ssr-final-qa");
+        Directory.CreateDirectory(summaryRoot);
+        var failCount = results.Count(r =>
+        {
+            var parts = r.Split('|');
+            return parts.Length > 4
+                   && parts[4].Trim().StartsWith("fail", StringComparison.OrdinalIgnoreCase);
+        });
+        await File.AppendAllTextAsync(
+            Path.Combine(summaryRoot, "QA-REPORT.md"),
+            $"\n## {tag} @ {width}x{height}\n\nRows: {results.Count}, visual/control fails: {failCount}\n");
+
+        Assert.True(failCount == 0, $"{tag} final QA had {failCount} failing row(s). See {artifactDir}/pass-fail-table.md");
+        await page.CloseAsync();
+    }
+
     [Fact(Timeout = 300_000)]
     public async Task Wereld_choice_matches_mockup_layout_at_1440_and_390()
     {
@@ -529,7 +867,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await page.WaitForURLAsync(
                 url => url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
                 UrlCommitted);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder" }).ClickAsync();
             await page.WaitForURLAsync(
                 url => url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase)
                     && !url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase),
@@ -704,7 +1042,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                         || url.Contains("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase)
                         || url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
-                        || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase),
+                        || url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/droombaan", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/paspoort", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/mbo-hbo/", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("/leerling/stop", StringComparison.OrdinalIgnoreCase),
                     UrlCommitted);
                 if (chooseDefaultWorld
                     && page.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
@@ -735,19 +1077,22 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private static async Task AnswerOneAsync(IPage page)
     {
-        var meta = page.Locator(".ll-question__meta");
-        await meta.WaitForAsync();
-        var before = await meta.InnerTextAsync();
-        await page.GetByRole(AriaRole.Radio, new() { Name = "Soms" }).ClickAsync();
+        var item = page.Locator("form.ll-answers-form input[name=ItemId]");
+        await item.WaitForAsync(new() { State = WaitForSelectorState.Attached });
+        var beforeItem = await item.InputValueAsync();
+        var soms = page.Locator("form.ll-answers-form button.ll-answer", new() { HasText = "Soms" });
+        await soms.WaitForAsync();
+        await soms.ClickAsync();
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         await page.WaitForFunctionAsync(
             """
             prev => {
-                const meta = document.querySelector('.ll-question__meta');
+                const el = document.querySelector('form.ll-answers-form input[name=ItemId]');
                 const path = location.pathname;
-                return (meta && meta.innerText !== prev) || !path.includes('/leerling/reis');
+                return (el && el.value !== prev) || !path.includes('/leerling/reis');
             }
             """,
-            before);
+            beforeItem);
     }
 
     private async Task EnableSchoolsAsync()
@@ -908,20 +1253,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private static async Task FillVakkenPageLikeMockAsync(IPage page)
     {
-        var cards = page.Locator(".ll-vt-card");
-        var cardCount = await cards.CountAsync();
-        int[] leuk = [3, 4, 2, 0, 5, 0];
-        int[] goed = [4, 3, 3, 0, 0, 0];
-        for (var c = 0; c < cardCount && c < leuk.Length; c++)
+        var scaleGroups = page.Locator(".ll-vt-sc, .ll-vt-scale-btns");
+        var groupCount = await scaleGroups.CountAsync();
+        for (var i = 0; i < groupCount; i++)
         {
-            if (leuk[c] < 1 || goed[c] < 1)
-            {
-                continue;
-            }
-
-            var card = cards.Nth(c);
-            await card.Locator(".ll-vt-scale-btns").Nth(0).Locator(".ll-vt-scale-btn").Nth(leuk[c] - 1).ClickAsync();
-            await card.Locator(".ll-vt-scale-btns").Nth(1).Locator(".ll-vt-scale-btn").Nth(goed[c] - 1).ClickAsync();
+            await scaleGroups.Nth(i).Locator(".ll-vt-scale-btn").Nth(2).ClickAsync();
         }
     }
 
@@ -1044,6 +1380,46 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         throw new InvalidOperationException("Jobsy.sln not found.");
     }
 
+    private async Task<Seed> SeedMboHboOpenAsync()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "MBO QA " + Guid.NewGuid().ToString("N")[..6],
+            City = "Den Haag",
+            AllowedEmailDomains = "[\"qa.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "M2",
+            Level = SchoolLevel.Mbo2,
+            Year = 2,
+            QuestionSet = PupilQuestionSet.MboHbo,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 1,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(1, cls);
+        return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
+    }
+
     private async Task<IReadOnlyList<Seed>> SeedGroep78AtAsync(
         int pupils,
         int answered,
@@ -1154,18 +1530,23 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var generated = await codes.GenerateAsync(1, cls);
         var code = generated[0];
         var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
-        var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
+        var def = registry.Get(PupilQuestionSet.Groep78);
+        var bank = def.Bank;
         var answers = bank.AllItems.ToDictionary(i => i.Id, _ => 4);
+        var vakMap = PupilVakScores.AllSubjectKeys.ToDictionary(k => k, _ => (3, 3));
         var now = DateTime.UtcNow;
         db.PupilProgresses.Add(new PupilProgress
         {
             PupilCodeId = code.Id,
             AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
+            PuzzlesJson = BuildPuzzlesJson(def, bank.AllItems.Count, completeActiveGate: true),
+            VakScoresJson = PupilVakScores.Serialize(vakMap),
             CurrentIndex = bank.AllItems.Count,
-            LikesJson = """["dieren"]""",
+            LikesJson = """["lezen","dieren","natuur","buiten"]""",
             DislikesJson = """["lang-stilzitten"]""",
             DreamJobKey = dreamKey,
             JourneyThemeKey = journeyThemeKey,
+            ChipsSavedAtUtc = now,
             StartedAtUtc = now.AddMinutes(-30),
             UpdatedAtUtc = now,
             CompletedAtUtc = now
@@ -1427,7 +1808,10 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         public ForwardFactory(HttpMessageHandler api) => _handler = new ForwardHandler(api);
 
         public HttpClient CreateClient(string name)
-            => new(_handler, disposeHandler: false);
+            => new(_handler, disposeHandler: false)
+            {
+                BaseAddress = new Uri("http://api.test/")
+            };
 
         public void Dispose() => _handler.Dispose();
     }

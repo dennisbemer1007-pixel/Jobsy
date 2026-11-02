@@ -4,11 +4,13 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Jobsy.Web.Hosting;
 
@@ -97,19 +99,25 @@ public static class PupilDroombaanFormEndpoints
         var useGroep78Shell = result.QuestionSet == PupilQuestionSet.Groep78;
         var journeyThemeKey = PupilJourneyTheme.NormalizeOrDefault(progress?.JourneyThemeKey);
 
+        var registry = http.RequestServices.GetRequiredService<IPupilQuestionSetRegistry>();
         var body = PupilDroombaanSsrHtml.BuildBody(
             new PupilDroombaanPageModel(result, result.DreamJob, fieldValue, formError),
             culture,
             antiforgeryHtml,
             useGroep78Shell,
-            journeyThemeKey);
+            journeyThemeKey,
+            registry);
 
-        var doc = PupilLeerlingSsrFrame.RenderDocument(
-            culture["LeerlingDroom.Title"],
-            body,
-            pupil,
-            useGroep78Shell,
-            journeyThemeKey);
+        var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
+        {
+            PageTitle = culture["LeerlingDroom.Title"],
+            BodyHtml = body,
+            Pupil = pupil,
+            RoutePath = PupilDroombaanFormEndpoints.PagePath,
+            UseGroep78Shell = useGroep78Shell,
+            JourneyThemeKey = journeyThemeKey,
+            PauseFormHtml = PupilLeerlingSsrFrame.PauseForm(antiforgeryHtml, culture["Leerling.Pause"]),
+        });
 
         return Results.Content(doc, "text/html; charset=utf-8");
     }

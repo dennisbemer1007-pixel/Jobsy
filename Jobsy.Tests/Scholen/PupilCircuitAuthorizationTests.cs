@@ -216,7 +216,7 @@ public class PupilCircuitAuthorizationTests
         Assert.True(PupilPuzzleRoutes.IsBuilt("vuurtorenlampen"));
         Assert.False(PupilPuzzleRoutes.IsBuilt(null));
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling", "LeerlingReis.razor"));
+        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "PupilLeerlingJourneyEndpoints.cs"));
         Assert.Contains("PupilPuzzleRoutes.IsBuilt", reis, StringComparison.Ordinal);
         Assert.DoesNotContain("3 puzzelpauzes", File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStringsScholen.cs")), StringComparison.Ordinal);
     }
