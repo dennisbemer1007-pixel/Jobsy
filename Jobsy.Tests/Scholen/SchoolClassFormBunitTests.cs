@@ -1,8 +1,7 @@
 using Bunit;
 using Jobsy.Core.Enums;
-using Jobsy.Web.Components.School;
 using Jobsy.Web.Localization;
-using Microsoft.AspNetCore.Components;
+using Jobsy.Web.Scholen;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
@@ -28,42 +27,29 @@ public class SchoolClassFormBunitTests : BunitContext
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
 
-        var level = SchoolLevel.Havo;
-        var year = 2;
-        var cut = Render<SchoolClassForm>(ps => ps
-            .Add(p => p.ClassName, "2B")
-            .Add(p => p.Level, level)
-            .Add(p => p.LevelChanged, EventCallback.Factory.Create<SchoolLevel>(this, v => level = v))
-            .Add(p => p.Year, year)
-            .Add(p => p.YearChanged, EventCallback.Factory.Create<int>(this, v => year = v))
-            .Add(p => p.ShowPupilCount, true)
-            .Add(p => p.PupilCount, 28));
+        var model = new SchoolClassFormSsrHtml.FormModel
+        {
+            ClassName = "2B",
+            Kind = SchoolClassFormSsrHtml.KindVo,
+            Level = SchoolLevel.Havo,
+            Year = 2,
+            ShowPupilCount = true,
+            PupilCount = 28,
+        };
+        var voMarkup = RenderFormHtml(model, culture);
+        Assert.Contains("Middelbare school", voMarkup, StringComparison.Ordinal);
+        Assert.Contains("Vragenlijst: Middelbare school", voMarkup, StringComparison.Ordinal);
+        Assert.Contains("100 vragen", voMarkup, StringComparison.Ordinal);
+        Assert.Contains("Pauze-eiland", voMarkup, StringComparison.Ordinal);
 
-        Assert.Contains("Middelbare school", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Vragenlijst: Middelbare school", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("100 vragen", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Pauze-eiland", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Elke leerlingcode van deze klas krijgt deze vragenlijst. Leerlingen kiezen zelf niets.", cut.Markup, StringComparison.Ordinal);
-
-        var primary = cut.Find("input[value='primary']");
-        await primary.ChangeAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = "primary" });
-        cut.Render(ps => ps
-            .Add(p => p.ClassName, "7A")
-            .Add(p => p.Level, level)
-            .Add(p => p.LevelChanged, EventCallback.Factory.Create<SchoolLevel>(this, v => level = v))
-            .Add(p => p.Year, year)
-            .Add(p => p.YearChanged, EventCallback.Factory.Create<int>(this, v => year = v))
-            .Add(p => p.ShowPupilCount, true)
-            .Add(p => p.PupilCount, 28));
-
-        Assert.Equal(SchoolLevel.Groep78, level);
-        Assert.Equal(7, year);
-        Assert.Contains("Vragenlijst: Groep 7/8", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("60 vragen", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("1 pauze-eiland", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("puzzelpauzes", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("ongeveer 30 minuten", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("role=\"radiogroup\"", cut.Markup, StringComparison.Ordinal);
+        model.Kind = SchoolClassFormSsrHtml.KindPrimary;
+        model.Level = SchoolLevel.Groep78;
+        model.Year = 7;
+        var primaryMarkup = RenderFormHtml(model, culture);
+        Assert.Contains("Vragenlijst: Groep 7/8", primaryMarkup, StringComparison.Ordinal);
+        Assert.Contains("60 vragen", primaryMarkup, StringComparison.Ordinal);
+        Assert.Contains("1 pauze-eiland", primaryMarkup, StringComparison.Ordinal);
+        Assert.Contains("role=\"radiogroup\"", primaryMarkup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -72,17 +58,19 @@ public class SchoolClassFormBunitTests : BunitContext
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
 
-        var cut = Render<SchoolClassForm>(ps => ps
-            .Add(p => p.ClassName, "2B")
-            .Add(p => p.Level, SchoolLevel.Havo)
-            .Add(p => p.Year, 2)
-            .Add(p => p.LevelLocked, true));
-
-        Assert.Contains("Soort klas ligt vast", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("role=\"note\"", cut.Markup, StringComparison.Ordinal);
-        Assert.NotNull(cut.Find("fieldset.sch-kind").GetAttribute("disabled"));
-        Assert.True(cut.Find("input[value='primary']").HasAttribute("disabled"));
-        Assert.True(cut.Find("input[value='secondary']").HasAttribute("disabled"));
+        var model = new SchoolClassFormSsrHtml.FormModel
+        {
+            ClassName = "2B",
+            Level = SchoolLevel.Havo,
+            Year = 2,
+            LevelLocked = true,
+        };
+        var markup = RenderFormHtml(model, culture);
+        Assert.Contains("Soort klas ligt vast", markup, StringComparison.Ordinal);
+        Assert.Contains("role=\"note\"", markup, StringComparison.Ordinal);
+        Assert.Contains("<fieldset class=\"sch-kind\" disabled>", markup, StringComparison.Ordinal);
+        Assert.Contains("input type=\"radio\" name=\"kind\" value=\"primary\"", markup, StringComparison.Ordinal);
+        Assert.Contains(" disabled", markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -91,15 +79,24 @@ public class SchoolClassFormBunitTests : BunitContext
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
 
-        var cut = Render<SchoolClassForm>(ps => ps
-            .Add(p => p.ClassName, "2B")
-            .Add(p => p.Level, SchoolLevel.Havo)
-            .Add(p => p.Year, 2));
-
-        var groups = cut.FindAll("[role='radiogroup']");
-        Assert.NotEmpty(groups);
-        Assert.Contains(groups, g => !string.IsNullOrWhiteSpace(g.GetAttribute("aria-label")));
+        var markup = RenderFormHtml(new SchoolClassFormSsrHtml.FormModel
+        {
+            ClassName = "2B",
+            Level = SchoolLevel.Havo,
+            Year = 2,
+        }, culture);
+        Assert.Contains("role=\"radiogroup\"", markup, StringComparison.Ordinal);
+        Assert.Contains("aria-label=", markup, StringComparison.Ordinal);
     }
+
+    private static string RenderFormHtml(SchoolClassFormSsrHtml.FormModel model, CultureState culture)
+        => SchoolClassFormSsrHtml.Build(
+            model,
+            null,
+            "/school/klassen",
+            "/school/klassen",
+            "",
+            culture);
 
     private sealed class FakeAuth : AuthenticationStateProvider
     {

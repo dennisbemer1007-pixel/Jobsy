@@ -12,7 +12,6 @@ using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Components.Pages.Leerling;
-using Jobsy.Web.Components.Pages.School;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
@@ -336,7 +335,6 @@ public class TeacherSchoolLabelBunitTests : BunitContext
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
 
         var groupDto = JsonSerializer.Deserialize<TeacherGroupInsightsDto>(PortalHandler.GroupJson, JobsyApiClient.ApiJson)!;
         var groupMarkup = TeacherPortalReadOnlySsrHtml.BuildGroupBody(ClassId, groupDto, culture);
@@ -351,12 +349,20 @@ public class TeacherSchoolLabelBunitTests : BunitContext
         Assert.Contains("Weet ik nog niet: 4", overviewMarkup, StringComparison.Ordinal);
         Assert.DoesNotContain("sch-chip-list\"></div>", overviewMarkup, StringComparison.Ordinal);
 
-        nav.NavigateTo("http://localhost/school/resultaten");
-        var school = Render<SchoolResults>();
-        AssertNoRawEnums(school.Markup);
-        Assert.Contains("Iets goed afmaken", school.Markup, StringComparison.Ordinal);
-        Assert.Contains("Zelf kiezen", school.Markup, StringComparison.Ordinal);
-        Assert.Contains("Weet ik nog niet: 6", school.Markup, StringComparison.Ordinal);
+        var classes = JsonSerializer.Deserialize<List<SchoolPortalClassListItemDto>>(PortalHandler.ClassesJson, JobsyApiClient.ApiJson)!;
+        var results = JsonSerializer.Deserialize<SchoolPortalResultsDto>(PortalHandler.ResultsJson, JobsyApiClient.ApiJson)!;
+        var schoolMarkup = SchoolPortalSsrHtml.Results(
+            classes,
+            PupilQuestionSet.Vo,
+            false,
+            ClassId,
+            results,
+            null,
+            culture);
+        AssertNoRawEnums(schoolMarkup);
+        Assert.Contains("Iets goed afmaken", schoolMarkup, StringComparison.Ordinal);
+        Assert.Contains("Zelf kiezen", schoolMarkup, StringComparison.Ordinal);
+        Assert.Contains("Weet ik nog niet: 6", schoolMarkup, StringComparison.Ordinal);
     }
 
     private static void AssertNoRawEnums(string markup)
@@ -453,7 +459,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
                 PupilQuestionSet.Vo),
             JobsyApiClient.ApiJson);
 
-        private static readonly string ClassesJson = JsonSerializer.Serialize(
+        internal static readonly string ClassesJson = JsonSerializer.Serialize(
             new List<SchoolPortalClassListItemDto>
             {
                 new(
@@ -473,7 +479,7 @@ public class TeacherSchoolLabelBunitTests : BunitContext
             },
             JobsyApiClient.ApiJson);
 
-        private static readonly string ResultsJson = JsonSerializer.Serialize(
+        internal static readonly string ResultsJson = JsonSerializer.Serialize(
             new SchoolPortalResultsDto(
                 ClassId,
                 "2B",

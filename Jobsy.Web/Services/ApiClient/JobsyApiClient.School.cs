@@ -132,6 +132,15 @@ public sealed partial class JobsyApiClient
     public Task DownloadSchoolCodeListCsvAsync(IJSRuntime js, Guid classId, CancellationToken ct = default)
         => DownloadNamedFileAsync($"api/school/classes/{classId}/codelist.csv", js, "codelijst.csv", ct);
 
+    public Task<HttpResponseMessage> GetSchoolCodeListFileAsync(
+        Guid classId,
+        string extension,
+        CancellationToken ct = default)
+        => _http.GetAsync(
+            $"api/school/classes/{classId:D}/codelist.{extension}",
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+
     public async Task<SchoolPortalClassDetailDto?> ConfirmSchoolParentalAsync(
         Guid classId,
         bool confirmed,
