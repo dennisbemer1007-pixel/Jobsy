@@ -422,7 +422,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await EnablePassportV2Async();
         var baseUrl = EnsureWeb();
         var root = FindRepoRoot();
-        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v6", tag);
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "scholen-ssr-final-qa-v7", tag);
         Directory.CreateDirectory(artifactDir);
         var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
         var results = new List<string>();
