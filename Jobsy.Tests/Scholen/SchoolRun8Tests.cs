@@ -139,9 +139,6 @@ public class SchoolRun8ReadAloudTests : BunitContext
         await culture.SetLanguageAsync("nl");
         var nav = Services.GetRequiredService<NavigationManager>();
 
-        nav.NavigateTo("http://localhost/leerling");
-        await AssertSpoken(Render<LeerlingLogin>());
-
         nav.NavigateTo("http://localhost/leerling/start");
         await AssertSpoken(Render<LeerlingStart>());
 

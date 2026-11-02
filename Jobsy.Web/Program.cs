@@ -678,6 +678,8 @@ app.MapMeCandidateProxyEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
+app.MapPupilLoginPageEndpoints();
+app.MapTeacherPortalEntryEndpoints();
 app.MapParentPassportAuthEndpoints();
 app.MapPupilDroombaanFormEndpoints();
 app.MapPupilPdfEndpoints();

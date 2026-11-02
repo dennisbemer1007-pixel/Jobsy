@@ -254,16 +254,13 @@ public class LoggedInPupilIntroBunitTests : BunitContext
     }
 
     [Fact]
-    public async Task Already_logged_in_hides_the_pick_a_school_intro()
+    public void Leerling_login_is_ssr_not_blazor()
     {
-        var culture = Services.GetRequiredService<CultureState>();
-        await culture.SetLanguageAsync("nl");
-        var nav = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
-        nav.NavigateTo("http://localhost/leerling");
-
-        var cut = Render<LeerlingLogin>();
-        Assert.Contains("Je bent al ingelogd", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Kies je school en je klas", cut.Markup, StringComparison.Ordinal);
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        Assert.False(File.Exists(Path.Combine(root, "Jobsy.Web/Components/Pages/Leerling/LeerlingLogin.razor")));
+        var html = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilLeerlingLoginSsrHtml.cs"));
+        Assert.Contains("Leerling.Login.AlreadyIn", html, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Login.Heading", html, StringComparison.Ordinal);
     }
 
     [Fact]
