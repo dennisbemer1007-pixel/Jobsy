@@ -107,6 +107,72 @@
     });
   }
 
+  function vakkenScoreOk(val) {
+    var n = parseInt(val, 10);
+    return n >= 1 && n <= 5;
+  }
+
+  function syncVakkenForm(form) {
+    var cards = form.querySelectorAll(".ll-vt-card");
+    if (!cards.length) return;
+    var done = 0;
+    cards.forEach(function (card) {
+      var leuk = null;
+      var goed = null;
+      card.querySelectorAll('input[type="hidden"]').forEach(function (inp) {
+        var n = inp.getAttribute("name") || "";
+        if (n.indexOf("Leuk.") === 0) leuk = inp;
+        if (n.indexOf("Goed.") === 0) goed = inp;
+      });
+      var complete = leuk && goed && vakkenScoreOk(leuk.value) && vakkenScoreOk(goed.value);
+      card.classList.toggle("is-done", !!complete);
+      var ok = card.querySelector(".ll-vt-card__ok");
+      if (complete && !ok) {
+        ok = document.createElement("span");
+        ok.className = "ll-vt-card__ok";
+        ok.setAttribute("aria-hidden", "true");
+        ok.textContent = "✓";
+        var head = card.querySelector(".ll-vt-card__head");
+        if (head) head.appendChild(ok);
+      } else if (!complete && ok) {
+        ok.remove();
+      }
+      if (complete) done += 1;
+    });
+    var total = cards.length;
+    var remaining = total - done;
+    var pct = total === 0 ? 0 : (done * 100) / total;
+    var prog = form.closest(".ll-vt-main");
+    if (prog) prog = prog.querySelector("[data-ll-vt-prog]");
+    if (prog) {
+      var bar = prog.querySelector(".ll-vt-prog__bar i");
+      if (bar) bar.style.width = pct + "%";
+      var track = prog.querySelector(".ll-vt-prog__bar");
+      if (track) {
+        track.setAttribute("aria-valuenow", String(done));
+        track.setAttribute("aria-valuemax", String(total));
+      }
+      var count = prog.querySelector("[data-ll-vt-count]");
+      if (count) count.textContent = done + "/" + total;
+      var rem = prog.querySelector("[data-ll-vt-remaining]");
+      if (rem && rem.getAttribute("data-ll-vt-remaining-template")) {
+        rem.textContent = rem
+          .getAttribute("data-ll-vt-remaining-template")
+          .replace("{0}", String(remaining));
+      }
+    }
+    var bubble = form.querySelector("[data-ll-vt-bubble]");
+    if (bubble) {
+      if (remaining <= 0 && bubble.getAttribute("data-ll-vt-bubble-done")) {
+        bubble.textContent = bubble.getAttribute("data-ll-vt-bubble-done");
+      } else if (bubble.getAttribute("data-ll-vt-bubble-progress")) {
+        bubble.textContent = bubble.getAttribute("data-ll-vt-bubble-progress").replace("{0}", String(remaining));
+      }
+    }
+    var next = form.querySelector("[data-testid=ll-vt-next], .ll-vt-next");
+    if (next) next.disabled = done !== total || total === 0;
+  }
+
   function bindVakkenScale(root) {
     root.querySelectorAll("form[data-ll-vakken-form]").forEach(function (form) {
       if (form.getAttribute("data-ll-bound") === "1") return;
@@ -127,8 +193,10 @@
               b.setAttribute("aria-checked", b === btn ? "true" : "false");
             });
           }
+          syncVakkenForm(form);
         });
       });
+      syncVakkenForm(form);
     });
   }
 
