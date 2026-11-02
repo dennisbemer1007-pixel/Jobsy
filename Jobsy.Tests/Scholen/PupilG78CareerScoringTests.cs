@@ -89,6 +89,20 @@ public class PupilG78CareerScoringTests
         Assert.True(ranks[0].Score >= ranks[^1].Score);
     }
 
+    [Fact]
+    public void Sport_chip_profile_without_vak_scores_stays_below_seventy_percent()
+    {
+        var result = MinimalResult("IS");
+        result.RiasecScoresJson =
+            """{"realistic":78,"investigative":65,"artistic":40,"social":58,"enterprising":32,"conventional":36}""";
+        var progress = new PupilProgress { LikesJson = """["sport"]""" };
+        var vak = PupilVakScores.Parse(progress.VakScoresJson);
+        var ranked = PupilG78CareerScoring.TopJobMatches(result, progress, vak, minMatch: 0, maxCount: 5);
+        Assert.NotEmpty(ranked);
+        Assert.All(PupilG78CareerScoring.TopJobMatches(result, progress, vak), m => Assert.True(m.MatchScore < 0.70));
+        Assert.True(ranked[0].MatchScore is >= 0.60 and < 0.70);
+    }
+
     private static PupilResult MinimalResult(string holland) => new()
     {
         HollandCode = holland,

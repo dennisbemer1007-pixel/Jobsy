@@ -1487,6 +1487,49 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.True(bad.Count == 0, "Console errors: " + string.Join("; ", bad));
     }
 
+    [Fact(Timeout = 300_000, DisplayName = "Acc_pdf_url_canonical_redirect")]
+    public async Task Acc_pdf_malformed_query_redirects_to_clean_lang_on_acceptatie()
+    {
+        if (!AcceptatieE2E.Enabled)
+        {
+            return;
+        }
+
+        _ = TestContext.Current.CancellationToken;
+        var baseUrl = AcceptatieE2E.BaseUrl.TrimEnd('/');
+        var artifactDir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
+        if (string.IsNullOrWhiteSpace(artifactDir))
+        {
+            artifactDir = "/opt/cursor/artifacts/pdf-match-acc-v2";
+        }
+
+        Directory.CreateDirectory(artifactDir);
+
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        var loginUrl =
+            $"{baseUrl}/leerling?schoolId={AcceptatieE2E.SchoolId}&classId={AcceptatieE2E.ClassId}";
+        await LoginAsync(page, loginUrl, AcceptatieE2E.PlainCode, Guid.Parse(AcceptatieE2E.ClassId));
+
+        await page.GotoAsync(
+            $"{baseUrl}/leerling/pdf?lang=nl?",
+            new() { WaitUntil = WaitUntilState.Load });
+        Assert.DoesNotContain("lang=nl?", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/leerling/pdf?lang=nl", page.Url, StringComparison.OrdinalIgnoreCase);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, "04_pdf_url_bar.png"), FullPage = true });
+
+        await page.GotoAsync($"{baseUrl}/leerling/dit-ben-jij", new() { WaitUntil = WaitUntilState.Load });
+        await page.WaitForSelectorAsync("[data-testid=leerling-dit-ben-jij]", new() { Timeout = 60_000 });
+        var suggestions = page.Locator("[data-testid=leerling-g78-job-suggestions]");
+        var file = await suggestions.CountAsync() > 0
+            ? "02_dit_ben_jij_match.png"
+            : "02_dit_ben_jij_chips_fallback.png";
+        await page.ScreenshotAsync(new() { Path = Path.Combine(artifactDir, file), FullPage = true });
+    }
+
     private static async Task CaptureWalkthroughScreenshotIfRequestedAsync(IPage page, string fileName)
     {
         var dir = Environment.GetEnvironmentVariable("JOBSY_WALKTHROUGH_ARTIFACTS");
@@ -1516,9 +1559,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         public static string PlainCode => Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CODE") ?? "";
 
         public static string SchoolId =>
-            Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_SCHOOL_ID") ?? "";
+            Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_SCHOOL_ID")
+            ?? DemoSchoolIds.SchoolId.ToString("D");
 
         public static string ClassId =>
-            Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CLASS_ID") ?? "";
+            Environment.GetEnvironmentVariable("JOBSY_ACC_PUPIL_CLASS_ID")
+            ?? DemoSchoolIds.ClassGroep78Id.ToString("D");
     }
 }
