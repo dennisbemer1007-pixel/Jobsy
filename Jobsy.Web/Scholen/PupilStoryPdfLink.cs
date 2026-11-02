@@ -42,6 +42,25 @@ public static class PupilStoryPdfLink
     public static bool NeedsCanonicalRedirect(HttpRequest request)
     {
         var canonical = HrefFromQuery(request.Query);
+
+        var rawTarget = request.HttpContext.Features
+            .Get<Microsoft.AspNetCore.Http.Features.IHttpRequestFeature>()?.RawTarget;
+        if (!string.IsNullOrEmpty(rawTarget))
+        {
+            var rawPathAndQuery = rawTarget.Split(' ')[0];
+            if (rawPathAndQuery.Length == 0 || rawPathAndQuery[0] != '/')
+            {
+                rawPathAndQuery = "/" + rawPathAndQuery;
+            }
+
+            var sanitizedRaw = SanitizeHref(rawPathAndQuery);
+            if (!string.Equals(sanitizedRaw, canonical, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(sanitizedRaw, rawPathAndQuery, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
         var current = (request.Path.Value ?? Path) + (request.QueryString.Value ?? "");
         if (string.Equals(current, canonical, StringComparison.OrdinalIgnoreCase))
         {
