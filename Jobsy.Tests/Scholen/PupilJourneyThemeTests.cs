@@ -28,4 +28,21 @@ public sealed class PupilJourneyThemeTests
     {
         Assert.Contains("sort-1.png", PupilJourneyTheme.PuzzleSortAsset(PupilJourneyTheme.ZeeExpeditie, 1));
     }
+
+    [Theory]
+    [InlineData("schelpenrij", 15)]
+    [InlineData("schatkaart", 30)]
+    [InlineData("vuurtorenlampen", 45)]
+    public void Puzzle_gate_question_matches_journey_slots(string key, int expected)
+    {
+        Assert.Equal(expected, PupilJourneyTheme.PuzzleGateQuestion(key));
+    }
+
+    [Fact]
+    public void Schatkaart_intro_sub_uses_theme_lead()
+    {
+        Assert.Equal(
+            "Leerling.Puzzle.Tuin.Schatkaart.Lead",
+            PupilJourneyTheme.PuzzleIntroSubKey(PupilJourneyTheme.Eilandtuin, "schatkaart"));
+    }
 }

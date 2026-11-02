@@ -1209,6 +1209,182 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Theory]
+    [InlineData(1440, 900, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task G78_schatkaart_puzzle_playable_with_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 30, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var repoRoot = FindRepoRoot();
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-puzzel2-schatkaart", label);
+        Directory.CreateDirectory(artifactDir);
+        await SavePuzzleMockupIntroAsync(repoRoot, artifactDir, "schatkaart-intro-zee.html", width, height);
+
+        var consoleErrors = new List<string>();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error") consoleErrors.Add(msg.Text);
+        };
+        var failedRequests = new List<string>();
+        page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/schatkaart**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
+        await Assertions.Expect(page.Locator(".prev-row--cards")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Schatkaart" })).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
+        var cardStyle = await page.Locator("[data-testid=ll-puzzle-card]").First.GetAttributeAsync("style");
+        Assert.Contains("card-back.jpg", cardStyle, StringComparison.Ordinal);
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-mid-game.png"), FullPage = true });
+        await CompleteSchatkaartPairsAsync(page);
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" })).ToBeEnabledAsync();
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-end.png"), FullPage = true });
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/**", UrlCommitted);
+
+        var html = await page.ContentAsync();
+        Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(consoleErrors);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(1440, 900, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task G78_vuurtorenlampen_puzzle_playable_with_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 45, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var repoRoot = FindRepoRoot();
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-puzzel3-lampen", label);
+        Directory.CreateDirectory(artifactDir);
+        await SavePuzzleMockupIntroAsync(repoRoot, artifactDir, "lampen-intro-zee.html", width, height);
+
+        var consoleErrors = new List<string>();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error") consoleErrors.Add(msg.Text);
+        };
+        var failedRequests = new List<string>();
+        page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/vuurtorenlampen**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
+        await Assertions.Expect(page.Locator(".prev-row--lamps")).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-mid-game.png"), FullPage = true });
+        await CompleteVuurtorenPatternAsync(page);
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" })).ToBeEnabledAsync();
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-end.png"), FullPage = true });
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/**", UrlCommitted);
+
+        var html = await page.ContentAsync();
+        Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(consoleErrors);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    private async Task SavePuzzleMockupIntroAsync(string repoRoot, string artifactDir, string htmlName, int width, int height)
+    {
+        var mockHtml = Path.Combine(repoRoot, "docs", "g78-puzzle-mockups", htmlName);
+        if (!File.Exists(mockHtml) || _browser is null)
+        {
+            return;
+        }
+
+        await using var mockContext = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var mockPage = await mockContext.NewPageAsync();
+        await mockPage.GotoAsync(new Uri(mockHtml).AbsoluteUri);
+        await mockPage.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(artifactDir, "mockup-intro.png"),
+            FullPage = true
+        });
+    }
+
+    private static async Task CompleteSchatkaartPairsAsync(IPage page)
+    {
+        var play = page.Locator("[data-ll-puzzle-play-section]");
+        foreach (var face in new[] { "1", "2", "3" })
+        {
+            var pair = play.Locator($"[data-ll-card-face=\"{face}\"]");
+            await pair.Nth(0).ClickAsync();
+            await page.WaitForTimeoutAsync(300);
+            await pair.Nth(1).ClickAsync();
+            await page.WaitForTimeoutAsync(1_000);
+        }
+
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('input[name=\"Outcome\"]')?.value === 'done'",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 15_000 });
+    }
+
+    private static async Task CompleteVuurtorenPatternAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            "() => { const el = document.querySelector('[data-ll-lamp-turn]'); return el && el.hidden === false; }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 25_000 });
+        var patternRaw = await page.EvaluateAsync<string>(
+            "() => document.querySelector('[data-ll-puzzle-play-section]')?.getAttribute('data-ll-lamp-pattern') || ''");
+        var lamps = patternRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var play = page.Locator("[data-ll-puzzle-play-section]");
+        foreach (var lamp in lamps)
+        {
+            await play.Locator($"[data-ll-lamp-index=\"{lamp}\"]").ClickAsync();
+            await page.WaitForTimeoutAsync(450);
+        }
+
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('input[name=\"Outcome\"]')?.value === 'done'",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 10_000 });
+    }
+
+    [Theory]
     [InlineData(1280, 800, "desktop")]
     [InlineData(390, 844, "mobile")]
     public async Task G78_vakkentest_mockup_compare_screenshots(int width, int height, string label)
