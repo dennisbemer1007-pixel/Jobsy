@@ -346,6 +346,33 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
+        await Assertions.Expect(page.Locator("[data-testid=leerling-g78-shell]")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".ll-g78-shell header.top .btn-pauze")).ToBeVisibleAsync();
+        var cardsHeadJson = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const head = document.querySelector('.lp-g78__cards-head');
+              const sub = head?.querySelector('small');
+              if (!head || !sub) {
+                return JSON.stringify({ ok: false, reason: 'missing-cards-head' });
+              }
+              const hr = head.getBoundingClientRect();
+              const sr = sub.getBoundingClientRect();
+              const subDisplay = window.getComputedStyle(sub).display;
+              return JSON.stringify({
+                subDisplay,
+                subOnOwnLine: subDisplay === 'block' && sr.top > hr.top + 10,
+                overlapPx: Math.max(0, hr.bottom - sr.top - sr.height)
+              });
+            }
+            """);
+        using (var cardsHead = System.Text.Json.JsonDocument.Parse(cardsHeadJson))
+        {
+            var cardsRoot = cardsHead.RootElement;
+            Assert.Equal("block", cardsRoot.GetProperty("subDisplay").GetString());
+            Assert.True(cardsRoot.GetProperty("subOnOwnLine").GetBoolean(), cardsHeadJson);
+        }
+
         var layoutJson = await page.EvaluateAsync<string>(
             """
             () => {
@@ -410,6 +437,116 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.GotoAsync($"{baseUrl}/leerling/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid=leerling-paspoort-page]").WaitForAsync();
         Assert.DoesNotContain("/leerling?error=expired", page.Url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact(Timeout = 240_000)]
+    public async Task Wereld_screen_00_checkmark_sized_mockup_and_controls()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var root = FindRepoRoot();
+
+        foreach (var (width, height, tag) in new[] { (1440, 957, "desktop"), (390, 844, "mobile") })
+        {
+            var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-screen-00-fix", tag);
+            Directory.CreateDirectory(artifactDir);
+            var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag == "mobile" ? "mobile" : "desktop");
+            const string mockFile = "00-kies-je-wereld.png";
+
+            await using var context = width <= 400
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height }
+                });
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            var consoleOnWereld = new List<string>();
+            var failedOnWereld = new List<string>();
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type == "error"
+                    && page.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase))
+                {
+                    consoleOnWereld.Add(msg.Text);
+                }
+            };
+            page.RequestFailed += (_, req) =>
+            {
+                if (req.Url.Contains("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
+                    || req.Url.Contains("/leerling/werelden/", StringComparison.OrdinalIgnoreCase)
+                    || req.Url.Contains("leerling-werelden-kies.css", StringComparison.OrdinalIgnoreCase))
+                {
+                    failedOnWereld.Add($"{req.Method} {req.Url} → {req.Failure}");
+                }
+            };
+
+            var seed = await SeedOpenClassAsync();
+            var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+            await page.WaitForURLAsync("**/leerling/wereld**", UrlCommitted);
+            await page.Locator("[data-testid=ll-wereld-zee]").WaitForAsync();
+
+            var scripts = await page.EvaluateAsync<string[]>(
+                "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
+            Assert.DoesNotContain(scripts, s => s.Contains("blazor.web.js", StringComparison.OrdinalIgnoreCase));
+
+            var checkBox = await page.Locator(".same svg").First.BoundingBoxAsync();
+            Assert.NotNull(checkBox);
+            Assert.InRange(checkBox!.Width, 24, 40);
+            Assert.InRange(checkBox.Height, 24, 40);
+
+            var speakKey = width <= 400 ? "ll-wereld-coach-m" : "ll-wereld-coach";
+            await page.Locator($"[data-speech-key={speakKey}]").ClickAsync();
+
+            foreach (var testId in new[] { "ll-wereld-zee", "ll-wereld-tuin", "ll-wereld-ster" })
+            {
+                await page.GotoAsync($"{baseUrl}/leerling/wereld", new() { WaitUntil = WaitUntilState.Commit });
+                await page.Locator($"[data-testid={testId}]").WaitForAsync();
+                await page.Locator($"[data-testid={testId}]").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+                await page.Locator("h1.rk-h, .kz-h").First.WaitForAsync();
+            }
+
+            await page.GotoAsync($"{baseUrl}/leerling/wereld", new() { WaitUntil = WaitUntilState.Commit });
+            await page.Locator(".same svg").First.WaitForAsync();
+
+            var built = Path.Combine(artifactDir, "00-kies-je-wereld-built.png");
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = built,
+                FullPage = tag == "mobile"
+            });
+
+            var mock = Path.Combine(mockDir, mockFile);
+            var sideBySide = Path.Combine(artifactDir, "00-kies-je-wereld-mockup-vs-built.png");
+            if (File.Exists(mock))
+            {
+                var compareScript = Path.Combine(root, "tools", "scholen-ssr-final-qa", "compare_mockup_side_by_side.py");
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "python3",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                };
+                psi.ArgumentList.Add(compareScript);
+                psi.ArgumentList.Add(mock);
+                psi.ArgumentList.Add(built);
+                psi.ArgumentList.Add(sideBySide);
+                using var proc = System.Diagnostics.Process.Start(psi)!;
+                var diffOut = await proc.StandardOutput.ReadToEndAsync();
+                await proc.WaitForExitAsync();
+                Assert.Equal(0, proc.ExitCode);
+                var diff = double.Parse(diffOut.Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                Assert.True(diff < 35, $"mockup diff {diff:F1}% too high for {tag}");
+            }
+
+            AssertNoMeaningfulConsoleErrors(consoleOnWereld);
+            Assert.Empty(failedOnWereld);
+            await page.CloseAsync();
+        }
     }
 
     [Theory(Timeout = 600_000)]
@@ -730,6 +867,178 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             $"\n## {tag} @ {width}x{height}\n\nRows: {results.Count}, visual/control fails: {failCount}\n");
 
         Assert.True(failCount == 0, $"{tag} final QA had {failCount} failing row(s). See {artifactDir}/pass-fail-table.md");
+        await page.CloseAsync();
+    }
+
+    [Fact(Timeout = 600_000)]
+    public async Task G78_route_screen_all_worlds_clean_console_and_mockup_pairs()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var root = FindRepoRoot();
+        var compareScript = Path.Combine(root, "tools", "scholen-ssr-final-qa", "compare_mockup_side_by_side.py");
+        var artifactRoot = Path.Combine("/opt/cursor/artifacts", "g78-route-screen-fix");
+        Directory.CreateDirectory(artifactRoot);
+
+        var worlds = new (string TestId, string MockFile)[]
+        {
+            ("ll-wereld-zee", "01-zee-route.png"),
+            ("ll-wereld-tuin", "04-eilandtuin-route.png"),
+            ("ll-wereld-ster", "07-sterrenkust-route.png"),
+        };
+
+        foreach (var (width, height, tag, fullPage) in new[]
+                 {
+                     (1440, 900, "desktop", false),
+                     (390, 844, "mobile", true),
+                 })
+        {
+            var mockDir = Path.Combine(root, "docs", "mockups", "leerling", "werelden", "renders", tag);
+            var outDir = Path.Combine(artifactRoot, tag);
+            Directory.CreateDirectory(outDir);
+
+            await using var context = width <= 400
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height }
+                });
+
+            foreach (var (testId, mockFile) in worlds)
+            {
+                var seed = await SeedOpenClassAsync();
+                var page = await context.NewPageAsync();
+                page.SetDefaultTimeout(90_000);
+                var consoleIssues = new List<string>();
+                var failedRequests = new List<string>();
+                page.Console += (_, msg) =>
+                {
+                    if (msg.Type is "error" or "warning")
+                    {
+                        consoleIssues.Add($"{msg.Type}: {msg.Text}");
+                    }
+                };
+                page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+                await page.Context.ClearCookiesAsync();
+                var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+                await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
+                await page.WaitForURLAsync("**/leerling/wereld**", DomReady);
+                await page.Locator($"[data-testid={testId}]").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+                await page.Locator("h1.rk-h").WaitForAsync();
+
+                var html = await page.ContentAsync();
+                Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+
+                var built = Path.Combine(outDir, $"{testId}-{width}.png");
+                await page.ScreenshotAsync(new PageScreenshotOptions { Path = built, FullPage = fullPage });
+
+                var mock = Path.Combine(mockDir, mockFile);
+                var sideBySide = Path.Combine(outDir, $"{testId}-{width}-mockup-vs-built.png");
+                if (File.Exists(mock))
+                {
+                    var psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "python3",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false
+                    };
+                    psi.ArgumentList.Add(compareScript);
+                    psi.ArgumentList.Add(mock);
+                    psi.ArgumentList.Add(built);
+                    psi.ArgumentList.Add(sideBySide);
+                    using var proc = System.Diagnostics.Process.Start(psi)!;
+                    var diffOut = await proc.StandardOutput.ReadToEndAsync();
+                    await proc.WaitForExitAsync();
+                    Assert.Equal(0, proc.ExitCode);
+                    var diff = double.Parse(diffOut.Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                    var maxDiff = width <= 400 ? 16.0 : 12.0;
+                    Assert.True(diff <= maxDiff, $"{testId} @ {width} mockup diff {diff:F1}% (max {maxDiff}%)");
+                }
+
+                await page.Locator("a.btn-quiet").Filter(new() { HasText = "Andere wereld" }).ClickAsync();
+                await page.WaitForURLAsync("**/leerling/wereld**", UrlCommitted);
+                await page.Locator($"[data-testid={testId}]").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/start**", UrlCommitted);
+                await page.Locator(".rk-go").ClickAsync();
+                await page.WaitForURLAsync("**/leerling/reis**", UrlCommitted);
+
+                Assert.Empty(consoleIssues);
+                Assert.Empty(failedRequests);
+                await page.CloseAsync();
+            }
+        }
+    }
+
+    [Fact(Timeout = 300_000)]
+    public async Task G78_droombaan_before_and_after_bevestigen_at_1440_and_390()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.ZeeExpeditie);
+        var mockRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "docs", "mockups", "leerling", "werelden", "renders"));
+        var artifactDir = "/opt/cursor/artifacts/g78-droombaan-fix";
+        Directory.CreateDirectory(artifactDir);
+        var baseUrl = EnsureWeb();
+        var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
+        page.SetDefaultTimeout(90_000);
+        var consoleErrors = new List<string>();
+        var failedRequests = new List<string>();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.RequestFailed += (_, req) => failedRequests.Add($"{req.Failure} {req.Url}");
+
+        async Task CaptureViewportAsync(int width, int height, string tag)
+        {
+            var mockFolder = width >= 800 ? "desktop" : "mobile";
+            File.Copy(
+                Path.Combine(mockRoot, mockFolder, "12-zee-beroep-kiezen.png"),
+                Path.Combine(artifactDir, $"mockup-before-bevestigen-{tag}.png"),
+                overwrite: true);
+            await page.SetViewportSizeAsync(width, height);
+            await page.GotoAsync($"{baseUrl}/leerling/droombaan?pick=1", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=ll-g78-job-picks]").WaitForAsync();
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"built-before-bevestigen-{tag}.png"),
+                FullPage = true
+            });
+            await page.Locator("[data-testid=ll-g78-job-picks] .jpick:not(.jpick-none)").First.ClickAsync();
+            await page.GetByRole(AriaRole.Button, new() { Name = "Bevestigen" }).ClickAsync();
+            await page.WaitForURLAsync("**/leerling/droombaan?dream=*", new() { Timeout = 60_000 });
+            await page.Locator("[data-testid=leerling-droombaan-check]").WaitForAsync(new() { Timeout = 30_000 });
+            Assert.DoesNotContain("blazor.web.js", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(0, await page.Locator(".ll-dream-ssr__save.btn-primary").CountAsync());
+            Assert.True(await page.Locator(".ll-dream-check .btn.btn-main").CountAsync() >= 1);
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifactDir, $"built-after-bevestigen-{tag}.png"),
+                FullPage = true
+            });
+        }
+
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await CaptureViewportAsync(1440, 900, "1440");
+        await CaptureViewportAsync(390, 844, "390");
+
+        var hardConsole = consoleErrors
+            .Where(e => !e.Contains("Cache-Control", StringComparison.OrdinalIgnoreCase)
+                        && !e.Contains("Pragma", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Empty(hardConsole);
+        Assert.Empty(failedRequests);
         await page.CloseAsync();
     }
 
@@ -1208,6 +1517,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.CloseAsync();
     }
 
+
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]
@@ -1287,6 +1597,182 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.Empty(consoleErrors);
         Assert.Empty(failedRequests);
         await page.CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(1440, 900, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task G78_schatkaart_puzzle_playable_with_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 30, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var repoRoot = FindRepoRoot();
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-puzzel2-schatkaart", label);
+        Directory.CreateDirectory(artifactDir);
+        await SavePuzzleMockupIntroAsync(repoRoot, artifactDir, "schatkaart-intro-zee.html", width, height);
+
+        var consoleErrors = new List<string>();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error") consoleErrors.Add(msg.Text);
+        };
+        var failedRequests = new List<string>();
+        page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/schatkaart**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
+        await Assertions.Expect(page.Locator(".prev-row--cards")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Schatkaart" })).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
+        var cardStyle = await page.Locator("[data-testid=ll-puzzle-card]").First.GetAttributeAsync("style");
+        Assert.Contains("card-back.jpg", cardStyle, StringComparison.Ordinal);
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-mid-game.png"), FullPage = true });
+        await CompleteSchatkaartPairsAsync(page);
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" })).ToBeEnabledAsync();
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-end.png"), FullPage = true });
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/**", UrlCommitted);
+
+        var html = await page.ContentAsync();
+        Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(consoleErrors);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(1440, 900, "desktop")]
+    [InlineData(390, 844, "mobile")]
+    public async Task G78_vuurtorenlampen_puzzle_playable_with_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 45, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var repoRoot = FindRepoRoot();
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-puzzel3-lampen", label);
+        Directory.CreateDirectory(artifactDir);
+        await SavePuzzleMockupIntroAsync(repoRoot, artifactDir, "lampen-intro-zee.html", width, height);
+
+        var consoleErrors = new List<string>();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error") consoleErrors.Add(msg.Text);
+        };
+        var failedRequests = new List<string>();
+        page.RequestFailed += (_, req) => failedRequests.Add(req.Url);
+
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await page.WaitForURLAsync("**/leerling/puzzel/vuurtorenlampen**", UrlCommitted);
+        await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
+        await Assertions.Expect(page.Locator(".prev-row--lamps")).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+        await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
+
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-mid-game.png"), FullPage = true });
+        await CompleteVuurtorenPatternAsync(page);
+        await Assertions.Expect(page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" })).ToBeEnabledAsync();
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-end.png"), FullPage = true });
+
+        await page.GetByRole(AriaRole.Button, new() { Name = "Verder met de reis" }).ClickAsync();
+        await page.WaitForURLAsync("**/leerling/**", UrlCommitted);
+
+        var html = await page.ContentAsync();
+        Assert.DoesNotContain("blazor.web.js", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(consoleErrors);
+        Assert.Empty(failedRequests);
+        await page.CloseAsync();
+    }
+
+    private async Task SavePuzzleMockupIntroAsync(string repoRoot, string artifactDir, string htmlName, int width, int height)
+    {
+        var mockHtml = Path.Combine(repoRoot, "docs", "g78-puzzle-mockups", htmlName);
+        if (!File.Exists(mockHtml) || _browser is null)
+        {
+            return;
+        }
+
+        await using var mockContext = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var mockPage = await mockContext.NewPageAsync();
+        await mockPage.GotoAsync(new Uri(mockHtml).AbsoluteUri);
+        await mockPage.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(artifactDir, "mockup-intro.png"),
+            FullPage = true
+        });
+    }
+
+    private static async Task CompleteSchatkaartPairsAsync(IPage page)
+    {
+        var play = page.Locator("[data-ll-puzzle-play-section]");
+        foreach (var face in new[] { "1", "2", "3" })
+        {
+            var pair = play.Locator($"[data-ll-card-face=\"{face}\"]");
+            await pair.Nth(0).ClickAsync();
+            await page.WaitForTimeoutAsync(300);
+            await pair.Nth(1).ClickAsync();
+            await page.WaitForTimeoutAsync(1_000);
+        }
+
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('input[name=\"Outcome\"]')?.value === 'done'",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 15_000 });
+    }
+
+    private static async Task CompleteVuurtorenPatternAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            "() => { const el = document.querySelector('[data-ll-lamp-turn]'); return el && el.hidden === false; }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 25_000 });
+        var patternRaw = await page.EvaluateAsync<string>(
+            "() => document.querySelector('[data-ll-puzzle-play-section]')?.getAttribute('data-ll-lamp-pattern') || ''");
+        var lamps = patternRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var play = page.Locator("[data-ll-puzzle-play-section]");
+        foreach (var lamp in lamps)
+        {
+            await play.Locator($"[data-ll-lamp-index=\"{lamp}\"]").ClickAsync();
+            await page.WaitForTimeoutAsync(450);
+        }
+
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('input[name=\"Outcome\"]')?.value === 'done'",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 10_000 });
     }
 
     [Theory]

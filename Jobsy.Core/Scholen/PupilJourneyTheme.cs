@@ -257,6 +257,61 @@ public static class PupilJourneyTheme
             _ => 1,
         };
 
+    public static int PuzzleGateQuestion(string puzzleKey)
+        => puzzleKey.Trim().ToLowerInvariant() switch
+        {
+            "schatkaart" => 30,
+            "vuurtorenlampen" => 45,
+            _ => 15,
+        };
+
+    public static string PuzzleIntroSubKey(string? themeKey, string puzzleKey)
+    {
+        var puzzle = puzzleKey.Trim().ToLowerInvariant();
+        return puzzle switch
+        {
+            "schelpenrij" => SchelpenrijIntroSubKey(themeKey),
+            _ => PuzzleLeadKey(themeKey, puzzleKey),
+        };
+    }
+
+    public static string PuzzleIntroCoachKey(string puzzleKey)
+        => puzzleKey.Trim().ToLowerInvariant() switch
+        {
+            "schatkaart" => "Leerling.G78.Puzzle.IntroBubble.Schatkaart",
+            "vuurtorenlampen" => "Leerling.G78.Puzzle.IntroBubble.Vuurtoren",
+            _ => "Leerling.G78.Puzzle.IntroBubble",
+        };
+
+    public static string PuzzleIntroStepKey(string puzzleKey, int step)
+        => (puzzleKey.Trim().ToLowerInvariant(), step) switch
+        {
+            ("schatkaart", 1) => "Leerling.G78.Puzzle.Schatkaart.Step1",
+            ("schatkaart", 2) => "Leerling.G78.Puzzle.Schatkaart.Step2",
+            ("schatkaart", 3) => "Leerling.G78.Puzzle.Schatkaart.Step3",
+            ("vuurtorenlampen", 1) => "Leerling.G78.Puzzle.Vuurtoren.Step1",
+            ("vuurtorenlampen", 2) => "Leerling.G78.Puzzle.Vuurtoren.Step2",
+            ("vuurtorenlampen", 3) => "Leerling.G78.Puzzle.Vuurtoren.Step3",
+            (_, 1) => "Leerling.G78.Puzzle.Step1",
+            (_, 2) => "Leerling.G78.Puzzle.Step2",
+            (_, 3) => "Leerling.G78.Puzzle.Step3",
+            _ => "Leerling.G78.Puzzle.Step1",
+        };
+
+    public static IReadOnlyList<int> SchelpenrijPatternSequence() => [1, 2, 2, 3, 1];
+
+    public static int SchelpenrijPatternAnswer() => 2;
+
+    public static IReadOnlyList<int> SchelpenrijPatternChoices() => [1, 2, 3, 2, 1];
+
+    public static string SchelpenrijIntroSubKey(string? themeKey)
+        => NormalizeOrDefault(themeKey) switch
+        {
+            Sterrenkust => "Leerling.G78.Puzzle.IntroSub.Ster",
+            Eilandtuin => "Leerling.G78.Puzzle.IntroSub.Tuin",
+            _ => "Leerling.G78.Puzzle.IntroSub.Zee",
+        };
+
     public static IEnumerable<string> AllPuzzleAssetPaths()
     {
         foreach (var theme in All)

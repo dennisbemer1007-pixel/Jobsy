@@ -35,8 +35,8 @@ public static class PupilLeerlingSsrFrame
         var routePath = options.RoutePath ?? "/leerling/reis";
         var styles = PageAssetCatalog.StylesheetsForPupilSsr(routePath);
         var chip = BuildChip(options.Pupil);
-        var themeClass = options.UseGroep78Shell && PupilJourneyTheme.IsValid(options.JourneyThemeKey)
-            ? PupilJourneyTheme.Groep78ShellClass(options.JourneyThemeKey)
+        var themeClass = options.UseGroep78Shell
+            ? PupilJourneyTheme.Groep78ShellClass(PupilJourneyTheme.NormalizeOrDefault(options.JourneyThemeKey))
             : PupilJourneyTheme.Groep78ShellClass(PupilJourneyTheme.ZeeExpeditie);
 
         var sb = new StringBuilder();
