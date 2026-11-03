@@ -189,7 +189,7 @@ internal static class PupilGroep78MockHtml
 
     internal static string JobPickWhyHtml(CultureState culture, string jobKey, IReadOnlyList<string> likeKeys)
     {
-        var beroepKey = PupilG78CareerScoring.PrimaryBeroepssoortKey(jobKey);
+        var beroepKey = PupilGroep78JobPaint.DisplayBeroepssoortKey(jobKey);
         var omdat = beroepKey is null ? "" : PupilG78BeroepssoortCatalog.Omdat(beroepKey, english: false);
         if (string.IsNullOrWhiteSpace(omdat))
         {

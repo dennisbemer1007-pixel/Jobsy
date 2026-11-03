@@ -1,9 +1,33 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 
 namespace Jobsy.Web.Scholen;
 
 internal static class PupilGroep78JobPaint
 {
+    /// <summary>Beroepsgroep label for G78 job cards (can differ from scoring when a job fits multiple clusters).</summary>
+    internal static string? DisplayBeroepssoortKey(string jobKey)
+    {
+        var key = jobKey.ToLowerInvariant();
+        return key switch
+        {
+            "fysiotherapeut" => "zorg-mensen",
+            "personal-trainer" or "profsporter" => "sport-bewegen",
+            "bioloog" => "exact-wetenschap",
+            _ => PupilG78CareerScoring.PrimaryBeroepssoortKey(jobKey)
+        };
+    }
+
+    internal static (string Domain, string Blurb) PickCardCopy(string jobKey, string language)
+    {
+        var beroep = DisplayBeroepssoortKey(jobKey);
+        var domain = beroep is null
+            ? ""
+            : PupilG78BeroepssoortCatalog.Title(beroep, english: false);
+        var blurb = PupilPassportLocalizedCopy.JobBlurb(jobKey, PupilQuestionSet.Groep78, language);
+        return (domain, blurb);
+    }
     internal static string PaintImagePath(string jobKey)
     {
         var key = jobKey.ToLowerInvariant();
@@ -18,6 +42,9 @@ internal static class PupilGroep78JobPaint
             "hovenier" => ("buiten-groen", false),
             "brandweer" or "verpleegkundige" => ("helpen", false),
             "politie" => ("helpen", true),
+            "fysiotherapeut" => ("zorg-dieren", true),
+            "personal-trainer" => ("sport", false),
+            "profsporter" => ("sport", true),
             "kok" or "bakker" => ("creatief", true),
             "programmeur" or "ict-medewerker" or "game-developer" => ("onderzoek", true),
             _ => PaintStemFromBeroepssoort(jobKey)
@@ -38,7 +65,7 @@ internal static class PupilGroep78JobPaint
             "media-digital" => ("creatief", true),
             "natuur-buiten" => ("buiten-groen", false),
             "veiligheid-hulp" => ("helpen", false),
-            "sport-bewegen" => ("helpen", true),
+            "sport-bewegen" => ("sport", false),
             _ => ("onderzoek", false)
         };
     }
