@@ -32,6 +32,8 @@ public static partial class PageAssetCatalog
         return path.Equals("/leerling/wereld", StringComparison.OrdinalIgnoreCase)
                || path.Equals("/leerling/start", StringComparison.OrdinalIgnoreCase)
                || path.Equals("/leerling/reis", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("/leerling/stop", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("/leerling/stop?", StringComparison.OrdinalIgnoreCase)
                || path.Equals("/leerling/vakken", StringComparison.OrdinalIgnoreCase)
                || path.Equals("/leerling/eiland", StringComparison.OrdinalIgnoreCase)
                || path.Equals("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)

@@ -15,6 +15,8 @@ public class LeerlingGroep78ThemeCssCatalogTests
         ["/leerling/dit-ben-jij"],
         ["/leerling/paspoort"],
         ["/leerling/droombaan"],
+        ["/leerling/stop"],
+        ["/leerling/stop?done=1&g78=1"],
     ];
 
     [Theory]
@@ -40,7 +42,6 @@ public class LeerlingGroep78ThemeCssCatalogTests
 
     [Theory]
     [InlineData("/leerling")]
-    [InlineData("/leerling/stop")]
     [InlineData("/leerling/vo-paspoort")]
     public void Login_and_vo_routes_skip_g78_theme_css(string path)
     {

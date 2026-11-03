@@ -499,6 +499,12 @@ public static class UiStringsScholen
         nl["Leerling.G78.Island.MetaProgress"] = "30 van 60 klaar";
         nl["Leerling.G78.Island.JourneyMeta"] = "<b>Pauze-eiland</b> · 30 van 60 klaar · even rust · stap {0} van 2";
         nl["Leerling.G78.Result.JourneyMeta"] = "<b>Klaar</b> · alle 60 vragen · jouw verhaal";
+        nl["Leerling.G78.ReisDone.JourneyMeta"] = "<b>Klaar</b> · alle vragen beantwoord";
+        nl["Leerling.G78.ReisDone.Kicker"] = "Alle vragen af";
+        nl["Leerling.G78.ReisDone.Title"] = "Klaar!";
+        nl["Leerling.G78.ReisDone.Coach"] = "Super! Nu zie je straks jouw verhaal.";
+        nl["Leerling.G78.Journey.PauseMeta"] = "{0} · {1} van {2} vragen · even pauze";
+        nl["Leerling.G78.ReadAloud"] = "Laat dit voorlezen";
         nl["Leerling.G78.Result.ReadStory"] = "Laat jouw verhaal voorlezen";
         nl["Leerling.G78.Result.LikesTitle"] = "Je houdt van";
         nl["Leerling.G78.Result.JobsTitle"] = "Beroepen om eens te bekijken";

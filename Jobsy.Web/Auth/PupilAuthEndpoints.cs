@@ -1,14 +1,17 @@
 using System.Globalization;
+using System.Text;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 
 namespace Jobsy.Web.Auth;
@@ -99,7 +102,11 @@ public static class PupilAuthEndpoints
 
         // POST must not share /leerling/stop with the Blazor page: both match and
         // the pause button returns 500. The confirmation page stays GET /leerling/stop.
-        app.MapPost("/leerling/pauze", async (HttpContext http, IAntiforgery antiforgery) =>
+        app.MapPost("/leerling/pauze", async (
+            HttpContext http,
+            IAntiforgery antiforgery,
+            JobsyApiClient api,
+            CancellationToken ct) =>
         {
             http.Response.Headers.CacheControl = "no-store";
             if (!await antiforgery.IsRequestValidAsync(http))
@@ -107,19 +114,25 @@ public static class PupilAuthEndpoints
                 // Still sign out — pause must always work on shared Chromebooks.
             }
 
+            PupilProgressStateDto? progress = null;
+            try
+            {
+                progress = await api.GetPupilProgressAsync(ct);
+            }
+            catch
+            {
+                // Pause must still work when progress cannot be loaded.
+            }
+
             var pupil = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
             var codeId = pupil.Principal?.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
             http.RequestServices.GetService<PupilApiTicketStore>()?.Remove(codeId);
             await http.SignOutAsync(PupilAuthDefaults.Scheme);
             PupilApiSessionCookie.Clear(http);
-            var form = await http.Request.ReadFormAsync();
+            var form = await http.Request.ReadFormAsync(ct);
             var part = form["part"].ToString();
-            if (string.Equals(part, "1", StringComparison.Ordinal))
-            {
-                return Results.Redirect("/leerling/stop?done=deel1");
-            }
-
-            return Results.Redirect("/leerling/stop?done=1");
+            var stopQuery = BuildStopRedirectQuery(form, part, progress);
+            return Results.Redirect($"/leerling/stop{stopQuery}");
         }).AllowAnonymous();
     }
 
@@ -156,6 +169,35 @@ public static class PupilAuthEndpoints
         }
 
         return null;
+    }
+
+    private static string BuildStopRedirectQuery(
+        IFormCollection form,
+        string part,
+        PupilProgressStateDto? progress)
+    {
+        var done = string.Equals(part, "1", StringComparison.Ordinal) ? "deel1" : "1";
+        var qs = new StringBuilder("?done=").Append(Uri.EscapeDataString(done));
+        if (string.Equals(form["g78"].ToString(), "1", StringComparison.Ordinal))
+        {
+            qs.Append("&g78=1");
+            var theme = form["theme"].ToString();
+            if (PupilJourneyTheme.IsValid(theme))
+            {
+                qs.Append("&theme=").Append(Uri.EscapeDataString(theme));
+            }
+
+            if (progress is not null)
+            {
+                PupilGroep78JourneySnapshot.AppendPauseQuery(qs, progress);
+            }
+            else
+            {
+                PupilGroep78JourneySnapshot.AppendPauseQueryFromForm(qs, form);
+            }
+        }
+
+        return qs.ToString();
     }
 
     private static string QuestionSetQuerySuffix(string body)

@@ -149,16 +149,62 @@ public static class PupilLeerlingSsrFrame
         sb.Append("</div>");
     }
 
-    public static string PauseForm(string antiforgeryField, string label, string? part = null)
+    public static string PauseForm(
+        string antiforgeryField,
+        string label,
+        string? part = null,
+        bool groep78 = false,
+        string? journeyThemeKey = null,
+        string? journeyNodeKey = null,
+        int? answeredCount = null,
+        int? totalItems = null,
+        bool journeyCompleted = false)
     {
         var sb = new StringBuilder();
-        sb.Append("""<form method="post" action="/leerling/pauze" class="ll-topbar__pause-form">""");
+        sb.Append("""<form method="post" action="/leerling/pauze" class="ll-topbar__pause-form" data-ll-pause-form>""");
         sb.Append(antiforgeryField);
         if (!string.IsNullOrEmpty(part))
         {
             sb.Append("<input type=\"hidden\" name=\"part\" value=\"");
             sb.Append(WebUtility.HtmlEncode(part));
             sb.Append("\" />");
+        }
+
+        if (groep78)
+        {
+            sb.Append("""<input type="hidden" name="g78" value="1" />""");
+            if (PupilJourneyTheme.IsValid(journeyThemeKey))
+            {
+                sb.Append("<input type=\"hidden\" name=\"theme\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(journeyThemeKey));
+                sb.Append("\" />");
+            }
+
+            if (!string.IsNullOrWhiteSpace(journeyNodeKey))
+            {
+                sb.Append("<input type=\"hidden\" name=\"jn\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(journeyNodeKey));
+                sb.Append("\" />");
+            }
+
+            if (answeredCount is int answered)
+            {
+                sb.Append("<input type=\"hidden\" name=\"ja\" value=\"");
+                sb.Append(answered.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                sb.Append("\" />");
+            }
+
+            if (totalItems is int total)
+            {
+                sb.Append("<input type=\"hidden\" name=\"jt\" value=\"");
+                sb.Append(total.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                sb.Append("\" />");
+            }
+
+            if (journeyCompleted)
+            {
+                sb.Append("""<input type="hidden" name="jc" value="1" />""");
+            }
         }
 
         sb.Append("""<button type="submit" class="btn-pauze"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span>""");

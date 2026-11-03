@@ -2,6 +2,18 @@
   "use strict";
 
   var answerSaveChain = Promise.resolve();
+  var pauseFlushMs = 2000;
+
+  function flushAnswerSaveChain() {
+    return Promise.race([
+      answerSaveChain.catch(function () {
+        /* keep queue alive after failure */
+      }),
+      new Promise(function (resolve) {
+        setTimeout(resolve, pauseFlushMs);
+      }),
+    ]);
+  }
 
   function readAntiforgeryFromForm(form) {
     var itemId = form.querySelector('input[name="ItemId"]');
@@ -859,6 +871,23 @@
     });
   }
 
+  function bindPauseForms(root) {
+    root.querySelectorAll("form[data-ll-pause-form]").forEach(function (form) {
+      if (form.getAttribute("data-ll-bound") === "1") return;
+      form.setAttribute("data-ll-bound", "1");
+      form.addEventListener("submit", function (e) {
+        if (form.getAttribute("data-ll-pause-submitting") === "1") {
+          return;
+        }
+        e.preventDefault();
+        flushAnswerSaveChain().then(function () {
+          form.setAttribute("data-ll-pause-submitting", "1");
+          HTMLFormElement.prototype.submit.call(form);
+        });
+      });
+    });
+  }
+
   function init() {
     var root = document.body;
     bindReadAloud(root);
@@ -872,6 +901,7 @@
     bindIslandSteps(root);
     bindJobPicks(root);
     bindMhboScale(root);
+    bindPauseForms(root);
   }
 
   if (document.readyState === "loading") {
