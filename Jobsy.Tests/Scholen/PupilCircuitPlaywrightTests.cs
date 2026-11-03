@@ -2636,6 +2636,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             Assert.Equal("true", await puzzleSpeak.GetAttributeAsync("aria-pressed"));
             await G78PuzzleIntroScreenshotTests.AssertSchelpenSlotsInsidePreviewBoxAsync(page);
             await G78PuzzleIntroScreenshotTests.AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(artifactDir, $"vraag-{tag}.png"),
+                FullPage = true
+            });
             if (width <= 400)
             {
                 await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
@@ -2643,11 +2648,6 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 await G78PuzzleIntroScreenshotTests.AssertPuzzleIntroAndPlayWithinContainersAsync(page);
             }
 
-            await page.ScreenshotAsync(new PageScreenshotOptions
-            {
-                Path = Path.Combine(artifactDir, $"vraag-{tag}.png"),
-                FullPage = true
-            });
             await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
             await page.CloseAsync();
         }
