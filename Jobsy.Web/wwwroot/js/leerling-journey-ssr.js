@@ -96,15 +96,26 @@
     bindIslandSteps(shell);
     bindJobPicks(shell);
     bindMhboScale(shell);
+    bindPauseForms(shell);
     return true;
   }
 
   function fetchReisDocument() {
-    return fetch("/leerling/reis", {
+    var url = "/leerling/reis?_=" + Date.now();
+    return fetch(url, {
       method: "GET",
       credentials: "same-origin",
+      redirect: "manual",
       headers: { Accept: "text/html", "X-Requested-With": "XMLHttpRequest" },
     }).then(function (res) {
+      if (res.type === "opaqueredirect" || (res.status >= 300 && res.status < 400)) {
+        var loc = res.headers.get("Location");
+        if (loc) {
+          var err = new Error("reis_fetch_redirect");
+          err.redirectPath = loc;
+          throw err;
+        }
+      }
       if (!res.ok) throw new Error("reis_fetch_" + res.status);
       return res.text();
     });
@@ -153,20 +164,24 @@
 
   function navigateAfterReisSave(_form, data) {
     var target = data.redirectPath || "/leerling/reis";
-    if (target.indexOf("/leerling/reis") === 0 && target.indexOf("?") < 0) {
-      return fetchReisDocument()
-        .then(function (html) {
-          if (swapGroep78ShellMain(html)) {
-            return;
-          }
-          window.location.assign(target);
-        })
-        .catch(function () {
-          window.location.assign(target);
-        });
+    var plainReis =
+      target === "/leerling/reis" ||
+      target.indexOf("/leerling/reis?") === 0;
+    if (!plainReis) {
+      window.location.assign(target);
+      return Promise.resolve();
     }
-    window.location.assign(target);
-    return Promise.resolve();
+    return fetchReisDocument()
+      .then(function (html) {
+        if (swapGroep78ShellMain(html)) {
+          return;
+        }
+        window.location.assign(target);
+      })
+      .catch(function (err) {
+        var recovery = (err && err.redirectPath) || target;
+        window.location.assign(recovery);
+      });
   }
 
   function bindReadAloud(root) {
@@ -234,7 +249,7 @@
               }
               var status = err && err.status;
               var recovery = (err && err.redirectPath) || "/leerling/reis";
-              if (status === 409 || status === 502 || status === 400) {
+              if (status === 409 || status === 502 || status === 400 || status === 500) {
                 window.setTimeout(function () {
                   window.location.assign(recovery);
                 }, 400);
