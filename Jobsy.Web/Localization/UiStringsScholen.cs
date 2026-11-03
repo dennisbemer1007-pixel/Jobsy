@@ -411,6 +411,8 @@ public static class UiStringsScholen
         nl["Leerling.Theme.Ster.Lighthouse.Title"] = "De vuurtoren";
         nl["Leerling.Theme.Ster.Lagoon.Title"] = "De sterrenbaai";
         nl["Leerling.Theme.Ster.World.Sub"] = "Langs de sterrenkust";
+        nl["Leerling.Puzzle.Zee.Schatkaart.Lead"] = "Draai kaarten om en vind de paren.";
+        nl["Leerling.Puzzle.Zee.Vuurtoren.Lead"] = "Onthoud het lichtpatroon en tik het na.";
         nl["Leerling.Puzzle.Tuin.Schelpenrij.Title"] = "Schelpenrij";
         nl["Leerling.Puzzle.Tuin.Schelpenrij.Lead"] = "Vind het patroon in de rij schelpen in de koraaltuin.";
         nl["Leerling.Puzzle.Tuin.Schatkaart.Title"] = "Schatkaart";

@@ -180,6 +180,8 @@ public static class PupilJourneyTheme
         themeKey = NormalizeOrDefault(themeKey);
         return (themeKey, puzzle) switch
         {
+            (ZeeExpeditie, "schatkaart") => "Leerling.Puzzle.Zee.Schatkaart.Lead",
+            (ZeeExpeditie, "vuurtorenlampen") => "Leerling.Puzzle.Zee.Vuurtoren.Lead",
             (Eilandtuin, "schelpenrij") => "Leerling.Puzzle.Tuin.Schelpenrij.Lead",
             (Eilandtuin, "schatkaart") => "Leerling.Puzzle.Tuin.Schatkaart.Lead",
             (Eilandtuin, "vuurtorenlampen") => "Leerling.Puzzle.Tuin.Vuurtoren.Lead",
