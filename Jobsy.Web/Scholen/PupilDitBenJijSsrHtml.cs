@@ -26,16 +26,13 @@ public static class PupilDitBenJijSsrHtml
         var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
         var tileStems = PupilJourneyTheme.ResultTileStems(themeKey);
         var sb = new StringBuilder();
-        sb.Append("<section class=\"band rb dark ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
-        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append("\">");
-        sb.Append("""<div class="wrap ll-g78-result-band__journey">""");
+        sb.Append("<section class=\"band rb dark ll-g78-dream-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
+        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append(";min-height:360px\">");
+        sb.Append("""<div class="wrap ll-g78-dream-band__journey ll-g78-result-band__journey">""");
         sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
             culture, registry, themeKey, "dit-ben-jij", culture["Leerling.G78.Result.JourneyMeta"], 0, 0, sceneMetaIsHtml: true));
         sb.Append("</div></section>");
-        sb.Append("""<div class="wrap rs-hdr"><div class="rs-title"><span class="pill-done">""");
-        sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.DonePill"]));
-        sb.Append("""</span><h1 class="rs-h serif">""").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1></div></div>");
-        sb.Append("""<div class="wrap ll-g78-overlap ll-result--g78" data-testid="leerling-dit-ben-jij"><div class="q-layout">""");
+        sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-result--g78" data-testid="leerling-dit-ben-jij"><div class="q-layout">""");
         sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
             culture,
             culture["Leerling.G78.Result.Coach"],
@@ -44,7 +41,10 @@ public static class PupilDitBenJijSsrHtml
             "kreeft-kijker.png",
             mobileGuideFirst: true));
         sb.Append("<div class=\"ll-result-main\">");
-        sb.Append("""<div class="card ll-result-story"><div class="qrow">""");
+        sb.Append("""<div class="card ll-result-story"><header class="ll-result-head">""");
+        sb.Append("<span class=\"pill-done\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.DonePill"])).Append("</span>");
+        sb.Append("<h1 class=\"island-lead rs-h serif\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1></header>");
+        sb.Append("""<div class="qrow">""");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(result.Story.Body, "ll-story", culture, "Leerling.G78.Result.ReadStory"));
         sb.Append("</div><p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(result.Story.Body)).Append("</p></div>");
         sb.Append("<div class=\"rtiles\">");

@@ -1710,7 +1710,7 @@
   }
 
   .ll-g78-shell .ll-g78-result-band {
-    min-height: 300px !important;
+    min-height: 0 !important;
   }
 
   .ll-g78-shell .ll-g78-result-band__journey {
@@ -1837,16 +1837,148 @@
   }
 }
 
-/* G78 vakkentest (approved mockup) */
-.ll-g78-shell > .ll-vt {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+/* G78 vakkentest (journey scene + themed cards) */
+.ll-g78-shell .ll-g78-vakken-wrap {
+  padding-bottom: 24px;
 }
 
-.ll-g78-shell:has(.ll-vt) footer {
-  padding: 14px 0 18px;
+.ll-g78-shell .ll-vakken-g78-card {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.ll-g78-shell .ll-vakken-g78-intro {
+  font-size: 17px;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.ll-g78-shell .ll-vakken-g78-stars {
+  color: var(--gold, #f3c66b);
+  font-weight: 600;
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-prog {
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-prog__labels {
+  color: var(--ink);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-prog__bar {
+  background: color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-prog__bar i {
+  background: linear-gradient(90deg, var(--gold, #d9932b), var(--gold-light, #f3c66b));
+}
+
+.ll-g78-shell .ll-vakken-g78-grid {
+  margin-bottom: 8px;
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-card {
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(16, 40, 74, 0.06);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-card.is-done {
+  border-color: var(--gold, #d9932b);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-card__ic {
+  background: color-mix(in srgb, var(--teal, #2a7a72) 12%, #fff);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-card__name,
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-ql {
+  color: var(--ink);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-scale-btn {
+  border-color: color-mix(in srgb, var(--border) 80%, var(--ink));
+  color: var(--ink);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vt-scale-btn.is-on {
+  background: var(--navy, #141f3d);
+  border-color: var(--navy, #141f3d);
+  color: var(--gold-light, #f3c66b);
+}
+
+.ll-g78-shell .ll-vakken-g78-foot {
+  position: relative;
+  z-index: 4;
+  margin-top: 8px;
+  padding-right: 0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ll-g78-shell .ll-vakken-g78-foot .ll-vt-next {
+  margin-left: auto;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--gold, #d9932b) 55%, #000);
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vakken-corner {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(300px, 38vw);
+  z-index: 2;
+}
+
+.ll-g78-shell .ll-vakken-g78-card .ll-vakken-corner .bubble {
+  background: var(--navy, #141f3d);
+  color: #fff;
+}
+
+@media (min-width: 721px) {
+  .ll-g78-shell .ll-vakken-g78-foot {
+    padding-right: min(320px, 34%);
+  }
+
+  .ll-g78-shell .ll-vakken-g78-card {
+    padding-bottom: 88px;
+  }
+}
+
+@media (max-width: 720px) {
+  .ll-g78-shell .ll-vakken-g78-card .ll-vakken-corner {
+    position: static;
+    max-width: none;
+    width: 100%;
+    margin-top: 16px;
+    order: 0;
+  }
+
+  .ll-g78-shell .ll-vakken-g78-foot {
+    padding-right: 0;
+  }
+
+  .ll-g78-shell .ll-vakken-g78-foot .ll-vt-next {
+    flex: 1 1 100%;
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .ll-g78-shell .ll-vakken-g78-card {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px;
+  }
+
+  .ll-g78-shell .ll-vakken-g78-card form {
+    order: 1;
+  }
+
+  .ll-g78-shell .ll-vakken-g78-card .ll-vakken-corner {
+    order: 2;
+  }
 }
 
 .ll-vt-scene-bar {
@@ -2234,6 +2366,9 @@
 .ll-g78-shell .wrap.ll-result--g78 {
   position: relative;
   z-index: 4;
+}
+
+.ll-g78-shell .wrap.ll-result--g78:not(.ll-g78-overlap--below-journey) {
   margin-top: -20px;
 }
 
@@ -2599,7 +2734,23 @@
 }
 
 .ll-g78-shell .ll-g78-result-band {
-  min-height: 460px;
+  min-height: 0;
+}
+
+.ll-g78-shell .ll-result-head {
+  margin: 0 0 14px;
+}
+
+.ll-g78-shell .ll-result-head .pill-done {
+  margin-bottom: 8px;
+}
+
+.ll-g78-shell .ll-result-head .island-lead {
+  margin: 0;
+}
+
+.ll-g78-shell .wrap.ll-result--g78.ll-g78-overlap--below-journey {
+  margin-top: 28px;
 }
 
 .ll-g78-shell .band.dark::after {
