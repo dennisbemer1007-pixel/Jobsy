@@ -99,6 +99,7 @@ public static class PupilLeerlingJourneyEndpoints
         HttpContext http,
         JobsyApiClient api,
         CultureState culture,
+        IPupilQuestionSetRegistry registry,
         IAntiforgery af,
         CancellationToken ct)
     {
@@ -106,10 +107,16 @@ public static class PupilLeerlingJourneyEndpoints
         culture.InitializeFromRequest(http);
         var done = http.Request.Query["done"].ToString();
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        var body = PupilStopSsrHtml.BuildBody(culture, done, afHtml);
         var progress = await LoadProgressAsync(api, ct);
-        var useG78 = progress?.QuestionSet == PupilQuestionSet.Groep78
-                     && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        var themeFromQuery = http.Request.Query["theme"].ToString();
+        var g78FromQuery = string.Equals(http.Request.Query["g78"], "1", StringComparison.Ordinal);
+        var useG78 = g78FromQuery
+                     || (progress?.QuestionSet == PupilQuestionSet.Groep78
+                         && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress));
+        var themeKey = PupilJourneyTheme.IsValid(progress?.JourneyThemeKey)
+            ? progress!.JourneyThemeKey
+            : PupilJourneyTheme.IsValid(themeFromQuery) ? themeFromQuery : null;
+        var body = PupilStopSsrHtml.BuildBody(culture, done, afHtml, useG78, themeKey, registry);
         var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
         {
             PageTitle = string.IsNullOrEmpty(done) ? culture["Leerling.Stop.AskTitle"] : culture["Leerling.Stop.Title"],
@@ -117,7 +124,7 @@ public static class PupilLeerlingJourneyEndpoints
             Pupil = http.User,
             RoutePath = "/leerling/stop",
             UseGroep78Shell = useG78,
-            JourneyThemeKey = progress?.JourneyThemeKey,
+            JourneyThemeKey = themeKey,
             ShowPause = false,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
@@ -191,7 +198,14 @@ public static class PupilLeerlingJourneyEndpoints
         if (progress.Completed)
         {
             var doneAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-            return Html(http, culture["Leerling.Reis.Title"], PupilReisSsrHtml.DoneCard(culture), "/leerling/reis", groep78, progress.JourneyThemeKey, doneAf);
+            return Html(
+                http,
+                culture["Leerling.Reis.Title"],
+                PupilReisSsrHtml.DoneCard(culture, groep78, progress.JourneyThemeKey, registry),
+                "/leerling/reis",
+                groep78,
+                progress.JourneyThemeKey,
+                doneAf);
         }
 
         var error = http.Request.Query["error"].ToString() switch
@@ -733,7 +747,9 @@ public static class PupilLeerlingJourneyEndpoints
             UseGroep78Shell = useG78,
             JourneyThemeKey = themeKey,
             ShowPause = showPause,
-            PauseFormHtml = showPause ? PupilLeerlingSsrFrame.PauseForm(pauseAntiforgeryHtml, "Pauze") : "",
+            PauseFormHtml = showPause
+                ? PupilLeerlingSsrFrame.PauseForm(pauseAntiforgeryHtml, "Pauze", groep78: useG78, journeyThemeKey: themeKey)
+                : "",
         });
         return Results.Content(doc, "text/html; charset=utf-8");
     }

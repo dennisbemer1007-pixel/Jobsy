@@ -1,9 +1,11 @@
 using System.Globalization;
+using System.Text;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Antiforgery;
@@ -114,12 +116,8 @@ public static class PupilAuthEndpoints
             PupilApiSessionCookie.Clear(http);
             var form = await http.Request.ReadFormAsync();
             var part = form["part"].ToString();
-            if (string.Equals(part, "1", StringComparison.Ordinal))
-            {
-                return Results.Redirect("/leerling/stop?done=deel1");
-            }
-
-            return Results.Redirect("/leerling/stop?done=1");
+            var stopQuery = BuildStopRedirectQuery(form, part);
+            return Results.Redirect($"/leerling/stop{stopQuery}");
         }).AllowAnonymous();
     }
 
@@ -156,6 +154,23 @@ public static class PupilAuthEndpoints
         }
 
         return null;
+    }
+
+    private static string BuildStopRedirectQuery(IFormCollection form, string part)
+    {
+        var done = string.Equals(part, "1", StringComparison.Ordinal) ? "deel1" : "1";
+        var qs = new StringBuilder("?done=").Append(Uri.EscapeDataString(done));
+        if (string.Equals(form["g78"].ToString(), "1", StringComparison.Ordinal))
+        {
+            qs.Append("&g78=1");
+            var theme = form["theme"].ToString();
+            if (PupilJourneyTheme.IsValid(theme))
+            {
+                qs.Append("&theme=").Append(Uri.EscapeDataString(theme));
+            }
+        }
+
+        return qs.ToString();
     }
 
     private static string QuestionSetQuerySuffix(string body)

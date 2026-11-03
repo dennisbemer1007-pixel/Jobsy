@@ -121,13 +121,59 @@ public static class PupilReisSsrHtml
     public static string WindowClosed(CultureState culture, PupilQuestionSet set)
         => StateCard(culture["Leerling.WindowClosed.Title"], culture, PupilCopy.Key(set, "Leerling.WindowClosed.Body"));
 
-    public static string DoneCard(CultureState culture)
+    public static string DoneCard(
+        CultureState culture,
+        bool groep78 = false,
+        string? themeKey = null,
+        IPupilQuestionSetRegistry? registry = null)
     {
-        var sb = new StringBuilder("""<section class="ll-card"><h1>""");
-        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</h1><p>");
-        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.DoneLead"])).Append("</p>");
-        sb.Append("""<a class="btn-primary" href="/leerling/dit-ben-jij">""");
-        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.ToResult"])).Append("</a></section>");
+        if (!groep78 || registry is null)
+        {
+            var legacy = new StringBuilder("""<section class="ll-card"><h1>""");
+            legacy.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</h1><p>");
+            legacy.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.DoneLead"])).Append("</p>");
+            legacy.Append("""<a class="btn-primary" href="/leerling/dit-ben-jij">""");
+            legacy.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.ToResult"])).Append("</a></section>");
+            return legacy.ToString();
+        }
+
+        var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
+        var sb = new StringBuilder();
+        sb.Append("""<section class="ll-g78-scene ll-g78-result-scene" data-testid="leerling-g78-scene">""");
+        sb.Append("<section class=\"band ll-g78-world-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
+        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append("\" aria-hidden=\"true\"></section>");
+        sb.Append("""<div class="ll-g78-scene__journey ll-g78-result-band__journey">""");
+        sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
+            culture,
+            registry,
+            themeKey,
+            "dit-ben-jij",
+            culture["Leerling.G78.ReisDone.JourneyMeta"],
+            0,
+            0,
+            sceneMetaIsHtml: true));
+        sb.Append("</div></section>");
+        sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-reis-done--g78" data-testid="leerling-reis-klaar"><div class="q-layout">""");
+        sb.Append("""<section class="card ll-reis-done-card">""");
+        sb.Append("<div class=\"qmeta\"><span class=\"kicker\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</span></div>");
+        sb.Append("<h1 class=\"island-lead qtitle\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</h1>");
+        sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(
+            culture["Leerling.Reis.DoneLead"],
+            "ll-reis-done",
+            culture,
+            "Leerling.G78.ReadQuestion"));
+        sb.Append("<p class=\"ll-reis-done-lead\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.DoneLead"])).Append("</p>");
+        sb.Append("""<div class="qfoot"><a class="btn btn-main" href="/leerling/dit-ben-jij">""");
+        sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.ToResult"]));
+        sb.Append(PupilGroep78SsrParts.NextSvg).Append("</a></div></section>");
+        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
+            culture,
+            culture["Leerling.G78.ReisDone.Coach"],
+            culture["Leerling.G78.ReisDone.Coach"],
+            "ll-reis-done-coach",
+            "kreeft-welkom.png",
+            mobileGuideFirst: true));
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 

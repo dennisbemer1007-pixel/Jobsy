@@ -149,16 +149,32 @@ public static class PupilLeerlingSsrFrame
         sb.Append("</div>");
     }
 
-    public static string PauseForm(string antiforgeryField, string label, string? part = null)
+    public static string PauseForm(
+        string antiforgeryField,
+        string label,
+        string? part = null,
+        bool groep78 = false,
+        string? journeyThemeKey = null)
     {
         var sb = new StringBuilder();
-        sb.Append("""<form method="post" action="/leerling/pauze" class="ll-topbar__pause-form">""");
+        sb.Append("""<form method="post" action="/leerling/pauze" class="ll-topbar__pause-form" data-ll-pause-form>""");
         sb.Append(antiforgeryField);
         if (!string.IsNullOrEmpty(part))
         {
             sb.Append("<input type=\"hidden\" name=\"part\" value=\"");
             sb.Append(WebUtility.HtmlEncode(part));
             sb.Append("\" />");
+        }
+
+        if (groep78)
+        {
+            sb.Append("""<input type="hidden" name="g78" value="1" />""");
+            if (PupilJourneyTheme.IsValid(journeyThemeKey))
+            {
+                sb.Append("<input type=\"hidden\" name=\"theme\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(journeyThemeKey));
+                sb.Append("\" />");
+            }
         }
 
         sb.Append("""<button type="submit" class="btn-pauze"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span>""");

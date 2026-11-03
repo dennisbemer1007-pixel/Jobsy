@@ -1734,6 +1734,124 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.CloseAsync();
     }
 
+    [Theory(Timeout = 300_000)]
+    [InlineData(1440, 900, "1440")]
+    [InlineData(390, 844, "390")]
+    public async Task G78_klaar_page_has_g78_styling(int width, int height, string tag)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.ZeeExpeditie);
+        var baseUrl = EnsureWeb();
+        var artifactDir = "/opt/cursor/artifacts/g78-klaar-pause";
+        Directory.CreateDirectory(artifactDir);
+
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height }
+        });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=leerling-reis-klaar]").WaitForAsync();
+
+        var styleCheck = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const sheet = [...document.querySelectorAll('link[rel=stylesheet]')].some(l => (l.href || '').includes('leerling-werelden-kies.css'));
+              const shell = document.querySelector('[data-testid=leerling-g78-shell]');
+              const card = document.querySelector('.ll-reis-done-card');
+              const coach = document.querySelector('[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile]');
+              const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+              const bg = shell ? getComputedStyle(shell).backgroundColor : '';
+              return JSON.stringify({
+                sheet,
+                shell: !!shell,
+                card: !!card,
+                coach: !!coach,
+                overflow,
+                bg
+              });
+            }
+            """);
+        using var doc = System.Text.Json.JsonDocument.Parse(styleCheck);
+        var root = doc.RootElement;
+        Assert.True(root.GetProperty("sheet").GetBoolean());
+        Assert.True(root.GetProperty("shell").GetBoolean());
+        Assert.True(root.GetProperty("card").GetBoolean());
+        Assert.True(root.GetProperty("coach").GetBoolean());
+        Assert.True(root.GetProperty("overflow").GetInt32() <= 1, styleCheck);
+
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(artifactDir, $"klaar-{tag}.png"),
+            FullPage = true
+        });
+    }
+
+    [Theory(Timeout = 300_000)]
+    [InlineData(1440, 900, "1440")]
+    [InlineData(390, 844, "390")]
+    public async Task G78_pause_works_immediately_after_answer_click(int width, int height, string tag)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 4, chipsSaved: true, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var artifactDir = "/opt/cursor/artifacts/g78-klaar-pause";
+        Directory.CreateDirectory(artifactDir);
+
+        var consoleErrors = new List<string>();
+        var badHttp = new List<string>();
+
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height }
+        });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.Response += (_, resp) =>
+        {
+            if (resp.Status >= 400 && resp.Url.Contains("/leerling", StringComparison.OrdinalIgnoreCase))
+            {
+                badHttp.Add($"{resp.Status} {resp.Url}");
+            }
+        };
+
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=ll-g78-answers] .ans").First.WaitForAsync();
+
+        var t0 = DateTime.UtcNow;
+        await page.Locator("[data-testid=ll-g78-answers] .ans").First.ClickAsync();
+        await page.Locator(".ll-g78-shell header.top .btn-pauze").ClickAsync();
+        await page.WaitForURLAsync("**/leerling/stop**", new() { Timeout = 2_000 });
+        var elapsedMs = (DateTime.UtcNow - t0).TotalMilliseconds;
+        Assert.True(elapsedMs < 2_500, $"pause navigation took {elapsedMs:F0} ms");
+
+        await page.Locator("[data-testid=leerling-stop-pause]").WaitForAsync();
+        Assert.Contains("leerling-werelden-kies.css", await page.ContentAsync(), StringComparison.Ordinal);
+        Assert.Empty(consoleErrors);
+        Assert.Empty(badHttp);
+
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(artifactDir, $"pauze-{tag}.png"),
+            FullPage = true
+        });
+    }
+
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]
