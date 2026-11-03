@@ -516,6 +516,14 @@
     min-height: 118px;
   }
 
+  .ll-g78-shell .wcard .wimg .pick {
+    top: 8px;
+    left: 8px;
+    right: auto;
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
   .ll-g78-shell .wcard .wbody {
     padding: 14px 14px 14px 16px;
     gap: 4px;
@@ -1116,10 +1124,10 @@
   min-height: 42px;
 }
 
-.ll-g78-shell .wcard .pick {
+.ll-g78-shell .wcard .wimg .pick {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   background: var(--coral);
   color: #fff;
   font-size: 13px;
@@ -1127,6 +1135,8 @@
   padding: 4px 10px;
   border-radius: 999px;
   z-index: 2;
+  max-width: calc(100% - 16px);
+  box-shadow: 0 2px 8px rgba(16, 40, 74, 0.25);
 }
 
 .ll-g78-shell .rk-h {

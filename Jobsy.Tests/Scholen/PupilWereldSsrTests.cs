@@ -38,6 +38,10 @@ public class PupilWereldSsrTests
         Assert.Contains("data-testid=\"ll-wereld-tuin\"", html, StringComparison.Ordinal);
         Assert.Contains("class=\"wcard sel", html, StringComparison.Ordinal);
         Assert.Contains("Gekozen", html, StringComparison.Ordinal);
+        Assert.Contains(
+            """<span class="pick">Gekozen</span></div><div class="wbody">""",
+            html,
+            StringComparison.Ordinal);
         Assert.DoesNotContain("data-testid=\"ll-wereld-zee\" class=\"wcard sel", html, StringComparison.Ordinal);
     }
 

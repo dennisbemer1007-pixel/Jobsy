@@ -1122,6 +1122,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await page.WaitForURLAsync("**/leerling/start**", DomReady);
             await page.GotoAsync($"{baseUrl}/leerling/wereld", new() { WaitUntil = WaitUntilState.Commit });
             await page.Locator(".wcard.sel").WaitForAsync();
+            await AssertGekozenLabelDoesNotOverlapTitleAsync(page, "Zee-expeditie");
             var checkBox = await page.Locator(".same svg").First.BoundingBoxAsync();
             Assert.NotNull(checkBox);
             Assert.InRange(checkBox!.Width, 24, 40);
@@ -1133,6 +1134,31 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 FullPage = tag == "390"
             });
         }
+    }
+
+    private static async Task AssertGekozenLabelDoesNotOverlapTitleAsync(IPage page, string expectedTitle)
+    {
+        var card = page.Locator(".wcard.sel");
+        await card.WaitForAsync();
+        var title = card.Locator("h2");
+        await Assertions.Expect(title).ToHaveTextAsync(expectedTitle);
+        var titleClipped = await title.EvaluateAsync<bool>(
+            "el => el.scrollWidth > el.clientWidth + 1");
+        Assert.False(titleClipped, $"Title '{expectedTitle}' must not be clipped.");
+        var overlaps = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const card = document.querySelector('.wcard.sel');
+              if (!card) return true;
+              const pick = card.querySelector('.pick');
+              const h2 = card.querySelector('h2');
+              if (!pick || !h2) return false;
+              const a = pick.getBoundingClientRect();
+              const b = h2.getBoundingClientRect();
+              return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+            }
+            """);
+        Assert.False(overlaps, "Gekozen label must not overlap the world title.");
     }
 
     [Fact(Timeout = 300_000)]

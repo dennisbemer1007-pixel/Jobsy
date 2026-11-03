@@ -37,13 +37,14 @@ public static class PupilWereldSsrHtml
             sb.Append("<button type=\"submit\" class=\"wcard");
             if (selected) sb.Append(" sel");
             sb.Append("\" data-testid=\"ll-wereld-").Append(PupilLeerlingSsrParts.E(card.Key)).Append("\">");
+            sb.Append("<div class=\"wimg\" style=\"background-image:image-set(url('/leerling/werelden/img/").Append(card.ImageStem);
+            sb.Append("-390w.jpg') 1x);background-position:").Append(card.BgPos).Append("\">");
             if (selected)
             {
                 sb.Append("<span class=\"pick\">Gekozen</span>");
             }
 
-            sb.Append("<div class=\"wimg\" style=\"background-image:image-set(url('/leerling/werelden/img/").Append(card.ImageStem);
-            sb.Append("-390w.jpg') 1x);background-position:").Append(card.BgPos).Append("\"></div>");
+            sb.Append("</div>");
             sb.Append("<div class=\"wbody\"><h2 class=\"serif\">").Append(PupilLeerlingSsrParts.E(culture[card.TitleKey]));
             sb.Append("</h2><p>").Append(PupilLeerlingSsrParts.E(culture[card.DescKey])).Append("</p>");
             sb.Append("""<div class="wgo"><span>""").Append(PupilLeerlingSsrParts.E(culture["Leerling.Wereld.ChooseGo"]));
