@@ -48,9 +48,12 @@ public sealed class PupilPuzzelSsrHtmlTests
             registry,
             error: null);
 
-        Assert.Contains("Vind de bij elkaar horende symbolen.", html, StringComparison.Ordinal);
+        Assert.Contains("Draai kaarten om en vind de paren.", html, StringComparison.Ordinal);
         Assert.Contains("prev-row--cards", html, StringComparison.Ordinal);
-        Assert.Contains("card-back.jpg", html, StringComparison.Ordinal);
+        Assert.Contains("/puzzles/zee/match-1.jpg", html, StringComparison.Ordinal);
+        Assert.Contains("/puzzles/zee/match-2.jpg", html, StringComparison.Ordinal);
+        Assert.Contains("/puzzles/zee/match-3.jpg", html, StringComparison.Ordinal);
+        Assert.Contains("slot--card-face", html, StringComparison.Ordinal);
         Assert.Contains("Bekijk de kaarten op tafel.", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Vind het patroon in de rij schelpen", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-match-src", html, StringComparison.Ordinal);
@@ -74,9 +77,31 @@ public sealed class PupilPuzzelSsrHtmlTests
 
         Assert.Contains("Onthoud het sterrenlicht en tik het patroon na.", html, StringComparison.Ordinal);
         Assert.Contains("prev-row--lamps", html, StringComparison.Ordinal);
-        Assert.Contains("/puzzles/ster/lamp-", html, StringComparison.Ordinal);
+        Assert.Contains("slot--beacon", html, StringComparison.Ordinal);
+        Assert.Contains("data-ll-lamp-tone=\"1\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("/puzzles/ster/lamp-", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-lamp-watch", html, StringComparison.Ordinal);
         Assert.DoesNotContain("prev-row--cards", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Groep78_vuurtorenlampen_play_uses_beacon_lamps()
+    {
+        var culture = NlCulture();
+        var registry = new PupilQuestionSetRegistry();
+        var html = PupilPuzzelSsrHtml.BuildBody(
+            "vuurtorenlampen",
+            culture,
+            antiforgery: "",
+            savePath: "/leerling/puzzel/vuurtorenlampen/save",
+            groep78: true,
+            themeKey: PupilJourneyTheme.ZeeExpeditie,
+            registry,
+            error: null);
+
+        Assert.Contains("ll-puzzle__beacon", html, StringComparison.Ordinal);
+        Assert.Contains("Onthoud het lichtpatroon en tik het na.", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("/puzzles/zee/lamp-", html, StringComparison.Ordinal);
     }
 
     private static CultureState NlCulture()

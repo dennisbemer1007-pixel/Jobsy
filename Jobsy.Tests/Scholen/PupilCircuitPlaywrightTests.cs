@@ -1794,6 +1794,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
         await Assertions.Expect(page.Locator(".prev-row--cards")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-1']")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-2']")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-3']")).ToBeVisibleAsync();
         await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Schatkaart" })).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
         await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
@@ -1851,9 +1854,44 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
 
         await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
-        await Assertions.Expect(page.Locator(".prev-row--lamps")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".prev-row--lamps .slot--beacon")).ToHaveCountAsync(3);
         await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
         await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
+        await page.WaitForFunctionAsync(
+            "() => !!document.querySelector('.ll-puzzle__beacon.is-lit')",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 20_000 });
+        await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "lamp-lit.png"), FullPage = true });
+        var lampOverlap = await page.EvaluateAsync<int>(
+            """
+            () => {
+              const lamps = [...document.querySelectorAll('.ll-puzzle__beacon')];
+              if (lamps.length < 2) return 0;
+              let overlaps = 0;
+              for (let i = 0; i < lamps.length; i++) {
+                const a = lamps[i].getBoundingClientRect();
+                for (let j = i + 1; j < lamps.length; j++) {
+                  const b = lamps[j].getBoundingClientRect();
+                  const overlap = !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+                  if (overlap) overlaps++;
+                }
+              }
+              return overlaps;
+            }
+            """);
+        Assert.Equal(0, lampOverlap);
+        var clippedLamp = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const root = document.documentElement;
+              const vw = root.clientWidth;
+              return [...document.querySelectorAll('.ll-puzzle__beacon')].some(el => {
+                const r = el.getBoundingClientRect();
+                return r.left < -1 || r.right > vw + 1;
+              });
+            }
+            """);
+        Assert.False(clippedLamp, "Lamp buttons must not clip horizontally at viewport edge.");
 
         await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-mid-game.png"), FullPage = true });
         await CompleteVuurtorenPatternAsync(page);

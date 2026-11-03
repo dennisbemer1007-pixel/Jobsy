@@ -47,13 +47,12 @@ internal static class PupilGroep78MockHtml
 
     internal static string PuzzleMatchPreviewRow(string? themeKey)
     {
-        var back = PupilJourneyTheme.PuzzleCardBackAsset(themeKey);
         var sb = new StringBuilder("""<div class="prev-row-box prev-row-box--cards"><div class="prev-row prev-row--cards" aria-hidden="true">""");
-        for (var i = 0; i < 6; i++)
+        foreach (var face in PupilJourneyTheme.PuzzleMatchPairIds(themeKey))
         {
-            sb.Append("<div class=\"slot slot--card\"><img src=\"")
-                .Append(PupilLeerlingSsrParts.E(back))
-                .Append("\" alt=\"\" /></div>");
+            sb.Append("<div class=\"slot slot--card slot--card-face\"><img src=\"")
+                .Append(PupilLeerlingSsrParts.E(PupilJourneyTheme.PuzzleMatchAsset(themeKey, face)))
+                .Append("\" alt=\"\" loading=\"lazy\" decoding=\"async\" /></div>");
         }
 
         sb.Append("</div></div>");
@@ -62,16 +61,32 @@ internal static class PupilGroep78MockHtml
 
     internal static string PuzzleLampPreviewRow(string? themeKey)
     {
+        _ = themeKey;
         var sb = new StringBuilder("""<div class="prev-row-box prev-row-box--lamps"><div class="prev-row prev-row--lamps" aria-hidden="true">""");
         for (var i = 0; i < 3; i++)
         {
-            sb.Append("<div class=\"slot slot--lamp\"><img src=\"")
-                .Append(PupilLeerlingSsrParts.E(PupilJourneyTheme.PuzzleLampAsset(themeKey, i)))
-                .Append("\" alt=\"\" /></div>");
+            sb.Append(PuzzleLampBeaconMarkup(i, asButton: false));
         }
 
         sb.Append("</div></div>");
         return sb.ToString();
+    }
+
+    internal static string PuzzleLampBeaconMarkup(int index, bool asButton, CultureState? culture = null)
+    {
+        var tone = index + 1;
+        var glass = """<span class="ll-puzzle__beacon-glass" aria-hidden="true"></span>""";
+        if (!asButton)
+        {
+            return $"""<div class="slot slot--lamp slot--beacon" data-ll-lamp-tone="{tone}">{glass}</div>""";
+        }
+
+        var label = culture is null
+            ? $"Lamp {tone}"
+            : string.Format(culture["Leerling.Puzzle.Vuurtoren.Lamp"], tone);
+        return $"""
+            <button type="button" class="ll-puzzle__lamp ll-puzzle__beacon" data-ll-lamp-index="{index}" data-ll-lamp-tone="{tone}" data-testid="ll-puzzle-lamp" aria-label="{PupilLeerlingSsrParts.E(label)}">{glass}<span class="ll-puzzle__lamp-glow" aria-hidden="true"></span></button>
+            """;
     }
 
     internal static string PuzzlePatternPlay(CultureState culture)
@@ -121,15 +136,11 @@ internal static class PupilGroep78MockHtml
     {
         var sb = new StringBuilder();
         sb.Append("<p class=\"ll-puzzle__hint\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Puzzle.Vuurtoren.Hint"])).Append("</p>");
+        _ = themeKey;
         sb.Append("""<div class="ll-puzzle__lamps ll-puzzle__lamps--g78" role="group" aria-label="Vuurtorenlampen">""");
         for (var i = 0; i < 3; i++)
         {
-            sb.Append("<button type=\"button\" class=\"ll-puzzle__lamp\" data-ll-lamp-index=\"").Append(i);
-            sb.Append("\" data-testid=\"ll-puzzle-lamp\" aria-label=\"")
-                .Append(PupilLeerlingSsrParts.E(string.Format(culture["Leerling.Puzzle.Vuurtoren.Lamp"], i + 1)))
-                .Append("\"><img src=\"")
-                .Append(PupilLeerlingSsrParts.E(PupilJourneyTheme.PuzzleLampAsset(themeKey, i)))
-                .Append("\" alt=\"\" loading=\"lazy\" decoding=\"async\" /><span class=\"ll-puzzle__lamp-glow\"></span></button>");
+            sb.Append(PuzzleLampBeaconMarkup(i, asButton: true, culture));
         }
 
         sb.Append("</div>");

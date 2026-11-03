@@ -55,11 +55,12 @@ public sealed class PupilJourneyThemeTests
         Assert.Equal(expected, PupilJourneyTheme.PuzzleGateQuestion(key));
     }
 
-    [Fact]
-    public void Schatkaart_intro_sub_uses_theme_lead()
+    [Theory]
+    [InlineData(PupilJourneyTheme.ZeeExpeditie, "Leerling.Puzzle.Zee.Schatkaart.Lead")]
+    [InlineData(PupilJourneyTheme.Eilandtuin, "Leerling.Puzzle.Tuin.Schatkaart.Lead")]
+    public void Schatkaart_intro_sub_uses_theme_lead(string theme, string expectedKey)
     {
-        Assert.Equal(
-            "Leerling.Puzzle.Tuin.Schatkaart.Lead",
-            PupilJourneyTheme.PuzzleIntroSubKey(PupilJourneyTheme.Eilandtuin, "schatkaart"));
+        Assert.Equal(expectedKey, PupilJourneyTheme.PuzzleIntroSubKey(theme, "schatkaart"));
     }
+
 }
