@@ -134,7 +134,7 @@ public static class PupilVakkenSsrHtml
 
         sb.Append("""<div class="ll-vt-foot">""");
         sb.Append("<a class=\"ll-vt-back\" href=\"");
-        sb.Append(page == 2 ? "/leerling/vakken" : "/leerling/reis").Append("\">");
+        sb.Append(page == 2 ? "/leerling/vakken" : "/leerling/reis?prev=1").Append("\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Vakken.Back"])).Append("</a>");
         sb.Append("<button type=\"submit\" class=\"ll-vt-next\" data-testid=\"ll-vt-next\"");
         if (!pageComplete)

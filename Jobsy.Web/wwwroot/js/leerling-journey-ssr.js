@@ -249,14 +249,17 @@
         btn.addEventListener("click", function () {
           if (s1) s1.hidden = true;
           if (s2) s2.hidden = false;
+          form.setAttribute("data-ll-island-active-step", "2");
         });
       });
       form.querySelectorAll("[data-ll-island-prev]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           if (s2) s2.hidden = true;
           if (s1) s1.hidden = false;
+          form.setAttribute("data-ll-island-active-step", "1");
         });
       });
+      form.setAttribute("data-ll-island-active-step", s2 && !s2.hidden ? "2" : "1");
     });
   }
 
@@ -316,7 +319,13 @@
       });
       btn.classList.add("sel");
       btn.setAttribute("aria-pressed", "true");
-      if (choice !== answer) return;
+      if (choice !== answer) {
+        btn.classList.add("is-wrong");
+        setTimeout(function () {
+          btn.classList.remove("is-wrong");
+        }, 450);
+        return;
+      }
       card.setAttribute("data-ll-schelp-solved", "1");
       var outcome = form.querySelector('input[name="Outcome"]');
       if (outcome) outcome.value = "done";

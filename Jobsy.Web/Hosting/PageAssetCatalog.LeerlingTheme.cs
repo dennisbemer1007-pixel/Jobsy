@@ -21,8 +21,6 @@ public static partial class PageAssetCatalog
 
         if (path.Equals("/leerling", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/leerling?", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/leerling/stop", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/leerling/stop?", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/leerling/pdf", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/leerling/pdf?", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/leerling/pauze", StringComparison.OrdinalIgnoreCase)
