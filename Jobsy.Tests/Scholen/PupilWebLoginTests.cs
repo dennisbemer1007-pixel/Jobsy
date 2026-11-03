@@ -96,6 +96,57 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_verder_respects_theme_gate_and_resume()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Contains("/leerling/wereld", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var verder = await client.GetAsync("/leerling/verder");
+        Assert.Equal(HttpStatusCode.Redirect, verder.StatusCode);
+        Assert.Contains("/leerling/wereld", verder.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(
+                new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie),
+                options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+
+        var resume = await client.GetAsync("/leerling/verder");
+        Assert.Equal(HttpStatusCode.Redirect, resume.StatusCode);
+        Assert.Contains("/leerling/start", resume.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Groep78_wereld_hides_stray_theme_until_explicit_choice()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedStrayThemeProgressAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Contains("/leerling/wereld", login.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var wereld = await client.GetAsync("/leerling/wereld");
+        var html = await wereld.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, wereld.StatusCode);
+        Assert.DoesNotContain("class=\"wcard sel", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Gekozen", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Groep78_without_theme_gets_redirected_from_reis_to_wereld()
     {
         await EnableSchoolsAsync();
@@ -565,6 +616,56 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("css/app.min.css?v=" + AssetVersions.Version("css/app.min.css"), html, StringComparison.Ordinal);
         Assert.Contains("js/leerling-login.js", html, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"leerling-vo-paspoort\"", html, StringComparison.Ordinal);
+    }
+
+    private async Task<Seed> SeedStrayThemeProgressAsync()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "Stray Theme " + Guid.NewGuid().ToString("N")[..6],
+            City = "Naaldwijk",
+            AllowedEmailDomains = "[\"voorbeeldcollege.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "8B",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 1,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(1, cls);
+        var code = await db.PupilCodes.Include(c => c.Progress).FirstAsync(c => c.Id == generated[0].Id);
+        code.Progress = new PupilProgress
+        {
+            PupilCodeId = code.Id,
+            JourneyThemeKey = PupilJourneyTheme.Sterrenkust,
+            JourneyThemeChosenAtUtc = null,
+            StartedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+        };
+        await db.SaveChangesAsync();
+        return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
     }
 
     private async Task<Seed> SeedOpenClassAsync()

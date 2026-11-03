@@ -1099,31 +1099,66 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     {
         _ = TestContext.Current.CancellationToken;
         await EnableSchoolsAsync();
-        var seed = await SeedOpenClassAsync();
         var baseUrl = EnsureWeb();
-        var outDir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "artifacts", "wereld-screenshots");
+        var outDir = Path.Combine("/opt/cursor/artifacts", "g78-kies-wereld-screenshots");
         Directory.CreateDirectory(outDir);
-        foreach (var (width, height, tag) in new[] { (1440, 900, "desktop-1440"), (390, 844, "mobile-390") })
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
         {
-            var page = await _browser!.NewPageAsync(new BrowserNewPageOptions
-            {
-                ViewportSize = new ViewportSize { Width = width, Height = height }
-            });
-            page.SetDefaultTimeout(90_000);
-            await page.Context.ClearCookiesAsync();
+            var seed = await SeedOpenClassAsync();
+            await using var context = width <= 400
+                ? await NewMobileContextAsync()
+                : await _browser!.NewContextAsync(new BrowserNewContextOptions
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height }
+                });
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
             var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
             await page.GotoAsync(loginUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId, chooseDefaultWorld: false);
             await page.WaitForURLAsync("**/leerling/wereld**", DomReady);
             await page.Locator("[data-testid=ll-wereld-zee]").WaitForAsync();
-            await page.WaitForTimeoutAsync(500);
+            await page.Locator("[data-testid=ll-wereld-zee]").ClickAsync();
+            await page.WaitForURLAsync("**/leerling/start**", DomReady);
+            await page.GotoAsync($"{baseUrl}/leerling/wereld", new() { WaitUntil = WaitUntilState.Commit });
+            await page.Locator(".wcard.sel").WaitForAsync();
+            await AssertGekozenLabelDoesNotOverlapTitleAsync(page, "Zee-expeditie");
+            var checkBox = await page.Locator(".same svg").First.BoundingBoxAsync();
+            Assert.NotNull(checkBox);
+            Assert.InRange(checkBox!.Width, 24, 40);
+            Assert.InRange(checkBox.Height, 24, 40);
+            await page.WaitForTimeoutAsync(300);
             await page.ScreenshotAsync(new PageScreenshotOptions
             {
-                Path = Path.Combine(outDir, $"built-{tag}.png"),
-                FullPage = true
+                Path = Path.Combine(outDir, $"kies-wereld-{tag}-selected.png"),
+                FullPage = tag == "390"
             });
-            await page.CloseAsync();
         }
+    }
+
+    private static async Task AssertGekozenLabelDoesNotOverlapTitleAsync(IPage page, string expectedTitle)
+    {
+        var card = page.Locator(".wcard.sel");
+        await card.WaitForAsync();
+        var title = card.Locator("h2");
+        await Assertions.Expect(title).ToHaveTextAsync(expectedTitle);
+        var titleClipped = await title.EvaluateAsync<bool>(
+            "el => el.scrollWidth > el.clientWidth + 1");
+        Assert.False(titleClipped, $"Title '{expectedTitle}' must not be clipped.");
+        var overlaps = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const card = document.querySelector('.wcard.sel');
+              if (!card) return true;
+              const pick = card.querySelector('.pick');
+              const h2 = card.querySelector('h2');
+              if (!pick || !h2) return false;
+              const a = pick.getBoundingClientRect();
+              const b = h2.getBoundingClientRect();
+              return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+            }
+            """);
+        Assert.False(overlaps, "Gekozen label must not overlap the world title.");
     }
 
     [Fact(Timeout = 300_000)]
