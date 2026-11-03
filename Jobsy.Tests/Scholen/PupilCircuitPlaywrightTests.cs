@@ -1578,6 +1578,163 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
     }
 
+    [Theory(Timeout = 600_000)]
+    [InlineData(1440, 900, "1440")]
+    [InlineData(390, 844, "390")]
+    public async Task G78_full_reis_through_klaar_no_5xx_with_screenshots(int width, int height, string label)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var baseUrl = EnsureWeb();
+        var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-reis-klaar", label);
+        Directory.CreateDirectory(artifactDir);
+        var http5xx = new List<string>();
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Response += (_, resp) =>
+        {
+            if ((int)resp.Status >= 500 && resp.Url.Contains("lobsy", StringComparison.OrdinalIgnoreCase))
+            {
+                http5xx.Add($"{resp.Status} {resp.Url}");
+            }
+        };
+
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        if (page.Url.Contains("/leerling/start", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.Locator("a.rk-go, a.btn-primary").First.ClickAsync();
+        }
+
+        await page.WaitForURLAsync("**/leerling/reis**", DomReady);
+
+        for (var step = 0; step < 180; step++)
+        {
+            if (await page.Locator("[data-testid=leerling-reis-klaar]").CountAsync() > 0)
+            {
+                break;
+            }
+
+            if (page.Url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).CountAsync() > 0)
+                {
+                    await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+                }
+
+                if (await page.Locator("[data-ll-schelp-choice]").CountAsync() > 0)
+                {
+                    var ans = await page.EvaluateAsync<string>(
+                        "() => document.querySelector('.ll-puzzle-g78')?.getAttribute('data-ll-puzzle-answer') || '2'");
+                    await page.Locator($"[data-ll-schelp-choice=\"{ans}\"]").First.ClickAsync();
+                    await page.Locator("[data-ll-puzzle-continue]:not([disabled])").First.ClickAsync(new() { Timeout = 60_000 });
+                }
+                else
+                {
+                    await page.GetByRole(AriaRole.Button, new() { Name = "Overslaan" }).ClickAsync(new() { Timeout = 15_000 });
+                }
+
+                await page.WaitForURLAsync(
+                    url => !url.Contains("/leerling/puzzel/", StringComparison.OrdinalIgnoreCase),
+                    UrlCommitted);
+                continue;
+            }
+
+            if (page.Url.Contains("/leerling/eiland", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.Locator("[data-testid=ll-island-form]").WaitForAsync();
+                await page.Locator("[data-ll-chip-like]").First.ClickAsync();
+                await page.Locator("[data-ll-island-next]").ClickAsync();
+                await page.Locator("[data-ll-chip-dislike]").First.ClickAsync();
+                await page.GetByRole(AriaRole.Button, new() { Name = "Klaar, verder!" }).ClickAsync();
+                await page.WaitForFunctionAsync("() => !location.pathname.includes('/leerling/eiland')");
+                continue;
+            }
+
+            if (page.Url.Contains("/leerling/vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                for (var vp = 0; vp < 3 && page.Url.Contains("/leerling/vakken", StringComparison.OrdinalIgnoreCase); vp++)
+                {
+                    await FillVakkenPageLikeMockAsync(page);
+                    var next = page.Locator("[data-testid=ll-vt-next]");
+                    await page.WaitForFunctionAsync(
+                        "() => { const btn = document.querySelector('[data-testid=ll-vt-next]'); return btn && !btn.disabled; }",
+                        null,
+                        new PageWaitForFunctionOptions { Timeout = 30_000 });
+                    await next.ClickAsync();
+                    await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+                }
+
+                continue;
+            }
+
+            if (!page.Url.Contains("/leerling/reis", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            await page.Locator("[data-testid=ll-g78-answers] .ans").First.WaitForAsync();
+            var itemBefore = await page.Locator("form.ll-answers-form input[name=ItemId]").InputValueAsync();
+            var pick = page.Locator("[data-testid=ll-g78-answers] .ans[data-ll-answer-value=\"3\"]");
+            if (await pick.CountAsync() == 0)
+            {
+                pick = page.Locator("[data-testid=ll-g78-answers] .ans").Nth(2);
+            }
+
+            await pick.ClickAsync();
+            await page.WaitForFunctionAsync(
+                """
+                prev => {
+                  if (!location.pathname.includes('/leerling/reis')) return true;
+                  if (document.querySelector('[data-testid=leerling-reis-klaar]')) return true;
+                  const el = document.querySelector('form.ll-answers-form input[name=ItemId]');
+                  return el && el.value !== prev;
+                }
+                """,
+                itemBefore,
+                new PageWaitForFunctionOptions { Timeout = 55_000 });
+        }
+
+        while (page.Url.Contains("/leerling/vakken", StringComparison.OrdinalIgnoreCase))
+        {
+            await FillVakkenPageLikeMockAsync(page);
+            var next = page.Locator("[data-testid=ll-vt-next]");
+            await page.WaitForFunctionAsync(
+                "() => { const btn = document.querySelector('[data-testid=ll-vt-next]'); return btn && !btn.disabled; }",
+                null,
+                new PageWaitForFunctionOptions { Timeout = 30_000 });
+            await next.ClickAsync();
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        }
+
+        if (!page.Url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=leerling-reis-klaar]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+
+        var shotName = page.Url.Contains("/leerling/dit-ben-jij", StringComparison.OrdinalIgnoreCase)
+            ? "dit-ben-jij-fullpage.png"
+            : "klaar-fullpage.png";
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(artifactDir, shotName),
+            FullPage = true
+        });
+        var overlap = await page.EvaluateAsync<int>(
+            "() => document.documentElement.scrollWidth - document.documentElement.clientWidth");
+        Assert.True(overlap <= 1, $"Horizontal overflow {overlap}px at journey end ({label}).");
+        Assert.Empty(http5xx);
+    }
+
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]

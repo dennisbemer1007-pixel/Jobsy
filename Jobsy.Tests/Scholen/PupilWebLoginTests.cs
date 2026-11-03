@@ -661,81 +661,237 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var login = await PostLoginAsync(client, seed);
         var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
-        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
-        {
-            Content = JsonContent.Create(
-                new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie),
-                options: JobsyApiClient.ApiJson)
-        };
-        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
-        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+        await SetJourneyThemeAsync(api, apiTicket, PupilJourneyTheme.ZeeExpeditie);
 
-        for (var step = 0; step < 120; step++)
+        await RunGroep78WebJsonJourneyToKlaarAsync(client, api, apiTicket, assertSchatgrot9026: true);
+    }
+
+    [Fact]
+    public async Task Groep78_web_json_journey_with_pause_and_prev_through_klaar_without_500()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        await SetJourneyThemeAsync(api, apiTicket, PupilJourneyTheme.ZeeExpeditie);
+
+        var answersViaWeb = 0;
+        var pauseDone = false;
+        var prevDone = false;
+
+        for (var step = 0; step < 160; step++)
         {
             var progress = await GetProgressAsync(api, apiTicket);
             Assert.Equal(HttpStatusCode.OK, progress.Status);
-            if (progress.Body!.Completed || progress.Body.NextStep == "done")
+            if (progress.Body!.Completed || string.Equals(progress.Body.NextStep, "done", StringComparison.OrdinalIgnoreCase))
             {
+                break;
+            }
+
+            if (string.Equals(progress.Body.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                await CompleteVakkenAsync(api, apiTicket);
                 break;
             }
 
             if (progress.Body.NeedsIsland || progress.Body.NextStep == "island")
             {
-                var chips = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/chips")
-                {
-                    Content = JsonContent.Create(
-                        new PupilChipsRequest(["sport"], ["rekenen"], null, null),
-                        options: JobsyApiClient.ApiJson)
-                };
-                chips.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
-                Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(chips)).StatusCode);
+                await SaveChipsAsync(api, apiTicket);
                 continue;
             }
 
             if (string.Equals(progress.Body.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
                 && !string.IsNullOrWhiteSpace(progress.Body.NextPuzzleKey))
             {
-                var puzzle = new HttpRequestMessage(
-                    HttpMethod.Put,
-                    "/api/pupil/progress/puzzles/" + Uri.EscapeDataString(progress.Body.NextPuzzleKey))
-                {
-                    Content = JsonContent.Create(new PupilPuzzleRequest("done"), options: JobsyApiClient.ApiJson)
-                };
-                puzzle.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
-                Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(puzzle)).StatusCode);
+                await SavePuzzleAsync(api, apiTicket, progress.Body.NextPuzzleKey!);
                 continue;
             }
 
-            if (string.Equals(progress.Body.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+            Assert.False(string.IsNullOrWhiteSpace(progress.Body.CurrentItemId));
+
+            if (answersViaWeb == 5 && !pauseDone)
+            {
+                var pauseForm = await client.GetAsync("/leerling/reis");
+                var pauseHtml = await pauseForm.Content.ReadAsStringAsync();
+                var pauseField = ExtractFormFieldName(pauseHtml, "hidden")!;
+                var pauseToken = ExtractHiddenInput(pauseHtml, pauseField)!;
+                var pause = await client.PostAsync(
+                    "/leerling/pauze",
+                    new FormUrlEncodedContent(new Dictionary<string, string> { [pauseField] = pauseToken }));
+                Assert.Equal(HttpStatusCode.Redirect, pause.StatusCode);
+                var relogin = await PostLoginAsync(client, seed);
+                Assert.Equal(HttpStatusCode.Redirect, relogin.StatusCode);
+                apiTicket = CookieValue(relogin.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+                pauseDone = true;
+                continue;
+            }
+
+            if (answersViaWeb == 11 && !prevDone)
+            {
+                var prevGet = await client.GetAsync("/leerling/reis?prev=1");
+                Assert.NotEqual(HttpStatusCode.InternalServerError, prevGet.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, prevGet.StatusCode);
+                var prevHtml = await prevGet.Content.ReadAsStringAsync();
+                var prevField = ExtractFormFieldName(prevHtml, "hidden")!;
+                var prevToken = ExtractHiddenInput(prevHtml, prevField)!;
+                var prevItem = ExtractHiddenInput(prevHtml, "ItemId")!;
+                var prevSave = await PostWebReisAnswerAsync(client, prevField, prevToken, prevItem, 5);
+                Assert.Equal(HttpStatusCode.OK, prevSave.StatusCode);
+                prevDone = true;
+                answersViaWeb++;
+                continue;
+            }
+
+            if (string.Equals(progress.Body.CurrentItemId, "9026", StringComparison.Ordinal))
+            {
+                var schatgrot = await client.GetAsync("/leerling/reis");
+                var schatHtml = await schatgrot.Content.ReadAsStringAsync();
+                Assert.NotEqual(HttpStatusCode.InternalServerError, schatgrot.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, schatgrot.StatusCode);
+                Assert.Contains("9026", schatHtml, StringComparison.Ordinal);
+                Assert.Contains("Schatgrot", schatHtml, StringComparison.OrdinalIgnoreCase);
+            }
+
+            await AssertWebReisAnswerOkAsync(client, progress.Body.CurrentItemId!);
+            answersViaWeb++;
+        }
+
+        await AssertGroep78KlaarReisAsync(client, api, apiTicket);
+    }
+
+    private static async Task RunGroep78WebJsonJourneyToKlaarAsync(
+        HttpClient client,
+        HttpClient api,
+        string apiTicket,
+        bool assertSchatgrot9026 = false)
+    {
+        for (var step = 0; step < 160; step++)
+        {
+            var progress = await GetProgressAsync(api, apiTicket);
+            Assert.Equal(HttpStatusCode.OK, progress.Status);
+            if (progress.Body!.Completed || string.Equals(progress.Body.NextStep, "done", StringComparison.OrdinalIgnoreCase))
             {
                 break;
             }
 
+            if (string.Equals(progress.Body.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                await CompleteVakkenAsync(api, apiTicket);
+                break;
+            }
+
+            if (progress.Body.NeedsIsland || progress.Body.NextStep == "island")
+            {
+                await SaveChipsAsync(api, apiTicket);
+                continue;
+            }
+
+            if (string.Equals(progress.Body.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(progress.Body.NextPuzzleKey))
+            {
+                await SavePuzzleAsync(api, apiTicket, progress.Body.NextPuzzleKey!);
+                continue;
+            }
+
             Assert.False(string.IsNullOrWhiteSpace(progress.Body.CurrentItemId));
-            var reisGet = await client.GetAsync("/leerling/reis");
-            Assert.NotEqual(HttpStatusCode.InternalServerError, reisGet.StatusCode);
-            Assert.Equal(HttpStatusCode.OK, reisGet.StatusCode);
-            var html = await reisGet.Content.ReadAsStringAsync();
-            var tokenField = ExtractFormFieldName(html, "hidden")!;
-            var token = ExtractHiddenInput(html, tokenField) ?? ExtractHiddenInputReversed(html, tokenField)!;
-            var jsonPost = await PostWebReisAnswerAsync(
-                client,
-                tokenField,
-                token,
-                progress.Body.CurrentItemId!,
-                3);
-            Assert.NotEqual(HttpStatusCode.InternalServerError, jsonPost.StatusCode);
-            Assert.Equal(HttpStatusCode.OK, jsonPost.StatusCode);
-            var saved = await jsonPost.Content.ReadFromJsonAsync<PupilReisAnswerSaveJson>(JobsyApiClient.ApiJson);
-            Assert.NotNull(saved);
-            Assert.True(saved!.Ok);
+
+            if (assertSchatgrot9026 && string.Equals(progress.Body.CurrentItemId, "9026", StringComparison.Ordinal))
+            {
+                var schatgrot = await client.GetAsync("/leerling/reis");
+                var schatHtml = await schatgrot.Content.ReadAsStringAsync();
+                Assert.NotEqual(HttpStatusCode.InternalServerError, schatgrot.StatusCode);
+                Assert.Equal(HttpStatusCode.OK, schatgrot.StatusCode);
+                Assert.Contains("9026", schatHtml, StringComparison.Ordinal);
+                Assert.Contains("Schatgrot", schatHtml, StringComparison.OrdinalIgnoreCase);
+            }
+
+            await AssertWebReisAnswerOkAsync(client, progress.Body.CurrentItemId!);
         }
 
+        await AssertGroep78KlaarReisAsync(client, api, apiTicket);
+    }
+
+    private static async Task AssertGroep78KlaarReisAsync(HttpClient client, HttpClient api, string apiTicket)
+    {
         var finalProgress = await GetProgressAsync(api, apiTicket);
         Assert.True(
-            finalProgress.Body!.AnsweredCount >= 60
-            || string.Equals(finalProgress.Body.NextStep, "vakken", StringComparison.OrdinalIgnoreCase),
-            "Expected all 60 answers or vakken step.");
+            finalProgress.Body!.Completed
+            || string.Equals(finalProgress.Body.NextStep, "done", StringComparison.OrdinalIgnoreCase),
+            "Expected journey completed through vakken.");
+
+        var klaar = await client.GetAsync("/leerling/reis");
+        Assert.NotEqual(HttpStatusCode.InternalServerError, klaar.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, klaar.StatusCode);
+        var klaarHtml = await klaar.Content.ReadAsStringAsync();
+        Assert.Contains("data-testid=\"leerling-reis-klaar\"", klaarHtml, StringComparison.Ordinal);
+    }
+
+    private static async Task AssertWebReisAnswerOkAsync(HttpClient client, string itemId)
+    {
+        var reisGet = await client.GetAsync("/leerling/reis");
+        Assert.NotEqual(HttpStatusCode.InternalServerError, reisGet.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, reisGet.StatusCode);
+        var html = await reisGet.Content.ReadAsStringAsync();
+        var tokenField = ExtractFormFieldName(html, "hidden")!;
+        var token = ExtractHiddenInput(html, tokenField) ?? ExtractHiddenInputReversed(html, tokenField)!;
+        var jsonPost = await PostWebReisAnswerAsync(client, tokenField, token, itemId, 3);
+        Assert.NotEqual(HttpStatusCode.InternalServerError, jsonPost.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, jsonPost.StatusCode);
+        var saved = await jsonPost.Content.ReadFromJsonAsync<PupilReisAnswerSaveJson>(JobsyApiClient.ApiJson);
+        Assert.NotNull(saved);
+        Assert.True(saved!.Ok);
+    }
+
+    private static async Task SetJourneyThemeAsync(HttpClient api, string apiTicket, string themeKey)
+    {
+        var themeReq = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/journey-theme")
+        {
+            Content = JsonContent.Create(new PupilJourneyThemeRequest(themeKey), options: JobsyApiClient.ApiJson)
+        };
+        themeReq.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(themeReq)).StatusCode);
+    }
+
+    private static async Task SaveChipsAsync(HttpClient api, string apiTicket)
+    {
+        var chips = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/chips")
+        {
+            Content = JsonContent.Create(
+                new PupilChipsRequest(["sport"], ["rekenen"], null, null),
+                options: JobsyApiClient.ApiJson)
+        };
+        chips.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(chips)).StatusCode);
+    }
+
+    private static async Task SavePuzzleAsync(HttpClient api, string apiTicket, string puzzleKey)
+    {
+        var puzzle = new HttpRequestMessage(
+            HttpMethod.Put,
+            "/api/pupil/progress/puzzles/" + Uri.EscapeDataString(puzzleKey))
+        {
+            Content = JsonContent.Create(new PupilPuzzleRequest("done"), options: JobsyApiClient.ApiJson)
+        };
+        puzzle.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(puzzle)).StatusCode);
+    }
+
+    private static async Task CompleteVakkenAsync(HttpClient api, string apiTicket)
+    {
+        var inputs = PupilVakScores.AllSubjectKeys
+            .Select(k => new PupilVakScoreInput(k, 4, 4))
+            .ToList();
+        var vakken = new HttpRequestMessage(HttpMethod.Put, "/api/pupil/progress/vakscores")
+        {
+            Content = JsonContent.Create(new PupilVakScoresRequest(inputs), options: JobsyApiClient.ApiJson)
+        };
+        vakken.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+        Assert.Equal(HttpStatusCode.OK, (await api.SendAsync(vakken)).StatusCode);
     }
 
     [Fact]

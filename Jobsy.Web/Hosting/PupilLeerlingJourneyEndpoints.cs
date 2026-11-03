@@ -201,10 +201,20 @@ public static class PupilLeerlingJourneyEndpoints
         if (progress.Completed)
         {
             var doneAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            string doneBody;
+            try
+            {
+                doneBody = PupilReisSsrHtml.DoneCard(culture, groep78, progress.JourneyThemeKey, registry);
+            }
+            catch
+            {
+                doneBody = PupilReisSsrHtml.DoneCard(culture, groep78: false);
+            }
+
             return Html(
                 http,
                 culture["Leerling.Reis.Title"],
-                PupilReisSsrHtml.DoneCard(culture, groep78, progress.JourneyThemeKey, registry),
+                doneBody,
                 "/leerling/reis",
                 groep78,
                 progress.JourneyThemeKey,
