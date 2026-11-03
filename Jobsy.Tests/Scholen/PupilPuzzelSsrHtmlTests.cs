@@ -58,6 +58,7 @@ public sealed class PupilPuzzelSsrHtmlTests
         Assert.DoesNotContain("Vind het patroon in de rij schelpen", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-match-src", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-puzzle-kind=\"schatkaart\"", html, StringComparison.Ordinal);
+        Assert.Contains("/leerling/werelden/img/kreeft-kaart.png", html, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -563,6 +563,18 @@
     max-width: none;
   }
 
+  .ll-g78-shell .ll-g78-coach-mobile .guide {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 4px;
+  }
+
+  .ll-g78-shell .ll-g78-coach-mobile {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   .ll-g78-shell .band::after {
     height: 50px;
   }
@@ -970,15 +982,21 @@
 
 .ll-g78-shell .prev-row--cards {
   display: grid;
-  grid-template-columns: repeat(3, 62px);
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(6px, 2vw, 10px);
   justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ll-g78-shell .slot--card {
-  width: 62px;
-  height: 74px;
+  width: 100%;
+  max-width: 62px;
+  height: auto;
+  aspect-ratio: 62 / 74;
   padding: 4px;
+  justify-self: center;
 }
 
 .ll-g78-shell .slot--card img {
@@ -1762,20 +1780,32 @@
     padding: 14px 8px;
   }
 
-  .ll-g78-shell .prev-row-box .prev-row {
+  .ll-g78-shell .prev-row-box .prev-row:not(.prev-row--cards) {
     flex-wrap: nowrap;
     justify-content: center;
     gap: 7px;
   }
 
-  .ll-g78-shell .prev-row-box .slot {
+  .ll-g78-shell .prev-row-box .prev-row.prev-row--cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ll-g78-shell .prev-row-box .prev-row.prev-row--cards .slot--card {
+    max-width: 56px;
+  }
+
+  .ll-g78-shell .prev-row-box .slot:not(.slot--card) {
     width: 56px;
     height: 64px;
     border-radius: 10px;
     flex: none;
   }
 
-  .ll-g78-shell .prev-row-box .slot img {
+  .ll-g78-shell .prev-row-box .slot:not(.slot--card) img {
     max-width: 42px;
     max-height: 50px;
   }
@@ -2340,6 +2370,12 @@
   border-radius: 18px;
   padding: 14px 16px;
   margin: 16px 0 18px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ll-g78-shell .prev-row-box.prev-row-box--cards {
+  overflow: hidden;
 }
 
 .ll-g78-shell .prev-row-box .prev-row {
@@ -2350,6 +2386,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.ll-g78-shell .prev-row-box .prev-row.prev-row--cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(6px, 2vw, 10px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ll-g78-shell .slot {

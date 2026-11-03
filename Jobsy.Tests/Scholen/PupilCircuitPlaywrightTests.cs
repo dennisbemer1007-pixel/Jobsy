@@ -1797,6 +1797,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-1']")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-2']")).ToBeVisibleAsync();
         await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-3']")).ToBeVisibleAsync();
+        await G78PuzzleIntroScreenshotTests.AssertIntroNoHorizontalOverflowAsync(page);
+        await G78PuzzleIntroScreenshotTests.AssertSchatkaartTilesInsideIntroBoxAsync(page);
+        await G78PuzzleIntroScreenshotTests.AssertCoachLobsterLoadsAsync(page, width);
         await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Schatkaart" })).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
         await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
@@ -1854,6 +1857,8 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
 
         await page.ScreenshotAsync(new PageScreenshotOptions { Path = Path.Combine(artifactDir, "after-intro.png"), FullPage = true });
+        await G78PuzzleIntroScreenshotTests.AssertIntroNoHorizontalOverflowAsync(page);
+        await G78PuzzleIntroScreenshotTests.AssertCoachLobsterLoadsAsync(page, width);
         await Assertions.Expect(page.Locator(".prev-row--lamps .slot--beacon")).ToHaveCountAsync(3);
         await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
         await Assertions.Expect(page.Locator("[data-ll-puzzle-phase=play]:not([hidden])")).ToBeVisibleAsync();
