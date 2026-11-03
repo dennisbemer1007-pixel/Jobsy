@@ -578,22 +578,37 @@ public sealed class SchoolPortalService : ISchoolPortalService
         }
 
         var entity = await _db.SchoolClasses
-            .Include(c => c.PupilCodes)
             .FirstOrDefaultAsync(c => c.Id == classId, cancellationToken);
         if (entity is null)
         {
             return (null, "not_found");
         }
 
-        var current = entity.PupilCodes.Count;
+        var current = await _db.PupilCodes.CountAsync(c => c.SchoolClassId == classId, cancellationToken);
         if (current + count > MaxCodesPerClass)
         {
             return (null, $"Maximaal {MaxCodesPerClass} codes per klas (nu {current}).");
         }
 
-        await _codes.GenerateAsync(count, entity, cancellationToken);
-        entity.PupilCount = current + count;
-        await _db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _codes.GenerateAsync(count, entity, cancellationToken);
+            entity.PupilCount = await _db.PupilCodes.CountAsync(c => c.SchoolClassId == classId, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException) when (count == 1)
+        {
+            current = await _db.PupilCodes.CountAsync(c => c.SchoolClassId == classId, cancellationToken);
+            if (current + count > MaxCodesPerClass)
+            {
+                return (null, $"Maximaal {MaxCodesPerClass} codes per klas (nu {current}).");
+            }
+
+            await _codes.GenerateAsync(count, entity, cancellationToken);
+            entity.PupilCount = await _db.PupilCodes.CountAsync(c => c.SchoolClassId == classId, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
         return (await MapClassDetailAsync(classId, cancellationToken), null);
     }
 

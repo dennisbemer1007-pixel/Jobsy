@@ -224,7 +224,18 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        var body = PupilReisSsrHtml.BuildBody(display, def, culture, registry, afHtml, ReisAnswerPath, error, groep78, progress.JourneyThemeKey);
+        string body;
+        try
+        {
+            body = PupilReisSsrHtml.BuildBody(display, def, culture, registry, afHtml, ReisAnswerPath, error, groep78, progress.JourneyThemeKey);
+        }
+        catch
+        {
+            body = groep78
+                ? $"""<section class="ll-card"><p class="ll-error" role="alert">{PupilLeerlingSsrParts.E(culture["Leerling.Reis.SaveFailed"])}</p><a class="btn-primary" href="/leerling/reis">Opnieuw</a></section>"""
+                : PupilReisSsrHtml.WindowClosed(culture, progress.QuestionSet);
+        }
+
         return Html(http, culture["Leerling.Reis.Title"], body, "/leerling/reis", groep78, progress.JourneyThemeKey, afHtml, progress: display);
     }
 
@@ -250,10 +261,12 @@ public static class PupilLeerlingJourneyEndpoints
 
         try
         {
-            var result = await api.SavePupilAnswerAsync(itemId, value, ct);
+            var (result, apiStatus, errorBody) = await api.SavePupilAnswerAsync(itemId, value, ct);
             if (result is null)
             {
-                return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status502BadGateway);
+                var status = MapReisAnswerApiFailureStatus(apiStatus);
+                var recoveryRedirect = ReisAnswerRecoveryRedirect(errorBody);
+                return ReisAnswerSaveFailed(culture, wantsJson, status, recoveryRedirect);
             }
 
             var redirect = PupilLeerlingProgressRouting.RedirectAfterAnswer(result) ?? "/leerling/reis";
@@ -266,8 +279,19 @@ public static class PupilLeerlingJourneyEndpoints
         }
         catch
         {
-            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status500InternalServerError);
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status502BadGateway);
         }
+    }
+
+    /// <summary>Never surface HTTP 500 on answer save — map API/server faults to 502 or the API's 4xx.</summary>
+    private static int MapReisAnswerApiFailureStatus(int apiStatus)
+    {
+        if (apiStatus is >= 400 and < 500)
+        {
+            return apiStatus;
+        }
+
+        return StatusCodes.Status502BadGateway;
     }
 
     private static IResult ReisAnswerSaveJsonOk(HttpContext http, IAntiforgery af, string redirectPath)
@@ -282,20 +306,56 @@ public static class PupilLeerlingJourneyEndpoints
             AntiforgeryToken: tokens.RequestToken));
     }
 
-    private static IResult ReisAnswerSaveFailed(CultureState culture, bool wantsJson, int status)
+    private static IResult ReisAnswerSaveFailed(
+        CultureState culture,
+        bool wantsJson,
+        int status,
+        string? recoveryRedirect = null)
     {
         if (wantsJson)
         {
             return Results.Json(
                 new PupilReisAnswerSaveJson(
                     Ok: false,
-                    RedirectPath: null,
+                    RedirectPath: recoveryRedirect,
                     Error: culture["Leerling.Reis.SaveFailed"],
                     Status: status),
                 statusCode: status);
         }
 
-        return Results.Redirect("/leerling/reis?error=save");
+        return Results.Redirect(string.IsNullOrEmpty(recoveryRedirect)
+            ? "/leerling/reis?error=save"
+            : recoveryRedirect);
+    }
+
+    private static string? ReisAnswerRecoveryRedirect(string? errorBody)
+    {
+        if (string.IsNullOrWhiteSpace(errorBody))
+        {
+            return null;
+        }
+
+        try
+        {
+            var err = System.Text.Json.JsonSerializer.Deserialize<PupilErrorDto>(errorBody, JobsyApiClient.ApiJson);
+            if (err is null)
+            {
+                return null;
+            }
+
+            return err.NextStep switch
+            {
+                "puzzle" when PupilPuzzleRoutes.IsBuilt(err.NextPuzzleKey)
+                    => $"/leerling/puzzel/{Uri.EscapeDataString(err.NextPuzzleKey!)}",
+                "island" => "/leerling/eiland",
+                "vakken" => "/leerling/vakken",
+                _ => "/leerling/reis",
+            };
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static async Task<IResult> GetEilandAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)

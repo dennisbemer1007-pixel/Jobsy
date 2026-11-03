@@ -168,7 +168,7 @@
     "v": "20261028-59"
   },
   "css/features/leerling-werelden-kies.css": {
-    "sha256": "c9e45f722e7eee4b5da01b13acd29502aced5dabff5794cb6a9b7f6eab807681",
+    "sha256": "cc8cc217a1bed9a9a48c4407ddfd152f29064982d98aa6d6bb70785c9d1b8533",
     "v": "20261102-02"
   },
   "css/features/lobsy-assistant-panel.css": {
@@ -492,7 +492,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "68fff72894084088f1bf3b75cb694d2f25169c6b4e7eaf29ab01a2f730ef640b",
+    "sha256": "bdfa31d4eafbdc915a6a6c4f11e0a00614f3ef75f9f6050ed561dff39b5148a2",
     "v": "20261102-01"
   },
   "js/leerling-login.js": {
@@ -580,7 +580,7 @@
     "v": "20261026-03"
   },
   "js/passport-ssr-extras.js": {
-    "sha256": "e6838ac7c2814cc049b003b17844e83ba83d471479037b36309705b26b407195",
+    "sha256": "1b5d7d15a8fca22eaf66824c219ad84e70a99d229c32c500f398bc3b97e1a938",
     "v": "20261026-40"
   },
   "js/passport-ssr-fit.js": {
@@ -600,7 +600,7 @@
     "v": "20261004-13"
   },
   "js/read-aloud.js": {
-    "sha256": "48461623f48be4c5c47b4896ff7ccd38c1cc86f4a7e11922344f3941ce663044",
+    "sha256": "002865d6c2d498576cedadd36b0494cbd5345312afec3c2b55ce180b5e72d83d",
     "v": "20261015-01"
   },
   "js/saved-ssr-filters.js": {

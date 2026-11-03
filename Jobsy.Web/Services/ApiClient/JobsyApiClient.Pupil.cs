@@ -34,7 +34,7 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilJourneyThemeResponse>(response.Content, ct);
     }
 
-    public async Task<PupilAnswerResponse?> SavePupilAnswerAsync(
+    public async Task<(PupilAnswerResponse? Ok, int StatusCode, string? ErrorBody)> SavePupilAnswerAsync(
         string itemId,
         int value,
         CancellationToken ct = default)
@@ -45,11 +45,12 @@ public sealed partial class JobsyApiClient
             ct);
         if (response.IsSuccessStatusCode)
         {
-            return await ReadApiJsonAsync<PupilAnswerResponse>(response.Content, ct);
+            var ok = await ReadApiJsonAsync<PupilAnswerResponse>(response.Content, ct);
+            return (ok, (int)response.StatusCode, null);
         }
 
         var body = await response.Content.ReadAsStringAsync(ct);
-        throw new HttpRequestException(body, null, response.StatusCode);
+        return (null, (int)response.StatusCode, body);
     }
 
     public async Task<PupilChipsResponse?> SavePupilChipsAsync(

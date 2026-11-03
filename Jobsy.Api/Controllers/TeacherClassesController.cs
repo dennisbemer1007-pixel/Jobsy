@@ -54,7 +54,7 @@ public sealed class TeacherClassesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var (detail, error) = await _portal.AddCodesAsync(User, classId, request.Count, cancellationToken);
-        if (error == "not_found" || detail is null)
+        if (error == "not_found")
         {
             return NotFound();
         }
@@ -62,6 +62,11 @@ public sealed class TeacherClassesController : ControllerBase
         if (!string.IsNullOrEmpty(error))
         {
             return BadRequest(new { message = error });
+        }
+
+        if (detail is null)
+        {
+            return NotFound();
         }
 
         return Ok(detail);
