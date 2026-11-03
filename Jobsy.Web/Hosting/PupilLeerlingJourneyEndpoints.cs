@@ -139,8 +139,11 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        var body = PupilWereldSsrHtml.BuildBody(culture, afHtml, progress.JourneyThemeKey, WereldSavePath);
-        return Html(http, culture["Leerling.Wereld.Title"], body, "/leerling/wereld", useG78: true, progress.JourneyThemeKey, afHtml, showPause: false);
+        var savedTheme = PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress)
+            ? progress.JourneyThemeKey
+            : null;
+        var body = PupilWereldSsrHtml.BuildBody(culture, afHtml, savedTheme, WereldSavePath);
+        return Html(http, culture["Leerling.Wereld.Title"], body, "/leerling/wereld", useG78: true, savedTheme, afHtml, showPause: false);
     }
 
     private static async Task<IResult> PostWereldAsync(HttpContext http, JobsyApiClient api, IAntiforgery af, CancellationToken ct)
