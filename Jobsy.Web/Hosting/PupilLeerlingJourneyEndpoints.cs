@@ -217,16 +217,17 @@ public static class PupilLeerlingJourneyEndpoints
         IAntiforgery af,
         CancellationToken ct)
     {
+        var wantsJson = PupilLeerlingClientJson.WantsJson(http);
         if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
         {
-            return Results.Redirect("/leerling/reis?error=save");
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status400BadRequest);
         }
 
         var form = await http.Request.ReadFormAsync(ct);
         var itemId = form["ItemId"].ToString();
         if (!int.TryParse(form["Value"].ToString(), out var value))
         {
-            return Results.Redirect("/leerling/reis?error=save");
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status400BadRequest);
         }
 
         try
@@ -234,20 +235,49 @@ public static class PupilLeerlingJourneyEndpoints
             var result = await api.SavePupilAnswerAsync(itemId, value, ct);
             if (result is null)
             {
-                return Results.Redirect("/leerling/reis?error=save");
+                return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status502BadGateway);
             }
 
-            if (PupilLeerlingProgressRouting.RedirectAfterAnswer(result) is { } redir)
+            var redirect = PupilLeerlingProgressRouting.RedirectAfterAnswer(result) ?? "/leerling/reis";
+            if (wantsJson)
             {
-                return Results.Redirect(redir);
+                return ReisAnswerSaveJsonOk(http, af, redirect);
             }
+
+            return Results.Redirect(redirect);
         }
         catch
         {
-            return Results.Redirect("/leerling/reis?error=save");
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    private static IResult ReisAnswerSaveJsonOk(HttpContext http, IAntiforgery af, string redirectPath)
+    {
+        var tokens = af.GetAndStoreTokens(http);
+        return Results.Json(new PupilReisAnswerSaveJson(
+            Ok: true,
+            RedirectPath: redirectPath,
+            Error: null,
+            Status: StatusCodes.Status200OK,
+            AntiforgeryField: tokens.FormFieldName,
+            AntiforgeryToken: tokens.RequestToken));
+    }
+
+    private static IResult ReisAnswerSaveFailed(CultureState culture, bool wantsJson, int status)
+    {
+        if (wantsJson)
+        {
+            return Results.Json(
+                new PupilReisAnswerSaveJson(
+                    Ok: false,
+                    RedirectPath: null,
+                    Error: culture["Leerling.Reis.SaveFailed"],
+                    Status: status),
+                statusCode: status);
         }
 
-        return Results.Redirect("/leerling/reis");
+        return Results.Redirect("/leerling/reis?error=save");
     }
 
     private static async Task<IResult> GetEilandAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)

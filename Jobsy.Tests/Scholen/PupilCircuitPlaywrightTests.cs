@@ -1577,6 +1577,166 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]
+    public async Task G78_reis_sixteen_fast_answers_optimistic_save(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var seed = seeds[0];
+        var baseUrl = EnsureWeb();
+        var consoleErrors = new List<string>();
+        var failedRequests = new List<string>();
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.Response += (_, resp) =>
+        {
+            if ((int)resp.Status >= 400)
+            {
+                failedRequests.Add($"{resp.Status} {resp.Url}");
+            }
+        };
+
+        var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+        await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=ll-g78-answers]").WaitForAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => document.querySelector('form[data-ll-answer-scale][data-ll-bound="1"]') !== null
+            """,
+            null,
+            new() { Timeout = 15_000 });
+
+        var feedbackMs = new List<double>();
+        var advanceMs = new List<double>();
+        // Stop before the schelpenrij puzzle gate (15 answers) so the flow stays on /leerling/reis.
+        const int count = 14;
+        var reisAnswered = 0;
+        for (var i = 0; reisAnswered < count; i++)
+        {
+            await page.Locator("[data-testid=ll-g78-answers] .ans").First.WaitForAsync();
+            var itemBefore = await page.Locator("form.ll-answers-form input[name=ItemId]").InputValueAsync();
+            var pick = page.Locator("[data-testid=ll-g78-answers] .ans[data-ll-answer-value=\"3\"]");
+            if (await pick.CountAsync() == 0)
+            {
+                pick = page.Locator("[data-testid=ll-g78-answers] .ans").Nth(2);
+            }
+
+            var feedback = await pick.EvaluateAsync<double>(
+                """
+                el => {
+                  const t0 = performance.now();
+                  el.click();
+                  for (let i = 0; i < 8; i++) {
+                    if (document.querySelector('[data-testid=ll-g78-answers] .ans.sel')) {
+                      return performance.now() - t0;
+                    }
+                  }
+                  return performance.now() - t0;
+                }
+                """);
+            feedbackMs.Add(feedback);
+
+            var tAdvance = DateTime.UtcNow;
+            try
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    prev => {
+                      if (!location.pathname.includes('/leerling/reis')) return true;
+                      const el = document.querySelector('form.ll-answers-form input[name=ItemId]');
+                      return el && el.value !== prev;
+                    }
+                    """,
+                    itemBefore,
+                    new() { Timeout = 45_000 });
+            }
+            catch (TimeoutException ex)
+            {
+                var dump = await page.EvaluateAsync<string>(
+                    """
+                    () => {
+                      const f = document.querySelector('form.ll-answers-form');
+                      return JSON.stringify({
+                        url: location.href,
+                        item: f?.querySelector('input[name=ItemId]')?.value,
+                        save: f?.getAttribute('data-ll-save-state'),
+                        bound: f?.getAttribute('data-ll-bound'),
+                        sel: document.querySelector('[data-testid=ll-g78-answers] .ans.sel') !== null
+                      });
+                    }
+                    """);
+                throw new TimeoutException(
+                    $"Question did not advance after click (dump={dump}; failedRequests={string.Join("; ", failedRequests)}; console={string.Join("; ", consoleErrors)})",
+                    ex);
+            }
+
+            advanceMs.Add((DateTime.UtcNow - tAdvance).TotalMilliseconds);
+            reisAnswered += 1;
+        }
+
+        Assert.Equal(count, reisAnswered);
+        Assert.Contains("/leerling/reis", page.Url, StringComparison.OrdinalIgnoreCase);
+
+        var itemAfter = await page.Locator("form.ll-answers-form input[name=ItemId]").InputValueAsync();
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=ll-g78-answers]").WaitForAsync();
+        Assert.Equal(itemAfter, await page.Locator("form.ll-answers-form input[name=ItemId]").InputValueAsync());
+
+        await page.GetByRole(AriaRole.Link, new() { Name = "Vorige" }).ClickAsync();
+        await page.Locator("[data-testid=ll-g78-answers]").WaitForAsync();
+        var prevItem = await page.Locator("form.ll-answers-form input[name=ItemId]").InputValueAsync();
+        var changePick = page.Locator("[data-testid=ll-g78-answers] .ans[data-ll-answer-value=\"5\"]");
+        if (await changePick.CountAsync() == 0)
+        {
+            changePick = page.Locator("[data-testid=ll-g78-answers] .ans").Last;
+        }
+
+        await changePick.ClickAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => document.querySelector('[data-testid=ll-g78-answers] .ans.sel') !== null
+            """,
+            null,
+            new() { Timeout = 500 });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const form = document.querySelector('form.ll-answers-form');
+              return form && form.getAttribute('data-ll-save-state') === 'idle';
+            }
+            """,
+            null,
+            new() { Timeout = 45_000 });
+
+        var overflow = await page.EvaluateAsync<int>(
+            "() => document.documentElement.scrollWidth - document.documentElement.clientWidth");
+        Assert.True(overflow <= 1, $"horizontal overflow {overflow}px at {width}x{height}");
+        Assert.Empty(failedRequests);
+        Assert.Empty(consoleErrors);
+        Assert.True(feedbackMs.Max() < 150, $"max click feedback {feedbackMs.Max():F1} ms at {width}x{height} (all: {string.Join(", ", feedbackMs.Select(m => m.ToString("F0")))})");
+        Assert.True(
+            advanceMs.Max() < 5_000,
+            $"max advance to next question {advanceMs.Max():F0} ms (avg {advanceMs.Average():F0} ms) at {width}x{height}");
+        await page.CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
     public async Task Groep78_schelpenrij_puzzle_loads_under_3_seconds(int width, int height)
     {
         _ = TestContext.Current.CancellationToken;
