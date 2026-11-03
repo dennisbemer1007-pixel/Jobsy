@@ -1015,10 +1015,11 @@
 
 .ll-g78-shell .prev-row--lamps {
   display: flex;
-  gap: clamp(12px, 4vw, 18px);
+  gap: clamp(8px, 2.5vw, 18px);
   justify-content: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ll-g78-shell .slot--lamp {
@@ -1798,13 +1799,11 @@
   }
 
   .ll-g78-shell .prev-row-box {
-    padding: 14px 8px;
+    padding: 12px 10px;
   }
 
-  .ll-g78-shell .prev-row-box .prev-row:not(.prev-row--cards) {
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 7px;
+  .ll-g78-shell .prev-row-box:not(.prev-row-box--cards):not(.prev-row-box--lamps) .prev-row {
+    gap: clamp(3px, 0.9vw, 7px);
   }
 
   .ll-g78-shell .prev-row-box .prev-row.prev-row--cards {
@@ -1819,16 +1818,42 @@
     max-width: 56px;
   }
 
-  .ll-g78-shell .prev-row-box .slot:not(.slot--card) {
-    width: 56px;
-    height: 64px;
+  .ll-g78-shell .prev-row-box .slot:not(.slot--card):not(.slot--lamp):not(.slot--beacon) {
+    max-width: min(52px, 100%);
     border-radius: 10px;
-    flex: none;
   }
 
-  .ll-g78-shell .prev-row-box .slot:not(.slot--card) img {
-    max-width: 42px;
-    max-height: 50px;
+  .ll-g78-shell .prev-row-box .slot.q {
+    font-size: clamp(26px, 7vw, 40px);
+  }
+
+  .ll-g78-shell .prev-row-box .slot--lamp,
+  .ll-g78-shell .prev-row-box .slot--beacon {
+    width: min(64px, 28vw);
+    height: min(64px, 28vw);
+  }
+
+  .ll-g78-shell .ll-puzzle-schelp-choices {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(4px, 1.2vw, 8px);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ll-g78-shell .ll-puzzle-schelp-choices .ans {
+    min-height: 0;
+    padding: clamp(6px, 2vw, 12px) clamp(4px, 1vw, 8px);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ll-g78-shell .ll-puzzle-schelp-choices .ans img {
+    max-width: min(48px, 90%);
+    max-height: min(48px, 90%);
+    margin: 0 auto;
   }
 
   .ll-g78-shell .pchip {
@@ -2546,6 +2571,31 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.ll-g78-shell .prev-row-box:not(.prev-row-box--cards):not(.prev-row-box--lamps) .prev-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(4px, 1.2vw, 10px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ll-g78-shell .prev-row-box:not(.prev-row-box--cards) .slot:not(.slot--card):not(.slot--lamp):not(.slot--beacon) {
+  width: 100%;
+  max-width: 62px;
+  height: auto;
+  aspect-ratio: 62 / 74;
+  justify-self: center;
+  box-sizing: border-box;
+}
+
+.ll-g78-shell .prev-row-box:not(.prev-row-box--cards) .slot:not(.slot--card) img {
+  width: auto;
+  height: auto;
+  max-width: min(50px, 85%);
+  max-height: min(58px, 78%);
 }
 
 .ll-g78-shell .prev-row-box .prev-row.prev-row--cards {

@@ -2523,6 +2523,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     [Theory(Timeout = 600_000)]
     [InlineData(1440, 900, "1440")]
     [InlineData(390, 844, "390")]
+    [InlineData(360, 740, "360")]
     public async Task G78_leerling_reis_journey_quality_gate(int width, int height, string tag)
     {
         _ = TestContext.Current.CancellationToken;
@@ -2558,7 +2559,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             """;
 
         await using var context = width <= 400
-            ? await NewMobileContextAsync()
+            ? await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+                IsMobile = true,
+                HasTouch = true,
+                DeviceScaleFactor = 2
+            })
             : await _browser!.NewContextAsync(new BrowserNewContextOptions
             {
                 ViewportSize = new ViewportSize { Width = width, Height = height }
@@ -2626,6 +2634,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await puzzleSpeak.ClickAsync();
             await page.WaitForFunctionAsync("() => window.__g78SpeakCalls >= 1");
             Assert.Equal("true", await puzzleSpeak.GetAttributeAsync("aria-pressed"));
+            await G78PuzzleIntroScreenshotTests.AssertSchelpenSlotsInsidePreviewBoxAsync(page);
+            await G78PuzzleIntroScreenshotTests.AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+            if (width <= 400)
+            {
+                await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+                await page.Locator(".ll-puzzle-schelp-choices").WaitForAsync();
+                await G78PuzzleIntroScreenshotTests.AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+            }
+
             await page.ScreenshotAsync(new PageScreenshotOptions
             {
                 Path = Path.Combine(artifactDir, $"vraag-{tag}.png"),
@@ -2633,6 +2650,44 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             });
             await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
             await page.CloseAsync();
+        }
+
+        if (width <= 400)
+        {
+            foreach (var (answered, puzzleKey) in new[]
+                     {
+                         (30, "schatkaart"),
+                         (45, "vuurtorenlampen"),
+                     })
+            {
+                var extraSeeds = await SeedGroep78AtAsync(
+                    1,
+                    answered,
+                    chipsSaved: false,
+                    completeActivePuzzleGate: false,
+                    journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+                var extraSeed = extraSeeds[0];
+                var (page, consoleErrors, failedHttp) = await OpenMonitoredPageAsync();
+                await LoginAsync(
+                    page,
+                    $"{baseUrl}/leerling?schoolId={extraSeed.SchoolId:D}&classId={extraSeed.ClassId:D}",
+                    extraSeed.PlainCode,
+                    extraSeed.ClassId);
+                await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                await page.WaitForURLAsync($"**/leerling/puzzel/{puzzleKey}**", UrlCommitted);
+                await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+                await G78PuzzleIntroScreenshotTests.AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+                if (string.Equals(puzzleKey, "schatkaart", StringComparison.Ordinal))
+                {
+                    await G78PuzzleIntroScreenshotTests.AssertSchatkaartTilesInsideIntroBoxAsync(page);
+                }
+
+                await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+                await page.Locator(".ll-puzzle-play:not([hidden])").WaitForAsync();
+                await G78PuzzleIntroScreenshotTests.AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+                await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
+                await page.CloseAsync();
+            }
         }
 
         var islandSeeds = await SeedGroep78AtAsync(

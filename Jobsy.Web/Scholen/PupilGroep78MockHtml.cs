@@ -122,11 +122,14 @@ internal static class PupilGroep78MockHtml
         {
             var face = faces[i];
             var matchSrc = PupilJourneyTheme.PuzzleMatchAsset(themeKey, face);
+            var cardAria = string.Format(culture["Leerling.G78.Puzzle.CardChoice.Aria"], i + 1);
             sb.Append("<button type=\"button\" class=\"ll-puzzle__card\" data-ll-card-index=\"").Append(i);
             sb.Append("\" data-ll-card-face=\"").Append(PupilLeerlingSsrParts.E(face));
             sb.Append("\" data-ll-match-src=\"").Append(PupilLeerlingSsrParts.E(matchSrc));
             sb.Append("\" style=\"background-image:url('").Append(PupilLeerlingSsrParts.E(back));
-            sb.Append("')\" data-testid=\"ll-puzzle-card\"></button>");
+            sb.Append("')\" data-testid=\"ll-puzzle-card\" aria-label=\"")
+                .Append(PupilLeerlingSsrParts.E(cardAria))
+                .Append("\"></button>");
         }
 
         sb.Append("</div><p class=\"ll-puzzle__status ll-puzzle__status--calm\" data-ll-puzzle-success hidden aria-live=\"polite\">")

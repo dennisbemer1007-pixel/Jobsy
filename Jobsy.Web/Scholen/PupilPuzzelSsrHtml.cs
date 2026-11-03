@@ -189,8 +189,12 @@ public static class PupilPuzzelSsrHtml
             sb.Append("<div class=\"ll-puzzle__cards\">");
             for (var i = 0; i < faces.Count; i++)
             {
+                var cardAria = string.Format(culture["Leerling.G78.Puzzle.CardChoice.Aria"], i + 1);
                 sb.Append("<button type=\"button\" class=\"ll-puzzle__card\" data-ll-card-index=\"").Append(i);
-                sb.Append("\" data-ll-card-face=\"").Append(PupilLeerlingSsrParts.E(faces[i])).Append("\" data-testid=\"ll-puzzle-card\"></button>");
+                sb.Append("\" data-ll-card-face=\"").Append(PupilLeerlingSsrParts.E(faces[i]));
+                sb.Append("\" data-testid=\"ll-puzzle-card\" aria-label=\"")
+                    .Append(PupilLeerlingSsrParts.E(cardAria))
+                    .Append("\"></button>");
             }
 
             sb.Append("</div>");

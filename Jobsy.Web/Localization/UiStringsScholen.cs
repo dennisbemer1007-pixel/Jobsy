@@ -482,6 +482,7 @@ public static class UiStringsScholen
         nl["Leerling.G78.Puzzle.FactNoClock"] = "Geen klok";
         nl["Leerling.G78.Puzzle.FactSkip"] = "Weet je het niet? Ga gewoon verder";
         nl["Leerling.G78.Puzzle.ShellChoice.Aria"] = "Kies schelp {0}";
+        nl["Leerling.G78.Puzzle.CardChoice.Aria"] = "Draai kaart {0} om";
         nl["Leerling.G78.AnswerChoice.Aria"] = "{0}: {1}, {2} van 5";
         nl["Leerling.Vakken.ScaleChoice.Aria"] = "{0}: {1}, {2} van 5";
         nl["Leerling.G78.Puzzle.ReadIntro"] = "Laat de uitleg voorlezen";
