@@ -294,6 +294,10 @@ public static class PupilLeerlingJourneyEndpoints
         var form = await http.Request.ReadFormAsync(ct);
         var likes = form["Likes"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
         var dislikes = form["Dislikes"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        foreach (var key in likes)
+        {
+            dislikes.RemoveAll(d => string.Equals(d, key, StringComparison.OrdinalIgnoreCase));
+        }
         var likeOther = form["LikeOther"].ToString();
         var dislikeOther = form["DislikeOther"].ToString();
         try

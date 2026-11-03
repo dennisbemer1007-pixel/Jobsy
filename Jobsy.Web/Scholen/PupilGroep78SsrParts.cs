@@ -57,15 +57,24 @@ public static class PupilGroep78SsrParts
         string speakText,
         string speechKey,
         string lobsterImage = "kreeft-welkom.png",
-        bool mobileGuideFirst = false)
+        bool mobileGuideFirst = false,
+        int? islandCoachStep = null,
+        bool hidden = false)
     {
+        var stepAttr = islandCoachStep is int step
+            ? $" data-ll-island-coach-step=\"{step}\""
+            : "";
+        var hiddenAttr = hidden ? " hidden" : "";
         var sb = new StringBuilder();
         if (mobileGuideFirst)
         {
-            sb.Append(MobileCoachGuide(culture, bubbleText, speakText, speechKey));
+            sb.Append(MobileCoachGuide(culture, bubbleText, speakText, speechKey, stepAttr, hiddenAttr));
         }
 
-        sb.Append("""<aside class="ll-g78-coach d-only" aria-label="Lobsy" data-testid="ll-g78-coach">""");
+        sb.Append("<aside class=\"ll-g78-coach d-only\" aria-label=\"Lobsy\" data-testid=\"ll-g78-coach\"");
+        sb.Append(stepAttr);
+        sb.Append(hiddenAttr);
+        sb.Append('>');
         sb.Append("""<div class="bubble tail-b"><span class="who">Lobsy</span>""");
         sb.Append(PupilLeerlingSsrParts.E(bubbleText));
         sb.Append("""<div class="bt">""").Append(Groep78SpeakButton(speakText, speechKey, culture));
@@ -74,16 +83,25 @@ public static class PupilGroep78SsrParts
         sb.Append("\" width=\"250\" height=\"250\" alt=\"\" /></aside>");
         if (!mobileGuideFirst)
         {
-            sb.Append(MobileCoachGuide(culture, bubbleText, speakText, speechKey));
+            sb.Append(MobileCoachGuide(culture, bubbleText, speakText, speechKey, stepAttr, hiddenAttr));
         }
 
         return sb.ToString();
     }
 
-    private static string MobileCoachGuide(CultureState culture, string bubbleText, string speakText, string speechKey)
+    private static string MobileCoachGuide(
+        CultureState culture,
+        string bubbleText,
+        string speakText,
+        string speechKey,
+        string stepAttr,
+        string hiddenAttr)
     {
         var sb = new StringBuilder();
-        sb.Append("""<div class="m-only ll-g78-coach-mobile" data-testid="ll-g78-coach-mobile"><div class="guide"><div class="ring" aria-hidden="true"></div><div class="bubble tail-l"><span class="who">Lobsy</span>""");
+        sb.Append("<div class=\"m-only ll-g78-coach-mobile\" data-testid=\"ll-g78-coach-mobile\"");
+        sb.Append(stepAttr);
+        sb.Append(hiddenAttr);
+        sb.Append("><div class=\"guide\"><div class=\"ring\" aria-hidden=\"true\"></div><div class=\"bubble tail-l\"><span class=\"who\">Lobsy</span>");
         sb.Append(PupilLeerlingSsrParts.E(bubbleText));
         sb.Append("""<div class="bt">""").Append(Groep78SpeakButton(speakText, speechKey, culture));
         sb.Append("<span class=\"speak-label\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Wereld.ReadAloud"])).Append("</span></div></div></div></div>");

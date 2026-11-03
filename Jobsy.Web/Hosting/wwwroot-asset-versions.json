@@ -168,7 +168,7 @@
     "v": "20261028-59"
   },
   "css/features/leerling-werelden-kies.css": {
-    "sha256": "b0c0c4a4381d0ee0dd37a64da4e8e143733538106499ae5ed4a2d27b6f0e468e",
+    "sha256": "4f57ca7c9f244a7626da389def4446dba44ab6827cc6e1d1722966bf22ddc384",
     "v": "20261102-02"
   },
   "css/features/lobsy-assistant-panel.css": {
@@ -492,7 +492,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "20e97cf7f61d293a23a26b67f3a4e4d2eac5f4f7e8b221ef0c87a8d19d9fcb6e",
+    "sha256": "6de73dbd99c6017bb6d5163a6f404bd0cb31aefcc5ebdcce8ab21827c6c36978",
     "v": "20261102-01"
   },
   "js/leerling-login.js": {

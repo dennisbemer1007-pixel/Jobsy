@@ -38,7 +38,7 @@ public static class PupilEilandSsrHtml
         var sb = new StringBuilder();
         if (groep78)
         {
-            var islandMeta = string.Format(culture["Leerling.G78.Island.JourneyMeta"], 1);
+            var islandMeta = IslandJourneyMetaHtml(culture, 1, 2);
             sb.Append(PupilLeerlingSsrParts.Groep78SceneHeader(
                 culture, registry, themeKey, "pauze-eiland", "pauze-eiland",
                 islandMeta, true, "center 45%", sceneMetaIsHtml: true));
@@ -71,12 +71,43 @@ public static class PupilEilandSsrHtml
                 culture["Leerling.G78.Island.CoachLikes"],
                 culture["Leerling.G78.Island.CoachLikes"],
                 "ll-island-coach-likes",
-                "kreeft-welkom.png"));
+                "kreeft-welkom.png",
+                islandCoachStep: 1));
+            sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
+                culture,
+                culture["Leerling.G78.Island.CoachDislikes"],
+                culture["Leerling.G78.Island.CoachDislikes"],
+                "ll-island-coach-dislikes",
+                "kreeft-welkom.png",
+                islandCoachStep: 2,
+                hidden: true));
             sb.Append("</div></div>");
         }
         else
         {
             sb.Append("</div>");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string IslandJourneyMetaHtml(CultureState culture, params int[] steps)
+    {
+        var sb = new StringBuilder();
+        for (var i = 0; i < steps.Length; i++)
+        {
+            var step = steps[i];
+            sb.Append("<span data-ll-island-jmeta=\"");
+            sb.Append(step.ToString(CultureInfo.InvariantCulture));
+            sb.Append('"');
+            if (step != 1)
+            {
+                sb.Append(" hidden");
+            }
+
+            sb.Append('>');
+            sb.Append(string.Format(culture["Leerling.G78.Island.JourneyMeta"], step));
+            sb.Append("</span>");
         }
 
         return sb.ToString();
