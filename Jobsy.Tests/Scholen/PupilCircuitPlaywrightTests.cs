@@ -1670,6 +1670,14 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.Locator("[data-testid=leerling-g78-scene]").WaitForAsync();
         await FillVakkenPageLikeMockAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => { const c = document.querySelector('[data-ll-vt-count]'); return c && c.textContent.trim() === '6/6'; }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 15_000 });
+        await Assertions.Expect(page.Locator("[data-ll-vt-count]")).ToHaveTextAsync("6/6");
+        await Assertions.Expect(page.Locator("[data-ll-vt-remaining]")).ToContainTextAsync("0", new() { IgnoreCase = true });
+        await Assertions.Expect(page.Locator("[data-ll-vt-bubble] .bt")).ToContainTextAsync("ga door", new() { IgnoreCase = true });
+        await Assertions.Expect(page.Locator("[data-testid=ll-vt-next]")).ToBeEnabledAsync();
         var vakLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: false, viewportWidth: width);
         Assert.True(vakLayout.Ok, vakLayout.Raw);
         await page.ScreenshotAsync(new()
@@ -2140,6 +2148,23 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                     leftColumnGap = Math.max(0, kr.left - cr.right);
                     if (kr.top - cr.top > 120) hits.push('coach-below-card-top');
                     if (cr.width < viewportWidth * 0.45) hits.push('main-column-too-narrow');
+                  }
+                  const strip = document.querySelector('.ll-g78-result-scene .g78-journey, [data-testid=leerling-g78-journey]');
+                  const gapMin = 14;
+                  const visibleRect = (el) => {
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    const st = window.getComputedStyle(el);
+                    if (r.width < 2 || r.height < 2 || st.display === 'none' || st.visibility === 'hidden') return null;
+                    return r;
+                  };
+                  if (strip) {
+                    const sr = strip.getBoundingClientRect();
+                    const coachBubble = document.querySelector('[data-testid=ll-g78-coach]:not([hidden]) .bubble, [data-testid=ll-g78-coach-mobile]:not([hidden]) .guide .bubble');
+                    const cr = visibleRect(card);
+                    const br = visibleRect(coachBubble);
+                    if (cr && cr.top < sr.bottom + gapMin) hits.push('card-intersects-journey');
+                    if (br && br.top < sr.bottom + gapMin) hits.push('coach-intersects-journey');
                   }
                 } else {
                   hits.push('missing-dit-ben-jij-head');

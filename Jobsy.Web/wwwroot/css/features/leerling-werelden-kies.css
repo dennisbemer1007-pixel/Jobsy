@@ -1705,8 +1705,12 @@
     margin-top: 18px;
   }
 
-  .ll-g78-shell .wrap.ll-result--g78 {
+  .ll-g78-shell .wrap.ll-result--g78:not(.ll-g78-overlap--below-journey) {
     margin-top: -20px !important;
+  }
+
+  .ll-g78-shell .wrap.ll-result--g78.ll-g78-overlap--below-journey {
+    margin-top: 16px !important;
   }
 
   .ll-g78-shell .ll-g78-result-band {
@@ -2750,18 +2754,18 @@
 }
 
 .ll-g78-shell .wrap.ll-result--g78.ll-g78-overlap--below-journey {
-  margin-top: 12px;
+  margin-top: 20px;
 }
 
 .ll-g78-shell .ll-g78-result-scene .ll-g78-result-band {
   min-height: 200px;
 }
 
-@media (min-width: 601px) {
-  .ll-g78-shell .wrap.ll-result--g78.ll-g78-overlap--below-journey {
-    margin-top: -36px;
-  }
+.ll-g78-shell .ll-g78-result-scene .ll-g78-scene__journey {
+  margin-bottom: 20px;
+}
 
+@media (min-width: 601px) {
   .ll-g78-shell .ll-result--g78 .q-layout {
     display: grid;
     grid-template-areas: "main coach";
