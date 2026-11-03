@@ -147,8 +147,8 @@
     var total = cards.length;
     var remaining = total - done;
     var pct = total === 0 ? 0 : (done * 100) / total;
-    var prog = form.closest(".ll-vt-main");
-    if (prog) prog = prog.querySelector("[data-ll-vt-prog]");
+    var progHost = form.closest(".ll-vakken-g78-card, .ll-vt-main");
+    var prog = progHost ? progHost.querySelector("[data-ll-vt-prog]") : null;
     if (prog) {
       var bar = prog.querySelector(".ll-vt-prog__bar i");
       if (bar) bar.style.width = pct + "%";
@@ -166,12 +166,16 @@
           .replace("{0}", String(remaining));
       }
     }
-    var bubble = form.querySelector("[data-ll-vt-bubble]");
+    var bubbleHost = form.closest(".ll-vakken-g78-card, .ll-vt-main") || form.parentElement;
+    var bubble = bubbleHost ? bubbleHost.querySelector("[data-ll-vt-bubble]") : null;
     if (bubble) {
+      var bubbleLine = bubble.querySelector(".bt") || bubble;
       if (remaining <= 0 && bubble.getAttribute("data-ll-vt-bubble-done")) {
-        bubble.textContent = bubble.getAttribute("data-ll-vt-bubble-done");
+        bubbleLine.textContent = bubble.getAttribute("data-ll-vt-bubble-done");
       } else if (bubble.getAttribute("data-ll-vt-bubble-progress")) {
-        bubble.textContent = bubble.getAttribute("data-ll-vt-bubble-progress").replace("{0}", String(remaining));
+        bubbleLine.textContent = bubble
+          .getAttribute("data-ll-vt-bubble-progress")
+          .replace("{0}", String(remaining));
       }
     }
     var next = form.querySelector("[data-testid=ll-vt-next], .ll-vt-next");

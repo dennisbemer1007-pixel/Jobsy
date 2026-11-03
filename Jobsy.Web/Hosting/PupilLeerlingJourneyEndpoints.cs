@@ -326,7 +326,13 @@ public static class PupilLeerlingJourneyEndpoints
         }
     }
 
-    private static async Task<IResult> GetVakkenAsync(HttpContext http, JobsyApiClient api, CultureState culture, IAntiforgery af, CancellationToken ct)
+    private static async Task<IResult> GetVakkenAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        IAntiforgery af,
+        IPupilQuestionSetRegistry registry,
+        CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
@@ -351,7 +357,7 @@ public static class PupilLeerlingJourneyEndpoints
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var themeKey = groep78 ? PupilJourneyTheme.NormalizeOrDefault(progress.JourneyThemeKey) : null;
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78, themeKey);
+        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78, themeKey, registry);
         return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, themeKey, afHtml);
     }
 

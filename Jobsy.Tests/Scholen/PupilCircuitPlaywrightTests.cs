@@ -1608,6 +1608,91 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]
+    public async Task G78_dit_ben_jij_and_vakken_layout_no_overlap(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
+        var vakkenSeeds = await SeedGroep78AtAsync(
+            1,
+            bankCount,
+            chipsSaved: true,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.Sterrenkust);
+        var vakkenSeed = vakkenSeeds[0];
+        var ditBenJij = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.Sterrenkust);
+        var baseUrl = EnsureWeb();
+        var artifacts = "/opt/cursor/artifacts/screenshots";
+        Directory.CreateDirectory(artifacts);
+        var consoleErrors = new List<string>();
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type == "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={ditBenJij.SchoolId:D}&classId={ditBenJij.ClassId:D}",
+            ditBenJij.PlainCode,
+            ditBenJij.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/dit-ben-jij", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
+        await Assertions.Expect(page.Locator("[data-testid=leerling-g78-scene]")).ToBeVisibleAsync();
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        var ditLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: true, viewportWidth: width);
+        Assert.True(ditLayout.Ok, ditLayout.Raw);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(artifacts, $"dit-ben-jij-{width}.png"),
+            FullPage = width <= 400,
+        });
+
+        await page.Context.ClearCookiesAsync();
+        await LoginAsync(
+            page,
+            $"{baseUrl}/leerling?schoolId={vakkenSeed.SchoolId:D}&classId={vakkenSeed.ClassId:D}",
+            vakkenSeed.PlainCode,
+            vakkenSeed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.Locator("[data-testid=leerling-g78-scene]").WaitForAsync();
+        await FillVakkenPageLikeMockAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => { const c = document.querySelector('[data-ll-vt-count]'); return c && c.textContent.trim() === '6/6'; }",
+            null,
+            new PageWaitForFunctionOptions { Timeout = 15_000 });
+        await Assertions.Expect(page.Locator("[data-ll-vt-count]")).ToHaveTextAsync("6/6");
+        await Assertions.Expect(page.Locator("[data-ll-vt-remaining]")).ToContainTextAsync("0", new() { IgnoreCase = true });
+        await Assertions.Expect(page.Locator("[data-ll-vt-bubble] .bt")).ToContainTextAsync("ga door", new() { IgnoreCase = true });
+        await Assertions.Expect(page.Locator("[data-testid=ll-vt-next]")).ToBeEnabledAsync();
+        var vakLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: false, viewportWidth: width);
+        Assert.True(vakLayout.Ok, vakLayout.Raw);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(artifacts, $"vakken-{width}.png"),
+            FullPage = width <= 400 || width >= 1400,
+        });
+
+        Assert.Empty(consoleErrors);
+        await page.CloseAsync();
+    }
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
     public async Task G78_vakken_ssr_styled_evidence(int width, int height)
     {
         _ = TestContext.Current.CancellationToken;
@@ -1650,7 +1735,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await page.Locator("[data-testid=ll-vt-scene-bar]").WaitForAsync();
+        await page.Locator("[data-testid=leerling-g78-scene]").WaitForAsync();
         await Assertions.Expect(page.Locator("[data-testid=leerling-g78-shell]")).ToBeVisibleAsync();
         Assert.Equal(0, await page.Locator("script[src*='blazor.web.js']").CountAsync());
         Assert.Contains("leerling-werelden-kies.css", await page.ContentAsync(), StringComparison.Ordinal);
@@ -1670,7 +1755,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await next.ClickAsync();
         await page.WaitForURLAsync("**/leerling/vakken?page=2**", UrlCommitted);
-        await page.Locator("[data-testid=ll-vt-scene-bar]").WaitForAsync();
+        await page.Locator("[data-testid=leerling-g78-scene]").WaitForAsync();
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(artifacts, $"vakken-after-p2-{width}.png"),
@@ -2007,7 +2092,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
         await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
         await page.GotoAsync($"{baseUrl}/leerling/vakken");
-        await page.Locator("[data-testid=ll-vt-scene-bar]").WaitForAsync();
+        await page.Locator("[data-testid=leerling-g78-scene]").WaitForAsync();
 
         await FillVakkenPageLikeMockAsync(page);
 
@@ -2017,6 +2102,89 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             FullPage = false
         });
         await page.CloseAsync();
+    }
+
+    private static async Task<(bool Ok, string Raw)> EvaluateG78DitBenJijVakkenLayoutAsync(
+        IPage page,
+        bool expectDitBenJij,
+        int viewportWidth)
+    {
+        var raw = await page.EvaluateAsync<string>(
+            """
+            ({ expectDitBenJij, viewportWidth }) => {
+              window.scrollTo(0, 0);
+              const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+              const hits = [];
+              const bubbles = [...document.querySelectorAll('.ll-vt-bub, .guide .bubble, [data-testid=ll-g78-coach] .bubble, [data-testid=ll-g78-coach-mobile] .bubble')];
+              const actions = [...document.querySelectorAll('[data-testid=ll-vt-next], .ll-vakken-g78-foot .btn-main, .res-foot .btn-main, .res-foot .btn-ghost, .ll-vt-back')];
+              for (const bubble of bubbles) {
+                const br = bubble.getBoundingClientRect();
+                if (br.width < 2 || br.height < 2) continue;
+                for (const action of actions) {
+                  const ar = action.getBoundingClientRect();
+                  if (ar.width < 2 || ar.height < 2) continue;
+                  const pad = 6;
+                  const clear = br.right <= ar.left + pad || br.left >= ar.right - pad || br.bottom <= ar.top + pad || br.top >= ar.bottom - pad;
+                  if (!clear) hits.push('coach-action-overlap');
+                }
+              }
+              let titleGap = 0;
+              let cardTop = 0;
+              let cardAboveFold = true;
+              let leftColumnGap = 0;
+              if (expectDitBenJij) {
+                const title = document.querySelector('.ll-result-head h1, .ll-result-head .island-lead');
+                const body = document.querySelector('.ll-result-story .qrow, .ll-result-story .story-body');
+                const card = document.querySelector('.ll-result-story');
+                const coach = document.querySelector('[data-testid=ll-g78-coach]:not([hidden])');
+                if (title && body && card) {
+                  titleGap = body.getBoundingClientRect().top - title.getBoundingClientRect().bottom;
+                  cardTop = card.getBoundingClientRect().top;
+                  const vh = window.innerHeight || document.documentElement.clientHeight;
+                  cardAboveFold = cardTop < vh * 0.78;
+                  if (viewportWidth >= 600 && coach) {
+                    const cr = card.getBoundingClientRect();
+                    const kr = coach.getBoundingClientRect();
+                    leftColumnGap = Math.max(0, kr.left - cr.right);
+                    if (kr.top - cr.top > 120) hits.push('coach-below-card-top');
+                    if (cr.width < viewportWidth * 0.45) hits.push('main-column-too-narrow');
+                  }
+                  const strip = document.querySelector('.ll-g78-result-scene .g78-journey, [data-testid=leerling-g78-journey]');
+                  const gapMin = 14;
+                  const visibleRect = (el) => {
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    const st = window.getComputedStyle(el);
+                    if (r.width < 2 || r.height < 2 || st.display === 'none' || st.visibility === 'hidden') return null;
+                    return r;
+                  };
+                  if (strip) {
+                    const sr = strip.getBoundingClientRect();
+                    const coachBubble = document.querySelector('[data-testid=ll-g78-coach]:not([hidden]) .bubble, [data-testid=ll-g78-coach-mobile]:not([hidden]) .guide .bubble');
+                    const cr = visibleRect(card);
+                    const br = visibleRect(coachBubble);
+                    if (cr && cr.top < sr.bottom + gapMin) hits.push('card-intersects-journey');
+                    if (br && br.top < sr.bottom + gapMin) hits.push('coach-intersects-journey');
+                  }
+                } else {
+                  hits.push('missing-dit-ben-jij-head');
+                }
+              }
+              const text = document.body?.innerText || '';
+              const untranslated = (text.match(/\bLeerling(?:Passport)?\.[A-Za-z.]+/g) || []).slice(0, 5);
+              const desktopDit = expectDitBenJij && viewportWidth >= 600;
+              const ok = overflow <= 1
+                && hits.length === 0
+                && titleGap < 96
+                && untranslated.length === 0
+                && (!desktopDit || (cardAboveFold && cardTop < 520));
+              return JSON.stringify({ ok, overflow, hits, titleGap, cardTop, cardAboveFold, leftColumnGap, untranslated });
+            }
+            """,
+            new { expectDitBenJij, viewportWidth });
+        using var doc = System.Text.Json.JsonDocument.Parse(raw);
+        var ok = doc.RootElement.GetProperty("ok").GetBoolean();
+        return (ok, raw);
     }
 
     private static async Task FillVakkenPageLikeMockAsync(IPage page)
@@ -2061,9 +2229,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.GotoAsync($"{baseUrl}/leerling/vakken");
         await page.Locator("[data-testid=leerling-vakken]").WaitForAsync();
 
-        var sceneBar = page.Locator("[data-testid=ll-vt-scene-bar]");
-        await sceneBar.WaitForAsync();
-        await Assertions.Expect(sceneBar).ToContainTextAsync("Sterrenkust");
+        var scene = page.Locator("[data-testid=leerling-g78-scene]");
+        await scene.WaitForAsync();
+        await Assertions.Expect(page.Locator("[data-testid=leerling-vakken] .kicker")).ToContainTextAsync("Sterrenkust");
 
         var scaleGroups = page.Locator(".ll-vt-scale-btns");
         var groupCount = await scaleGroups.CountAsync();

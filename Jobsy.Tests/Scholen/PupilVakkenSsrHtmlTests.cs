@@ -1,4 +1,5 @@
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -13,6 +14,7 @@ public class PupilVakkenSsrHtmlTests
     public void Groep78_body_includes_mockup_shell_markers_and_g78_foot_controls()
     {
         var culture = NlCulture();
+        var registry = new PupilQuestionSetRegistry();
         var html = PupilVakkenSsrHtml.BuildBody(
             null!,
             culture,
@@ -22,9 +24,11 @@ public class PupilVakkenSsrHtmlTests
             savePath: "/leerling/vakken/save",
             error: null,
             groep78: true,
-            themeKey: PupilJourneyTheme.Sterrenkust);
+            themeKey: PupilJourneyTheme.Sterrenkust,
+            registry: registry);
 
-        Assert.Contains("data-testid=\"ll-vt-scene-bar\"", html, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"leerling-g78-scene\"", html, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"leerling-g78-journey\"", html, StringComparison.Ordinal);
         Assert.Contains("ll-vt-foot", html, StringComparison.Ordinal);
         Assert.Contains("ll-vt-next", html, StringComparison.Ordinal);
         Assert.Contains("ll-vt-scale-btns", html, StringComparison.Ordinal);
