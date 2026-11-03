@@ -1,6 +1,161 @@
 (function () {
   "use strict";
 
+  var answerSaveChain = Promise.resolve();
+
+  function readAntiforgeryFromForm(form) {
+    var itemId = form.querySelector('input[name="ItemId"]');
+    var inputs = form.querySelectorAll('input[type="hidden"]');
+    for (var i = 0; i < inputs.length; i++) {
+      var inp = inputs[i];
+      var name = inp.getAttribute("name") || "";
+      if (name === "ItemId" || name === "Value") continue;
+      if (itemId && inp === itemId) continue;
+      return { field: name, token: inp.value || "" };
+    }
+    return { field: "", token: "" };
+  }
+
+  function writeAntiforgeryToForm(form, field, token) {
+    if (!field || !token) return;
+    var inputs = form.querySelectorAll('input[type="hidden"]');
+    for (var i = 0; i < inputs.length; i++) {
+      var inp = inputs[i];
+      if ((inp.getAttribute("name") || "") === field) {
+        inp.value = token;
+        return;
+      }
+    }
+    var hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = field;
+    hidden.value = token;
+    form.insertBefore(hidden, form.firstChild);
+  }
+
+  function applyG78AnswerSelection(form, btn, val) {
+    var hidden = form.querySelector('input[name="Value"]');
+    if (hidden) hidden.value = val;
+    form.querySelectorAll("[data-ll-answer-value]").forEach(function (b) {
+      var sel = b === btn;
+      b.classList.toggle("sel", sel);
+      b.setAttribute("aria-checked", sel ? "true" : "false");
+    });
+  }
+
+  function swapGroep78ShellMain(html) {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, "text/html");
+    var nextShell = doc.querySelector(".ll-g78-shell");
+    var shell = document.querySelector(".ll-g78-shell");
+    if (!nextShell || !shell) {
+      window.location.assign("/leerling/reis");
+      return false;
+    }
+    var header = shell.querySelector("header.top");
+    var footer = shell.querySelector("footer");
+    var nextHeader = nextShell.querySelector("header.top");
+    var nextFooter = nextShell.querySelector("footer");
+    if (!header || !footer || !nextHeader || !nextFooter) {
+      window.location.assign("/leerling/reis");
+      return false;
+    }
+    var node = header.nextElementSibling;
+    while (node && node !== footer) {
+      var remove = node;
+      node = node.nextElementSibling;
+      remove.remove();
+    }
+    var insertBefore = footer;
+    var incoming = nextHeader.nextElementSibling;
+    while (incoming && incoming !== nextFooter) {
+      shell.insertBefore(document.importNode(incoming, true), insertBefore);
+      incoming = incoming.nextElementSibling;
+    }
+    document.title = doc.title || document.title;
+    bindReadAloud(shell);
+    bindAnswerScale(shell);
+    bindChips(shell);
+    bindVakkenScale(shell);
+    bindWereld(shell);
+    bindPuzzleIntro(shell);
+    bindSchelpenPatternPick(shell);
+    bindPuzzle(shell);
+    bindIslandSteps(shell);
+    bindJobPicks(shell);
+    bindMhboScale(shell);
+    return true;
+  }
+
+  function fetchReisDocument() {
+    return fetch("/leerling/reis", {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { Accept: "text/html", "X-Requested-With": "XMLHttpRequest" },
+    }).then(function (res) {
+      if (!res.ok) throw new Error("reis_fetch_" + res.status);
+      return res.text();
+    });
+  }
+
+  function postReisAnswer(form, itemId, value) {
+    var af = readAntiforgeryFromForm(form);
+    var body = new URLSearchParams();
+    if (af.field && af.token) {
+      body.set(af.field, af.token);
+    }
+    body.set("ItemId", itemId);
+    body.set("Value", String(value));
+    return fetch(form.getAttribute("action") || "/leerling/reis/answer", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: body.toString(),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        if (!data || typeof data !== "object") {
+          throw new Error("reis_save_non_json");
+        }
+        var ok = data.ok === true || data.Ok === true || (data.ok === undefined && data.Ok === undefined && res.ok);
+        if (!ok) {
+          var err = new Error(data.error || data.Error || "reis_save_failed");
+          err.status = data.status || data.Status || res.status;
+          throw err;
+        }
+        var afField = data.antiforgeryField || data.AntiforgeryField;
+        var afToken = data.antiforgeryToken || data.AntiforgeryToken;
+        if (afField && afToken) {
+          writeAntiforgeryToForm(form, afField, afToken);
+        }
+        return {
+          redirectPath: data.redirectPath || data.RedirectPath || "/leerling/reis",
+        };
+      });
+    });
+  }
+
+  function navigateAfterReisSave(_form, data) {
+    var target = data.redirectPath || "/leerling/reis";
+    if (target.indexOf("/leerling/reis") === 0 && target.indexOf("?") < 0) {
+      return fetchReisDocument()
+        .then(function (html) {
+          if (swapGroep78ShellMain(html)) {
+            return;
+          }
+          window.location.assign(target);
+        })
+        .catch(function () {
+          window.location.assign(target);
+        });
+    }
+    window.location.assign(target);
+    return Promise.resolve();
+  }
+
   function bindReadAloud(root) {
     root.querySelectorAll("[data-read-aloud-text]").forEach(function (btn) {
       if (btn.getAttribute("data-read-aloud-bound") === "1") return;
@@ -19,14 +174,55 @@
     root.querySelectorAll("form[data-ll-answer-scale]").forEach(function (form) {
       if (form.getAttribute("data-ll-bound") === "1") return;
       form.setAttribute("data-ll-bound", "1");
-      var hidden = form.querySelector('input[name="Value"]');
+      var itemInput = form.querySelector('input[name="ItemId"]');
+      var hasAsyncButtons = form.querySelector("[data-ll-answer-value]");
+      if (!hasAsyncButtons) {
+        return;
+      }
+
       form.querySelectorAll("[data-ll-answer-value]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
           var val = btn.getAttribute("data-ll-answer-value");
-          if (!hidden || !val) return;
-          hidden.value = val;
-          form.submit();
+          if (!itemInput || !val) return;
+          var itemId = itemInput.value;
+          if (!itemId) return;
+          applyG78AnswerSelection(form, btn, val);
+          form.setAttribute("data-ll-save-state", "pending");
+          answerSaveChain = answerSaveChain
+            .catch(function () {
+              /* keep queue alive after failure */
+            })
+            .then(function () {
+              return postReisAnswer(form, itemId, val);
+            })
+            .then(function (data) {
+              return navigateAfterReisSave(form, data);
+            })
+            .then(function () {
+              var live = document.querySelector("form[data-ll-answer-scale]");
+              if (live) live.setAttribute("data-ll-save-state", "idle");
+            })
+            .catch(function () {
+              form.setAttribute("data-ll-save-state", "error");
+              var alert = form.parentElement
+                ? form.parentElement.querySelector(".ll-error")
+                : null;
+              if (!alert) {
+                alert = document.createElement("p");
+                alert.className = "ll-error";
+                alert.setAttribute("role", "alert");
+                alert.textContent = "Opslaan mislukt. Probeer opnieuw.";
+                form.insertAdjacentElement("afterend", alert);
+              }
+            });
         });
+      });
+
+      form.addEventListener("submit", function (e) {
+        if (form.querySelector("[data-ll-answer-value]")) {
+          e.preventDefault();
+        }
       });
     });
   }

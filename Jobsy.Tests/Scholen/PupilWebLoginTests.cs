@@ -10,6 +10,7 @@ using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -376,9 +377,37 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("/leerling/reis", post.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
         Assert.DoesNotContain("error=save", post.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
 
+        var reisGet2 = await client.GetAsync("/leerling/reis");
+        var html2 = await reisGet2.Content.ReadAsStringAsync();
+        var token2 = ExtractHiddenInput(html2, tokenField!)
+                    ?? ExtractHiddenInputReversed(html2, tokenField!);
+        var secondItem = ExtractHiddenInput(html2, "ItemId");
+        Assert.False(string.IsNullOrWhiteSpace(token2));
+        Assert.False(string.IsNullOrWhiteSpace(secondItem));
+        var jsonReq = new HttpRequestMessage(HttpMethod.Post, "/leerling/reis/answer")
+        {
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField!] = token2!,
+                ["ItemId"] = secondItem!,
+                ["Value"] = "4"
+            })
+        };
+        jsonReq.Headers.TryAddWithoutValidation("Accept", "application/json");
+        jsonReq.Headers.TryAddWithoutValidation("X-Requested-With", "XMLHttpRequest");
+        var jsonPost = await client.SendAsync(jsonReq);
+        Assert.Equal(HttpStatusCode.OK, jsonPost.StatusCode);
+        var jsonBody = await jsonPost.Content.ReadFromJsonAsync<PupilReisAnswerSaveJson>(
+            JobsyApiClient.ApiJson);
+        Assert.NotNull(jsonBody);
+        Assert.True(jsonBody!.Ok);
+        Assert.False(string.IsNullOrWhiteSpace(jsonBody.RedirectPath));
+        Assert.False(string.IsNullOrWhiteSpace(jsonBody.AntiforgeryToken));
+
         var progress = await GetProgressAsync(api, apiTicket);
-        Assert.Equal(1, progress.Body!.AnsweredCount);
+        Assert.Equal(2, progress.Body!.AnsweredCount);
         Assert.NotEqual(firstItem, progress.Body.CurrentItemId);
+        Assert.NotEqual(secondItem, progress.Body.CurrentItemId);
     }
 
     private static string? ExtractFormFieldName(string html, string type)
