@@ -136,6 +136,7 @@
         if (!ok) {
           var err = new Error(data.error || data.Error || "reis_save_failed");
           err.status = data.status || data.Status || res.status;
+          err.redirectPath = data.redirectPath || data.RedirectPath || null;
           throw err;
         }
         var afField = data.antiforgeryField || data.AntiforgeryField;
@@ -219,7 +220,7 @@
               var live = document.querySelector("form[data-ll-answer-scale]");
               if (live) live.setAttribute("data-ll-save-state", "idle");
             })
-            .catch(function () {
+            .catch(function (err) {
               form.setAttribute("data-ll-save-state", "error");
               var alert = form.parentElement
                 ? form.parentElement.querySelector(".ll-error")
@@ -230,6 +231,13 @@
                 alert.setAttribute("role", "alert");
                 alert.textContent = "Opslaan mislukt. Probeer opnieuw.";
                 form.insertAdjacentElement("afterend", alert);
+              }
+              var status = err && err.status;
+              var recovery = (err && err.redirectPath) || "/leerling/reis";
+              if (status === 409 || status === 502 || status === 400) {
+                window.setTimeout(function () {
+                  window.location.assign(recovery);
+                }, 400);
               }
             });
         });

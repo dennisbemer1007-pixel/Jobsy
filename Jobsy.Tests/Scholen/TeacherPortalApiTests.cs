@@ -74,6 +74,43 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Teacher_add_codes_parallel_requests_do_not_return_500()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (_, schoolId, classId) = await SeedSchoolWithClassAsync("8B", codeCount: 5);
+        var teacherId = await SeedTeacherAsync(schoolId, [classId]);
+        using var client1 = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+        using var client2 = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+
+        var add1 = client1.PostAsJsonAsync($"api/teacher/classes/{classId}/codes", new AddCodesRequest(1));
+        var add2 = client2.PostAsJsonAsync($"api/teacher/classes/{classId}/codes", new AddCodesRequest(1));
+        await Task.WhenAll(add1, add2);
+
+        Assert.NotEqual(HttpStatusCode.InternalServerError, add1.Result.StatusCode);
+        Assert.NotEqual(HttpStatusCode.InternalServerError, add2.Result.StatusCode);
+        Assert.Contains(add1.Result.StatusCode, new[] { HttpStatusCode.OK, HttpStatusCode.BadRequest });
+        Assert.Contains(add2.Result.StatusCode, new[] { HttpStatusCode.OK, HttpStatusCode.BadRequest });
+
+        var rows = await client1.GetFromJsonAsync<List<TeacherCodeRowDto>>($"api/teacher/classes/{classId}/codes", Json);
+        Assert.NotNull(rows);
+        Assert.Equal(7, rows!.Count);
+    }
+
+    [Fact]
+    public async Task Teacher_add_codes_at_max_returns_clear_bad_request()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (_, schoolId, classId) = await SeedSchoolWithClassAsync("8B", codeCount: SchoolPortalService.MaxCodesPerClass);
+        var teacherId = await SeedTeacherAsync(schoolId, [classId]);
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+
+        var add = await client.PostAsJsonAsync($"api/teacher/classes/{classId}/codes", new AddCodesRequest(1));
+        Assert.Equal(HttpStatusCode.BadRequest, add.StatusCode);
+        var body = await add.Content.ReadAsStringAsync();
+        Assert.Contains("Maximaal", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Code_of_other_class_returns_404_and_access_log_on_detail()
     {
         await EnableSchoolsAsync(true, perCode: true);
