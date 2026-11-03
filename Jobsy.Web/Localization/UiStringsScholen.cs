@@ -487,7 +487,7 @@ public static class UiStringsScholen
         nl["Leerling.G78.Island.LikesTitle"] = "Wat jij leuk vindt";
         nl["Leerling.G78.Island.LikesLead"] = "Even rust. Waar word jij blij van?";
         nl["Leerling.G78.Island.DislikesTitle"] = "Wat jij niet leuk vindt";
-        nl["Leerling.G78.Island.DislikesLead"] = "Wat vind jij niet leuk?";
+        nl["Leerling.G78.Island.DislikesLead"] = "Even verder. Kies wat jíj liever niet doet — mag ook helemaal niets.";
         nl["Leerling.G78.Island.CoachLikes"] = "Je bent halverwege. Kies wat jij leuk vindt. Je mag ook niks kiezen.";
         nl["Leerling.G78.Island.CoachDislikes"] = "Kies wat jij niet leuk vindt. Ook leeg mag.";
         nl["Leerling.G78.Island.Other"] = "+ Iets anders";

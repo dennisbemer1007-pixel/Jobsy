@@ -2766,6 +2766,12 @@
   font-weight: 600;
 }
 
+.ll-g78-shell .ll-island-step[hidden],
+.ll-g78-shell [data-ll-island-jmeta][hidden],
+.ll-g78-shell [data-ll-island-coach-step][hidden] {
+  display: none !important;
+}
+
 .ll-g78-shell .ll-g78-island-wrap {
   overflow: visible;
   padding-bottom: 24px;

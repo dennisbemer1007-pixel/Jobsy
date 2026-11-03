@@ -41,9 +41,31 @@
       var likeSet = new Set(likes.value ? likes.value.split(",") : []);
       var dislikeSet = new Set(dislikes.value ? dislikes.value.split(",") : []);
 
-      function sync() {
+      function syncHiddenFields() {
         likes.value = Array.from(likeSet).filter(Boolean).join(",");
         dislikes.value = Array.from(dislikeSet).filter(Boolean).join(",");
+      }
+
+      function syncChipButton(btn, key, isDislike) {
+        var on = isDislike ? dislikeSet.has(key) : likeSet.has(key);
+        btn.classList.toggle("is-on", on);
+        btn.classList.toggle("is-like", !isDislike && on);
+        btn.classList.toggle("is-dislike", isDislike && on);
+        btn.classList.toggle("on", on);
+        btn.classList.toggle("like", !isDislike && on);
+        btn.classList.toggle("dislike", isDislike && on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+      }
+
+      function syncAllChipButtons() {
+        form.querySelectorAll("[data-ll-chip-like]").forEach(function (btn) {
+          var key = btn.getAttribute("data-ll-chip-like");
+          if (key) syncChipButton(btn, key, false);
+        });
+        form.querySelectorAll("[data-ll-chip-dislike]").forEach(function (btn) {
+          var key = btn.getAttribute("data-ll-chip-dislike");
+          if (key) syncChipButton(btn, key, true);
+        });
       }
 
       form.querySelectorAll("[data-ll-chip-like]").forEach(function (btn) {
@@ -55,11 +77,8 @@
             likeSet.add(key);
             dislikeSet.delete(key);
           }
-          btn.classList.toggle("is-on", likeSet.has(key));
-          btn.classList.toggle("is-like", likeSet.has(key));
-          btn.classList.toggle("on", likeSet.has(key));
-          btn.classList.toggle("like", likeSet.has(key));
-          sync();
+          syncAllChipButtons();
+          syncHiddenFields();
         });
       });
 
@@ -72,11 +91,8 @@
             dislikeSet.add(key);
             likeSet.delete(key);
           }
-          btn.classList.toggle("is-on", dislikeSet.has(key));
-          btn.classList.toggle("is-dislike", dislikeSet.has(key));
-          btn.classList.toggle("on", dislikeSet.has(key));
-          btn.classList.toggle("dislike", dislikeSet.has(key));
-          sync();
+          syncAllChipButtons();
+          syncHiddenFields();
         });
       });
 
@@ -89,21 +105,10 @@
       });
 
       form.addEventListener("submit", function () {
-        sync();
+        syncHiddenFields();
       });
 
-      form.querySelectorAll("[data-ll-chip-like]").forEach(function (btn) {
-        var key = btn.getAttribute("data-ll-chip-like");
-        if (!key) return;
-        btn.classList.toggle("on", likeSet.has(key));
-        btn.classList.toggle("like", likeSet.has(key));
-      });
-      form.querySelectorAll("[data-ll-chip-dislike]").forEach(function (btn) {
-        var key = btn.getAttribute("data-ll-chip-dislike");
-        if (!key) return;
-        btn.classList.toggle("on", dislikeSet.has(key));
-        btn.classList.toggle("dislike", dislikeSet.has(key));
-      });
+      syncAllChipButtons();
     });
   }
 
@@ -238,28 +243,54 @@
     });
   }
 
+  function setIslandActiveStep(form, step) {
+    var s1 = form.querySelector('[data-ll-island-step="1"]');
+    var s2 = form.querySelector('[data-ll-island-step="2"]');
+    var on1 = step === 1;
+    var on2 = step === 2;
+    if (s1) {
+      s1.hidden = !on1;
+      if (on1) s1.removeAttribute("hidden");
+      else s1.setAttribute("hidden", "");
+    }
+    if (s2) {
+      s2.hidden = !on2;
+      if (on2) s2.removeAttribute("hidden");
+      else s2.setAttribute("hidden", "");
+    }
+    form.setAttribute("data-ll-island-active-step", String(step));
+    var shell = form.closest(".ll-g78-shell") || document.body;
+    shell.querySelectorAll("[data-ll-island-jmeta]").forEach(function (el) {
+      var show = el.getAttribute("data-ll-island-jmeta") === String(step);
+      el.hidden = !show;
+      if (show) el.removeAttribute("hidden");
+      else el.setAttribute("hidden", "");
+    });
+    shell.querySelectorAll("[data-ll-island-coach-step]").forEach(function (el) {
+      var show = el.getAttribute("data-ll-island-coach-step") === String(step);
+      el.hidden = !show;
+      if (show) el.removeAttribute("hidden");
+      else el.setAttribute("hidden", "");
+    });
+  }
+
   function bindIslandSteps(root) {
     root.querySelectorAll("form[data-ll-chips-form]").forEach(function (form) {
       if (form.getAttribute("data-ll-island-bound") === "1") return;
       if (!form.querySelector("[data-ll-island-step]")) return;
       form.setAttribute("data-ll-island-bound", "1");
-      var s1 = form.querySelector('[data-ll-island-step="1"]');
-      var s2 = form.querySelector('[data-ll-island-step="2"]');
       form.querySelectorAll("[data-ll-island-next]").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          if (s1) s1.hidden = true;
-          if (s2) s2.hidden = false;
-          form.setAttribute("data-ll-island-active-step", "2");
+          setIslandActiveStep(form, 2);
         });
       });
       form.querySelectorAll("[data-ll-island-prev]").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          if (s2) s2.hidden = true;
-          if (s1) s1.hidden = false;
-          form.setAttribute("data-ll-island-active-step", "1");
+          setIslandActiveStep(form, 1);
         });
       });
-      form.setAttribute("data-ll-island-active-step", s2 && !s2.hidden ? "2" : "1");
+      var s2 = form.querySelector('[data-ll-island-step="2"]');
+      setIslandActiveStep(form, s2 && !s2.hidden ? 2 : 1);
     });
   }
 
