@@ -13,7 +13,8 @@ public static class PupilStopSsrHtml
         string antiforgeryField,
         bool groep78 = false,
         string? themeKey = null,
-        IPupilQuestionSetRegistry? registry = null)
+        IPupilQuestionSetRegistry? registry = null,
+        PupilGroep78JourneySnapshot? journey = null)
     {
         if (!groep78 || registry is null)
         {
@@ -22,22 +23,12 @@ public static class PupilStopSsrHtml
 
         var paused = string.Equals(done, "1", StringComparison.Ordinal)
                      || string.Equals(done, "deel1", StringComparison.Ordinal);
-        var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
         var sb = new StringBuilder();
-        sb.Append("""<section class="ll-g78-scene ll-g78-result-scene" data-testid="leerling-g78-scene">""");
-        sb.Append("<section class=\"band ll-g78-world-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
-        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append("\" aria-hidden=\"true\"></section>");
-        sb.Append("""<div class="ll-g78-scene__journey ll-g78-result-band__journey">""");
-        sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
-            culture,
-            registry,
-            themeKey,
-            paused ? "dit-ben-jij" : "pauze-eiland",
-            paused ? culture["Leerling.G78.Result.JourneyMeta"] : culture["Leerling.Pause"],
-            0,
-            0,
-            sceneMetaIsHtml: paused));
-        sb.Append("</div></section>");
+        if (paused && journey is { ShowStrip: true })
+        {
+            sb.Append(PupilGroep78ResultSceneSsrHtml.Render(culture, registry, themeKey, journey));
+        }
+
         sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-stop--g78" data-testid="leerling-stop-pause"><div class="q-layout">""");
         sb.Append("""<section class="card ll-stop-card">""");
         if (paused)
@@ -50,7 +41,7 @@ public static class PupilStopSsrHtml
                 SpokenText.Join(culture["Leerling.Stop.Title"], body),
                 "ll-stop",
                 culture,
-                "Leerling.G78.ReadQuestion"));
+                "Leerling.G78.ReadAloud"));
             sb.Append("<p class=\"ll-stop-lead\">").Append(PupilLeerlingSsrParts.E(body)).Append("</p>");
             sb.Append("""<div class="qfoot"><a class="btn btn-main" href="/leerling">""");
             sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Stop.Again"])).Append("</a></div>");
@@ -62,7 +53,7 @@ public static class PupilStopSsrHtml
                 SpokenText.Join(culture["Leerling.Stop.AskTitle"], culture["Leerling.Stop.AskBody"]),
                 "ll-stop-ask",
                 culture,
-                "Leerling.G78.ReadQuestion"));
+                "Leerling.G78.ReadAloud"));
             sb.Append("<p class=\"ll-stop-lead\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Stop.AskBody"])).Append("</p>");
             sb.Append("<div class=\"qfoot\">").Append(PupilLeerlingSsrFrame.PauseForm(antiforgeryField, culture["Leerling.Pause"], groep78: true, journeyThemeKey: themeKey)).Append("</div>");
         }

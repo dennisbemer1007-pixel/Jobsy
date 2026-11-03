@@ -154,7 +154,11 @@ public static class PupilLeerlingSsrFrame
         string label,
         string? part = null,
         bool groep78 = false,
-        string? journeyThemeKey = null)
+        string? journeyThemeKey = null,
+        string? journeyNodeKey = null,
+        int? answeredCount = null,
+        int? totalItems = null,
+        bool journeyCompleted = false)
     {
         var sb = new StringBuilder();
         sb.Append("""<form method="post" action="/leerling/pauze" class="ll-topbar__pause-form" data-ll-pause-form>""");
@@ -174,6 +178,32 @@ public static class PupilLeerlingSsrFrame
                 sb.Append("<input type=\"hidden\" name=\"theme\" value=\"");
                 sb.Append(WebUtility.HtmlEncode(journeyThemeKey));
                 sb.Append("\" />");
+            }
+
+            if (!string.IsNullOrWhiteSpace(journeyNodeKey))
+            {
+                sb.Append("<input type=\"hidden\" name=\"jn\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(journeyNodeKey));
+                sb.Append("\" />");
+            }
+
+            if (answeredCount is int answered)
+            {
+                sb.Append("<input type=\"hidden\" name=\"ja\" value=\"");
+                sb.Append(answered.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                sb.Append("\" />");
+            }
+
+            if (totalItems is int total)
+            {
+                sb.Append("<input type=\"hidden\" name=\"jt\" value=\"");
+                sb.Append(total.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                sb.Append("\" />");
+            }
+
+            if (journeyCompleted)
+            {
+                sb.Append("""<input type="hidden" name="jc" value="1" />""");
             }
         }
 

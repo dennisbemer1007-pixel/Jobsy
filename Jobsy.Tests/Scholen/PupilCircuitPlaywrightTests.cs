@@ -1765,14 +1765,27 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
               const card = document.querySelector('.ll-reis-done-card');
               const coach = document.querySelector('[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile]');
               const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
-              const bg = shell ? getComputedStyle(shell).backgroundColor : '';
+              const header = document.querySelector('header.top');
+              const here = document.querySelector('.g78-jn.is-cur .g78-here');
+              const band = document.querySelector('.ll-g78-result-scene .ll-g78-result-band');
+              const hr = header?.getBoundingClientRect();
+              const gr = here?.getBoundingClientRect();
+              const br = band?.getBoundingClientRect();
+              const title = document.querySelector('.ll-reis-done-card h1')?.textContent?.trim() || '';
+              const kicker = document.querySelector('.ll-reis-done-card .kicker')?.textContent?.trim() || '';
+              const speak = document.querySelector('.ll-reis-done-card .speak-label')?.textContent?.trim() || '';
+              const hereOk = !!(hr && gr && gr.height > 6 && gr.top >= hr.bottom - 2);
               return JSON.stringify({
                 sheet,
                 shell: !!shell,
                 card: !!card,
                 coach: !!coach,
                 overflow,
-                bg
+                hereOk,
+                bandHeight: br?.height ?? 0,
+                title,
+                kicker,
+                speak
               });
             }
             """);
@@ -1783,6 +1796,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.True(root.GetProperty("card").GetBoolean());
         Assert.True(root.GetProperty("coach").GetBoolean());
         Assert.True(root.GetProperty("overflow").GetInt32() <= 1, styleCheck);
+        Assert.True(root.GetProperty("hereOk").GetBoolean(), styleCheck);
+        Assert.True(root.GetProperty("bandHeight").GetDouble() >= 80, styleCheck);
+        Assert.Equal("Klaar!", root.GetProperty("title").GetString());
+        Assert.Equal("Alle vragen af", root.GetProperty("kicker").GetString());
+        Assert.Equal("Laat dit voorlezen", root.GetProperty("speak").GetString());
 
         await page.ScreenshotAsync(new PageScreenshotOptions
         {
@@ -1842,6 +1860,29 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         await page.Locator("[data-testid=leerling-stop-pause]").WaitForAsync();
         Assert.Contains("leerling-werelden-kies.css", await page.ContentAsync(), StringComparison.Ordinal);
+        var pauseUi = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const header = document.querySelector('header.top');
+              const here = document.querySelector('.g78-jn.is-cur .g78-here');
+              const band = document.querySelector('.ll-g78-result-scene .ll-g78-result-band');
+              const hr = header?.getBoundingClientRect();
+              const gr = here?.getBoundingClientRect();
+              const br = band?.getBoundingClientRect();
+              const meta = document.querySelector('.g78-jmeta')?.textContent || '';
+              const speak = document.querySelector('.ll-stop-card .speak-label')?.textContent?.trim() || '';
+              const hereOk = !!(hr && gr && gr.height > 6 && gr.top >= hr.bottom - 2);
+              return JSON.stringify({ hereOk, bandHeight: br?.height ?? 0, meta, speak });
+            }
+            """);
+        using var pauseDoc = System.Text.Json.JsonDocument.Parse(pauseUi);
+        var pauseRoot = pauseDoc.RootElement;
+        Assert.True(pauseRoot.GetProperty("hereOk").GetBoolean(), pauseUi);
+        Assert.True(pauseRoot.GetProperty("bandHeight").GetDouble() >= 80, pauseUi);
+        var meta = pauseRoot.GetProperty("meta").GetString() ?? "";
+        Assert.Contains("5 van 60", meta, StringComparison.Ordinal);
+        Assert.DoesNotContain("jouw verhaal", meta, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Laat dit voorlezen", pauseRoot.GetProperty("speak").GetString());
         Assert.Empty(consoleErrors);
         Assert.Empty(badHttp);
 

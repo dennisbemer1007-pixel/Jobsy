@@ -1713,12 +1713,23 @@
     margin-top: 16px !important;
   }
 
-  .ll-g78-shell .ll-g78-result-band {
-    min-height: 0 !important;
+  .ll-g78-shell .ll-g78-result-scene .ll-g78-result-band {
+    min-height: clamp(120px, 32vw, 200px) !important;
   }
 
-  .ll-g78-shell .ll-g78-result-band__journey {
-    padding-top: 24px;
+  .ll-g78-shell .ll-g78-result-scene .ll-g78-scene__journey,
+  .ll-g78-shell .ll-g78-result-scene .ll-g78-result-band__journey {
+    margin-top: -32px;
+    padding-top: 44px;
+    overflow: visible;
+  }
+
+  .ll-g78-shell .ll-g78-result-scene .g78-journey {
+    overflow: visible;
+  }
+
+  .ll-g78-shell .ll-g78-result-scene .g78-jn.is-cur .g78-here {
+    top: -24px;
   }
 
   .ll-g78-shell .rs-hdr {
@@ -2737,10 +2748,6 @@
   background-repeat: no-repeat;
 }
 
-.ll-g78-shell .ll-g78-result-band {
-  min-height: 0;
-}
-
 .ll-g78-shell .ll-result-head {
   margin: 0 0 14px;
 }
@@ -2757,12 +2764,27 @@
   margin-top: 20px;
 }
 
+.ll-g78-shell .ll-g78-result-scene {
+  padding-top: 4px;
+}
+
 .ll-g78-shell .ll-g78-result-scene .ll-g78-result-band {
-  min-height: 200px;
+  min-height: clamp(140px, 22vw, 220px);
 }
 
 .ll-g78-shell .ll-g78-result-scene .ll-g78-scene__journey {
   margin-bottom: 20px;
+  margin-top: -40px;
+  padding-top: 40px;
+  overflow: visible;
+}
+
+.ll-g78-shell .ll-g78-result-scene .g78-journey {
+  overflow: visible;
+}
+
+.ll-g78-shell .ll-g78-result-scene .g78-jn.is-cur .g78-here {
+  top: -26px;
 }
 
 @media (min-width: 601px) {

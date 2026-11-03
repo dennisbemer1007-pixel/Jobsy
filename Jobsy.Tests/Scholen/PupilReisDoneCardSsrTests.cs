@@ -32,6 +32,10 @@ public sealed class PupilReisDoneCardSsrTests : BunitContext
         Assert.Contains("data-testid=\"leerling-reis-klaar\"", html, StringComparison.Ordinal);
         Assert.Contains("ll-g78-scene", html, StringComparison.Ordinal);
         Assert.Contains("class=\"card ll-reis-done-card\"", html, StringComparison.Ordinal);
+        Assert.Contains("Alle vragen af", html, StringComparison.Ordinal);
+        Assert.Contains("Klaar!", html, StringComparison.Ordinal);
+        Assert.Contains("Laat dit voorlezen", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Lobsy leest de vraag voor", html, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"ll-g78-coach\"", html, StringComparison.Ordinal);
         Assert.Contains("btn btn-main", html, StringComparison.Ordinal);
         Assert.True(PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles("/leerling/reis"));

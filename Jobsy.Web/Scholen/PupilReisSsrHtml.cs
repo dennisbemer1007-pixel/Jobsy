@@ -137,31 +137,23 @@ public static class PupilReisSsrHtml
             return legacy.ToString();
         }
 
-        var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
-        var sb = new StringBuilder();
-        sb.Append("""<section class="ll-g78-scene ll-g78-result-scene" data-testid="leerling-g78-scene">""");
-        sb.Append("<section class=\"band ll-g78-world-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
-        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append("\" aria-hidden=\"true\"></section>");
-        sb.Append("""<div class="ll-g78-scene__journey ll-g78-result-band__journey">""");
-        sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
-            culture,
-            registry,
-            themeKey,
+        var snapshot = new PupilGroep78JourneySnapshot(
             "dit-ben-jij",
             culture["Leerling.G78.ReisDone.JourneyMeta"],
-            0,
-            0,
-            sceneMetaIsHtml: true));
-        sb.Append("</div></section>");
+            SceneMetaIsHtml: true,
+            ShowStrip: true,
+            UseResultSceneBand: true);
+        var sb = new StringBuilder();
+        sb.Append(PupilGroep78ResultSceneSsrHtml.Render(culture, registry, themeKey, snapshot));
         sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-reis-done--g78" data-testid="leerling-reis-klaar"><div class="q-layout">""");
         sb.Append("""<section class="card ll-reis-done-card">""");
-        sb.Append("<div class=\"qmeta\"><span class=\"kicker\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</span></div>");
-        sb.Append("<h1 class=\"island-lead qtitle\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Done"])).Append("</h1>");
+        sb.Append("<div class=\"qmeta\"><span class=\"kicker\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.ReisDone.Kicker"])).Append("</span></div>");
+        sb.Append("<h1 class=\"island-lead qtitle\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.ReisDone.Title"])).Append("</h1>");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(
             culture["Leerling.Reis.DoneLead"],
             "ll-reis-done",
             culture,
-            "Leerling.G78.ReadQuestion"));
+            "Leerling.G78.ReadAloud"));
         sb.Append("<p class=\"ll-reis-done-lead\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.DoneLead"])).Append("</p>");
         sb.Append("""<div class="qfoot"><a class="btn btn-main" href="/leerling/dit-ben-jij">""");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.ToResult"]));
