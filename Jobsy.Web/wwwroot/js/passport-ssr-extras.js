@@ -2,6 +2,10 @@
   "use strict";
 
   function bindReadAloud(root) {
+    if (window.lobsyReadAloud && typeof window.lobsyReadAloud.bindTextButtons === "function") {
+      window.lobsyReadAloud.bindTextButtons(root);
+      return;
+    }
     root.querySelectorAll("[data-read-aloud-text]").forEach(function (btn) {
       if (btn.getAttribute("data-read-aloud-bound") === "1") return;
       btn.setAttribute("data-read-aloud-bound", "1");

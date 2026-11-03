@@ -46,6 +46,7 @@ public static class PupilLeerlingSsrFrame
         sb.Append("<title>");
         sb.Append(WebUtility.HtmlEncode(options.PageTitle));
         sb.Append(" · Lobsy</title>");
+        sb.Append("<link rel=\"icon\" href=\"/favicon.ico?v=20261018-23\" sizes=\"any\" />");
         foreach (var href in styles)
         {
             sb.Append("<link rel=\"stylesheet\" href=\"");

@@ -82,8 +82,8 @@ public static class PupilPuzzelSsrHtml
             }
 
             sb.Append("</li></ol>");
-            sb.Append("<div class=\"facts\"><span>").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactNoClock"]));
-            sb.Append("</span><span>").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactSkip"])).Append("</span></div>");
+            sb.Append("<div class=\"facts\"><span class=\"facts-badge\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactNoClock"]));
+            sb.Append("</span><span class=\"facts-badge\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactSkip"])).Append("</span></div>");
             sb.Append("""<div class="qfoot ll-puzzle-intro-foot">""");
             sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(introSub, "ll-puzzle-intro", culture, "Leerling.G78.Puzzle.ReadIntro"));
             sb.Append("""<button type="button" class="btn btn-main btn-big" data-ll-puzzle-start="1">""").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.Start"]));
@@ -189,8 +189,12 @@ public static class PupilPuzzelSsrHtml
             sb.Append("<div class=\"ll-puzzle__cards\">");
             for (var i = 0; i < faces.Count; i++)
             {
+                var cardAria = string.Format(culture["Leerling.G78.Puzzle.CardChoice.Aria"], i + 1);
                 sb.Append("<button type=\"button\" class=\"ll-puzzle__card\" data-ll-card-index=\"").Append(i);
-                sb.Append("\" data-ll-card-face=\"").Append(PupilLeerlingSsrParts.E(faces[i])).Append("\" data-testid=\"ll-puzzle-card\"></button>");
+                sb.Append("\" data-ll-card-face=\"").Append(PupilLeerlingSsrParts.E(faces[i]));
+                sb.Append("\" data-testid=\"ll-puzzle-card\" aria-label=\"")
+                    .Append(PupilLeerlingSsrParts.E(cardAria))
+                    .Append("\"></button>");
             }
 
             sb.Append("</div>");

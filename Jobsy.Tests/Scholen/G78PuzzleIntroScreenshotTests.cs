@@ -14,10 +14,15 @@ namespace Jobsy.Tests.Scholen;
 public sealed class G78PuzzleIntroScreenshotTests
 {
     [Theory]
+    [InlineData("schelpenrij", 1440, 900, "desktop")]
+    [InlineData("schelpenrij", 390, 844, "mobile")]
+    [InlineData("schelpenrij", 360, 740, "mobile360")]
     [InlineData("schatkaart", 1440, 900, "desktop")]
     [InlineData("schatkaart", 390, 844, "mobile")]
+    [InlineData("schatkaart", 360, 740, "mobile360")]
     [InlineData("vuurtorenlampen", 1440, 900, "desktop")]
     [InlineData("vuurtorenlampen", 390, 844, "mobile")]
+    [InlineData("vuurtorenlampen", 360, 740, "mobile360")]
     public async Task Intro_and_lamp_glow_render_without_clip(string puzzleKey, int width, int height, string label)
     {
         var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -85,7 +90,7 @@ public sealed class G78PuzzleIntroScreenshotTests
         await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = cssKies });
         await page.AddScriptTagAsync(new PageAddScriptTagOptions { Path = jsPath });
 
-        await AssertIntroNoHorizontalOverflowAsync(page);
+        await AssertPuzzleIntroAndPlayWithinContainersAsync(page);
         await AssertCoachLobsterLoadsAsync(page, width);
 
         await page.ScreenshotAsync(new PageScreenshotOptions
@@ -94,7 +99,14 @@ public sealed class G78PuzzleIntroScreenshotTests
             FullPage = true
         });
 
-        if (puzzleKey == "schatkaart")
+        if (string.Equals(puzzleKey, "schelpenrij", StringComparison.Ordinal))
+        {
+            await AssertSchelpenSlotsInsidePreviewBoxAsync(page);
+            await page.GetByRole(AriaRole.Button, new() { Name = "Start de puzzel" }).ClickAsync();
+            await page.Locator(".ll-puzzle-schelp-choices").WaitForAsync();
+            await AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+        }
+        else if (puzzleKey == "schatkaart")
         {
             await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-1']").First).ToBeVisibleAsync();
             await Assertions.Expect(page.Locator(".prev-row--cards img[src*='match-2']").First).ToBeVisibleAsync();
@@ -141,45 +153,76 @@ public sealed class G78PuzzleIntroScreenshotTests
         }
     }
 
-    internal static async Task AssertIntroNoHorizontalOverflowAsync(IPage page)
+    internal static Task AssertIntroNoHorizontalOverflowAsync(IPage page)
+        => AssertPuzzleIntroAndPlayWithinContainersAsync(page);
+
+    internal static async Task AssertPuzzleIntroAndPlayWithinContainersAsync(IPage page)
     {
-        var introOverflow = await page.EvaluateAsync<double>(
+        var cardOverflow = await page.EvaluateAsync<double>(
             """
             () => {
-              const intro = document.querySelector('.ll-puzzle-intro');
-              const card = intro?.closest('.ll-puzzle-g78');
-              if (!intro || !card) return 999;
+              const card = document.querySelector('[data-testid=ll-puzzle-root], .ll-puzzle-g78');
+              if (!card) return 999;
               const cr = card.getBoundingClientRect();
               let max = 0;
-              const check = (el) => {
+              const checkInCard = (el) => {
                 const r = el.getBoundingClientRect();
+                if (r.width <= 0 && r.height <= 0) return;
                 if (r.left < cr.left - 0.5) max = Math.max(max, cr.left - r.left);
                 if (r.right > cr.right + 0.5) max = Math.max(max, r.right - cr.right);
               };
-              intro.querySelectorAll('.prev-row-box, .prev-row--cards, .slot--card').forEach(check);
+              card.querySelectorAll(
+                '.ll-puzzle-intro, .ll-puzzle-play:not([hidden]), .prev-row-box, .prev-row, .slot, .ll-puzzle__cards, .ll-puzzle__card, .ll-puzzle-schelp-choices, .ll-puzzle-schelp-choices .ans, .ll-puzzle__lamps, .ll-puzzle__beacon'
+              ).forEach(checkInCard);
+              document.querySelectorAll('.prev-row-box').forEach(box => {
+                const br = box.getBoundingClientRect();
+                box.querySelectorAll('.slot').forEach(slot => {
+                  const sr = slot.getBoundingClientRect();
+                  if (sr.width <= 0 && sr.height <= 0) return;
+                  if (sr.left < br.left - 0.5) max = Math.max(max, br.left - sr.left);
+                  if (sr.right > br.right + 0.5) max = Math.max(max, sr.right - br.right);
+                });
+              });
               return max;
             }
             """);
-        Assert.True(introOverflow <= 1, $"Puzzle intro card content overflow {introOverflow}px.");
+        Assert.True(cardOverflow <= 1, $"Puzzle content overflow vs card {cardOverflow}px.");
 
-        var introViewportOverflow = await page.EvaluateAsync<double>(
+        var viewportOverflow = await page.EvaluateAsync<double>(
             """
             () => {
-              const intro = document.querySelector('.ll-puzzle-intro');
-              if (!intro) return 999;
+              const root = document.querySelector('[data-testid=ll-puzzle-root], .ll-puzzle-g78');
+              if (!root) return 999;
               const vw = document.documentElement.clientWidth;
-              let maxRight = 0;
-              let minLeft = vw;
-              intro.querySelectorAll('*').forEach(el => {
+              let max = 0;
+              root.querySelectorAll(
+                '.ll-puzzle-intro, .ll-puzzle-play:not([hidden]), .prev-row-box, .slot, .ll-puzzle__card, .ll-puzzle-schelp-choices .ans'
+              ).forEach(el => {
                 const r = el.getBoundingClientRect();
                 if (r.width <= 0 && r.height <= 0) return;
-                maxRight = Math.max(maxRight, r.right);
-                minLeft = Math.min(minLeft, r.left);
+                max = Math.max(max, r.right - vw, -r.left);
               });
-              return Math.max(0, maxRight - vw, -minLeft);
+              return Math.max(0, max);
             }
             """);
-        Assert.True(introViewportOverflow <= 1, $"Puzzle intro viewport overflow {introViewportOverflow}px.");
+        Assert.True(viewportOverflow <= 1, $"Puzzle viewport overflow {viewportOverflow}px.");
+    }
+
+    internal static async Task AssertSchelpenSlotsInsidePreviewBoxAsync(IPage page)
+    {
+        var ok = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const box = document.querySelector('.prev-row-box:not(.prev-row-box--cards):not(.prev-row-box--lamps)');
+              if (!box) return false;
+              const br = box.getBoundingClientRect();
+              return [...box.querySelectorAll('.slot')].every(slot => {
+                const r = slot.getBoundingClientRect();
+                return r.left >= br.left - 0.5 && r.right <= br.right + 0.5;
+              });
+            }
+            """);
+        Assert.True(ok, "Schelpenrij preview shells must stay inside the intro preview box.");
     }
 
     internal static async Task AssertSchatkaartTilesInsideIntroBoxAsync(IPage page)

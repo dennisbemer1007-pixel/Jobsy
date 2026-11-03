@@ -99,6 +99,12 @@
   cursor: pointer;
 }
 
+.ll-g78-shell .qfoot .btn-pauze,
+.ll-g78-shell .card .btn-pauze {
+  color: var(--navy2);
+  border-color: var(--navy2);
+}
+
 .ll-g78-shell .btn-pauze svg {
   width: 18px;
   height: 18px;
@@ -204,7 +210,7 @@
   font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--coral);
+  color: var(--coral2);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -797,7 +803,7 @@
 .g78-journey .g78-jn .g78-here {
   position: absolute;
   top: -30px;
-  background: var(--coral);
+  background: var(--coral2);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -1009,10 +1015,11 @@
 
 .ll-g78-shell .prev-row--lamps {
   display: flex;
-  gap: clamp(12px, 4vw, 18px);
+  gap: clamp(8px, 2.5vw, 18px);
   justify-content: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ll-g78-shell .slot--lamp {
@@ -1150,10 +1157,10 @@
 }
 
 .ll-g78-shell .btn-main {
-  background: var(--coral);
+  background: var(--coral2);
   color: #fff;
-  box-shadow: 0 4px 0 var(--coral2);
-  border-color: var(--coral);
+  box-shadow: 0 4px 0 #8a3418;
+  border-color: var(--coral2);
 }
 
 .ll-g78-shell .btn-ghost {
@@ -1792,13 +1799,11 @@
   }
 
   .ll-g78-shell .prev-row-box {
-    padding: 14px 8px;
+    padding: 12px 10px;
   }
 
-  .ll-g78-shell .prev-row-box .prev-row:not(.prev-row--cards) {
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 7px;
+  .ll-g78-shell .prev-row-box:not(.prev-row-box--cards):not(.prev-row-box--lamps) .prev-row {
+    gap: clamp(3px, 0.9vw, 7px);
   }
 
   .ll-g78-shell .prev-row-box .prev-row.prev-row--cards {
@@ -1813,16 +1818,42 @@
     max-width: 56px;
   }
 
-  .ll-g78-shell .prev-row-box .slot:not(.slot--card) {
-    width: 56px;
-    height: 64px;
+  .ll-g78-shell .prev-row-box .slot:not(.slot--card):not(.slot--lamp):not(.slot--beacon) {
+    max-width: min(52px, 100%);
     border-radius: 10px;
-    flex: none;
   }
 
-  .ll-g78-shell .prev-row-box .slot:not(.slot--card) img {
-    max-width: 42px;
-    max-height: 50px;
+  .ll-g78-shell .prev-row-box .slot.q {
+    font-size: clamp(26px, 7vw, 40px);
+  }
+
+  .ll-g78-shell .prev-row-box .slot--lamp,
+  .ll-g78-shell .prev-row-box .slot--beacon {
+    width: min(64px, 28vw);
+    height: min(64px, 28vw);
+  }
+
+  .ll-g78-shell .ll-puzzle-schelp-choices {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(4px, 1.2vw, 8px);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ll-g78-shell .ll-puzzle-schelp-choices .ans {
+    min-height: 0;
+    padding: clamp(6px, 2vw, 12px) clamp(4px, 1vw, 8px);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ll-g78-shell .ll-puzzle-schelp-choices .ans img {
+    max-width: min(48px, 90%);
+    max-height: min(48px, 90%);
+    margin: 0 auto;
   }
 
   .ll-g78-shell .pchip {
@@ -1870,7 +1901,7 @@
 }
 
 .ll-g78-shell .ll-vakken-g78-stars {
-  color: var(--gold, #f3c66b);
+  color: var(--navy2);
   font-weight: 600;
 }
 
@@ -2192,9 +2223,13 @@
 .ll-vt-ends {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
-  color: #7a829c;
+  font-size: 11px;
+  color: var(--muted);
   margin-top: 2px;
+}
+
+.ll-g78-shell .ll-vt-ends {
+  color: var(--muted);
 }
 
 .ll-vt-q + .ll-vt-q {
@@ -2538,6 +2573,31 @@
   gap: 10px;
 }
 
+.ll-g78-shell .prev-row-box:not(.prev-row-box--cards):not(.prev-row-box--lamps) .prev-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(4px, 1.2vw, 10px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ll-g78-shell .prev-row-box:not(.prev-row-box--cards) .slot:not(.slot--card):not(.slot--lamp):not(.slot--beacon) {
+  width: 100%;
+  max-width: 62px;
+  height: auto;
+  aspect-ratio: 62 / 74;
+  justify-self: center;
+  box-sizing: border-box;
+}
+
+.ll-g78-shell .prev-row-box:not(.prev-row-box--cards) .slot:not(.slot--card) img {
+  width: auto;
+  height: auto;
+  max-width: min(50px, 85%);
+  max-height: min(58px, 78%);
+}
+
 .ll-g78-shell .prev-row-box .prev-row.prev-row--cards {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2609,13 +2669,17 @@
   margin-bottom: 8px;
 }
 
-.ll-g78-shell .facts span {
-  background: #fff;
-  border: 2px solid #8ec4bc;
-  border-radius: 999px;
-  padding: 6px 14px;
-  color: var(--navy);
-  font-weight: 600;
+.ll-g78-shell .facts span,
+.ll-g78-shell .facts-badge {
+  background: rgba(15, 45, 60, 0.06);
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  color: var(--muted);
+  font-weight: 500;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
 }
 
 .ll-g78-shell .ll-puzzle-intro-foot {

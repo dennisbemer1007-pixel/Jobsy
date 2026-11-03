@@ -104,7 +104,9 @@ public static class PupilVakkenSsrHtml
         sb.Append("<span data-ll-vt-count>").Append(PupilLeerlingSsrParts.E(string.Format(culture["Leerling.Vakken.PageProgressCount"], doneOnPage, totalOnPage))).Append("</span>");
         sb.Append("</div>");
         sb.Append("<div class=\"ll-vt-prog__bar\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"");
-        sb.Append(totalOnPage).Append("\" aria-valuenow=\"").Append(doneOnPage).Append("\">");
+        sb.Append(totalOnPage).Append("\" aria-valuenow=\"").Append(doneOnPage).Append("\" aria-label=\"");
+        sb.Append(PupilLeerlingSsrParts.E(string.Format(culture["Leerling.Vakken.PageProgressCount"], doneOnPage, totalOnPage)));
+        sb.Append("\">");
         sb.Append("<i style=\"width:").Append(pageProgressPct.ToString("0.##", CultureInfo.InvariantCulture)).Append("%\"></i></div>");
         sb.Append("</div>");
 
@@ -192,6 +194,8 @@ public static class PupilVakkenSsrHtml
 
             sb.Append("\" role=\"radio\" aria-checked=\"");
             sb.Append(value == v ? "true" : "false");
+            sb.Append("\" aria-label=\"");
+            sb.Append(PupilLeerlingSsrParts.E(string.Format(culture["Leerling.Vakken.ScaleChoice.Aria"], subjectLabel, label, v)));
             sb.Append("\" data-ll-vt-subject=\"").Append(subject).Append("\" data-ll-vt-field=\"").Append(field);
             sb.Append("\" data-ll-vt-scale=\"").Append(v).Append("\">").Append(v).Append("</button>");
         }
