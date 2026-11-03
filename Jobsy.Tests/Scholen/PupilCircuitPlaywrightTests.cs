@@ -1651,8 +1651,9 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             ditBenJij.ClassId);
         await page.GotoAsync($"{baseUrl}/leerling/dit-ben-jij", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.Locator("[data-testid=leerling-dit-ben-jij]").WaitForAsync();
-        await Assertions.Expect(page.Locator("[data-testid=leerling-g78-scene], .ll-g78-result-band")).ToBeVisibleAsync();
-        var ditLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: true);
+        await Assertions.Expect(page.Locator("[data-testid=leerling-g78-scene]")).ToBeVisibleAsync();
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        var ditLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: true, viewportWidth: width);
         Assert.True(ditLayout.Ok, ditLayout.Raw);
         await page.ScreenshotAsync(new()
         {
@@ -1669,12 +1670,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.Locator("[data-testid=leerling-g78-scene]").WaitForAsync();
         await FillVakkenPageLikeMockAsync(page);
-        var vakLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: false);
+        var vakLayout = await EvaluateG78DitBenJijVakkenLayoutAsync(page, expectDitBenJij: false, viewportWidth: width);
         Assert.True(vakLayout.Ok, vakLayout.Raw);
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(artifacts, $"vakken-{width}.png"),
-            FullPage = width <= 400,
+            FullPage = width <= 400 || width >= 1400,
         });
 
         Assert.Empty(consoleErrors);
@@ -2095,11 +2096,15 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         await page.CloseAsync();
     }
 
-    private static async Task<(bool Ok, string Raw)> EvaluateG78DitBenJijVakkenLayoutAsync(IPage page, bool expectDitBenJij)
+    private static async Task<(bool Ok, string Raw)> EvaluateG78DitBenJijVakkenLayoutAsync(
+        IPage page,
+        bool expectDitBenJij,
+        int viewportWidth)
     {
         var raw = await page.EvaluateAsync<string>(
             """
-            (expectDitBenJij) => {
+            ({ expectDitBenJij, viewportWidth }) => {
+              window.scrollTo(0, 0);
               const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
               const hits = [];
               const bubbles = [...document.querySelectorAll('.ll-vt-bub, .guide .bubble, [data-testid=ll-g78-coach] .bubble, [data-testid=ll-g78-coach-mobile] .bubble')];
@@ -2116,22 +2121,42 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 }
               }
               let titleGap = 0;
+              let cardTop = 0;
+              let cardAboveFold = true;
+              let leftColumnGap = 0;
               if (expectDitBenJij) {
                 const title = document.querySelector('.ll-result-head h1, .ll-result-head .island-lead');
                 const body = document.querySelector('.ll-result-story .qrow, .ll-result-story .story-body');
-                if (title && body) {
+                const card = document.querySelector('.ll-result-story');
+                const coach = document.querySelector('[data-testid=ll-g78-coach]:not([hidden])');
+                if (title && body && card) {
                   titleGap = body.getBoundingClientRect().top - title.getBoundingClientRect().bottom;
+                  cardTop = card.getBoundingClientRect().top;
+                  const vh = window.innerHeight || document.documentElement.clientHeight;
+                  cardAboveFold = cardTop < vh * 0.78;
+                  if (viewportWidth >= 600 && coach) {
+                    const cr = card.getBoundingClientRect();
+                    const kr = coach.getBoundingClientRect();
+                    leftColumnGap = Math.max(0, kr.left - cr.right);
+                    if (kr.top - cr.top > 120) hits.push('coach-below-card-top');
+                    if (cr.width < viewportWidth * 0.45) hits.push('main-column-too-narrow');
+                  }
                 } else {
                   hits.push('missing-dit-ben-jij-head');
                 }
               }
               const text = document.body?.innerText || '';
               const untranslated = (text.match(/\bLeerling(?:Passport)?\.[A-Za-z.]+/g) || []).slice(0, 5);
-              const ok = overflow <= 1 && hits.length === 0 && titleGap < 96 && untranslated.length === 0;
-              return JSON.stringify({ ok, overflow, hits, titleGap, untranslated });
+              const desktopDit = expectDitBenJij && viewportWidth >= 600;
+              const ok = overflow <= 1
+                && hits.length === 0
+                && titleGap < 96
+                && untranslated.length === 0
+                && (!desktopDit || (cardAboveFold && cardTop < 520));
+              return JSON.stringify({ ok, overflow, hits, titleGap, cardTop, cardAboveFold, leftColumnGap, untranslated });
             }
             """,
-            expectDitBenJij);
+            new { expectDitBenJij, viewportWidth });
         using var doc = System.Text.Json.JsonDocument.Parse(raw);
         var ok = doc.RootElement.GetProperty("ok").GetBoolean();
         return (ok, raw);

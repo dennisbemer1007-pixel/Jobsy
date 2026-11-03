@@ -26,20 +26,14 @@ public static class PupilDitBenJijSsrHtml
         var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
         var tileStems = PupilJourneyTheme.ResultTileStems(themeKey);
         var sb = new StringBuilder();
-        sb.Append("<section class=\"band rb dark ll-g78-dream-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
-        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append(";min-height:360px\">");
-        sb.Append("""<div class="wrap ll-g78-dream-band__journey ll-g78-result-band__journey">""");
+        sb.Append("""<section class="ll-g78-scene ll-g78-result-scene" data-testid="leerling-g78-scene">""");
+        sb.Append("<section class=\"band ll-g78-world-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
+        sb.Append(bandStem).Append(".jpg');background-position:").Append(bandPos).Append("\" aria-hidden=\"true\"></section>");
+        sb.Append("""<div class="ll-g78-scene__journey ll-g78-result-band__journey">""");
         sb.Append(PupilLeerlingSsrParts.Groep78JourneyStrip(
             culture, registry, themeKey, "dit-ben-jij", culture["Leerling.G78.Result.JourneyMeta"], 0, 0, sceneMetaIsHtml: true));
         sb.Append("</div></section>");
         sb.Append("""<div class="wrap ll-g78-overlap ll-g78-overlap--below-journey ll-result--g78" data-testid="leerling-dit-ben-jij"><div class="q-layout">""");
-        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
-            culture,
-            culture["Leerling.G78.Result.Coach"],
-            culture["Leerling.G78.Result.Coach"],
-            "ll-result-coach",
-            "kreeft-kijker.png",
-            mobileGuideFirst: true));
         sb.Append("<div class=\"ll-result-main\">");
         sb.Append("""<div class="card ll-result-story"><header class="ll-result-head">""");
         sb.Append("<span class=\"pill-done\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.DonePill"])).Append("</span>");
@@ -80,8 +74,15 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("<a class=\"btn btn-ghost\" href=\"").Append(PupilLeerlingSsrParts.E(pdfHref)).Append("\" data-enhance-nav=\"false\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Pdf"])).Append("</a>");
         sb.Append("""<a class="btn btn-main" href="/leerling/droombaan">""").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.CheckDream"]));
-        sb.Append(PupilGroep78SsrParts.NextSvg).Append("</a></div></div></div>");
-        sb.Append("</div>");
+        sb.Append(PupilGroep78SsrParts.NextSvg).Append("</a></div></div>");
+        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
+            culture,
+            culture["Leerling.G78.Result.Coach"],
+            culture["Leerling.G78.Result.Coach"],
+            "ll-result-coach",
+            "kreeft-kijker.png",
+            mobileGuideFirst: false));
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 

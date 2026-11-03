@@ -2750,7 +2750,42 @@
 }
 
 .ll-g78-shell .wrap.ll-result--g78.ll-g78-overlap--below-journey {
-  margin-top: 28px;
+  margin-top: 12px;
+}
+
+.ll-g78-shell .ll-g78-result-scene .ll-g78-result-band {
+  min-height: 200px;
+}
+
+@media (min-width: 601px) {
+  .ll-g78-shell .wrap.ll-result--g78.ll-g78-overlap--below-journey {
+    margin-top: -36px;
+  }
+
+  .ll-g78-shell .ll-result--g78 .q-layout {
+    display: grid;
+    grid-template-areas: "main coach";
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 250px);
+    gap: 28px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .ll-g78-shell .ll-result--g78 .ll-result-main {
+    grid-area: main;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .ll-g78-shell .ll-result--g78 .ll-g78-coach.d-only {
+    grid-area: coach;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .ll-g78-shell .ll-result--g78 .ll-g78-coach-mobile {
+    display: none !important;
+  }
 }
 
 .ll-g78-shell .band.dark::after {
@@ -2952,24 +2987,6 @@
 .ll-g78-shell .ll-result--g78 .ll-g78-coach-mobile {
   display: none;
   width: 100%;
-}
-
-@media (min-width: 601px) {
-  .ll-g78-shell .ll-result--g78 .q-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 250px;
-    gap: 28px;
-    align-items: start;
-    width: 100%;
-  }
-
-  .ll-g78-shell .ll-result--g78 .ll-result-main {
-    grid-column: 1;
-  }
-
-  .ll-g78-shell .ll-result--g78 .ll-g78-coach.d-only {
-    grid-column: 2;
-  }
 }
 
 .ll-g78-shell .guide {
