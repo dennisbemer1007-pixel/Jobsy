@@ -89,7 +89,7 @@ public static class PupilReisSsrHtml
         if (groep78)
         {
             sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(qLabel, $"ll-q-{item.Id}", culture, "Leerling.G78.ReadQuestion"));
-            sb.Append(PupilGroep78SsrParts.Groep78AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error));
+            sb.Append(PupilGroep78SsrParts.Groep78AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error, qLabel));
             sb.Append(PupilGroep78SsrParts.Groep78PrevFoot(culture, state.CurrentIndex > 0));
         }
         else

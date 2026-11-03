@@ -123,13 +123,126 @@
     function notify(dotnetRef) {
         if (dotnetRef && typeof dotnetRef.invokeMethodAsync === "function") {
             dotnetRef.invokeMethodAsync("OnSpeechEnded").catch(function () { });
+            return;
+        }
+        if (dotnetRef && typeof dotnetRef.onSpeechEnded === "function") {
+            dotnetRef.onSpeechEnded();
         }
     }
 
     function notifyError(dotnetRef, message) {
         if (dotnetRef && typeof dotnetRef.invokeMethodAsync === "function") {
             dotnetRef.invokeMethodAsync("OnSpeechError", message || "").catch(function () { });
+            return;
         }
+        if (dotnetRef && typeof dotnetRef.onSpeechError === "function") {
+            dotnetRef.onSpeechError(message || "error");
+        }
+    }
+
+    var domActiveBtn = null;
+
+    function domButtonLabels(btn) {
+        return {
+            play: btn.getAttribute("data-read-aloud-play-aria") || btn.getAttribute("aria-label") || "",
+            stop: btn.getAttribute("data-read-aloud-stop-aria") || "",
+            unsupported: btn.getAttribute("data-read-aloud-unsupported") || ""
+        };
+    }
+
+    function setDomButtonSpeaking(btn, speaking) {
+        if (!btn) {
+            return;
+        }
+        btn.setAttribute("aria-pressed", speaking ? "true" : "false");
+        btn.classList.toggle("is-speaking", speaking);
+        btn.classList.toggle("on", speaking);
+        var labels = domButtonLabels(btn);
+        if (speaking && labels.stop) {
+            btn.setAttribute("aria-label", labels.stop);
+            if (btn.hasAttribute("title")) {
+                btn.setAttribute("title", labels.stop);
+            }
+        } else if (!speaking && labels.play) {
+            btn.setAttribute("aria-label", labels.play);
+            if (btn.hasAttribute("title")) {
+                btn.setAttribute("title", labels.play);
+            }
+        }
+    }
+
+    function domSpeechRef(btn) {
+        return {
+            onSpeechEnded: function () {
+                setDomButtonSpeaking(btn, false);
+                if (domActiveBtn === btn) {
+                    domActiveBtn = null;
+                }
+            },
+            onSpeechError: function () {
+                setDomButtonSpeaking(btn, false);
+                if (domActiveBtn === btn) {
+                    domActiveBtn = null;
+                }
+            }
+        };
+    }
+
+    function bindTextButtons(root) {
+        var scope = root || document;
+        scope.querySelectorAll("[data-read-aloud-text]").forEach(function (btn) {
+            if (btn.getAttribute("data-read-aloud-bound") === "1") {
+                return;
+            }
+            btn.setAttribute("data-read-aloud-bound", "1");
+            if (!btn.hasAttribute("aria-pressed")) {
+                btn.setAttribute("aria-pressed", "false");
+            }
+
+            whenVoices(function () {
+                var lang = document.documentElement.lang || "nl";
+                var p = probe(lang);
+                if (p.supported && p.enabled) {
+                    return;
+                }
+                var labels = domButtonLabels(btn);
+                btn.disabled = true;
+                btn.setAttribute("aria-disabled", "true");
+                if (labels.unsupported) {
+                    btn.setAttribute("title", labels.unsupported);
+                }
+            });
+
+            btn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                if (btn.disabled) {
+                    return;
+                }
+                var text = btn.getAttribute("data-read-aloud-text") || "";
+                if (!text) {
+                    return;
+                }
+                var lang = document.documentElement.lang || "nl";
+                var speaking = domActiveBtn === btn && btn.getAttribute("aria-pressed") === "true";
+                if (speaking) {
+                    stop(domSpeechRef(btn));
+                    setDomButtonSpeaking(btn, false);
+                    domActiveBtn = null;
+                    return;
+                }
+                if (domActiveBtn && domActiveBtn !== btn) {
+                    stop(domSpeechRef(domActiveBtn));
+                    setDomButtonSpeaking(domActiveBtn, false);
+                }
+                setDomButtonSpeaking(btn, true);
+                domActiveBtn = btn;
+                var ok = speak(text, lang, domSpeechRef(btn));
+                if (!ok) {
+                    setDomButtonSpeaking(btn, false);
+                    domActiveBtn = null;
+                }
+            });
+        });
     }
 
     function stop(dotnetRef) {
@@ -271,6 +384,7 @@
         setEnabled: setEnabled,
         speak: speak,
         stop: stop,
-        isEnabled: isEnabled
+        isEnabled: isEnabled,
+        bindTextButtons: bindTextButtons
     };
 })();

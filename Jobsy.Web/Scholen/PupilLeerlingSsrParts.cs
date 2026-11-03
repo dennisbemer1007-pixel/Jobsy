@@ -29,7 +29,7 @@ public static class PupilLeerlingSsrParts
         }
 
         return $"""
-            <button type="button" class="read-aloud read-aloud--icon" data-read-aloud-text="{E(text)}" data-speech-key="{E(speechKey)}" aria-label="{E(culture["ReadAloud.Play"])}" title="{E(culture["ReadAloud.Play"])}"><span class="read-aloud__icon" aria-hidden="true">🔊</span></button>
+            <button type="button" class="read-aloud read-aloud--icon" data-read-aloud-text="{E(text)}" data-speech-key="{E(speechKey)}" aria-pressed="false" aria-label="{E(culture["ReadAloud.PlayAria"])}" title="{E(culture["ReadAloud.Play"])}" data-read-aloud-play-aria="{E(culture["ReadAloud.PlayAria"])}" data-read-aloud-stop-aria="{E(culture["ReadAloud.StopAria"])}" data-read-aloud-unsupported="{E(culture["ReadAloud.Unsupported"])}"><span class="read-aloud__icon" aria-hidden="true">🔊</span></button>
             """;
     }
 

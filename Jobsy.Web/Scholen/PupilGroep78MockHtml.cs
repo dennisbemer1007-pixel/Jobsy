@@ -97,8 +97,11 @@ internal static class PupilGroep78MockHtml
         sb.Append("""<div class="answers ll-puzzle-schelp-choices" role="group" aria-label="Kies een schelp">""");
         foreach (var n in PupilJourneyTheme.SchelpenrijPatternChoices())
         {
+            var shellAria = string.Format(culture["Leerling.G78.Puzzle.ShellChoice.Aria"], n);
             sb.Append("<button type=\"button\" class=\"ans\" data-ll-schelp-choice=\"").Append(n)
-                .Append("\" data-testid=\"ll-puzzle-shell\"><img src=\"/leerling/werelden/img/schelp-")
+                .Append("\" data-testid=\"ll-puzzle-shell\" aria-label=\"")
+                .Append(PupilLeerlingSsrParts.E(shellAria))
+                .Append("\"><img src=\"/leerling/werelden/img/schelp-")
                 .Append(n).Append(".png\" alt=\"\" width=\"56\" height=\"56\" loading=\"lazy\" decoding=\"async\" /></button>");
         }
 
@@ -189,7 +192,7 @@ internal static class PupilGroep78MockHtml
         var checkedAttr = selected ? " checked" : "";
         return $"""
             <label class="jpick{(selected ? " sel" : "")}" data-ll-job-pick="{PupilLeerlingSsrParts.E(title)}">
-            <input type="radio" name="DreamJob" value="{PupilLeerlingSsrParts.E(title)}" class="visually-hidden"{checkedAttr} />
+            <input type="radio" name="DreamJob" value="{PupilLeerlingSsrParts.E(title)}" class="visually-hidden" aria-label="{PupilLeerlingSsrParts.E(title)}"{checkedAttr} />
             <figure class="jpick-paint {paintClass}"><img src="{PupilLeerlingSsrParts.E(img)}" alt="" width="400" height="400" loading="lazy" /></figure>
             <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p>{whyBlock}</div>
             <span class="jspeak" onclick="event.preventDefault(); event.stopPropagation();">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, $"ll-job-{jobKey}", culture)}</span>
@@ -235,7 +238,7 @@ internal static class PupilGroep78MockHtml
         var checkedAttr = selected ? " checked" : "";
         return $"""
             <label class="jpick jpick-none{(selected ? " sel" : "")}" data-ll-job-pick="">
-            <input type="radio" name="DreamJob" value="" class="visually-hidden"{checkedAttr} />
+            <input type="radio" name="DreamJob" value="" class="visually-hidden" aria-label="{PupilLeerlingSsrParts.E(label)}"{checkedAttr} />
             <div class="jpick-art jpick-art-none" aria-hidden="true">?</div>
             <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(label)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p></div>
             <span class="jspeak" onclick="event.preventDefault(); event.stopPropagation();">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, "ll-job-none", culture)}</span>

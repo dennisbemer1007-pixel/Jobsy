@@ -42,13 +42,13 @@ public static class PupilGroep78SsrParts
 
         var cls = active ? "read-aloud speak on" : "read-aloud speak";
         return $"""
-            <button type="button" class="{cls}" data-read-aloud-text="{PupilLeerlingSsrParts.E(text)}" data-speech-key="{PupilLeerlingSsrParts.E(speechKey)}" aria-label="{PupilLeerlingSsrParts.E(culture["ReadAloud.Play"])}">{SpeakSvg}</button>
+            <button type="button" class="{cls}" data-read-aloud-text="{PupilLeerlingSsrParts.E(text)}" data-speech-key="{PupilLeerlingSsrParts.E(speechKey)}" aria-pressed="false" aria-label="{PupilLeerlingSsrParts.E(culture["ReadAloud.PlayAria"])}" title="{PupilLeerlingSsrParts.E(culture["ReadAloud.Play"])}" data-read-aloud-play-aria="{PupilLeerlingSsrParts.E(culture["ReadAloud.PlayAria"])}" data-read-aloud-stop-aria="{PupilLeerlingSsrParts.E(culture["ReadAloud.StopAria"])}" data-read-aloud-unsupported="{PupilLeerlingSsrParts.E(culture["ReadAloud.Unsupported"])}">{SpeakSvg}</button>
             """;
     }
 
     public static string Groep78SpeakRow(string text, string speechKey, CultureState culture, string labelKey)
         => $"""
-            <div class="qrow" data-testid="ll-g78-speak-row">{Groep78SpeakButton(text, speechKey, culture, active: true)}<span class="speak-label">{PupilLeerlingSsrParts.E(culture[labelKey])}</span></div>
+            <div class="qrow" data-testid="ll-g78-speak-row">{Groep78SpeakButton(text, speechKey, culture)}<span class="speak-label">{PupilLeerlingSsrParts.E(culture[labelKey])}</span></div>
             """;
 
     public static string Groep78CoachAside(
@@ -115,7 +115,8 @@ public static class PupilGroep78SsrParts
         string saveAction,
         string? itemId,
         int? selected,
-        string? error)
+        string? error,
+        string? questionText = null)
     {
         var sb = new StringBuilder();
         sb.Append($"""<form method="post" action="{PupilLeerlingSsrParts.E(saveAction)}" class="ll-answers-form" data-ll-answer-scale="1">""");
@@ -142,6 +143,12 @@ public static class PupilGroep78SsrParts
 
             sb.Append("\" role=\"radio\" aria-checked=\"");
             sb.Append(isSel ? "true" : "false");
+            sb.Append("\" aria-label=\"");
+            sb.Append(PupilLeerlingSsrParts.E(string.Format(
+                culture["Leerling.G78.AnswerChoice.Aria"],
+                string.IsNullOrWhiteSpace(questionText) ? culture["Leerling.Reis.Answers"] : questionText,
+                label,
+                value)));
             sb.Append("\"><span class=\"lvl\"><i style=\"height:");
             sb.Append(AnswerFillPercent(value).ToString(CultureInfo.InvariantCulture));
             sb.Append("%\"></i></span>");

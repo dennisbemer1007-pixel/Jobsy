@@ -82,8 +82,8 @@ public static class PupilPuzzelSsrHtml
             }
 
             sb.Append("</li></ol>");
-            sb.Append("<div class=\"facts\"><span>").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactNoClock"]));
-            sb.Append("</span><span>").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactSkip"])).Append("</span></div>");
+            sb.Append("<div class=\"facts\"><span class=\"facts-badge\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactNoClock"]));
+            sb.Append("</span><span class=\"facts-badge\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.FactSkip"])).Append("</span></div>");
             sb.Append("""<div class="qfoot ll-puzzle-intro-foot">""");
             sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(introSub, "ll-puzzle-intro", culture, "Leerling.G78.Puzzle.ReadIntro"));
             sb.Append("""<button type="button" class="btn btn-main btn-big" data-ll-puzzle-start="1">""").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Puzzle.Start"]));

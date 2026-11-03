@@ -1,7 +1,11 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text;
 using System.Text.RegularExpressions;
+using Deque.AxeCore.Commons;
+using Deque.AxeCore.Playwright;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
@@ -2514,6 +2518,216 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         {
             await scaleGroups.Nth(i).Locator(".ll-vt-scale-btn").Nth(2).ClickAsync();
         }
+    }
+
+    [Theory(Timeout = 600_000)]
+    [InlineData(1440, 900, "1440")]
+    [InlineData(390, 844, "390")]
+    public async Task G78_leerling_reis_journey_quality_gate(int width, int height, string tag)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var registry = _api.Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        var bankCount = registry.Get(PupilQuestionSet.Groep78).Bank.AllItems.Count;
+        var artifactDir = "/opt/cursor/artifacts/g78-leerling-reis";
+        Directory.CreateDirectory(artifactDir);
+
+        const string speechInit = """
+            window.__g78SpeakCalls = 0;
+            window.__g78CancelCalls = 0;
+            window.__lobsyReadAloudSynth = (function () {
+              var voices = [{ lang: "nl-NL", name: "Test NL", localService: true }];
+              return {
+                getVoices: function () { return voices; },
+                speak: function (utter) {
+                  window.__g78SpeakCalls = (window.__g78SpeakCalls || 0) + 1;
+                  this._utter = utter;
+                  if (utter && typeof utter.onstart === "function") utter.onstart();
+                },
+                cancel: function () {
+                  window.__g78CancelCalls = (window.__g78CancelCalls || 0) + 1;
+                  var utter = this._utter;
+                  this._utter = null;
+                  if (utter && typeof utter.onend === "function") utter.onend();
+                },
+                addEventListener: function () {},
+                removeEventListener: function () {}
+              };
+            })();
+            """;
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+        await context.AddInitScriptAsync(speechInit);
+
+        async Task<(IPage Page, List<string> Console, List<string> Http)> OpenMonitoredPageAsync()
+        {
+            var consoleErrors = new List<string>();
+            var failedHttp = new List<string>();
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type is "error")
+                {
+                    consoleErrors.Add(msg.Text);
+                }
+            };
+            page.Response += (_, resp) =>
+            {
+                if (resp.Status < 400)
+                {
+                    return;
+                }
+
+                if (!resp.Url.StartsWith(baseUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                failedHttp.Add($"{resp.Status} {resp.Url}");
+            };
+            return (page, consoleErrors, failedHttp);
+        }
+
+        var reisSeeds = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var reisSeed = reisSeeds[0];
+        {
+            var (page, consoleErrors, failedHttp) = await OpenMonitoredPageAsync();
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={reisSeed.SchoolId:D}&classId={reisSeed.ClassId:D}", reisSeed.PlainCode, reisSeed.ClassId);
+            await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=ll-g78-answers]").WaitForAsync();
+
+            var speakBtn = page.Locator("[data-testid=ll-g78-speak-row] button[data-read-aloud-text]").First;
+            await speakBtn.ClickAsync();
+            await page.WaitForFunctionAsync("() => window.__g78SpeakCalls >= 1");
+            Assert.Equal("true", await speakBtn.GetAttributeAsync("aria-pressed"));
+            await speakBtn.ClickAsync();
+            await page.WaitForFunctionAsync("() => window.__g78CancelCalls >= 1");
+            Assert.Equal("false", await speakBtn.GetAttributeAsync("aria-pressed"));
+            await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
+            await page.CloseAsync();
+        }
+
+        var puzzSeeds = await SeedGroep78AtAsync(1, answered: 15, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var puzzSeed = puzzSeeds[0];
+        {
+            var (page, consoleErrors, failedHttp) = await OpenMonitoredPageAsync();
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={puzzSeed.SchoolId:D}&classId={puzzSeed.ClassId:D}", puzzSeed.PlainCode, puzzSeed.ClassId);
+            await page.GotoAsync($"{baseUrl}/leerling/puzzel/schelpenrij", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=ll-puzzle-root]").WaitForAsync();
+            Assert.True(await page.Locator(".facts-badge").CountAsync() >= 1);
+            var puzzleSpeak = page.Locator("[data-testid=ll-g78-speak-row] button[data-read-aloud-text]").First;
+            await puzzleSpeak.ClickAsync();
+            await page.WaitForFunctionAsync("() => window.__g78SpeakCalls >= 1");
+            Assert.Equal("true", await puzzleSpeak.GetAttributeAsync("aria-pressed"));
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(artifactDir, $"vraag-{tag}.png"),
+                FullPage = true
+            });
+            await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
+            await page.CloseAsync();
+        }
+
+        var islandSeeds = await SeedGroep78AtAsync(
+            1,
+            answered: 30,
+            chipsSaved: false,
+            completeActivePuzzleGate: true,
+            journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var islandSeed = islandSeeds[0];
+        {
+            var (page, consoleErrors, failedHttp) = await OpenMonitoredPageAsync();
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={islandSeed.SchoolId:D}&classId={islandSeed.ClassId:D}", islandSeed.PlainCode, islandSeed.ClassId);
+            await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.Commit });
+            await page.WaitForURLAsync("**/leerling/eiland**", UrlCommitted);
+            await page.Locator("[data-ll-chip-like]").First.WaitForAsync(new() { Timeout = 30_000 });
+            await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
+            await page.CloseAsync();
+        }
+
+        var vakkenSeeds = await SeedGroep78AtAsync(1, bankCount, chipsSaved: true, completeActivePuzzleGate: true, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var vakkenSeed = vakkenSeeds[0];
+        {
+            var (page, consoleErrors, failedHttp) = await OpenMonitoredPageAsync();
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={vakkenSeed.SchoolId:D}&classId={vakkenSeed.ClassId:D}", vakkenSeed.PlainCode, vakkenSeed.ClassId);
+            await page.GotoAsync($"{baseUrl}/leerling/vakken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=leerling-vakken]").WaitForAsync();
+            await FillVakkenPageLikeMockAsync(page);
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(artifactDir, $"vakken-{tag}.png"),
+                FullPage = true
+            });
+            await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
+            await page.CloseAsync();
+        }
+
+        var doneSeed = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.ZeeExpeditie);
+        foreach (var (path, marker) in new (string Path, string Marker)[]
+                 {
+                     ("/leerling/dit-ben-jij", "[data-testid=leerling-dit-ben-jij]"),
+                     ("/leerling/droombaan?pick=1", "[data-testid=ll-g78-job-picks]"),
+                     ("/leerling/reis", "[data-testid=leerling-reis-klaar]"),
+                     ("/leerling/stop?g78=1", "[data-testid=leerling-stop-pause]"),
+                 })
+        {
+            var (page, consoleErrors, failedHttp) = await OpenMonitoredPageAsync();
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={doneSeed.SchoolId:D}&classId={doneSeed.ClassId:D}", doneSeed.PlainCode, doneSeed.ClassId);
+            await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator(marker).WaitForAsync(new() { Timeout = 30_000 });
+            await AssertG78PageQualityAsync(page, consoleErrors, failedHttp);
+            await page.CloseAsync();
+        }
+    }
+
+    private static async Task AssertG78PageQualityAsync(IPage page, List<string> consoleErrors, List<string> failedHttp)
+    {
+        var untranslated = await page.EvaluateAsync<string[]>(
+            """
+            () => {
+              const text = document.body?.innerText || '';
+              return (text.match(/\bLeerling(?:Passport)?\.[A-Za-z.]+/g) || []).slice(0, 8);
+            }
+            """);
+        Assert.Empty(untranslated);
+
+        var overflow = await page.EvaluateAsync<int>(
+            "() => document.documentElement.scrollWidth - document.documentElement.clientWidth");
+        Assert.True(overflow <= 1, $"horizontal overflow {overflow}px on {page.Url}");
+
+        AssertNoMeaningfulConsoleErrors(consoleErrors);
+        Assert.Empty(failedHttp);
+
+        var axe = await page.RunAxe(
+            new AxeRunContext { Include = [new AxeSelector("[data-testid=leerling-g78-shell]")] },
+            new AxeRunOptions());
+        var violations = (axe.Violations ?? [])
+            .Where(v => v.Impact is "critical" or "serious")
+            .ToList();
+        Assert.False(violations.Count > 0, FormatAxeViolations(page.Url, violations));
+    }
+
+    private static string FormatAxeViolations(string url, IReadOnlyList<AxeResultItem> violations)
+    {
+        var sb = new StringBuilder();
+        sb.Append(CultureInfo.InvariantCulture, $"axe on {url}: ");
+        foreach (var violation in violations)
+        {
+            sb.Append(violation.Id).Append(" (").Append(violation.Impact).Append(") — ");
+            foreach (var node in violation.Nodes ?? [])
+            {
+                sb.Append(node.Target).Append("; ");
+            }
+        }
+
+        return sb.ToString();
     }
 
     [Theory]
