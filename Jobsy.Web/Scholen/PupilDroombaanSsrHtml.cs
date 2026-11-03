@@ -306,6 +306,13 @@ public static class PupilDroombaanSsrHtml
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(domain) || string.IsNullOrWhiteSpace(blurb))
+            {
+                var copy = PupilGroep78JobPaint.PickCardCopy(key, "nl");
+                domain = string.IsNullOrWhiteSpace(domain) ? copy.Domain : domain;
+                blurb = string.IsNullOrWhiteSpace(blurb) ? copy.Blurb : blurb;
+            }
+
             list.Add((key, title, domain, blurb));
         }
 

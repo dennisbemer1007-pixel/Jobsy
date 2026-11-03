@@ -304,6 +304,12 @@ public static class PupilPassportCopy
             "Je helpt dieren beter te worden. Je onderzoekt wat er mis is en werkt met mensen die zorgen.";
         d["LeerlingPassport.Card.bioloog.Blurb"] =
             "Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.";
+        d["LeerlingPassport.Card.fysiotherapeut.Blurb"] =
+            "Je helpt mensen die pijn hebben of moeite met bewegen. Je oefent samen zodat het lichaam sterker wordt.";
+        d["LeerlingPassport.Card.personal-trainer.Blurb"] =
+            "Je helpt mensen fit te worden in een sportschool. Je bedenkt oefeningen en moedigt ze aan.";
+        d["LeerlingPassport.Card.profsporter.Blurb"] =
+            "Je traint heel hard om op topniveau te sporten. Je speelt wedstrijden voor een club of team.";
         d["LeerlingPassport.Card.hovenier.Blurb"] =
             "Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.";
 
