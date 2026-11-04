@@ -26,10 +26,21 @@ public sealed partial class JobsyApiClient
 
         if (!response.IsSuccessStatusCode)
         {
-            return null;
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(
+                $"pupil progress failed: {(int)response.StatusCode} {body}",
+                null,
+                response.StatusCode);
         }
 
-        return await ReadApiJsonAsync<PupilProgressStateDto>(response.Content, ct);
+        try
+        {
+            return await ReadApiJsonAsync<PupilProgressStateDto>(response.Content, ct);
+        }
+        catch (Exception ex)
+        {
+            throw new HttpRequestException("pupil progress deserialize failed", ex);
+        }
     }
 
     public async Task<PupilJourneyThemeResponse?> SavePupilJourneyThemeAsync(
