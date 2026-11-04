@@ -147,7 +147,23 @@ public sealed partial class JobsyApiClient
         var q = query.Count == 0
             ? "api/pupil/passport/g78"
             : $"api/pupil/passport/g78?{string.Join("&", query)}";
-        return await GetApiJsonAsync<PupilG78PassportWebDto>(q, ct);
+        using var response = await _http.GetAsync(q, ct);
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new HttpRequestException("pupil session lost", null, response.StatusCode);
+        }
+
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            throw new HttpRequestException("pupil passport not completed", null, response.StatusCode);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilG78PassportWebDto>(response.Content, ct);
     }
 
     public async Task<PupilVoPassportDto?> GetPupilVoPassportAsync(CancellationToken ct = default)

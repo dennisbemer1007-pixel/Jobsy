@@ -99,8 +99,7 @@ public sealed class PupilCircuitAuthenticationMiddleware
             {
                 context.User = pupil.Principal;
                 var codeId = pupil.Principal.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-                var ticket = PupilApiSessionCookie.Read(context);
-                context.RequestServices.GetService<PupilApiTicketStore>()?.Set(codeId, ticket);
+                PupilApiTicketStoreSeeding.SeedFromRequestCookie(context, codeId);
             }
             else
             {
@@ -111,22 +110,19 @@ public sealed class PupilCircuitAuthenticationMiddleware
                 {
                     context.User = parent.Principal;
                     var codeId = parent.Principal.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
-                    var ticket = ParentApiSessionCookie.Read(context);
-                    context.RequestServices.GetService<ParentApiTicketStore>()?.Set(codeId, ticket);
+                    ParentApiTicketStoreSeeding.SeedFromRequestCookie(context, codeId);
                 }
             }
         }
         else if (global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(context.User))
         {
             var codeId = context.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-            var ticket = PupilApiSessionCookie.Read(context);
-            context.RequestServices.GetService<PupilApiTicketStore>()?.Set(codeId, ticket);
+            PupilApiTicketStoreSeeding.SeedFromRequestCookie(context, codeId);
         }
         else if (global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(context.User))
         {
             var codeId = context.User.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
-            var ticket = ParentApiSessionCookie.Read(context);
-            context.RequestServices.GetService<ParentApiTicketStore>()?.Set(codeId, ticket);
+            ParentApiTicketStoreSeeding.SeedFromRequestCookie(context, codeId);
         }
 
         await _next(context);
@@ -164,5 +160,64 @@ public static class PupilApiTicketSyncMiddleware
         {
             PupilApiSessionCookie.Set(context, store);
         }
+    }
+}
+
+/// <summary>
+/// Seeds the per-code API ticket store from the browser cookie without downgrading a fresher
+/// in-memory ticket after sliding refresh on the previous hop (same web instance).
+/// </summary>
+internal static class PupilApiTicketStoreSeeding
+{
+    internal static void SeedFromRequestCookie(HttpContext context, string? codeId)
+    {
+        var store = context.RequestServices.GetService<PupilApiTicketStore>();
+        if (store is null || string.IsNullOrWhiteSpace(codeId))
+        {
+            return;
+        }
+
+        var cookie = PupilApiSessionCookie.Read(context);
+        var stored = store.Get(codeId);
+        if (string.IsNullOrWhiteSpace(stored))
+        {
+            store.Set(codeId, cookie);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(cookie) || string.Equals(cookie, stored, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        // Browser cookie lags after JSON save / redirect; keep the renewed ticket from the store.
+        PupilApiSessionCookie.Set(context, stored);
+    }
+}
+
+internal static class ParentApiTicketStoreSeeding
+{
+    internal static void SeedFromRequestCookie(HttpContext context, string? codeId)
+    {
+        var store = context.RequestServices.GetService<ParentApiTicketStore>();
+        if (store is null || string.IsNullOrWhiteSpace(codeId))
+        {
+            return;
+        }
+
+        var cookie = ParentApiSessionCookie.Read(context);
+        var stored = store.Get(codeId);
+        if (string.IsNullOrWhiteSpace(stored))
+        {
+            store.Set(codeId, cookie);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(cookie) || string.Equals(cookie, stored, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ParentApiSessionCookie.Set(context, stored);
     }
 }
