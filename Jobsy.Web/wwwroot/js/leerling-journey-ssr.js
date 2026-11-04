@@ -934,6 +934,34 @@
     });
   }
 
+  function bindSessionKeepalive() {
+    if (window.__lobsyLeerlingSessionKeepalive) {
+      return;
+    }
+    window.__lobsyLeerlingSessionKeepalive = true;
+    var touchMs = 3 * 60 * 1000;
+    window.setInterval(function () {
+      if (document.hidden) {
+        return;
+      }
+      var path = window.location.pathname || "";
+      if (path.indexOf("/leerling") !== 0 || path === "/leerling" || path.indexOf("/leerling/stop") === 0) {
+        return;
+      }
+      fetch("/leerling/reis?_=" + Date.now(), {
+        method: "GET",
+        credentials: "same-origin",
+        redirect: "manual",
+        headers: {
+          Accept: "text/html",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      }).catch(function () {
+        /* offline blips are retried on the next answer save */
+      });
+    }, touchMs);
+  }
+
   function bindPauseForms(root) {
     root.querySelectorAll("form[data-ll-pause-form]").forEach(function (form) {
       if (form.getAttribute("data-ll-bound") === "1") return;
@@ -953,6 +981,7 @@
 
   function init() {
     var root = document.body;
+    bindSessionKeepalive();
     bindReadAloud(root);
     bindAnswerScale(root);
     bindChips(root);

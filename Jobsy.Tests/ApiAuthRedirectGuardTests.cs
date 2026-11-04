@@ -67,6 +67,18 @@ public class ApiAuthRedirectGuardTests
     }
 
     [Fact]
+    public void Pupil_api_401_must_not_trigger_staff_session_expired_notify()
+    {
+        var pupil = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(PupilClaimTypes.PupilCodeId, Guid.NewGuid().ToString("D"))],
+            authenticationType: PupilAuthDefaults.Scheme));
+
+        Assert.False(JobsyApiAuthHandler.ShouldNotifySessionExpiredOnApi401(
+            pupil,
+            "/api/pupil/progress"));
+    }
+
+    [Fact]
     public void Staff_html_401_still_goes_to_the_staff_login()
     {
         var http = new DefaultHttpContext();

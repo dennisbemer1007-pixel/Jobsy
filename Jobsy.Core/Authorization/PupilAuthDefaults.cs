@@ -7,10 +7,10 @@ public static class PupilAuthDefaults
     public const string CookieName = "Lobsy.Leerling";
 
     /// <summary>Sliding idle timeout for the pupil session cookie.</summary>
-    public static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(20);
+    public static readonly TimeSpan IdleTimeout = TimeSpan.FromMinutes(45);
 
     /// <summary>Absolute lifetime from issued-at claim, regardless of activity.</summary>
-    public static readonly TimeSpan AbsoluteTimeout = TimeSpan.FromMinutes(90);
+    public static readonly TimeSpan AbsoluteTimeout = TimeSpan.FromMinutes(120);
 }
 
 /// <summary>Claim types on the pupil principal. No name, e-mail or staff role.</summary>

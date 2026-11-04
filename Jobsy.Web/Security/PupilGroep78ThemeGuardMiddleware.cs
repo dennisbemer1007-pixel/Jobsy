@@ -1,4 +1,6 @@
+using System.Net;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Services;
@@ -25,7 +27,16 @@ public sealed class PupilGroep78ThemeGuardMiddleware
                 && context.User.Identity?.IsAuthenticated == true
                 && JobsyApiAuthHandler.IsPupilPrincipal(context.User))
             {
-                var progress = await api.GetPupilProgressAsync(context.RequestAborted);
+                PupilProgressStateDto? progress;
+                try
+                {
+                    progress = await api.GetPupilProgressAsync(context.RequestAborted);
+                }
+                catch (HttpRequestException)
+                {
+                    progress = null;
+                }
+
                 if (progress is not null && PupilGroep78EntryPaths.RequiresThemeChoice(progress))
                 {
                     context.Response.Redirect(PupilGroep78EntryPaths.Wereld);

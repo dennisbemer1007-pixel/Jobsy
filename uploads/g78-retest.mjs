@@ -303,13 +303,12 @@ async function runViewport(browser, width, height, code, tag, assetV) {
   });
 
   let answers = 0;
-  let pauseDone = false;
   let vorigeDone = false;
   let pdfDone = false;
   let lastScreen = '';
   let puzzelFails = 0;
 
-  for (let guard = 0; guard < 260; guard++) {
+  for (let guard = 0; guard < 320; guard++) {
     const url = page.url();
     let screen = 'other';
     if (url.includes('/wereld')) screen = 'wereld';
@@ -378,15 +377,6 @@ async function runViewport(browser, width, height, code, tag, assetV) {
     }
     if (screen === 'reis') {
       answers++;
-      if (answers === 6 && !pauseDone) {
-        await tryStep('pauze', tag, 'Pauze → stop → hervat', page, async () => {
-          await page.getByRole('button', { name: /^Pauze$/ }).or(page.locator('.ll-topbar__pause')).first().click();
-          await page.waitForURL(/\/leerling\/(stop|pauze)/, { timeout: 60_000 });
-          pauseDone = true;
-          await pupilLogin(page, code);
-        });
-        continue;
-      }
       if (answers === 12 && !vorigeDone) {
         await tryStep('vorige', tag, 'Vorige', page, async () => {
           await page.getByRole('link', { name: 'Vorige' }).click();

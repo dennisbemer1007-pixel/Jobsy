@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
@@ -16,7 +17,20 @@ public sealed partial class JobsyApiClient
             $"api/pupil/schools/{schoolId:D}/classes", ct);
 
     public async Task<PupilProgressStateDto?> GetPupilProgressAsync(CancellationToken ct = default)
-        => await GetApiJsonAsync<PupilProgressStateDto>("api/pupil/progress", ct);
+    {
+        using var response = await _http.GetAsync("api/pupil/progress", ct);
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new HttpRequestException("pupil session lost", null, response.StatusCode);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilProgressStateDto>(response.Content, ct);
+    }
 
     public async Task<PupilJourneyThemeResponse?> SavePupilJourneyThemeAsync(
         string themeKey,
