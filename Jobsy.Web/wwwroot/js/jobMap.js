@@ -6146,32 +6146,14 @@ window.jobMap = (function () {
             .catch(function () { });
     }
 
-    function onClusterClick(ev) {
+    async function onClusterClick(ev) {
         if (!map || !ev.features || !ev.features.length) {
             return;
-        }
-        if (lagenLayout && !isNarrowViewport()) {
-            const feature = ev.features[0];
-            const props = feature.properties || {};
-            const source = map.getSource(PIN_SOURCE);
-            const coords = feature.geometry && feature.geometry.coordinates;
-            if (source && coords && props.cluster_id != null) {
-                if (ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
-                    ev.originalEvent.stopPropagation();
-                }
-                lastClusterTapAt = Date.now();
-                openClusterListFromClusterId(
-                    source,
-                    props.cluster_id,
-                    coords,
-                    Math.max(Number(props.point_count) || 2, 2));
-                return;
-            }
         }
         const feature = ev.features[0];
         const props = feature.properties || {};
         const source = map.getSource(PIN_SOURCE);
-        if (!source) {
+        if (!source || typeof source.getClusterLeaves !== "function") {
             return;
         }
         if (ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
@@ -6186,61 +6168,21 @@ window.jobMap = (function () {
         if (!coords) {
             return;
         }
-        const total = Math.max(Number(props.point_count) || 2, 2);
-        const zoomNow = map.getZoom();
-        const maxZ = BASEMAP_MAX_ZOOM;
-
-        function openCompactListAtMax() {
-            openClusterListFromClusterId(source, clusterId, coords, total);
-        }
-
-        function easeToClusterZoom(targetZoom) {
-            map.easeTo({
-                center: coords,
-                zoom: clampBanenZoom(targetZoom),
-                duration: 320
-            });
-        }
-
-        if (zoomNow >= maxZ - 0.02) {
-            openCompactListAtMax();
-            return;
-        }
-
-        if (typeof source.getClusterExpansionZoom !== "function") {
-            const fallback = clampBanenZoom(Math.min(zoomNow + 1.75, maxZ));
-            if (fallback <= zoomNow + 0.05) {
-                openCompactListAtMax();
-            } else {
-                easeToClusterZoom(fallback);
+        const total = Math.min(Math.max(Number(props.point_count) || 2, 2), 100);
+        try {
+            const leaves = await source.getClusterLeaves(clusterId, total, 0);
+            if (!map) {
+                return;
             }
-            return;
-        }
-
-        Promise.resolve(source.getClusterExpansionZoom(clusterId))
-            .then(function (expansionZoom) {
-                if (!map) {
-                    return;
-                }
-                const exp = typeof expansionZoom === "number" ? expansionZoom : zoomNow + 2;
-                let target = clampBanenZoom(Math.min(exp, maxZ));
-                if (map.getZoom() >= maxZ - 0.02 || target <= map.getZoom() + 0.05) {
-                    openCompactListAtMax();
-                    return;
-                }
-                easeToClusterZoom(target);
-            })
-            .catch(function () {
-                if (!map) {
-                    return;
-                }
-                const target = clampBanenZoom(Math.min(map.getZoom() + 1.5, maxZ));
-                if (target <= map.getZoom() + 0.05) {
-                    openCompactListAtMax();
-                } else {
-                    easeToClusterZoom(target);
-                }
-            });
+            const childMarkers = (leaves || [])
+                .map(function (leaf) {
+                    return markerByLeafId(leaf.properties && leaf.properties.id);
+                })
+                .filter(Boolean);
+            if (childMarkers.length >= 1) {
+                openClusterList(childMarkers, coords);
+            }
+        } catch (_e) { }
     }
 
     function onPinClick(ev) {

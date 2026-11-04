@@ -714,7 +714,7 @@ public sealed class PupilPortalService : IPupilPortalService
         return (BuildAnswerResponse(def, progress, answers, completed, resultPending), null, 200);
     }
 
-    private PupilAnswerResponse BuildAnswerResponse(
+    private static PupilAnswerResponse BuildAnswerResponse(
         PupilQuestionSetDef def,
         PupilProgress progress,
         Dictionary<string, int> answers,
