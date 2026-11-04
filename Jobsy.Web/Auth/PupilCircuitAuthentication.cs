@@ -6,40 +6,6 @@ using Microsoft.AspNetCore.Authentication;
 namespace Jobsy.Web.Auth;
 
 /// <summary>
-/// Server-side copy of the opaque API pupil ticket, keyed by pupil code id.
-/// The Blazor circuit has no request cookies, so <see cref="Jobsy.Web.Services.JobsyApiAuthHandler"/>
-/// reads the ticket from here after <see cref="PupilCircuitAuthenticationMiddleware"/> captured it
-/// on <c>/_blazor</c>. Never written into the staff cookie or the Web pupil cookie.
-/// </summary>
-public sealed class PupilApiTicketStore
-{
-    private readonly ConcurrentDictionary<string, string> _byCode = new(StringComparer.Ordinal);
-
-    public void Set(string? pupilCodeId, string? ticket)
-    {
-        if (string.IsNullOrWhiteSpace(pupilCodeId) || string.IsNullOrWhiteSpace(ticket))
-        {
-            return;
-        }
-
-        _byCode[pupilCodeId] = ticket;
-    }
-
-    public string? Get(string? pupilCodeId)
-        => !string.IsNullOrWhiteSpace(pupilCodeId) && _byCode.TryGetValue(pupilCodeId, out var ticket)
-            ? ticket
-            : null;
-
-    public void Remove(string? pupilCodeId)
-    {
-        if (!string.IsNullOrWhiteSpace(pupilCodeId))
-        {
-            _byCode.TryRemove(pupilCodeId, out _);
-        }
-    }
-}
-
-/// <summary>
 /// Server-side copy of the opaque API parent passport ticket, keyed by pupil code id.
 /// The Blazor circuit has no request cookies, so <see cref="Jobsy.Web.Services.JobsyApiAuthHandler"/>
 /// reads the ticket from here after <see cref="PupilCircuitAuthenticationMiddleware"/> captured it
@@ -149,16 +115,22 @@ public static class PupilApiTicketSyncMiddleware
         }
 
         var codeId = context.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        var store = context.RequestServices.GetService<PupilApiTicketStore>()?.Get(codeId);
-        if (string.IsNullOrWhiteSpace(store))
+        var ticketStore = context.RequestServices.GetService<PupilApiTicketStore>();
+        if (ticketStore is null || string.IsNullOrWhiteSpace(codeId))
         {
             return;
         }
 
         var cookie = PupilApiSessionCookie.Read(context);
-        if (!string.Equals(store, cookie, StringComparison.Ordinal))
+        var resolved = ticketStore.ResolveTicket(codeId, cookie);
+        if (string.IsNullOrWhiteSpace(resolved))
         {
-            PupilApiSessionCookie.Set(context, store);
+            return;
+        }
+
+        if (!string.Equals(resolved, cookie, StringComparison.Ordinal))
+        {
+            PupilApiSessionCookie.Set(context, resolved);
         }
     }
 }
@@ -178,20 +150,28 @@ internal static class PupilApiTicketStoreSeeding
         }
 
         var cookie = PupilApiSessionCookie.Read(context);
-        var stored = store.Get(codeId);
-        if (string.IsNullOrWhiteSpace(stored))
+        if (!store.TryGetEntry(codeId, out var stored))
         {
             store.Set(codeId, cookie);
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(cookie) || string.Equals(cookie, stored, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(cookie) || string.Equals(cookie, stored.Ticket, StringComparison.Ordinal))
         {
             return;
         }
 
-        // Browser cookie lags after JSON save / redirect; keep the renewed ticket from the store.
-        PupilApiSessionCookie.Set(context, stored);
+        var clock = context.RequestServices.GetService<TimeProvider>() ?? TimeProvider.System;
+        var now = clock.GetUtcNow();
+        var storeFresh = now - stored.UpdatedAt <= PupilApiTicketStore.SameNodeBurstWindow;
+        if (storeFresh)
+        {
+            // Browser cookie lags after JSON save on this node; upgrade the response cookie below.
+            return;
+        }
+
+        // Browser cookie was renewed on another web node — adopt it locally; never downgrade the browser.
+        store.Set(codeId, cookie);
     }
 }
 

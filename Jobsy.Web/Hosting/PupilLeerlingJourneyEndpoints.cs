@@ -895,12 +895,15 @@ public static class PupilLeerlingJourneyEndpoints
         JobsyApiClient api,
         CancellationToken ct)
         => PupilLoadRetry.RunAsync(
-            () => LoadProgressOnceAsync(api, ct),
+            () => LoadProgressOnceAsync(api, http.RequestServices, ct),
             http.RequestServices,
             "progress",
             ct);
 
-    private static async Task<PupilProgressStateDto?> LoadProgressOnceAsync(JobsyApiClient api, CancellationToken ct)
+    private static async Task<PupilProgressStateDto?> LoadProgressOnceAsync(
+        JobsyApiClient api,
+        IServiceProvider? services,
+        CancellationToken ct)
     {
         try
         {
@@ -910,14 +913,15 @@ public static class PupilLeerlingJourneyEndpoints
         {
             throw;
         }
-        catch
+        catch (Exception ex)
         {
+            LeerlingLoadLog.Failed(services, "progress", ex, ex is HttpRequestException http ? http.StatusCode : null, giveUp: false);
             return null;
         }
     }
 
     private static async Task<PupilProgressStateDto?> LoadProgressAsync(JobsyApiClient api, CancellationToken ct)
-        => await LoadProgressOnceAsync(api, ct);
+        => await LoadProgressOnceAsync(api, services: null, ct);
 
     private static Dictionary<string, (int Leuk, int Goed)> BuildVakScores(PupilProgressStateDto _, int page)
     {

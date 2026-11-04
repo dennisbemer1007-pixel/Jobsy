@@ -184,16 +184,9 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     private string? ReadPupilTicket(HttpContext? httpContext, ClaimsPrincipal user)
     {
         var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        var stored = _services.GetService<PupilApiTicketStore>()?.Get(codeId);
-        if (!string.IsNullOrWhiteSpace(stored))
-        {
-            // After a sliding refresh the API invalidates the previous ticket. The browser
-            // cookie can lag one hop (JSON fetch, island POST + progress load). Prefer the
-            // in-memory copy from the last API response on this request.
-            return stored;
-        }
-
-        return httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
+        var store = _services.GetService<PupilApiTicketStore>();
+        var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
+        return store?.ResolveTicket(codeId, cookie);
     }
 
     /// <summary>Session calls. The public school list must not wait for a ticket.</summary>

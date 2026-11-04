@@ -369,7 +369,64 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public async Task Groep78_after_island_first_vuurtoren_answer_reis_ok_even_with_stale_api_cookie()
+    public async Task Groep78_island_through_vuurtoren_q35_progress_and_reis_never_save_failed()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtIslandGateAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        var login = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var eiland = await client.GetAsync("/leerling/eiland");
+        var eilandHtml = await eiland.Content.ReadAsStringAsync();
+        var tokenField = ExtractFormFieldName(eilandHtml, "hidden")!;
+        var token = ExtractHiddenInput(eilandHtml, tokenField)!;
+        Assert.Equal(HttpStatusCode.Redirect, (await client.PostAsync(
+            "/leerling/eiland/save",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField] = token,
+                ["Likes"] = "sport",
+                ["Dislikes"] = "rekenen",
+            }))).StatusCode);
+
+        var answeredViaWeb = 0;
+        for (var step = 0; step < 10; step++)
+        {
+            var reis = await client.GetAsync("/leerling/reis");
+            var reisHtml = await reis.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, reis.StatusCode);
+            Assert.DoesNotContain("Niet bewaard — probeer opnieuw", reisHtml, StringComparison.Ordinal);
+            if (reisHtml.Contains("data-testid=\"leerling-reis-klaar\"", StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            var reisTokenField = ExtractFormFieldName(reisHtml, "hidden")!;
+            var reisToken = ExtractHiddenInput(reisHtml, reisTokenField)!;
+            var itemId = ExtractHiddenInput(reisHtml, "ItemId")!;
+            Assert.False(string.IsNullOrWhiteSpace(itemId));
+
+            var save = await PostWebReisAnswerAsync(client, reisTokenField, reisToken, itemId, 4);
+            Assert.Equal(HttpStatusCode.OK, save.StatusCode);
+            answeredViaWeb++;
+            if (answeredViaWeb >= 5)
+            {
+                break;
+            }
+        }
+
+        Assert.True(answeredViaWeb >= 5, "expected at least five vuurtoren answers after island");
+        var finalReis = await client.GetAsync("/leerling/reis");
+        var finalHtml = await finalReis.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, finalReis.StatusCode);
+        Assert.DoesNotContain("Niet bewaard — probeer opnieuw", finalHtml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Groep78_vuurtoren_reis_ok_when_memory_store_stale_but_browser_api_cookie_renewed()
     {
         await EnableSchoolsAsync();
         var seed = await SeedGroep78AtIslandGateAsync();
@@ -380,43 +437,16 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         var login = await PostLoginAsync(client, seed);
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
         var staleApiCookie = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
-        var webCookie = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilAuthDefaults.CookieName)!;
         Assert.False(string.IsNullOrWhiteSpace(staleApiCookie));
-        Assert.False(string.IsNullOrWhiteSpace(webCookie));
 
-        var eiland = await client.GetAsync("/leerling/eiland");
-        var eilandHtml = await eiland.Content.ReadAsStringAsync();
-        var tokenField = ExtractFormFieldName(eilandHtml, "hidden")!;
-        var token = ExtractHiddenInput(eilandHtml, tokenField)!;
+        await CompleteIslandAndVuurtorenAnswersAsync(client, answerCount: 4);
 
-        Assert.Equal(HttpStatusCode.Redirect, (await client.PostAsync(
-            "/leerling/eiland/save",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                [tokenField] = token,
-                ["Likes"] = "sport",
-                ["Dislikes"] = "rekenen",
-            }))).StatusCode);
+        var codeId = await ResolvePupilCodeIdAsync(seed);
+        var ticketStore = web.Services.GetRequiredService<PupilApiTicketStore>();
+        ticketStore.Set(codeId.ToString("D"), staleApiCookie);
+        await Task.Delay(PupilApiTicketStore.SameNodeBurstWindow + TimeSpan.FromMilliseconds(200));
 
-        var reisAfter = await client.GetAsync("/leerling/reis");
-        var reisHtml = await reisAfter.Content.ReadAsStringAsync();
-        Assert.Equal(HttpStatusCode.OK, reisAfter.StatusCode);
-        Assert.Contains("ll-g78-shell", reisHtml, StringComparison.Ordinal);
-        tokenField = ExtractFormFieldName(reisHtml, "hidden")!;
-        token = ExtractHiddenInput(reisHtml, tokenField)!;
-        var itemId = ExtractHiddenInput(reisHtml, "ItemId")!;
-        Assert.False(string.IsNullOrWhiteSpace(itemId));
-
-        var saveAnswer = await PostWebReisAnswerAsync(client, tokenField, token, itemId, 4);
-        Assert.Equal(HttpStatusCode.OK, saveAnswer.StatusCode);
-
-        var staleReis = new HttpRequestMessage(HttpMethod.Get, "/leerling/reis");
-        staleReis.Headers.TryAddWithoutValidation(
-            "Cookie",
-            PupilAuthDefaults.CookieName + "=" + webCookie + "; "
-            + PupilApiSessionCookie.Name + "=" + staleApiCookie);
-        staleReis.Headers.Accept.ParseAdd("text/html");
-        var reisStale = await client.SendAsync(staleReis);
+        var reisStale = await client.GetAsync("/leerling/reis");
         var staleHtml = await reisStale.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, reisStale.StatusCode);
         Assert.Contains("text/html", reisStale.Content.Headers.ContentType?.MediaType ?? "", StringComparison.OrdinalIgnoreCase);
@@ -680,6 +710,50 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         }
 
         return null;
+    }
+
+    private async Task<Guid> ResolvePupilCodeIdAsync(Seed seed)
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var row = await db.PupilCodes
+            .Where(c => c.SchoolClassId == seed.ClassId)
+            .Select(c => new { c.Id, c.CodeProtected })
+            .ToListAsync();
+        var match = row.FirstOrDefault(c => codes.Unprotect(c.CodeProtected) == seed.PlainCode);
+        Assert.NotNull(match);
+        return match!.Id;
+    }
+
+    private static async Task CompleteIslandAndVuurtorenAnswersAsync(HttpClient client, int answerCount)
+    {
+        var eiland = await client.GetAsync("/leerling/eiland");
+        var eilandHtml = await eiland.Content.ReadAsStringAsync();
+        var tokenField = ExtractFormFieldName(eilandHtml, "hidden")!;
+        var token = ExtractHiddenInput(eilandHtml, tokenField)!;
+
+        Assert.Equal(HttpStatusCode.Redirect, (await client.PostAsync(
+            "/leerling/eiland/save",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField] = token,
+                ["Likes"] = "sport",
+                ["Dislikes"] = "rekenen",
+            }))).StatusCode);
+
+        for (var i = 0; i < answerCount; i++)
+        {
+            var reisAfter = await client.GetAsync("/leerling/reis");
+            var reisHtml = await reisAfter.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, reisAfter.StatusCode);
+            tokenField = ExtractFormFieldName(reisHtml, "hidden")!;
+            token = ExtractHiddenInput(reisHtml, tokenField)!;
+            var itemId = ExtractHiddenInput(reisHtml, "ItemId")!;
+            Assert.False(string.IsNullOrWhiteSpace(itemId));
+            var saveAnswer = await PostWebReisAnswerAsync(client, tokenField, token, itemId, 4);
+            Assert.Equal(HttpStatusCode.OK, saveAnswer.StatusCode);
+        }
     }
 
     private static async Task<(HttpStatusCode Status, PupilProgressStateDto? Body)> GetProgressAsync(
