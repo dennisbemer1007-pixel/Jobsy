@@ -426,6 +426,30 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_vuurtoren_reis_ok_when_fresh_memory_holds_login_ticket_but_browser_renewed()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtIslandGateAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+        var loginApiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+
+        await CompleteIslandAndVuurtorenAnswersAsync(client, answerCount: 6);
+
+        var codeId = await ResolvePupilCodeIdAsync(seed);
+        web.Services.GetRequiredService<PupilApiTicketStore>().Set(codeId.ToString("D"), loginApiTicket);
+
+        var reis = await FetchReisDocumentAsync(client);
+        var html = await reis.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reis.StatusCode);
+        Assert.DoesNotContain("Niet bewaard — probeer opnieuw", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Groep78_vuurtoren_reis_ok_when_memory_store_stale_but_browser_api_cookie_renewed()
     {
         await EnableSchoolsAsync();
@@ -682,6 +706,14 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         });
         client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
         return client;
+    }
+
+    private static Task<HttpResponseMessage> FetchReisDocumentAsync(HttpClient client)
+    {
+        var keepalive = new HttpRequestMessage(HttpMethod.Get, "/leerling/reis?_=" + DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        keepalive.Headers.TryAddWithoutValidation("Accept", "text/html");
+        keepalive.Headers.TryAddWithoutValidation("X-Requested-With", "XMLHttpRequest");
+        return client.SendAsync(keepalive);
     }
 
     private static Task<HttpResponseMessage> PostLoginAsync(HttpClient client, Seed seed)

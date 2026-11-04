@@ -150,27 +150,19 @@ internal static class PupilApiTicketStoreSeeding
         }
 
         var cookie = PupilApiSessionCookie.Read(context);
-        if (!store.TryGetEntry(codeId, out var stored))
+        if (string.IsNullOrWhiteSpace(cookie))
+        {
+            return;
+        }
+
+        if (!store.TryGetEntry(codeId, out var stored)
+            || string.Equals(cookie, stored.Ticket, StringComparison.Ordinal))
         {
             store.Set(codeId, cookie);
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(cookie) || string.Equals(cookie, stored.Ticket, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        var clock = context.RequestServices.GetService<TimeProvider>() ?? TimeProvider.System;
-        var now = clock.GetUtcNow();
-        var storeFresh = now - stored.UpdatedAt <= PupilApiTicketStore.SameNodeBurstWindow;
-        if (storeFresh)
-        {
-            // Browser cookie lags after JSON save on this node; upgrade the response cookie below.
-            return;
-        }
-
-        // Browser cookie was renewed on another web node — adopt it locally; never downgrade the browser.
+        // Cross-node saves renew the API ticket in the browser; adopt it on this instance.
         store.Set(codeId, cookie);
     }
 }
