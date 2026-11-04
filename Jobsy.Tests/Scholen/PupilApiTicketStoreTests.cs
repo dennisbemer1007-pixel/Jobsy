@@ -19,15 +19,15 @@ public class PupilApiTicketStoreTests
     }
 
     [Fact]
-    public void ResolveTicket_prefers_memory_during_same_node_burst_when_cookie_lags()
+    public void ResolveTicket_prefers_browser_cookie_when_tickets_differ_even_within_burst_window()
     {
         var store = new PupilApiTicketStore();
         var clock = new FakeClock(DateTimeOffset.Parse("2026-11-04T18:00:00Z"));
-        store.Set(CodeId, "renewed-ticket");
+        store.Set(CodeId, "older-node-ticket");
         clock.Advance(TimeSpan.FromMilliseconds(500));
 
-        var resolved = store.ResolveTicket(CodeId, "old-ticket", clock);
-        Assert.Equal("renewed-ticket", resolved);
+        var resolved = store.ResolveTicket(CodeId, "newer-browser-ticket", clock);
+        Assert.Equal("newer-browser-ticket", resolved);
     }
 
     private sealed class FakeClock(DateTimeOffset start) : TimeProvider

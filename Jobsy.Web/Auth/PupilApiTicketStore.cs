@@ -44,10 +44,11 @@ public sealed class PupilApiTicketStore
 
     /// <summary>
     /// Pick the API ticket to forward when the browser cookie and in-memory copy diverge.
+    /// The browser cookie is authoritative when both exist: it survives load-balanced hops
+    /// after sliding refresh on another web node. In-memory copies are per-instance only.
     /// </summary>
-    internal string? ResolveTicket(string? pupilCodeId, string? browserCookie, TimeProvider? clock = null)
+    internal string? ResolveTicket(string? pupilCodeId, string? browserCookie, TimeProvider? _ = null)
     {
-        var now = (clock ?? TimeProvider.System).GetUtcNow();
         TryGetEntry(pupilCodeId, out var stored);
         var hasStored = !string.IsNullOrWhiteSpace(stored.Ticket);
         var hasCookie = !string.IsNullOrWhiteSpace(browserCookie);
@@ -67,8 +68,7 @@ public sealed class PupilApiTicketStore
             return stored.Ticket;
         }
 
-        var storeFresh = now - stored.UpdatedAt <= SameNodeBurstWindow;
-        return storeFresh ? stored.Ticket : browserCookie;
+        return browserCookie;
     }
 
     public void Remove(string? pupilCodeId)
