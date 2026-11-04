@@ -623,7 +623,7 @@ public static class PupilLeerlingJourneyEndpoints
 
         if (!response.IsSuccessStatusCode)
         {
-            var pending = """<section class="ll-card"><p class="ll-error" role="alert">"""+culture["Leerling.Reis.ResultPending"]+"""</p><a class="btn-primary" href="/leerling/dit-ben-jij">Opnieuw</a></section>""";
+            var pending = """<section class="ll-card"><p class="ll-error" role="alert">""" + culture["Leerling.Reis.ResultPending"] + """</p><a class="btn-primary" href="/leerling/dit-ben-jij">Opnieuw</a></section>""";
             var pendingAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
             return Html(http, culture["LeerlingStory.Title"], pending, "/leerling/dit-ben-jij", false, null, pendingAf);
         }
