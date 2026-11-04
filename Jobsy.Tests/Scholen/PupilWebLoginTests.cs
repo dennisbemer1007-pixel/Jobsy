@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities;
@@ -667,6 +668,54 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_parallel_answer_save_at_schatgrot_9026_and_reis_get_never_return_500()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtSchatgrot9026Async();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+
+        async Task<HttpResponseMessage> Save9026Async(int value)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Put, "api/pupil/progress/answers/9026")
+            {
+                Content = JsonContent.Create(new PupilAnswerRequest(value), options: JobsyApiClient.ApiJson)
+            };
+            req.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + apiTicket);
+            return await api.SendAsync(req);
+        }
+
+        var apiResults = await Task.WhenAll(
+            Save9026Async(3),
+            Save9026Async(3),
+            Save9026Async(4),
+            Save9026Async(3));
+        Assert.All(apiResults, r => Assert.NotEqual(HttpStatusCode.InternalServerError, r.StatusCode));
+
+        var reisGet = await client.GetAsync("/leerling/reis");
+        var reisHtml = await reisGet.Content.ReadAsStringAsync();
+        Assert.NotEqual(HttpStatusCode.InternalServerError, reisGet.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, reisGet.StatusCode);
+        Assert.Contains("9026", reisHtml, StringComparison.Ordinal);
+
+        var tokenField = ExtractFormFieldName(reisHtml, "hidden")!;
+        var token = ExtractHiddenInput(reisHtml, tokenField)!;
+        var parallelWeb = Enumerable.Range(0, 4)
+            .Select(_ => PostWebReisAnswerAsync(client, tokenField, token, "9026", 4))
+            .ToArray();
+        var webResults = await Task.WhenAll(parallelWeb);
+        Assert.All(webResults, r => Assert.NotEqual(HttpStatusCode.InternalServerError, r.StatusCode));
+
+        var afterGet = await client.GetAsync("/leerling/reis");
+        Assert.NotEqual(HttpStatusCode.InternalServerError, afterGet.StatusCode);
+    }
+
+    [Fact]
     public async Task Groep78_web_json_journey_with_pause_and_prev_through_klaar_without_500()
     {
         await EnableSchoolsAsync();
@@ -961,6 +1010,67 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             StartedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
+        await db.SaveChangesAsync();
+        return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
+    }
+
+    private async Task<Seed> SeedGroep78AtSchatgrot9026Async()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
+        var def = registry.Get(PupilQuestionSet.Groep78);
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "Schatgrot race " + Guid.NewGuid().ToString("N")[..6],
+            City = "Naaldwijk",
+            AllowedEmailDomains = "[\"voorbeeldcollege.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "8B",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 1,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(1, cls);
+        const int answered = 25;
+        var bank = def.Bank;
+        var answers = bank.AllItems.Take(answered).ToDictionary(i => i.Id, _ => 4);
+        var puzzles = new Dictionary<string, int> { ["schelpenrij"] = (int)PupilPuzzleStatus.Done };
+        var now = DateTime.UtcNow;
+        db.PupilProgresses.Add(new PupilProgress
+        {
+            PupilCodeId = generated[0].Id,
+            AnswersJson = JsonSerializer.Serialize(answers),
+            PuzzlesJson = JsonSerializer.Serialize(puzzles),
+            CurrentIndex = answered,
+            JourneyThemeKey = PupilJourneyTheme.ZeeExpeditie,
+            JourneyThemeChosenAtUtc = now,
+            LikesJson = "[]",
+            DislikesJson = "[]",
+            StartedAtUtc = now.AddMinutes(-10),
+            UpdatedAtUtc = now
+        });
         await db.SaveChangesAsync();
         return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
     }
