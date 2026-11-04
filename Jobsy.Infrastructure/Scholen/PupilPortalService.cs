@@ -534,6 +534,29 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, new PupilErrorDto("validation", "Antwoord moet 1–5 zijn."), 400);
         }
 
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            try
+            {
+                return await SaveAnswerCoreAsync(pupil, itemId, value, attempt > 0, cancellationToken);
+            }
+            catch (DbUpdateException ex) when (attempt == 0)
+            {
+                _logger.LogDebug(ex, "Concurrent pupil answer save for {ItemId}, retrying once", itemId);
+                InvalidatePupilSessionCache(pupil);
+            }
+        }
+
+        return (null, new PupilErrorDto("conflict", "Kon antwoord niet opslaan. Probeer opnieuw."), 409);
+    }
+
+    private async Task<(PupilAnswerResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveAnswerCoreAsync(
+        ClaimsPrincipal pupil,
+        string itemId,
+        int value,
+        bool forceReload,
+        CancellationToken cancellationToken)
+    {
         var ctx = await ResolveSessionAsync(pupil, includeResult: false, cancellationToken: cancellationToken);
         if (ctx.Error is not null)
         {
@@ -551,7 +574,6 @@ public sealed class PupilPortalService : IPupilPortalService
         var item = def.Bank.GetById(itemId);
         if (item is null)
         {
-            // Known in another registered test → wrong_set. Unknown (e.g. 9101 before VO lands) → 404.
             if (_registry.All.Any(d => d.Set != def.Set && d.Bank.GetById(itemId) is not null))
             {
                 return (null, new PupilErrorDto("wrong_set", "Deze vraag hoort niet bij jouw test."), 400);
@@ -587,6 +609,11 @@ public sealed class PupilPortalService : IPupilPortalService
             _db.PupilProgresses.Add(progress);
             code.Progress = progress;
         }
+        else if (forceReload)
+        {
+            await _db.Entry(code).ReloadAsync(cancellationToken);
+            await _db.Entry(progress).ReloadAsync(cancellationToken);
+        }
 
         var answers = ParseAnswers(progress.AnswersJson);
         var islandDone = progress.ChipsSavedAtUtc is not null;
@@ -599,11 +626,34 @@ public sealed class PupilPortalService : IPupilPortalService
 
         if (!allowed)
         {
-            return (null, new PupilErrorDto(
-                "step_pending",
-                "Eerst de volgende stap afronden.",
-                PupilFlow.ToNextStepToken(step.Kind),
-                step.PuzzleKey), 409);
+            await _db.Entry(code).ReloadAsync(cancellationToken);
+            await _db.Entry(progress).ReloadAsync(cancellationToken);
+            answers = ParseAnswers(progress.AnswersJson);
+            islandDone = progress.ChipsSavedAtUtc is not null;
+            puzzles = ParsePuzzles(progress.PuzzlesJson);
+            step = PupilFlow.Next(def, answers, islandDone, puzzles, VakkenComplete(def, progress));
+            alreadyAnswered = answers.ContainsKey(item.Id);
+            if (alreadyAnswered && answers[item.Id] == value)
+            {
+                return (BuildAnswerResponse(def, progress, answers, completed: false, resultPending: false), null, 200);
+            }
+
+            allowed =
+                alreadyAnswered
+                || (step.Kind == PupilFlowStepKind.Question && item.GlobalIndex <= step.Index);
+            if (!allowed)
+            {
+                return (null, new PupilErrorDto(
+                    "step_pending",
+                    "Eerst de volgende stap afronden.",
+                    PupilFlow.ToNextStepToken(step.Kind),
+                    step.PuzzleKey), 409);
+            }
+        }
+
+        if (alreadyAnswered && answers[item.Id] == value)
+        {
+            return (BuildAnswerResponse(def, progress, answers, completed: false, resultPending: false), null, 200);
         }
 
         answers[item.Id] = value;
@@ -616,15 +666,12 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         var total = def.Bank.AllItems.Count;
-        var nextIndex = FirstUnansweredIndex(def, progress.AnswersJson);
-        progress.CurrentIndex = nextIndex;
+        progress.CurrentIndex = FirstUnansweredIndex(def, progress.AnswersJson);
         var allAnswered = answers.Count >= total
                         && def.Bank.AllItems.All(i => answers.ContainsKey(i.Id));
         var resultPending = false;
         var completed = false;
 
-        // Persist answers first. Never mark Completed before BuildAsync succeeds —
-        // otherwise a builder failure leaves the pupil stuck without a PupilResult.
         await _db.SaveChangesAsync(cancellationToken);
 
         if (allAnswered)
@@ -663,10 +710,27 @@ public sealed class PupilPortalService : IPupilPortalService
             }
         }
 
+        answers = ParseAnswers(progress.AnswersJson);
+        return (BuildAnswerResponse(def, progress, answers, completed, resultPending), null, 200);
+    }
+
+    private PupilAnswerResponse BuildAnswerResponse(
+        PupilQuestionSetDef def,
+        PupilProgress progress,
+        Dictionary<string, int> answers,
+        bool completed,
+        bool resultPending)
+    {
+        var total = def.Bank.AllItems.Count;
         var vakkenComplete = VakkenComplete(def, progress);
         var nextStep = completed
             ? new PupilFlowStep(PupilFlowStepKind.Done, total, null, null, null)
-            : PupilFlow.Next(def, answers, progress.ChipsSavedAtUtc is not null, ParsePuzzles(progress.PuzzlesJson), vakkenComplete);
+            : PupilFlow.Next(
+                def,
+                answers,
+                progress.ChipsSavedAtUtc is not null,
+                ParsePuzzles(progress.PuzzlesJson),
+                vakkenComplete);
         var needsIsland = nextStep.Kind == PupilFlowStepKind.Island;
         string? nextId = nextStep.Kind == PupilFlowStepKind.Question ? nextStep.ItemId : null;
         string? nextWorld = nextStep.Kind == PupilFlowStepKind.Island
@@ -674,7 +738,7 @@ public sealed class PupilPortalService : IPupilPortalService
             : nextStep.WorldKey;
         var responseIndex = nextStep.Kind == PupilFlowStepKind.Done ? total : nextStep.Index;
 
-        return (new PupilAnswerResponse(
+        return new PupilAnswerResponse(
             responseIndex,
             answers.Count,
             def.PlatesShed(answers.Count),
@@ -684,7 +748,19 @@ public sealed class PupilPortalService : IPupilPortalService
             needsIsland,
             resultPending,
             PupilFlow.ToNextStepToken(nextStep.Kind),
-            nextStep.PuzzleKey), null, 200);
+            nextStep.PuzzleKey);
+    }
+
+    private void InvalidatePupilSessionCache(ClaimsPrincipal pupil)
+    {
+        var codeId = pupil.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        if (string.IsNullOrWhiteSpace(codeId) || !Guid.TryParse(codeId, out var id))
+        {
+            return;
+        }
+
+        _cache.Remove($"pupil-sv:{id:D}");
+        _cache.Remove($"pupil-session:{id:D}");
     }
 
     public async Task<(PupilVakScoresResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveVakScoresAsync(

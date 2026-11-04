@@ -3,6 +3,7 @@
 
   var answerSaveChain = Promise.resolve();
   var pauseFlushMs = 2000;
+  var reisDocumentGeneration = 0;
 
   function flushAnswerSaveChain() {
     return Promise.race([
@@ -162,6 +163,20 @@
     });
   }
 
+  function setAnswerScaleBusy(form, busy) {
+    if (!form) return;
+    form.setAttribute("data-ll-save-state", busy ? "pending" : "idle");
+    form.querySelectorAll("[data-ll-answer-value]").forEach(function (btn) {
+      if (busy) {
+        btn.setAttribute("aria-disabled", "true");
+        btn.setAttribute("data-ll-save-blocked", "1");
+      } else {
+        btn.removeAttribute("aria-disabled");
+        btn.removeAttribute("data-ll-save-blocked");
+      }
+    });
+  }
+
   function navigateAfterReisSave(_form, data) {
     var target = data.redirectPath || "/leerling/reis";
     var plainReis =
@@ -171,14 +186,21 @@
       window.location.assign(target);
       return Promise.resolve();
     }
+    var generation = ++reisDocumentGeneration;
     return fetchReisDocument()
       .then(function (html) {
+        if (generation !== reisDocumentGeneration) {
+          return;
+        }
         if (swapGroep78ShellMain(html)) {
           return;
         }
         window.location.assign(target);
       })
       .catch(function (err) {
+        if (generation !== reisDocumentGeneration) {
+          return;
+        }
         var recovery = (err && err.redirectPath) || target;
         window.location.assign(recovery);
       });
@@ -215,12 +237,18 @@
       form.querySelectorAll("[data-ll-answer-value]").forEach(function (btn) {
         btn.addEventListener("click", function (e) {
           e.preventDefault();
+          if (form.getAttribute("data-ll-save-state") === "pending") {
+            return;
+          }
+          if (btn.getAttribute("data-ll-save-blocked") === "1") {
+            return;
+          }
           var val = btn.getAttribute("data-ll-answer-value");
           if (!itemInput || !val) return;
           var itemId = itemInput.value;
           if (!itemId) return;
           applyG78AnswerSelection(form, btn, val);
-          form.setAttribute("data-ll-save-state", "pending");
+          setAnswerScaleBusy(form, true);
           answerSaveChain = answerSaveChain
             .catch(function () {
               /* keep queue alive after failure */
@@ -233,9 +261,10 @@
             })
             .then(function () {
               var live = document.querySelector("form[data-ll-answer-scale]");
-              if (live) live.setAttribute("data-ll-save-state", "idle");
+              setAnswerScaleBusy(live, false);
             })
             .catch(function (err) {
+              setAnswerScaleBusy(form, false);
               form.setAttribute("data-ll-save-state", "error");
               var alert = form.parentElement
                 ? form.parentElement.querySelector(".ll-error")
@@ -339,8 +368,15 @@
         });
       });
 
-      form.addEventListener("submit", function () {
+      form.addEventListener("submit", function (e) {
         syncHiddenFields();
+        if (form.querySelector("[data-ll-island-step]")) {
+          if (form.getAttribute("data-ll-island-submitting") === "1") {
+            e.preventDefault();
+            return;
+          }
+          form.setAttribute("data-ll-island-submitting", "1");
+        }
       });
 
       syncAllChipButtons();
