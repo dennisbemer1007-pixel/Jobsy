@@ -183,15 +183,17 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     private string? ReadPupilTicket(HttpContext? httpContext, ClaimsPrincipal user)
     {
-        var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
-        if (!string.IsNullOrWhiteSpace(cookie))
+        var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        var stored = _services.GetService<PupilApiTicketStore>()?.Get(codeId);
+        if (!string.IsNullOrWhiteSpace(stored))
         {
-            return cookie;
+            // After a sliding refresh the API invalidates the previous ticket. The browser
+            // cookie can lag one hop (JSON fetch, island POST + progress load). Prefer the
+            // in-memory copy from the last API response on this request.
+            return stored;
         }
 
-        // The circuit has no request cookies. The ticket was stored when /_blazor authenticated.
-        var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        return _services.GetService<PupilApiTicketStore>()?.Get(codeId);
+        return httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
     }
 
     /// <summary>Session calls. The public school list must not wait for a ticket.</summary>
@@ -296,14 +298,19 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     private static bool TryReadSetCookieHeaders(HttpResponseMessage response, out IEnumerable<string> values)
     {
+        var list = new List<string>();
         if (response.Headers.TryGetValues("Set-Cookie", out var headers))
         {
-            values = headers;
-            return true;
+            list.AddRange(headers);
         }
 
-        values = Array.Empty<string>();
-        return false;
+        if (response.TrailingHeaders.TryGetValues("Set-Cookie", out var trailing))
+        {
+            list.AddRange(trailing);
+        }
+
+        values = list;
+        return list.Count > 0;
     }
 
     private void CaptureRenewedParentApiTicket(HttpResponseMessage response, HttpContext? httpContext, ClaimsPrincipal user)

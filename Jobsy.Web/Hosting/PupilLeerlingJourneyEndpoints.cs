@@ -173,10 +173,19 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var progress = await LoadProgressAsync(api, ct);
+        PupilProgressStateDto? progress;
+        try
+        {
+            progress = await LoadProgressAsync(api, ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
         if (progress is null)
         {
-            return PlainError(culture["Leerling.Session.Lost"]);
+            return PlainError(culture["Leerling.Reis.SaveFailed"]);
         }
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
@@ -378,10 +387,19 @@ public static class PupilLeerlingJourneyEndpoints
             return Html(http, culture["Leerling.Vo.PartBreak.DocumentTitle"], PupilEilandSsrHtml.PartBreak(culture, partAf), "/leerling/eiland", false, null, partAf);
         }
 
-        var progress = await LoadProgressAsync(api, ct);
+        PupilProgressStateDto? progress;
+        try
+        {
+            progress = await LoadProgressAsync(api, ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
         if (progress is null)
         {
-            return PlainError(culture["Leerling.Session.Lost"]);
+            return PlainError(culture["Leerling.Reis.SaveFailed"]);
         }
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
@@ -454,10 +472,19 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var progress = await LoadProgressAsync(api, ct);
+        PupilProgressStateDto? progress;
+        try
+        {
+            progress = await LoadProgressAsync(api, ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
         if (progress is null)
         {
-            return PlainError(culture["Leerling.Session.Lost"]);
+            return PlainError(culture["Leerling.Reis.SaveFailed"]);
         }
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
@@ -529,10 +556,19 @@ public static class PupilLeerlingJourneyEndpoints
             return Html(http, culture["Leerling.Puzzle.Title"], """<section class="ll-card"><a class="btn-primary" href="/leerling/reis">Terug</a></section>""", $"/leerling/puzzel/{key}", false, null, missingAf);
         }
 
-        var progress = await LoadProgressAsync(api, ct);
+        PupilProgressStateDto? progress;
+        try
+        {
+            progress = await LoadProgressAsync(api, ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
         if (progress is null)
         {
-            return PlainError(culture["Leerling.Session.Lost"]);
+            return PlainError(culture["Leerling.Reis.SaveFailed"]);
         }
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
@@ -791,7 +827,7 @@ public static class PupilLeerlingJourneyEndpoints
         }
         catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
         {
-            return null;
+            throw;
         }
         catch
         {

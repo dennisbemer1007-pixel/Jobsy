@@ -130,8 +130,39 @@ public sealed class PupilCircuitAuthenticationMiddleware
         }
 
         await _next(context);
+        PupilApiTicketSyncMiddleware.TrySyncResponseCookie(context);
     }
 
     internal static bool IsBlazorCircuit(PathString path)
         => path.StartsWithSegments("/_blazor");
+}
+
+/// <summary>
+/// After pupil SSR handlers, mirror the latest API ticket from
+/// <see cref="PupilApiTicketStore"/> into <see cref="PupilApiSessionCookie"/> when the
+/// browser cookie lags (common after sliding refresh on JSON saves).
+/// </summary>
+public static class PupilApiTicketSyncMiddleware
+{
+    internal static void TrySyncResponseCookie(HttpContext context)
+    {
+        if (context.Response.HasStarted
+            || !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(context.User))
+        {
+            return;
+        }
+
+        var codeId = context.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        var store = context.RequestServices.GetService<PupilApiTicketStore>()?.Get(codeId);
+        if (string.IsNullOrWhiteSpace(store))
+        {
+            return;
+        }
+
+        var cookie = PupilApiSessionCookie.Read(context);
+        if (!string.Equals(store, cookie, StringComparison.Ordinal))
+        {
+            PupilApiSessionCookie.Set(context, store);
+        }
+    }
 }

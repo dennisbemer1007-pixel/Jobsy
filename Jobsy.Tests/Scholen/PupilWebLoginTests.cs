@@ -355,25 +355,65 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             + PupilApiSessionCookie.Name + "=not-a-valid-api-ticket");
         broken.Headers.Accept.ParseAdd("text/html");
         var reis = await client.SendAsync(broken);
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, reis.StatusCode);
-        var body = await reis.Content.ReadAsStringAsync();
-        Assert.Contains("sessie is verlopen", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.Redirect, reis.StatusCode);
+        var location = reis.Headers.Location?.ToString() ?? "";
+        Assert.Contains("error=expired", location, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/leerling", location, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("/login", location, StringComparison.OrdinalIgnoreCase);
+    }
 
-        var leerling = new HttpRequestMessage(HttpMethod.Get, "/leerling");
-        leerling.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + webTicket);
-        leerling.Headers.Accept.ParseAdd("text/html");
-        var again = await client.SendAsync(leerling);
-        var location = again.Headers.Location?.ToString() ?? "";
-        if (again.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.Found)
-        {
-            Assert.DoesNotContain("error=expired", location, StringComparison.OrdinalIgnoreCase);
-        }
-        else
-        {
-            var loginHtml = await again.Content.ReadAsStringAsync();
-            Assert.Equal(HttpStatusCode.OK, again.StatusCode);
-            Assert.DoesNotContain("error=expired", loginHtml, StringComparison.OrdinalIgnoreCase);
-        }
+    [Fact]
+    public void Pupil_web_and_api_idle_timeout_both_fifteen_minutes()
+    {
+        Assert.Equal(TimeSpan.FromMinutes(15), PupilAuthDefaults.IdleTimeout);
+    }
+
+    [Fact]
+    public async Task Groep78_web_eiland_save_then_json_answer_after_island_does_not_session_lost()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtIslandGateAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var eiland = await client.GetAsync("/leerling/eiland");
+        var eilandHtml = await eiland.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, eiland.StatusCode);
+        var tokenField = ExtractFormFieldName(eilandHtml, "hidden")!;
+        var token = ExtractHiddenInput(eilandHtml, tokenField)!;
+
+        var saveIsland = await client.PostAsync(
+            "/leerling/eiland/save",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField] = token,
+                ["Likes"] = "sport",
+                ["Dislikes"] = "rekenen",
+            }));
+        Assert.Equal(HttpStatusCode.Redirect, saveIsland.StatusCode);
+        Assert.Contains("/leerling/reis", saveIsland.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+
+        var reisAfter = await client.GetAsync("/leerling/reis");
+        var reisHtml = await reisAfter.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reisAfter.StatusCode);
+        Assert.DoesNotContain("sessie is verlopen", reisHtml, StringComparison.OrdinalIgnoreCase);
+
+        tokenField = ExtractFormFieldName(reisHtml, "hidden")!;
+        token = ExtractHiddenInput(reisHtml, tokenField)!;
+        var itemId = ExtractHiddenInput(reisHtml, "ItemId")!;
+        Assert.False(string.IsNullOrWhiteSpace(itemId));
+
+        var saveAnswer = await PostWebReisAnswerAsync(client, tokenField, token, itemId, 4);
+        Assert.Equal(HttpStatusCode.OK, saveAnswer.StatusCode);
+
+        var pulse = await client.GetAsync("/leerling/reis?_=" + DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        Assert.Equal(HttpStatusCode.OK, pulse.StatusCode);
+        var pulseHtml = await pulse.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("sessie is verlopen", pulseHtml, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -1078,6 +1118,71 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             StartedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
+        await db.SaveChangesAsync();
+        return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
+    }
+
+    private async Task<Seed> SeedGroep78AtIslandGateAsync()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var registry = scope.ServiceProvider.GetRequiredService<IPupilQuestionSetRegistry>();
+        var def = registry.Get(PupilQuestionSet.Groep78);
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "Island gate " + Guid.NewGuid().ToString("N")[..6],
+            City = "Naaldwijk",
+            AllowedEmailDomains = "[\"voorbeeldcollege.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "8B",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 1,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(1, cls);
+        const int answered = 30;
+        var bank = def.Bank;
+        var answers = bank.AllItems.Take(answered).ToDictionary(i => i.Id, _ => 4);
+        var puzzles = new Dictionary<string, int>
+        {
+            ["schelpenrij"] = (int)PupilPuzzleStatus.Done,
+            ["schatkaart"] = (int)PupilPuzzleStatus.Done,
+        };
+        var now = DateTime.UtcNow;
+        db.PupilProgresses.Add(new PupilProgress
+        {
+            PupilCodeId = generated[0].Id,
+            AnswersJson = JsonSerializer.Serialize(answers),
+            PuzzlesJson = JsonSerializer.Serialize(puzzles),
+            CurrentIndex = answered,
+            JourneyThemeKey = PupilJourneyTheme.ZeeExpeditie,
+            JourneyThemeChosenAtUtc = now,
+            LikesJson = "[]",
+            DislikesJson = "[]",
+            StartedAtUtc = now.AddMinutes(-10),
+            UpdatedAtUtc = now
+        });
         await db.SaveChangesAsync();
         return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
     }
