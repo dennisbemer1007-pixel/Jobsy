@@ -102,10 +102,9 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         if (!refreshed)
         {
             var apiPath = request.RequestUri?.AbsolutePath ?? "";
-            // Pupil circuits call staff profile endpoints during culture init; a 401 there
-            // must not tear down the leerling session or redirect the paspoort document.
-            if (!(IsPupilPrincipal(user) && !ForwardsPupilCookie(apiPath))
-                && !(IsParentPassportPrincipal(user) && !ForwardsParentPassportCookie(apiPath)))
+            // Pupil/parent API 401s are handled by SSR endpoints (retry / code login).
+            // Never sign the browser out of the Web cookie on a stale API ticket alone.
+            if (!ShouldNotifySessionExpiredOnApi401(user, apiPath))
             {
                 await NotifySessionExpiredAsync(httpContext);
             }
@@ -208,12 +207,19 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// The API may slide its own pupil cookie. Store the new value. Never copy
     /// it onto <c>Lobsy.Leerling</c>: that name is the Web session.
     /// </summary>
+    /// <summary>
+    /// Pupil and parent sessions use their own code login — an API 401 must not
+    /// sign out the Web cookie or send the browser to staff login.
+    /// </summary>
+    internal static bool ShouldNotifySessionExpiredOnApi401(ClaimsPrincipal user, string _)
+        => !IsPupilPrincipal(user) && !IsParentPassportPrincipal(user);
+
     private void CaptureRenewedApiTicket(
         HttpResponseMessage response,
         HttpContext? httpContext,
         ClaimsPrincipal user)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var values))
+        if (!TryReadSetCookieHeaders(response, out var values))
         {
             return;
         }
@@ -288,9 +294,21 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
     }
 
+    private static bool TryReadSetCookieHeaders(HttpResponseMessage response, out IEnumerable<string> values)
+    {
+        if (response.Headers.TryGetValues("Set-Cookie", out var headers))
+        {
+            values = headers;
+            return true;
+        }
+
+        values = Array.Empty<string>();
+        return false;
+    }
+
     private void CaptureRenewedParentApiTicket(HttpResponseMessage response, HttpContext? httpContext, ClaimsPrincipal user)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var values))
+        if (!TryReadSetCookieHeaders(response, out var values))
         {
             return;
         }

@@ -309,6 +309,74 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Pupil_reis_keepalive_get_refreshes_session_without_expired_redirect()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+
+        var login = await PostLoginAsync(client, seed);
+        var apiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        await SetJourneyThemeAsync(api, apiTicket, PupilJourneyTheme.ZeeExpeditie);
+
+        var keepalive = new HttpRequestMessage(HttpMethod.Get, "/leerling/reis?_=" + DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        keepalive.Headers.TryAddWithoutValidation("Accept", "text/html");
+        keepalive.Headers.TryAddWithoutValidation("X-Requested-With", "XMLHttpRequest");
+        var pulse = await client.SendAsync(keepalive);
+        Assert.Equal(HttpStatusCode.OK, pulse.StatusCode);
+        Assert.Equal("no-store", pulse.Headers.CacheControl?.ToString());
+        Assert.DoesNotContain("error=expired", pulse.Headers.Location?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Stale_api_ticket_with_valid_web_cookie_shows_session_lost_without_expired_redirect()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        using var web = new PupilWebFactory(_api.Server.CreateHandler());
+        using var client = web.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = false
+        });
+        client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
+
+        var login = await PostLoginAsync(client, seed);
+        var webTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilAuthDefaults.CookieName);
+        Assert.False(string.IsNullOrWhiteSpace(webTicket));
+
+        var broken = new HttpRequestMessage(HttpMethod.Get, "/leerling/reis");
+        broken.Headers.TryAddWithoutValidation(
+            "Cookie",
+            PupilAuthDefaults.CookieName + "=" + webTicket + "; "
+            + PupilApiSessionCookie.Name + "=not-a-valid-api-ticket");
+        broken.Headers.Accept.ParseAdd("text/html");
+        var reis = await client.SendAsync(broken);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, reis.StatusCode);
+        var body = await reis.Content.ReadAsStringAsync();
+        Assert.Contains("sessie is verlopen", body, StringComparison.OrdinalIgnoreCase);
+
+        var leerling = new HttpRequestMessage(HttpMethod.Get, "/leerling");
+        leerling.Headers.TryAddWithoutValidation("Cookie", PupilAuthDefaults.CookieName + "=" + webTicket);
+        leerling.Headers.Accept.ParseAdd("text/html");
+        var again = await client.SendAsync(leerling);
+        var location = again.Headers.Location?.ToString() ?? "";
+        if (again.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.Found)
+        {
+            Assert.DoesNotContain("error=expired", location, StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            var loginHtml = await again.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+            Assert.DoesNotContain("error=expired", loginHtml, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
     public async Task Logged_in_pupil_downloads_the_story_pdf()
     {
         await EnableSchoolsAsync();
