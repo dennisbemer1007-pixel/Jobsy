@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
@@ -426,59 +429,6 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public async Task Groep78_vuurtoren_reis_ok_when_fresh_memory_holds_login_ticket_but_browser_renewed()
-    {
-        await EnableSchoolsAsync();
-        var seed = await SeedGroep78AtIslandGateAsync();
-        var apiHandler = _api.Server.CreateHandler();
-        using var web = new PupilWebFactory(apiHandler);
-        using var client = HtmlClient(web);
-
-        var login = await PostLoginAsync(client, seed);
-        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        var loginApiTicket = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
-
-        await CompleteIslandAndVuurtorenAnswersAsync(client, answerCount: 6);
-
-        var codeId = await ResolvePupilCodeIdAsync(seed);
-        web.Services.GetRequiredService<PupilApiTicketStore>().Set(codeId.ToString("D"), loginApiTicket);
-
-        var reis = await FetchReisDocumentAsync(client);
-        var html = await reis.Content.ReadAsStringAsync();
-        Assert.Equal(HttpStatusCode.OK, reis.StatusCode);
-        Assert.DoesNotContain("Niet bewaard — probeer opnieuw", html, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task Groep78_vuurtoren_reis_ok_when_memory_store_stale_but_browser_api_cookie_renewed()
-    {
-        await EnableSchoolsAsync();
-        var seed = await SeedGroep78AtIslandGateAsync();
-        var apiHandler = _api.Server.CreateHandler();
-        using var web = new PupilWebFactory(apiHandler);
-        using var client = HtmlClient(web);
-
-        var login = await PostLoginAsync(client, seed);
-        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
-        var staleApiCookie = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
-        Assert.False(string.IsNullOrWhiteSpace(staleApiCookie));
-
-        await CompleteIslandAndVuurtorenAnswersAsync(client, answerCount: 4);
-
-        var codeId = await ResolvePupilCodeIdAsync(seed);
-        var ticketStore = web.Services.GetRequiredService<PupilApiTicketStore>();
-        ticketStore.Set(codeId.ToString("D"), staleApiCookie);
-        await Task.Delay(PupilApiTicketStore.SameNodeBurstWindow + TimeSpan.FromMilliseconds(200));
-
-        var reisStale = await client.GetAsync("/leerling/reis");
-        var staleHtml = await reisStale.Content.ReadAsStringAsync();
-        Assert.Equal(HttpStatusCode.OK, reisStale.StatusCode);
-        Assert.Contains("text/html", reisStale.Content.Headers.ContentType?.MediaType ?? "", StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("ll-g78-shell", staleHtml, StringComparison.Ordinal);
-        Assert.DoesNotContain("Niet bewaard — probeer opnieuw", staleHtml, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task Groep78_paspoort_before_journey_done_shows_friendly_page_not_500()
     {
         await EnableSchoolsAsync();
@@ -708,14 +658,6 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         return client;
     }
 
-    private static Task<HttpResponseMessage> FetchReisDocumentAsync(HttpClient client)
-    {
-        var keepalive = new HttpRequestMessage(HttpMethod.Get, "/leerling/reis?_=" + DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-        keepalive.Headers.TryAddWithoutValidation("Accept", "text/html");
-        keepalive.Headers.TryAddWithoutValidation("X-Requested-With", "XMLHttpRequest");
-        return client.SendAsync(keepalive);
-    }
-
     private static Task<HttpResponseMessage> PostLoginAsync(HttpClient client, Seed seed)
         => client.PostAsync("/leerling/login", new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -742,50 +684,6 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         }
 
         return null;
-    }
-
-    private async Task<Guid> ResolvePupilCodeIdAsync(Seed seed)
-    {
-        await using var scope = _api.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
-        var row = await db.PupilCodes
-            .Where(c => c.SchoolClassId == seed.ClassId)
-            .Select(c => new { c.Id, c.CodeProtected })
-            .ToListAsync();
-        var match = row.FirstOrDefault(c => codes.Unprotect(c.CodeProtected) == seed.PlainCode);
-        Assert.NotNull(match);
-        return match!.Id;
-    }
-
-    private static async Task CompleteIslandAndVuurtorenAnswersAsync(HttpClient client, int answerCount)
-    {
-        var eiland = await client.GetAsync("/leerling/eiland");
-        var eilandHtml = await eiland.Content.ReadAsStringAsync();
-        var tokenField = ExtractFormFieldName(eilandHtml, "hidden")!;
-        var token = ExtractHiddenInput(eilandHtml, tokenField)!;
-
-        Assert.Equal(HttpStatusCode.Redirect, (await client.PostAsync(
-            "/leerling/eiland/save",
-            new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                [tokenField] = token,
-                ["Likes"] = "sport",
-                ["Dislikes"] = "rekenen",
-            }))).StatusCode);
-
-        for (var i = 0; i < answerCount; i++)
-        {
-            var reisAfter = await client.GetAsync("/leerling/reis");
-            var reisHtml = await reisAfter.Content.ReadAsStringAsync();
-            Assert.Equal(HttpStatusCode.OK, reisAfter.StatusCode);
-            tokenField = ExtractFormFieldName(reisHtml, "hidden")!;
-            token = ExtractHiddenInput(reisHtml, tokenField)!;
-            var itemId = ExtractHiddenInput(reisHtml, "ItemId")!;
-            Assert.False(string.IsNullOrWhiteSpace(itemId));
-            var saveAnswer = await PostWebReisAnswerAsync(client, tokenField, token, itemId, 4);
-            Assert.Equal(HttpStatusCode.OK, saveAnswer.StatusCode);
-        }
     }
 
     private static async Task<(HttpStatusCode Status, PupilProgressStateDto? Body)> GetProgressAsync(
@@ -934,6 +832,87 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         }
 
         await db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Groep78_full_journey_alternating_two_web_instances_never_save_failed()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedOpenClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        var sharedKeys = Path.Combine(Path.GetTempPath(), "jobsy-dp-dual-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(sharedKeys);
+
+        await using var webA = new PupilWebFactory(apiHandler, sharedDataProtectionKeysPath: sharedKeys);
+        await using var webB = new PupilWebFactory(apiHandler, sharedDataProtectionKeysPath: sharedKeys);
+
+        using var bootstrap = webA.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = false
+        });
+        var login = await PostLoginAsync(bootstrap, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+        Assert.True(login.Headers.TryGetValues("Set-Cookie", out var setCookies));
+
+        var cookieHandler = new LoadBalancedCookieHandler(
+            new AlternatingWebHandler(webA.Server.CreateHandler(), webB.Server.CreateHandler()),
+            setCookies);
+        using var client = new HttpClient(cookieHandler, disposeHandler: true)
+        {
+            BaseAddress = new Uri("http://localhost/")
+        };
+        client.DefaultRequestHeaders.Accept.ParseAdd("text/html");
+
+        using var api = new HttpClient(apiHandler, disposeHandler: false) { BaseAddress = new Uri("http://localhost/") };
+        var apiTicket = CookieValue(setCookies, PupilApiSessionCookie.Name)!;
+        await SetJourneyThemeAsync(api, apiTicket, PupilJourneyTheme.ZeeExpeditie);
+
+        for (var step = 0; step < 160; step++)
+        {
+            var progress = await GetProgressAsync(api, apiTicket);
+            Assert.Equal(HttpStatusCode.OK, progress.Status);
+            if (progress.Body!.Completed || string.Equals(progress.Body.NextStep, "done", StringComparison.OrdinalIgnoreCase))
+            {
+                break;
+            }
+
+            if (string.Equals(progress.Body.NextStep, "vakken", StringComparison.OrdinalIgnoreCase))
+            {
+                await CompleteVakkenAsync(api, apiTicket);
+                break;
+            }
+
+            if (progress.Body.NeedsIsland || progress.Body.NextStep == "island")
+            {
+                await SaveChipsViaWebAsync(client);
+                continue;
+            }
+
+            if (string.Equals(progress.Body.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(progress.Body.NextPuzzleKey))
+            {
+                await SavePuzzleViaWebAsync(client, progress.Body.NextPuzzleKey!);
+                continue;
+            }
+
+            Assert.False(string.IsNullOrWhiteSpace(progress.Body.CurrentItemId));
+            var reisGet = await client.GetAsync("/leerling/reis");
+            var html = await reisGet.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, reisGet.StatusCode);
+            Assert.DoesNotContain("Niet bewaard — probeer opnieuw", html, StringComparison.Ordinal);
+            await AssertWebReisAnswerOkAsync(client, progress.Body.CurrentItemId!);
+        }
+
+        var klaar = await client.GetAsync("/leerling/reis");
+        var klaarHtml = await klaar.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Niet bewaard — probeer opnieuw", klaarHtml, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"leerling-reis-klaar\"", klaarHtml, StringComparison.Ordinal);
+
+        var paspoort = await client.GetAsync("/leerling/paspoort");
+        var paspoortHtml = await paspoort.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, paspoort.StatusCode);
+        Assert.DoesNotContain("Niet bewaard", paspoortHtml, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1508,15 +1487,139 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
     private sealed record Seed(Guid SchoolId, Guid ClassId, string PlainCode);
 
+    private static async Task SaveChipsViaWebAsync(HttpClient client)
+    {
+        var eiland = await client.GetAsync("/leerling/eiland");
+        var html = await eiland.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, eiland.StatusCode);
+        var tokenField = ExtractFormFieldName(html, "hidden")!;
+        var token = ExtractHiddenInput(html, tokenField)!;
+        var save = await client.PostAsync(
+            "/leerling/eiland/save",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField] = token,
+                ["Likes"] = "sport",
+                ["Dislikes"] = "rekenen",
+            }));
+        Assert.Equal(HttpStatusCode.Redirect, save.StatusCode);
+    }
+
+    private static async Task SavePuzzleViaWebAsync(HttpClient client, string puzzleKey)
+    {
+        var page = await client.GetAsync("/leerling/puzzel/" + Uri.EscapeDataString(puzzleKey));
+        var html = await page.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        var tokenField = ExtractFormFieldName(html, "hidden")!;
+        var token = ExtractHiddenInput(html, tokenField)!;
+        var save = await client.PostAsync(
+            "/leerling/puzzel/" + Uri.EscapeDataString(puzzleKey) + "/save",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField] = token,
+                ["Outcome"] = "done",
+            }));
+        Assert.True(save.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.OK);
+    }
+
+    private sealed class LoadBalancedCookieHandler : DelegatingHandler
+    {
+        private readonly CookieContainer _cookies = new();
+        private static readonly Uri Origin = new("http://localhost/");
+
+        public LoadBalancedCookieHandler(HttpMessageHandler inner, IEnumerable<string> seedSetCookies)
+        {
+            InnerHandler = inner;
+            foreach (var raw in seedSetCookies)
+            {
+                try
+                {
+                    _cookies.SetCookies(Origin, raw);
+                }
+                catch (CookieException)
+                {
+                    // Parsed from responses when seeding fails.
+                }
+            }
+        }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var uri = request.RequestUri ?? Origin;
+            var cookieHeader = _cookies.GetCookieHeader(uri);
+            if (!string.IsNullOrEmpty(cookieHeader))
+            {
+                request.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
+            }
+
+            var response = await base.SendAsync(request, cancellationToken);
+            if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
+            {
+                foreach (var raw in setCookies)
+                {
+                    try
+                    {
+                        _cookies.SetCookies(uri, raw);
+                    }
+                    catch (CookieException)
+                    {
+                        // Ignore malformed test cookies.
+                    }
+                }
+            }
+
+            return response;
+        }
+    }
+
+    private sealed class AlternatingWebHandler : DelegatingHandler
+    {
+        private readonly HttpMessageInvoker _a;
+        private readonly HttpMessageInvoker _b;
+        private int _n;
+
+        public AlternatingWebHandler(HttpMessageHandler a, HttpMessageHandler b)
+        {
+            _a = new HttpMessageInvoker(a, disposeHandler: false);
+            _b = new HttpMessageInvoker(b, disposeHandler: false);
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var invoker = Interlocked.Increment(ref _n) % 2 == 1 ? _a : _b;
+            return invoker.SendAsync(request, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _a.Dispose();
+                _b.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+    }
+
     private sealed class PupilWebFactory : WebWebApplicationFactory
     {
         private readonly HttpMessageHandler _api;
         private readonly IFeatureFlags? _flags;
+        private readonly string? _sharedDataProtectionKeysPath;
 
-        public PupilWebFactory(HttpMessageHandler api, IFeatureFlags? flags = null)
+        public PupilWebFactory(
+            HttpMessageHandler api,
+            IFeatureFlags? flags = null,
+            string? sharedDataProtectionKeysPath = null)
         {
             _api = api;
             _flags = flags;
+            _sharedDataProtectionKeysPath = sharedDataProtectionKeysPath;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -1533,6 +1636,14 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             });
             builder.ConfigureTestServices(services =>
             {
+                if (!string.IsNullOrWhiteSpace(_sharedDataProtectionKeysPath))
+                {
+                    services.RemoveAll<IConfigureOptions<KeyManagementOptions>>();
+                    services.AddDataProtection()
+                        .SetApplicationName("Jobsy.Web")
+                        .PersistKeysToFileSystem(new DirectoryInfo(_sharedDataProtectionKeysPath));
+                }
+
                 services.RemoveAll<IAntiforgery>();
                 services.AddSingleton<IAntiforgery>(new AlwaysValidAntiforgery());
                 services.RemoveAll<IFeatureFlags>();

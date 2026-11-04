@@ -126,10 +126,9 @@ public class PupilCircuitAuthorizationTests
     [Fact]
     public async Task Blazor_circuit_uses_the_pupil_scheme_and_staff_pages_do_not()
     {
-        var store = new PupilApiTicketStore();
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
-        builder.Services.AddSingleton(store);
+        builder.Services.AddScoped<PupilRequestApiTicket>();
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options => options.Cookie.Name = "Jobsy.Auth")
             .AddCookie(PupilAuthDefaults.Scheme, options => options.Cookie.Name = PupilAuthDefaults.CookieName);
@@ -161,8 +160,11 @@ public class PupilCircuitAuthorizationTests
 
             ctx.Response.Headers["X-Auth"] = ctx.User.Identity?.AuthenticationType ?? "none";
             ctx.Response.Headers["X-Pupil"] = JobsyApiAuthHandler.IsPupilPrincipal(ctx.User) ? "1" : "0";
-            var code = ctx.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-            ctx.Response.Headers["X-Ticket"] = store.Get(code) ?? "";
+            ctx.Response.Headers["X-Ticket"] = JobsyApiAuthHandler.IsPupilPrincipal(ctx.User)
+                ? ctx.RequestServices.GetService<PupilRequestApiTicket>()?.GetForForwarding(ctx)
+                  ?? PupilApiSessionCookie.Read(ctx)
+                  ?? ""
+                : "";
             ctx.Response.StatusCode = StatusCodes.Status204NoContent;
         });
 

@@ -93,7 +93,6 @@
     bindVakkenScale(shell);
     bindWereld(shell);
     bindPuzzleIntro(shell);
-    bindSchelpenPatternPick(shell);
     bindPuzzle(shell);
     bindIslandSteps(shell);
     bindJobPicks(shell);
@@ -312,6 +311,9 @@
       }
 
       function syncChipButton(btn, key, isDislike) {
+        if (!btn || !btn.classList) {
+          return;
+        }
         var on = isDislike ? dislikeSet.has(key) : likeSet.has(key);
         btn.classList.toggle("is-on", on);
         btn.classList.toggle("is-like", !isDislike && on);
@@ -394,6 +396,7 @@
     if (!cards.length) return;
     var done = 0;
     cards.forEach(function (card) {
+      if (!card || !card.classList) return;
       var leuk = null;
       var goed = null;
       card.querySelectorAll('input[type="hidden"]').forEach(function (inp) {
@@ -470,6 +473,7 @@
           var group = btn.closest(".ll-vt-sc, .ll-vakken__scale-btns");
           if (group) {
             group.querySelectorAll("[data-ll-vt-scale]").forEach(function (b) {
+              if (!b || !b.classList) return;
               b.classList.toggle("is-on", b === btn);
               b.setAttribute("aria-checked", b === btn ? "true" : "false");
             });
@@ -579,7 +583,7 @@
         if (!noneNote) return;
         // G78 mock: keep “Dan ga je naar Check je droombaan…” visible above the footer.
         noneNote.removeAttribute("hidden");
-        noneNote.classList.add("on");
+        if (noneNote.classList) noneNote.classList.add("on");
       }
       form.querySelectorAll('input[name="DreamJob"][type="radio"]').forEach(function (radio) {
         radio.addEventListener("change", function () {
@@ -610,6 +614,7 @@
   }
 
   function bindSchelpenPatternPick(root) {
+    if (!root || !root.getAttribute) return;
     if (root.getAttribute("data-ll-schelp-pattern-bound") === "1") return;
     root.setAttribute("data-ll-schelp-pattern-bound", "1");
     root.addEventListener("click", function (evt) {
@@ -623,9 +628,11 @@
       var answer = parseInt(card.getAttribute("data-ll-puzzle-answer") || "0", 10);
       var choice = parseInt(btn.getAttribute("data-ll-schelp-choice") || "0", 10);
       playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (b) {
+        if (!b || !b.classList) return;
         b.classList.remove("sel");
         b.setAttribute("aria-pressed", "false");
       });
+      if (!btn.classList) return;
       btn.classList.add("sel");
       btn.setAttribute("aria-pressed", "true");
       if (choice !== answer) {
@@ -639,7 +646,7 @@
       var outcome = form.querySelector('input[name="Outcome"]');
       if (outcome) outcome.value = "done";
       var qSlot = playSection.querySelector("[data-ll-puzzle-slot-q]");
-      if (qSlot) {
+      if (qSlot && qSlot.classList) {
         qSlot.classList.remove("q");
         qSlot.innerHTML =
           '<img src="/leerling/werelden/img/schelp-' +
@@ -733,6 +740,7 @@
         var order = [1, 3, 2, 4];
         var pick = null;
         playSection.querySelectorAll("[data-ll-shell-index]").forEach(function (btn) {
+          if (!btn || !btn.classList) return;
           btn.addEventListener("click", function () {
             var idx = parseInt(btn.getAttribute("data-ll-shell-index"), 10);
             if (pick === null) {
@@ -750,11 +758,11 @@
             order[idx] = tmp;
             pick = null;
             section.querySelectorAll("[data-ll-shell-index]").forEach(function (b) {
-              b.classList.remove("is-pick");
+              if (b && b.classList) b.classList.remove("is-pick");
             });
             if (order[0] === 1 && order[1] === 2 && order[2] === 3 && order[3] === 4) {
               section.querySelectorAll(".ll-puzzle__shell").forEach(function (s) {
-                s.classList.add("is-done");
+                if (s && s.classList) s.classList.add("is-done");
               });
               markSolved();
             }
@@ -847,7 +855,7 @@
           step = 0;
           setLampUi("watch");
           playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (b) {
-            b.classList.remove("is-lit");
+            if (b && b.classList) b.classList.remove("is-lit");
           });
           var i = 0;
           function nextLamp() {
@@ -878,6 +886,7 @@
         }
 
         playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (btn) {
+          if (!btn || !btn.classList) return;
           btn.addEventListener("click", function () {
             if (playMode || !ready) return;
             var lamp = parseInt(btn.getAttribute("data-ll-lamp-index"), 10);
@@ -931,7 +940,7 @@
           var group = btn.parentElement;
           if (group) {
             group.querySelectorAll("[data-mhbo-scale-value]").forEach(function (b) {
-              b.classList.toggle("is-on", b === btn);
+              if (b && b.classList) b.classList.toggle("is-on", b === btn);
             });
           }
         });
@@ -993,7 +1002,7 @@
     bindVakkenScale(root);
     bindWereld(root);
     bindPuzzleIntro(root);
-    bindSchelpenPatternPick(root);
+    bindSchelpenPatternPick(document);
     bindPuzzle(root);
     bindIslandSteps(root);
     bindJobPicks(root);
