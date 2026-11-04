@@ -376,7 +376,7 @@
     "v": "20261025-87"
   },
   "js/app-core.js": {
-    "sha256": "44f8a6cad03a70ae04b0b3e8493debf38145205bdcb310b9ff3712a62a135723",
+    "sha256": "6a5b9c6d93df1475b14cac8f2af70b556c21eb44060c1f3c87627b616aa9807a",
     "v": "20261026-87"
   },
   "js/app-extras.js": {
@@ -400,8 +400,8 @@
     "v": "20261025-87"
   },
   "js/banenkaart-maps-boot.js": {
-    "sha256": "e335f371a2dda759754225582b8877719c0ca5ba9e412e1026b67851d488b80a",
-    "v": "20261028-60"
+    "sha256": "19551c4636f006fa05fcde102e3ce6618aa18b784a5dc0e7223d727873fe3710",
+    "v": "20261104-cluster1"
   },
   "js/banenkaart-ov-travel.js": {
     "sha256": "38b6f01aec8c8b2ebc464e2c062ae0ae3f2a087b8fc2c120120afb35c8274c64",
@@ -468,8 +468,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "400620e7bf70ef1d634497f68f7c830514ff721593458a9df92fc412ff1c45ab",
-    "v": "20261028-60"
+    "sha256": "4328a1465485151392918ee8bcfa1226a351bfd2e7b0b94c06e35970b70a3816",
+    "v": "20261104-cluster1"
   },
   "js/jobsy-basemap-warm.js": {
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
