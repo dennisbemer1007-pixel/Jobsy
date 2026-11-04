@@ -157,8 +157,7 @@ public static class AuthServiceCollectionExtensions
                         return Task.CompletedTask;
                     }
 
-                    var codeId = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-                    http.RequestServices.GetService<PupilApiTicketStore>()?.Remove(codeId);
+                    http.RequestServices.GetService<PupilRequestApiTicket>()?.Clear();
                     PupilApiSessionCookie.Clear(http);
                     http.Response.Headers.CacheControl = "no-store";
                     http.Response.Redirect("/leerling?error=expired");
@@ -406,7 +405,7 @@ public static class AuthServiceCollectionExtensions
             };
         });
 
-        services.AddSingleton<PupilApiTicketStore>();
+        services.AddScoped<PupilRequestApiTicket>();
         services.AddSingleton<ParentApiTicketStore>();
         services.AddAuthorization(ConfigureAuthorization);
         services.AddCascadingAuthenticationState();

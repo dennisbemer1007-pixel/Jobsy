@@ -88,7 +88,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken);
-        CaptureRenewedApiTicket(response, httpContext, user);
+        CaptureRenewedApiTicket(response, httpContext);
         CaptureRenewedParentApiTicket(response, httpContext, user);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
@@ -122,7 +122,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyParentCookie(retry, httpContext, user);
         ApplyDefaultAccept(retry);
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
-        CaptureRenewedApiTicket(retriedResponse, httpContext, user);
+        CaptureRenewedApiTicket(retriedResponse, httpContext);
         CaptureRenewedParentApiTicket(retriedResponse, httpContext, user);
         return retriedResponse;
     }
@@ -183,10 +183,13 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     private string? ReadPupilTicket(HttpContext? httpContext, ClaimsPrincipal user)
     {
-        var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        var store = _services.GetService<PupilApiTicketStore>();
-        var cookie = httpContext is null ? null : PupilApiSessionCookie.Read(httpContext);
-        return store?.ResolveTicket(codeId, cookie);
+        if (!IsPupilPrincipal(user))
+        {
+            return null;
+        }
+
+        return _services.GetService<PupilRequestApiTicket>()?.GetForForwarding(httpContext)
+               ?? (httpContext is null ? null : PupilApiSessionCookie.Read(httpContext));
     }
 
     /// <summary>Session calls. The public school list must not wait for a ticket.</summary>
@@ -211,8 +214,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
     private void CaptureRenewedApiTicket(
         HttpResponseMessage response,
-        HttpContext? httpContext,
-        ClaimsPrincipal user)
+        HttpContext? httpContext)
     {
         if (!TryReadSetCookieHeaders(response, out var values))
         {
@@ -226,12 +228,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
                 continue;
             }
 
-            var codeId = user.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-            _services.GetService<PupilApiTicketStore>()?.Set(codeId, value);
-            if (httpContext is not null && !httpContext.Response.HasStarted)
-            {
-                PupilApiSessionCookie.Set(httpContext, value);
-            }
+            _services.GetService<PupilRequestApiTicket>()?.ApplyRefresh(value, httpContext);
 
             return;
         }

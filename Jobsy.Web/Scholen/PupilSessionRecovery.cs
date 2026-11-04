@@ -10,8 +10,7 @@ public static class PupilSessionRecovery
 {
     public static async Task<IResult> RedirectToCodeLoginAsync(HttpContext http, string? returnPath = null)
     {
-        var codeId = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        http.RequestServices.GetService<PupilApiTicketStore>()?.Remove(codeId);
+        http.RequestServices.GetService<PupilRequestApiTicket>()?.Clear();
         await http.SignOutAsync(PupilAuthDefaults.Scheme);
         PupilApiSessionCookie.Clear(http);
         http.Response.Headers.CacheControl = "no-store";

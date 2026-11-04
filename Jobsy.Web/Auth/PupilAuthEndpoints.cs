@@ -125,8 +125,7 @@ public static class PupilAuthEndpoints
             }
 
             var pupil = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
-            var codeId = pupil.Principal?.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-            http.RequestServices.GetService<PupilApiTicketStore>()?.Remove(codeId);
+            http.RequestServices.GetService<PupilRequestApiTicket>()?.Clear();
             await http.SignOutAsync(PupilAuthDefaults.Scheme);
             PupilApiSessionCookie.Clear(http);
             var form = await http.Request.ReadFormAsync(ct);

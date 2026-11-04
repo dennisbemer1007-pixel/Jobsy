@@ -64,8 +64,6 @@ public sealed class PupilCircuitAuthenticationMiddleware
                 && global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(pupil.Principal))
             {
                 context.User = pupil.Principal;
-                var codeId = pupil.Principal.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-                PupilApiTicketStoreSeeding.SeedFromRequestCookie(context, codeId);
             }
             else
             {
@@ -80,11 +78,6 @@ public sealed class PupilCircuitAuthenticationMiddleware
                 }
             }
         }
-        else if (global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(context.User))
-        {
-            var codeId = context.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-            PupilApiTicketStoreSeeding.SeedFromRequestCookie(context, codeId);
-        }
         else if (global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(context.User))
         {
             var codeId = context.User.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
@@ -92,79 +85,10 @@ public sealed class PupilCircuitAuthenticationMiddleware
         }
 
         await _next(context);
-        PupilApiTicketSyncMiddleware.TrySyncResponseCookie(context);
     }
 
     internal static bool IsBlazorCircuit(PathString path)
         => path.StartsWithSegments("/_blazor");
-}
-
-/// <summary>
-/// After pupil SSR handlers, mirror the latest API ticket from
-/// <see cref="PupilApiTicketStore"/> into <see cref="PupilApiSessionCookie"/> when the
-/// browser cookie lags (common after sliding refresh on JSON saves).
-/// </summary>
-public static class PupilApiTicketSyncMiddleware
-{
-    internal static void TrySyncResponseCookie(HttpContext context)
-    {
-        if (context.Response.HasStarted
-            || !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsPupilPrincipal(context.User))
-        {
-            return;
-        }
-
-        var codeId = context.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        var ticketStore = context.RequestServices.GetService<PupilApiTicketStore>();
-        if (ticketStore is null || string.IsNullOrWhiteSpace(codeId))
-        {
-            return;
-        }
-
-        var cookie = PupilApiSessionCookie.Read(context);
-        var resolved = ticketStore.ResolveTicket(codeId, cookie);
-        if (string.IsNullOrWhiteSpace(resolved))
-        {
-            return;
-        }
-
-        if (!string.Equals(resolved, cookie, StringComparison.Ordinal))
-        {
-            PupilApiSessionCookie.Set(context, resolved);
-        }
-    }
-}
-
-/// <summary>
-/// Seeds the per-code API ticket store from the browser cookie without downgrading a fresher
-/// in-memory ticket after sliding refresh on the previous hop (same web instance).
-/// </summary>
-internal static class PupilApiTicketStoreSeeding
-{
-    internal static void SeedFromRequestCookie(HttpContext context, string? codeId)
-    {
-        var store = context.RequestServices.GetService<PupilApiTicketStore>();
-        if (store is null || string.IsNullOrWhiteSpace(codeId))
-        {
-            return;
-        }
-
-        var cookie = PupilApiSessionCookie.Read(context);
-        if (string.IsNullOrWhiteSpace(cookie))
-        {
-            return;
-        }
-
-        if (!store.TryGetEntry(codeId, out var stored)
-            || string.Equals(cookie, stored.Ticket, StringComparison.Ordinal))
-        {
-            store.Set(codeId, cookie);
-            return;
-        }
-
-        // Cross-node saves renew the API ticket in the browser; adopt it on this instance.
-        store.Set(codeId, cookie);
-    }
 }
 
 internal static class ParentApiTicketStoreSeeding
