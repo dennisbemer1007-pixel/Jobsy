@@ -128,13 +128,13 @@ public static class PupilPdfEndpoints
 
     private static string? ResolveApiTicket(HttpContext http)
     {
-        var ticket = PupilApiSessionCookie.Read(http);
-        if (!string.IsNullOrWhiteSpace(ticket))
+        var codeId = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        var stored = http.RequestServices.GetService<PupilApiTicketStore>()?.Get(codeId);
+        if (!string.IsNullOrWhiteSpace(stored))
         {
-            return ticket;
+            return stored;
         }
 
-        var codeId = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
-        return http.RequestServices.GetService<PupilApiTicketStore>()?.Get(codeId);
+        return PupilApiSessionCookie.Read(http);
     }
 }
