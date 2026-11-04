@@ -50,6 +50,7 @@
     var hidden = form.querySelector('input[name="Value"]');
     if (hidden) hidden.value = val;
     form.querySelectorAll("[data-ll-answer-value]").forEach(function (b) {
+      if (!b || !b.classList) return;
       var sel = b === btn;
       b.classList.toggle("sel", sel);
       b.setAttribute("aria-checked", sel ? "true" : "false");
@@ -583,6 +584,7 @@
       form.querySelectorAll('input[name="DreamJob"][type="radio"]').forEach(function (radio) {
         radio.addEventListener("change", function () {
           form.querySelectorAll(".jpick").forEach(function (card) {
+            if (!card || !card.classList) return;
             var on = card.contains(radio) && radio.checked;
             card.classList.toggle("sel", on);
           });
@@ -595,6 +597,7 @@
         }
         btn.addEventListener("click", function () {
           form.querySelectorAll(".jpick").forEach(function (b) {
+            if (!b || !b.classList) return;
             var sel = b === btn;
             b.classList.toggle("sel", sel);
             b.setAttribute("aria-pressed", sel ? "true" : "false");
@@ -664,6 +667,7 @@
   }
 
   function openPuzzleCard(btn) {
+    if (!btn || !btn.classList) return;
     btn.classList.add("is-open");
     var src = btn.getAttribute("data-ll-match-src");
     if (src) {
@@ -675,6 +679,7 @@
   }
 
   function closePuzzleCard(btn) {
+    if (!btn || !btn.classList) return;
     btn.classList.remove("is-open");
     if (!btn.getAttribute("data-ll-match-src")) return;
     var back = btn.getAttribute("data-ll-card-back");
@@ -799,8 +804,8 @@
               matched.add(face);
               open.delete(first);
               open.delete(idx);
-              firstBtn.classList.add("is-matched");
-              btn.classList.add("is-matched");
+              if (firstBtn && firstBtn.classList) firstBtn.classList.add("is-matched");
+              if (btn && btn.classList) btn.classList.add("is-matched");
               first = null;
               if (matched.size >= 3) {
                 markSolved();

@@ -369,6 +369,78 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Groep78_after_island_first_vuurtoren_answer_reis_ok_even_with_stale_api_cookie()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtIslandGateAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+        var staleApiCookie = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        var webCookie = CookieValue(login.Headers.GetValues("Set-Cookie"), PupilAuthDefaults.CookieName)!;
+        Assert.False(string.IsNullOrWhiteSpace(staleApiCookie));
+        Assert.False(string.IsNullOrWhiteSpace(webCookie));
+
+        var eiland = await client.GetAsync("/leerling/eiland");
+        var eilandHtml = await eiland.Content.ReadAsStringAsync();
+        var tokenField = ExtractFormFieldName(eilandHtml, "hidden")!;
+        var token = ExtractHiddenInput(eilandHtml, tokenField)!;
+
+        Assert.Equal(HttpStatusCode.Redirect, (await client.PostAsync(
+            "/leerling/eiland/save",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                [tokenField] = token,
+                ["Likes"] = "sport",
+                ["Dislikes"] = "rekenen",
+            }))).StatusCode);
+
+        var reisAfter = await client.GetAsync("/leerling/reis");
+        var reisHtml = await reisAfter.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reisAfter.StatusCode);
+        Assert.Contains("ll-g78-shell", reisHtml, StringComparison.Ordinal);
+        tokenField = ExtractFormFieldName(reisHtml, "hidden")!;
+        token = ExtractHiddenInput(reisHtml, tokenField)!;
+        var itemId = ExtractHiddenInput(reisHtml, "ItemId")!;
+        Assert.False(string.IsNullOrWhiteSpace(itemId));
+
+        var saveAnswer = await PostWebReisAnswerAsync(client, tokenField, token, itemId, 4);
+        Assert.Equal(HttpStatusCode.OK, saveAnswer.StatusCode);
+
+        var staleReis = new HttpRequestMessage(HttpMethod.Get, "/leerling/reis");
+        staleReis.Headers.TryAddWithoutValidation(
+            "Cookie",
+            PupilAuthDefaults.CookieName + "=" + webCookie + "; "
+            + PupilApiSessionCookie.Name + "=" + staleApiCookie);
+        staleReis.Headers.Accept.ParseAdd("text/html");
+        var reisStale = await client.SendAsync(staleReis);
+        var staleHtml = await reisStale.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, reisStale.StatusCode);
+        Assert.Contains("text/html", reisStale.Content.Headers.ContentType?.MediaType ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ll-g78-shell", staleHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Niet bewaard — probeer opnieuw", staleHtml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Groep78_paspoort_before_journey_done_shows_friendly_page_not_500()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedGroep78AtIslandGateAsync();
+        using var web = new PupilWebFactory(_api.Server.CreateHandler(), new PassportV2SchoolsOnFlags());
+        using var client = HtmlClient(web);
+        Assert.Equal(HttpStatusCode.Redirect, (await PostLoginAsync(client, seed)).StatusCode);
+
+        var paspoort = await client.GetAsync("/leerling/paspoort");
+        var html = await paspoort.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, paspoort.StatusCode);
+        Assert.Contains("leerling-paspoort-incomplete", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("LB-BKH9", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Groep78_web_eiland_save_then_json_answer_after_island_does_not_session_lost()
     {
         await EnableSchoolsAsync();
@@ -1333,8 +1405,13 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     private sealed class PupilWebFactory : WebWebApplicationFactory
     {
         private readonly HttpMessageHandler _api;
+        private readonly IFeatureFlags? _flags;
 
-        public PupilWebFactory(HttpMessageHandler api) => _api = api;
+        public PupilWebFactory(HttpMessageHandler api, IFeatureFlags? flags = null)
+        {
+            _api = api;
+            _flags = flags;
+        }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -1353,7 +1430,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
                 services.RemoveAll<IAntiforgery>();
                 services.AddSingleton<IAntiforgery>(new AlwaysValidAntiforgery());
                 services.RemoveAll<IFeatureFlags>();
-                services.AddSingleton<IFeatureFlags>(new SchoolsOnFlags());
+                services.AddSingleton<IFeatureFlags>(_flags ?? new SchoolsOnFlags());
                 services.RemoveAll<IHttpClientFactory>();
                 services.AddSingleton<IHttpClientFactory>(new ForwardFactory(_api));
                 services.RemoveAll<JobsyApiClient>();
@@ -1375,6 +1452,25 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
                     return new JobsyApiClient(http);
                 });
             });
+        }
+    }
+
+    private sealed class PassportV2SchoolsOnFlags : IFeatureFlags
+    {
+        private static readonly FeatureFlagSnapshot Snap = new(
+            false,
+            false,
+            PupilPassportV2Enabled: true,
+            SchoolsEnabled: true);
+
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap);
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap.IsEnabled(feature));
+
+        public void Invalidate()
+        {
         }
     }
 
