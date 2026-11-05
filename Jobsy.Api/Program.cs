@@ -153,7 +153,9 @@ builder.Services.AddRateLimiter(options =>
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
         ?? (isProduction ? 60 : 10_000);
-    var pupilLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
+    var pupilAuthenticatedLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
+        ?? (isProduction ? 200 : 10_000);
+    var pupilAnonymousLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilAnonymousPermitLimit")
         ?? (isProduction ? 60 : 10_000);
     var kvkSearchLimit = builder.Configuration.GetValue<int?>("RateLimiting:KvkSearchPermitLimit")
         ?? 30;
@@ -402,16 +404,21 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
-    // Global pupil API partition: 60 req/min per IP (HMAC partition in production).
+    // Pupil API: per pupil_code_id when signed in; anonymous login/list stays on the IP bucket.
     options.AddPolicy("pupil", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+    {
+        var pupilCodeId = httpContext.User.FindFirst(Jobsy.Core.Authorization.PupilClaimTypes.PupilCodeId)?.Value;
+        var partition = RateLimitPartitioning.ResolvePupilPartitionKey(httpContext, internalClientIpSecret);
+        var limit = string.IsNullOrWhiteSpace(pupilCodeId) ? pupilAnonymousLimit : pupilAuthenticatedLimit;
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partition,
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = pupilLimit,
+                PermitLimit = limit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
 });
 
 builder.Services.AddHsts(options =>

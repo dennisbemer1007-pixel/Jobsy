@@ -78,19 +78,12 @@ public static class PupilLeerlingJourneyEndpoints
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
         }
 
-        if (outcome.IsOffline || outcome.Value is null)
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/start", useG78: true, null, af, out var startFail))
         {
-            return ProgressLoadFailed(
-                http,
-                culture,
-                culture["Leerling.Reis.Offline"],
-                "/leerling/start",
-                useG78: true,
-                themeKey: null,
-                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return startFail!;
         }
 
-        var progress = outcome.Value;
+        var progress = outcome.Value!;
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
         {
@@ -194,19 +187,12 @@ public static class PupilLeerlingJourneyEndpoints
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
         }
 
-        if (outcome.IsOffline || outcome.Value is null)
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/reis", useG78: true, null, af, out var reisFail))
         {
-            return ProgressLoadFailed(
-                http,
-                culture,
-                culture["Leerling.Reis.SaveFailed"],
-                "/leerling/reis",
-                useG78: true,
-                themeKey: null,
-                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return reisFail!;
         }
 
-        var progress = outcome.Value;
+        var progress = outcome.Value!;
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
         {
@@ -254,6 +240,7 @@ public static class PupilLeerlingJourneyEndpoints
         var error = http.Request.Query["error"].ToString() switch
         {
             "save" => culture["Leerling.Reis.SaveFailed"],
+            "wait" => culture["Leerling.Reis.RateLimited"],
             _ => null,
         };
         var display = progress;
@@ -351,21 +338,32 @@ public static class PupilLeerlingJourneyEndpoints
         int status,
         string? recoveryRedirect = null)
     {
+        var errorMessage = ReisAnswerErrorMessage(culture, status);
         if (wantsJson)
         {
             return Results.Json(
                 new PupilReisAnswerSaveJson(
                     Ok: false,
                     RedirectPath: recoveryRedirect,
-                    Error: culture["Leerling.Reis.SaveFailed"],
+                    Error: errorMessage,
                     Status: status),
                 statusCode: status);
+        }
+
+        if (status == StatusCodes.Status429TooManyRequests)
+        {
+            return Results.Redirect("/leerling/reis?error=wait");
         }
 
         return Results.Redirect(string.IsNullOrEmpty(recoveryRedirect)
             ? "/leerling/reis?error=save"
             : recoveryRedirect);
     }
+
+    private static string ReisAnswerErrorMessage(CultureState culture, int status)
+        => status == StatusCodes.Status429TooManyRequests
+            ? culture["Leerling.Reis.RateLimited"]
+            : culture["Leerling.Reis.SaveFailed"];
 
     private static string? ReisAnswerRecoveryRedirect(string? errorBody)
     {
@@ -413,19 +411,12 @@ public static class PupilLeerlingJourneyEndpoints
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
         }
 
-        if (outcome.IsOffline || outcome.Value is null)
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/eiland", useG78: true, null, af, out var eilandFail))
         {
-            return ProgressLoadFailed(
-                http,
-                culture,
-                culture["Leerling.Reis.SaveFailed"],
-                "/leerling/eiland",
-                useG78: true,
-                themeKey: null,
-                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return eilandFail!;
         }
 
-        var progress = outcome.Value;
+        var progress = outcome.Value!;
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
         {
@@ -503,19 +494,12 @@ public static class PupilLeerlingJourneyEndpoints
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
         }
 
-        if (outcome.IsOffline || outcome.Value is null)
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/vakken", useG78: true, null, af, out var vakkenFail))
         {
-            return ProgressLoadFailed(
-                http,
-                culture,
-                culture["Leerling.Reis.SaveFailed"],
-                "/leerling/vakken",
-                useG78: true,
-                themeKey: null,
-                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return vakkenFail!;
         }
 
-        var progress = outcome.Value;
+        var progress = outcome.Value!;
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
         {
@@ -592,19 +576,13 @@ public static class PupilLeerlingJourneyEndpoints
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
         }
 
-        if (outcome.IsOffline || outcome.Value is null)
+        var puzzleRoute = $"/leerling/puzzel/{key}";
+        if (TryProgressLoadFailure(outcome, http, culture, puzzleRoute, useG78: true, null, af, out var puzzelFail))
         {
-            return ProgressLoadFailed(
-                http,
-                culture,
-                culture["Leerling.Reis.SaveFailed"],
-                $"/leerling/puzzel/{key}",
-                useG78: true,
-                themeKey: null,
-                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return puzzelFail!;
         }
 
-        var progress = outcome.Value;
+        var progress = outcome.Value!;
 
         if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
         {
@@ -913,6 +891,10 @@ public static class PupilLeerlingJourneyEndpoints
         {
             throw;
         }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsRateLimited(ex.StatusCode))
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             LeerlingLoadLog.Failed(services, "progress", ex, ex is HttpRequestException http ? http.StatusCode : null, giveUp: false);
@@ -986,6 +968,46 @@ public static class PupilLeerlingJourneyEndpoints
             ShowPause = false,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
+    }
+
+    private static bool TryProgressLoadFailure(
+        PupilLoadOutcome<PupilProgressStateDto> outcome,
+        HttpContext http,
+        CultureState culture,
+        string route,
+        bool useG78,
+        string? themeKey,
+        IAntiforgery af,
+        out IResult? failure)
+    {
+        failure = null;
+        if (outcome.IsRateLimited)
+        {
+            failure = ProgressLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.RateLimited"],
+                route,
+                useG78,
+                themeKey,
+                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return true;
+        }
+
+        if (outcome.IsOffline || outcome.Value is null)
+        {
+            failure = ProgressLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.Offline"],
+                route,
+                useG78,
+                themeKey,
+                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return true;
+        }
+
+        return false;
     }
 
     private static IResult ProgressLoadFailed(

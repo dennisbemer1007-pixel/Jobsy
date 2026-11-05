@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using Jobsy.Api.Security;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Security;
@@ -77,6 +78,32 @@ public class RateLimitPartitioningUnitTests
         http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
 
         var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
+        Assert.Equal("cip:198.51.100.7", key);
+    }
+
+    [Fact]
+    public void Pupil_session_partitions_by_pupil_code_id()
+    {
+        var codeId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000001");
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(PupilClaimTypes.PupilCodeId, codeId.ToString("D"))],
+            PupilAuthDefaults.Scheme));
+        http.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.50");
+
+        var key = RateLimitPartitioning.ResolvePupilPartitionKey(http, Secret);
+        Assert.Equal("pupil:" + codeId.ToString("D"), key);
+    }
+
+    [Fact]
+    public void Anonymous_pupil_login_uses_ip_partition_not_pupil_code()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers[RateLimitPartitioning.ClientIpHeader] = "198.51.100.7";
+        http.Request.Headers[RateLimitPartitioning.InternalSecretHeader] = Secret;
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+
+        var key = RateLimitPartitioning.ResolvePupilPartitionKey(http, Secret);
         Assert.Equal("cip:198.51.100.7", key);
     }
 
