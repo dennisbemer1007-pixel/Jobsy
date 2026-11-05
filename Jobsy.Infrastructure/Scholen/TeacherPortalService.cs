@@ -231,7 +231,9 @@ public sealed class TeacherPortalService : ITeacherPortalService
         var results = await _db.PupilResults.AsNoTracking()
             .Where(r => r.SchoolClassId == classId)
             .ToListAsync(cancellationToken);
-        var group = MapGroupInsights(results, schoolClass.QuestionSet);
+        var group = schoolClass.QuestionSet == PupilQuestionSet.MboHbo
+            ? MapMboGroupInsights(codes, schoolClass)
+            : MapGroupInsights(results, schoolClass.QuestionSet);
 
         var previewLimit = schoolClass.QuestionSet == PupilQuestionSet.MboHbo
             ? codes.Count
@@ -312,6 +314,15 @@ public sealed class TeacherPortalService : ITeacherPortalService
         var results = await _db.PupilResults.AsNoTracking()
             .Where(r => r.SchoolClassId == classId)
             .ToListAsync(cancellationToken);
+        if (schoolClass.QuestionSet == PupilQuestionSet.MboHbo)
+        {
+            var codes = await _db.PupilCodes.AsNoTracking()
+                .Include(c => c.Progress)
+                .Where(c => c.SchoolClassId == classId)
+                .ToListAsync(cancellationToken);
+            return MapMboGroupInsights(codes, schoolClass);
+        }
+
         return MapGroupInsights(results, schoolClass.QuestionSet);
     }
 
@@ -882,11 +893,30 @@ public sealed class TeacherPortalService : ITeacherPortalService
             levelLocked);
     }
 
+    private TeacherGroupInsightsDto MapMboGroupInsights(
+        IReadOnlyList<PupilCode> codes,
+        SchoolClass schoolClass)
+    {
+        var completedStates = codes
+            .Where(c => PupilMboHboTeacherProgress.IsFullyComplete(c, schoolClass))
+            .Select(c => PupilMboHboProgressState.Parse(c.Progress?.MboHboProgressJson))
+            .ToList();
+        var agg = PupilMboHboGroupInsightsAggregator.Aggregate(completedStates, schoolClass.Level);
+        return MapGroupInsightsFromAggregate(agg, PupilQuestionSet.MboHbo);
+    }
+
     private TeacherGroupInsightsDto MapGroupInsights(
         IReadOnlyList<PupilResult> results,
         PupilQuestionSet questionSet)
     {
         var agg = ClassResultsAggregator.AggregateTeacherGroup(results, questionSet);
+        return MapGroupInsightsFromAggregate(agg, questionSet);
+    }
+
+    private TeacherGroupInsightsDto MapGroupInsightsFromAggregate(
+        TeacherGroupAggregate agg,
+        PupilQuestionSet questionSet)
+    {
         string? l1 = null;
         string? l2 = null;
         if (agg.Visible && agg.RiasecBars.Count > 0)

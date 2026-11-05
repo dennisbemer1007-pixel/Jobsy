@@ -20,10 +20,7 @@ public static class TeacherPortalReadOnlySsrHtml
         sb.Append("<h1>");
         sb.Append(WebUtility.HtmlEncode(culture["Leraar.Group.Title"]));
         sb.Append("</h1><p class=\"muted\">");
-        var qsKey = group.QuestionSet == PupilQuestionSet.Groep78
-            ? "School.QuestionSet.Groep78"
-            : "School.QuestionSet.Vo";
-        sb.Append(WebUtility.HtmlEncode(culture[qsKey]));
+        sb.Append(WebUtility.HtmlEncode(QuestionSetSubtitle(group.QuestionSet, culture)));
         sb.Append("</p></header>");
 
         if (!group.Visible)
@@ -36,10 +33,27 @@ public static class TeacherPortalReadOnlySsrHtml
 
         sb.Append("<div class=\"sch-group-grid\">");
         AppendRiasecSection(sb, group, culture);
-        AppendValuesSection(sb, group, culture);
-        AppendCulturesSection(sb, group, culture);
-        AppendCompetenceSection(sb, group, culture);
-        AppendDiscussionSection(sb, group, culture);
+        if (ShouldShowGroupSection(group, group.TopValues))
+        {
+            AppendValuesSection(sb, group, culture);
+        }
+
+        if (ShouldShowGroupSection(group, group.TopCultures))
+        {
+            AppendCulturesSection(sb, group, culture);
+        }
+
+        if (ShouldShowGroupSection(group, group.CompetenceBands))
+        {
+            AppendCompetenceSection(sb, group, culture);
+        }
+
+        if (group.QuestionSet != PupilQuestionSet.MboHbo
+            && group.DiscussionPromptKeys.Count > 0)
+        {
+            AppendDiscussionSection(sb, group, culture);
+        }
+
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -152,46 +166,60 @@ public static class TeacherPortalReadOnlySsrHtml
         sb.Append("</p></header>");
 
         sb.Append("""
-            <div class="mhbo-root" style="min-height:auto;background:transparent">
-            <div class="mhbo-grid" style="grid-template-columns:1.55fr 1fr;margin-top:18px">
-            <div class="mhbo-card" style="padding:14px 16px">
-            <div style="display:flex;gap:16px;font-size:12.5px;color:#5a6576;margin-bottom:6px">
+            <div class="mhbo-root mhbo-teacher" style="min-height:auto;background:transparent">
+            <div class="mhbo-teacher-layout">
+            <div class="mhbo-card mhbo-teacher-progress-card">
+            <div class="mhbo-teacher-legend">
             <span><span class="mhbo-dot d0"></span> Niet gestart</span>
             <span><span class="mhbo-dot d1"></span> Bezig</span>
             <span><span class="mhbo-dot d2"></span> Afgerond</span>
             </div>
-            <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <div class="ent-data-table-wrap mhbo-teacher-progress-wrap">
+            <table class="ent-data-table data-table mhbo-teacher-progress" data-testid="mhbo-teacher-progress-table">
             <thead><tr>
-            <th>Code</th><th>Vakken</th><th>Interesse</th><th>Compet.</th><th>Beroepen</th><th>Werkw.</th><th>Af</th><th>Paspoort</th>
+            <th scope="col">Code</th>
+            <th scope="col">Vakken</th>
+            <th scope="col">Interesse</th>
+            <th scope="col">Compet.</th>
+            <th scope="col">Beroepen</th>
+            <th scope="col">Werkw.</th>
+            <th scope="col">Af</th>
+            <th scope="col">Paspoort</th>
             </tr></thead><tbody>
             """);
 
         foreach (var row in model.Codes)
         {
-            sb.Append("<tr><td><b>");
+            sb.Append("<tr class=\"ent-data-table__row mhbo-teacher-progress__row\">");
+            sb.Append("<td data-label=\"Code\"><span class=\"sch-code\">");
             sb.Append(WebUtility.HtmlEncode(row.CodeDisplay));
-            sb.Append("</b>");
+            sb.Append("</span>");
             if (row.PatternSignal)
             {
-                sb.Append("""<span class="mhbo-chip" title="Antwoordpatroon opvallend" style="margin-left:6px">⚠</span>""");
+                sb.Append("""<span class="mhbo-chip" title="Antwoordpatroon opvallend">⚠</span>""");
             }
 
             sb.Append("</td>");
-            foreach (var st in row.BlockStatuses)
+            for (var i = 0; i < row.BlockStatuses.Count; i++)
             {
-                sb.Append("<td><span class=\"mhbo-dot ");
-                sb.Append(DotClass(st));
-                sb.Append("\"></span></td>");
+                var label = i < MboProgressBlockLabels.Length ? MboProgressBlockLabels[i] : "Test";
+                sb.Append("<td data-label=\"");
+                sb.Append(WebUtility.HtmlEncode(label));
+                sb.Append("\"><span class=\"mhbo-dot ");
+                sb.Append(DotClass(row.BlockStatuses[i]));
+                sb.Append("\" aria-hidden=\"true\"></span><span class=\"mhbo-teacher-progress__status\">");
+                sb.Append(WebUtility.HtmlEncode(MboTileStatusLabel(row.BlockStatuses[i])));
+                sb.Append("</span></td>");
             }
 
-            sb.Append("<td>");
+            sb.Append("<td data-label=\"Af\" class=\"tabular\">");
             sb.Append(row.CompletedCount.ToString(CultureInfo.InvariantCulture));
-            sb.Append("/5</td><td>");
-            sb.Append(row.PassportReady ? "Klaar" : "—");
+            sb.Append("/5</td><td data-label=\"Paspoort\">");
+            sb.Append(WebUtility.HtmlEncode(row.PassportReady ? "Klaar" : "—"));
             sb.Append("</td></tr>");
         }
 
-        sb.Append("</tbody></table></div><div class=\"mhbo-grid\">");
+        sb.Append("</tbody></table></div></div><div class=\"mhbo-teacher-charts mhbo-grid\">");
         sb.Append("<div class=\"mhbo-card\"><h2 style=\"font-size:18px;color:#0f2747\">Voortgang per test</h2>");
         foreach (var pr in model.Charts.BlockCompletion)
         {
@@ -221,6 +249,38 @@ public static class TeacherPortalReadOnlySsrHtml
         sb.Append("</div></div></div></div>");
         return sb.ToString();
     }
+
+    private static readonly string[] MboProgressBlockLabels =
+        ["Vakken", "Interesse", "Compet.", "Beroepen", "Werkw."];
+
+    private static string MboTileStatusLabel(PupilMboHboTileStatus st)
+        => st switch
+        {
+            PupilMboHboTileStatus.Completed => "Afgerond",
+            PupilMboHboTileStatus.InProgress => "Bezig",
+            _ => "Niet gestart"
+        };
+
+    private static string QuestionSetSubtitle(PupilQuestionSet set, CultureState culture)
+        => set switch
+        {
+            PupilQuestionSet.Groep78 => culture["School.QuestionSet.Groep78"],
+            PupilQuestionSet.MboHbo => culture["School.QuestionSet.MboHbo"],
+            _ => culture["School.QuestionSet.Vo"]
+        };
+
+    private static bool ShouldShowGroupSection(TeacherGroupInsightsDto group, IReadOnlyList<NamedCountDto> items)
+        => group.QuestionSet != PupilQuestionSet.MboHbo || items.Count > 0;
+
+    private static string GroupDimensionLabel(TeacherGroupInsightsDto group, CultureState culture, string key)
+        => group.QuestionSet == PupilQuestionSet.MboHbo
+            ? key
+            : PupilDimensionText.Value(culture, key);
+
+    private static string GroupCultureLabel(TeacherGroupInsightsDto group, CultureState culture, string key)
+        => group.QuestionSet == PupilQuestionSet.MboHbo
+            ? key
+            : PupilDimensionText.Culture(culture, key);
 
     private static void AppendClassBreadcrumb(StringBuilder sb, Guid classId, CultureState culture, string currentLabel)
     {
@@ -266,7 +326,7 @@ public static class TeacherPortalReadOnlySsrHtml
         foreach (var v in group.TopValues)
         {
             sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(PupilDimensionText.Value(culture, v.Key)));
+            sb.Append(WebUtility.HtmlEncode(GroupDimensionLabel(group, culture, v.Key)));
             sb.Append(" <span class=\"muted\">· ");
             sb.Append(v.Count.ToString(CultureInfo.InvariantCulture));
             sb.Append("</span></li>");
@@ -283,7 +343,7 @@ public static class TeacherPortalReadOnlySsrHtml
         foreach (var c in group.TopCultures)
         {
             sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(PupilDimensionText.Culture(culture, c.Key)));
+            sb.Append(WebUtility.HtmlEncode(GroupCultureLabel(group, culture, c.Key)));
             sb.Append(" <span class=\"muted\">· ");
             sb.Append(c.Count.ToString(CultureInfo.InvariantCulture));
             sb.Append("</span></li>");
