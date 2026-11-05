@@ -16,6 +16,6 @@ public static partial class PageAssetCatalog
 
     public static IReadOnlyList<string> LeerlingMboHboStylesheets(string? rawPath)
         => IncludesLeerlingMboHboStyles(rawPath)
-            ? [WwwrootAssetCatalog.Url(LeerlingMboHboStylesheetPath)]
+            ? [WwwrootAssetCatalog.UrlLeadingSlash(LeerlingMboHboStylesheetPath)]
             : [];
 }

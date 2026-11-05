@@ -19,7 +19,7 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<PupilMboHboIntroResponse>(cancellationToken: ct);
     }
 
-    public async Task<PupilMboHboQuestionDto?> GetMboHboQuestionAsync(
+    public async Task<(PupilMboHboQuestionDto? Ok, int StatusCode)> GetMboHboQuestionResponseAsync(
         string blockKey,
         string? itemId = null,
         CancellationToken ct = default)
@@ -27,12 +27,28 @@ public sealed partial class JobsyApiClient
         var q = string.IsNullOrWhiteSpace(itemId)
             ? ""
             : $"?itemId={Uri.EscapeDataString(itemId)}";
-        return await GetApiJsonAsync<PupilMboHboQuestionDto>(
+        using var response = await _http.GetAsync(
             $"api/pupil/mbo-hbo/blocks/{Uri.EscapeDataString(blockKey)}/question{q}",
             ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return (null, (int)response.StatusCode);
+        }
+
+        var ok = await ReadApiJsonAsync<PupilMboHboQuestionDto>(response.Content, ct);
+        return (ok, (int)response.StatusCode);
     }
 
-    public async Task<PupilMboHboAnswerResponse?> SaveMboHboAnswerAsync(
+    public async Task<PupilMboHboQuestionDto?> GetMboHboQuestionAsync(
+        string blockKey,
+        string? itemId = null,
+        CancellationToken ct = default)
+    {
+        var (ok, _) = await GetMboHboQuestionResponseAsync(blockKey, itemId, ct);
+        return ok;
+    }
+
+    public async Task<(PupilMboHboAnswerResponse? Ok, int StatusCode, string? ErrorBody)> SaveMboHboAnswerAsync(
         string blockKey,
         string itemId,
         int value,
@@ -42,15 +58,17 @@ public sealed partial class JobsyApiClient
             $"api/pupil/mbo-hbo/blocks/{Uri.EscapeDataString(blockKey)}/answers/{Uri.EscapeDataString(itemId)}",
             new PupilMboHboAnswerRequest(value),
             ct);
-        if (!response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-            return null;
+            var ok = await ReadApiJsonAsync<PupilMboHboAnswerResponse>(response.Content, ct);
+            return (ok, (int)response.StatusCode, null);
         }
 
-        return await response.Content.ReadFromJsonAsync<PupilMboHboAnswerResponse>(cancellationToken: ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        return (null, (int)response.StatusCode, body);
     }
 
-    public async Task<PupilMboHboAnswerResponse?> SaveMboHboVakAnswerAsync(
+    public async Task<(PupilMboHboAnswerResponse? Ok, int StatusCode, string? ErrorBody)> SaveMboHboVakAnswerAsync(
         string itemId,
         int leuk,
         int goed,
@@ -60,12 +78,14 @@ public sealed partial class JobsyApiClient
             $"api/pupil/mbo-hbo/blocks/vakken/answers/{Uri.EscapeDataString(itemId)}",
             new PupilMboHboVakAnswerRequest(leuk, goed),
             ct);
-        if (!response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-            return null;
+            var ok = await ReadApiJsonAsync<PupilMboHboAnswerResponse>(response.Content, ct);
+            return (ok, (int)response.StatusCode, null);
         }
 
-        return await response.Content.ReadFromJsonAsync<PupilMboHboAnswerResponse>(cancellationToken: ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        return (null, (int)response.StatusCode, body);
     }
 
     public async Task<PupilMboHboOutcomeDto?> GetMboHboOutcomeAsync(string blockKey, CancellationToken ct = default)

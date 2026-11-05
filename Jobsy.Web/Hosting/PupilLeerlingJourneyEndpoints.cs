@@ -864,49 +864,274 @@ public static class PupilLeerlingJourneyEndpoints
         return MboHtml(http, "Jouw testen", body, "/leerling/mbo-hbo/overzicht");
     }
 
-    private static async Task<IResult> GetMboTestAsync(HttpContext http, JobsyApiClient api, string blockKey, IAntiforgery af, CancellationToken ct)
+    private static async Task<IResult> GetMboTestAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache progressCache,
+        CultureState culture,
+        string blockKey,
+        IAntiforgery af,
+        CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
-        var q = await api.GetMboHboQuestionAsync(blockKey, itemId: null, ct);
-        var body = q is null ? "<div class=\"mhbo-wrap\"><p>Vraag niet gevonden.</p></div>" : PupilMboHboSsrHtml.TestQuestion(q, blockKey, PupilLeerlingSsrParts.AntiforgeryField(af, http), $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}/answer");
-        return MboHtml(http, "Test", body, $"/leerling/mbo-hbo/test/{blockKey}");
+        culture.InitializeFromRequest(http);
+        var route = $"/leerling/mbo-hbo/test/{blockKey}";
+        var itemId = http.Request.Query["itemId"].ToString();
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            itemId = null;
+        }
+
+        var error = http.Request.Query["error"].ToString() switch
+        {
+            "save" => culture["Leerling.Reis.SaveFailed"],
+            "wait" => culture["Leerling.Reis.RateLimited"],
+            _ => null,
+        };
+
+        PupilMboHboQuestionDto q;
+        if (PupilCodeId(http) is { } codeId
+            && progressCache.TryConsumeSkipFetch(codeId, blockKey, out var cached)
+            && cached is not null
+            && (itemId is null || string.Equals(cached.ItemId, itemId, StringComparison.Ordinal)))
+        {
+            q = cached;
+        }
+        else
+        {
+            var outcome = await LoadMboQuestionAsync(http, api, progressCache, blockKey, itemId, ct);
+            if (outcome.IsRateLimited)
+            {
+                return MboLoadFailed(http, culture, culture["Leerling.Reis.RateLimited"], route, rateLimited: true);
+            }
+
+            if (outcome.IsOffline || outcome.Value is null)
+            {
+                return MboLoadFailed(http, culture, culture["Leerling.Reis.Offline"], route);
+            }
+
+            q = outcome.Value;
+        }
+
+        if (PupilCodeId(http) is { } rememberId)
+        {
+            progressCache.RememberQuestion(rememberId, blockKey, q);
+        }
+
+        if (PupilCodeId(http) is { } pendingId
+            && progressCache.TryGetPendingAnswer(pendingId, blockKey, q.ItemId, out var pending))
+        {
+            q = ApplyPendingAnswer(q, pending);
+        }
+
+        var body = PupilMboHboSsrHtml.TestQuestion(
+            q,
+            blockKey,
+            culture,
+            PupilLeerlingSsrParts.AntiforgeryField(af, http),
+            $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}/answer",
+            error);
+        return MboHtml(http, "Test", body, route);
     }
 
-    private static async Task<IResult> PostMboTestAsync(HttpContext http, JobsyApiClient api, string blockKey, CancellationToken ct)
+    private static async Task<IResult> PostMboTestAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache progressCache,
+        CultureState culture,
+        IAntiforgery af,
+        string blockKey,
+        CancellationToken ct)
     {
-        if (!http.Request.HasFormContentType)
+        culture.InitializeFromRequest(http);
+        var testRoute = $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}";
+        if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
         {
-            return Results.Redirect($"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}");
+            return Results.Redirect($"{testRoute}?error=save");
         }
 
         var form = await http.Request.ReadFormAsync(ct);
         var itemId = form["ItemId"].ToString();
-        PupilMboHboAnswerResponse? res;
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return Results.Redirect($"{testRoute}?error=save");
+        }
+
+        (PupilMboHboAnswerResponse? Ok, int StatusCode, string? ErrorBody) result;
         if (form.ContainsKey("Leuk") && form.ContainsKey("Goed"))
         {
             _ = int.TryParse(form["Leuk"].ToString(), out var leuk);
             _ = int.TryParse(form["Goed"].ToString(), out var goed);
-            res = await api.SaveMboHboVakAnswerAsync(itemId, leuk, goed, ct);
+            result = await api.SaveMboHboVakAnswerAsync(itemId, leuk, goed, ct);
         }
         else
         {
             _ = int.TryParse(form["Value"].ToString(), out var val);
-            res = await api.SaveMboHboAnswerAsync(blockKey, itemId, val, ct);
+            result = await api.SaveMboHboAnswerAsync(blockKey, itemId, val, ct);
         }
 
-        if (res is null)
+        if (result.Ok is null)
         {
-            return Results.Redirect($"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}");
+            if (result.StatusCode == StatusCodes.Status429TooManyRequests
+                && PupilCodeId(http) is { } rateCodeId)
+            {
+                if (form.ContainsKey("Leuk") && form.ContainsKey("Goed"))
+                {
+                    _ = int.TryParse(form["Leuk"].ToString(), out var leuk);
+                    _ = int.TryParse(form["Goed"].ToString(), out var goed);
+                    progressCache.StagePendingAnswer(rateCodeId, blockKey, itemId, null, leuk, goed);
+                }
+                else
+                {
+                    _ = int.TryParse(form["Value"].ToString(), out var val);
+                    progressCache.StagePendingAnswer(rateCodeId, blockKey, itemId, val, null, null);
+                }
+
+                return Results.Redirect($"{testRoute}?itemId={Uri.EscapeDataString(itemId)}&error=wait");
+            }
+
+            return Results.Redirect($"{testRoute}?itemId={Uri.EscapeDataString(itemId)}&error=save");
         }
 
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.ClearPendingAnswer(codeId, blockKey);
+        }
+
+        var res = result.Ok;
         if (res.BlockComplete)
         {
             return Results.Redirect(PupilMboHboEntryPaths.Uitkomst(PupilMboHboEntryPaths.TryParseBlockRoute(blockKey, out var b) ? b : PupilMboHboBlock.Interesse));
         }
 
-        return Results.Redirect(string.IsNullOrEmpty(res.NextItemId)
-            ? PupilMboHboEntryPaths.Overzicht
-            : $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}?itemId={Uri.EscapeDataString(res.NextItemId)}");
+        var nextItemId = res.NextItemId;
+        if (string.IsNullOrEmpty(nextItemId))
+        {
+            return Results.Redirect(PupilMboHboEntryPaths.Overzicht);
+        }
+
+        if (PupilCodeId(http) is { } stageId)
+        {
+            var nextQuestion = await api.GetMboHboQuestionAsync(blockKey, nextItemId, ct);
+            if (nextQuestion is not null)
+            {
+                progressCache.StageAfterAnswer(stageId, blockKey, nextQuestion);
+            }
+        }
+
+        return Results.Redirect($"{testRoute}?itemId={Uri.EscapeDataString(nextItemId)}");
+    }
+
+    private static async Task<IResult> GetMboPaspoortAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var model = await api.GetMboHboPassportAsync(ct);
+        var pdfHref = PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
+        var pdfNotice = http.Request.Query["pdf"].ToString() switch
+        {
+            "locked" => "Je paspoort is nog niet klaar. Rond eerst al je testen af.",
+            "error" => "De PDF lukt nu even niet. Probeer het zo opnieuw.",
+            _ => null,
+        };
+        var body = model is null
+            ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>"
+            : PupilMboHboSsrHtml.Paspoort(model, culture, pdfHref, pdfNotice);
+        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort");
+    }
+
+    private static Task<PupilLoadOutcome<PupilMboHboQuestionDto>> LoadMboQuestionAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache progressCache,
+        string blockKey,
+        string? itemId,
+        CancellationToken ct)
+        => PupilLoadRetry.RunAsync(
+            () => LoadMboQuestionOnceAsync(http, api, progressCache, blockKey, itemId, ct),
+            http.RequestServices,
+            "mbo-hbo-question",
+            ct);
+
+    private static async Task<PupilMboHboQuestionDto?> LoadMboQuestionOnceAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache _,
+        string blockKey,
+        string? itemId,
+        CancellationToken ct)
+    {
+        try
+        {
+            var (question, status) = await api.GetMboHboQuestionResponseAsync(blockKey, itemId, ct);
+            if (question is not null)
+            {
+                return question;
+            }
+
+            if (status is StatusCodes.Status401Unauthorized or StatusCodes.Status403Forbidden)
+            {
+                throw new HttpRequestException("session", null, HttpStatusCode.Unauthorized);
+            }
+
+            if (status == StatusCodes.Status429TooManyRequests)
+            {
+                throw new HttpRequestException("rate_limited", null, HttpStatusCode.TooManyRequests);
+            }
+
+            return null;
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            throw;
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsRateLimited(ex.StatusCode))
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            LeerlingLoadLog.Failed(
+                http.RequestServices,
+                "mbo-hbo-question",
+                ex,
+                ex is HttpRequestException httpEx ? httpEx.StatusCode : null,
+                giveUp: false);
+            return null;
+        }
+    }
+
+    private static PupilMboHboQuestionDto ApplyPendingAnswer(
+        PupilMboHboQuestionDto q,
+        PupilMboHboWebProgressCache.PendingAnswer pending)
+        => q with
+        {
+            CurrentValue = pending.Value ?? q.CurrentValue,
+            CurrentLeuk = pending.Leuk ?? q.CurrentLeuk,
+            CurrentGoed = pending.Goed ?? q.CurrentGoed,
+        };
+
+    private static IResult MboLoadFailed(
+        HttpContext http,
+        CultureState culture,
+        string message,
+        string route,
+        bool rateLimited = false)
+    {
+        var button = rateLimited
+            ? culture["Leerling.Reis.Retry"]
+            : culture["Common.Error.TryAgain"];
+        var body = $"""
+            <div class="mhbo-wrap" data-testid="mhbo-load-retry">
+            <p class="mhbo-error" role="alert">{PupilLeerlingSsrParts.E(message)}</p>
+            <a class="mhbo-btn" href="{PupilLeerlingSsrParts.E(route)}">{PupilLeerlingSsrParts.E(button)}</a>
+            </div>
+            """;
+        return MboHtml(http, "Test", body, route);
     }
 
     private static async Task<IResult> GetMboUitkomstAsync(HttpContext http, JobsyApiClient api, string blockKey, CancellationToken ct)
@@ -915,14 +1140,6 @@ public static class PupilLeerlingJourneyEndpoints
         var model = await api.GetMboHboOutcomeAsync(blockKey, ct);
         var body = model is null ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>" : PupilMboHboSsrHtml.Uitkomst(model);
         return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}");
-    }
-
-    private static async Task<IResult> GetMboPaspoortAsync(HttpContext http, JobsyApiClient api, CancellationToken ct)
-    {
-        http.Response.Headers.CacheControl = "no-store";
-        var model = await api.GetMboHboPassportAsync(ct);
-        var body = model is null ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>" : PupilMboHboSsrHtml.Paspoort(model);
-        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort");
     }
 
     private static Task<PupilLoadOutcome<PupilProgressStateDto>> FetchProgressAsync(

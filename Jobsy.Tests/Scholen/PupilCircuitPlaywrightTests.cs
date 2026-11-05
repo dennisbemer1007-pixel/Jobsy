@@ -2742,6 +2742,68 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Theory(Timeout = 600_000)]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Mbo_hbo_pupil_ssr_pages_have_no_console_errors(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var seed = await SeedMboHboOpenAsync();
+
+        const string speechInit = """
+            window.__lobsyReadAloudSynth = {
+              getVoices: function () { return [{ lang: "nl-NL", localService: true }]; },
+              speak: function (u) { if (u && u.onstart) u.onstart(); if (u && u.onend) u.onend(); },
+              cancel: function () {},
+              addEventListener: function () {},
+              removeEventListener: function () {}
+            };
+            """;
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+            });
+        await context.AddInitScriptAsync(speechInit);
+
+        foreach (var (path, marker) in new[]
+                 {
+                     ("/leerling/mbo-hbo/uitleg", ".mhbo-wrap"),
+                     ("/leerling/mbo-hbo/overzicht", ".mhbo-overview-grid, .mhbo-wrap h1"),
+                     ("/leerling/mbo-hbo/test/interesse", "[data-testid=mhbo-test-question]"),
+                 })
+        {
+            var consoleErrors = new List<string>();
+            var pageErrors = new List<string>();
+            var page = await context.NewPageAsync();
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type is "error")
+                {
+                    consoleErrors.Add(msg.Text);
+                }
+            };
+            page.PageError += (_, err) => pageErrors.Add(err);
+
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+            await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator(marker).First.WaitForAsync(new() { Timeout = 60_000 });
+
+            var scripts = await page.EvaluateAsync<string[]>(
+                "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
+            Assert.Contains(scripts, s => s.Contains("jobsy-dom-safe.js", StringComparison.Ordinal));
+            Assert.Contains(scripts, s => s.Contains("leerling-journey-ssr.js", StringComparison.Ordinal));
+
+            AssertNoMeaningfulConsoleErrors(consoleErrors);
+            Assert.Empty(pageErrors);
+            await page.CloseAsync();
+        }
+    }
+
+    [Theory(Timeout = 600_000)]
     [InlineData(1440, 900, "1440")]
     [InlineData(390, 844, "390")]
     [InlineData(360, 740, "360")]

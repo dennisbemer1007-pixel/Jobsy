@@ -41,7 +41,8 @@ public sealed record PupilMboHboQuestionDto(
     PupilMboHboScaleKind Scale,
     int? CurrentValue,
     int? CurrentLeuk,
-    int? CurrentGoed);
+    int? CurrentGoed,
+    string? PreviousItemId = null);
 
 public sealed record PupilMboHboAnswerRequest(int Value);
 
