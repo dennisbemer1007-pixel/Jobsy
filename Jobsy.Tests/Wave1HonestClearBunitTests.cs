@@ -123,14 +123,27 @@ public class Wave1HonestClearBunitTests : JobsyBunitContext
     [InlineData(true)]
     public void Talent_pool_tag_input_follows_the_switch(bool showRiasec)
     {
-        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
+        var ctx = new JobsyBunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
+        ctx.Services.AddSingleton(sp => new CultureState(
+            sp.GetRequiredService<IJSRuntime>(),
+            sp,
+            sp.GetRequiredService<AuthenticationStateProvider>()));
+        ctx.Services.AddSingleton<IGeocodingClient>(new NullGeo());
+        ctx.Services.AddSingleton(new HttpClient(new ApiStub()) { BaseAddress = new Uri("http://localhost/") });
+        ctx.Services.AddSingleton(sp => new JobsyApiClient(sp.GetRequiredService<HttpClient>()));
+        ctx.Services.AddSingleton<IFeatureFlags>(_flags);
+        ctx.Services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 [Jobsy.Core.Rules.TalentPoolRiasecVisibility.ConfigKey] = showRiasec ? "true" : "false"
             })
             .Build());
+        BunitAntiforgery.Register(ctx.Services);
+        ctx.EnableInteractiveServerRenderer();
 
-        var cut = Render<TalentPoolSection>();
+        var cut = ctx.Render<TalentPoolSection>();
         cut.WaitForAssertion(() => Assert.Contains("Zoeken", cut.Markup, StringComparison.Ordinal));
         if (showRiasec)
         {

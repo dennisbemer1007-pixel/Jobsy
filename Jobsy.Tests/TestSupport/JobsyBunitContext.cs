@@ -9,6 +9,6 @@ namespace Jobsy.Tests.TestSupport;
 /// </summary>
 public class JobsyBunitContext : BunitContext
 {
-    protected void EnableInteractiveServerRenderer()
+    public void EnableInteractiveServerRenderer()
         => SetRendererInfo(new RendererInfo("Server", true));
 }
