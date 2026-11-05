@@ -2707,11 +2707,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             });
         await context.AddInitScriptAsync(speechInit);
 
-        foreach (var (seed, path, marker) in new[]
+        foreach (var (seed, path, marker, interact) in new[]
                  {
-                     (reisSeeds[0], "/leerling/reis", "[data-testid=ll-g78-answers], [data-testid=leerling-reis-klaar]"),
-                     (puzzSeeds[0], "/leerling/puzzel/schelpenrij", "[data-testid=ll-puzzle-root]"),
-                     (droomSeed, "/leerling/droombaan?pick=1", "[data-testid=ll-g78-job-picks]"),
+                     (reisSeeds[0], "/leerling/reis", "[data-testid=ll-g78-answers], [data-testid=leerling-reis-klaar]", (Func<IPage, Task>)InteractG78ReisQuestionAsync),
+                     (puzzSeeds[0], "/leerling/puzzel/schelpenrij", "[data-testid=ll-puzzle-root]", (Func<IPage, Task>)InteractNoOpAsync),
+                     (droomSeed, "/leerling/droombaan?pick=1", "[data-testid=ll-g78-job-picks]", (Func<IPage, Task>)InteractNoOpAsync),
                  })
         {
             var consoleErrors = new List<string>();
@@ -2729,6 +2729,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
             await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             await page.Locator(marker).First.WaitForAsync(new() { Timeout = 60_000 });
+            await interact(page);
 
             var scripts = await page.EvaluateAsync<string[]>(
                 "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
@@ -2769,11 +2770,12 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             });
         await context.AddInitScriptAsync(speechInit);
 
-        foreach (var (path, marker) in new[]
+        foreach (var (path, marker, interact) in new[]
                  {
-                     ("/leerling/mbo-hbo/uitleg", ".mhbo-wrap"),
-                     ("/leerling/mbo-hbo/overzicht", ".mhbo-overview-grid, .mhbo-wrap h1"),
-                     ("/leerling/mbo-hbo/test/interesse", "[data-testid=mhbo-test-question]"),
+                     ("/leerling/mbo-hbo/uitleg", ".mhbo-wrap", (Func<IPage, Task>)InteractNoOpAsync),
+                     ("/leerling/mbo-hbo/overzicht", ".mhbo-overview-grid, .mhbo-wrap h1", (Func<IPage, Task>)InteractNoOpAsync),
+                     ("/leerling/mbo-hbo/test/interesse", "[data-testid=mhbo-test-question]", (Func<IPage, Task>)InteractMboQuestionAsync),
+                     ("/leerling/mbo-hbo/paspoort", "[data-testid=mhbo-paspoort], .mhbo-wrap", (Func<IPage, Task>)InteractNoOpAsync),
                  })
         {
             var consoleErrors = new List<string>();
@@ -2791,6 +2793,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
             await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             await page.Locator(marker).First.WaitForAsync(new() { Timeout = 60_000 });
+            await interact(page);
 
             var scripts = await page.EvaluateAsync<string[]>(
                 "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
@@ -2800,6 +2803,96 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
             AssertNoMeaningfulConsoleErrors(consoleErrors);
             Assert.Empty(pageErrors);
             await page.CloseAsync();
+        }
+    }
+
+    [Theory(Timeout = 600_000)]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Mbo_hbo_header_overview_and_code_stay_on_one_row(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var seed = await SeedMboHboOpenAsync();
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+            });
+        var page = await context.NewPageAsync();
+        await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+        await page.GotoAsync($"{baseUrl}/leerling/mbo-hbo/test/interesse", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator("[data-testid=mhbo-test-question]").WaitForAsync(new() { Timeout = 60_000 });
+
+        var layout = await page.EvaluateAsync<HeaderLayout>(@"() => {
+          const top = document.querySelector('.mhbo-top');
+          const link = top && top.querySelector('.mhbo-lnk');
+          const chip = top && top.querySelector('.mhbo-chip');
+          if (!link || !chip) return null;
+          const linkStyle = getComputedStyle(link);
+          const chipStyle = getComputedStyle(chip);
+          const linkLine = parseFloat(linkStyle.lineHeight) || 16;
+          const chipLine = parseFloat(chipStyle.lineHeight) || 16;
+          const lr = link.getBoundingClientRect();
+          const cr = chip.getBoundingClientRect();
+          const overlap = lr.left < cr.right && cr.left < lr.right && lr.top < cr.bottom && cr.top < lr.bottom;
+          return {
+            linkLines: Math.max(1, Math.round(lr.height / linkLine)),
+            chipLines: Math.max(1, Math.round(cr.height / chipLine)),
+            overlap
+          };
+        }");
+
+        Assert.NotNull(layout);
+        Assert.True(layout!.LinkLines <= 1, $"Overzicht link wrapped ({layout.LinkLines} lines)");
+        Assert.True(layout.ChipLines <= 1, $"Code chip wrapped ({layout.ChipLines} lines)");
+        Assert.False(layout.Overlap, "Header controls overlap");
+        await page.CloseAsync();
+    }
+
+    private sealed class HeaderLayout
+    {
+        public int LinkLines { get; set; }
+        public int ChipLines { get; set; }
+        public bool Overlap { get; set; }
+    }
+
+    private static Task InteractNoOpAsync(IPage _) => Task.CompletedTask;
+
+    private static async Task InteractG78ReisQuestionAsync(IPage page)
+    {
+        var speak = page.Locator("[data-read-aloud-text]").First;
+        if (await speak.CountAsync() > 0)
+        {
+            await speak.ClickAsync(new() { Timeout = 5_000 });
+            await page.WaitForTimeoutAsync(400);
+        }
+
+        var answer = page.Locator("[data-ll-answer-value]").First;
+        if (await answer.CountAsync() > 0)
+        {
+            await answer.ClickAsync(new() { Timeout = 5_000 });
+            await page.WaitForTimeoutAsync(600);
+        }
+    }
+
+    private static async Task InteractMboQuestionAsync(IPage page)
+    {
+        var speak = page.Locator("[data-read-aloud-text], .read-aloud.speak").First;
+        if (await speak.CountAsync() > 0)
+        {
+            await speak.ClickAsync(new() { Timeout = 5_000 });
+            await page.WaitForTimeoutAsync(400);
+        }
+
+        var scale = page.Locator("[data-mhbo-scale-value]").Nth(2);
+        if (await scale.CountAsync() > 0)
+        {
+            await scale.ClickAsync(new() { Timeout = 5_000 });
+            await page.WaitForTimeoutAsync(300);
         }
     }
 

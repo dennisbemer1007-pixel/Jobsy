@@ -43,8 +43,11 @@ public sealed class PupilMboHboSsrHtmlTests
     public void Playwright_mbo_hbo_console_smoke_test_exists()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var html = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilMboHboSsrHtml.cs"));
         var tests = File.ReadAllText(Path.Combine(root, "Jobsy.Tests/Scholen/PupilCircuitPlaywrightTests.cs"));
         Assert.Contains("Mbo_hbo_pupil_ssr_pages_have_no_console_errors", tests, StringComparison.Ordinal);
+        Assert.Contains("Mbo_hbo_header_overview_and_code_stay_on_one_row", tests, StringComparison.Ordinal);
+        Assert.Contains("mhbo-paspoort", html, StringComparison.Ordinal);
         Assert.Contains("jobsy-dom-safe.js", tests, StringComparison.Ordinal);
     }
 }
