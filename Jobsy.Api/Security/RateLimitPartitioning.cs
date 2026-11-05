@@ -65,6 +65,17 @@ public static class RateLimitPartitioning
             return Store(httpContext, "uid:" + userId);
         }
 
+        var pupilCodeId = httpContext.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        if (!string.IsNullOrWhiteSpace(pupilCodeId))
+        {
+            return Store(httpContext, "pupil:" + pupilCodeId.Trim());
+        }
+
+        if (TryReadTrustedUserId(httpContext, internalSecret, out var trustedUserId))
+        {
+            return Store(httpContext, "uid:" + trustedUserId);
+        }
+
         if (TryReadTrustedClientIp(httpContext, internalSecret, out var trustedIp))
         {
             return Store(httpContext, "cip:" + trustedIp);
@@ -78,6 +89,47 @@ public static class RateLimitPartitioning
 
         var remote = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         return Store(httpContext, "ip:" + remote);
+    }
+
+    /// <summary>
+    /// Trusted Web→API user id (same secret as visitor IP). Used when the JWT principal is not
+    /// available yet at <c>UseRateLimiter</c> but the Web already authenticated the browser session.
+    /// </summary>
+    public static bool TryReadTrustedUserId(
+        HttpContext httpContext,
+        string? internalSecret,
+        out string userId)
+    {
+        userId = string.Empty;
+        if (string.IsNullOrWhiteSpace(internalSecret))
+        {
+            return false;
+        }
+
+        if (!httpContext.Request.Headers.TryGetValue(InternalSecretHeader, out var secretValues)
+            || !httpContext.Request.Headers.TryGetValue(InternalClientIpHeaders.RateLimitUserIdHeader, out var userValues))
+        {
+            return false;
+        }
+
+        var provided = secretValues.ToString() ?? string.Empty;
+        var expectedBytes = Encoding.UTF8.GetBytes(internalSecret.Trim());
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
+        if (expectedBytes.Length == 0
+            || providedBytes.Length != expectedBytes.Length
+            || !CryptographicOperations.FixedTimeEquals(providedBytes, expectedBytes))
+        {
+            return false;
+        }
+
+        var raw = userValues.ToString()?.Trim() ?? string.Empty;
+        if (!Guid.TryParse(raw, out _))
+        {
+            return false;
+        }
+
+        userId = raw;
+        return true;
     }
 
     public static bool TryReadTrustedClientIp(

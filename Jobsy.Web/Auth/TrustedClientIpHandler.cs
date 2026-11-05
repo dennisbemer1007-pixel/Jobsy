@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Jobsy.Core.Security;
 using Jobsy.Web.Security;
 
@@ -28,8 +29,18 @@ public sealed class TrustedClientIpHandler : DelegatingHandler
         HttpContext? httpContext,
         IConfiguration configuration)
     {
+        ApplyTrustedClientIp(request, httpContext, user: null, configuration);
+    }
+
+    public static void ApplyTrustedClientIp(
+        HttpRequestMessage request,
+        HttpContext? httpContext,
+        ClaimsPrincipal? user,
+        IConfiguration configuration)
+    {
         request.Headers.Remove(InternalClientIpHeaders.ClientIpHeader);
         request.Headers.Remove(InternalClientIpHeaders.InternalSecretHeader);
+        request.Headers.Remove(InternalClientIpHeaders.RateLimitUserIdHeader);
 
         var secret = configuration[InternalClientIpHeaders.ConfigKey];
         if (string.IsNullOrWhiteSpace(secret))
@@ -45,5 +56,17 @@ public sealed class TrustedClientIpHandler : DelegatingHandler
 
         request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.ClientIpHeader, clientIp);
         request.Headers.TryAddWithoutValidation(InternalClientIpHeaders.InternalSecretHeader, secret.Trim());
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst("sub")?.Value
+                         ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userId, out _))
+            {
+                request.Headers.TryAddWithoutValidation(
+                    InternalClientIpHeaders.RateLimitUserIdHeader,
+                    userId);
+            }
+        }
     }
 }

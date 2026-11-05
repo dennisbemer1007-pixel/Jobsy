@@ -50,7 +50,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var user = await ResolveUserAsync();
 
         ApplyAccessToken(request, user, httpContext);
-        ApplyTrustedClientIp(request, httpContext);
+        ApplyTrustedClientIp(request, httpContext, user);
         user = await ApplyPupilCookieAsync(request, httpContext, user, cancellationToken);
         ApplyParentCookie(request, httpContext, user);
 
@@ -117,7 +117,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var retry = await CloneRequestAsync(request, bodyBytes, cancellationToken);
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
         ApplyAccessToken(retry, user, httpContext);
-        ApplyTrustedClientIp(retry, httpContext);
+        ApplyTrustedClientIp(retry, httpContext, user);
         user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
         ApplyParentCookie(retry, httpContext, user);
         ApplyDefaultAccept(retry);
@@ -382,8 +382,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// behind a shared internal secret so anonymous public-* rate limits partition
     /// per visitor, not the shared Web→API hop.
     /// </summary>
-    private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext)
-        => Jobsy.Web.Auth.TrustedClientIpHandler.ApplyTrustedClientIp(request, httpContext, _configuration);
+    private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext, ClaimsPrincipal user)
+        => Jobsy.Web.Auth.TrustedClientIpHandler.ApplyTrustedClientIp(request, httpContext, user, _configuration);
 
     private async Task<bool> TrySilentDeviceRefreshAsync(HttpContext? httpContext, CancellationToken cancellationToken)
     {
