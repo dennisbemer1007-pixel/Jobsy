@@ -475,6 +475,10 @@
     "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
     "v": "20261023-19"
   },
+  "js/jobsy-dom-safe.js": {
+    "sha256": "07dbb8c087c8fcbb2c5d37916223a3b28a59fdc6c877cfe77b1fd7efc805f4d7",
+    "v": "20261105-catalog"
+  },
   "js/jobsy-geo-lite.js": {
     "sha256": "0f4176373cb6884b260bcf0e4ed7d51c2aa3280a22a01e216127af7df17fee81",
     "v": "20261025-87"
@@ -492,7 +496,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "92407e1a629017813fb4ab19bb5d4c6e64ab9aef65c7329fce1b368393a2f9c0",
+    "sha256": "a75c2335ea519acd6a338ec6d3d06c088a251b7a49e7cb550b2bc15047e6f4aa",
     "v": "20261103-01"
   },
   "js/leerling-login.js": {
@@ -600,7 +604,7 @@
     "v": "20261004-13"
   },
   "js/read-aloud.js": {
-    "sha256": "002865d6c2d498576cedadd36b0494cbd5345312afec3c2b55ce180b5e72d83d",
+    "sha256": "d82736d8cf942b186dc1a988255d17945ff46c3233f740a4eb4aaf3412756fb9",
     "v": "20261015-01"
   },
   "js/saved-ssr-filters.js": {
@@ -610,6 +614,10 @@
   "js/saved-ssr-unsave.js": {
     "sha256": "1120ba4b95fc79bbc448a55d126406d9b93367ce4eed23a6c51f0ff97806fa80",
     "v": "20261026-49"
+  },
+  "js/scholen-portal-ssr.js": {
+    "sha256": "f2f023106589fb4fe4dbde8a138f590cad430d3a347b671d7ab74df6a709d45a",
+    "v": "20261105-catalog"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "c6daa7faa5213415966cd25b8c1b6e147ac3ea532cc9a3e0b1128c71f1c5318c",

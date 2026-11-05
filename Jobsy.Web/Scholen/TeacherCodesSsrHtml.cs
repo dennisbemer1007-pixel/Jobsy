@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
-using System.Text.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
@@ -317,9 +316,9 @@ public static class TeacherCodesSsrHtml
         sb.Append("<form method=\"post\" action=\"");
         sb.Append($"/leraar/klas/{classId:D}/codes/{row.Id:D}/replace");
         sb.Append(PreserveQuerySuffix(classId, query, statusFilter, sort, sortDesc));
-        sb.Append("\" style=\"display:inline\" onsubmit=\"return confirm(");
-        sb.Append(JsonSerializer.Serialize(culture["School.Codes.ReplaceConfirm"]));
-        sb.Append(");\">");
+        sb.Append("\" style=\"display:inline\" data-sch-confirm=\"");
+        sb.Append(E(culture["School.Codes.ReplaceConfirm"]));
+        sb.Append("\">");
         sb.Append(replaceFormAntiforgeryPrefix);
         sb.Append("<button type=\"submit\" class=\"btn-compact\">");
         sb.Append(E(culture["School.Codes.Replace"]));

@@ -155,8 +155,13 @@
             return;
         }
         btn.setAttribute("aria-pressed", speaking ? "true" : "false");
-        btn.classList.toggle("is-speaking", speaking);
-        btn.classList.toggle("on", speaking);
+        if (window.jobsyDomSafe) {
+            window.jobsyDomSafe.toggleClass(btn, "is-speaking", speaking);
+            window.jobsyDomSafe.toggleClass(btn, "on", speaking);
+        } else if (btn.classList) {
+            btn.classList.toggle("is-speaking", speaking);
+            btn.classList.toggle("on", speaking);
+        }
         var labels = domButtonLabels(btn);
         if (speaking && labels.stop) {
             btn.setAttribute("aria-label", labels.stop);

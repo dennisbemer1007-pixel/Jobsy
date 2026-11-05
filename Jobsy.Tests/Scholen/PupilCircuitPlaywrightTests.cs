@@ -2678,6 +2678,70 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
     }
 
     [Theory(Timeout = 600_000)]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task G78_pupil_ssr_journey_pages_have_no_console_errors(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var baseUrl = EnsureWeb();
+        var reisSeeds = await SeedGroep78AtAsync(1, answered: 0, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var puzzSeeds = await SeedGroep78AtAsync(1, answered: 15, chipsSaved: false, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var droomSeed = await SeedCompletedWithDreamJobAsync(PupilDreamJobFit.UndecidedKey, PupilJourneyTheme.ZeeExpeditie);
+
+        const string speechInit = """
+            window.__lobsyReadAloudSynth = {
+              getVoices: function () { return [{ lang: "nl-NL", localService: true }]; },
+              speak: function (u) { if (u && u.onstart) u.onstart(); if (u && u.onend) u.onend(); },
+              cancel: function () {},
+              addEventListener: function () {},
+              removeEventListener: function () {}
+            };
+            """;
+
+        await using var context = width <= 400
+            ? await NewMobileContextAsync()
+            : await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+            });
+        await context.AddInitScriptAsync(speechInit);
+
+        foreach (var (seed, path, marker) in new[]
+                 {
+                     (reisSeeds[0], "/leerling/reis", "[data-testid=ll-g78-answers], [data-testid=leerling-reis-klaar]"),
+                     (puzzSeeds[0], "/leerling/puzzel/schelpenrij", "[data-testid=ll-puzzle-root]"),
+                     (droomSeed, "/leerling/droombaan?pick=1", "[data-testid=ll-g78-job-picks]"),
+                 })
+        {
+            var consoleErrors = new List<string>();
+            var pageErrors = new List<string>();
+            var page = await context.NewPageAsync();
+            page.Console += (_, msg) =>
+            {
+                if (msg.Type is "error")
+                {
+                    consoleErrors.Add(msg.Text);
+                }
+            };
+            page.PageError += (_, err) => pageErrors.Add(err);
+
+            await LoginAsync(page, $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}", seed.PlainCode, seed.ClassId);
+            await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator(marker).First.WaitForAsync(new() { Timeout = 60_000 });
+
+            var scripts = await page.EvaluateAsync<string[]>(
+                "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
+            Assert.Contains(scripts, s => s.Contains("jobsy-dom-safe.js", StringComparison.Ordinal));
+            Assert.Contains(scripts, s => s.Contains("leerling-journey-ssr.js", StringComparison.Ordinal));
+
+            AssertNoMeaningfulConsoleErrors(consoleErrors);
+            Assert.Empty(pageErrors);
+            await page.CloseAsync();
+        }
+    }
+
+    [Theory(Timeout = 600_000)]
     [InlineData(1440, 900, "1440")]
     [InlineData(390, 844, "390")]
     [InlineData(360, 740, "360")]

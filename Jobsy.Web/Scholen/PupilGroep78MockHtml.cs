@@ -198,7 +198,7 @@ internal static class PupilGroep78MockHtml
             <input type="radio" name="DreamJob" value="{PupilLeerlingSsrParts.E(title)}" class="visually-hidden" aria-label="{PupilLeerlingSsrParts.E(title)}"{checkedAttr} />
             <figure class="jpick-paint {paintClass}"><img src="{PupilLeerlingSsrParts.E(img)}" alt="" width="400" height="400" loading="lazy" /></figure>
             <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p>{whyBlock}</div>
-            <span class="jspeak" onclick="event.preventDefault(); event.stopPropagation();">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, $"ll-job-{jobKey}", culture)}</span>
+            <span class="jspeak">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, $"ll-job-{jobKey}", culture)}</span>
             {mark}
             </label>
             """;
@@ -244,7 +244,7 @@ internal static class PupilGroep78MockHtml
             <input type="radio" name="DreamJob" value="" class="visually-hidden" aria-label="{PupilLeerlingSsrParts.E(label)}"{checkedAttr} />
             <div class="jpick-art jpick-art-none" aria-hidden="true">?</div>
             <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(label)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p></div>
-            <span class="jspeak" onclick="event.preventDefault(); event.stopPropagation();">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, "ll-job-none", culture)}</span>
+            <span class="jspeak">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, "ll-job-none", culture)}</span>
             {mark}
             </label>
             """;

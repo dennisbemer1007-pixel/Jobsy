@@ -79,9 +79,9 @@ public static class SchoolPortalSsrHtml
             sb.Append("</th></tr></thead><tbody>");
             foreach (var row in dash.Classes)
             {
-                sb.Append("<tr class=\"ent-data-table__row\" onclick=\"location.href='/school/klassen/");
+                sb.Append("<tr class=\"ent-data-table__row\" data-sch-row-href=\"/school/klassen/");
                 sb.Append(row.Id.ToString("D"));
-                sb.Append("'\" style=\"cursor:pointer\"><td data-label=\"");
+                sb.Append("\" style=\"cursor:pointer\"><td data-label=\"");
                 sb.Append(E(culture["School.Col.Class"]));
                 sb.Append("\">");
                 sb.Append(E(row.ClassName));
@@ -258,9 +258,9 @@ public static class SchoolPortalSsrHtml
         sb.Append("</tr></thead><tbody>");
         foreach (var row in rows)
         {
-            sb.Append("<tr class=\"ent-data-table__row\" onclick=\"location.href='/school/klassen/");
+            sb.Append("<tr class=\"ent-data-table__row\" data-sch-row-href=\"/school/klassen/");
             sb.Append(row.Id.ToString("D"));
-            sb.Append("'\" style=\"cursor:pointer\"><td data-label=\"");
+            sb.Append("\" style=\"cursor:pointer\"><td data-label=\"");
             sb.Append(E(culture["School.Col.Class"]));
             sb.Append("\">");
             sb.Append(E(row.ClassName));
@@ -631,9 +631,9 @@ public static class SchoolPortalSsrHtml
             sb.Append(classId.ToString("D"));
             sb.Append("/codes/");
             sb.Append(codeRow.Id.ToString("D"));
-            sb.Append("/replace\" class=\"sch-inline-form\" onsubmit=\"return confirm('");
-            sb.Append(replaceConfirm);
-            sb.Append("')\">");
+            sb.Append("/replace\" class=\"sch-inline-form\" data-sch-confirm=\"");
+            sb.Append(E(replaceConfirm));
+            sb.Append("\">");
             sb.Append(antiforgery);
             sb.Append("<button type=\"submit\" class=\"btn-compact\">");
             sb.Append(E(culture["School.Codes.Replace"]));
@@ -641,9 +641,9 @@ public static class SchoolPortalSsrHtml
             sb.Append(classId.ToString("D"));
             sb.Append("/codes/");
             sb.Append(codeRow.Id.ToString("D"));
-            sb.Append("/delete\" class=\"sch-inline-form\" onsubmit=\"return confirm('");
-            sb.Append(deleteConfirm);
-            sb.Append("')\">");
+            sb.Append("/delete\" class=\"sch-inline-form\" data-sch-confirm=\"");
+            sb.Append(E(deleteConfirm));
+            sb.Append("\">");
             sb.Append(antiforgery);
             sb.Append("<button type=\"submit\" class=\"btn-outline-danger\">");
             sb.Append(E(culture["School.Codes.Delete"]));
@@ -702,7 +702,7 @@ public static class SchoolPortalSsrHtml
 
         sb.Append("<form method=\"get\" action=\"/school/leraren\" class=\"sch-filter-row\"><label>");
         sb.Append(E(culture["School.Col.Class"]));
-        sb.Append(" <select class=\"sch-field\" name=\"classId\" onchange=\"this.form.submit()\"><option value=\"\">");
+        sb.Append(" <select class=\"sch-field\" name=\"classId\" data-sch-auto-submit><option value=\"\">");
         sb.Append(E(culture["School.Filter.All"]));
         sb.Append("</option>");
         foreach (var c in classes)

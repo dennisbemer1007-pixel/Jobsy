@@ -113,6 +113,8 @@ public static class PupilLeerlingSsrFrame
         if (options.IncludeJourneyScripts)
         {
             sb.Append("<script src=\"");
+            sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/jobsy-dom-safe.js"));
+            sb.Append("\" defer></script><script src=\"");
             sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/read-aloud.js"));
             sb.Append("\" defer></script><script src=\"");
             sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/leerling-journey-ssr.js"));

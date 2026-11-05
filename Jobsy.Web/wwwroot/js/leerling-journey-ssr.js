@@ -1,6 +1,34 @@
 (function () {
   "use strict";
 
+  function cl(el) {
+    if (window.jobsyDomSafe && typeof window.jobsyDomSafe.classList === "function") {
+      return window.jobsyDomSafe.classList(el);
+    }
+    return el && el.classList ? el.classList : null;
+  }
+
+  function clToggle(el, className, on) {
+    var list = cl(el);
+    if (list) {
+      list.toggle(className, on);
+    }
+  }
+
+  function clAdd(el, className) {
+    var list = cl(el);
+    if (list) {
+      list.add(className);
+    }
+  }
+
+  function clRemove(el, className) {
+    var list = cl(el);
+    if (list) {
+      list.remove(className);
+    }
+  }
+
   var answerSaveChain = Promise.resolve();
   var pauseFlushMs = 2000;
   var reisDocumentGeneration = 0;
@@ -50,10 +78,11 @@
     var hidden = form.querySelector('input[name="Value"]');
     if (hidden) hidden.value = val;
     form.querySelectorAll("[data-ll-answer-value]").forEach(function (b) {
-      if (!b || !b.classList) return;
       var sel = b === btn;
-      b.classList.toggle("sel", sel);
-      b.setAttribute("aria-checked", sel ? "true" : "false");
+      clToggle(b, "sel", sel);
+      if (b && b.setAttribute) {
+        b.setAttribute("aria-checked", sel ? "true" : "false");
+      }
     });
   }
 
@@ -96,6 +125,7 @@
     bindPuzzle(shell);
     bindIslandSteps(shell);
     bindJobPicks(shell);
+    bindJpickSpeakIsolation(shell);
     bindMhboScale(shell);
     bindPauseForms(shell);
     return true;
@@ -311,17 +341,16 @@
       }
 
       function syncChipButton(btn, key, isDislike) {
-        if (!btn || !btn.classList) {
-          return;
-        }
         var on = isDislike ? dislikeSet.has(key) : likeSet.has(key);
-        btn.classList.toggle("is-on", on);
-        btn.classList.toggle("is-like", !isDislike && on);
-        btn.classList.toggle("is-dislike", isDislike && on);
-        btn.classList.toggle("on", on);
-        btn.classList.toggle("like", !isDislike && on);
-        btn.classList.toggle("dislike", isDislike && on);
-        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        clToggle(btn, "is-on", on);
+        clToggle(btn, "is-like", !isDislike && on);
+        clToggle(btn, "is-dislike", isDislike && on);
+        clToggle(btn, "on", on);
+        clToggle(btn, "like", !isDislike && on);
+        clToggle(btn, "dislike", isDislike && on);
+        if (btn && btn.setAttribute) {
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+        }
       }
 
       function syncAllChipButtons() {
@@ -396,7 +425,6 @@
     if (!cards.length) return;
     var done = 0;
     cards.forEach(function (card) {
-      if (!card || !card.classList) return;
       var leuk = null;
       var goed = null;
       card.querySelectorAll('input[type="hidden"]').forEach(function (inp) {
@@ -405,7 +433,7 @@
         if (n.indexOf("Goed.") === 0) goed = inp;
       });
       var complete = leuk && goed && vakkenScoreOk(leuk.value) && vakkenScoreOk(goed.value);
-      card.classList.toggle("is-done", !!complete);
+      clToggle(card, "is-done", !!complete);
       var ok = card.querySelector(".ll-vt-card__ok");
       if (complete && !ok) {
         ok = document.createElement("span");
@@ -473,9 +501,10 @@
           var group = btn.closest(".ll-vt-sc, .ll-vakken__scale-btns");
           if (group) {
             group.querySelectorAll("[data-ll-vt-scale]").forEach(function (b) {
-              if (!b || !b.classList) return;
-              b.classList.toggle("is-on", b === btn);
-              b.setAttribute("aria-checked", b === btn ? "true" : "false");
+              clToggle(b, "is-on", b === btn);
+              if (b && b.setAttribute) {
+                b.setAttribute("aria-checked", b === btn ? "true" : "false");
+              }
             });
           }
           syncVakkenForm(form);
@@ -583,14 +612,13 @@
         if (!noneNote) return;
         // G78 mock: keep “Dan ga je naar Check je droombaan…” visible above the footer.
         noneNote.removeAttribute("hidden");
-        if (noneNote.classList) noneNote.classList.add("on");
+        clAdd(noneNote, "on");
       }
       form.querySelectorAll('input[name="DreamJob"][type="radio"]').forEach(function (radio) {
         radio.addEventListener("change", function () {
           form.querySelectorAll(".jpick").forEach(function (card) {
-            if (!card || !card.classList) return;
             var on = card.contains(radio) && radio.checked;
-            card.classList.toggle("sel", on);
+            clToggle(card, "sel", on);
           });
           syncNoneNote();
         });
@@ -601,10 +629,11 @@
         }
         btn.addEventListener("click", function () {
           form.querySelectorAll(".jpick").forEach(function (b) {
-            if (!b || !b.classList) return;
             var sel = b === btn;
-            b.classList.toggle("sel", sel);
-            b.setAttribute("aria-pressed", sel ? "true" : "false");
+            clToggle(b, "sel", sel);
+            if (b && b.setAttribute) {
+              b.setAttribute("aria-pressed", sel ? "true" : "false");
+            }
           });
           syncNoneNote();
         });
@@ -628,17 +657,19 @@
       var answer = parseInt(card.getAttribute("data-ll-puzzle-answer") || "0", 10);
       var choice = parseInt(btn.getAttribute("data-ll-schelp-choice") || "0", 10);
       playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (b) {
-        if (!b || !b.classList) return;
-        b.classList.remove("sel");
-        b.setAttribute("aria-pressed", "false");
+        clRemove(b, "sel");
+        if (b && b.setAttribute) {
+          b.setAttribute("aria-pressed", "false");
+        }
       });
-      if (!btn.classList) return;
-      btn.classList.add("sel");
-      btn.setAttribute("aria-pressed", "true");
+      clAdd(btn, "sel");
+      if (btn && btn.setAttribute) {
+        btn.setAttribute("aria-pressed", "true");
+      }
       if (choice !== answer) {
-        btn.classList.add("is-wrong");
+        clAdd(btn, "is-wrong");
         setTimeout(function () {
-          btn.classList.remove("is-wrong");
+          clRemove(btn, "is-wrong");
         }, 450);
         return;
       }
@@ -646,8 +677,8 @@
       var outcome = form.querySelector('input[name="Outcome"]');
       if (outcome) outcome.value = "done";
       var qSlot = playSection.querySelector("[data-ll-puzzle-slot-q]");
-      if (qSlot && qSlot.classList) {
-        qSlot.classList.remove("q");
+      if (qSlot) {
+        clRemove(qSlot, "q");
         qSlot.innerHTML =
           '<img src="/leerling/werelden/img/schelp-' +
           choice +
@@ -674,8 +705,8 @@
   }
 
   function openPuzzleCard(btn) {
-    if (!btn || !btn.classList) return;
-    btn.classList.add("is-open");
+    if (!btn) return;
+    clAdd(btn, "is-open");
     var src = btn.getAttribute("data-ll-match-src");
     if (src) {
       btn.style.backgroundImage = "none";
@@ -686,8 +717,8 @@
   }
 
   function closePuzzleCard(btn) {
-    if (!btn || !btn.classList) return;
-    btn.classList.remove("is-open");
+    if (!btn) return;
+    clRemove(btn, "is-open");
     if (!btn.getAttribute("data-ll-match-src")) return;
     var back = btn.getAttribute("data-ll-card-back");
     if (back) btn.style.backgroundImage = "url('" + back + "')";
@@ -740,17 +771,16 @@
         var order = [1, 3, 2, 4];
         var pick = null;
         playSection.querySelectorAll("[data-ll-shell-index]").forEach(function (btn) {
-          if (!btn || !btn.classList) return;
           btn.addEventListener("click", function () {
             var idx = parseInt(btn.getAttribute("data-ll-shell-index"), 10);
             if (pick === null) {
               pick = idx;
-              btn.classList.add("is-pick");
+              clAdd(btn, "is-pick");
               return;
             }
             if (pick === idx) {
               pick = null;
-              btn.classList.remove("is-pick");
+              clRemove(btn, "is-pick");
               return;
             }
             var tmp = order[pick];
@@ -758,11 +788,11 @@
             order[idx] = tmp;
             pick = null;
             section.querySelectorAll("[data-ll-shell-index]").forEach(function (b) {
-              if (b && b.classList) b.classList.remove("is-pick");
+              clRemove(b, "is-pick");
             });
             if (order[0] === 1 && order[1] === 2 && order[2] === 3 && order[3] === 4) {
               section.querySelectorAll(".ll-puzzle__shell").forEach(function (s) {
-                if (s && s.classList) s.classList.add("is-done");
+                clAdd(s, "is-done");
               });
               markSolved();
             }
@@ -812,8 +842,8 @@
               matched.add(face);
               open.delete(first);
               open.delete(idx);
-              if (firstBtn && firstBtn.classList) firstBtn.classList.add("is-matched");
-              if (btn && btn.classList) btn.classList.add("is-matched");
+              clAdd(firstBtn, "is-matched");
+              clAdd(btn, "is-matched");
               first = null;
               if (matched.size >= 3) {
                 markSolved();
@@ -855,7 +885,7 @@
           step = 0;
           setLampUi("watch");
           playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (b) {
-            if (b && b.classList) b.classList.remove("is-lit");
+            clRemove(b, "is-lit");
           });
           var i = 0;
           function nextLamp() {
@@ -867,9 +897,9 @@
             }
             var lamp = pattern[i];
             var el = playSection.querySelector('[data-ll-lamp-index="' + lamp + '"]');
-            if (el) el.classList.add("is-lit");
+            clAdd(el, "is-lit");
             setTimeout(function () {
-              if (el) el.classList.remove("is-lit");
+              clRemove(el, "is-lit");
               i++;
               setTimeout(nextLamp, 400);
             }, 950);
@@ -886,13 +916,12 @@
         }
 
         playSection.querySelectorAll("[data-ll-lamp-index]").forEach(function (btn) {
-          if (!btn || !btn.classList) return;
           btn.addEventListener("click", function () {
             if (playMode || !ready) return;
             var lamp = parseInt(btn.getAttribute("data-ll-lamp-index"), 10);
-            btn.classList.add("is-lit");
+            clAdd(btn, "is-lit");
             setTimeout(function () {
-              btn.classList.remove("is-lit");
+              clRemove(btn, "is-lit");
             }, 350);
             if (pattern[step] !== lamp) {
               step = 0;
@@ -940,7 +969,7 @@
           var group = btn.parentElement;
           if (group) {
             group.querySelectorAll("[data-mhbo-scale-value]").forEach(function (b) {
-              if (b && b.classList) b.classList.toggle("is-on", b === btn);
+              clToggle(b, "is-on", b === btn);
             });
           }
         });
@@ -976,6 +1005,19 @@
     }, touchMs);
   }
 
+  function bindJpickSpeakIsolation(root) {
+    root.querySelectorAll("label.jpick .jspeak").forEach(function (wrap) {
+      if (wrap.getAttribute("data-ll-jspeak-bound") === "1") {
+        return;
+      }
+      wrap.setAttribute("data-ll-jspeak-bound", "1");
+      wrap.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+    });
+  }
+
   function bindPauseForms(root) {
     root.querySelectorAll("form[data-ll-pause-form]").forEach(function (form) {
       if (form.getAttribute("data-ll-bound") === "1") return;
@@ -1006,6 +1048,7 @@
     bindPuzzle(root);
     bindIslandSteps(root);
     bindJobPicks(root);
+    bindJpickSpeakIsolation(root);
     bindMhboScale(root);
     bindPauseForms(root);
   }
