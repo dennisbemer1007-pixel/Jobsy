@@ -46,6 +46,20 @@ public sealed class AfterMatchServiceFlowTests
         Assert.Equal(InterviewStatus.Proposing, proposing.InterviewStatus);
         Assert.Equal(2, proposing.OpenSlots.Count);
 
+        var slotId = proposing.OpenSlots[0].Id;
+        var scheduled = await service.SelectSlotAsync(
+            appId,
+            candidateId,
+            isEmployer: false,
+            new SelectSlotRequest(slotId));
+        Assert.Equal(InterviewStatus.Scheduled, scheduled.InterviewStatus);
+
+        var interview = await db.Interviews.Include(i => i.Slots).FirstAsync(i => i.ApplicationId == appId);
+        var chosen = interview.Slots.Single(s => s.Id == slotId);
+        chosen.StartUtc = DateTime.UtcNow.AddDays(-2);
+        chosen.EndUtc = DateTime.UtcNow.AddDays(-2).AddMinutes(30);
+        await db.SaveChangesAsync();
+
         var outcome = await service.RecordOutcomeAsync(
             appId,
             employerId,

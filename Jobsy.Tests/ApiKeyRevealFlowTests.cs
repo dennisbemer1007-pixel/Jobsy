@@ -47,10 +47,15 @@ public class ApiKeyRevealFlowTests
     {
         const string marker = "/koppeling/sleutel?t=";
         var idx = html.IndexOf(marker, StringComparison.Ordinal);
-        Assert.True(idx >= 0);
+        Assert.True(idx >= 0, marker);
         var start = idx + marker.Length;
-        var end = html.IndexOf('"', start);
-        return Uri.UnescapeDataString(html[start..end]);
+        var end = start;
+        while (end < html.Length && html[end] is not ('"' or '\'' or '<' or '>' or ' ' or '\n' or '\r'))
+        {
+            end++;
+        }
+
+        return Uri.UnescapeDataString(html[start..end].TrimEnd(')', ']'));
     }
 
     private static async Task<Guid> SeedCompanyAsync(JobsyDbContext db)
