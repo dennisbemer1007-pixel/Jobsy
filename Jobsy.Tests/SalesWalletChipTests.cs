@@ -10,10 +10,12 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class SalesWalletChipV2Tests : BunitContext
+public class SalesWalletChipV2Tests : JobsyBunitContext
+
 {
     [Fact]
     public void Anonymous_makes_zero_dashboard_calls()
@@ -85,6 +87,7 @@ public class SalesWalletChipV2Tests : BunitContext
         var http = new HttpClient(counter) { BaseAddress = new Uri("http://wallet.test/") };
         Services.AddSingleton(new JobsyApiClient(http));
         Services.AddCascadingAuthenticationState();
+        EnableInteractiveServerRenderer();
 
         return counter;
     }

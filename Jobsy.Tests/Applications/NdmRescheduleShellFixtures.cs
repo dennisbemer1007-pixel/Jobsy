@@ -6,6 +6,7 @@ using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Applications;
 
@@ -13,7 +14,7 @@ internal static class NdmRescheduleShellFixtures
 {
     internal static string BuildHtml(string mode)
     {
-        using var ctx = new BunitContext();
+        using var ctx = new JobsyBunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddSingleton<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
             new FakeAuth());

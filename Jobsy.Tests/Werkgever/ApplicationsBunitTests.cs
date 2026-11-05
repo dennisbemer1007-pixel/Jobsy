@@ -12,10 +12,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class ApplicationsBunitTests : BunitContext
+public class ApplicationsBunitTests : JobsyBunitContext
+
 {
     public ApplicationsBunitTests()
     {

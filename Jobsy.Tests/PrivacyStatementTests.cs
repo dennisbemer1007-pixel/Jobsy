@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -29,7 +30,7 @@ namespace Jobsy.Tests;
 /// render is exactly what a visitor gets.
 /// </summary>
 [Collection("JobsyLanguagesState")]
-public abstract class PrivacyRenderTestBase : BunitContext
+public abstract class PrivacyRenderTestBase : JobsyBunitContext
 {
     protected static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];
 

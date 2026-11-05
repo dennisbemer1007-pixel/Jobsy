@@ -20,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -27,7 +28,7 @@ namespace Jobsy.Tests;
 /// Shared bUnit host for the two terms documents (04.9). Both routes are static SSR, so a plain
 /// render of <see cref="TermsPage"/> is exactly what a visitor gets.
 /// </summary>
-public abstract class TermsRenderTestBase : BunitContext
+public abstract class TermsRenderTestBase : JobsyBunitContext
 {
     protected static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];
 

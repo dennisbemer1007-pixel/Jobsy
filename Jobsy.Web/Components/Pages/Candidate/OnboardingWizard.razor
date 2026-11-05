@@ -997,7 +997,11 @@
         };
     }
 
-    private void ClearStepValidation() => _showValidation = false;
+    private void ClearStepValidation()
+    {
+        _showValidation = false;
+        _error = null;
+    }
 
     private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
     {
@@ -1301,7 +1305,8 @@
 
         if (!fromMiniTestFinish)
         {
-            if (_step is >= 1 and <= 10)
+            // Steps 1–5 use onboarding-client-form.js (data-ob-nav-next); Blazor NextAsync must not double-advance.
+            if (OnboardingRustig.Enabled && _step is >= 1 and <= MaxRustigPersonalStep)
             {
                 return;
             }

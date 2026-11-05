@@ -7,8 +7,8 @@ public sealed class KreeftHeaderStripGuardTests
     {
         var root = FindRepoRoot();
         var notFound = ReadWeb(root, "Components/Errors/NotFoundView.razor");
-        Assert.Contains("KreeftHeaderStrip", notFound, StringComparison.Ordinal);
-        Assert.Contains("RouteKaartDesk", notFound, StringComparison.Ordinal);
+        Assert.Contains("KreeftErrorIllustrations", notFound, StringComparison.Ordinal);
+        Assert.Contains("err-kreeft-scene", notFound, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyMascot", notFound, StringComparison.Ordinal);
 
         var errorPage = ReadWeb(root, "Components/Pages/Error.razor");

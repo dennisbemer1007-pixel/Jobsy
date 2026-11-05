@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -25,7 +26,7 @@ namespace Jobsy.Tests;
 /// <c>/wie-zijn-wij</c> (public-pages 08): static SSR in five languages, contact via
 /// <c>Legal:SupportEmail</c>, and no HTML from the database anymore.
 /// </summary>
-public class AboutPageTests : BunitContext
+public class AboutPageTests : JobsyBunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();

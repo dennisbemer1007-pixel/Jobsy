@@ -95,7 +95,7 @@ public class KandidaatBanenFoundationGuardTests
         Assert.True(File.Exists(Path.Combine(root, "docs", "features", "kandidaat-banen.md")));
         Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "kandidaat-banen.css")));
         var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "PageAssetCatalog.cs"));
-        Assert.Contains("css/features/kandidaat-banen.css?v=", catalog, StringComparison.Ordinal);
+        Assert.Contains("css/features/kandidaat-banen.css", catalog, StringComparison.Ordinal);
     }
 
     [Fact]

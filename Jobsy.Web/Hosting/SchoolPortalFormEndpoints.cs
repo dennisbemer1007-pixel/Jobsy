@@ -70,7 +70,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect("/school/klassen/nieuw?error=" + Uri.EscapeDataString(PortalActionError.From(ex.Message)));
+            return Redirect("/school/klassen/nieuw?error=" + Uri.EscapeDataString(PortalActionError.FromException(ex)));
         }
     }
 
@@ -121,7 +121,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            var apiText = PortalActionError.From(ex.Message);
+            var apiText = PortalActionError.FromException(ex);
             var msg = apiText.Contains("ligt vast", StringComparison.Ordinal)
                 ? culture["School.Class.LevelLocked"]
                 : apiText;
@@ -148,7 +148,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect(ClassPath(classId, error: PortalActionError.From(ex.Message)));
+            return Redirect(ClassPath(classId, error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -172,7 +172,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect(ClassPath(classId, error: PortalActionError.From(ex.Message)));
+            return Redirect(ClassPath(classId, error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -196,7 +196,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect(ClassPath(classId, error: PortalActionError.From(ex.Message)));
+            return Redirect(ClassPath(classId, error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -226,7 +226,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect(ClassPath(classId, error: PortalActionError.From(ex.Message)));
+            return Redirect(ClassPath(classId, error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -259,7 +259,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect(ClassPath(classId, windowError: PortalActionError.From(ex.Message)));
+            return Redirect(ClassPath(classId, windowError: PortalActionError.FromException(ex)));
         }
     }
 
@@ -284,7 +284,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect(ClassPath(classId, error: PortalActionError.From(ex.Message)));
+            return Redirect(ClassPath(classId, error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -317,7 +317,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect("/school/leraren?invite=1&error=" + Uri.EscapeDataString(PortalActionError.From(ex.Message)));
+            return Redirect("/school/leraren?invite=1&error=" + Uri.EscapeDataString(PortalActionError.FromException(ex)));
         }
     }
 
@@ -343,7 +343,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect($"/school/leraren?assign={teacherUserId:D}&error=" + Uri.EscapeDataString(PortalActionError.From(ex.Message)));
+            return Redirect($"/school/leraren?assign={teacherUserId:D}&error=" + Uri.EscapeDataString(PortalActionError.FromException(ex)));
         }
     }
 
@@ -415,7 +415,7 @@ public static class SchoolPortalFormEndpoints
         }
         catch (Exception ex)
         {
-            return Redirect("/school/privacy?error=" + Uri.EscapeDataString(PortalActionError.From(ex.Message)));
+            return Redirect("/school/privacy?error=" + Uri.EscapeDataString(PortalActionError.FromException(ex)));
         }
     }
 

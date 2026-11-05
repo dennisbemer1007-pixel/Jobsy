@@ -11,10 +11,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class OnboardingFinaleV2BunitTests : BunitContext
+public class OnboardingFinaleV2BunitTests : JobsyBunitContext
+
 {
     public OnboardingFinaleV2BunitTests()
     {

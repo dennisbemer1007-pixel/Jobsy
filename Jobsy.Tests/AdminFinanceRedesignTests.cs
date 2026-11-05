@@ -16,10 +16,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Xunit;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class AdminFinanceRedesignTests : BunitContext
+public class AdminFinanceRedesignTests : JobsyBunitContext
+
 {
     public AdminFinanceRedesignTests()
     {

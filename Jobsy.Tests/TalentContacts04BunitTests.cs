@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +21,7 @@ namespace Jobsy.Tests;
 /// Carrière 04 §2–§5: the contact-request page in the journey style. The h1 is visible, statuses
 /// are words, the share dialog lists the exact preview and nothing is shared without a yes.
 /// </summary>
-public class TalentContacts04BunitTests : BunitContext
+public class TalentContacts04BunitTests : JobsyBunitContext
 {
     private readonly StubHandler _handler = new();
     private bool _employers = true;

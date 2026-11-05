@@ -131,7 +131,7 @@ public static class TeacherPortalCodesEndpoints
                 status,
                 sort,
                 sortDesc,
-                error: PortalActionError.From(ex.Message)));
+                error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -162,7 +162,7 @@ public static class TeacherPortalCodesEndpoints
                 status,
                 sort,
                 sortDesc,
-                error: PortalActionError.From(ex.Message)));
+                error: PortalActionError.FromException(ex)));
         }
     }
 

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -21,7 +22,7 @@ namespace Jobsy.Tests;
 /// Carrière 05: <c>/candidate/hoe-werkt-lobsy</c> as five stones in the journey style, plus the
 /// H1–H3 fixes (no "_message" literal, stay on error, no inline style on the shared panel).
 /// </summary>
-public class CandidateHowLobsy05BunitTests : BunitContext
+public class CandidateHowLobsy05BunitTests : JobsyBunitContext
 {
     private readonly AmbientCultureScope _cultureScope = new();
     private readonly StubHandler _handler = new();

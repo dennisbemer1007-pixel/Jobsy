@@ -76,6 +76,19 @@ public class EmailLayoutGuardTests
                 continue;
             }
 
+            // Web SSR shells emit HTML fragments (not transactional email).
+            var relPath = Path.GetRelativePath(root, file).Replace('\\', '/');
+            if (relPath.StartsWith("Jobsy.Web/", StringComparison.Ordinal)
+                && (relPath.Contains("Ssr", StringComparison.Ordinal)
+                    || relPath.Contains("/Scholen/", StringComparison.Ordinal)
+                    || relPath.Contains("/Onboarding/", StringComparison.Ordinal)
+                    || relPath.Contains("/Applications/", StringComparison.Ordinal)
+                    || relPath.Contains("/KandidaatBanen/", StringComparison.Ordinal)
+                    || relPath.Contains("/Werkgever/", StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
             var source = File.ReadAllText(file);
             if (source.Contains("EmailLayout.Wrap(", StringComparison.Ordinal)
                 || source.Contains("<html", StringComparison.OrdinalIgnoreCase)

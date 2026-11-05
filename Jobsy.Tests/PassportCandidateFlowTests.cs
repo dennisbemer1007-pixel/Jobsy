@@ -68,7 +68,7 @@ public class PassportCandidateFlowTests
         Assert.Contains("GetMyKompasDnaResultAsync", data, StringComparison.Ordinal);
         Assert.Contains("Passport.Fit.Soon", File.ReadAllText(Path.Combine(
             TestRepo.FindRoot(),
-            "Jobsy.Web", "Passport", "PassportSsrShells.cs")), StringComparison.Ordinal);
+            "Jobsy.Web", "Passport", "PassportSsrFitHtml.cs")), StringComparison.Ordinal);
     }
 
     [Theory]

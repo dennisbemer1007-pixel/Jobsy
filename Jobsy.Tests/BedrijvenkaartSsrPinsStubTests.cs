@@ -19,7 +19,7 @@ public sealed class BedrijvenkaartSsrPinsStubTests
     public async Task Bedrijvenkaart_bff_pins_returns_filtered_list_with_origin()
     {
         await using var web = new IllustratedPagesWebFactory(companyMapInitiativeEnabled: false);
-        using var http = new HttpClient { BaseAddress = new Uri(web.ServerAddress) };
+        using var http = web.CreateKestrelClient();
         var response = await http.GetAsync(
             "/api/bedrijvenkaart-client/pins?radiusKm=10&lat=51.9935&lng=4.2085");
         var body = await response.Content.ReadAsStringAsync();
@@ -33,7 +33,7 @@ public sealed class BedrijvenkaartSsrPinsStubTests
     public async Task Company_public_page_renders_kaswerk_title()
     {
         await using var web = new IllustratedPagesWebFactory(companyMapInitiativeEnabled: false);
-        using var http = new HttpClient { BaseAddress = new Uri(web.ServerAddress) };
+        using var http = web.CreateClient();
         var html = await http.GetStringAsync("/71001001/0001");
         Assert.Contains("KasWerk Naaldwijk", html, StringComparison.Ordinal);
         Assert.Contains("id=\"company-title\"", html, StringComparison.Ordinal);

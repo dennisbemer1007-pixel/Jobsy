@@ -9,10 +9,12 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class IntegrationSmallModelTileTests : BunitContext
+public class IntegrationSmallModelTileTests : JobsyBunitContext
+
 {
     public IntegrationSmallModelTileTests()
     {

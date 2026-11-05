@@ -49,7 +49,7 @@ internal static class KbDiscoveryE2eHelpers
     {
         if (viewportWidth >= 900)
         {
-            return page.Locator("[data-testid=kb-keyword-search-desktop]").First;
+            return page.Locator("[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]").First;
         }
 
         return page.Locator("[data-testid=kb-keyword-search]").First;

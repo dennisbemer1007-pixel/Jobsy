@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
-public class LeerlingAnswerScaleTests : BunitContext
+public class LeerlingAnswerScaleTests : JobsyBunitContext
+
 {
     private readonly PupilQuestionSetRegistry _registry = new();
 
@@ -42,8 +44,7 @@ public class LeerlingAnswerScaleTests : BunitContext
         Assert.Contains("Niet echt", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Soms", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Best wel", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Ja", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Ja!", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Ja!", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

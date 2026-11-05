@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class LandingHeroNoPercentTests : BunitContext
+public class LandingHeroNoPercentTests : JobsyBunitContext
+
 {
     private static readonly Regex MatchScorePercent = new(
         @"(\d{1,3}(?:[.,]\d+)?)\s*%\s*(match|past|fit|score|dopasow|potrivir)|>\s*\d{1,3}\s*%|<[^>]*>\d{1,3}%",

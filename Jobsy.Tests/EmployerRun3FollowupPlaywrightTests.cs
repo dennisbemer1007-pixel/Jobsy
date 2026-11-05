@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -14,7 +15,7 @@ namespace Jobsy.Tests;
 /// Real Chromium check for the employer offline confirmation and the candidate timeline at 1280px.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class EmployerRun3FollowupPlaywrightTests : BunitContext
+public class EmployerRun3FollowupPlaywrightTests : JobsyBunitContext
 {
     public EmployerRun3FollowupPlaywrightTests()
     {

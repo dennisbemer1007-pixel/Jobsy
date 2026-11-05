@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -28,7 +29,7 @@ namespace Jobsy.Tests;
 /// bUnit host for the static <c>/hoe-werkt-lobsy</c> page (public-pages 08). The route is static
 /// SSR, so rendering the component is exactly what a visitor's first byte contains.
 /// </summary>
-public abstract class HowLobsyRenderTestBase : BunitContext
+public abstract class HowLobsyRenderTestBase : JobsyBunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -18,7 +19,7 @@ namespace Jobsy.Tests;
 /// count is readable, and Annuleren comes before Publiceren.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class EmployerRun4FollowupPlaywrightTests : BunitContext
+public class EmployerRun4FollowupPlaywrightTests : JobsyBunitContext
 {
     public EmployerRun4FollowupPlaywrightTests()
     {

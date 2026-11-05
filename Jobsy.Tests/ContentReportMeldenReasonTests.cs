@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.JSInterop;
 using System.Threading.RateLimiting;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -95,7 +96,8 @@ public class ContentReportMeldenReasonTests
     }
 }
 
-public class ContentReportMeldenReasonBunitTests : BunitContext
+public class ContentReportMeldenReasonBunitTests : JobsyBunitContext
+
 {
     public ContentReportMeldenReasonBunitTests()
     {

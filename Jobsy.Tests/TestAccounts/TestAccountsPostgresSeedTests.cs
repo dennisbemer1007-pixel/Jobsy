@@ -1,5 +1,6 @@
 using Jobsy.Api.Ops;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,9 @@ public sealed class TestAccountsPostgresSeedTests
 {
     private const string Password = "Acceptatie-Seed-Test-1";
     private const string HmacKey = "test-hmac-key-for-seed";
+    private const int ExpectedTestUsers = 10;
+    /// <summary>5 VO (1A) + 10 groep 7/8 demo codes after <see cref="TestAccountsSeedService"/> school seed.</summary>
+    private const int ExpectedPupilCodes = 15;
 
     [Fact]
     public async Task Seed_and_status_survive_missing_hmac_and_a_second_run_is_unchanged()
@@ -61,14 +65,14 @@ public sealed class TestAccountsPostgresSeedTests
             Assert.Contains("Pupil codes skipped: Scholen:CodeHmacKey is not configured.", first.Text, StringComparison.Ordinal);
             Assert.DoesNotContain("Failed:", first.Text, StringComparison.Ordinal);
             Assert.DoesNotContain(Password, first.Text, StringComparison.Ordinal);
-            Assert.Equal(10, CountAction(first.Text, "Created"));
+            Assert.Equal(ExpectedTestUsers, CountAction(first.Text, "Created"));
             Assert.Equal(1, CountAction(first.Text, "Skipped"));
             Assert.Contains("Ambassadeur", first.Text, StringComparison.Ordinal);
 
             await using (var scope = sp.CreateAsyncScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-                Assert.Equal(10, await db.Users.CountAsync(u => u.IsTestAccount));
+                Assert.Equal(ExpectedTestUsers, await db.Users.CountAsync(u => u.IsTestAccount));
                 Assert.Equal(0, await db.PupilCodes.CountAsync());
                 Assert.Equal(PupilQuestionSet.Vo, (await db.SchoolClasses.SingleAsync(c => c.Name == "1A")).QuestionSet);
                 Assert.Equal(PupilQuestionSet.Groep78, (await db.SchoolClasses.SingleAsync(c => c.Name == "8B")).QuestionSet);
@@ -81,31 +85,31 @@ public sealed class TestAccountsPostgresSeedTests
             Assert.DoesNotContain(Password, second.Text, StringComparison.Ordinal);
             Assert.Equal(0, CountAction(second.Text, "Created"));
             Assert.Equal(0, CountAction(second.Text, "Updated"));
-            Assert.Equal(10, CountAction(second.Text, "Unchanged"));
-            Assert.Equal(1, CountAction(second.Text, "Skipped"));
+            Assert.Equal(ExpectedTestUsers, CountAction(second.Text, "Unchanged"));
+            Assert.Equal(0, CountAction(second.Text, "Skipped"));
 
             await using (var scope = sp.CreateAsyncScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-                Assert.Equal(10, await db.PupilCodes.CountAsync());
+                Assert.Equal(ExpectedPupilCodes, await db.PupilCodes.CountAsync());
             }
 
             var third = await RunAsync(["seed"], withKey);
             Assert.Equal(TestAccountsCommand.ExitPartial, third.Code);
             Assert.Equal(0, CountAction(third.Text, "Created"));
             Assert.Equal(0, CountAction(third.Text, "Updated"));
-            Assert.Equal(10, CountAction(third.Text, "Unchanged"));
+            Assert.Equal(ExpectedTestUsers, CountAction(third.Text, "Unchanged"));
 
             await using (var scope = sp.CreateAsyncScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-                Assert.Equal(10, await db.PupilCodes.CountAsync());
-                Assert.Equal(10, await db.Users.CountAsync(u => u.IsTestAccount));
+                Assert.Equal(ExpectedPupilCodes, await db.PupilCodes.CountAsync());
+                Assert.Equal(ExpectedTestUsers, await db.Users.CountAsync(u => u.IsTestAccount));
             }
 
             var status = await RunAsync(["status"], withKey);
             Assert.Equal(TestAccountsCommand.ExitOk, status.Code);
-            Assert.Contains("Test accounts: 10", status.Text, StringComparison.Ordinal);
+            Assert.Contains($"Test accounts: {ExpectedTestUsers}", status.Text, StringComparison.Ordinal);
             Assert.Contains("test-admin@lobsy.nl", status.Text, StringComparison.Ordinal);
             Assert.Contains("test-leraar@lobsy.nl", status.Text, StringComparison.Ordinal);
             Assert.DoesNotContain(Password, status.Text, StringComparison.Ordinal);

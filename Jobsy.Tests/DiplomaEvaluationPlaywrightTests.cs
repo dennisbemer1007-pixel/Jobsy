@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +21,7 @@ namespace Jobsy.Tests;
 /// Playwright checks the rendered markup at a phone width; bunit drives the Blazor actions.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class DiplomaEvaluationPlaywrightTests : BunitContext
+public class DiplomaEvaluationPlaywrightTests : JobsyBunitContext
 {
     private readonly EvalApi _api = new();
 

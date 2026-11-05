@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Jobsy.Infrastructure.Data.Migrations;
 
 /// <inheritdoc />
+[Migration("20261030103000_AddPupilVakScoresJson")]
 public partial class AddPupilVakScoresJson : Migration
 {
     /// <inheritdoc />

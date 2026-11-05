@@ -47,7 +47,9 @@ public class FutureJobsForYouTests
             TestRepo.FindRoot(),
             "Jobsy.Web/Passport/PassportSsrShells.cs"));
         Assert.Contains("FutureJobsForYouEnabled", shells, StringComparison.Ordinal);
-        Assert.Contains("Passport.Fit.Soon", shells, StringComparison.Ordinal);
+        Assert.Contains("Passport.Fit.Soon", File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web/Passport/PassportSsrFitHtml.cs")), StringComparison.Ordinal);
     }
 
     [Fact]

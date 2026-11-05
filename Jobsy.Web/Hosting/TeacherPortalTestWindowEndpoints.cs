@@ -123,7 +123,7 @@ public static class TeacherPortalTestWindowEndpoints
         }
         catch (Exception ex)
         {
-            return SeeOther(TeacherTestWindowSsrHtml.PagePath(classId, error: PortalActionError.From(ex.Message)));
+            return SeeOther(TeacherTestWindowSsrHtml.PagePath(classId, error: PortalActionError.FromException(ex)));
         }
     }
 
@@ -147,7 +147,7 @@ public static class TeacherPortalTestWindowEndpoints
         }
         catch (Exception ex)
         {
-            return SeeOther(TeacherTestWindowSsrHtml.PagePath(classId, pauseError: PortalActionError.From(ex.Message)));
+            return SeeOther(TeacherTestWindowSsrHtml.PagePath(classId, pauseError: PortalActionError.FromException(ex)));
         }
     }
 

@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -69,7 +70,8 @@ public class PupilDimensionLabelTests
     }
 }
 
-public class PupilFirstLoadBunitTests : BunitContext
+public class PupilFirstLoadBunitTests : JobsyBunitContext
+
 {
     private readonly ScriptedHandler _handler = new();
 
@@ -103,7 +105,8 @@ public class PupilFirstLoadBunitTests : BunitContext
         var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PupilLeerlingJourneyEndpoints.cs"));
         Assert.Contains("PupilLoadRetry", endpoints, StringComparison.Ordinal);
         Assert.Contains("LoadProgressAsync", endpoints, StringComparison.Ordinal);
-        Assert.Contains("Leerling.Session.Lost", endpoints, StringComparison.Ordinal);
+        Assert.Contains("PupilSessionRecovery", endpoints, StringComparison.Ordinal);
+        Assert.Contains("SessionLost", endpoints, StringComparison.Ordinal);
         Assert.Contains("/leerling?error=expired", endpoints, StringComparison.Ordinal);
     }
 
@@ -171,8 +174,11 @@ public class PupilFirstLoadBunitTests : BunitContext
     }
 }
 
-public class LoggedInPupilIntroBunitTests : BunitContext
+public class LoggedInPupilIntroBunitTests : JobsyBunitContext
+
 {
+
+
     public LoggedInPupilIntroBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -252,8 +258,11 @@ public class LoggedInPupilIntroBunitTests : BunitContext
     }
 }
 
-public class TeacherSchoolLabelBunitTests : BunitContext
+public class TeacherSchoolLabelBunitTests : JobsyBunitContext
+
 {
+
+
     private static readonly Guid ClassId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     public TeacherSchoolLabelBunitTests()

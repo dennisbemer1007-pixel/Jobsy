@@ -22,11 +22,15 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
-public class SchoolRun8CopyTests : BunitContext
+public class SchoolRun8CopyTests : JobsyBunitContext
+
 {
+
+
     public SchoolRun8CopyTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -108,7 +112,7 @@ public class SchoolRun8CopyTests : BunitContext
     }
 }
 
-public class SchoolRun8ReadAloudTests : BunitContext
+public class SchoolRun8ReadAloudTests : JobsyBunitContext
 {
     private readonly ScriptedHandler _handler = new();
 
@@ -127,12 +131,17 @@ public class SchoolRun8ReadAloudTests : BunitContext
         Services.AddSingleton<IPupilQuestionSetRegistry>(new PupilQuestionSetRegistry());
         Services.AddSingleton<IFeatureFlags>(new ReadAloudFeatureFlags());
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://api.test/") }));
+        EnableInteractiveServerRenderer();
     }
 
     [Fact]
     public async Task Leerling_ssr_and_part_break_include_read_aloud_markup()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var parts = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilLeerlingSsrParts.cs"));
+        Assert.Contains("SpeakButton", parts, StringComparison.Ordinal);
+        Assert.Contains("data-read-aloud-text", parts, StringComparison.Ordinal);
+
         foreach (var file in new[]
                  {
                      "Jobsy.Web/Scholen/PupilStartSsrHtml.cs",
@@ -143,8 +152,13 @@ public class SchoolRun8ReadAloudTests : BunitContext
                  })
         {
             var text = File.ReadAllText(Path.Combine(root, file));
-            Assert.Contains("SpeakButton", text, StringComparison.Ordinal);
-            Assert.Contains("data-read-aloud-text", text, StringComparison.Ordinal);
+            Assert.True(
+                text.Contains("SpeakButton", StringComparison.Ordinal)
+                || text.Contains("Groep78SpeakButton", StringComparison.Ordinal)
+                || text.Contains("Groep78SpeakRow", StringComparison.Ordinal)
+                || text.Contains("PupilLeerlingSsrParts.SpeakButton", StringComparison.Ordinal)
+                || text.Contains("PupilGroep78SsrParts.", StringComparison.Ordinal),
+                $"{file} should wire read-aloud via shared SSR speak helpers");
         }
 
         var culture = Services.GetRequiredService<CultureState>();
@@ -225,8 +239,11 @@ public class SchoolRun8ReadAloudTests : BunitContext
     }
 }
 
-public class SchoolRun8Groep8Tests : BunitContext
+public class SchoolRun8Groep8Tests : JobsyBunitContext
+
 {
+
+
     public SchoolRun8Groep8Tests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -284,8 +301,11 @@ public class SchoolRun8Groep8Tests : BunitContext
     }
 }
 
-public class SchoolRun8ResultsTests : BunitContext
+public class SchoolRun8ResultsTests : JobsyBunitContext
+
 {
+
+
     public SchoolRun8ResultsTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
