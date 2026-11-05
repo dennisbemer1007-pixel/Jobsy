@@ -18,7 +18,8 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class Wave1HonestClearBunitTests : BunitContext
+public class Wave1HonestClearBunitTests : JobsyBunitContext
+
 {
     private readonly MutableFlags _flags = new();
 
@@ -37,6 +38,7 @@ public class Wave1HonestClearBunitTests : BunitContext
         Services.AddSingleton<IFeatureFlags>(_flags);
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         BunitAntiforgery.Register(Services);
+        EnableInteractiveServerRenderer();
     }
 
     [Theory]

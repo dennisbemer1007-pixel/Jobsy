@@ -14,12 +14,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>Isolated from <see cref="PublicLayoutBunitTests"/> so culture is not pinned before <c>?lang=ar</c>.</summary>
 [Collection("JobsyLanguagesState")]
-public sealed class PublicLayoutRtlBunitTests : BunitContext
+public class PublicLayoutRtlBunitTests : JobsyBunitContext
 {
     public PublicLayoutRtlBunitTests()
     {

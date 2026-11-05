@@ -8,11 +8,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Errors;
 
 /// <summary>errors 04 §04.4: the small "Dit stukje laadt nu niet." card.</summary>
-public class InlineErrorBlockTests : BunitContext
+public class InlineErrorBlockTests : JobsyBunitContext
 {
     private const string Secret = "Secret boom detail from the database connection string.";
 

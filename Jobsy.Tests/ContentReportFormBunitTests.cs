@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -15,7 +16,7 @@ namespace Jobsy.Tests;
 /// <c>/melden</c> is a plain POST form (public-pages 06): it must render without JS and carry an
 /// antiforgery token, because a visitor reporting content may well have scripts disabled.
 /// </summary>
-public class ContentReportFormBunitTests : BunitContext
+public class ContentReportFormBunitTests : JobsyBunitContext
 {
     public ContentReportFormBunitTests()
     {

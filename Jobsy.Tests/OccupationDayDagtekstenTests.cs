@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -199,7 +200,7 @@ public class OccupationDayDagtekstenTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class OccupationDayRenderContext : BunitContext
+    private sealed class OccupationDayRenderContext : JobsyBunitContext
     {
         private readonly HttpClient _http = new(new DayApi()) { BaseAddress = new Uri("http://localhost/") };
 

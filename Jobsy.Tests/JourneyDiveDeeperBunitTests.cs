@@ -14,11 +14,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>Choosing "Iets dieper" on the shed must open question 6 of 10, not the same shed.</summary>
-public sealed class JourneyDiveDeeperBunitTests : BunitContext
+public class JourneyDiveDeeperBunitTests : JobsyBunitContext
 {
     public JourneyDiveDeeperBunitTests()
     {

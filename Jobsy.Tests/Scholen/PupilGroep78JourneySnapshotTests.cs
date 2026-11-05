@@ -10,10 +10,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
-public sealed class PupilGroep78JourneySnapshotTests : BunitContext
+public class PupilGroep78JourneySnapshotTests : JobsyBunitContext
+
 {
     public PupilGroep78JourneySnapshotTests()
     {

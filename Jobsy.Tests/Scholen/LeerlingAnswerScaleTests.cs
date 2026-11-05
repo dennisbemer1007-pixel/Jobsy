@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
-public class LeerlingAnswerScaleTests : BunitContext
+public class LeerlingAnswerScaleTests : JobsyBunitContext
+
 {
     private readonly PupilQuestionSetRegistry _registry = new();
 

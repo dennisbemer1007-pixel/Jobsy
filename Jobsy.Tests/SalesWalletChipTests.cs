@@ -10,11 +10,16 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class SalesWalletChipV2Tests : BunitContext
+public class SalesWalletChipV2Tests : JobsyBunitContext
+
 {
+
+    public SalesWalletChipV2Tests() => EnableInteractiveServerRenderer();
+
     [Fact]
     public void Anonymous_makes_zero_dashboard_calls()
     {

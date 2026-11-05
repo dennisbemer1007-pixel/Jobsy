@@ -11,7 +11,9 @@ using Jobsy.Infrastructure.Services;
 using Jobsy.Infrastructure.Services.AfterMatch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +22,13 @@ public sealed class AfterMatchServiceFlowTests
     [Fact]
     public async Task Propose_slots_and_record_outcome_without_scheduling_mail()
     {
-        await using var db = CreateDb();
+        await using var harness = await AfterMatchDbHarness.CreateAsync();
+        if (!harness.SupportsExecuteDelete)
+        {
+            return;
+        }
+
+        var db = harness.Db;
         var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
 
         var proposing = await service.ProposeEmployerSlotsAsync(
@@ -57,7 +65,8 @@ public sealed class AfterMatchServiceFlowTests
     [Fact]
     public async Task Reschedule_from_scheduled_interview()
     {
-        await using var db = CreateDb();
+        await using var harness = await AfterMatchDbHarness.CreateAsync();
+        var db = harness.Db;
         var (service, appId, candidateId, _) = await SeedThreadAsync(db);
         await SeedScheduledInterviewAsync(db, appId);
 
@@ -72,7 +81,8 @@ public sealed class AfterMatchServiceFlowTests
     [Fact]
     public async Task OpenSlots_excludes_past_unselected_slots()
     {
-        await using var db = CreateDb();
+        await using var harness = await AfterMatchDbHarness.CreateAsync();
+        var db = harness.Db;
         var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
         var interview = await db.Interviews.Include(i => i.Slots).FirstAsync(i => i.ApplicationId == appId);
         db.InterviewSlots.AddRange(
@@ -112,7 +122,8 @@ public sealed class AfterMatchServiceFlowTests
     [Fact]
     public async Task MarkCandidateMessagesRead_sets_ReadAtUtc_on_inbound_messages()
     {
-        await using var db = CreateDb();
+        await using var harness = await AfterMatchDbHarness.CreateAsync();
+        var db = harness.Db;
         var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
         db.ApplicationMessages.Add(new ApplicationMessage
         {
@@ -133,7 +144,8 @@ public sealed class AfterMatchServiceFlowTests
     [Fact]
     public async Task MarkEmployerMessagesRead_sets_ReadAtUtc_on_candidate_messages()
     {
-        await using var db = CreateDb();
+        await using var harness = await AfterMatchDbHarness.CreateAsync();
+        var db = harness.Db;
         var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
         db.ApplicationMessages.Add(new ApplicationMessage
         {
@@ -154,7 +166,8 @@ public sealed class AfterMatchServiceFlowTests
     [Fact]
     public async Task PreviewMessage_flags_phone_for_candidate_and_iban_for_employer()
     {
-        await using var db = CreateDb();
+        await using var harness = await AfterMatchDbHarness.CreateAsync();
+        var db = harness.Db;
         var (service, appId, candidateId, employerId) = await SeedThreadAsync(db);
 
         var phone = await service.PreviewMessageAsync(appId, candidateId, senderIsEmployer: false, "Bel me op 06 12 34 56 78");
@@ -177,12 +190,118 @@ public sealed class AfterMatchServiceFlowTests
         Assert.True(ibanPreview.WouldBlock);
     }
 
-    private static JobsyDbContext CreateDb()
+    private sealed class AfterMatchDbHarness : IAsyncDisposable
     {
-        var options = new DbContextOptionsBuilder<JobsyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
-            .Options;
-        return new JobsyDbContext(options);
+        public JobsyDbContext Db { get; }
+        public bool SupportsExecuteDelete { get; }
+
+        private readonly ServiceProvider? _provider;
+        private readonly AsyncServiceScope? _scope;
+        private readonly string? _adminConnectionString;
+        private readonly string? _databaseName;
+
+        private AfterMatchDbHarness(
+            JobsyDbContext db,
+            bool supportsExecuteDelete,
+            ServiceProvider? provider,
+            AsyncServiceScope? scope,
+            string? adminConnectionString,
+            string? databaseName)
+        {
+            Db = db;
+            SupportsExecuteDelete = supportsExecuteDelete;
+            _provider = provider;
+            _scope = scope;
+            _adminConnectionString = adminConnectionString;
+            _databaseName = databaseName;
+        }
+
+        public static async Task<AfterMatchDbHarness> CreateAsync()
+        {
+            var baseConnection = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+            if (!string.IsNullOrWhiteSpace(baseConnection))
+            {
+                var builder = new NpgsqlConnectionStringBuilder(baseConnection);
+                var databaseName = $"jobsy_aftermatch_{Guid.NewGuid():N}";
+                var admin = new NpgsqlConnectionStringBuilder(baseConnection) { Database = "postgres", Pooling = false };
+                try
+                {
+                    await using var probe = new NpgsqlConnection(admin.ConnectionString);
+                    await probe.OpenAsync();
+                }
+                catch (Exception ex) when (ex is NpgsqlException or System.Net.Sockets.SocketException or TimeoutException)
+                {
+                    return CreateInMemory();
+                }
+
+                await ExecuteAdminAsync(admin.ConnectionString, $"CREATE DATABASE \"{databaseName}\"");
+                builder.Database = databaseName;
+                builder.Pooling = false;
+                var services = new ServiceCollection();
+                services.AddDbContext<JobsyDbContext>(o =>
+                    o.UseNpgsql(builder.ConnectionString, npgsql => npgsql.UseNetTopologySuite()));
+                var provider = services.BuildServiceProvider();
+                var scope = provider.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+                await db.Database.MigrateAsync();
+                return new AfterMatchDbHarness(
+                    db,
+                    supportsExecuteDelete: true,
+                    provider,
+                    scope,
+                    admin.ConnectionString,
+                    databaseName);
+            }
+
+            return CreateInMemory();
+        }
+
+        private static AfterMatchDbHarness CreateInMemory()
+        {
+            var options = new DbContextOptionsBuilder<JobsyDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+                .Options;
+            return new AfterMatchDbHarness(
+                new JobsyDbContext(options),
+                supportsExecuteDelete: false,
+                null,
+                null,
+                null,
+                null);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_scope is not null)
+            {
+                await _scope.Value.DisposeAsync();
+            }
+            else
+            {
+                await Db.DisposeAsync();
+            }
+            if (_provider is not null)
+            {
+                await _provider.DisposeAsync();
+            }
+
+            if (_adminConnectionString is not null && _databaseName is not null)
+            {
+                NpgsqlConnection.ClearAllPools();
+                await ExecuteAdminAsync(
+                    _adminConnectionString,
+                    $"DROP DATABASE IF EXISTS \"{_databaseName}\" WITH (FORCE)");
+            }
+        }
+
+        private static async Task ExecuteAdminAsync(string adminConnectionString, string sql)
+        {
+            await using var conn = new NpgsqlConnection(adminConnectionString);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 
     private static async Task SeedScheduledInterviewAsync(JobsyDbContext db, Guid appId)

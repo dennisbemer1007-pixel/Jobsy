@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +21,7 @@ namespace Jobsy.Tests;
 /// with OpenForWork off sees the enable prompt instead of a fit percent and no apply control.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class EmployerRolesFixlistPlaywrightTests : BunitContext
+public class EmployerRolesFixlistPlaywrightTests : JobsyBunitContext
 {
     public EmployerRolesFixlistPlaywrightTests()
     {

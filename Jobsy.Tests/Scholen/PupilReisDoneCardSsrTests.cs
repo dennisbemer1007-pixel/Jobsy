@@ -7,10 +7,12 @@ using Jobsy.Web.Scholen;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
-public sealed class PupilReisDoneCardSsrTests : BunitContext
+public class PupilReisDoneCardSsrTests : JobsyBunitContext
+
 {
     public PupilReisDoneCardSsrTests()
     {

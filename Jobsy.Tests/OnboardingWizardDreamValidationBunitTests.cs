@@ -15,13 +15,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>
 /// Step 6 dream validation must stay on step 6 and must not leak into step 7 after "Weet ik nog niet".
 /// </summary>
-public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
+public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
 {
     public OnboardingWizardDreamValidationBunitTests()
     {

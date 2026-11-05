@@ -14,10 +14,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
-public class SchoolRun7LayoutTests : BunitContext
+public class SchoolRun7LayoutTests : JobsyBunitContext
+
 {
     public SchoolRun7LayoutTests()
     {
@@ -85,8 +87,11 @@ public class SchoolRun7LayoutTests : BunitContext
     }
 }
 
-public class SchoolRun7CodeDetailTests : BunitContext
+public class SchoolRun7CodeDetailTests : JobsyBunitContext
+
 {
+
+
     private static readonly Guid ClassId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CodeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 

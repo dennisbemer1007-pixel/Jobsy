@@ -7,10 +7,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Errors;
 
-public class StatusPageBunitTests : BunitContext
+public class StatusPageBunitTests : JobsyBunitContext
+
 {
     public StatusPageBunitTests()
     {

@@ -11,10 +11,12 @@ using Jobsy.Web.Navigation;
 using Jobsy.Web.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class AfterMatchMessagesSsrTests : BunitContext
+public class AfterMatchMessagesSsrTests : JobsyBunitContext
+
 {
     public AfterMatchMessagesSsrTests()
     {
@@ -210,7 +212,7 @@ public sealed class AfterMatchMessagesSsrTests : BunitContext
             null,
             $"/candidate/applications/{appId:D}/after-match/wait-ssr");
 
-        using var ctx = new BunitContext();
+        using var ctx = new JobsyBunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddSingleton<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
             new FakeAuth());

@@ -9,6 +9,7 @@ using Jobsy.Web.Navigation;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -235,7 +236,8 @@ public class Ontdekkingsreis08RoutesNavTests
     }
 }
 
-public class Ontdekkingsreis08ShedBunitTests : BunitContext
+public class Ontdekkingsreis08ShedBunitTests : JobsyBunitContext
+
 {
     public Ontdekkingsreis08ShedBunitTests()
     {

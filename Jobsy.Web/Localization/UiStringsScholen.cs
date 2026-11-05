@@ -863,6 +863,9 @@ public static class UiStringsScholen
             ar[key] = arText;
         }
 
+        Add("LeerlingPassport.FeatureDisabled", "Het DNA-paspoort is nog niet ingeschakeld op dit platform.", "The DNA passport is not enabled on this platform yet.", "Paszport DNA nie jest jeszcze włączony na tej platformie.", "Pașaportul ADN nu este încă activat pe această platformă.", "جواز الحمض النووي غير مفعّل على هذه المنصة بعد.");
+        Add("LeerlingPassport.NotReady", "Je DNA-paspoort is er pas als je hele reis klaar is.", "Your DNA passport appears when your whole journey is complete.", "Paszport DNA pojawi się, gdy cała podróż będzie ukończona.", "Pașaportul ADN apare când întreaga călătorie e gata.", "يظهر جواز الحمض النووي عندما تكتمل رحلتك بالكامل.");
+        Add("LeerlingPassport.ContinueJourney", "Verder met je reis", "Continue your journey", "Kontynuuj podróż", "Continuă călătoria", "تابع رحلتك");
         Add("Leerling.Reis.Retry", "Opnieuw proberen", "Try again", "Spróbuj ponownie", "Încearcă din nou", "حاول مرة أخرى");
         Add("Leerling.Reis.More", "Meer uitleg", "More help", "Więcej pomocy", "Mai mult ajutor", "مزيد من الشرح");
         Add("Leerling.Login.AlreadyTitle", "Je bent al ingelogd", "You are already logged in", "Jesteś już zalogowany", "Ești deja conectat", "أنت مسجّل الدخول بالفعل");

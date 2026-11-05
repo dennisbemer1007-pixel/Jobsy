@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -25,7 +26,7 @@ namespace Jobsy.Tests;
 /// LegalDocument shell: table of contents matches the section ids, "In het kort" follows the reader's
 /// language, the Dutch body stays <c>lang="nl"</c> and the ar page is right-to-left (02.8).
 /// </summary>
-public class LegalDocumentRenderTests : BunitContext
+public class LegalDocumentRenderTests : JobsyBunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();

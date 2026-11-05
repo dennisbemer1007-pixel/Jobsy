@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -256,7 +257,8 @@ public class PupilCircuitAuthorizationTests
         => response.Headers.TryGetValues(name, out var values) ? values.Single() : "";
 }
 
-public class PupilAuthorizeRouteViewTests : BunitContext
+public class PupilAuthorizeRouteViewTests : JobsyBunitContext
+
 {
     public PupilAuthorizeRouteViewTests()
     {

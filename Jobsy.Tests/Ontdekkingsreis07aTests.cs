@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -369,7 +370,8 @@ public class OntdekkingsreisRouteTests
     }
 }
 
-public class JourneyLobsterSceneBunitTests : BunitContext
+public class JourneyLobsterSceneBunitTests : JobsyBunitContext
+
 {
     public JourneyLobsterSceneBunitTests()
     {

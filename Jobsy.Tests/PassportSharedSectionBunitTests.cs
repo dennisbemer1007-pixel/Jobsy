@@ -14,7 +14,8 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class PassportSharedSectionBunitTests : BunitContext
+public class PassportSharedSectionBunitTests : JobsyBunitContext
+
 {
     private readonly MutableFlags _flags = new();
     private readonly ApiStub _api = new();

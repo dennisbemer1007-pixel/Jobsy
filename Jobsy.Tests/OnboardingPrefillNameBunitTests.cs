@@ -15,10 +15,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class OnboardingPrefillNameBunitTests : BunitContext
+public class OnboardingPrefillNameBunitTests : JobsyBunitContext
+
 {
     public OnboardingPrefillNameBunitTests()
     {

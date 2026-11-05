@@ -14,10 +14,12 @@ using Microsoft.JSInterop;
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class CookieConsentStaticModeTests : BunitContext
+public class CookieConsentStaticModeTests : JobsyBunitContext
+
 {
     public CookieConsentStaticModeTests()
     {

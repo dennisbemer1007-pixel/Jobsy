@@ -9,12 +9,15 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>Smoke: PlatformSettingsEditor renders switches (styled captures: AdminFlagsPlaywrightTests r2).</summary>
-public sealed class AdminFlagsEvidenceBunitTests : BunitContext
+public class AdminFlagsEvidenceBunitTests : JobsyBunitContext
 {
+    public AdminFlagsEvidenceBunitTests() => EnableInteractiveServerRenderer();
+
     [Fact]
     public void Renders_admin_switches_without_raw_resource_keys()
     {

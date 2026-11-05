@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -17,7 +18,7 @@ namespace Jobsy.Tests;
 /// Carrière 03: the step detail (claws, band, vacancies, courses, proof), the growth moment
 /// and undo. No percentages, no "0 jaar", no clickable AI course names.
 /// </summary>
-public class CareerStepBunitTests : BunitContext
+public class CareerStepBunitTests : JobsyBunitContext
 {
     /// <summary>D4: no percentage is ever rendered on a career surface.</summary>
     private static readonly System.Text.RegularExpressions.Regex Percentage = new(@"\d\s*%");

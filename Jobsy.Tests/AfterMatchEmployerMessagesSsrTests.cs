@@ -8,10 +8,12 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Middleware;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class AfterMatchEmployerMessagesSsrTests : BunitContext
+public class AfterMatchEmployerMessagesSsrTests : JobsyBunitContext
+
 {
     public AfterMatchEmployerMessagesSsrTests()
     {

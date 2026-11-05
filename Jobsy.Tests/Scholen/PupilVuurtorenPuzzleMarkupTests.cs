@@ -4,36 +4,49 @@ namespace Jobsy.Tests.Scholen;
 
 public sealed class PupilVuurtorenPuzzleMarkupTests
 {
-    private static string PuzzleRazorSource()
+    private static string PuzzleSsrSource()
     {
-        var path = Path.Combine(
+        var path = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
             "..", "..", "..", "..",
             "Jobsy.Web",
-            "Components",
-            "Pages",
-            "Leerling",
-            "LeerlingPuzzel.razor");
-        path = Path.GetFullPath(path);
+            "Scholen",
+            "PupilPuzzelSsrHtml.cs"));
+        Assert.True(File.Exists(path), $"Missing {path}");
+        return File.ReadAllText(path);
+    }
+
+    private static string LampPlaySource()
+    {
+        var path = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..",
+            "Jobsy.Web",
+            "Scholen",
+            "PupilGroep78MockHtml.cs"));
         Assert.True(File.Exists(path), $"Missing {path}");
         return File.ReadAllText(path);
     }
 
     [Fact]
-    public void Vuurtoren_lamps_use_play_mode_only_disabled_binding()
+    public void Vuurtoren_lamps_use_play_mode_markup_without_busy_disabled_binding()
     {
-        var src = PuzzleRazorSource();
+        var play = LampPlaySource();
         var lampBlock = Regex.Match(
-            src,
-            @"ll-puzzle__lamps[\s\S]*?ll-puzzle__status",
+            play,
+            @"PuzzleLampPlay[\s\S]*?return sb\.ToString\(\);",
             RegexOptions.Singleline);
-        Assert.True(lampBlock.Success, "Expected vuurtoren lamp block in LeerlingPuzzel.razor");
+        Assert.True(lampBlock.Success, "Expected PuzzleLampPlay in PupilGroep78MockHtml.cs");
 
         var block = lampBlock.Value;
-        Assert.Contains("disabled=\"@(_lampPlayMode)\"", block, StringComparison.Ordinal);
+        Assert.Contains("ll-puzzle__lamps", block, StringComparison.Ordinal);
+        Assert.Contains("PuzzleLampBeaconMarkup", block, StringComparison.Ordinal);
         Assert.DoesNotContain("disabled=\"@_busy", block, StringComparison.Ordinal);
         Assert.DoesNotContain("False ||", block, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Leerling.Puzzle.Vuurtoren.Lamp", block, StringComparison.Ordinal);
-        Assert.Contains("Leerling.Puzzle.Vuurtoren.Done", src, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Puzzle.Vuurtoren.Lamp", play, StringComparison.Ordinal);
+        Assert.Contains("Leerling.Puzzle.Vuurtoren.Done", play, StringComparison.Ordinal);
+
+        var ssr = PuzzleSsrSource();
+        Assert.Contains("PuzzleLampPlay", ssr, StringComparison.Ordinal);
     }
 }

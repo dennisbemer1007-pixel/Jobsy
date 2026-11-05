@@ -10,10 +10,12 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class CareerPageBunitTests : BunitContext
+public class CareerPageBunitTests : JobsyBunitContext
+
 {
     private readonly AmbientCultureScope _cultureScope = new();
 
