@@ -346,113 +346,13 @@ public static class TeacherKlasOverviewSsrHtml
 
     private static void AppendGroupInsights(StringBuilder sb, TeacherClassOverviewDto overview, CultureState culture)
     {
-        var gi = overview.GroupInsights;
-        sb.Append("<div class=\"sch-overview-insights\">");
-        sb.Append("<section class=\"sch-card\"><h2>");
-        sb.Append(E(culture["Leraar.Group.Drivers"]));
-        sb.Append("</h2>");
-        if (!gi.Visible)
-        {
-            sb.Append("<p class=\"muted\">");
-            sb.Append(E(string.Format(CultureInfo.CurrentCulture, culture["Leraar.Group.Hidden"], gi.CompletedCount)));
-            sb.Append("</p>");
-        }
-        else
-        {
-            sb.Append("<ol class=\"sch-rank-list\">");
-            foreach (var v in gi.TopValues)
-            {
-                sb.Append("<li>");
-                sb.Append(E(GroupInsightValueLabel(overview.QuestionSet, culture, v.Key)));
-                sb.Append(E($" · {v.Count}"));
-                sb.Append("</li>");
-            }
-
-            sb.Append("</ol>");
-        }
-
-        if (overview.QuestionSet != PupilQuestionSet.MboHbo)
-        {
-            sb.Append("</section><section class=\"sch-card\"><h2>");
-            sb.Append(E(culture["Leraar.Group.DreamJobs"]));
-            sb.Append("</h2>");
-            if (!gi.Visible)
-            {
-                sb.Append("<p class=\"muted\">");
-                sb.Append(E(string.Format(CultureInfo.CurrentCulture, culture["Leraar.Group.Hidden"], gi.CompletedCount)));
-                sb.Append("</p>");
-            }
-            else
-            {
-                if (gi.DreamJobs.Count > 0)
-                {
-                    sb.Append("<div class=\"sch-chip-list\">");
-                    foreach (var d in gi.DreamJobs)
-                    {
-                        sb.Append("<span class=\"sch-chip\">");
-                        sb.Append(E(DreamJobChipLabel(culture, d)));
-                        sb.Append("</span>");
-                    }
-
-                    sb.Append("</div>");
-                }
-
-                sb.Append("<p class=\"muted\">");
-                sb.Append(E(culture["Leraar.DreamJobs.Undecided"]));
-                sb.Append(": ");
-                sb.Append(gi.UndecidedDreamJobCount.ToString(CultureInfo.InvariantCulture));
-                sb.Append("</p>");
-                if (gi.NotFilledDreamJobCount > 0)
-                {
-                    sb.Append("<p class=\"muted\">");
-                    sb.Append(E(culture["Leraar.DreamJobs.NotFilled"]));
-                    sb.Append(": ");
-                    sb.Append(gi.NotFilledDreamJobCount.ToString(CultureInfo.InvariantCulture));
-                    sb.Append("</p>");
-                }
-            }
-
-            sb.Append("</section>");
-        }
-        else
-        {
-            sb.Append("</section>");
-        }
-
-        if (gi.Visible && gi.TopCultures.Count > 0)
-        {
-            sb.Append("<section class=\"sch-card\"><h2>");
-            sb.Append(E(culture["Leraar.Group.Cultures"]));
-            sb.Append("</h2><ol class=\"sch-rank-list\">");
-            foreach (var c in gi.TopCultures)
-            {
-                sb.Append("<li>");
-                sb.Append(E($"{GroupInsightCultureLabel(overview.QuestionSet, culture, c.Key)} · {c.Count}"));
-                sb.Append("</li>");
-            }
-
-            sb.Append("</ol></section>");
-        }
-
-        sb.Append("</div>");
+        TeacherGroupInsightsSsrHtml.AppendOverviewInsights(sb, overview.GroupInsights, overview.QuestionSet, culture);
     }
-
-    private static string GroupInsightValueLabel(PupilQuestionSet set, CultureState culture, string key)
-        => set == PupilQuestionSet.MboHbo ? key : PupilDimensionText.Value(culture, key);
-
-    private static string GroupInsightCultureLabel(PupilQuestionSet set, CultureState culture, string key)
-        => set == PupilQuestionSet.MboHbo ? key : PupilDimensionText.Culture(culture, key);
 
     private static string PendingDetail(CultureState culture, TeacherCodeRowDto row)
         => row.Status == PupilCodeStatus.NotStarted
             ? culture["Leraar.Pending.NotLoggedIn"]
             : culture.Format("Leraar.Pending.InProgress", row.ProgressCurrent, row.ProgressTotal);
-
-    private static string DreamJobChipLabel(CultureState culture, NamedCountDto d)
-    {
-        var label = PupilDreamJobText.Label(culture, d.Key);
-        return $"{label} ({d.Count})";
-    }
 
     private static string StatusPill(PupilCodeStatus s) => s switch
     {

@@ -316,6 +316,11 @@ public static class UiStringsScholen
         nl["Leraar.Group.Competence"] = "Competentiebanden";
         nl["Leraar.Group.Discussion"] = "Gesprek in de klas";
         nl["Leraar.Group.Hidden"] = "Zichtbaar vanaf 5 afgeronde tests. Nu: {0}.";
+        nl["Leraar.Group.InterestsHint"] = "Hoeveel leerlingen scoorden hoog op elke interesse";
+        nl["Leraar.Group.CompetenceHint"] = "Waar de klas zichzelf ziet";
+        nl["Leraar.Group.DriversHint"] = "Top drijfveren";
+        nl["Leraar.Group.CulturesHint"] = "Waar de klas zich prettig bij voelt";
+        nl["Leraar.Group.DreamJobsHint"] = "Meest gekozen droombanen in de klas";
         nl["Leraar.Group.Prompt1"] = "Welke interesses herkennen jullie in de klas?";
         nl["Leraar.Group.Prompt2"] = "Wat is voor jullie belangrijk in werk of school?";
         nl["Leraar.Group.Prompt3"] = "Welke droombanen verrassen jullie?";
