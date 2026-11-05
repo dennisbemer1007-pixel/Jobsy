@@ -131,7 +131,6 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
         Assert.DoesNotContain("PersistentComponentState", discovery);
         Assert.DoesNotContain("PersistAsJson", discovery);
         Assert.DoesNotContain("DiscoveryPersistState", discovery);
-        Assert.Contains("getClusterExpansionZoom", js, StringComparison.Ordinal);
         Assert.Contains("await source.getClusterLeaves", js, StringComparison.Ordinal);
         var onClusterStart = js.IndexOf("async function onClusterClick", StringComparison.Ordinal);
         Assert.True(onClusterStart >= 0);

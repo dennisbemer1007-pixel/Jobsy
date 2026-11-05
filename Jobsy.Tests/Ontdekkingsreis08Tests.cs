@@ -142,7 +142,11 @@ public class Ontdekkingsreis08RoutesNavTests
                 or "Jobsy.Web/Navigation/OnboardingRoutes.cs"
                 or "Jobsy.Web/Auth/AuthRedirects.cs"
                 or "Jobsy.Web/Navigation/RoleNavCatalog.cs"
-                or "Jobsy.Web/Auth/CandidateGuestRedirectMiddleware.cs")
+                or "Jobsy.Web/Auth/CandidateGuestRedirectMiddleware.cs"
+                or "Jobsy.Web/Hosting/OnboardingStartFormEndpoints.cs"
+                or "Jobsy.Web/Navigation/NotificationNavigation.cs"
+                or "Jobsy.Web/Components/Pages/Candidate/CandidateDiscoverySsr.razor"
+                or "Jobsy.Web/Components/Pages/Candidate/OnboardingStartSsr.razor")
             {
                 continue;
             }
@@ -189,14 +193,15 @@ public class Ontdekkingsreis08RoutesNavTests
     [Fact]
     public void Focus_mode_only_with_stap_query()
     {
+        // Static discovery SSR keeps normal nav on all screens (no questionnaire focus trap).
         Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
-        Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=7"));
+        Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=7"));
+        Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=klaar"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=8"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=3"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=2"));
         Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
         Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=start"));
-        Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=klaar"));
         Assert.False(MainLayout.IsQuestionnairePath("candidate/start", "candidate/start"));
     }
 

@@ -48,6 +48,7 @@ public class OnboardingPrefillNameBunitTests : JobsyBunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        BunitAntiforgery.Register(Services);
         EnableInteractiveServerRenderer();
     }
 
@@ -67,7 +68,7 @@ public class OnboardingPrefillNameBunitTests : JobsyBunitContext
             """;
         _handler.CurrentStep = 1;
         var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("/candidate/start");
+        nav.NavigateTo("/candidate/start/wizard");
 
         var cut = Render<OnboardingWizard>();
         cut.WaitForAssertion(() => cut.Find("#onboarding-field-firstname input"));

@@ -8,6 +8,7 @@ namespace Jobsy.Tests.Errors;
 /// errors 05 §05.3 and §05.9. One switch turns the public site into a real 503 with the calm
 /// onderhoudspagina; admins keep working and health checks never go to 503.
 /// </summary>
+[Collection("JobsyLanguagesState")]
 public class MaintenanceMiddlewareTests
 {
     [Theory]

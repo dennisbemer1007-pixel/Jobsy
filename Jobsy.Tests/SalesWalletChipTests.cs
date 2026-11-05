@@ -17,9 +17,6 @@ namespace Jobsy.Tests;
 public class SalesWalletChipV2Tests : JobsyBunitContext
 
 {
-
-    public SalesWalletChipV2Tests() => EnableInteractiveServerRenderer();
-
     [Fact]
     public void Anonymous_makes_zero_dashboard_calls()
     {
@@ -90,6 +87,7 @@ public class SalesWalletChipV2Tests : JobsyBunitContext
         var http = new HttpClient(counter) { BaseAddress = new Uri("http://wallet.test/") };
         Services.AddSingleton(new JobsyApiClient(http));
         Services.AddCascadingAuthenticationState();
+        EnableInteractiveServerRenderer();
 
         return counter;
     }

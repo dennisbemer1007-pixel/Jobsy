@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using Jobsy.Web.Services;
 
@@ -26,14 +27,32 @@ public sealed class PassportClientSaveIntegrationTests
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.CandidatePassportEnabled = true;
+        factory.WelcomeDismissed = true;
+        factory.FinishReached = true;
         factory.StoredProfile.FirstName = "Paspoort";
         factory.StoredProfile.LastName = "Tester";
-        var client = factory.CreateClient(new() { AllowAutoRedirect = false, HandleCookies = true });
+        var root = factory.EnsureServerAddress();
+        using var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            UseCookies = true,
+            CookieContainer = new CookieContainer()
+        };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(root) };
 
         _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/paspoort?tab=data"));
         var page = await client.GetAsync("/candidate/paspoort?tab=data");
+        if (page.StatusCode == HttpStatusCode.Redirect && page.Headers.Location is not null)
+        {
+            page = await client.GetAsync(page.Headers.Location);
+        }
+
         page.EnsureSuccessStatusCode();
         var html = await page.Content.ReadAsStringAsync();
+        if (!html.Contains("data-testid=\"passport-page-ssr\"", StringComparison.Ordinal))
+        {
+            Assert.Fail("Expected passport SSR page; got: " + html[..Math.Min(html.Length, 500)]);
+        }
         var tokenMatch = Regex.Match(html, "name=\"__RequestVerificationToken\" value=\"([^\"]+)\"");
         Assert.True(tokenMatch.Success, "Expected antiforgery token on passport data tab.");
 

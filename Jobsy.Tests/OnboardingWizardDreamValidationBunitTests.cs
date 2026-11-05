@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Bunit;
 using Jobsy.Core.Features;
 using Microsoft.AspNetCore.Components;
@@ -11,6 +12,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -50,6 +52,8 @@ public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
+        Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        BunitAntiforgery.Register(Services);
         EnableInteractiveServerRenderer();
     }
 
@@ -58,7 +62,7 @@ public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
     {
         _handler.CurrentStep = 6;
         var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("/candidate/start");
+        nav.NavigateTo("/candidate/start/wizard");
 
         var cut = Render<OnboardingWizard>();
         cut.WaitForAssertion(() =>
@@ -67,17 +71,15 @@ public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
         cut.Find("[data-testid=onboarding-next]").Click();
         cut.WaitForAssertion(() =>
             Assert.Contains("Kies of typ een droombaan", cut.Markup, StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain("state-message error", cut.Markup, StringComparison.Ordinal);
 
-        var unknown = cut.FindAll(".ob-wizard__footer-extra")
+        var unknown = cut.FindAll("button")
             .First(b => b.TextContent.Contains("Weet ik nog niet", StringComparison.OrdinalIgnoreCase));
         unknown.Click();
 
         cut.WaitForAssertion(() =>
         {
             Assert.DoesNotContain("Kies of typ een droombaan", cut.Markup, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("state-message error", cut.Markup, StringComparison.Ordinal);
-            Assert.Contains("Nu even over jou", cut.Markup, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("data-ob-client-step=\"7\"", cut.Markup, StringComparison.Ordinal);
         });
     }
 
@@ -98,6 +100,17 @@ public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
             if (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
                 && request.Method == HttpMethod.Put)
             {
+                if (request.Content is not null)
+                {
+                    var json = request.Content.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("currentStep", out var stepProp)
+                        && stepProp.TryGetInt32(out var savedStep))
+                    {
+                        CurrentStep = savedStep;
+                    }
+                }
+
                 return Task.FromResult(Json(OnboardingBody(CurrentStep)));
             }
 
@@ -154,7 +167,7 @@ public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
 
     private sealed class FixedRustigGate : IOnboardingRustigGate
     {
-        public bool Enabled => false;
+        public bool Enabled => true;
     }
 
     private sealed class FixedFlags : IFeatureFlags

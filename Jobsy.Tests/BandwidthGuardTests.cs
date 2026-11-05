@@ -49,7 +49,8 @@ public class BandwidthGuardTests
         Assert.Contains("jobsyPageVisible", store);
 
         var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/SessionIdleGuard.razor"));
-        Assert.Contains("jobsyPageVisible", idle);
+        Assert.Contains("lobsySessionIdle.start", idle);
+        Assert.Contains("lobsySessionIdle.stop", idle);
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-extras.js"));
         Assert.Contains("document.visibilityState === \"hidden\"", js);

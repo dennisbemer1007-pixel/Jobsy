@@ -53,10 +53,18 @@ public class PupilPagesNoCandidateChromeTests : JobsyBunitContext
     public void Reis_uses_answer_scale_component_without_aria_pressed()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingSsrParts.cs"));
-        Assert.Contains("data-ll-answer-scale", reis, StringComparison.Ordinal);
-        Assert.Contains("role=\"radio\"", reis, StringComparison.Ordinal);
-        Assert.DoesNotContain("aria-pressed", reis, StringComparison.Ordinal);
+        var parts = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingSsrParts.cs"));
+        var start = parts.IndexOf("public static string AnswerScaleForm", StringComparison.Ordinal);
+        var end = parts.IndexOf("public static string", start + 1, StringComparison.Ordinal);
+        if (end < 0)
+        {
+            end = parts.Length;
+        }
+
+        var answerScale = parts[start..end];
+        Assert.Contains("data-ll-answer-scale", answerScale, StringComparison.Ordinal);
+        Assert.Contains("role=\\\"radio\\\"", answerScale, StringComparison.Ordinal);
+        Assert.DoesNotContain("aria-pressed", answerScale, StringComparison.Ordinal);
     }
 
     [Fact]

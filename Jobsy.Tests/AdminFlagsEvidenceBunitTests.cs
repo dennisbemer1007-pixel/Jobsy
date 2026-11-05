@@ -16,8 +16,6 @@ namespace Jobsy.Tests;
 /// <summary>Smoke: PlatformSettingsEditor renders switches (styled captures: AdminFlagsPlaywrightTests r2).</summary>
 public class AdminFlagsEvidenceBunitTests : JobsyBunitContext
 {
-    public AdminFlagsEvidenceBunitTests() => EnableInteractiveServerRenderer();
-
     [Fact]
     public void Renders_admin_switches_without_raw_resource_keys()
     {
@@ -38,6 +36,7 @@ public class AdminFlagsEvidenceBunitTests : JobsyBunitContext
         Services.AddSingleton(new Jobsy.Web.Navigation.BottomNavRefreshService());
         Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags>(new AlwaysOffFlags());
         AdminEditorBunitServices.AddUserFacingError(Services);
+        EnableInteractiveServerRenderer();
 
         var cut = Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));

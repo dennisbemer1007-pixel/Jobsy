@@ -70,7 +70,9 @@ public class LeerlingCheerToastTests : JobsyBunitContext
         var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilReisSsrHtml.cs"));
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "LeerlingLayout.razor"));
         Assert.Contains("CoachCue", reis, StringComparison.Ordinal);
-        Assert.Contains("ll-coach-cue", reis, StringComparison.Ordinal);
+        var parts = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingSsrParts.cs"));
+        Assert.Contains("CoachCue", reis, StringComparison.Ordinal);
+        Assert.Contains("ll-coach-cue", parts, StringComparison.Ordinal);
         Assert.Contains("<LeerlingCoach", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("ll-lob-zone", reis, StringComparison.Ordinal);
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "scholen.css"));

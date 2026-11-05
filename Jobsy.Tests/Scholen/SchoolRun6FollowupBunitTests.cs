@@ -105,7 +105,8 @@ public class PupilFirstLoadBunitTests : JobsyBunitContext
         var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PupilLeerlingJourneyEndpoints.cs"));
         Assert.Contains("PupilLoadRetry", endpoints, StringComparison.Ordinal);
         Assert.Contains("LoadProgressAsync", endpoints, StringComparison.Ordinal);
-        Assert.Contains("Leerling.Session.Lost", endpoints, StringComparison.Ordinal);
+        Assert.Contains("PupilSessionRecovery", endpoints, StringComparison.Ordinal);
+        Assert.Contains("SessionLost", endpoints, StringComparison.Ordinal);
         Assert.Contains("/leerling?error=expired", endpoints, StringComparison.Ordinal);
     }
 

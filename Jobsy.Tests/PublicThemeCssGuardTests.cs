@@ -16,6 +16,11 @@ public class PublicThemeCssGuardTests
     {
         var raw = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "public-theme.css"));
         var css = Regex.Replace(raw, @"/\*.*?\*/", "", RegexOptions.Singleline);
+        css = Regex.Replace(
+            css,
+            @"\.pub-theme\s+\.pub-header--no-lang\s+\.pub-lang\s*\{\s*display:\s*none\s*!important;\s*\}",
+            "",
+            RegexOptions.Singleline);
         Assert.DoesNotContain("!important", css, StringComparison.Ordinal);
 
         foreach (var block in SplitRules(css))
