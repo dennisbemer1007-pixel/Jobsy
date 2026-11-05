@@ -1755,3 +1755,106 @@ html.using-keyboard .ll-question__text:focus-visible {
     border-radius: var(--r-md);
     box-shadow: var(--shadow-md, 0 8px 24px rgb(0 0 0 / 12%));
 }
+
+.mhbo-teacher-layout {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+.mhbo-teacher-progress-card {
+    padding: var(--space-3) var(--space-4);
+    overflow: hidden;
+}
+
+.mhbo-teacher-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--muted);
+    margin-bottom: var(--space-2);
+}
+
+.mhbo-teacher-progress-wrap {
+    overflow-x: hidden;
+}
+
+.mhbo-teacher-progress {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.mhbo-teacher-progress th,
+.mhbo-teacher-progress td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.45rem 0.35rem;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.mhbo-teacher-progress th:first-child,
+.mhbo-teacher-progress td:first-child {
+    text-align: left;
+    width: 5.5rem;
+}
+
+.mhbo-teacher-progress__status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.mhbo-teacher-charts {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+@media (max-width: 639px) {
+    .sch-shell .mhbo-teacher-progress thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+
+    .sch-shell .mhbo-teacher-progress tr {
+        display: block;
+        margin-bottom: var(--space-3);
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        padding: var(--space-2) var(--space-3);
+    }
+
+    .sch-shell .mhbo-teacher-progress td[data-label] {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        border: 0;
+        text-align: right;
+        padding: 0.35rem 0;
+    }
+
+    .sch-shell .mhbo-teacher-progress td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--muted);
+        text-align: left;
+        flex: 1 1 auto;
+    }
+
+    .sch-shell .mhbo-teacher-progress td[data-label]:first-child {
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0.25rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .sch-shell .mhbo-teacher-progress td[data-label]:first-child::before {
+        display: none;
+    }
+}

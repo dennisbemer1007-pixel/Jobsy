@@ -265,4 +265,30 @@ public static class PupilMboHboScoring
         return LikertAnswerJson.ToPercent(values);
     }
 
+    public static string HollandCodeFromInteresse(IReadOnlyList<NamedScore> bars)
+    {
+        var map = new Dictionary<string, char>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["R (Praktisch)"] = 'R',
+            ["Praktisch"] = 'R',
+            ["I (Onderzoekend)"] = 'I',
+            ["Onderzoekend"] = 'I',
+            ["A (Artistiek)"] = 'A',
+            ["Artistiek"] = 'A',
+            ["S (Sociaal)"] = 'S',
+            ["Sociaal"] = 'S',
+            ["E (Ondernemend)"] = 'E',
+            ["Ondernemend"] = 'E',
+            ["C (Conventioneel)"] = 'C',
+            ["Conventioneel"] = 'C'
+        };
+
+        return string.Concat(bars
+            .OrderByDescending(b => b.Percent)
+            .Select(b => map.TryGetValue(b.Label, out var c) ? c : (char?)null)
+            .Where(c => c is not null)
+            .Take(3)
+            .Select(c => c!.Value));
+    }
+
 }

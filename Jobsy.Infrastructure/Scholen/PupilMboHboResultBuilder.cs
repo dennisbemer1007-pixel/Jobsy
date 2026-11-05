@@ -62,7 +62,7 @@ public sealed class PupilMboHboResultBuilder : IPupilMboHboResultBuilder
                 .ToDictionary(g => g.Key, g => g.Max(x => x.Percent), StringComparer.OrdinalIgnoreCase),
             Json);
 
-        var holland = BuildHolland(interesse.Bars);
+        var holland = PupilMboHboScoring.HollandCodeFromInteresse(interesse.Bars);
         var topValue = values.Highlights.Count > 0
             ? values.Highlights[0]
             : values.Bars.Count > 0 ? values.Bars[0].Label : null;
@@ -90,32 +90,6 @@ public sealed class PupilMboHboResultBuilder : IPupilMboHboResultBuilder
         code.Status = PupilCodeStatus.Completed;
         code.Progress.CompletedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
-    }
-
-    private static string BuildHolland(IReadOnlyList<PupilMboHboScoring.NamedScore> bars)
-    {
-        var map = new Dictionary<string, char>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["R (Praktisch)"] = 'R',
-            ["Praktisch"] = 'R',
-            ["I (Onderzoekend)"] = 'I',
-            ["Onderzoekend"] = 'I',
-            ["A (Artistiek)"] = 'A',
-            ["Artistiek"] = 'A',
-            ["S (Sociaal)"] = 'S',
-            ["Sociaal"] = 'S',
-            ["E (Ondernemend)"] = 'E',
-            ["Ondernemend"] = 'E',
-            ["C (Conventioneel)"] = 'C',
-            ["Conventioneel"] = 'C'
-        };
-
-        return string.Concat(bars
-            .OrderByDescending(b => b.Percent)
-            .Select(b => map.TryGetValue(b.Label, out var c) ? c : (char?)null)
-            .Where(c => c is not null)
-            .Take(3)
-            .Select(c => c!.Value));
     }
 
     private static string RiasecKey(string label)

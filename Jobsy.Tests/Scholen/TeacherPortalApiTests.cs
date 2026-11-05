@@ -308,6 +308,53 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Mbo_hbo_five_completed_blocks_unlock_group_from_progress_json()
+    {
+        await EnableSchoolsAsync(true, perCode: true);
+        var (_, schoolId, classId) = await SeedMboHboClassAsync(codeCount: 5);
+        var teacherId = await SeedTeacherAsync(schoolId, [classId]);
+        var cat = PupilMboHboCatalog.Default;
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var codes = await db.PupilCodes.Where(c => c.SchoolClassId == classId).ToListAsync();
+            var now = DateTime.UtcNow.ToString("O");
+            foreach (var code in codes)
+            {
+                var state = new PupilMboHboProgressState();
+                foreach (var block in PupilMboHboCatalog.AllBlocks)
+                {
+                    state.BlocksCompleted[PupilMboHboProgressState.BlockKey(block)] = now;
+                    foreach (var q in cat.QuestionsFor(block, SchoolLevel.Mbo2))
+                    {
+                        state.Answers[q.Id] = 4;
+                    }
+                }
+
+                db.PupilProgresses.Add(new PupilProgress
+                {
+                    PupilCodeId = code.Id,
+                    MboHboProgressJson = state.ToJson(),
+                    StartedAtUtc = DateTime.UtcNow.AddMinutes(-40),
+                    UpdatedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        using var client = JobsyTestAuth.CreateAuthenticatedClient(_factory, teacherId);
+        var group = await client.GetFromJsonAsync<TeacherGroupInsightsDto>(
+            $"api/teacher/classes/{classId}/group", Json);
+        Assert.NotNull(group);
+        Assert.True(group!.Visible);
+        Assert.Equal(PupilQuestionSet.MboHbo, group.QuestionSet);
+        Assert.NotEmpty(group.TopValues);
+        Assert.NotEmpty(group.TopCultures);
+        Assert.Equal(0, group.NotFilledDreamJobCount);
+    }
+
+    [Fact]
     public async Task Parental_info_missing_blocks_teacher_open_window()
     {
         await EnableSchoolsAsync(true, perCode: true);

@@ -363,53 +363,62 @@ public static class TeacherKlasOverviewSsrHtml
             foreach (var v in gi.TopValues)
             {
                 sb.Append("<li>");
-                sb.Append(E($"{PupilDimensionText.Value(culture, v.Key)} · {v.Count}"));
+                sb.Append(E(GroupInsightValueLabel(overview.QuestionSet, culture, v.Key)));
+                sb.Append(E($" · {v.Count}"));
                 sb.Append("</li>");
             }
 
             sb.Append("</ol>");
         }
 
-        sb.Append("</section><section class=\"sch-card\"><h2>");
-        sb.Append(E(culture["Leraar.Group.DreamJobs"]));
-        sb.Append("</h2>");
-        if (!gi.Visible)
+        if (overview.QuestionSet != PupilQuestionSet.MboHbo)
         {
-            sb.Append("<p class=\"muted\">");
-            sb.Append(E(string.Format(CultureInfo.CurrentCulture, culture["Leraar.Group.Hidden"], gi.CompletedCount)));
-            sb.Append("</p>");
+            sb.Append("</section><section class=\"sch-card\"><h2>");
+            sb.Append(E(culture["Leraar.Group.DreamJobs"]));
+            sb.Append("</h2>");
+            if (!gi.Visible)
+            {
+                sb.Append("<p class=\"muted\">");
+                sb.Append(E(string.Format(CultureInfo.CurrentCulture, culture["Leraar.Group.Hidden"], gi.CompletedCount)));
+                sb.Append("</p>");
+            }
+            else
+            {
+                if (gi.DreamJobs.Count > 0)
+                {
+                    sb.Append("<div class=\"sch-chip-list\">");
+                    foreach (var d in gi.DreamJobs)
+                    {
+                        sb.Append("<span class=\"sch-chip\">");
+                        sb.Append(E(DreamJobChipLabel(culture, d)));
+                        sb.Append("</span>");
+                    }
+
+                    sb.Append("</div>");
+                }
+
+                sb.Append("<p class=\"muted\">");
+                sb.Append(E(culture["Leraar.DreamJobs.Undecided"]));
+                sb.Append(": ");
+                sb.Append(gi.UndecidedDreamJobCount.ToString(CultureInfo.InvariantCulture));
+                sb.Append("</p>");
+                if (gi.NotFilledDreamJobCount > 0)
+                {
+                    sb.Append("<p class=\"muted\">");
+                    sb.Append(E(culture["Leraar.DreamJobs.NotFilled"]));
+                    sb.Append(": ");
+                    sb.Append(gi.NotFilledDreamJobCount.ToString(CultureInfo.InvariantCulture));
+                    sb.Append("</p>");
+                }
+            }
+
+            sb.Append("</section>");
         }
         else
         {
-            if (gi.DreamJobs.Count > 0)
-            {
-                sb.Append("<div class=\"sch-chip-list\">");
-                foreach (var d in gi.DreamJobs)
-                {
-                    sb.Append("<span class=\"sch-chip\">");
-                    sb.Append(E(DreamJobChipLabel(culture, d)));
-                    sb.Append("</span>");
-                }
-
-                sb.Append("</div>");
-            }
-
-            sb.Append("<p class=\"muted\">");
-            sb.Append(E(culture["Leraar.DreamJobs.Undecided"]));
-            sb.Append(": ");
-            sb.Append(gi.UndecidedDreamJobCount.ToString(CultureInfo.InvariantCulture));
-            sb.Append("</p>");
-            if (gi.NotFilledDreamJobCount > 0)
-            {
-                sb.Append("<p class=\"muted\">");
-                sb.Append(E(culture["Leraar.DreamJobs.NotFilled"]));
-                sb.Append(": ");
-                sb.Append(gi.NotFilledDreamJobCount.ToString(CultureInfo.InvariantCulture));
-                sb.Append("</p>");
-            }
+            sb.Append("</section>");
         }
 
-        sb.Append("</section>");
         if (gi.Visible && gi.TopCultures.Count > 0)
         {
             sb.Append("<section class=\"sch-card\"><h2>");
@@ -418,7 +427,7 @@ public static class TeacherKlasOverviewSsrHtml
             foreach (var c in gi.TopCultures)
             {
                 sb.Append("<li>");
-                sb.Append(E($"{PupilDimensionText.Culture(culture, c.Key)} · {c.Count}"));
+                sb.Append(E($"{GroupInsightCultureLabel(overview.QuestionSet, culture, c.Key)} · {c.Count}"));
                 sb.Append("</li>");
             }
 
@@ -427,6 +436,12 @@ public static class TeacherKlasOverviewSsrHtml
 
         sb.Append("</div>");
     }
+
+    private static string GroupInsightValueLabel(PupilQuestionSet set, CultureState culture, string key)
+        => set == PupilQuestionSet.MboHbo ? key : PupilDimensionText.Value(culture, key);
+
+    private static string GroupInsightCultureLabel(PupilQuestionSet set, CultureState culture, string key)
+        => set == PupilQuestionSet.MboHbo ? key : PupilDimensionText.Culture(culture, key);
 
     private static string PendingDetail(CultureState culture, TeacherCodeRowDto row)
         => row.Status == PupilCodeStatus.NotStarted
