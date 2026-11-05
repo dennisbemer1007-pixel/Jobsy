@@ -108,6 +108,20 @@ public class RateLimitPartitioningUnitTests
     }
 
     [Fact]
+    public void Trusted_user_id_header_partitions_when_secret_matches()
+    {
+        var userId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        var http = new DefaultHttpContext();
+        http.Request.Headers[RateLimitPartitioning.ClientIpHeader] = "198.51.100.7";
+        http.Request.Headers[RateLimitPartitioning.InternalSecretHeader] = Secret;
+        http.Request.Headers[InternalClientIpHeaders.RateLimitUserIdHeader] = userId.ToString("D");
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+
+        var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
+        Assert.Equal("uid:" + userId.ToString("D"), key);
+    }
+
+    [Fact]
     public void Rejects_forged_client_ip_without_matching_secret()
     {
         var http = new DefaultHttpContext();

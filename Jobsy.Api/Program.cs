@@ -156,7 +156,7 @@ builder.Services.AddRateLimiter(options =>
     var pupilAuthenticatedLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
         ?? (isProduction ? 200 : 10_000);
     var pupilAnonymousLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilAnonymousPermitLimit")
-        ?? (isProduction ? 60 : 10_000);
+        ?? (isProduction ? 200 : 10_000);
     var kvkSearchLimit = builder.Configuration.GetValue<int?>("RateLimiting:KvkSearchPermitLimit")
         ?? 30;
     var registrationSubmitLimit = builder.Configuration.GetValue<int?>("RateLimiting:RegistrationSubmitPermitLimit")
@@ -213,11 +213,17 @@ builder.Services.AddRateLimiter(options =>
             return RateLimitPartition.GetNoLimiter("auth");
         }
 
+        var partition = RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret);
+        var permitLimit = partition.StartsWith("uid:", StringComparison.Ordinal)
+                          || partition.StartsWith("pupil:", StringComparison.Ordinal)
+            ? 20
+            : 200;
+
         return RateLimitPartition.GetFixedWindowLimiter(
-            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            partition,
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 20,
+                PermitLimit = permitLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             });
@@ -513,7 +519,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
-app.UseMiddleware<Jobsy.Api.Security.PupilRateLimitPrincipalMiddleware>();
+app.UseMiddleware<Jobsy.Api.Security.RateLimitPrincipalMiddleware>();
 app.UseRateLimiter();
 app.UseLoginProtection();
 app.UseAuthorization();
