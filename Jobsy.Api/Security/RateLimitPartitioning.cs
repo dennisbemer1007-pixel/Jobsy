@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using Jobsy.Api.Extensions;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Security;
@@ -41,6 +42,21 @@ public static class RateLimitPartitioning
     /// Order: authenticated user id → trusted visitor IP (header + secret via
     /// FixedTimeEquals, or JWT <c>client_ip</c> claim) → RemoteIpAddress.
     /// </summary>
+    /// <summary>
+    /// Pupil API: one bucket per <see cref="PupilClaimTypes.PupilCodeId"/> when signed in;
+    /// anonymous login/list endpoints share the visitor IP bucket.
+    /// </summary>
+    public static string ResolvePupilPartitionKey(HttpContext httpContext, string? internalSecret)
+    {
+        var pupilCodeId = httpContext.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        if (!string.IsNullOrWhiteSpace(pupilCodeId))
+        {
+            return Store(httpContext, "pupil:" + pupilCodeId.Trim());
+        }
+
+        return ResolvePartitionKey(httpContext, internalSecret);
+    }
+
     public static string ResolvePartitionKey(HttpContext httpContext, string? internalSecret)
     {
         var userId = ResolveUserId(httpContext.User);

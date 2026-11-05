@@ -589,6 +589,7 @@ public static class UiStringsScholen
         nl["Leerling.Reis.ResultPending"] = "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.";
         nl["Leerling.Reis.Retry"] = "Probeer opnieuw";
         nl["Leerling.Reis.Offline"] = "Even geen verbinding. Probeer opnieuw.";
+        nl["Leerling.Reis.RateLimited"] = "Even geduld — probeer het zo opnieuw.";
         nl["Leerling.Reis.Prev"] = "Vorige";
         nl["Leerling.Reis.Bubble"] = "Goed bezig! Elke 6 vragen valt er een schaaltje af.";
         nl["Leerling.Reis.Bubble.Vo"] = "Elke 10 vragen valt er een schaaltje af. Je antwoorden worden bewaard.";
