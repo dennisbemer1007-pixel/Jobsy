@@ -40,6 +40,7 @@ def collect_sources() -> list[Path]:
             WWW / "js" / "banenkaart-maps-boot.js",
             ROOT / "Jobsy.Web" / "Hosting" / "PageAssetCatalog.cs",
             ROOT / "Jobsy.Web" / "Scholen" / "PupilLeerlingSsrFrame.cs",
+            ROOT / "Jobsy.Web" / "Scholen" / "ScholenPortalSsrFrame.cs",
             WWW / "service-worker.js",
             WWW / "service-worker.published.js",
         ]

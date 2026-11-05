@@ -213,6 +213,52 @@ public sealed class ScholenS1PortalPlaywrightTests : IClassFixture<RoleFunctiona
         }
     }
 
+    [Theory(Timeout = 300_000)]
+    [InlineData(1440, 900)]
+    [InlineData(390, 844)]
+    public async Task Teacher_codes_page_has_no_console_errors(int width, int height)
+    {
+        _ = TestContext.Current.CancellationToken;
+        var seed = _seed!;
+        var baseUrl = _web!.ServerAddress.TrimEnd('/');
+        var codesPath = $"/leraar/klas/{seed.ClassId:D}/codes";
+        var consoleErrors = new List<string>();
+        var pageErrors = new List<string>();
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height },
+            IgnoreHTTPSErrors = true,
+        });
+        var page = await context.NewPageAsync();
+        page.Console += (_, msg) =>
+        {
+            if (msg.Type is "error")
+            {
+                consoleErrors.Add(msg.Text);
+            }
+        };
+        page.PageError += (_, err) => pageErrors.Add(err);
+
+        await page.GotoAsync(
+            $"{baseUrl}/__test/staff?user={seed.TeacherId:D}&school={seed.SchoolId:D}&role=Teacher&return={Uri.EscapeDataString(codesPath)}",
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForURLAsync("**/codes**", new() { Timeout = 90_000 });
+        await page.Locator("[data-testid=\"leraar-code-table\"] .sch-code").First.WaitForAsync(new() { Timeout = 90_000 });
+
+        var scripts = await page.EvaluateAsync<string[]>(
+            "() => [...document.querySelectorAll('script[src]')].map(s => s.getAttribute('src') || '')");
+        Assert.Contains(scripts, s => s.Contains("scholen-portal-ssr.js", StringComparison.Ordinal));
+        Assert.Contains(scripts, s => s.Contains("jobsy-dom-safe.js", StringComparison.Ordinal));
+
+        var bad = consoleErrors
+            .Where(e => !e.Contains("favicon", StringComparison.OrdinalIgnoreCase)
+                        && !e.Contains("script-src-attr", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.True(bad.Count == 0 && pageErrors.Count == 0,
+            "console: " + string.Join("; ", bad) + " | pageerror: " + string.Join("; ", pageErrors));
+    }
+
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]

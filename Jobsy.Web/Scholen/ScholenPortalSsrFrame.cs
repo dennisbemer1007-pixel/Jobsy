@@ -73,7 +73,12 @@ public static class ScholenPortalSsrFrame
         sb.Append(PublicRoutes.Accessibility);
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture["PublicFooter.Accessibility"]));
-        sb.Append("</a></footer></div></body></html>");
+        sb.Append("</a></footer></div>");
+        sb.Append("<script src=\"");
+        sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/jobsy-dom-safe.js"));
+        sb.Append("\" defer></script><script src=\"");
+        sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/scholen-portal-ssr.js"));
+        sb.Append("\" defer></script></body></html>");
         return sb.ToString();
     }
 
