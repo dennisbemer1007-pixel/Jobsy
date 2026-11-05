@@ -31,30 +31,7 @@ public static class TeacherPortalReadOnlySsrHtml
             return sb.ToString();
         }
 
-        sb.Append("<div class=\"sch-group-grid\">");
-        AppendRiasecSection(sb, group, culture);
-        if (ShouldShowGroupSection(group, group.TopValues))
-        {
-            AppendValuesSection(sb, group, culture);
-        }
-
-        if (ShouldShowGroupSection(group, group.TopCultures))
-        {
-            AppendCulturesSection(sb, group, culture);
-        }
-
-        if (ShouldShowGroupSection(group, group.CompetenceBands))
-        {
-            AppendCompetenceSection(sb, group, culture);
-        }
-
-        if (group.QuestionSet != PupilQuestionSet.MboHbo
-            && group.DiscussionPromptKeys.Count > 0)
-        {
-            AppendDiscussionSection(sb, group, culture);
-        }
-
-        sb.Append("</div>");
+        TeacherGroupInsightsSsrHtml.AppendFullPageCharts(sb, group, culture);
         return sb.ToString();
     }
 
@@ -269,19 +246,6 @@ public static class TeacherPortalReadOnlySsrHtml
             _ => culture["School.QuestionSet.Vo"]
         };
 
-    private static bool ShouldShowGroupSection(TeacherGroupInsightsDto group, IReadOnlyList<NamedCountDto> items)
-        => group.QuestionSet != PupilQuestionSet.MboHbo || items.Count > 0;
-
-    private static string GroupDimensionLabel(TeacherGroupInsightsDto group, CultureState culture, string key)
-        => group.QuestionSet == PupilQuestionSet.MboHbo
-            ? key
-            : PupilDimensionText.Value(culture, key);
-
-    private static string GroupCultureLabel(TeacherGroupInsightsDto group, CultureState culture, string key)
-        => group.QuestionSet == PupilQuestionSet.MboHbo
-            ? key
-            : PupilDimensionText.Culture(culture, key);
-
     private static void AppendClassBreadcrumb(StringBuilder sb, Guid classId, CultureState culture, string currentLabel)
     {
         sb.Append("<header class=\"sch-page-header\"><p class=\"sch-breadcrumb\"><a href=\"");
@@ -292,96 +256,6 @@ public static class TeacherPortalReadOnlySsrHtml
         sb.Append("</a> / ");
         sb.Append(WebUtility.HtmlEncode(currentLabel));
         sb.Append("</p>");
-    }
-
-    private static void AppendRiasecSection(StringBuilder sb, TeacherGroupInsightsDto group, CultureState culture)
-    {
-        sb.Append("<section class=\"sch-card\"><h2>");
-        sb.Append(WebUtility.HtmlEncode(culture["Leraar.Group.Interests"]));
-        sb.Append("</h2><ul class=\"sch-bar-list\">");
-        var max = Math.Max(1, group.RiasecBars.Count > 0 ? group.RiasecBars.Max(b => b.Count) : 1);
-        foreach (var bar in group.RiasecBars)
-        {
-            sb.Append("<li><span>");
-            sb.Append(WebUtility.HtmlEncode(culture[bar.KidLabelKey]));
-            sb.Append(" <span class=\"muted\">(");
-            sb.Append(WebUtility.HtmlEncode(bar.Letter));
-            sb.Append(")</span></span><progress class=\"sch-progress-meter\" max=\"");
-            sb.Append(max.ToString(CultureInfo.InvariantCulture));
-            sb.Append("\" value=\"");
-            sb.Append(bar.Count.ToString(CultureInfo.InvariantCulture));
-            sb.Append("\"></progress><span class=\"tabular\">");
-            sb.Append(bar.Count.ToString(CultureInfo.InvariantCulture));
-            sb.Append("</span></li>");
-        }
-
-        sb.Append("</ul></section>");
-    }
-
-    private static void AppendValuesSection(StringBuilder sb, TeacherGroupInsightsDto group, CultureState culture)
-    {
-        sb.Append("<section class=\"sch-card\"><h2>");
-        sb.Append(WebUtility.HtmlEncode(culture["Leraar.Group.Drivers"]));
-        sb.Append("</h2><ol class=\"sch-rank-list\">");
-        foreach (var v in group.TopValues)
-        {
-            sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(GroupDimensionLabel(group, culture, v.Key)));
-            sb.Append(" <span class=\"muted\">· ");
-            sb.Append(v.Count.ToString(CultureInfo.InvariantCulture));
-            sb.Append("</span></li>");
-        }
-
-        sb.Append("</ol></section>");
-    }
-
-    private static void AppendCulturesSection(StringBuilder sb, TeacherGroupInsightsDto group, CultureState culture)
-    {
-        sb.Append("<section class=\"sch-card\"><h2>");
-        sb.Append(WebUtility.HtmlEncode(culture["Leraar.Group.Cultures"]));
-        sb.Append("</h2><ol class=\"sch-rank-list\">");
-        foreach (var c in group.TopCultures)
-        {
-            sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(GroupCultureLabel(group, culture, c.Key)));
-            sb.Append(" <span class=\"muted\">· ");
-            sb.Append(c.Count.ToString(CultureInfo.InvariantCulture));
-            sb.Append("</span></li>");
-        }
-
-        sb.Append("</ol></section>");
-    }
-
-    private static void AppendCompetenceSection(StringBuilder sb, TeacherGroupInsightsDto group, CultureState culture)
-    {
-        sb.Append("<section class=\"sch-card\"><h2>");
-        sb.Append(WebUtility.HtmlEncode(culture["Leraar.Group.Competence"]));
-        sb.Append("</h2><ul class=\"sch-chip-list\">");
-        foreach (var b in group.CompetenceBands)
-        {
-            sb.Append("<li class=\"sch-chip\">");
-            sb.Append(WebUtility.HtmlEncode(b.Key));
-            sb.Append(" · ");
-            sb.Append(b.Count.ToString(CultureInfo.InvariantCulture));
-            sb.Append("</li>");
-        }
-
-        sb.Append("</ul></section>");
-    }
-
-    private static void AppendDiscussionSection(StringBuilder sb, TeacherGroupInsightsDto group, CultureState culture)
-    {
-        sb.Append("<section class=\"sch-card\"><h2>");
-        sb.Append(WebUtility.HtmlEncode(culture["Leraar.Group.Discussion"]));
-        sb.Append("</h2><ul class=\"sch-prompt-list\">");
-        foreach (var line in group.DiscussionPromptKeys)
-        {
-            sb.Append("<li>");
-            sb.Append(WebUtility.HtmlEncode(line));
-            sb.Append("</li>");
-        }
-
-        sb.Append("</ul></section>");
     }
 
     private static string DotClass(PupilMboHboTileStatus st)

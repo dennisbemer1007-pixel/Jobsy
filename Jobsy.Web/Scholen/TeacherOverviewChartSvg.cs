@@ -86,6 +86,48 @@ public static class TeacherOverviewChartSvg
         return sb.ToString();
     }
 
+    public static string VerticalColumns(
+        IReadOnlyList<BarItem> items,
+        string emptyLabel,
+        int width = 420,
+        int chartHeight = 120,
+        int gap = 12,
+        string barColor = "#0f2747")
+    {
+        if (items.Count == 0)
+        {
+            return $"""<p class="sch-chart-empty">{Escape(emptyLabel)}</p>""";
+        }
+
+        var max = Math.Max(1, items.Max(i => i.Value));
+        var colWidth = Math.Max(32, (width - gap * (items.Count - 1)) / items.Count);
+        var labelHeight = 36;
+        var height = chartHeight + labelHeight + 8;
+        var sb = new StringBuilder();
+        sb.Append(CultureInfo.InvariantCulture,
+            $"""<svg class="sch-chart-columns__svg" viewBox="0 0 {width} {height}" role="img" aria-hidden="true">""");
+        var x = 0d;
+        foreach (var item in items)
+        {
+            var stem = chartHeight * Math.Clamp(item.Value, 0, max) / max;
+            var y = chartHeight - stem;
+            sb.Append(CultureInfo.InvariantCulture,
+                $"""<rect x="{x:0.##}" y="{y:0.##}" width="{colWidth:0.##}" height="{stem:0.##}" rx="6" fill="{barColor}" />""");
+            var label = TruncateLabel(item.Label, 14);
+            sb.Append(CultureInfo.InvariantCulture,
+                $"""<text x="{x + colWidth / 2d:0.##}" y="{chartHeight + 14}" text-anchor="middle" class="sch-chart-columns__label">{Escape(label)}</text>""");
+            sb.Append(CultureInfo.InvariantCulture,
+                $"""<text x="{x + colWidth / 2d:0.##}" y="{chartHeight + 28}" text-anchor="middle" class="sch-chart-columns__value">{item.Value}</text>""");
+            x += colWidth + gap;
+        }
+
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+
+    private static string TruncateLabel(string label, int maxChars)
+        => label.Length <= maxChars ? label : label[..Math.Max(0, maxChars - 1)] + "…";
+
     private static string EmptyDonut(int size, int stroke, string label)
     {
         var cx = size / 2d;
