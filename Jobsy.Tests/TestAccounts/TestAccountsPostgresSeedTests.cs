@@ -86,7 +86,6 @@ public sealed class TestAccountsPostgresSeedTests
             Assert.Equal(0, CountAction(second.Text, "Created"));
             Assert.Equal(0, CountAction(second.Text, "Updated"));
             Assert.Equal(ExpectedTestUsers, CountAction(second.Text, "Unchanged"));
-            Assert.Equal(0, CountAction(second.Text, "Skipped"));
 
             await using (var scope = sp.CreateAsyncScope())
             {

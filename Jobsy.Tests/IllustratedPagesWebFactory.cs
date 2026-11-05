@@ -117,7 +117,14 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
                 return ServerAddress;
             }
 
-            _ = CreateClient();
+            // WebApplicationFactory lazily builds the TestServer host; Kestrel sidecar starts in CreateHost.
+            _ = Server;
+            if (string.IsNullOrEmpty(ServerAddress) && _kestrel is not null)
+            {
+                var addresses = _kestrel.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
+                ServerAddress = addresses!.Addresses.First(a => a.StartsWith("http://", StringComparison.Ordinal));
+            }
+
             return ServerAddress;
         }
     }

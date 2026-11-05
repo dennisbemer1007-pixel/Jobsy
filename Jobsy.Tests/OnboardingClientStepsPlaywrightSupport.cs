@@ -260,7 +260,13 @@ internal static class OnboardingClientStepsPlaywrightSupport
                     return ServerAddress;
                 }
 
-                _ = CreateClient();
+                _ = Server;
+                if (string.IsNullOrWhiteSpace(ServerAddress) && _kestrel is not null)
+                {
+                    var addresses = _kestrel.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
+                    ServerAddress = addresses!.Addresses.First(a => a.StartsWith("http://", StringComparison.Ordinal));
+                }
+
                 return ServerAddress;
             }
         }
