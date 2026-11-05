@@ -192,7 +192,7 @@ public class TeacherPortalUnitTests
         Assert.Equal(
             "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.",
             nl["Leerling.Reis.ResultPending"]);
-        Assert.Equal("Probeer opnieuw", nl["Leerling.Reis.Retry"]);
+        Assert.Equal("Opnieuw proberen", nl["Leerling.Reis.Retry"]);
     }
 
     [Fact]

@@ -513,6 +513,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+app.UseMiddleware<Jobsy.Api.Security.PupilRateLimitPrincipalMiddleware>();
 app.UseRateLimiter();
 app.UseLoginProtection();
 app.UseAuthorization();

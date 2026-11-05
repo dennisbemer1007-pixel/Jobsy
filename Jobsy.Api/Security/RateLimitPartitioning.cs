@@ -124,6 +124,7 @@ public static class RateLimitPartitioning
         var partition = http.Items.TryGetValue(PartitionItemKey, out var stored)
             ? stored?.ToString() ?? "unknown"
             : "unknown";
+        var partitionHash = HashPartitionForLog(partition);
         var route = http.Request.Path.Value ?? "/";
 
         var supportCode = SupportCodeGenerator.Create();
@@ -132,10 +133,10 @@ public static class RateLimitPartitioning
             .GetService<ILoggerFactory>()
             ?.CreateLogger("Jobsy.Api.RateLimiting");
         logger?.LogWarning(
-            "Rate limit rejected {SupportCode} route={Route} partition={Partition} method={Method}",
+            "Rate limit rejected {SupportCode} route={Route} partitionHash={PartitionHash} method={Method}",
             supportCode,
             route,
-            partition,
+            partitionHash,
             http.Request.Method);
 
         if (route.StartsWith("/api/assistant", StringComparison.OrdinalIgnoreCase))
@@ -278,5 +279,17 @@ public static class RateLimitPartitioning
     {
         httpContext.Items[PartitionItemKey] = key;
         return key;
+    }
+
+    /// <summary>Stable short hash for logs — never log raw pupil ids or visitor IPs.</summary>
+    public static string HashPartitionForLog(string partition)
+    {
+        if (string.IsNullOrWhiteSpace(partition))
+        {
+            return "unknown";
+        }
+
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(partition.Trim()));
+        return Convert.ToHexString(hash.AsSpan(0, 8)).ToLowerInvariant();
     }
 }

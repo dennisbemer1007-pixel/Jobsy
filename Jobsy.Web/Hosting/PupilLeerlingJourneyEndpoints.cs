@@ -59,7 +59,8 @@ public static class PupilLeerlingJourneyEndpoints
     private static async Task<IResult> GetVerderAsync(HttpContext http, JobsyApiClient api, CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
-        var progress = await LoadProgressAsync(api, ct);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
         if (progress is null)
         {
             return Results.Redirect("/leerling?error=expired");
@@ -72,7 +73,7 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var outcome = await FetchProgressAsync(http, api, ct);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
         if (outcome.SessionLost)
         {
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
@@ -115,7 +116,8 @@ public static class PupilLeerlingJourneyEndpoints
         culture.InitializeFromRequest(http);
         var done = http.Request.Query["done"].ToString();
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
-        var progress = await LoadProgressAsync(api, ct);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
         var themeFromQuery = http.Request.Query["theme"].ToString();
         var g78FromQuery = string.Equals(http.Request.Query["g78"], "1", StringComparison.Ordinal);
         var useG78 = g78FromQuery
@@ -145,7 +147,8 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var progress = await LoadProgressAsync(api, ct);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
         if (progress is null)
         {
             return Results.Redirect("/leerling?error=expired");
@@ -164,7 +167,12 @@ public static class PupilLeerlingJourneyEndpoints
         return Html(http, culture["Leerling.Wereld.Title"], body, "/leerling/wereld", useG78: true, savedTheme, afHtml, showPause: false);
     }
 
-    private static async Task<IResult> PostWereldAsync(HttpContext http, JobsyApiClient api, IAntiforgery af, CancellationToken ct)
+    private static async Task<IResult> PostWereldAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        IAntiforgery af,
+        CancellationToken ct)
     {
         if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
         {
@@ -174,6 +182,11 @@ public static class PupilLeerlingJourneyEndpoints
         var form = await http.Request.ReadFormAsync(ct);
         var key = form["ThemeKey"].ToString();
         var saved = await api.SavePupilJourneyThemeAsync(key, ct);
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.Invalidate(codeId);
+        }
+
         return Results.Redirect(saved?.RedirectPath ?? "/leerling/start");
     }
 
@@ -181,7 +194,7 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var outcome = await FetchProgressAsync(http, api, ct);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
         if (outcome.SessionLost)
         {
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
@@ -268,6 +281,7 @@ public static class PupilLeerlingJourneyEndpoints
     private static async Task<IResult> PostReisAnswerAsync(
         HttpContext http,
         JobsyApiClient api,
+        PupilWebProgressCache progressCache,
         CultureState culture,
         IAntiforgery af,
         CancellationToken ct)
@@ -296,6 +310,15 @@ public static class PupilLeerlingJourneyEndpoints
             }
 
             var redirect = PupilLeerlingProgressRouting.RedirectAfterAnswer(result) ?? "/leerling/reis";
+            if (PupilCodeId(http) is { } codeId
+                && progressCache.TryGetSnapshot(codeId, out var snapshot)
+                && snapshot is not null)
+            {
+                progressCache.StageAfterAnswer(
+                    codeId,
+                    PupilProgressStatePatch.AfterAnswer(snapshot, itemId, value, result));
+            }
+
             if (wantsJson)
             {
                 return ReisAnswerSaveJsonOk(http, af, redirect);
@@ -405,7 +428,7 @@ public static class PupilLeerlingJourneyEndpoints
             return Html(http, culture["Leerling.Vo.PartBreak.DocumentTitle"], PupilEilandSsrHtml.PartBreak(culture, partAf), "/leerling/eiland", false, null, partAf);
         }
 
-        var outcome = await FetchProgressAsync(http, api, ct);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
         if (outcome.SessionLost)
         {
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
@@ -436,7 +459,14 @@ public static class PupilLeerlingJourneyEndpoints
         return Html(http, culture["Leerling.Island.Title"], body, "/leerling/eiland", groep78, progress.JourneyThemeKey, afHtml, progress: progress);
     }
 
-    private static async Task<IResult> PostEilandAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)
+    private static async Task<IResult> PostEilandAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CultureState culture,
+        IPupilQuestionSetRegistry registry,
+        IAntiforgery af,
+        CancellationToken ct)
     {
         if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
         {
@@ -463,7 +493,12 @@ public static class PupilLeerlingJourneyEndpoints
                 return Results.Redirect("/leerling/eiland?error=save");
             }
 
-            var progress = await LoadProgressAsync(api, ct);
+            if (PupilCodeId(http) is { } codeId)
+            {
+                progressCache.Invalidate(codeId);
+            }
+
+            var progress = await LoadProgressAsync(http, api, progressCache, ct);
             var def = progress is null ? null : registry.Get(progress.QuestionSet);
             if (def?.PartBreakAfterIsland == true)
             {
@@ -488,7 +523,7 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var outcome = await FetchProgressAsync(http, api, ct);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
         if (outcome.SessionLost)
         {
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
@@ -520,7 +555,12 @@ public static class PupilLeerlingJourneyEndpoints
         return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, themeKey, afHtml, progress: progress);
     }
 
-    private static async Task<IResult> PostVakkenAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
+    private static async Task<IResult> PostVakkenAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CultureState culture,
+        CancellationToken ct)
     {
         if (!http.Request.HasFormContentType)
         {
@@ -547,6 +587,11 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect($"/leerling/vakken?page={page}&error=save");
         }
 
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.Invalidate(codeId);
+        }
+
         if (page == 1)
         {
             return Results.Redirect("/leerling/vakken?page=2");
@@ -570,7 +615,7 @@ public static class PupilLeerlingJourneyEndpoints
             return Html(http, culture["Leerling.Puzzle.Title"], """<section class="ll-card"><a class="btn-primary" href="/leerling/reis">Terug</a></section>""", $"/leerling/puzzel/{key}", false, null, missingAf);
         }
 
-        var outcome = await FetchProgressAsync(http, api, ct);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
         if (outcome.SessionLost)
         {
             return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
@@ -601,7 +646,12 @@ public static class PupilLeerlingJourneyEndpoints
         return Html(http, culture["Leerling.Puzzle.Title"], body, $"/leerling/puzzel/{key}", groep78, progress.JourneyThemeKey, afHtml, progress: progress);
     }
 
-    private static async Task<IResult> PostPuzzelAsync(HttpContext http, JobsyApiClient api, string key, CancellationToken ct)
+    private static async Task<IResult> PostPuzzelAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        string key,
+        CancellationToken ct)
     {
         if (!http.Request.HasFormContentType)
         {
@@ -619,6 +669,11 @@ public static class PupilLeerlingJourneyEndpoints
         if (result is null)
         {
             return Results.Redirect($"/leerling/puzzel/{Uri.EscapeDataString(key)}?error=save");
+        }
+
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.Invalidate(codeId);
         }
 
         return Results.Redirect(PupilLeerlingProgressRouting.RedirectAfterPuzzle(result)!);
@@ -651,7 +706,8 @@ public static class PupilLeerlingJourneyEndpoints
             return Html(http, culture["LeerlingStory.Title"], pendingBody, "/leerling/dit-ben-jij", false, null, pendingAf);
         }
 
-        var progress = await LoadProgressAsync(api, ct);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
         var groep78 = progress?.QuestionSet == PupilQuestionSet.Groep78 && progress is not null && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var flag = await features.GetAsync(ct);
         var passportV2 = flag.PupilPassportV2Enabled && result.QuestionSet == PupilQuestionSet.Groep78;
@@ -665,7 +721,8 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var progress = await LoadProgressAsync(api, ct);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
         var flag = await features.GetAsync(ct);
         if (!flag.PupilPassportV2Enabled)
         {
@@ -871,21 +928,36 @@ public static class PupilLeerlingJourneyEndpoints
     private static Task<PupilLoadOutcome<PupilProgressStateDto>> FetchProgressAsync(
         HttpContext http,
         JobsyApiClient api,
+        PupilWebProgressCache progressCache,
         CancellationToken ct)
         => PupilLoadRetry.RunAsync(
-            () => LoadProgressOnceAsync(api, http.RequestServices, ct),
+            () => LoadProgressOnceAsync(http, api, progressCache, ct),
             http.RequestServices,
             "progress",
             ct);
 
     private static async Task<PupilProgressStateDto?> LoadProgressOnceAsync(
+        HttpContext http,
         JobsyApiClient api,
-        IServiceProvider? services,
+        PupilWebProgressCache progressCache,
         CancellationToken ct)
     {
+        if (PupilCodeId(http) is { } codeId
+            && progressCache.TryConsumeSkipFetch(codeId, out var cached)
+            && cached is not null)
+        {
+            return cached;
+        }
+
         try
         {
-            return await api.GetPupilProgressAsync(ct);
+            var progress = await api.GetPupilProgressAsync(ct);
+            if (progress is not null && PupilCodeId(http) is { } rememberId)
+            {
+                progressCache.RememberSnapshot(rememberId, progress);
+            }
+
+            return progress;
         }
         catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
         {
@@ -897,13 +969,22 @@ public static class PupilLeerlingJourneyEndpoints
         }
         catch (Exception ex)
         {
-            LeerlingLoadLog.Failed(services, "progress", ex, ex is HttpRequestException http ? http.StatusCode : null, giveUp: false);
+            LeerlingLoadLog.Failed(
+                http.RequestServices,
+                "progress",
+                ex,
+                ex is HttpRequestException httpEx ? httpEx.StatusCode : null,
+                giveUp: false);
             return null;
         }
     }
 
-    private static async Task<PupilProgressStateDto?> LoadProgressAsync(JobsyApiClient api, CancellationToken ct)
-        => await LoadProgressOnceAsync(api, services: null, ct);
+    private static Task<PupilProgressStateDto?> LoadProgressAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CancellationToken ct)
+        => LoadProgressOnceAsync(http, api, progressCache, ct);
 
     private static Dictionary<string, (int Leuk, int Goed)> BuildVakScores(PupilProgressStateDto _, int page)
     {
@@ -990,7 +1071,8 @@ public static class PupilLeerlingJourneyEndpoints
                 route,
                 useG78,
                 themeKey,
-                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+                PupilLeerlingSsrParts.AntiforgeryField(af, http),
+                rateLimited: true);
             return true;
         }
 
@@ -1017,15 +1099,25 @@ public static class PupilLeerlingJourneyEndpoints
         string route,
         bool useG78,
         string? themeKey,
-        string pauseAntiforgeryHtml)
+        string pauseAntiforgeryHtml,
+        bool rateLimited = false)
     {
+        var button = rateLimited
+            ? culture["Leerling.Reis.Retry"]
+            : culture["Common.Error.TryAgain"];
         var body = $"""
             <section class="ll-card" data-testid="leerling-load-retry">
             <p class="ll-error" role="alert">{PupilLeerlingSsrParts.E(message)}</p>
-            <a class="btn-primary" href="{PupilLeerlingSsrParts.E(route)}">{PupilLeerlingSsrParts.E(culture["Common.Error.TryAgain"])}</a>
+            <a class="btn-primary" href="{PupilLeerlingSsrParts.E(route)}">{PupilLeerlingSsrParts.E(button)}</a>
             </section>
             """;
         return Html(http, culture["Leerling.Reis.Title"], body, route, useG78, themeKey, pauseAntiforgeryHtml, progress: null);
+    }
+
+    private static Guid? PupilCodeId(HttpContext http)
+    {
+        var raw = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        return Guid.TryParse(raw, out var id) ? id : null;
     }
 
     private static IReadOnlyList<string> SplitCsv(string raw)
