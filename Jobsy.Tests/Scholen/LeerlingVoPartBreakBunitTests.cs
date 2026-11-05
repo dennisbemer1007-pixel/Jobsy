@@ -47,9 +47,10 @@ public class LeerlingVoPartBreakBunitTests : JobsyBunitContext
         await culture.SetLanguageAsync("nl");
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var stop = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilStopSsrHtml.cs"));
+        var frame = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Scholen/PupilLeerlingSsrFrame.cs"));
         Assert.Contains("Leerling.Vo.Stop.Part1Body", stop, StringComparison.Ordinal);
         Assert.Contains("Leerling.Stop.AskTitle", stop, StringComparison.Ordinal);
-        Assert.Contains("/leerling/pauze", stop, StringComparison.Ordinal);
+        Assert.Contains("/leerling/pauze", frame, StringComparison.Ordinal);
         _ = culture["Leerling.Stop.Title"];
     }
 

@@ -48,6 +48,7 @@ public class OnboardingPrefillNameBunitTests : JobsyBunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        EnableInteractiveServerRenderer();
     }
 
     [Fact]

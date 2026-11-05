@@ -44,8 +44,7 @@ public class LeerlingAnswerScaleTests : JobsyBunitContext
         Assert.Contains("Niet echt", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Soms", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Best wel", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Ja", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Ja!", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Ja!", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

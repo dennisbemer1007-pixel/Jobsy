@@ -258,7 +258,10 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", app, StringComparison.Ordinal);
+        Assert.Equal(
+            AssetVersions.Version("js/app-core.js"),
+            Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("js/app-core.js"));
         Assert.Contains("css/app.min.css", app);
         Assert.Contains("css/critical.css", app);
         Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);

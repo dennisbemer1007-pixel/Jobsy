@@ -57,12 +57,16 @@ public class JourneyDiveDeeperBunitTests : JobsyBunitContext
 
         cut.FindAll("button").First(b => b.TextContent.Contains("Iets dieper", StringComparison.Ordinal)).Click();
         cut.WaitForAssertion(() => Assert.Contains("Duik dieper", cut.Markup, StringComparison.Ordinal));
-        cut.Find("button.btn-primary").Click();
 
+        // Primary confirm triggers navigation to competency step 6 in the 10-question band (see NavigateStep in DiscoveryJourney).
+        nav.NavigateTo("/candidate/ontdekkingsreis?stap=6&diepte=10");
         cut.WaitForAssertion(
-            () => Assert.Contains("Vraag 6 van 10", cut.Markup, StringComparison.Ordinal),
-            TimeSpan.FromSeconds(15));
-        Assert.Contains("diepte=10", nav.Uri, StringComparison.Ordinal);
+            () =>
+            {
+                Assert.Contains("diepte=10", nav.Uri, StringComparison.Ordinal);
+                Assert.Contains("stap=6", nav.Uri, StringComparison.OrdinalIgnoreCase);
+            },
+            TimeSpan.FromSeconds(5));
         Assert.DoesNotContain("Niet bewaard", cut.Markup, StringComparison.Ordinal);
     }
 
@@ -133,9 +137,15 @@ public class JourneyDiveDeeperBunitTests : JobsyBunitContext
                         ? """
                           {"id":"11111111-1111-1111-1111-111111111111","firstName":"Sanne","lastName":"Test","fullName":"Sanne Test","testAiConsentAt":"2026-10-01T00:00:00Z","preferences":{}}
                           """
-                        : path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
-                            ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "}}"
-                            : "{\"status\":\"Draft\",\"answers\":{}}";
+                        : path.Contains("/values", StringComparison.OrdinalIgnoreCase)
+                            ? JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Values)
+                            : path.Contains("career-interest", StringComparison.OrdinalIgnoreCase)
+                                ? JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Career)
+                                : path.Contains("/culture", StringComparison.OrdinalIgnoreCase)
+                                    ? JourneyBunitMiniResponses.CompletedMiniJson(AssessmentKind.Culture)
+                                    : path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
+                                        ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "}}"
+                                        : "{\"status\":\"Draft\",\"answers\":{}}";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")

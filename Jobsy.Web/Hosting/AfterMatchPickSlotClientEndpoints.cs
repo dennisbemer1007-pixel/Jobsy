@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Scholen;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
@@ -101,7 +102,7 @@ public static class AfterMatchPickSlotClientEndpoints
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
             return Results.Json(
-                new { errorKey = "validation", message = ex.Message },
+                new { errorKey = "validation", message = PortalActionError.FromException(ex) },
                 statusCode: StatusCodes.Status400BadRequest);
         }
 

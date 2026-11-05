@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -89,7 +90,7 @@ public static class MeCandidateProxyEndpoints
         }
         catch (InvalidOperationException ex)
         {
-            return Results.BadRequest(new { message = ex.Message });
+            return Results.BadRequest(new { message = PortalActionError.FromException(ex) });
         }
     }
 

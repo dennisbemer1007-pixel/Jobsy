@@ -50,6 +50,7 @@ public class OnboardingWizardDreamValidationBunitTests : JobsyBunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
+        EnableInteractiveServerRenderer();
     }
 
     [Fact]

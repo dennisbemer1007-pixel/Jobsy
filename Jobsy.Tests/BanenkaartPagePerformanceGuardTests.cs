@@ -20,7 +20,10 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.DoesNotContain("media=\"print\"", appCssLink);
         Assert.Contains("data-app-css", appCssLink);
         Assert.DoesNotContain("onload=", appCssLink);
-        Assert.Contains("?v=", appCssLink);
+        Assert.Contains("css/app.min.css", appCssLink, StringComparison.Ordinal);
+        Assert.Equal(
+            AssetVersions.Version("css/app.min.css"),
+            Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("css/app.min.css"));
 
         var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);

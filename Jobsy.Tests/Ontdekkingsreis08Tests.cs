@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Bunit;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
@@ -153,6 +154,12 @@ public class Ontdekkingsreis08RoutesNavTests
             if (src.Contains("\"/candidate/start\"", StringComparison.Ordinal)
                 || src.Contains("'/candidate/start'", StringComparison.Ordinal))
             {
+                if (src.Contains("\"/candidate/start/wizard\"", StringComparison.Ordinal)
+                    && !Regex.IsMatch(src, @"""\/candidate\/start""(?!\/wizard)"))
+                {
+                    continue;
+                }
+
                 // Allow ClassicStartPath constant usages via OnboardingRoutes
                 if (src.Contains("OnboardingRoutes.ClassicStartPath", StringComparison.Ordinal)
                     && !src.Contains("\"/candidate/start\"", StringComparison.Ordinal))

@@ -34,6 +34,7 @@ public class PassportSharedSectionBunitTests : JobsyBunitContext
         Services.AddSingleton<CandidateProfileEditor>();
         Services.AddSingleton<IFeatureFlags>(_flags);
         BunitAntiforgery.Register(Services);
+        EnableInteractiveServerRenderer();
     }
 
     [Fact]

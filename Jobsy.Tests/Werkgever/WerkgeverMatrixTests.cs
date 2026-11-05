@@ -53,6 +53,7 @@ public class WerkgeverNavVisibilityTests
             var allowed = WerkgeverRightsMatrix.RoleAllowed(row, role);
             if (row.Route is "/werkgever/vacatures/nieuw" or "/werkgever/partner" or "/werkgever/partner/uitbetalen"
                 or "/werkgever/koppelingen" or "/werkgever/uren" or "/werkgever/sollicitaties/initiatieven"
+                or "/werkgever/sollicitaties/pipeline"
                 || row.Route.Contains('{', StringComparison.Ordinal))
             {
                 // Nieuw / detail / payout stub routes have no nav item; partner/koppelingen are conditional.

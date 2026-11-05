@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -44,7 +45,7 @@ public static class UwvClientEndpoints
         }
         catch (InvalidOperationException ex)
         {
-            return Results.Problem(ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            return Results.Problem(PortalActionError.FromException(ex), statusCode: StatusCodes.Status400BadRequest);
         }
     }
 
@@ -73,7 +74,7 @@ public static class UwvClientEndpoints
         }
         catch (InvalidOperationException ex)
         {
-            return Results.Problem(ex.Message, statusCode: StatusCodes.Status400BadRequest);
+            return Results.Problem(PortalActionError.FromException(ex), statusCode: StatusCodes.Status400BadRequest);
         }
     }
 

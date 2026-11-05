@@ -83,7 +83,14 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/{ApplicationId:guid}` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
-| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/blazor` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/cancel-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/messages-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/outcome-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/panel-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/propose-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/reschedule-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/pipeline` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/initiatieven` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/open-voor-initiatief` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/uren` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |

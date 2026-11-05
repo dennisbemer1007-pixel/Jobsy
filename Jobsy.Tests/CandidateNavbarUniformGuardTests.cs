@@ -25,7 +25,8 @@ public sealed class CandidateNavbarUniformGuardTests
         Assert.Contains("<AppShellHeader", layout, StringComparison.Ordinal);
         Assert.Contains("NoBlazorCandidateNav", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("jobsy-chrome__header", layout, StringComparison.Ordinal);
-        Assert.DoesNotContain("CandidateHeaderNav", header, StringComparison.Ordinal);
+        Assert.Contains("candidate-header-nav-slot", header, StringComparison.Ordinal);
+        Assert.Contains("<CandidateHeaderNav />", header, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"app-shell-header\"", header, StringComparison.Ordinal);
         Assert.Contains("bottom-nav", bottom, StringComparison.Ordinal);
         Assert.Contains("<PageHelp />", header, StringComparison.Ordinal);

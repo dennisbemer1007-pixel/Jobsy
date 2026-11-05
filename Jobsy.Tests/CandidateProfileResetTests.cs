@@ -174,6 +174,7 @@ public class CandidateProfileResetTests
 
         var resetCoverage = new[]
         {
+            typeof(ActivityAgreement),
             typeof(AfterMatchReminderPreference),
             typeof(AmbassadeurProfile),
             typeof(Application),
@@ -215,8 +216,11 @@ public class CandidateProfileResetTests
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
             typeof(InterviewReminder),
+            typeof(JobSearchActivity),
+            typeof(JobSearchActivityAttachment),
             typeof(LocalAuthCredential),
             typeof(MfaTrustedDevice),
+            typeof(NotificationPreference),
             typeof(OneTimeLink),
             typeof(PartnerAffiliateProfile),
             typeof(PassportAccessLog),
