@@ -587,7 +587,7 @@ public static class UiStringsScholen
         nl["Leerling.Reis.Saved"] = "Bewaard";
         nl["Leerling.Reis.SaveFailed"] = "Niet bewaard — probeer opnieuw";
         nl["Leerling.Reis.ResultPending"] = "Je antwoorden zijn bewaard. We maken je verhaal klaar. Probeer het zo nog eens.";
-        nl["Leerling.Reis.Retry"] = "Probeer opnieuw";
+        nl["Leerling.Reis.Retry"] = "Opnieuw proberen";
         nl["Leerling.Reis.Offline"] = "Even geen verbinding. Probeer opnieuw.";
         nl["Leerling.Reis.RateLimited"] = "Even geduld — probeer het zo opnieuw.";
         nl["Leerling.Reis.Prev"] = "Vorige";
@@ -863,6 +863,7 @@ public static class UiStringsScholen
             ar[key] = arText;
         }
 
+        Add("Leerling.Reis.Retry", "Opnieuw proberen", "Try again", "Spróbuj ponownie", "Încearcă din nou", "حاول مرة أخرى");
         Add("Leerling.Reis.More", "Meer uitleg", "More help", "Więcej pomocy", "Mai mult ajutor", "مزيد من الشرح");
         Add("Leerling.Login.AlreadyTitle", "Je bent al ingelogd", "You are already logged in", "Jesteś już zalogowany", "Ești deja conectat", "أنت مسجّل الدخول بالفعل");
         Add("Leerling.Vo.PartBreak.DocumentTitle", "Deel 1 is klaar", "Part 1 is done", "Część 1 gotowa", "Partea 1 e gata", "انتهى الجزء 1");
