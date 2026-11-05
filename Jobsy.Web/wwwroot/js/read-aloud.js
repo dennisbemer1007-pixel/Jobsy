@@ -155,12 +155,15 @@
             return;
         }
         btn.setAttribute("aria-pressed", speaking ? "true" : "false");
-        if (window.jobsyDomSafe) {
+        if (window.jobsyDomSafe && typeof window.jobsyDomSafe.toggleClass === "function") {
             window.jobsyDomSafe.toggleClass(btn, "is-speaking", speaking);
             window.jobsyDomSafe.toggleClass(btn, "on", speaking);
-        } else if (btn.classList) {
-            btn.classList.toggle("is-speaking", speaking);
-            btn.classList.toggle("on", speaking);
+            return;
+        }
+        var list = btn.classList;
+        if (list) {
+            list.toggle("is-speaking", speaking);
+            list.toggle("on", speaking);
         }
         var labels = domButtonLabels(btn);
         if (speaking && labels.stop) {

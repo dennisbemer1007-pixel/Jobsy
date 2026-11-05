@@ -136,7 +136,7 @@ public static class PupilLeerlingSsrFrame
         sb.Append("<img src=\"/brand/svg/lobsy-logo-horizontaal.svg\" alt=\"Lobsy\" /></a><span class=\"sp\"></span>");
         if (showOverview)
         {
-            sb.Append("<a class=\"mhbo-lnk\" href=\"/leerling/mbo-hbo/overzicht\">Naar overzicht</a>");
+            sb.Append("<a class=\"mhbo-lnk\" href=\"/leerling/mbo-hbo/overzicht\">Overzicht</a>");
         }
 
         if (!string.IsNullOrEmpty(chip))
