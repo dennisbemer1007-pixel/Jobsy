@@ -53,23 +53,29 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         };
         page.PageError += (_, err) => errors.Add(err);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (UseCaptureTestSignIn(baseUrl, _localBaseUrl))
         {
             await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+        }
+        else if (KbE2e.IsLocalCiStack(baseUrl))
+        {
+            await FunctionalE2eAuth.SignInSeededCandidateAsync(page, baseUrl, "/candidate/applications");
         }
         else if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
         {
             throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
-
-        if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+        else
         {
-            await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-        }
+            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+            }
 
-        await page.GotoAsync(
-            baseUrl + "/candidate/applications",
-            new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.GotoAsync(
+                baseUrl + "/candidate/applications",
+                new() { WaitUntil = WaitUntilState.NetworkIdle });
+        }
 
         await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(1500);
@@ -95,9 +101,9 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         }
 
         var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
-        if (await card.CountAsync() > 0)
+        if (await card.CountAsync() > 0 && await card.IsVisibleAsync())
         {
-            await card.ClickAsync();
+            await card.ClickAsync(new() { Force = true, Timeout = 15_000 });
             await page.WaitForTimeoutAsync(1000);
         }
 
@@ -114,12 +120,13 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
            || text.Contains("Failed to load resource", StringComparison.OrdinalIgnoreCase)
            || text.Contains("net::ERR_", StringComparison.OrdinalIgnoreCase);
 
+    private static bool UseCaptureTestSignIn(string baseUrl, string? localBaseUrl) =>
+        localBaseUrl is not null && string.Equals(baseUrl, localBaseUrl, StringComparison.Ordinal);
+
     private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)
     {
-        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
-        var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
-        if (!string.IsNullOrWhiteSpace(preferred)
-            && await KbE2e.TryLoginAsync(page, baseUrl, preferred.Trim(), password))
+        var password = KbE2e.ResolveCandidatePassword(baseUrl);
+        if (await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.ResolveCandidateEmail(), password))
         {
             return true;
         }

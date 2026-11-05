@@ -37,6 +37,7 @@ internal static class E2eFlowOnboarding
         var submit = page.Locator(
             "form.pub-signup__form button[type=submit], form.au-form button[type=submit], form.login-form button[type=submit], button.au-submit, button.login-submit").First;
         await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await submit.ScrollIntoViewIfNeededAsync();
         await page.WaitForFunctionAsync(
             """
             () => {
@@ -47,10 +48,39 @@ internal static class E2eFlowOnboarding
             """,
             null,
             new() { Timeout = 90_000 });
-        await submit.ClickAsync(new() { Timeout = 60_000 });
-        await page.WaitForURLAsync(
-            url => url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 90_000 });
+
+        var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            try
+            {
+                var waitCodePage = page.WaitForURLAsync(
+                    url => url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 120_000 });
+                if (mobile)
+                {
+                    await Task.WhenAll(waitCodePage, submit.TapAsync(new() { Timeout = 60_000 }));
+                }
+                else
+                {
+                    await Task.WhenAll(waitCodePage, submit.ClickAsync(new() { Timeout = 60_000 }));
+                }
+
+                break;
+            }
+            catch (TimeoutException) when (attempt == 0)
+            {
+                await page.WaitForTimeoutAsync(750);
+            }
+        }
+
+        if (!page.Url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new TimeoutException(
+                $"Signup submit did not reach /account-maken/code; still at {page.Url}");
+        }
 
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
         if (string.IsNullOrWhiteSpace(code))

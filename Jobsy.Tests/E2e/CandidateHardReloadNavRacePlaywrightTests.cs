@@ -19,6 +19,17 @@ public sealed class CandidateHardReloadNavRacePlaywrightTests
     [InlineData(390, 844, 10)]
     public async Task Hard_reload_reis_then_immediate_header_nav(int width, int height, int iterations)
     {
+        // Acceptatie-only diagnostic; CI functional gate runs against the local stack (127.0.0.1:5201).
+        if (FunctionalE2eGate.IsRequired)
+        {
+            return;
+        }
+
+        if (!await SmokeReachability.IsReachableAsync(AccUrl))
+        {
+            return;
+        }
+
         var outDir = Path.Combine(FindRepoRoot(), "artifacts", "hard-reload-nav-race");
         Directory.CreateDirectory(outDir);
         var tag = width >= 500 ? "1280" : "390";
