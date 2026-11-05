@@ -136,6 +136,7 @@ builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environme
 builder.Services.AddSingleton<JobsyAccessTokenIssuer>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<Jobsy.Web.Scholen.PupilWebProgressCache>();
+builder.Services.AddSingleton<Jobsy.Web.Scholen.PupilMboHboWebProgressCache>();
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
 builder.Services.AddHttpClient(Jobsy.Web.Auth.AuthApiClient.HttpClientName, client =>

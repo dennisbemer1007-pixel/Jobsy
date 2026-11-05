@@ -157,6 +157,9 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
         }
 
         var index = questions.ToList().FindIndex(x => x.Id == q.Id) + 1;
+        var questionList = questions.ToList();
+        var qIndex = questionList.FindIndex(x => x.Id == q.Id);
+        string? previousItemId = qIndex > 0 ? questionList[qIndex - 1].Id : null;
         int? val = null;
         int? leuk = null;
         int? goed = null;
@@ -185,7 +188,8 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
             PupilMboHboScaleLabels.ForBlock(block),
             val,
             leuk,
-            goed), null, 200);
+            goed,
+            previousItemId), null, 200);
     }
 
     public async Task<(PupilMboHboAnswerResponse? Ok, PupilErrorDto? Error, int Status)> SaveAnswerAsync(

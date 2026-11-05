@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Scholen.MboHbo;
@@ -32,27 +33,109 @@ public static class PupilMboHboSsrHtml
         return sb.ToString();
     }
 
-    public static string TestQuestion(PupilMboHboQuestionDto q, string _, string antiforgery, string postPath)
+    public static string TestQuestion(
+        PupilMboHboQuestionDto q,
+        string blockKey,
+        CultureState culture,
+        string antiforgery,
+        string postPath,
+        string? error)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"mhbo-wrap\"><form method=\"post\" action=\"").Append(PupilLeerlingSsrParts.E(postPath)).Append("\" data-mhbo-scale-form=\"1\">");
+        sb.Append("<div class=\"mhbo-wrap\" data-testid=\"mhbo-test-question\">");
+        sb.Append("<p class=\"mhbo-meta\">Vraag ").Append(q.Index.ToString(CultureInfo.InvariantCulture));
+        sb.Append(" van ").Append(q.Total.ToString(CultureInfo.InvariantCulture)).Append("</p>");
+        sb.Append("<form method=\"post\" action=\"").Append(PupilLeerlingSsrParts.E(postPath)).Append("\" data-mhbo-scale-form=\"1\">");
         sb.Append(antiforgery);
         sb.Append("<input type=\"hidden\" name=\"ItemId\" value=\"").Append(PupilLeerlingSsrParts.E(q.ItemId)).Append("\" />");
-        sb.Append("<h1>").Append(PupilLeerlingSsrParts.E(q.Question)).Append("</h1>");
+        sb.Append("<h1 id=\"mhbo-q-title\">").Append(PupilLeerlingSsrParts.E(q.Question)).Append("</h1>");
+        sb.Append(SpeakRow(q.Question, $"mhbo-q-{q.ItemId}", culture));
+        if (!string.IsNullOrWhiteSpace(q.Scenario))
+        {
+            sb.Append("<p class=\"mhbo-scenario\">").Append(PupilLeerlingSsrParts.E(q.Scenario)).Append("</p>");
+        }
+
         if (q.Scale == PupilMboHboScaleKind.SubjectLeukGoed)
         {
             sb.Append("<input type=\"hidden\" name=\"Leuk\" value=\"").Append(q.CurrentLeuk ?? 0).Append("\" />");
             sb.Append("<input type=\"hidden\" name=\"Goed\" value=\"").Append(q.CurrentGoed ?? 0).Append("\" />");
-            sb.Append(ScaleRow("Leuk", q.CurrentLeuk));
-            sb.Append(ScaleRow("Goed", q.CurrentGoed));
+            sb.Append("<div class=\"mhbo-vak-scales\">");
+            sb.Append("<div class=\"mhbo-vak-row\"><span>Leuk</span>").Append(ScaleRow("Leuk", q.CurrentLeuk)).Append("</div>");
+            sb.Append("<div class=\"mhbo-vak-row\"><span>Goed in</span>").Append(ScaleRow("Goed", q.CurrentGoed)).Append("</div>");
+            sb.Append("</div>");
         }
         else
         {
             sb.Append("<input type=\"hidden\" name=\"Value\" value=\"").Append(q.CurrentValue ?? 0).Append("\" />");
             sb.Append(ScaleRow("Value", q.CurrentValue));
         }
-        sb.Append("<button type=\"submit\" class=\"mhbo-btn\">Volgende →</button></form></div>");
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            sb.Append("<p class=\"mhbo-error\" role=\"alert\">").Append(PupilLeerlingSsrParts.E(error)).Append("</p>");
+            sb.Append("<p><a class=\"mhbo-btn mhbo-btn--ghost\" href=\"");
+            sb.Append(PupilLeerlingSsrParts.E(TestPath(blockKey, q.ItemId)));
+            sb.Append("\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Retry"])).Append("</a></p>");
+        }
+
+        sb.Append("<div class=\"mhbo-qfoot\" data-testid=\"mhbo-test-nav\">");
+        sb.Append(PrevControl(blockKey, q, culture));
+        sb.Append("<button type=\"submit\" class=\"mhbo-btn\">Volgende →</button></div></form></div>");
         return sb.ToString();
+    }
+
+    public static string Uitkomst(PupilMboHboOutcomeDto model)
+        => $"""<div class="mhbo-wrap"><h1>Uitkomst {PupilLeerlingSsrParts.E(model.Title)}</h1><p class="mhbo-sub">{PupilLeerlingSsrParts.E(model.Summary)}</p><a class="mhbo-lnk" href="/leerling/mbo-hbo/overzicht">← Terug</a></div>""";
+
+    public static string Paspoort(
+        PupilMboHboPassportDto model,
+        CultureState culture,
+        string pdfHref,
+        string? pdfNotice)
+    {
+        var sb = new StringBuilder("""<div class="mhbo-wrap" data-testid="mhbo-paspoort"><h1>Jouw Lobsy-paspoort</h1>""");
+        if (!string.IsNullOrEmpty(pdfNotice))
+        {
+            sb.Append("<p class=\"mhbo-error\" role=\"alert\">").Append(PupilLeerlingSsrParts.E(pdfNotice)).Append("</p>");
+        }
+
+        sb.Append("""<nav class="mhbo-paspoort-actions" data-testid="mhbo-paspoort-actions">""");
+        sb.Append("<a class=\"mhbo-btn mhbo-btn--ghost\" href=\"/leerling/mbo-hbo/overzicht\">Terug naar overzicht</a>");
+        sb.Append("<a class=\"mhbo-btn\" href=\"").Append(PupilLeerlingSsrParts.E(pdfHref)).Append("\" data-enhance-nav=\"false\" data-testid=\"mhbo-download-pdf\">");
+        sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingPassport.Page.Pdf"])).Append("</a></nav>");
+        sb.Append("<div class=\"mhbo-grid\">");
+        foreach (var sec in model.Sections)
+        {
+            sb.Append("<div class=\"mhbo-card\"><h2>").Append(PupilLeerlingSsrParts.E(sec.Title)).Append("</h2>");
+            sb.Append(sec.BodyHtml).Append("</div>");
+        }
+        sb.Append("</div></div>");
+        return sb.ToString();
+    }
+
+    private static string SpeakRow(string text, string speechKey, CultureState culture)
+        => $"""
+            <div class="mhbo-speak-row" data-testid="mhbo-speak-row">{PupilGroep78SsrParts.Groep78SpeakButton(text, speechKey, culture)}<span class="speak-label">{PupilLeerlingSsrParts.E(culture["Leerling.G78.ReadQuestion"])}</span></div>
+            """;
+
+    private static string PrevControl(string blockKey, PupilMboHboQuestionDto q, CultureState culture)
+    {
+        var label = PupilLeerlingSsrParts.E(culture["Leerling.Reis.Prev"]);
+        if (!string.IsNullOrEmpty(q.PreviousItemId))
+        {
+            var href = TestPath(blockKey, q.PreviousItemId);
+            return $"""<a class="mhbo-btn mhbo-btn--ghost" href="{PupilLeerlingSsrParts.E(href)}" data-testid="mhbo-prev">{PupilGroep78SsrParts.BackSvg}{label}</a>""";
+        }
+
+        return $"""<button type="button" class="mhbo-btn mhbo-btn--ghost" disabled data-testid="mhbo-prev">{PupilGroep78SsrParts.BackSvg}{label}</button>""";
+    }
+
+    private static string TestPath(string blockKey, string? itemId)
+    {
+        var path = $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}";
+        return string.IsNullOrEmpty(itemId)
+            ? path
+            : $"{path}?itemId={Uri.EscapeDataString(itemId)}";
     }
 
     private static string ScaleRow(string field, int? selected)
@@ -65,21 +148,6 @@ public static class PupilMboHboSsrHtml
             sb.Append("\" data-mhbo-scale-field=\"").Append(field).Append("\" data-mhbo-scale-value=\"").Append(v).Append("\">").Append(v).Append("</button>");
         }
         sb.Append("</div>");
-        return sb.ToString();
-    }
-
-    public static string Uitkomst(PupilMboHboOutcomeDto model)
-        => $"""<div class="mhbo-wrap"><h1>Uitkomst {PupilLeerlingSsrParts.E(model.Title)}</h1><p class="mhbo-sub">{PupilLeerlingSsrParts.E(model.Summary)}</p><a class="mhbo-lnk" href="/leerling/mbo-hbo/overzicht">← Terug</a></div>""";
-
-    public static string Paspoort(PupilMboHboPassportDto model)
-    {
-        var sb = new StringBuilder("""<div class="mhbo-wrap"><h1>Jouw Lobsy-paspoort</h1><div class="mhbo-grid">""");
-        foreach (var sec in model.Sections)
-        {
-            sb.Append("<div class=\"mhbo-card\"><h2>").Append(PupilLeerlingSsrParts.E(sec.Title)).Append("</h2>");
-            sb.Append(sec.BodyHtml).Append("</div>");
-        }
-        sb.Append("</div></div>");
         return sb.ToString();
     }
 }
