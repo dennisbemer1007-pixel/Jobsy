@@ -27,6 +27,14 @@ public class PersistLcpGuardTests
         Assert.Contains("OnAfterRenderAsync", testDetail, StringComparison.Ordinal);
         Assert.Contains("LoadHeavyStateAsync", testDetail, StringComparison.Ordinal);
         Assert.Contains("RendererInfo.IsInteractive", testDetail, StringComparison.Ordinal);
+        Assert.Contains("RetryLoadHeavyStateAsync", testDetail, StringComparison.Ordinal);
+        Assert.Contains("Prerender has firstRender", testDetail, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            """
+            if (!firstRender || _heavyLoadStarted || _def is null || !RendererInfo.IsInteractive)
+            """,
+            testDetail,
+            StringComparison.Ordinal);
         Assert.DoesNotContain("CareerCompass = _careerCompass", testDetail, StringComparison.Ordinal);
         Assert.DoesNotContain("DeepState = _deepState", testDetail, StringComparison.Ordinal);
         Assert.DoesNotContain("CompetenceReport = _competenceReport", testDetail, StringComparison.Ordinal);

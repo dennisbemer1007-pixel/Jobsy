@@ -40,6 +40,13 @@
     {
         <PageContentSkeleton Variant="test-detail" LoadingLabel="@Culture["Common.Loading"]" />
     }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadHeavyStateAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    }
     else if (_def is null)
     {
         <p class="state-message">@Culture["Tests.Unknown"]</p>
@@ -482,6 +489,7 @@
 
     private const string PersistKeyPrefix = "candidateTestDetail:";
     private bool _loading = true;
+    private bool _loadFailed;
     private bool _busy;
     private AssessmentTestDefinition? _def;
     private bool _freeDone;
@@ -618,7 +626,10 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _heavyLoadStarted || _def is null || !RendererInfo.IsInteractive)
+        // Prerender has firstRender true but IsInteractive false; the first *interactive*
+        // render often has firstRender false (second pass). Gating only on firstRender
+        // leaves the page on the skeleton forever — same pattern as HomeDashboardLoad.TryBegin.
+        if (_heavyLoadStarted || _def is null || !RendererInfo.IsInteractive)
         {
             return;
         }
@@ -627,9 +638,17 @@
         await LoadHeavyStateAsync();
     }
 
+    private async Task RetryLoadHeavyStateAsync()
+    {
+        _loadFailed = false;
+        _heavyLoadStarted = true;
+        await LoadHeavyStateAsync();
+    }
+
     private async Task LoadHeavyStateAsync()
     {
         _loading = true;
+        _loadFailed = false;
         await InvokeAsync(StateHasChanged);
 
         try
@@ -734,6 +753,7 @@
         {
             // Keep any payment query error; surface load failures without wiping completed results.
             _payError ??= Culture["Common.Error"];
+            _loadFailed = true;
         }
         finally
         {
