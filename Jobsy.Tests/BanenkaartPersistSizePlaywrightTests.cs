@@ -8,7 +8,9 @@ namespace Jobsy.Tests;
 
 /// <summary>
 /// FIX 1/4 — Banenkaart must not persist the full vacancy catalog into / HTML.
-/// That blew past the 2 MB Blazor hub limit and killed the candidate circuit
+/// That blew past the 2 MB Blazor hub limit where an interactive circuit still
+/// loaded the map (legacy); Banenkaart is now SSR-first but other candidate
+/// surfaces still use Blazor.
 /// (~1 s after connect), leaving Lijst/Match dead. Soft-skips E2E when
 /// <c>JOBSY_E2E_BASE_URL</c> is unset/unreachable so unit CI stays green.
 /// </summary>
@@ -26,6 +28,10 @@ public class BanenkaartPersistSizePlaywrightTests
     public void Discovery_does_not_persist_catalog_and_hub_limit_stays_2mb()
     {
         var root = FindRepoRoot();
+        var banenkaartSsr = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "BanenkaartSsr.razor"));
+        Assert.Contains("NoBlazorRuntime", banenkaartSsr);
+        Assert.Contains("/banenkaart", banenkaartSsr);
+
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.DoesNotContain("PersistentComponentState", discovery);
         Assert.DoesNotContain("PersistAsJson", discovery);
@@ -47,7 +53,7 @@ public class BanenkaartPersistSizePlaywrightTests
         Assert.Contains("390", src);
         Assert.Contains("844", src);
         Assert.Contains("1280", src);
-        Assert.Contains("_blazor", src);
+        Assert.Contains("data-banenkaart-ssr", src);
         Assert.Contains("swipe-actions__btn--interest", src);
         Assert.Contains("kandidaat@jobsy.local", src);
     }
@@ -55,7 +61,7 @@ public class BanenkaartPersistSizePlaywrightTests
     [Theory]
     [InlineData(390, 844)]
     [InlineData(1280, 800)]
-    public async Task Anonymous_home_html_circuit_and_lijst(int width, int height)
+    public async Task Anonymous_home_ssr_and_lijst(int width, int height)
     {
         var baseUrl = ResolveBaseUrl();
         if (baseUrl is null)
@@ -71,7 +77,7 @@ public class BanenkaartPersistSizePlaywrightTests
     [Theory]
     [InlineData(390, 844)]
     [InlineData(1280, 800)]
-    public async Task Candidate_home_html_circuit_lijst_and_match_swipe(int width, int height)
+    public async Task Candidate_home_ssr_lijst_and_match_swipe(int width, int height)
     {
         var baseUrl = ResolveBaseUrl();
         if (baseUrl is null)
@@ -98,30 +104,9 @@ public class BanenkaartPersistSizePlaywrightTests
         await AssertHtmlUnderLimitAsync(baseUrl, cookieHeader: null);
 
         var page = await context.NewPageAsync();
-        var wsClosedEarly = false;
-        // Capture the hub socket during navigation — desktop can race past a
-        // late page.WebSocket handler even when Blazor._internal is already up.
-        var blazorWs = await page.RunAndWaitForWebSocketAsync(
-            async () =>
-            {
-                await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            },
-            new()
-            {
-                Timeout = 30_000,
-                Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
-            });
-        Assert.NotNull(blazorWs);
-        blazorWs.Close += (_, _) => wsClosedEarly = true;
-
-        await page.WaitForFunctionAsync(
-            "() => !!(window.Blazor && window.Blazor._internal)",
-            null,
-            new() { Timeout = 30_000 });
-
-        await page.WaitForTimeoutAsync(10_000);
-        Assert.False(wsClosedEarly, "_blazor WebSocket closed within 10 s (anonymous).");
-        Assert.False(blazorWs.IsClosed, "_blazor WebSocket should stay open ≥10 s (anonymous).");
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
+        await PlaywrightBanenkaartWaitHelper.DismissStartPromptIfPresentAsync(page);
 
         await AssertLijstShowsCardsWithin2sAsync(page, width);
     }
@@ -148,22 +133,9 @@ public class BanenkaartPersistSizePlaywrightTests
         var cookieHeader = string.Join("; ", cookies.Select(c => $"{c.Name}={c.Value}"));
         await AssertHtmlUnderLimitAsync(baseUrl, cookieHeader);
 
-        var closedDuringHold = false;
-        var blazorWs = await page.RunAndWaitForWebSocketAsync(
-            async () =>
-            {
-                await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            },
-            new()
-            {
-                Timeout = 30_000,
-                Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
-            });
-        Assert.NotNull(blazorWs);
-        blazorWs.Close += (_, _) => closedDuringHold = true;
-        await page.WaitForTimeoutAsync(10_000);
-        Assert.False(closedDuringHold, "_blazor WebSocket closed within 10 s (candidate).");
-        Assert.False(blazorWs.IsClosed, "_blazor WebSocket should stay open ≥10 s (candidate).");
+        await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
+        await PlaywrightBanenkaartWaitHelper.DismissStartPromptIfPresentAsync(page);
 
         await AssertLijstShowsCardsWithin2sAsync(page, width);
 
@@ -250,13 +222,14 @@ public class BanenkaartPersistSizePlaywrightTests
 
     private static async Task AssertLijstShowsCardsWithin2sAsync(IPage page, int width)
     {
-        // Circuit must be interactive before Lijst is meaningful (dead circuit = tap does nothing).
-        await page.WaitForFunctionAsync(
-            "() => !!(window.Blazor && (window.Blazor._internal || document.querySelector('[data-blazor-id], .vacancy-pane')))",
-            null,
-            new() { Timeout = 30_000 });
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
 
-        var listBtn = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Lijst|List", RegexOptions.IgnoreCase) }).First;
+        var listBtn = page.Locator("[data-testid=kb-view-lijst]").First;
+        if (await listBtn.CountAsync() == 0)
+        {
+            listBtn = page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("Lijst|List", RegexOptions.IgnoreCase) }).First;
+        }
+
         if (await listBtn.CountAsync() == 0)
         {
             listBtn = page.Locator("button.jobsy-action--toggle:has-text('Lijst'), button:has-text('Lijst')").First;

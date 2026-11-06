@@ -46,6 +46,7 @@ public class FilterSheetFooterPlaywrightTests
 
         await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
         await OpenFiltersAsync(page);
 
         var apply = page.Locator(".filter-sheet__apply").First;
@@ -112,6 +113,7 @@ public class FilterSheetFooterPlaywrightTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
         var search = page.Locator(".filter-bar__search").First;
         await search.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         Assert.True(await search.IsVisibleAsync());

@@ -49,8 +49,8 @@ public class BanenkaartMobileOverflowPlaywrightTests
         });
         await page.WaitForSelectorAsync(".jobsy-discovery, #job-map, .kb-filter-bar", new() { Timeout = 60_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await WaitForBlazorInteractiveAsync(page);
-        await DismissStartPromptAsync(page);
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
+        await PlaywrightBanenkaartWaitHelper.DismissStartPromptIfPresentAsync(page);
 
         await AssertNoHorizontalOverflowAsync(page);
         await AssertFilterBarFitsAsync(page);
@@ -112,33 +112,6 @@ public class BanenkaartMobileOverflowPlaywrightTests
             await lijst.First.ClickAsync(new() { Force = true });
             await page.WaitForTimeoutAsync(400);
             await AssertNoHorizontalOverflowAsync(page);
-        }
-    }
-
-    private static async Task WaitForBlazorInteractiveAsync(IPage page)
-    {
-        await page.WaitForFunctionAsync(
-            "() => !!(window.Blazor && window.Blazor._internal)",
-            null,
-            new() { Timeout = 30_000 });
-    }
-
-    private static async Task DismissStartPromptAsync(IPage page)
-    {
-        var later = page.Locator(".kb-start-prompt__later");
-        if (await later.CountAsync() == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            await later.First.ClickAsync(new() { Timeout = 5_000 });
-            await page.WaitForTimeoutAsync(400);
-        }
-        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
-        {
-            // Prompt may already have closed itself after the circuit started.
         }
     }
 

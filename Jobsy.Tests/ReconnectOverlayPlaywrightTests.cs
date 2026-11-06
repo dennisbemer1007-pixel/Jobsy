@@ -62,6 +62,18 @@ public class ReconnectOverlayPlaywrightTests
         {
             var request = route.Request;
             var path = new Uri(request.Url).AbsolutePath;
+            if (path.Contains("reconnect.css", StringComparison.OrdinalIgnoreCase))
+            {
+                var cssFile = Path.Combine(wwwroot, "css", "features", "reconnect.css");
+                await route.FulfillAsync(new()
+                {
+                    Status = File.Exists(cssFile) ? 200 : 404,
+                    ContentType = "text/css",
+                    BodyBytes = File.Exists(cssFile) ? await File.ReadAllBytesAsync(cssFile) : null
+                });
+                return;
+            }
+
             if (path is "/" or "/status/404")
             {
                 await route.FulfillAsync(new()

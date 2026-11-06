@@ -379,17 +379,23 @@ public class StatusPagesPlaywrightTests
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
         await using var context = await NewContextAsync(browser, baseUrl, language, 1440, 900);
         var page = await context.NewPageAsync();
-        await page.GotoAsync(baseUrl + "/", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
+        if (!await TryLoginAsync(page, baseUrl, CandidateEmail(), Password()))
+        {
+            Skip($"reconnect toast {language}: could not sign in as seeded candidate");
+            return;
+        }
 
-        var trying = await page.Locator(".reconnect-toast__msg--show").First.InnerTextAsync();
-        Assert.False(string.IsNullOrWhiteSpace(trying));
+        await page.GotoAsync(baseUrl + "/home", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
 
         var hasBlazor = await page.EvaluateAsync<bool>("() => typeof Blazor !== 'undefined' && !!Blazor");
         if (!hasBlazor)
         {
-            Skip($"reconnect toast {language}: landing has no Blazor circuit in this environment");
+            Skip($"reconnect toast {language}: dashboard has no Blazor in this environment");
             return;
         }
+
+        var trying = await page.Locator(".reconnect-toast__msg--show").First.InnerTextAsync();
+        Assert.False(string.IsNullOrWhiteSpace(trying));
 
         await context.SetOfflineAsync(true);
         try
@@ -444,7 +450,7 @@ public class StatusPagesPlaywrightTests
         }));
 
         await page.GotoAsync(
-            baseUrl + "/candidate/dashboard",
+            baseUrl + "/home",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
         var block = page.Locator(".err-inline");

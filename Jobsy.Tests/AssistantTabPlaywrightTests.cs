@@ -56,10 +56,8 @@ public class AssistantTabPlaywrightTests
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 60_000
         });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 30_000 });
+        // Passport is SSR (NoBlazorRuntime) — coach mounts via lobsy-coach-ssr.js, not data-lobsy-circuit.
+        await page.WaitForSelectorAsync("[data-passport-ssr], #lobsy-coach-btn, .lobsy-coach-dock", new() { Timeout = 60_000 });
 
         var coach = page.Locator("#lobsy-coach-btn");
         await coach.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
