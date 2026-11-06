@@ -263,7 +263,7 @@
 }.pub-theme .gd-mnav .gd-cta{
   margin:0;
   border-radius:var(--radius-pill);
-}@media (min-width:900px){.pub-theme .gd-mnav{display:none}}.pub-theme .gd-qfoot{
+}.pub-theme .gd-qfoot{
   display:flex;
   justify-content:center;
   align-items:center;

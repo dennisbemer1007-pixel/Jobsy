@@ -185,7 +185,7 @@ public static partial class PageAssetCatalog
             return Area.None;
         }
 
-        if (path is "/gratis-dna")
+        if (path is "/gratis-dna" or "/ontdek" or "/dna")
         {
             return Area.GratisDna;
         }
@@ -496,7 +496,7 @@ public static partial class PageAssetCatalog
     public static bool IncludeGratisDnaScript(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path is "/gratis-dna"
+        return path is "/gratis-dna" or "/ontdek" or "/dna"
             || path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal)
             || path.StartsWith("/account-maken", StringComparison.Ordinal);
     }

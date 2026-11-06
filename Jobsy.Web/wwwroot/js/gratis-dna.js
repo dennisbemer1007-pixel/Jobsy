@@ -520,7 +520,7 @@ window.jobsyEnsureGratisDna = function () {
             return;
         }
         var s = document.createElement("script");
-        s.src = "/js/gratis-dna.js?v=20261003-csp2";
+        s.src = "/js/gratis-dna.js?v=20261004-13";
         s.defer = true;
         s.dataset.gratisDna = "true";
         s.onload = function () { resolve(); };
