@@ -33,6 +33,8 @@ public class GratisDnaBunitTests : JobsyBunitContext
     [Fact]
     public void Result_view_renders_four_tiles_teaser_share_cta_wipe_without_percent()
     {
+        var culture = Services.GetRequiredService<CultureState>();
+        using var _nl = culture.PushDisplayLanguage("nl");
         var cut = Render(builder =>
         {
             builder.OpenComponent<GratisDnaResultView>(0);
@@ -49,16 +51,16 @@ public class GratisDnaBunitTests : JobsyBunitContext
         var markup = cut.Markup;
         Assert.Contains("Eerste indruk · 20 vragen", markup, StringComparison.Ordinal);
         Assert.Contains("Zo werk jij", markup, StringComparison.Ordinal);
-        Assert.Contains("Dit vind je leuk", markup, StringComparison.Ordinal);
-        Assert.Contains("Hier voel je je thuis", markup, StringComparison.Ordinal);
-        Assert.Contains("Dit vind je belangrijk", markup, StringComparison.Ordinal);
+        Assert.Contains("Wat je leuk vindt", markup, StringComparison.Ordinal);
+        Assert.Contains("Waar je je thuis voelt", markup, StringComparison.Ordinal);
+        Assert.Contains("Wat jij belangrijk vindt", markup, StringComparison.Ordinal);
         Assert.Contains("Dit ben jij", markup, StringComparison.Ordinal);
         Assert.Contains("Bewaar je DNA · Maak gratis account", markup, StringComparison.Ordinal);
         Assert.Contains("WhatsApp", markup, StringComparison.Ordinal);
         Assert.Contains("Instagram", markup, StringComparison.Ordinal);
         Assert.Contains("Wis antwoorden", markup, StringComparison.Ordinal);
         Assert.Contains("Bewaar je DNA", markup, StringComparison.Ordinal);
-        Assert.Contains("Maak gratis account", markup, StringComparison.Ordinal);
+        Assert.Contains("Doorgaan met e-mail", markup, StringComparison.Ordinal);
         Assert.Contains("/account-maken?van=ontdek", markup, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"gd-passport-teaser\"", markup, StringComparison.Ordinal);
         Assert.Contains("aria-hidden=\"true\"", markup, StringComparison.Ordinal);
