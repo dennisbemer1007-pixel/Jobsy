@@ -394,7 +394,9 @@ public class StatusPagesPlaywrightTests
             return;
         }
 
-        var trying = await page.Locator(".reconnect-toast__msg--show").First.InnerTextAsync();
+        await page.WaitForSelectorAsync("#components-reconnect-modal", new() { Timeout = 30_000 });
+        var trying = await page.EvaluateAsync<string>(
+            "() => { const p = document.querySelector('.reconnect-toast__msg--show'); return p ? (p.textContent || '').trim() : ''; }");
         Assert.False(string.IsNullOrWhiteSpace(trying));
 
         await context.SetOfflineAsync(true);

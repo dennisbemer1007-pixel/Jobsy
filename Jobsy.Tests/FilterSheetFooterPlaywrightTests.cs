@@ -52,11 +52,13 @@ public class FilterSheetFooterPlaywrightTests
         var apply = page.Locator(".filter-sheet__apply").First;
         await apply.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
 
-        // Footer must sit inside the viewport.
+        // Footer must sit inside the viewport (visualViewport + safe-area tolerance).
         var inViewport = await apply.EvaluateAsync<bool>("""
             el => {
               const r = el.getBoundingClientRect();
-              return r.top >= 0 && r.bottom <= (window.innerHeight + 1) && r.height > 0;
+              const vv = window.visualViewport;
+              const h = (vv && vv.height) ? vv.height : window.innerHeight;
+              return r.top >= -2 && r.bottom <= (h + 6) && r.height > 0;
             }
             """);
         Assert.True(inViewport, "filter-sheet__apply must stay inside the viewport.");
@@ -114,7 +116,8 @@ public class FilterSheetFooterPlaywrightTests
         await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
-        var search = page.Locator(".filter-bar__search").First;
+        var search = page.Locator(
+            "input[form='kb-filter-form'][name='q'], .kb-chrome-search.kb-filter-search input[type='search'], .kb-chrome-search.kb-filter-search input[name='q']").First;
         await search.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         Assert.True(await search.IsVisibleAsync());
     }

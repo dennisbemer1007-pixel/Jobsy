@@ -190,14 +190,26 @@ public class ReconnectOverlayPlaywrightTests
             """
             () => {
               const el = document.getElementById('components-reconnect-modal');
+              if (!el) {
+                return {
+                  display: 'none',
+                  position: 'static',
+                  show: 'none',
+                  failed: 'none',
+                  rejected: 'none'
+                };
+              }
               const cs = getComputedStyle(el);
-              const msg = (name) => getComputedStyle(el.querySelector(name)).display;
+              const disp = (sel) => {
+                const n = el.querySelector(sel);
+                return n ? getComputedStyle(n).display : 'none';
+              };
               return {
                 display: cs.display,
                 position: cs.position,
-                show: msg('.reconnect-toast__msg--show'),
-                failed: msg('.reconnect-toast__msg--failed'),
-                rejected: msg('.reconnect-toast__msg--rejected')
+                show: disp('.reconnect-toast__msg--show'),
+                failed: disp('.reconnect-toast__msg--failed'),
+                rejected: disp('.reconnect-toast__msg--rejected')
               };
             }
             """);

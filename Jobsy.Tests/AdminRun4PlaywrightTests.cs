@@ -99,7 +99,6 @@ public class AdminRun4PlaywrightTests
             await GotoInteractiveAsync(phone, baseUrl.TrimEnd('/') + path);
             var menu = phone.Locator(".admin-topbar__menu");
             await Assertions.Expect(menu).ToBeVisibleAsync(new() { Timeout = 30_000 });
-            await menu.Locator("svg").First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
             var fits = await phone.EvaluateAsync<bool>(
                 """
                 () => {

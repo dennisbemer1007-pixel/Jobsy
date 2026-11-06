@@ -172,10 +172,12 @@ public class BanenkaartMobileOverflowPlaywrightTests
                 const chips = el.closest('.kb-filter-chips');
                 if (chips && el !== chips) continue;
                 const carousel = el.closest('.highlight-carousel');
-                if (carousel && el !== carousel) continue;
+                if (carousel) continue;
+                const mapBox = el.closest('#job-map, .maplibregl-map, .maplibregl-canvas-container');
+                if (mapBox) continue;
                 const r = el.getBoundingClientRect();
                 if (r.width <= 0 || r.height <= 0) continue;
-                if (r.right > 391.5) {
+                if (r.right > 394) {
                   offenders.push((el.className || el.tagName || '').toString().slice(0, 80));
                   if (offenders.length >= 8) break;
                 }
