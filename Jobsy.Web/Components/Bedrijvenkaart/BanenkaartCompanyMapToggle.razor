@@ -1,0 +1,22 @@
+@using Jobsy.Core.Features
+@using Jobsy.Web.KandidaatBanen
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+@if (_enabled)
+{
+    <div class="bk-map-toggle bk-map-toggle--banen" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
+        <a href="@KbRoutes.Map" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Jobs"]</a>
+        <a href="@KbRoutes.CompanyMap" role="tab">@Culture["Kb.MapToggle.Companies"]</a>
+    </div>
+}
+
+@code {
+    private bool _enabled;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _enabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
+    }
+}

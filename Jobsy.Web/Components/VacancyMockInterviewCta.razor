@@ -1,0 +1,37 @@
+@namespace Jobsy.Web.Components
+@using System.ComponentModel
+@using Jobsy.Web.Media
+@inherits CultureAwareComponentBase
+
+<div class="lobsy-coach-cta @PlacementClass" data-testid="vacancy-mock-interview-cta">
+    <button type="button"
+            class="lobsy-coach-cta__btn lobsy-coach-cta__btn--warm"
+            @onclick="OnOpen"
+            aria-label="@Culture["MockInterview.CtaAria"]">
+        <span class="lobsy-coach-cta__medallion" aria-hidden="true">
+            <img src="@BrandImages.MarkSvg"
+                 srcset="@BrandImages.SrcSet56"
+                 sizes="40px"
+                 alt=""
+                 width="40"
+                 height="40"
+                 decoding="async" />
+        </span>
+        <span class="lobsy-coach-cta__label">@Culture["MockInterview.CtaBubble"]</span>
+    </button>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Placement { get; set; } = "";
+
+    [Parameter, EditorRequired]
+    public EventCallback OnOpen { get; set; }
+
+    private string PlacementClass => Placement switch
+    {
+        "rail" => "lobsy-coach-cta--kb-rail",
+        "mobile" => "lobsy-coach-cta--kb-mobile",
+        _ => ""
+    };
+}

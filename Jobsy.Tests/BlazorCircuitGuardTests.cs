@@ -33,9 +33,23 @@ public class BlazorCircuitGuardTests
         Assert.Contains("LoadBlazorRuntime", app);
         Assert.Contains("type === \"unload\"", app);
         Assert.Contains("pagehide", app);
-        Assert.Contains("js/app-core.js?v=", app);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", app);
         Assert.Contains("nonce=\"@Nonce\"", app);
         Assert.Contains("defer", app);
+    }
+
+    [Fact]
+    public void Pagehide_shim_is_idempotent_and_keeps_native_add()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("window.__jobsyPagehideShim", app, StringComparison.Ordinal);
+        Assert.Contains("if (!window.__jobsyPagehideShim)", app, StringComparison.Ordinal);
+        Assert.Contains("var add = EventTarget.prototype.addEventListener;", app, StringComparison.Ordinal);
+        Assert.Contains("var remove = EventTarget.prototype.removeEventListener;", app, StringComparison.Ordinal);
+        // Patched add/remove call the closed-over natives, not a live re-read of the prototype.
+        Assert.Contains("return add.call(this, type, listener, options);", app, StringComparison.Ordinal);
+        Assert.Contains("return remove.call(this, type, listener, options);", app, StringComparison.Ordinal);
+        Assert.DoesNotContain("EventTarget.prototype.addEventListener.call(this", app, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -46,7 +60,7 @@ public class BlazorCircuitGuardTests
         Assert.Contains("KeepAliveInterval", program);
         Assert.Contains("ClientTimeoutInterval", program);
         Assert.Contains("DisconnectedCircuitRetentionPeriod", program);
-        Assert.Contains("TimeSpan.FromMinutes(5)", program);
+        Assert.Contains("TimeSpan.FromMinutes(15)", program);
     }
 
     [Fact]
@@ -55,14 +69,43 @@ public class BlazorCircuitGuardTests
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("id=\"components-reconnect-modal\"", app);
         Assert.Contains("reconnect-toast", app);
-        Assert.Contains("data-reconnect-reload", app);
-        Assert.Contains("Verbinding herstellen", app);
+        Assert.Contains("data-reconnect-try", app);
+        Assert.Contains("data-reconnect-login", app);
+        // errors 04 §04.3: the toast reads the catalog, so assert the key, not a Dutch literal.
+        Assert.Contains("Status.Reconnect.Trying", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.Failed", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.Rejected", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.SessionExpired", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.ReconnectButton", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.SignInAgain", app, StringComparison.Ordinal);
+        Assert.DoesNotContain(">Verbinding herstellen", app, StringComparison.Ordinal);
+        Assert.Equal(
+            "Verbinding herstellen…",
+            Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "nl"));
+        Assert.NotEqual(
+            Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "nl"),
+            Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "ar"));
         Assert.DoesNotContain("onclick=\"location.reload()\"", app);
-        Assert.Contains("closest(\"[data-reconnect-reload]\")", app);
+        Assert.Contains("data-reconnect-reload", app, StringComparison.Ordinal);
 
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
-        Assert.Contains(".reconnect-toast {\n    display: none;\n    position: fixed;", css);
-        Assert.Contains("bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("WwwrootAssetCatalog.Url(\"css/features/reconnect.css\")", app, StringComparison.Ordinal);
+        Assert.Contains("data-reconnect-css", app, StringComparison.Ordinal);
+        var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
+        Assert.Contains(
+            "#components-reconnect-modal:not(.components-reconnect-show)",
+            critical,
+            StringComparison.Ordinal);
+
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "reconnect.css"));
+        Assert.Contains(".reconnect-toast", css);
+        Assert.Contains("display: none", css);
+        Assert.Contains("position: fixed", css);
+        Assert.Contains("--bottom-nav-clearance", css, StringComparison.Ordinal);
+        Assert.Contains("data-lobsy-reconnect-active", css, StringComparison.Ordinal);
+        Assert.Contains(".reconnect-toast.components-reconnect-retrying", css, StringComparison.Ordinal);
+        Assert.Contains(".reconnect-toast.components-reconnect-paused", css, StringComparison.Ordinal);
+        Assert.Contains(".reconnect-toast__msg", css, StringComparison.Ordinal);
+        Assert.Contains("display: none", css, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -105,8 +148,10 @@ public class BlazorCircuitGuardTests
     {
         var root = FindRepoRoot();
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
-        Assert.Contains("ErrorBoundary", layout);
-        Assert.Contains("Circuit.ErrorRetry", layout);
+        Assert.Contains("CircuitErrorBoundary", layout);
+        var boundary = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "CircuitErrorBoundary.razor"));
+        Assert.Contains("ErrorBoundary", boundary);
+        Assert.Contains("Circuit.ErrorRetry", boundary);
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Program.cs"));
         Assert.Contains("CircuitExceptionLogger", program);
         Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web", "Hosting", "CircuitExceptionLogger.cs")));

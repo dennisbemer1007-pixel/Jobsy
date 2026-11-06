@@ -1,0 +1,33 @@
+KEY: AmbassadeurInvite
+SUBJECT: Je bent uitgenodigd als ambassadeur bij Lobsy
+PREHEADER: Kies een wachtwoord en begin.
+KIND: Essential
+--- TEXT ---
+Hallo Alex,
+
+Welkom als ambassadeur
+======================
+
+Je bent uitgenodigd als ambassadeur bij Lobsy.
+
+1 Kies je wachtwoord. 2 Vul je bedrijfsgegevens in. 3 Onderteken de
+overeenkomst. Dan krijg je je eigen code.
+
+Inloggen: https://lobsy.nl/login
+
+Team Lobsy
+
+Je ontvangt deze mail vanwege een actie op Lobsy.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Welkom als ambassadeur
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Inloggen -> https://lobsy.nl/login
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

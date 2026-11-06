@@ -1,0 +1,10 @@
+@namespace Jobsy.Web.Components.Leerling
+@inject CultureState Culture
+
+<ReadAloudButton Text="@Text" SpeechKey="@SpeechKey" PlayAria="@Culture["ReadAloud.Play"]" />
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+
+    [Parameter] public string SpeechKey { get; set; } = "";
+}

@@ -29,30 +29,13 @@ public static class TrainingTracking
         return HmacHex(normalized, secret);
     }
 
-    public static bool EmailHashMatches(string? email, string? storedHash, string secret)
-    {
-        if (string.IsNullOrWhiteSpace(storedHash))
-        {
-            return false;
-        }
-
-        var computed = EmailHash(email, secret);
-        if (computed.Length != storedHash.Length)
-        {
-            return false;
-        }
-
-        return CryptographicOperations.FixedTimeEquals(
-            Encoding.ASCII.GetBytes(computed),
-            Encoding.ASCII.GetBytes(storedHash));
-    }
-
     public static string AppendParameters(
         string baseUrl,
         string candidateHash,
         Guid clickId,
         string campaign,
-        string medium)
+        string medium,
+        string? affiliateCode = null)
     {
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
@@ -82,10 +65,18 @@ public static class TrainingTracking
         Set("utm_source", Ref);
         Set("utm_medium", mediumValue);
         Set("utm_campaign", campaignValue);
+        if (!string.IsNullOrWhiteSpace(affiliateCode))
+        {
+            Set("aff", affiliateCode.Trim());
+        }
 
         builder.Query = string.Join('&', pairs);
         return builder.Uri.ToString();
     }
+
+    /// <summary>Outbound link rel for passport course cards.</summary>
+    public static string RelFor(bool isPartner)
+        => isPartner ? "sponsored noopener noreferrer" : "noopener";
 
     public static bool LooksSafeOutbound(string url)
     {

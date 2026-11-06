@@ -1,4 +1,4 @@
-# Jobsy demo-materiaal
+# Lobsy demo-materiaal
 
 Demo-scripts, werkbeschrijvingen met screenshots en een PowerPoint-presentatie van de app.
 

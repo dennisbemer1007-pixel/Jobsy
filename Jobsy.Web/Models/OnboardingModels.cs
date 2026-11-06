@@ -10,6 +10,8 @@ public sealed class OnboardingState
     public string? Source { get; set; }
     public List<OnboardingStepEvent> Steps { get; set; } = [];
     public OnboardingImpression? Impression { get; set; }
+    public int WizardVersion { get; set; } = 2;
+    public bool FinishReached { get; set; }
 }
 
 public sealed class OnboardingStepEvent
@@ -29,7 +31,6 @@ public sealed class OnboardingImpression
     public OnboardingImpressionItem? TopValue { get; set; }
     public int MatchingVacancyCount { get; set; }
     public List<OnboardingMatchCard> MatchCards { get; set; } = [];
-    public List<string> DreamJobSuggestions { get; set; } = [];
     public bool CompetencyProvisional { get; set; }
     public bool CareerProvisional { get; set; }
     public bool CultureProvisional { get; set; }
@@ -52,4 +53,26 @@ public sealed class OnboardingMatchCard
     public int MatchPercent { get; set; }
     public string WhyLine { get; set; } = "";
     public bool IsProvisional { get; set; }
+}
+
+public sealed class OnboardingNearbySignal
+{
+    public int Count { get; set; }
+    public int? WiderRadiusCount { get; set; }
+    public int MaxTravelMinutes { get; set; }
+    public string? PreferredTransport { get; set; }
+    public bool EmployersFeatureOff { get; set; }
+    public bool MissingHomeLocation { get; set; }
+    public List<OnboardingNearbyVacancyCard> Examples { get; set; } = [];
+}
+
+public sealed class OnboardingNearbyVacancyCard
+{
+    public Guid VacancyId { get; set; }
+    public string Title { get; set; } = "";
+    public double DistanceKm { get; set; }
+    public int TravelMinutes { get; set; }
+    public string HoursLabel { get; set; } = "";
+    public string ScheduleHint { get; set; } = "";
+    public string WhyLine { get; set; } = "";
 }

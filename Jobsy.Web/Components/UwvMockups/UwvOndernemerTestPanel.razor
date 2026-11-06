@@ -1,0 +1,122 @@
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Media
+@using Jobsy.Web.UwvMockups
+
+<div class="test-page journey-page uwv-ondernemer-test uwv-ondernemer-test--@Phase">
+@if (Phase == "intro")
+{
+    <TestPageShell Kind="AssessmentKind.Career"
+                   Mode="TestPageShell.ShellMode.Intro"
+                   H1="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   Lead="@IntroLead"
+                   TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   Answered="0"
+                   TargetCount="6"
+                   QuickScanVersion="1"
+                   ActiveDepth="TestDepthLevel.First"
+                   DepthInteractive="false"
+                   ShowDepthSegments="false"
+                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Your own pace" : "In jouw tempo")">
+        <ChildContent>
+            <footer class="test-shell__footer">
+                <button type="button" class="btn btn-primary">@(UwvMockupCopy.IsEnglish(Lang) ? "Start" : "Begin")</button>
+            </footer>
+        </ChildContent>
+    </TestPageShell>
+}
+else if (Phase == "question")
+{
+    <TestPageShell Kind="AssessmentKind.Career"
+                   Mode="TestPageShell.ShellMode.Question"
+                   H1="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   LevelName="@(UwvMockupCopy.IsEnglish(Lang) ? "Short" : "Kort")"
+                   Answered="1"
+                   TargetCount="6"
+                   QuickScanVersion="1"
+                   ActiveDepth="TestDepthLevel.First"
+                   ShowDepthSegments="false"
+                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Take your time" : "Neem je tijd")">
+        <ChildContent>
+            <div class="test-flow test-flow--compact uwv-ondernemer-test__flow">
+                <div class="test-flow__progress-head">
+                    <p class="test-flow__counter">@(UwvMockupCopy.IsEnglish(Lang) ? "Question 1 of 6" : "Vraag 1 van 6")</p>
+                </div>
+                <div class="test-flow__bar uwv-ondernemer-test__bar" role="group" aria-label="@(UwvMockupCopy.IsEnglish(Lang) ? "Question 1 of 6" : "Vraag 1 van 6")">
+                    @for (var seg = 0; seg < 6; seg++)
+                    {
+                        var cls = seg == 0 ? "is-current" : "is-todo";
+                        <span class="test-flow__seg @cls" aria-hidden="true"></span>
+                    }
+                </div>
+            </div>
+            <p class="uwv-ondernemer-test__back">
+                <a href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back" : "Terug")</a>
+            </p>
+            <p class="uwv-test-q">@(UwvMockupCopy.IsEnglish(Lang)
+                ? "I like trying a small idea before committing to a big step."
+                : "Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.")</p>
+            <div class="uwv-test-scale" role="group" aria-label="Likert">
+                @foreach (var label in ScaleLabels)
+                {
+                    <button type="button" class="uwv-test-scale__btn">@label</button>
+                }
+            </div>
+        </ChildContent>
+    </TestPageShell>
+}
+else
+{
+    var (resultTitle, resultLead) = UwvMockupCopy.Ondernemer.ResultCopy("explore", Lang);
+    <div class="uwv-ondernemer-test__shell">
+        <article class="detail-card career-card uwv-ondernemer-result__panel">
+            <div class="uwv-ondernemer-result__main">
+                <p class="uwv-ondernemer-result__eyebrow">@(UwvMockupCopy.IsEnglish(Lang) ? "Self-employment check · Short" : "Past ondernemen bij mij? · Kort")</p>
+                <h1 class="uwv-ondernemer-result__title">@resultTitle</h1>
+                <p class="uwv-ondernemer-result__lead">@resultLead</p>
+                <h2 class="uwv-ondernemer-result__steps-title">@UwvMockupCopy.Ondernemer.ResultNextStepsTitle(Lang)</h2>
+                <ol class="uwv-ondernemer-result__steps">
+                    @foreach (var step in UwvMockupCopy.Ondernemer.ResultNextSteps(Lang))
+                    {
+                        <li>
+                            @if (step.External)
+                            {
+                            <a class="uwv-ondernemer-result__step-link uwv-ondernemer-result__step-link--external"
+                               href="@step.Href"
+                               target="_blank"
+                               rel="noopener noreferrer">@step.Label<span class="uwv-ondernemer-result__step-icon" aria-hidden="true">&nbsp;↗</span></a>
+                        }
+                        else
+                        {
+                            <a class="uwv-ondernemer-result__step-link" href="@step.Href">@step.Label<span class="uwv-ondernemer-result__step-icon" aria-hidden="true">&nbsp;›</span></a>
+                        }
+                        </li>
+                    }
+                </ol>
+                <footer class="test-shell__footer uwv-ondernemer-result__footer">
+                    <a class="btn btn-ghost" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back to discovery" : "Terug naar ontdekken")</a>
+                    <a class="btn btn-primary" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Take to your work adviser" : "Neem mee naar je adviseur")</a>
+                </footer>
+                <p class="uwv-ondernemer-result__done muted">@UwvMockupCopy.Ondernemer.ResultDoneLine(Lang)</p>
+            </div>
+            <figure class="uwv-ondernemer-result__scene" aria-hidden="true">
+                <img src="@CandidateIllustratedImages.OndernemerResultScene" alt="" width="960" height="540" decoding="async" loading="lazy" />
+            </figure>
+        </article>
+    </div>
+}
+</div>
+
+@code {
+    [Parameter] public string Phase { get; set; } = "intro";
+    [Parameter] public string? Lang { get; set; }
+
+    private string IntroLead =>
+        $"{UwvMockupCopy.Ondernemer.IntroBenefit(Lang)} · {UwvMockupCopy.Ondernemer.IntroDuration(Lang)}";
+
+    private IEnumerable<string> ScaleLabels => UwvMockupCopy.IsEnglish(Lang)
+        ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
+        : ["Helemaal niet", "Niet", "Neutraal", "Wel", "Helemaal wel"];
+}

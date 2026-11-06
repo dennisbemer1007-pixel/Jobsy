@@ -1,0 +1,13 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <div class="kb-why">
+        <span class="kb-why__icon" aria-hidden="true">@KbIcons.Sparkle</span>
+        <p class="kb-why__text">@Text</p>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Text { get; set; }
+}

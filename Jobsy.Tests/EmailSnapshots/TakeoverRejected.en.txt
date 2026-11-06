@@ -1,0 +1,31 @@
+KEY: TakeoverRejected
+SUBJECT: Your request for Bakkerij De Gouden Korrel was rejected
+PREHEADER: Think this is wrong? Contact us.
+KIND: Essential
+--- TEXT ---
+Hello Alex,
+
+Your request was rejected
+=========================
+
+The manager of Bakkerij De Gouden Korrel rejected your request. Think this
+is wrong? Contact us.
+
+Contact us: mailto:support@lobsy.nl
+
+Team Lobsy
+
+You get this email because you asked for access to Bakkerij De Gouden Korrel.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Your request was rejected
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Contact us -> mailto:support@lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

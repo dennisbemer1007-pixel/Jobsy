@@ -13,6 +13,18 @@ public class CandidateOnboarding
     /// <summary>1–10 (content steps). Install/notifications is post-step UI (not counted).</summary>
     public int CurrentStep { get; set; } = 1;
 
+    /// <summary>
+    /// Wizard schema version. Existing rows default to 1; new rows use 2.
+    /// Incomplete v1 rows are mapped to v2 step numbers on read.
+    /// </summary>
+    public int WizardVersion { get; set; } = 1;
+
+    /// <summary>
+    /// True when the uncounted finish screen ("Je Kompas staat klaar") was reached
+    /// but onboarding is not yet completed (e.g. migrated from v1 step 10).
+    /// </summary>
+    public bool FinishReached { get; set; }
+
     public DateTime StartedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
 

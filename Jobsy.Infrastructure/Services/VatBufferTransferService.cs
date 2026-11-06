@@ -83,6 +83,67 @@ public sealed class VatBufferTransferService : IVatBufferTransferService
         return transfer;
     }
 
+    public async Task<VatBufferTransfer> QueueForInvoiceAsync(
+        ConsumerPurchaseInvoice invoice,
+        CancellationToken cancellationToken = default)
+    {
+        var existing = await _db.VatBufferTransfers
+            .FirstOrDefaultAsync(t => t.ConsumerPurchaseInvoiceId == invoice.Id, cancellationToken);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
+        if (invoice.VatAmountCents <= 0)
+        {
+            var skippedZero = new VatBufferTransfer
+            {
+                Id = Guid.NewGuid(),
+                ConsumerPurchaseInvoiceId = invoice.Id,
+                InvoiceNumber = invoice.InvoiceNumber,
+                DestinationIban = "",
+                AmountCents = 0,
+                Status = VatBufferTransferStatus.SkippedNoVat,
+                CreatedAt = DateTime.UtcNow,
+                ProcessedAt = DateTime.UtcNow,
+                Note = "Geen BTW-bedrag om over te boeken."
+            };
+            _db.VatBufferTransfers.Add(skippedZero);
+            await _db.SaveChangesAsync(cancellationToken);
+            return skippedZero;
+        }
+
+        var platform = await _companySettings.GetAsync(cancellationToken);
+        var iban = platform.VatBufferIban;
+        var now = DateTime.UtcNow;
+
+        var transfer = new VatBufferTransfer
+        {
+            Id = Guid.NewGuid(),
+            ConsumerPurchaseInvoiceId = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber,
+            DestinationIban = iban ?? "",
+            AmountCents = invoice.VatAmountCents,
+            Status = string.IsNullOrWhiteSpace(iban)
+                ? VatBufferTransferStatus.SkippedNoIban
+                : VatBufferTransferStatus.Pending,
+            CreatedAt = now,
+            ProcessedAt = string.IsNullOrWhiteSpace(iban) ? now : null,
+            Note = string.IsNullOrWhiteSpace(iban)
+                ? "Geen Knab BTW-IBAN geconfigureerd in Admin → Bedrijfsgegevens."
+                : $"Omschrijving/kenmerk: {invoice.InvoiceNumber}"
+        };
+
+        _db.VatBufferTransfers.Add(transfer);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "BTW-buffer queued for consumer invoice {InvoiceNumber}: {Cents} cents → {Iban} ({Status})",
+            invoice.InvoiceNumber, transfer.AmountCents, MaskIban(transfer.DestinationIban), transfer.Status);
+
+        return transfer;
+    }
+
     public async Task<int> ProcessPendingAsync(CancellationToken cancellationToken = default)
     {
         var pending = await _db.VatBufferTransfers

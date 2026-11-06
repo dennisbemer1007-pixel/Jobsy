@@ -8,25 +8,37 @@ public class PageHelpDocsTests
     [InlineData("/")]
     [InlineData("/banen")]
     [InlineData("/banen/")]
-    public void Banenkaart_paths_are_excluded(string path)
+    public void Marketing_map_entry_paths_are_excluded(string path)
     {
         Assert.True(PageHelpDocs.IsExcludedPath(path));
         Assert.Null(PageHelpDocs.TryGet(path));
     }
 
     [Theory]
+    [InlineData("/banenkaart", "Banenkaart")]
+    [InlineData("/banenkaart/", "Banenkaart")]
+    [InlineData("/bedrijvenkaart", "Bedrijvenkaart")]
+    public void Map_paths_have_page_help(string path, string title)
+    {
+        Assert.False(PageHelpDocs.IsExcludedPath(path));
+        var doc = PageHelpDocs.TryGet(path);
+        Assert.NotNull(doc);
+        Assert.Equal(title, doc!.Title);
+    }
+
+    [Theory]
     [InlineData("/login", "Inloggen")]
     [InlineData("/home", "Home / dashboard")]
     [InlineData("/candidate/applications", "Mijn sollicitaties")]
-    [InlineData("/employer/tokens", "Tokens")]
-    [InlineData("/employer/company", "Bedrijfsgegevens")]
-    [InlineData("/employer/organization", "Organisatie")]
-    [InlineData("/admin/integrations", "Beheer · Integraties")]
-    [InlineData("/admin/mail-test", "Beheer · Mailtest")]
+    [InlineData("/werkgever/tokens", "Tokens & facturen")]
+    [InlineData("/werkgever/organisatie/profiel", "Bedrijfsgegevens")]
+    [InlineData("/werkgever/organisatie/vestigingen", "Vestigingen")]
+    [InlineData("/admin/instellingen/integraties", "Beheer · Integraties")]
+    [InlineData("/admin/content/emails", "Beheer · E-mails & meldingen")]
     [InlineData("/admin/feedback", "Beheer · Feedback")]
-    [InlineData("/branch/vacancies/new", "Vacature plaatsen")]
-    [InlineData("/branch/vacancies", "Vacatures (vestiging)")]
-    [InlineData("/salesmanager/toolkit", "Sales-toolkit")]
+    [InlineData("/werkgever/vacatures/nieuw", "Vacature plaatsen")]
+    [InlineData("/werkgever/vacatures", "Vacatures (werkgever)")]
+    [InlineData("/sales/link", "Mijn link & materiaal")]
     [InlineData("/intermediary/team", "Team (intermediair)")]
     [InlineData("/wie-zijn-wij", "Wie zijn wij")]
     [InlineData("/privacy", "Privacyverklaring")]

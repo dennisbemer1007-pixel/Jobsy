@@ -1,8 +1,13 @@
+using Jobsy.Api.Admin;
 using Jobsy.Api.Models;
+using Jobsy.Core.Admin;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -10,6 +15,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Api.Controllers;
 
@@ -22,29 +29,107 @@ public class SettingsController : ControllerBase
     private readonly IIntegrationCredentialService _credentials;
     private readonly IPlatformFeatureService _features;
     private readonly IPlatformCompanySettingsService _companySettings;
-    private readonly IAboutPageSettingsService _aboutPage;
     private readonly IMarketingFlyerSettingsService _marketingFlyer;
     private readonly IMarketingFlyerPdfService _marketingFlyerPdf;
     private readonly IFlexCommercialService _flexCommercial;
+    private readonly IAdminAuditLog _audit;
+    private readonly IAdminAuditContext _auditContext;
+    private readonly IUserLookupService _users;
+    private readonly AiOptions _ai;
+    private readonly MistralOptions _mistral;
+    private readonly OpenAiOptions _openAi;
+    private readonly SessionAuthOptions _sessionAuth;
+    private readonly MailOptions _mail;
+    private readonly LettermintOptions _lettermint;
+    private readonly WhatsAppReminderOptions _whatsApp;
 
     public SettingsController(
         JobsyDbContext db,
         IIntegrationCredentialService credentials,
         IPlatformFeatureService features,
         IPlatformCompanySettingsService companySettings,
-        IAboutPageSettingsService aboutPage,
         IMarketingFlyerSettingsService marketingFlyer,
         IMarketingFlyerPdfService marketingFlyerPdf,
-        IFlexCommercialService flexCommercial)
+        IFlexCommercialService flexCommercial,
+        IAdminAuditLog audit,
+        IAdminAuditContext auditContext,
+        IUserLookupService users,
+        IOptions<AiOptions>? aiOptions = null,
+        IOptions<MistralOptions>? mistralOptions = null,
+        IOptions<WhatsAppReminderOptions>? whatsAppOptions = null,
+        IOptions<OpenAiOptions>? openAiOptions = null,
+        IOptions<MailOptions>? mailOptions = null,
+        IOptions<LettermintOptions>? lettermintOptions = null,
+        IOptions<SessionAuthOptions>? sessionAuthOptions = null)
     {
         _db = db;
+        _sessionAuth = sessionAuthOptions?.Value ?? new SessionAuthOptions();
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
-        _aboutPage = aboutPage;
         _marketingFlyer = marketingFlyer;
         _marketingFlyerPdf = marketingFlyerPdf;
         _flexCommercial = flexCommercial;
+        _audit = audit;
+        _auditContext = auditContext;
+        _users = users;
+        _ai = aiOptions?.Value ?? new AiOptions();
+        _mistral = mistralOptions?.Value ?? new MistralOptions();
+        _openAi = openAiOptions?.Value ?? new OpenAiOptions();
+        _mail = mailOptions?.Value ?? new MailOptions();
+        _lettermint = lettermintOptions?.Value ?? new LettermintOptions();
+        _whatsApp = whatsAppOptions?.Value ?? new WhatsAppReminderOptions();
+    }
+
+    /// <summary>The AI company that actually receives calls. Read-only: switch with Ai__Provider.</summary>
+    [HttpGet("ai-provider")]
+    public ActionResult<AiProviderStatusDto> GetAiProvider()
+    {
+        var status = ActiveProviderStatus.DescribeAi(
+            _ai.Provider,
+            _mistral.ApiKey,
+            _mistral.Model,
+            _mistral.BaseUrl,
+            _openAi.Model,
+            _openAi.BaseUrl);
+        IReadOnlyList<AiFeatureModelDto>? featureModels = null;
+        if (status.Available && string.Equals(status.Provider, AiProviderNames.Mistral, StringComparison.Ordinal))
+        {
+            var smallFallback = AiModelRouting.FirstNonEmpty(_ai.SmallModel, _openAi.SmallModel);
+            featureModels = _mistral.ActiveFeatureModels(smallFallback)
+                .Select(row => new AiFeatureModelDto(row.Feature, row.Model))
+                .ToList();
+        }
+
+        var hideOpenAi = string.Equals(_ai.Provider, AiProviderNames.Mistral, StringComparison.OrdinalIgnoreCase);
+        return Ok(new AiProviderStatusDto(
+            status.Provider,
+            status.Available ? status.Provider : "Niet ingesteld",
+            ReadOnly: true,
+            FellBackToOpenAi: false,
+            InferenceInEu: status.RegionCode == ActiveProviderStatus.RegionEu,
+            status.Model,
+            status.RegionCode,
+            status.Available,
+            status.EndpointHost,
+            featureModels,
+            HideOpenAiProbe: hideOpenAi));
+    }
+
+    /// <summary>The mail company that actually sends. Read-only: switch with Mail__Provider.</summary>
+    [HttpGet("mail-provider")]
+    public ActionResult<MailProviderStatusDto> GetMailProvider()
+    {
+        var status = ActiveMailStatus.Describe(
+            _mail.Provider,
+            !string.IsNullOrWhiteSpace(_lettermint.ApiKey),
+            _lettermint.BaseUrl);
+        return Ok(new MailProviderStatusDto(
+            status.Provider,
+            status.Available ? status.Provider : "Mail: niet ingesteld",
+            status.RegionCode,
+            status.EndpointHost,
+            status.Available));
     }
 
     [HttpGet("token-pricing")]
@@ -95,6 +180,7 @@ public class SettingsController : ControllerBase
         => Ok(await _flexCommercial.GetAsync(cancellationToken));
 
     [HttpPut("lobsy-commercial")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<FlexCommercialSettingsDto>> UpdateLobsyCommercial(
         [FromBody] UpdateLobsyCommercialRequest request,
         CancellationToken cancellationToken)
@@ -105,18 +191,49 @@ public class SettingsController : ControllerBase
                 new FlexCommercialSettingsUpdate(
                     request.MarginPerHourEuro,
                     request.BackofficePartnerName ?? "",
-                    request.DeepAnalysisPriceEuro,
+                    request.DeepTestPriceCompetenceEuro > 0
+                        ? request.DeepTestPriceCompetenceEuro
+                        : request.DeepAnalysisPriceEuro,
+                    request.DeepTestPriceCareerEuro > 0
+                        ? request.DeepTestPriceCareerEuro
+                        : (request.DeepAnalysisPriceEuro > 0
+                            ? request.DeepAnalysisPriceEuro
+                            : request.DeepTestPriceCompetenceEuro),
+                    request.DeepTestPriceValuesEuro > 0
+                        ? request.DeepTestPriceValuesEuro
+                        : (request.DeepAnalysisPriceEuro > 0
+                            ? request.DeepAnalysisPriceEuro
+                            : request.DeepTestPriceCompetenceEuro),
+                    request.DeepTestPriceCultureEuro > 0
+                        ? request.DeepTestPriceCultureEuro
+                        : (request.DeepAnalysisPriceEuro > 0
+                            ? request.DeepAnalysisPriceEuro
+                            : request.DeepTestPriceCompetenceEuro),
                     request.AgencyAnnualPriceEuro,
-                    request.ContactUnlockCostTokens),
+                    request.ContactUnlockCostTokens,
+                    request.AcceptCandidatePilotCostTokens > 0
+                        ? request.AcceptCandidatePilotCostTokens
+                        : FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
+                    request.AcceptCandidatePilotEndsOn,
+                    request.AcceptCandidateStandardCostTokens > 0
+                        ? request.AcceptCandidateStandardCostTokens
+                        : FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
+                    request.FirstEmployerAcceptanceFreeEnabled),
                 cancellationToken));
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            var code = string.Equals(ex.Message, "invalid_price", StringComparison.Ordinal)
+                ? "invalid_price"
+                : null;
+            return BadRequest(code is null
+                ? new { message = ex.Message }
+                : new { code, message = ex.Message });
         }
     }
 
     [HttpPut("token-pricing/packs/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     public async Task<IActionResult> UpdatePack(
         Guid id,
         [FromBody] UpdateTokenPackRequest request,
@@ -140,6 +257,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("token-pricing/costs/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     public async Task<IActionResult> UpdateCost(
         Guid id,
         [FromBody] UpdateTokenSpendCostRequest request,
@@ -156,13 +274,34 @@ public class SettingsController : ControllerBase
             return BadRequest(new { message = "Kosten mogen niet negatief zijn." });
         }
 
+        var before = new { cost.Reason, cost.CostTokens, cost.IsActive };
         cost.CostTokens = request.CostTokens;
         cost.IsActive = request.IsActive;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // TODO(admin-07): migrate to IAdminAuditLog when admin-redesign 07 lands.
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "AdminSettings",
+            Message = "settings.pricing.update",
+            DetailsJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                actorUserId = User.FindFirst("sub")?.Value
+                              ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                key = cost.Reason.ToString(),
+                before,
+                after = new { cost.Reason, cost.CostTokens, cost.IsActive }
+            }),
+            CreatedAt = DateTime.UtcNow
+        });
         await _db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
 
     [HttpPut("token-pricing/pushbom-settings")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<object>> UpdatePushBomSettings(
         [FromBody] UpdatePushBomSettingsRequest request,
         CancellationToken cancellationToken)
@@ -199,6 +338,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("token-pricing/pushbom-tiers")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<object>> UpsertPushBomPricingTier(
         [FromBody] UpsertPushBomPricingTierRequest request,
         CancellationToken cancellationToken)
@@ -252,6 +392,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpDelete("token-pricing/pushbom-tiers/{id:guid}")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingDelete, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "id")]
     public async Task<IActionResult> DeletePushBomPricingTier(Guid id, CancellationToken cancellationToken)
     {
         var tier = await _db.PushBomPricingTiers.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
@@ -266,6 +407,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("early-adapter-rules")]
+    [AdminAudit(AdminAuditKeys.SettingsPricingUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<object>> UpsertEarlyAdapterRule(
         [FromBody] UpsertEarlyAdapterRuleRequest request,
         CancellationToken cancellationToken)
@@ -316,29 +458,241 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("platform-features")]
+    [AdminAudit(AdminAuditKeys.SettingsPlatformUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<PlatformFeatureDto>> UpdatePlatformFeatures(
         [FromBody] UpdatePlatformFeatureRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
+            var before = await _features.GetAsync(cancellationToken);
             var snap = await _features.UpdateAsync(
                 new PlatformFeatureUpdate(
                     request.VacancyContentModerationEnabled,
                     request.AuthenticatorEnabled,
-                    request.ExposeRegistrationActivationLinks,
                     request.PublicWebBaseUrl,
                     request.InactiveCompanyDays,
                     request.SessionInactivityTimeoutMinutes,
                     request.FreePublishUntil,
-                    request.ClearFreePublishUntil),
+                    request.ClearFreePublishUntil,
+                    SupportAccessNotifyAdmins: request.SupportAccessNotifyAdmins,
+                    SupportAccessNotifySubject: request.SupportAccessNotifySubject,
+CandidateInsightsEnabled: request.CandidateInsightsEnabled,
+                    CandidateInsightsUnlockDays: request.CandidateInsightsUnlockDays,
+                    CandidateInsightsUnlockPerBranch: request.CandidateInsightsUnlockPerBranch,
+                    SchoolsEnabled: request.SchoolsEnabled,
+                    SchoolPerCodeResultsEnabled: request.SchoolPerCodeResultsEnabled,
+                    SchoolRetentionCutoffMonth: request.SchoolRetentionCutoffMonth,
+                    SchoolRetentionCutoffDay: request.SchoolRetentionCutoffDay,
+                    AmbassadorsEnabled: request.AmbassadorsEnabled,
+                    EmployersEnabled: request.EmployersEnabled,
+                    CandidatePassportEnabled: request.CandidatePassportEnabled,
+                    PassportPartnersEnabled: request.PassportPartnersEnabled,
+                    PassportPdfV2Enabled: request.PassportPdfV2Enabled,
+                    PassportPdfDnaBlocksEnabled: request.PassportPdfDnaBlocksEnabled,
+                    TestsV2Enabled: request.TestsV2Enabled,
+                    TestItemExamplesEnabled: request.TestItemExamplesEnabled,
+                    TestProgressInsightEnabled: request.TestProgressInsightEnabled,
+                    PhoneVerificationEnabled: request.PhoneVerificationEnabled,
+                    WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
+                    CompactTestPdfEnabled: request.CompactTestPdfEnabled,
+                    FreeCandidateTestsEnabled: request.FreeCandidateTestsEnabled,
+                    HonestAdviceEnabled: request.HonestAdviceEnabled,
+                    FutureJobsForYouEnabled: request.FutureJobsForYouEnabled,
+                    EmployerPhase2Enabled: request.EmployerPhase2Enabled,
+                    CandidateExternalVacanciesEnabled: request.CandidateExternalVacanciesEnabled,
+                    ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
+                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled,
+                    EmployerFitQuestionnairesEnabled: request.EmployerFitQuestionnairesEnabled,
+                    KandidatenkaartEnabled: request.KandidatenkaartEnabled,
+                    CompanyMapInitiativeEnabled: request.CompanyMapInitiativeEnabled,
+                    AfterMatchEnabled: request.AfterMatchEnabled,
+                    SensitiveExperienceEnabled: request.SensitiveExperienceEnabled,
+                    TrainingPartnersEnabled: request.TrainingPartnersEnabled,
+                    UwvFeaturesEnabled: request.UwvFeaturesEnabled,
+                    ActivityLogEnabled: request.ActivityLogEnabled,
+                    ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
+                    TestJourneyIllustrationEnabled: request.TestJourneyIllustrationEnabled,
+                    OnboardingFinaleV2Enabled: request.OnboardingFinaleV2Enabled,
+                    OccupationDayInLifeEnabled: request.OccupationDayInLifeEnabled,
+                    ResearchConsentEnabled: request.ResearchConsentEnabled,
+                    TestEditModeEnabled: request.TestEditModeEnabled,
+                    SamplePdfEnabled: request.SamplePdfEnabled,
+                    TestDepthValueMockupEnabled: request.TestDepthValueMockupEnabled,
+                    ClearAdminFlagOverrideKeys: request.ClearAdminFlagOverrideKeys,
+                    CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
+                    CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
                 cancellationToken);
+
+            var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            var changes = CollectPlatformFeatureChanges(before, snap);
+            _auditContext.SuppressAutoWrite = true;
+            var correlation = HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString("N");
+            var ip = HttpContext?.Connection.RemoteIpAddress?.ToString();
+            foreach (var change in changes)
+            {
+                await _audit.WriteAsync(
+                    new AdminAuditEntry(
+                        Action: AdminAuditKeys.SettingsPlatformUpdate,
+                        TargetType: AdminAuditKeys.TargetTypes.Setting,
+                        TargetId: change.Field,
+                        TargetLabel: change.Field,
+                        Reason: request.Reason,
+                        DetailsJson: System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            field = change.Field,
+                            from = change.From,
+                            to = change.To
+                        }),
+                        Result: AdminAuditKeys.Results.Success,
+                        ActorUserId: actor?.Id,
+                        ActorRole: "Admin",
+                        CorrelationId: correlation,
+                        IpAddress: ip),
+                    cancellationToken);
+            }
+
             return Ok(ToFeatureDto(snap));
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new
+                {
+                    message =
+                        "Platforminstellingen konden niet worden opgeslagen (database-schema loopt achter). "
+                        + "Voer de nieuwste EF-migraties uit op de database en herstart de API. "
+                        + "Technisch: "
+                        + (ex.InnerException?.Message ?? ex.Message)
+                });
+        }
+    }
+
+    private static List<(string Field, string? From, string? To)> CollectPlatformFeatureChanges(
+        PlatformFeatureSnapshot before,
+        PlatformFeatureSnapshot after)
+    {
+        var list = new List<(string, string?, string?)>();
+        void Add(string field, string? from, string? to)
+        {
+            if (!string.Equals(from, to, StringComparison.Ordinal))
+            {
+                list.Add((field, from, to));
+            }
+        }
+
+        Add("VacancyContentModerationEnabled", before.VacancyContentModerationEnabled.ToString(), after.VacancyContentModerationEnabled.ToString());
+        Add("AuthenticatorEnabled", before.AuthenticatorEnabled.ToString(), after.AuthenticatorEnabled.ToString());
+        Add("PublicWebBaseUrl", before.PublicWebBaseUrl, after.PublicWebBaseUrl);
+        Add("InactiveCompanyDays", before.InactiveCompanyDays.ToString(), after.InactiveCompanyDays.ToString());
+        Add("SessionInactivityTimeoutMinutes", before.SessionInactivityTimeoutMinutes.ToString(), after.SessionInactivityTimeoutMinutes.ToString());
+        Add("FreePublishUntil", before.FreePublishUntil?.ToString("yyyy-MM-dd"), after.FreePublishUntil?.ToString("yyyy-MM-dd"));
+        Add("SupportAccessNotifyAdmins", before.SupportAccessNotifyAdmins.ToString(), after.SupportAccessNotifyAdmins.ToString());
+        Add("SupportAccessNotifySubject", before.SupportAccessNotifySubject.ToString(), after.SupportAccessNotifySubject.ToString());
+        Add("CandidateInsightsEnabled", before.CandidateInsightsEnabled.ToString(), after.CandidateInsightsEnabled.ToString());
+        Add("CandidateInsightsUnlockDays", before.CandidateInsightsUnlockDays.ToString(), after.CandidateInsightsUnlockDays.ToString());
+        Add("CandidateInsightsUnlockPerBranch", before.CandidateInsightsUnlockPerBranch.ToString(), after.CandidateInsightsUnlockPerBranch.ToString());
+        Add("SchoolsEnabled", before.SchoolsEnabled.ToString(), after.SchoolsEnabled.ToString());
+        Add("SchoolPerCodeResultsEnabled", before.SchoolPerCodeResultsEnabled.ToString(), after.SchoolPerCodeResultsEnabled.ToString());
+        Add("SchoolRetentionCutoffMonth", before.SchoolRetentionCutoffMonth.ToString(), after.SchoolRetentionCutoffMonth.ToString());
+        Add("SchoolRetentionCutoffDay", before.SchoolRetentionCutoffDay.ToString(), after.SchoolRetentionCutoffDay.ToString());
+        Add("AmbassadorsEnabled", before.AmbassadorsEnabled.ToString(), after.AmbassadorsEnabled.ToString());
+        Add("EmployersEnabled", before.EmployersEnabled.ToString(), after.EmployersEnabled.ToString());
+        Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
+        Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
+        Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("PupilPassportV2Enabled", before.PupilPassportV2Enabled.ToString(), after.PupilPassportV2Enabled.ToString());
+        Add("StudentPassportEnabled", before.StudentPassportEnabled.ToString(), after.StudentPassportEnabled.ToString());
+        Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
+        Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
+        Add("TestItemExamplesEnabled", before.TestItemExamplesEnabled.ToString(), after.TestItemExamplesEnabled.ToString());
+        Add("TestProgressInsightEnabled", before.TestProgressInsightEnabled.ToString(), after.TestProgressInsightEnabled.ToString());
+        Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
+        Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
+        Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
+        Add("FreeCandidateTestsEnabled", before.FreeCandidateTestsEnabled.ToString(), after.FreeCandidateTestsEnabled.ToString());
+        Add("HonestAdviceEnabled", before.HonestAdviceEnabled.ToString(), after.HonestAdviceEnabled.ToString());
+        Add("FutureJobsForYouEnabled", before.FutureJobsForYouEnabled.ToString(), after.FutureJobsForYouEnabled.ToString());
+        Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
+        Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
+        Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
+        Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
+        Add("CompanyMapInitiativeEnabled", before.CompanyMapInitiativeEnabled.ToString(), after.CompanyMapInitiativeEnabled.ToString());
+        Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
+        Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
+        Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
+        Add("UwvFeaturesEnabled", before.UwvFeaturesEnabled.ToString(), after.UwvFeaturesEnabled.ToString());
+        Add("ActivityLogEnabled", before.ActivityLogEnabled.ToString(), after.ActivityLogEnabled.ToString());
+        Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
+        Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
+        Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
+        Add("TestDepthValueMockupEnabled", before.TestDepthValueMockupEnabled.ToString(), after.TestDepthValueMockupEnabled.ToString());
+        Add("OccupationDayInLifeEnabled", before.OccupationDayInLifeEnabled.ToString(), after.OccupationDayInLifeEnabled.ToString());
+        Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
+        Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
+        Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
+        Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
+        Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
+        Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
+        return list;
+    }
+
+    /// <summary>
+    /// Public feature-flag snapshot for Web/UI bootstrap (not secrets).
+    /// </summary>
+    [HttpGet("feature-flags")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<IActionResult> GetFeatureFlags(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return Ok(new
+        {
+            employersEnabled = snap.EmployersEnabled,
+            candidatePassportEnabled = snap.CandidatePassportEnabled,
+            passportPartnersEnabled = snap.PassportPartnersEnabled,
+            passportPdfV2Enabled = snap.PassportPdfV2Enabled,
+            phoneVerificationEnabled = snap.PhoneVerificationEnabled,
+            schoolsEnabled = snap.SchoolsEnabled,
+            ambassadorsEnabled = snap.AmbassadorsEnabled,
+            whatsAppRemindersEnabled = snap.WhatsAppRemindersEnabled,
+            compactTestPdfEnabled = snap.CompactTestPdfEnabled,
+            honestAdviceEnabled = snap.HonestAdviceEnabled,
+            futureJobsForYouEnabled = snap.FutureJobsForYouEnabled,
+            employerPhase2Enabled = snap.EmployerPhase2Enabled,
+            candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
+            proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
+            testsV2Enabled = snap.TestsV2Enabled,
+            testItemExamplesEnabled = snap.TestItemExamplesEnabled,
+            testProgressInsightEnabled = snap.TestProgressInsightEnabled,
+            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
+            kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
+            companyMapInitiativeEnabled = snap.CompanyMapInitiativeEnabled,
+            afterMatchEnabled = snap.AfterMatchEnabled,
+            referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
+            sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
+            trainingPartnersEnabled = snap.TrainingPartnersEnabled,
+            uwvFeaturesEnabled = snap.UwvFeaturesEnabled,
+            activityLogEnabled = snap.ActivityLogEnabled,
+            pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
+            studentPassportEnabled = snap.StudentPassportEnabled,
+            testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,
+            onboardingFinaleV2Enabled = snap.OnboardingFinaleV2Enabled,
+            occupationDayInLifeEnabled = snap.OccupationDayInLifeEnabled,
+            testEditModeEnabled = snap.TestEditModeEnabled,
+            samplePdfEnabled = snap.SamplePdfEnabled,
+            testDepthValueMockupEnabled = snap.TestDepthValueMockupEnabled
+        });
     }
 
     /// <summary>
@@ -346,6 +700,7 @@ public class SettingsController : ControllerBase
     /// </summary>
     [HttpGet("free-publish")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<FreePublishStatusDto>> GetFreePublishStatus(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
@@ -359,10 +714,14 @@ public class SettingsController : ControllerBase
     /// </summary>
     [HttpGet("session-security")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<SessionSecurityDto>> GetSessionSecurity(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
-        return Ok(new SessionSecurityDto(snap.SessionInactivityTimeoutMinutes));
+        var minutes = SessionTimeoutResolver.ResolveInactivityMinutes(
+            _sessionAuth,
+            snap.SessionInactivityTimeoutMinutes);
+        return Ok(new SessionSecurityDto(minutes));
     }
 
     [HttpGet("company")]
@@ -373,48 +732,118 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("company")]
+    [AdminAudit(AdminAuditKeys.SettingsCompanyUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<PlatformCompanyDto>> UpdateCompanySettings(
         [FromBody] UpdatePlatformCompanyRequest request,
         CancellationToken cancellationToken)
     {
-        var snap = await _companySettings.GetAsync(cancellationToken);
-        var iban = IbanMasking.ResolveStoredIban(request.VatBufferIban, snap.VatBufferIban);
-        snap = await _companySettings.UpdateAsync(
-            new PlatformCompanyUpdate(
-                request.CompanyName ?? "",
-                request.Slogan,
-                request.Address,
-                request.PostalCode,
-                request.City,
-                request.Country,
-                request.KvkNumber,
-                request.VatNumber,
-                request.Phone,
-                request.Email,
-                iban),
-            cancellationToken);
+        var before = await _companySettings.GetAsync(cancellationToken);
+        var iban = IbanMasking.ResolveStoredIban(request.VatBufferIban, before.VatBufferIban);
+        PlatformCompanySnapshot snap;
+        try
+        {
+            snap = await _companySettings.UpdateAsync(
+                new PlatformCompanyUpdate(
+                    request.CompanyName ?? "",
+                    request.Slogan,
+                    request.Address,
+                    request.PostalCode,
+                    request.City,
+                    request.Country,
+                    request.KvkNumber,
+                    request.VatNumber,
+                    request.Phone,
+                    request.Email,
+                    iban,
+                    request.LegalName,
+                    request.TradeName,
+                    request.PostalStreet,
+                    request.PostalPostalCode,
+                    request.PostalCity,
+                    request.SupportEmail,
+                    request.PrivacyEmail),
+                cancellationToken);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        await WriteCompanyAuditAsync(before, snap, cancellationToken);
         return Ok(ToCompanyDto(snap));
     }
 
-    [HttpGet("about")]
-    public async Task<ActionResult<AboutPageDto>> GetAboutPage(CancellationToken cancellationToken)
-    {
-        var snap = await _aboutPage.GetAsync(cancellationToken);
-        return Ok(SiteController.ToDto(snap));
-    }
-
-    [HttpPut("about")]
-    public async Task<ActionResult<AboutPageDto>> UpdateAboutPage(
-        [FromBody] UpdateAboutPageRequest request,
+    private async Task WriteCompanyAuditAsync(
+        PlatformCompanySnapshot before,
+        PlatformCompanySnapshot after,
         CancellationToken cancellationToken)
     {
-        var snap = await _aboutPage.UpdateAsync(
-            new AboutPageUpdate(
-                request.Title ?? "",
-                request.Lead,
-                request.BodyHtml ?? ""),
-            cancellationToken);
-        return Ok(SiteController.ToDto(snap));
+        var changes = CollectCompanyChanges(before, after);
+        _auditContext.SuppressAutoWrite = true;
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var correlation = HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString("N");
+        var ip = HttpContext?.Connection.RemoteIpAddress?.ToString();
+        if (changes.Count == 0)
+        {
+            changes.Add(("unchanged", null, null));
+        }
+
+        foreach (var change in changes)
+        {
+            await _audit.WriteAsync(
+                new AdminAuditEntry(
+                    Action: AdminAuditKeys.SettingsCompanyUpdate,
+                    TargetType: AdminAuditKeys.TargetTypes.Setting,
+                    TargetId: change.Field,
+                    TargetLabel: change.Field,
+                    Reason: null,
+                    DetailsJson: System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        field = change.Field,
+                        from = change.From,
+                        to = change.To
+                    }),
+                    Result: AdminAuditKeys.Results.Success,
+                    ActorUserId: actor?.Id,
+                    ActorRole: "Admin",
+                    CorrelationId: correlation,
+                    IpAddress: ip),
+                cancellationToken);
+        }
+    }
+
+    private static List<(string Field, string? From, string? To)> CollectCompanyChanges(
+        PlatformCompanySnapshot before,
+        PlatformCompanySnapshot after)
+    {
+        var list = new List<(string, string?, string?)>();
+        void Add(string field, string? from, string? to)
+        {
+            if (!string.Equals(from ?? "", to ?? "", StringComparison.Ordinal))
+            {
+                list.Add((field, from, to));
+            }
+        }
+
+        Add("LegalName", before.LegalName, after.LegalName);
+        Add("TradeName", before.TradeName, after.TradeName);
+        Add("CompanyName", before.CompanyName, after.CompanyName);
+        Add("Slogan", before.Slogan, after.Slogan);
+        Add("Address", before.Address, after.Address);
+        Add("PostalCode", before.PostalCode, after.PostalCode);
+        Add("City", before.City, after.City);
+        Add("Country", before.Country, after.Country);
+        Add("PostalStreet", before.PostalStreet, after.PostalStreet);
+        Add("PostalPostalCode", before.PostalPostalCode, after.PostalPostalCode);
+        Add("PostalCity", before.PostalCity, after.PostalCity);
+        Add("KvkNumber", before.KvkNumber, after.KvkNumber);
+        Add("VatNumber", before.VatNumber, after.VatNumber);
+        Add("Phone", before.Phone, after.Phone);
+        Add("SupportEmail", before.SupportEmail, after.SupportEmail);
+        Add("PrivacyEmail", before.PrivacyEmail, after.PrivacyEmail);
+        Add("Email", before.Email, after.Email);
+        Add("VatBufferIban", IbanMasking.ForApi(before.VatBufferIban), IbanMasking.ForApi(after.VatBufferIban));
+        return list;
     }
 
     [HttpGet("marketing-flyer")]
@@ -425,6 +854,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("marketing-flyer")]
+    [AdminAudit(AdminAuditKeys.SettingsFlyerUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<MarketingFlyerDto>> UpdateMarketingFlyer(
         [FromBody] UpdateMarketingFlyerRequest request,
         CancellationToken cancellationToken)
@@ -447,6 +877,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPost("marketing-flyer/reset")]
+    [AdminAudit(AdminAuditKeys.SettingsFlyerUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting)]
     public async Task<ActionResult<MarketingFlyerDto>> ResetMarketingFlyer(CancellationToken cancellationToken)
     {
         var snap = await _marketingFlyer.ResetToDefaultsAsync(cancellationToken);
@@ -499,6 +930,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPut("integration-credentials/{key}")]
+    [AdminAudit(AdminAuditKeys.SettingsIntegrationUpdate, TargetType = AdminAuditKeys.TargetTypes.Setting, TargetRouteKey = "key")]
     public async Task<ActionResult<IntegrationCredentialDto>> UpsertIntegrationCredential(
         IntegrationKey key,
         [FromBody] UpdateIntegrationCredentialRequest request,
@@ -506,6 +938,21 @@ public class SettingsController : ControllerBase
     {
         try
         {
+            // Field names only — never secret values in the audit log.
+            var fields = new List<string>();
+            if (request.ApiKey is not null || request.ClearApiKey) fields.Add("ApiKey");
+            if (request.Model is not null) fields.Add("Model");
+            if (request.SmallModel is not null) fields.Add("SmallModel");
+            if (request.ClientId is not null) fields.Add("ClientId");
+            if (request.ClientSecret is not null || request.ClearClientSecret) fields.Add("ClientSecret");
+            if (request.TenantId is not null) fields.Add("TenantId");
+            if (request.BaseUrl is not null) fields.Add("BaseUrl");
+            if (request.FromAddress is not null) fields.Add("FromAddress");
+            fields.Add("UseEnvironmentCredentials");
+            _auditContext.TargetId = key.ToString();
+            _auditContext.TargetLabel = key.ToString();
+            _auditContext.SetDetailsObject(new { fields });
+
             var saved = await _credentials.UpsertAsync(
                 key,
                 new IntegrationCredentialUpdate(
@@ -518,7 +965,8 @@ public class SettingsController : ControllerBase
                     request.FromAddress,
                     request.ClearApiKey,
                     request.ClearClientSecret,
-                    request.UseEnvironmentCredentials),
+                    request.UseEnvironmentCredentials,
+                    request.SmallModel),
                 cancellationToken);
             return Ok(ToDto(saved));
         }
@@ -528,16 +976,62 @@ public class SettingsController : ControllerBase
         }
     }
 
-    private static PlatformFeatureDto ToFeatureDto(PlatformFeatureSnapshot snap) =>
+    private PlatformFeatureDto ToFeatureDto(PlatformFeatureSnapshot snap) =>
         new(
             snap.VacancyContentModerationEnabled,
             snap.AuthenticatorEnabled,
-            snap.ExposeRegistrationActivationLinks,
             snap.PublicWebBaseUrl,
             snap.UpdatedAtUtc,
             snap.InactiveCompanyDays,
             snap.SessionInactivityTimeoutMinutes,
-            snap.FreePublishUntil);
+            snap.FreePublishUntil,
+            snap.SupportAccessNotifyAdmins,
+            snap.SupportAccessNotifySubject,
+            snap.CandidateInsightsEnabled,
+            snap.CandidateInsightsUnlockDays,
+            snap.CandidateInsightsUnlockPerBranch,
+            snap.SchoolsEnabled,
+            snap.SchoolPerCodeResultsEnabled,
+            snap.SchoolRetentionCutoffMonth,
+            snap.SchoolRetentionCutoffDay,
+            snap.AmbassadorsEnabled,
+            snap.EmployersEnabled,
+            snap.CandidatePassportEnabled,
+            snap.PassportPartnersEnabled,
+            snap.PassportPdfV2Enabled,
+            snap.PassportPdfDnaBlocksEnabled,
+            snap.TestsV2Enabled,
+            snap.TestItemExamplesEnabled,
+            snap.TestProgressInsightEnabled,
+            snap.PhoneVerificationEnabled,
+            snap.WhatsAppRemindersEnabled,
+            snap.CompactTestPdfEnabled,
+            _whatsApp.IsConfigured,
+            snap.FreeCandidateTestsEnabled,
+            snap.HonestAdviceEnabled,
+            snap.FutureJobsForYouEnabled,
+            snap.EmployerPhase2Enabled,
+            snap.CandidateExternalVacanciesEnabled,
+            snap.ProactiveMatchingEnabled,
+            snap.MatchCalibrationV1Enabled,
+            snap.EmployerFitQuestionnairesEnabled,
+            snap.KandidatenkaartEnabled,
+            snap.SensitiveExperienceEnabled,
+            snap.TrainingPartnersEnabled,
+            snap.UwvFeaturesEnabled,
+            snap.ActivityLogEnabled,
+            snap.ReferenceVerificationEnabled,
+            snap.TestJourneyIllustrationEnabled,
+            snap.OnboardingFinaleV2Enabled,
+            snap.OccupationDayInLifeEnabled,
+            snap.ResearchConsentEnabled,
+            snap.TestEditModeEnabled,
+            snap.SamplePdfEnabled,
+            snap.TestDepthValueMockupEnabled,
+            snap.AdminOverriddenFlagKeys,
+            snap.CandidateApplyPerMinuteLimit,
+            snap.CandidateApplyPerHourLimit,
+            snap.CandidateApplyPerDayLimit);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(
@@ -552,7 +1046,14 @@ public class SettingsController : ControllerBase
             snap.Phone,
             snap.Email,
             IbanMasking.ForApi(snap.VatBufferIban),
-            snap.UpdatedAtUtc);
+            snap.UpdatedAtUtc,
+            snap.LegalName,
+            snap.TradeName,
+            snap.PostalStreet,
+            snap.PostalPostalCode,
+            snap.PostalCity,
+            snap.SupportEmail,
+            snap.PrivacyEmail);
 
     private static IntegrationCredentialDto ToDto(IntegrationCredentialView view) =>
         new(
@@ -579,7 +1080,9 @@ public class SettingsController : ControllerBase
             view.LastPingAtUtc,
             view.UpdatedAtUtc,
             view.IgnoresEnvironmentCredentials,
-            view.UsesEnvironmentCredentials);
+            view.UsesEnvironmentCredentials,
+            view.SmallModel,
+            view.LegalFooterMissing);
 }
 
 public sealed record PlatformCompanyDto(
@@ -594,7 +1097,14 @@ public sealed record PlatformCompanyDto(
     string? Phone,
     string? Email,
     string? VatBufferIban,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    string? LegalName = null,
+    string? TradeName = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null,
+    string? SupportEmail = null,
+    string? PrivacyEmail = null);
 
 public sealed record UpdatePlatformCompanyRequest(
     string? CompanyName,
@@ -607,12 +1117,14 @@ public sealed record UpdatePlatformCompanyRequest(
     string? VatNumber,
     string? Phone,
     string? Email,
-    string? VatBufferIban = null);
-
-public sealed record UpdateAboutPageRequest(
-    string? Title,
-    string? Lead,
-    string? BodyHtml);
+    string? VatBufferIban = null,
+    string? LegalName = null,
+    string? TradeName = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null,
+    string? SupportEmail = null,
+    string? PrivacyEmail = null);
 
 public sealed record MarketingFlyerDto(
     string Headline,
@@ -644,6 +1156,14 @@ public sealed record UpdateMarketingFlyerRequest(
 public sealed record UpdateLobsyCommercialRequest(
     decimal MarginPerHourEuro,
     string? BackofficePartnerName,
-    decimal DeepAnalysisPriceEuro,
-    decimal AgencyAnnualPriceEuro,
-    decimal ContactUnlockCostTokens);
+    decimal DeepAnalysisPriceEuro = 0,
+    decimal DeepTestPriceCompetenceEuro = 0,
+    decimal DeepTestPriceCareerEuro = 0,
+    decimal DeepTestPriceValuesEuro = 0,
+    decimal DeepTestPriceCultureEuro = 0,
+    decimal AgencyAnnualPriceEuro = 0,
+    decimal ContactUnlockCostTokens = 0,
+    decimal AcceptCandidatePilotCostTokens = 0,
+    DateOnly? AcceptCandidatePilotEndsOn = null,
+    decimal AcceptCandidateStandardCostTokens = 0,
+    bool FirstEmployerAcceptanceFreeEnabled = true);

@@ -3,15 +3,15 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Jobsy.Infrastructure.Data;
 
 namespace Jobsy.Infrastructure.Services;
@@ -31,13 +31,14 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     private readonly ICandidateCulturePersonalityService _culture;
     private readonly IFlexCommercialService _commercial;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<RoleFitCheckService> _logger;
     private readonly ITrainingUpskillService _training;
     private readonly ICultureFitAiService _cultureFit;
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IProfileVacancyMatchService _matches;
+    private readonly IFeatureFlags _featureFlags;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public RoleFitCheckService(
         JobsyDbContext db,
@@ -46,13 +47,14 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         ICandidateCulturePersonalityService culture,
         IFlexCommercialService commercial,
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<RoleFitCheckService> logger,
         ITrainingUpskillService training,
         ICultureFitAiService cultureFit,
         IVacancyDiscoveryIndex discovery,
-        IProfileVacancyMatchService matches)
+        IProfileVacancyMatchService matches,
+        IFeatureFlags featureFlags,
+        IPlatformErrorLog? platformLog = null)
     {
         _db = db;
         _competencies = competencies;
@@ -60,13 +62,14 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         _culture = culture;
         _commercial = commercial;
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
         _training = training;
         _cultureFit = cultureFit;
         _discovery = discovery;
         _matches = matches;
+        _featureFlags = featureFlags;
+        _platformLog = platformLog;
     }
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -75,7 +78,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
         var unlocked = competence is { IsComplete: true } && career is { IsComplete: true };
         var deep = await HasCompletedDeepAsync(userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
         var last = await _db.CandidateRoleFitChecks.AsNoTracking()
             .FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
 
@@ -83,7 +86,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var needsRecheck = false;
         if (last is not null)
         {
-            result = ToStoredResult(last, deep);
+            result = await ToStoredResultAsync(last, deep, cancellationToken);
             if (unlocked && competence is { IsComplete: true } && career is { IsComplete: true })
             {
                 var cultureScores = await _culture.GetCompletedScoresAsync(userId, cancellationToken);
@@ -151,7 +154,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         var fingerprint = CandidateInsightsFingerprint.ForRoleFit(
             title, vacancy?.Id, competence, career, cultureScores, prefs);
         var fromDeep = await HasCompletedDeepAsync(userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
 
         var existing = await _db.CandidateRoleFitChecks.FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
         if (existing is not null
@@ -165,12 +168,13 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 price,
                 "",
                 RoleFitCheckCopy.DeepUpsell,
-                ToStoredResult(existing, fromDeep),
+                await ToStoredResultAsync(existing, fromDeep, cancellationToken),
                 InsightsStatuses.Ready,
                 NeedsRecheck: false);
         }
 
-        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep, cultureScores);
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        var local = RoleFitCheckBuilder.Build(title, competence, career, fromDeep, cultureScores, employersOn: employersOn);
         var snapshot = await TryOpenAiAsync(title, competence, career, fromDeep, userId, local, cultureScores, cancellationToken)
                        ?? local;
         snapshot = snapshot with
@@ -226,7 +230,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             price,
             "",
             RoleFitCheckCopy.DeepUpsell,
-            ToStoredResult(row, fromDeep),
+            await ToStoredResultAsync(row, fromDeep, cancellationToken),
             InsightsStatuses.Ready,
             NeedsRecheck: false);
     }
@@ -241,7 +245,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         CulturePersonalityScores? culture,
         CancellationToken cancellationToken)
     {
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.RoleFitCheck, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return null;
@@ -260,8 +265,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 prefs.Licenses,
                 prefs.Roles,
                 culture);
-            var model = await ResolveModelAsync(cancellationToken);
-            var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+            var model = endpoint.Model;
+            var baseUrl = endpoint.BaseUrl;
             var client = _httpClientFactory.CreateClient(HttpClientName);
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -274,7 +279,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 response_format = new { type = "json_object" },
                 messages = new object[]
                 {
-                    new { role = "system", content = RoleFitCheckPrompt.System },
+                    new { role = "system", content = RoleFitCheckPrompt.System + "\n" + CandidateFactGuard.StrictAddendum },
                     new { role = "user", content = user }
                 }
             });
@@ -293,6 +298,31 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             var parsed = RoleFitCheckJson.TryDeserialize(content, jobTitle, fromDeep);
             if (parsed is null || parsed.Strengths.Count == 0)
             {
+                return null;
+            }
+
+            var visible = string.Join(
+                '\n',
+                parsed.Strengths.Concat(parsed.Gaps).Concat(parsed.ActionSteps));
+            var sheet = CandidateFactSheet.Personal(
+                prefs.Roles,
+                [],
+                prefs.Licenses,
+                confirmedItems: [jobTitle],
+                checkJobTitles: false);
+            var occupation = Jobsy.Core.Careers.OccupationCatalog.Shared.Resolve(jobTitle);
+            var storedAdvice = occupation is null
+                ? null
+                : Jobsy.Core.Careers.HonestAdviceService.Shared.Get(occupation.Id);
+            if (storedAdvice is not null)
+            {
+                sheet.RememberHonestAdvice([storedAdvice.Text]);
+            }
+            var reason = CandidateFactGuard.RejectionReason(visible, sheet);
+            if (reason is not null)
+            {
+                await AiFactRejectionLog.WriteAsync(
+                    _platformLog, _logger, "role-fit", reason, 1, cancellationToken, model, visible);
                 return null;
             }
 
@@ -390,6 +420,11 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         }
 
         var direct = await ScanDirectVacanciesAsync(userId, fit?.VacancyId, snapshot.JobTitle, cancellationToken);
+        if (!await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken))
+        {
+            direct = [];
+        }
+
         return snapshot with
         {
             TrainingOffers = offers.Select(o => new RoleFitStoredTrainingOffer(
@@ -400,7 +435,10 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
     }
 
     /// <summary>Map stored ResultJson only — no AI or vacancy scoring.</summary>
-    private static RoleFitCheckResultDto ToStoredResult(CandidateRoleFitCheck row, bool deepNow)
+    private async Task<RoleFitCheckResultDto> ToStoredResultAsync(
+        CandidateRoleFitCheck row,
+        bool deepNow,
+        CancellationToken cancellationToken)
     {
         var snapshot = RoleFitCheckJson.TryDeserialize(row.ResultJson, row.JobTitle, row.FromDeepAnalysis || deepNow)
                        ?? new RoleFitCheckSnapshot(
@@ -425,19 +463,34 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             .Select(d => new RoleFitDirectVacancyDto(d.Id, d.Title, d.CompanyName, d.MatchPercent, d.Href))
             .ToList();
 
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        string? mapHref = employersOn ? $"/?q={query}" : null;
+        if (!employersOn)
+        {
+            direct = [];
+        }
+
+        var steps = employersOn
+            ? snapshot.ActionSteps
+            : snapshot.ActionSteps
+                .Where(step => !CareerCompassBuilder.MentionsEmployerSurface(step)
+                               && !step.Contains("Den Haag", StringComparison.OrdinalIgnoreCase)
+                               && !step.Contains("Westland", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
         return new RoleFitCheckResultDto(
             snapshot.JobTitle,
             snapshot.MatchPercent,
             snapshot.Strengths,
             snapshot.Gaps,
-            snapshot.ActionSteps,
+            steps,
             snapshot.SearchKeys,
-            $"/?q={query}",
+            $"/banenkaart?q={query}",
             snapshot.FromDeepAnalysis,
             snapshot.FromOpenAi,
             snapshot.ShowDeepUpsell,
             offers,
-            fit?.VacancyId,
+            employersOn ? fit?.VacancyId : null,
             fit?.BarrierKind,
             fit?.CulturePercent,
             fit?.CultureBand,
@@ -560,8 +613,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         }
 
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
-        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
-        var scored = _matches.Score(
+        var transport = TravelReach.Fastest(TransportLabels.ParseMany(context.Prefs.PreferredTransport));
+        var scored = await _matches.ScoreAsync(
             context,
             vacancies.Select(vacancy =>
             {
@@ -578,7 +631,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
                 }
 
                 return (vacancy, travelMinutes);
-            }));
+            }),
+            cancellationToken);
 
         var ranked = scored.Values
             .Where(m => m.VacancyId != excludeVacancyId)
@@ -644,49 +698,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         return cards;
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

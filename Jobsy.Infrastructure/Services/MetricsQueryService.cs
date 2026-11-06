@@ -22,26 +22,29 @@ public sealed class MetricsQueryService : IMetricsQueryService
         string period,
         CancellationToken cancellationToken = default)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var metricsPeriod = MetricsPeriodParser.Parse(period);
         var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
         var periodKey = metricsPeriod.ToString().ToLowerInvariant();
 
         var vacancyQuery = _db.Vacancies.AsNoTracking().AsQueryable();
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            vacancyQuery = vacancyQuery.Where(v => companyIds.Contains(v.CompanyId));
+            vacancyQuery = vacancyQuery.Where(v => scopeIds.Contains(v.CompanyId));
         }
 
         var vacancyIds = await vacancyQuery.Select(v => v.Id).ToListAsync(cancellationToken);
 
-        var purchased = await SumTokensAsync(TokenTransactionKind.Purchase, from, to, companyIds, cancellationToken);
-        var spent = Math.Abs(await SumTokensAsync(TokenTransactionKind.Spend, from, to, companyIds, cancellationToken));
+        var purchased = await SumTokensAsync(TokenTransactionKind.Purchase, from, to, scopeIds, cancellationToken);
+        var spent = Math.Abs(await SumTokensAsync(TokenTransactionKind.Spend, from, to, scopeIds, cancellationToken));
 
         var activeVacancies = await vacancyQuery.CountAsync(v => v.Status == VacancyStatus.Active, cancellationToken);
         var employerVacancies = await vacancyQuery.CountAsync(
             v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Employer, cancellationToken);
         var intermediaryVacancies = await vacancyQuery.CountAsync(
-            v => v.Status == VacancyStatus.Active && v.Company.Type == CompanyType.Intermediary, cancellationToken);
+            v => v.Status == VacancyStatus.Active
+                 && (v.Company.Type == CompanyType.Intermediary || v.IntermediaryCompanyId != null),
+            cancellationToken);
         var activeAtsVacancies = await vacancyQuery.CountAsync(
             v => v.Status == VacancyStatus.Active && v.CreatedVia == VacancySource.Ats, cancellationToken);
         var activeRegularVacancies = await vacancyQuery.CountAsync(
@@ -82,15 +85,15 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         var pushBoms = await _db.TokenTransactions.AsNoTracking()
             .Where(t => t.Reason == TokenSpendReason.PushBom && t.CreatedAt >= from && t.CreatedAt <= to)
-            .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+            .Where(t => scopeIds == null || scopeIds.Contains(t.CompanyId))
             .CountAsync(cancellationToken);
 
         var extensions = await _db.TokenTransactions.AsNoTracking()
             .Where(t => t.Reason == TokenSpendReason.Extend && t.CreatedAt >= from && t.CreatedAt <= to)
-            .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+            .Where(t => scopeIds == null || scopeIds.Contains(t.CompanyId))
             .CountAsync(cancellationToken);
 
-        var tokensBalance = await SumTokenBalanceAsync(companyIds, cancellationToken);
+        var tokensBalance = await SumTokenBalanceAsync(scopeIds, cancellationToken);
 
         var utcNow = DateTime.UtcNow;
         var highlightedRows = await vacancyQuery
@@ -137,11 +140,22 @@ public sealed class MetricsQueryService : IMetricsQueryService
             .CountAsync(u => u.Role == UserRole.Candidate && u.IsActive && u.OpenForWork, cancellationToken);
         var allUsers = await _db.Users.AsNoTracking()
             .CountAsync(u => u.IsActive, cancellationToken);
+        var activeCandidates = await _db.Users.AsNoTracking()
+            .CountAsync(u => u.Role == UserRole.Candidate && u.IsActive, cancellationToken);
 
         var employers = await _db.Companies.AsNoTracking()
             .CountAsync(c => c.Type == CompanyType.Employer, cancellationToken);
         var intermediaries = await _db.Companies.AsNoTracking()
             .CountAsync(c => c.Type == CompanyType.Intermediary, cancellationToken);
+
+        // Previous equal-length window for period-based KPI deltas.
+        var prevTo = from;
+        var prevFrom = from - (to - from);
+        var previousApplications = await _db.Applications.AsNoTracking()
+            .Where(a => vacancyIds.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= prevFrom && a.CreatedAt < prevTo)
+            .CountAsync(cancellationToken);
 
         var metrics = new List<MetricCountDto>
         {
@@ -155,8 +169,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
             new("active_vacancies_regular", "Actieve vacatures (regulier)", periodKey, activeRegularVacancies),
             new("users_open_for_work", "Open for work", periodKey, openForWork),
             new("users_active", "Actieve gebruikers", periodKey, allUsers),
+            new("users_active_candidates", "Actieve kandidaten", periodKey, activeCandidates),
             new("applications_pending", "Openstaande sollicitaties", periodKey, applicationsPending),
-            new("applications", "Sollicitaties", periodKey, applications),
+            new("applications", "Sollicitaties", periodKey, applications, PreviousValue: previousApplications),
             new("conversion_rate", "Conversie sollicitaties", periodKey, conversionRate),
             new("impressions", "Getoond na zoekactie", periodKey, impressions),
             new("clicks", "Vacatureclicks", periodKey, clicks),
@@ -245,7 +260,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
             to,
             metricsPeriod,
             includePlatformOnly,
-            companyIds,
+            scopeIds,
             cancellationToken);
     }
 
@@ -255,6 +270,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
         int take = 3,
         CancellationToken cancellationToken = default)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         take = Math.Clamp(take, 1, 10);
         var metricsPeriod = MetricsPeriodParser.Parse(period);
         var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
@@ -262,54 +278,68 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         var vacancyQuery = _db.Vacancies.AsNoTracking()
             .Where(v => v.Status == VacancyStatus.Active);
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            vacancyQuery = vacancyQuery.Where(v => companyIds.Contains(v.CompanyId));
+            vacancyQuery = vacancyQuery.Where(v =>
+                scopeIds.Contains(v.CompanyId)
+                || scopeIds.Contains(v.IntermediaryCompanyId ?? Guid.Empty));
         }
 
-        // Project scores in the query so Top/Flop only materialize `take` rows each.
-        var scored = vacancyQuery.Select(v => new
+        var vacancies = await vacancyQuery
+            .Select(v => new { v.Id, v.Title, CompanyName = v.Company.Name })
+            .ToListAsync(cancellationToken);
+        if (vacancies.Count == 0)
         {
-            v.Id,
-            v.Title,
-            CompanyName = v.Company.Name,
-            Clicks = v.Clicks.Count(c => c.CreatedAt >= from && c.CreatedAt <= to),
-            Impressions = v.SearchImpressions.Count(i => i.CreatedAt >= from && i.CreatedAt <= to),
-            Applications = v.Applications.Count(a =>
-                a.EmailVerifiedAt != null && a.CreatedAt >= from && a.CreatedAt <= to)
-        });
+            return new VacancyPerformanceBoardDto(periodKey, [], []);
+        }
 
-        var topRows = await scored
+        var ids = vacancies.Select(v => v.Id).ToList();
+        var clickCounts = await _db.VacancyClicks.AsNoTracking()
+            .Where(c => ids.Contains(c.VacancyId) && c.CreatedAt >= from && c.CreatedAt <= to)
+            .GroupBy(c => c.VacancyId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count, cancellationToken);
+        var impressionCounts = await _db.VacancySearchImpressions.AsNoTracking()
+            .Where(i => ids.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
+            .GroupBy(i => i.VacancyId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count, cancellationToken);
+        var applicationCounts = await _db.Applications.AsNoTracking()
+            .Where(a => ids.Contains(a.VacancyId)
+                        && a.EmailVerifiedAt != null
+                        && a.CreatedAt >= from && a.CreatedAt <= to)
+            .GroupBy(a => a.VacancyId)
+            .Select(g => new { Id = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Id, x => x.Count, cancellationToken);
+
+        var scored = vacancies
+            .Select(v => (
+                v.Id,
+                v.Title,
+                v.CompanyName,
+                Clicks: clickCounts.GetValueOrDefault(v.Id),
+                Impressions: impressionCounts.GetValueOrDefault(v.Id),
+                Applications: applicationCounts.GetValueOrDefault(v.Id)))
+            .ToList();
+
+        var top = scored
             .OrderByDescending(v => v.Clicks)
             .ThenByDescending(v => v.Impressions)
             .ThenByDescending(v => v.Applications)
             .ThenBy(v => v.Title)
             .Take(take)
-            .ToListAsync(cancellationToken);
-
-        if (topRows.Count == 0)
-        {
-            return new VacancyPerformanceBoardDto(periodKey, [], []);
-        }
-
-        var top = topRows
             .Select(v => new VacancyPerformanceItemDto(
                 v.Id, v.Title, v.CompanyName, v.Impressions, v.Clicks, v.Applications))
             .ToList();
 
-        var topIds = top.Select(t => t.VacancyId).ToList();
-
-        // Flop never overlaps Top. With ≤ take active vacancies, Flop stays empty.
-        var flopRows = await scored
+        var topIds = top.Select(t => t.VacancyId).ToHashSet();
+        var flop = scored
             .Where(v => !topIds.Contains(v.Id))
             .OrderBy(v => v.Clicks)
             .ThenBy(v => v.Impressions)
             .ThenBy(v => v.Applications)
             .ThenBy(v => v.Title)
             .Take(take)
-            .ToListAsync(cancellationToken);
-
-        var flop = flopRows
             .Select(v => new VacancyPerformanceItemDto(
                 v.Id, v.Title, v.CompanyName, v.Impressions, v.Clicks, v.Applications))
             .ToList();
@@ -322,6 +352,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
         string period,
         CancellationToken cancellationToken = default)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var metricsPeriod = MetricsPeriodParser.Parse(period);
         var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
         var periodKey = metricsPeriod.ToString().ToLowerInvariant();
@@ -330,9 +361,9 @@ public sealed class MetricsQueryService : IMetricsQueryService
         var expireUntil = today.AddDays(5);
 
         var companiesQuery = _db.Companies.AsNoTracking().AsQueryable();
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            companiesQuery = companiesQuery.Where(c => companyIds.Contains(c.Id));
+            companiesQuery = companiesQuery.Where(c => scopeIds.Contains(c.Id));
         }
         else
         {
@@ -481,13 +512,38 @@ public sealed class MetricsQueryService : IMetricsQueryService
         return new ClientPerformanceBoardDto(periodKey, rows);
     }
 
-    public async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetVacancyDrilldownAsync(
+        string key,
+        Guid vacancyId,
+        string period,
+        CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(
+            key,
+            includePlatformOnly: true,
+            companyIds: null,
+            period,
+            vacancyId,
+            countUnverifiedApplications: true,
+            cancellationToken);
+
+    public Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
         string key,
         bool includePlatformOnly,
         IReadOnlyCollection<Guid>? companyIds,
         string period,
         CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(key, includePlatformOnly, companyIds, period, onlyVacancyId: null, cancellationToken: cancellationToken);
+
+    private async Task<IReadOnlyList<MetricDrilldownItemDto>> GetDrilldownAsync(
+        string key,
+        bool includePlatformOnly,
+        IReadOnlyCollection<Guid>? companyIds,
+        string period,
+        Guid? onlyVacancyId,
+        bool countUnverifiedApplications = false,
+        CancellationToken cancellationToken = default)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         // Caller should Forbid platform-only keys; defensive empty when not allowed.
         if (!includePlatformOnly && MetricsKeys.PlatformOnly.Contains(key))
         {
@@ -497,20 +553,22 @@ public sealed class MetricsQueryService : IMetricsQueryService
         var metricsPeriod = MetricsPeriodParser.Parse(period);
         var (from, to) = MetricsPeriodParser.ResolveRange(metricsPeriod);
 
-        var vacancyIds = companyIds is null
-            ? await _db.Vacancies.AsNoTracking().Select(v => v.Id).ToListAsync(cancellationToken)
-            : await _db.Vacancies.AsNoTracking()
-                .Where(v => companyIds.Contains(v.CompanyId))
-                .Select(v => v.Id)
-                .ToListAsync(cancellationToken);
+        var vacancyIds = onlyVacancyId is Guid oneVacancy
+            ? new List<Guid> { oneVacancy }
+            : scopeIds is null
+                ? await _db.Vacancies.AsNoTracking().Select(v => v.Id).ToListAsync(cancellationToken)
+                : await _db.Vacancies.AsNoTracking()
+                    .Where(v => scopeIds.Contains(v.CompanyId))
+                    .Select(v => v.Id)
+                    .ToListAsync(cancellationToken);
 
         return key.ToLowerInvariant() switch
         {
-            "tokens_purchased" or "tokens_spent" => await TokenDrilldownAsync(key, from, to, companyIds, cancellationToken),
-            "tokens_balance" => await TokenBalanceDrilldownAsync(companyIds, cancellationToken),
-            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken),
-            "applications_pending" => await ApplicationsDrilldownAsync(vacancyIds, from: null, to: null, pendingOnly: true, cancellationToken),
-            "conversion_rate" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken),
+            "tokens_purchased" or "tokens_spent" => await TokenDrilldownAsync(key, from, to, scopeIds, cancellationToken),
+            "tokens_balance" => await TokenBalanceDrilldownAsync(scopeIds, cancellationToken),
+            "applications" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken, countUnverifiedApplications),
+            "applications_pending" => await ApplicationsDrilldownAsync(vacancyIds, from: null, to: null, pendingOnly: true, cancellationToken, countUnverifiedApplications),
+            "conversion_rate" => await ApplicationsDrilldownAsync(vacancyIds, from, to, pendingOnly: false, cancellationToken, countUnverifiedApplications),
             "impressions" => (await _db.VacancySearchImpressions.AsNoTracking()
                     .Where(i => vacancyIds.Contains(i.VacancyId) && i.CreatedAt >= from && i.CreatedAt <= to)
                     .OrderByDescending(i => i.CreatedAt)
@@ -549,19 +607,25 @@ public sealed class MetricsQueryService : IMetricsQueryService
                 .Select(l => new MetricDrilldownItemDto(
                     l.Id, l.Category, l.Message, l.CreatedAt, null))
                 .ToListAsync(cancellationToken),
-            "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, companyIds, cancellationToken),
-            "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, companyIds, cancellationToken),
-            "active_boosts" => await ActiveBoostsDrilldownAsync(companyIds, cancellationToken),
+            "pushboms" => await TokenReasonDrilldownAsync(TokenSpendReason.PushBom, from, to, scopeIds, onlyVacancyId, cancellationToken),
+            "extensions" => await TokenReasonDrilldownAsync(TokenSpendReason.Extend, from, to, scopeIds, onlyVacancyId, cancellationToken),
+            "active_boosts" => await ActiveBoostsDrilldownAsync(scopeIds, cancellationToken),
             "avg_travel_minutes" or "top_transport_share" =>
                 await MatchTravelDrilldownAsync(vacancyIds, from, to, cancellationToken),
-            "active_vacancies" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: null, cancellationToken),
-            "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Employer, atsFilter: null, cancellationToken),
-            "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(companyIds, CompanyType.Intermediary, atsFilter: null, cancellationToken),
-            "active_vacancies_ats" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: true, cancellationToken),
-            "active_vacancies_regular" => await ActiveVacanciesDrilldownAsync(companyIds, type: null, atsFilter: false, cancellationToken),
+            "active_vacancies" => await ActiveVacanciesDrilldownAsync(scopeIds, type: null, atsFilter: null, cancellationToken),
+            "active_vacancies_employers" => await ActiveVacanciesDrilldownAsync(scopeIds, CompanyType.Employer, atsFilter: null, cancellationToken),
+            "active_vacancies_intermediaries" => await ActiveVacanciesDrilldownAsync(
+                scopeIds, CompanyType.Intermediary, atsFilter: null, includeIntermediaryPlacements: true, cancellationToken),
+            "active_vacancies_ats" => await ActiveVacanciesDrilldownAsync(scopeIds, type: null, atsFilter: true, cancellationToken),
+            "active_vacancies_regular" => await ActiveVacanciesDrilldownAsync(scopeIds, type: null, atsFilter: false, cancellationToken),
             "users_open_for_work" => await UsersOpenForWorkDrilldownAsync(cancellationToken),
             "users_active" => await _db.Users.AsNoTracking()
                 .Where(u => u.IsActive)
+                .OrderBy(u => u.FullName)
+                .Select(u => new MetricDrilldownItemDto(u.Id, u.FullName, u.Role.ToString(), DateTime.UtcNow, null))
+                .ToListAsync(cancellationToken),
+            "users_active_candidates" => await _db.Users.AsNoTracking()
+                .Where(u => u.IsActive && u.Role == UserRole.Candidate)
                 .OrderBy(u => u.FullName)
                 .Select(u => new MetricDrilldownItemDto(u.Id, u.FullName, u.Role.ToString(), DateTime.UtcNow, null))
                 .ToListAsync(cancellationToken),
@@ -691,7 +755,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
 
         if (await _db.Users.AsNoTracking()
                 .AnyAsync(u => u.LastLoginAtUtc > afterUtc
-                               && (u.CompanyId != null && orgIds.Contains(u.CompanyId.Value)
+                               && (u.CompanyId != null && orgIds.Contains(u.CompanyId ?? Guid.Empty)
                                    || u.CompanyMemberships.Any(m => orgIds.Contains(m.CompanyId))), ct))
         {
             return true;
@@ -897,10 +961,15 @@ public sealed class MetricsQueryService : IMetricsQueryService
         DateTime? from,
         DateTime? to,
         bool pendingOnly,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool countUnverified = false)
     {
         var query = _db.Applications.AsNoTracking()
-            .Where(a => vacancyIds.Contains(a.VacancyId) && a.EmailVerifiedAt != null);
+            .Where(a => vacancyIds.Contains(a.VacancyId));
+        if (!countUnverified)
+        {
+            query = query.Where(a => a.EmailVerifiedAt != null);
+        }
 
         if (pendingOnly)
         {
@@ -941,10 +1010,11 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var query = _db.TokenTransactions.AsNoTracking().AsQueryable();
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            query = query.Where(t => companyIds.Contains(t.CompanyId));
+            query = query.Where(t => scopeIds.Contains(t.CompanyId));
         }
 
         return await query
@@ -963,12 +1033,13 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var utcNow = DateTime.UtcNow;
         var query = _db.Vacancies.AsNoTracking()
             .Where(v => v.Status == VacancyStatus.Active && v.IsHighlighted);
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            query = query.Where(v => companyIds.Contains(v.CompanyId));
+            query = query.Where(v => scopeIds.Contains(v.CompanyId));
         }
 
         var rows = await query
@@ -1041,10 +1112,11 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var query = _db.TokenTransactions.AsNoTracking().AsQueryable();
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            query = query.Where(t => companyIds.Contains(t.CompanyId));
+            query = query.Where(t => scopeIds.Contains(t.CompanyId));
         }
 
         return await query.SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
@@ -1087,14 +1159,29 @@ public sealed class MetricsQueryService : IMetricsQueryService
         CompanyType? type,
         bool? atsFilter,
         CancellationToken ct)
+        => await ActiveVacanciesDrilldownAsync(companyIds, type, atsFilter, includeIntermediaryPlacements: false, ct);
+
+    private async Task<List<MetricDrilldownItemDto>> ActiveVacanciesDrilldownAsync(
+        IReadOnlyCollection<Guid>? companyIds,
+        CompanyType? type,
+        bool? atsFilter,
+        bool includeIntermediaryPlacements,
+        CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var query = _db.Vacancies.AsNoTracking().Where(v => v.Status == VacancyStatus.Active);
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            query = query.Where(v => companyIds.Contains(v.CompanyId));
+            query = query.Where(v =>
+                scopeIds.Contains(v.CompanyId)
+                || scopeIds.Contains(v.IntermediaryCompanyId ?? Guid.Empty));
         }
 
-        if (type is not null)
+        if (includeIntermediaryPlacements)
+        {
+            query = query.Where(v => v.Company.Type == CompanyType.Intermediary || v.IntermediaryCompanyId != null);
+        }
+        else if (type is not null)
         {
             query = query.Where(v => v.Company.Type == type);
         }
@@ -1133,13 +1220,14 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var kinds = key == "tokens_spent"
             ? new[] { TokenTransactionKind.Spend }
             : new[] { TokenTransactionKind.Purchase };
 
         return await _db.TokenTransactions.AsNoTracking()
             .Where(t => kinds.Contains(t.Kind) && t.CreatedAt >= from && t.CreatedAt <= to)
-            .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+            .Where(t => scopeIds == null || scopeIds.Contains(t.CompanyId))
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => new MetricDrilldownItemDto(
                 t.Id,
@@ -1155,10 +1243,12 @@ public sealed class MetricsQueryService : IMetricsQueryService
         DateTime from,
         DateTime to,
         IReadOnlyCollection<Guid>? companyIds,
+        Guid? vacancyId,
         CancellationToken ct)
         => await _db.TokenTransactions.AsNoTracking()
             .Where(t => t.Reason == reason && t.CreatedAt >= from && t.CreatedAt <= to)
             .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
+            .Where(t => vacancyId == null || t.VacancyId == vacancyId)
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => new MetricDrilldownItemDto(
                 t.Id,
@@ -1175,11 +1265,12 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var query = _db.TokenTransactions.AsNoTracking()
             .Where(t => t.Kind == kind && t.CreatedAt >= from && t.CreatedAt <= to);
-        if (companyIds is not null)
+        if (scopeIds is not null)
         {
-            query = query.Where(t => companyIds.Contains(t.CompanyId));
+            query = query.Where(t => scopeIds.Contains(t.CompanyId));
         }
 
         return await query.SumAsync(t => (decimal?)t.Amount, ct) ?? 0m;
@@ -1201,6 +1292,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         var bucketCount = SparklineBucketCount(period);
         var cache = new Dictionary<string, IReadOnlyList<decimal>>(StringComparer.OrdinalIgnoreCase);
         var result = new List<MetricCountDto>(metrics.Count);
@@ -1223,7 +1315,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
                     to,
                     bucketCount,
                     includePlatformOnly,
-                    companyIds,
+                    scopeIds,
                     ct);
                 cache[metric.Key] = points;
             }
@@ -1244,6 +1336,7 @@ public sealed class MetricsQueryService : IMetricsQueryService
         IReadOnlyCollection<Guid>? companyIds,
         CancellationToken ct)
     {
+        List<Guid>? scopeIds = companyIds is null ? null : companyIds as List<Guid> ?? companyIds.ToList();
         switch (key.ToLowerInvariant())
         {
             case "clicks":
@@ -1297,36 +1390,36 @@ public sealed class MetricsQueryService : IMetricsQueryService
                     from, to, bucketCount);
 
             case "site_visits_unique" when includePlatformOnly:
-            {
-                var rows = await _db.SiteVisits.AsNoTracking()
-                    .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
-                    .Select(v => new { v.CreatedAt, v.UserId, v.AnonymousKey, v.Id })
-                    .ToListAsync(ct);
-                return BucketUniqueVisitors(rows.Select(v => (
-                    v.CreatedAt,
-                    v.UserId is Guid uid ? "u:" + uid : "a:" + (v.AnonymousKey ?? v.Id.ToString())
-                )).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.SiteVisits.AsNoTracking()
+                        .Where(v => v.CreatedAt >= from && v.CreatedAt <= to)
+                        .Select(v => new { v.CreatedAt, v.UserId, v.AnonymousKey, v.Id })
+                        .ToListAsync(ct);
+                    return BucketUniqueVisitors(rows.Select(v => (
+                        v.CreatedAt,
+                        v.UserId is Guid uid ? "u:" + uid : "a:" + (v.AnonymousKey ?? v.Id.ToString())
+                    )).ToList(), from, to, bucketCount);
+                }
 
             case "tokens_purchased":
-            {
-                var rows = await _db.TokenTransactions.AsNoTracking()
-                    .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
-                    .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
-                    .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
-                    .ToListAsync(ct);
-                return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.TokenTransactions.AsNoTracking()
+                        .Where(t => t.Kind == TokenTransactionKind.Purchase && t.CreatedAt >= from && t.CreatedAt <= to)
+                        .Where(t => scopeIds == null || scopeIds.Contains(t.CompanyId))
+                        .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
+                        .ToListAsync(ct);
+                    return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
+                }
 
             case "tokens_spent":
-            {
-                var rows = await _db.TokenTransactions.AsNoTracking()
-                    .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
-                    .Where(t => companyIds == null || companyIds.Contains(t.CompanyId))
-                    .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
-                    .ToListAsync(ct);
-                return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
-            }
+                {
+                    var rows = await _db.TokenTransactions.AsNoTracking()
+                        .Where(t => t.Kind == TokenTransactionKind.Spend && t.CreatedAt >= from && t.CreatedAt <= to)
+                        .Where(t => scopeIds == null || scopeIds.Contains(t.CompanyId))
+                        .Select(t => new { t.CreatedAt, Amount = (decimal)Math.Abs(t.Amount) })
+                        .ToListAsync(ct);
+                    return BucketAmounts(rows.Select(r => (r.CreatedAt, r.Amount)).ToList(), from, to, bucketCount);
+                }
 
             default:
                 return new decimal[bucketCount];

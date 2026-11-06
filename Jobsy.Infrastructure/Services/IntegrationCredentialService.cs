@@ -1,3 +1,4 @@
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -19,6 +20,8 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
     private readonly ISecretProtector _secrets;
     private readonly MailOptions _mailOptions;
     private readonly KvkOptions _kvkOptions;
+    private readonly LettermintOptions _lettermint;
+    private readonly ILegalIdentity? _legalIdentity;
     private readonly IMemoryCache? _cache;
 
     public IntegrationCredentialService(JobsyDbContext db, ISecretProtector secrets)
@@ -48,12 +51,16 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         ISecretProtector secrets,
         IOptions<MailOptions> mailOptions,
         IOptions<KvkOptions> kvkOptions,
-        IMemoryCache? cache)
+        IMemoryCache? cache,
+        IOptions<LettermintOptions>? lettermintOptions = null,
+        ILegalIdentity? legalIdentity = null)
     {
         _db = db;
         _secrets = secrets;
         _mailOptions = mailOptions.Value ?? new MailOptions();
         _kvkOptions = kvkOptions.Value ?? new KvkOptions();
+        _lettermint = lettermintOptions?.Value ?? new LettermintOptions();
+        _legalIdentity = legalIdentity;
         _cache = cache;
     }
 
@@ -68,15 +75,16 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
         var row = await _db.IntegrationCredentials.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Key == key, cancellationToken);
-        return ToView(key, row);
+        return await ToViewAsync(key, row, cancellationToken);
     }
 
     public async Task<IReadOnlyList<IntegrationCredentialView>> GetConfigurableAsync(
         CancellationToken cancellationToken = default)
     {
         var rows = await _db.IntegrationCredentials.AsNoTracking().ToListAsync(cancellationToken);
+        var legal = await CurrentLegalIdentityAsync(cancellationToken);
         return ConfigurableKeys
-            .Select(key => ToView(key, rows.FirstOrDefault(r => r.Key == key)))
+            .Select(key => ToView(key, rows.FirstOrDefault(r => r.Key == key), legal))
             .ToList();
     }
 
@@ -173,6 +181,18 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             {
                 row.Model = "gpt-4o-mini";
             }
+
+            // Null keeps the saved small model. Empty clears it so cheap calls follow Model.
+            if (update.SmallModel is not null)
+            {
+                var small = update.SmallModel.Trim();
+                if (small.Length > 64)
+                {
+                    throw new InvalidOperationException("Klein model mag maximaal 64 tekens zijn.");
+                }
+
+                row.SmallModel = small.Length == 0 ? null : small;
+            }
         }
 
         // New credentials invalidate previous ping until retested.
@@ -192,7 +212,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
         _cache?.Remove("integration-secrets:" + key);
-        return ToView(key, row);
+        return await ToViewAsync(key, row, cancellationToken);
     }
 
     public async Task SavePingResultAsync(
@@ -236,6 +256,14 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         return secrets?.Model;
     }
 
+    public async Task<string?> GetSmallModelAsync(
+        IntegrationKey key,
+        CancellationToken cancellationToken = default)
+    {
+        var secrets = await GetSecretsAsync(key, cancellationToken);
+        return secrets?.SmallModel;
+    }
+
     public async Task<string?> GetBaseUrlAsync(
         IntegrationKey key,
         CancellationToken cancellationToken = default)
@@ -263,6 +291,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         string? clientSecret = null;
         string? tenantId = null;
         string? model = null;
+        string? smallModel = null;
         string? baseUrl = null;
         string? fromAddress = null;
 
@@ -273,6 +302,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             clientSecret = string.IsNullOrWhiteSpace(row.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
             tenantId = string.IsNullOrWhiteSpace(row.TenantId) ? null : row.TenantId.Trim();
             model = string.IsNullOrWhiteSpace(row.Model) ? null : row.Model.Trim();
+            smallModel = string.IsNullOrWhiteSpace(row.SmallModel) ? null : row.SmallModel.Trim();
             baseUrl = string.IsNullOrWhiteSpace(row.BaseUrl) ? null : row.BaseUrl.Trim();
             fromAddress = string.IsNullOrWhiteSpace(row.FromAddress) ? null : row.FromAddress.Trim();
         }
@@ -291,7 +321,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         }
 
         if (apiKey is null && clientId is null && clientSecret is null && tenantId is null
-            && model is null && baseUrl is null && fromAddress is null)
+            && model is null && smallModel is null && baseUrl is null && fromAddress is null)
         {
             _cache?.Set(cacheKey, (IntegrationCredentialSecrets?)null, SecretsCacheTtl);
             return null;
@@ -304,7 +334,8 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             tenantId,
             model,
             baseUrl,
-            fromAddress);
+            fromAddress,
+            smallModel);
         _cache?.Set(cacheKey, secrets, SecretsCacheTtl);
         return secrets;
     }
@@ -338,7 +369,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.Kvk => "KVK",
         IntegrationKey.MicrosoftEntra => "Microsoft Entra",
         IntegrationKey.GoogleEntra => "Google",
-        IntegrationKey.Mail => "Mail (Resend)",
+        IntegrationKey.Mail => "Mail",
         _ => key.ToString()
     };
 
@@ -349,7 +380,7 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         IntegrationKey.Kvk => "KvK-handelsregister (live API bij key, anders demo-stub).",
         IntegrationKey.MicrosoftEntra => "Microsoft-login (OIDC).",
         IntegrationKey.GoogleEntra => "Google-login (OAuth).",
-        IntegrationKey.Mail => "Uitgaande e-mail via Resend API (SMTP alleen als fallback).",
+        IntegrationKey.Mail => "Uitgaande e-mail. De verzender staat bij Mail__Provider.",
         _ => string.Empty
     };
 
@@ -369,7 +400,10 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
         return $"{key[..3]}••••••••{key[^4..]}";
     }
 
-    private IntegrationCredentialView ToView(IntegrationKey key, IntegrationCredential? row)
+    private IntegrationCredentialView ToView(
+        IntegrationKey key,
+        IntegrationCredential? row,
+        LegalIdentitySnapshot? legal = null)
     {
         var apiKeyPlain = string.IsNullOrWhiteSpace(row?.ApiKey) ? null : _secrets.Unprotect(row.ApiKey);
         var secretPlain = string.IsNullOrWhiteSpace(row?.ClientSecret) ? null : _secrets.Unprotect(row.ClientSecret);
@@ -427,10 +461,11 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
 
         var hasKey = !string.IsNullOrWhiteSpace(apiKeyPlain);
         var hasSecret = !string.IsNullOrWhiteSpace(secretPlain);
+        var isMail = key == IntegrationKey.Mail;
         return new IntegrationCredentialView(
             key,
-            DisplayName(key),
-            Description(key),
+            isMail ? MailDisplayName() : DisplayName(key),
+            isMail ? MailDescription() : Description(key),
             hasKey,
             hasKey ? MaskSecret(apiKeyPlain) : null,
             hasSecret,
@@ -451,6 +486,65 @@ public sealed class IntegrationCredentialService : IIntegrationCredentialService
             row?.LastPingAtUtc,
             row?.UpdatedAtUtc,
             ignoresEnv,
-            usedEnvKey || usedEnvFrom);
+            usedEnvKey || usedEnvFrom,
+            SupportsModel(key) ? TrimOrNull(row?.SmallModel) : null,
+            isMail && MailLegalFooter.IsMissing(_mailOptions, legal));
+    }
+
+    private async Task<IntegrationCredentialView> ToViewAsync(
+        IntegrationKey key,
+        IntegrationCredential? row,
+        CancellationToken cancellationToken)
+    {
+        var legal = key == IntegrationKey.Mail
+            ? await CurrentLegalIdentityAsync(cancellationToken)
+            : null;
+        return ToView(key, row, legal);
+    }
+
+    private async Task<LegalIdentitySnapshot?> CurrentLegalIdentityAsync(CancellationToken cancellationToken)
+    {
+        if (_legalIdentity is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _legalIdentity.GetAsync(cancellationToken);
+        }
+        catch
+        {
+            // The integrations page must still open when company details cannot be read.
+            return null;
+        }
+    }
+
+    private string MailDisplayName()
+    {
+        var status = ActiveMailStatus.Describe(
+            _mailOptions.Provider,
+            !string.IsNullOrWhiteSpace(_lettermint.ApiKey),
+            _lettermint.BaseUrl);
+        return status.Available ? $"Mail ({status.Provider})" : "Mail";
+    }
+
+    private string MailDescription()
+    {
+        var status = ActiveMailStatus.Describe(
+            _mailOptions.Provider,
+            !string.IsNullOrWhiteSpace(_lettermint.ApiKey),
+            _lettermint.BaseUrl);
+        if (!status.Available)
+        {
+            return "Uitgaande e-mail. De verzender is nog niet klaar.";
+        }
+
+        if (string.Equals(status.Provider, MailProviderNames.Lettermint, StringComparison.Ordinal))
+        {
+            return "Uitgaande e-mail via Lettermint. De mail blijft in de EU.";
+        }
+
+        return "Uitgaande e-mail via Resend. SMTP is alleen een reserveweg.";
     }
 }

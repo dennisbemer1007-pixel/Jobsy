@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,8 +14,19 @@ public static class TotpAuthenticator
     public static string GenerateSecret()
         => ToBase32(RandomNumberGenerator.GetBytes(20));
 
-    public static bool VerifyCode(string? secret, string? code, DateTime utcNow)
+    public static string GenerateCode(string secret, DateTime utcNow)
     {
+        var key = FromBase32(secret);
+        var counter = (long)Math.Floor((utcNow - DateTime.UnixEpoch).TotalSeconds / Period.TotalSeconds);
+        return ComputeCode(key, counter);
+    }
+
+    public static bool VerifyCode(string? secret, string? code, DateTime utcNow)
+        => TryVerifyCode(secret, code, utcNow, out _);
+
+    public static bool TryVerifyCode(string? secret, string? code, DateTime utcNow, out long matchedStep)
+    {
+        matchedStep = 0;
         if (string.IsNullOrWhiteSpace(secret)
             || string.IsNullOrWhiteSpace(code)
             || code.Length != Digits
@@ -36,11 +48,13 @@ public static class TotpAuthenticator
         var counter = (long)Math.Floor((utcNow - DateTime.UnixEpoch).TotalSeconds / Period.TotalSeconds);
         for (var offset = -1; offset <= 1; offset++)
         {
-            var expected = ComputeCode(key, counter + offset);
+            var step = counter + offset;
+            var expected = ComputeCode(key, step);
             if (CryptographicOperations.FixedTimeEquals(
                     Encoding.ASCII.GetBytes(expected),
                     Encoding.ASCII.GetBytes(code)))
             {
+                matchedStep = step;
                 return true;
             }
         }
@@ -51,6 +65,10 @@ public static class TotpAuthenticator
     public static string BuildProvisioningUri(string accountName, string secret)
         => $"otpauth://totp/Lobsy:{Uri.EscapeDataString(accountName)}?secret={secret}&issuer=Lobsy&algorithm=SHA1&digits={Digits}&period=30";
 
+    [SuppressMessage(
+        "Security",
+        "CA5350:Do Not Use Weak Cryptographic Algorithms",
+        Justification = "RFC 6238 TOTP requires HMAC-SHA1; changing the algorithm would break authenticator apps.")]
     private static string ComputeCode(byte[] key, long counter)
     {
         Span<byte> counterBytes = stackalloc byte[8];

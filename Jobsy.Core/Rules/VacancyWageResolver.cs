@@ -42,23 +42,6 @@ public static class VacancyWageResolver
         return bands.OrderBy(r => r.AgeYears).First().HourlyRate;
     }
 
-    /// <summary>Adult (21+) hourly rate from a salary table, or null when empty.</summary>
-    public static decimal? ResolveAdultHourlyWage(IEnumerable<CompanySalaryRate>? rates)
-    {
-        var bands = rates?.ToList() ?? [];
-        if (bands.Count == 0)
-        {
-            return null;
-        }
-
-        var adult = bands
-            .Where(r => r.AgeYears >= AgeRules.AdultAgeYears)
-            .OrderBy(r => r.AgeYears)
-            .FirstOrDefault();
-        return adult?.HourlyRate
-               ?? bands.OrderByDescending(r => r.AgeYears).First().HourlyRate;
-    }
-
     public static IReadOnlyList<WageAgeBand> GetWageBands(
         decimal vacancyHourlyWage,
         IEnumerable<CompanySalaryRate>? rates)

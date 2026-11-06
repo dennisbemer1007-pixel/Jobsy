@@ -21,23 +21,30 @@ public static class HorizonCareerPathBuilder
             ? profile.GapHints.Take(4).ToList()
             : [$"Vakkennis voor {dream}", "Zichtbaar maken van resultaten", "Communicatie in de doelrol"];
         var query = Uri.EscapeDataString(dream);
+        var blob = dream.ToLowerInvariant();
+        if (blob.Contains("timmerman") || blob.Contains("timmer") || blob.Contains("carpenter"))
+        {
+            return CareerPlanJson.WithStableKeys(BuildTimmermanPlan(dream, match, profileNote: profile?.HasDnaSignal == true
+                ? "op basis van je profiel"
+                : "op basis van je droombaan; vul je profiel in voor een scherper stappenplan"));
+        }
 
         var steps = new List<HorizonCareerPathStep>
         {
             ContentStep(
                 1,
-                "Profiel & DNA als basis",
-                "Je Lobsy-profiel en DNA-tests vormen het startpunt. We wegen wat je al meeneemt richting je stip — zonder vaste huidige functietitel.",
+                "Profiel als basis",
+                "Je Lobsy-profiel vormt het startpunt. We wegen wat je al meeneemt richting je droombaan, zonder vaste huidige functietitel.",
                 strength,
                 [],
-                ["DNA/Kompas bijgewerkt zodat matching scherper wordt"],
+                ["Profiel bijgewerkt zodat matching scherper wordt"],
                 YearsExperienceNeeded: 0,
                 "Open Mijn Kompas",
                 "/candidate/profile"),
             ContentStep(
                 2,
                 "Skills & competenties dichten",
-                $"Gap-analyse naar “{dream}”: wat je nog mist op skills en competenties, plus gerichte opleidingen.",
+                $"Op weg naar “{dream}”: wat je nog mist op skills en competenties, plus gerichte opleidingen.",
                 gaps,
                 DreamCourses(dream),
                 ["Aantoonbare basisvaardigheden uit je DNA/competentiescan"],
@@ -53,7 +60,7 @@ public static class HorizonCareerPathBuilder
                 ["Minimaal aantoonbare inzet in een verwante functie of project"],
                 YearsExperienceNeeded: EstimateYears(dream, mid: true),
                 "Zoek stap-vacatures",
-                "/?q=" + query),
+                "/banenkaart?q=" + query),
             ContentStep(
                 4,
                 dream,
@@ -63,17 +70,70 @@ public static class HorizonCareerPathBuilder
                 [$"Passende opleiding of gelijkwaardige ervaring voor {dream}", "Betrouwbare referenties of aantoonbare inzet"],
                 YearsExperienceNeeded: EstimateYears(dream, mid: false),
                 "Zoek droomvacatures",
-                "/?q=" + query)
+                "/banenkaart?q=" + query)
         };
 
-        var dnaNote = profile?.HasDnaSignal == true
-            ? "op basis van je profiel en DNA"
-            : "op basis van je stip; vul DNA in voor een scherpere gap-analyse";
+        var profileNote = profile?.HasDnaSignal == true
+            ? "op basis van je profiel"
+            : "op basis van je droombaan; vul je profiel in voor een scherper stappenplan";
         return CareerPlanJson.WithStableKeys(new HorizonCareerPathPlan(
             dream,
             match,
-            $"Pad naar “{dream}” {dnaNote} — rustige, diepe stappen zonder vaste huidige rol.",
+            $"Pad naar “{dream}” {profileNote} — rustige, duidelijke stappen zonder vaste huidige rol.",
             steps));
+    }
+
+    private static HorizonCareerPathPlan BuildTimmermanPlan(string dream, int match, string profileNote)
+    {
+        var steps = new List<HorizonCareerPathStep>
+        {
+            ContentStep(
+                1,
+                "MBO Timmeren (niveau 2–3)",
+                "Start met een praktijkgerichte timmeropleiding: werken met hout, tekening lezen en veilig werken op de bouw.",
+                ["Basis meten en zagen", "Tekening lezen", "Werken volgens veiligheidsregels"],
+                ["MBO Timmeren", "Entree bouw & infra"],
+                ["Startkwalificatie of instroom via BBL"],
+                YearsExperienceNeeded: 0,
+                "Zoek timmer-opleidingen",
+                "/candidate/paspoort?tab=fit"),
+            ContentStep(
+                2,
+                "BBL / leerbedrijf",
+                "Leer het vak op de werkvloer: meelopen met een timmerman, opdrachten uitvoeren en je portfolio opbouwen.",
+                ["Praktijkervaring op bouwplaats", "Werken in team met vakmensen", "Kwaliteit en netheid"],
+                ["BBL timmeren", "Leer-werkplek bouw"],
+                ["Leerbedrijf met begeleiding"],
+                YearsExperienceNeeded: 0,
+                "Bekijk stage & BBL-vacatures",
+                "/banenkaart?q=timmerman"),
+            ContentStep(
+                3,
+                "VCA & bouwveiligheid",
+                "Voor veel bouwplaatsen heb je VCA nodig. Combineer dat met werken volgens tekening en klantafspraken.",
+                ["VCA Basis", "Werken volgens tekening", "Materiaalkeuze hout"],
+                ["VCA Basis", "BHV op de bouw"],
+                ["VCA-diploma"],
+                YearsExperienceNeeded: 0,
+                "Plan VCA",
+                "/candidate/paspoort?tab=proof"),
+            ContentStep(
+                4,
+                dream,
+                $"Richt je op vakmanschap als {dream}: zelfstandig opmeten, maken en monteren met vaste kwaliteit.",
+                ["Zelfstandig opmeten en maken", "Afwerking en montage", "Klantcontact op de bouw"],
+                ["Aansluitende timmer-cursus"],
+                ["Aantoonbare praktijk als timmerman", "VCA en portfolio met projecten"],
+                YearsExperienceNeeded: 1,
+                "Zoek timmerman-vacatures",
+                "/banenkaart?q=timmerman")
+        };
+
+        return new HorizonCareerPathPlan(
+            dream,
+            match,
+            $"Pad naar “{dream}” {profileNote} — timmeren via opleiding, BBL en VCA.",
+            steps);
     }
 
     private static HorizonCareerPathStep ContentStep(

@@ -6,12 +6,15 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/wages")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class WagesController : ControllerBase
 {
     private readonly JobsyDbContext _db;
@@ -26,6 +29,7 @@ public class WagesController : ControllerBase
     /// <summary>Current effective WML rates (latest EffectiveFrom &lt;= today per age).</summary>
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<IEnumerable<MinimumWageRateDto>>> GetAll(CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -59,6 +63,7 @@ public class WagesController : ControllerBase
 
     [HttpGet("check")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public ActionResult<object> Check([FromQuery] decimal hourlyWage, [FromQuery] int ageYears = 21)
     {
         var minimum = _salaryService.GetMinimumHourlyWage(ageYears);

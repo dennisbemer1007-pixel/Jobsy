@@ -4,18 +4,21 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/salary-tables")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class SalaryTablesController : ControllerBase
 {
     private readonly JobsyDbContext _db;
@@ -54,7 +57,7 @@ public class SalaryTablesController : ControllerBase
 
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branchId, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, organizationId);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, organizationId, cancellationToken);
 
             var forBranch = await _db.CompanySalaryTables
                 .AsNoTracking()
@@ -108,7 +111,7 @@ public class SalaryTablesController : ControllerBase
         foreach (var organizationId in organizationIds)
         {
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, organizationId, cancellationToken);
-            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, organizationId);
+            await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, organizationId, cancellationToken);
         }
 
         var tables = await _db.CompanySalaryTables
@@ -135,13 +138,28 @@ public class SalaryTablesController : ControllerBase
             .Where(t => t.Id == id)
             .Select(t => new { t.Id, t.CompanyId })
             .FirstOrDefaultAsync(cancellationToken);
-        if (existing is not null)
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            await EnsureCanManageOrganizationTablesAsync(existing.CompanyId, cancellationToken);
+        }
+        catch (Core.Exceptions.ForbiddenCompanyAccessException)
+        {
+            return Forbid();
+        }
+
+        // RegionalManager is read-only — do not trigger FillEmpty DB writes on GET.
+        if (_companyAuth.GetPrimaryRole(User) != UserRole.RegionalManager)
         {
             var organizationId = await WmlSalaryTableService.ResolveOrganizationIdAsync(
                 _db, existing.CompanyId, cancellationToken);
             if (organizationId is Guid orgId)
             {
-                await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, cancellationToken, orgId);
+                await WmlSalaryTableService.FillEmptySalaryTablesAsync(_db, orgId, cancellationToken);
             }
         }
 
@@ -157,15 +175,6 @@ public class SalaryTablesController : ControllerBase
         if (table is null)
         {
             return NotFound();
-        }
-
-        try
-        {
-            await EnsureCanManageOrganizationTablesAsync(table.CompanyId, cancellationToken);
-        }
-        catch (Core.Exceptions.ForbiddenCompanyAccessException)
-        {
-            return Forbid();
         }
 
         var count = await _db.Vacancies.CountAsync(v => v.SalaryTableId == id, cancellationToken);

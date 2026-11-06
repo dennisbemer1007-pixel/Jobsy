@@ -1,0 +1,14 @@
+@using Jobsy.Core.Scholen
+@namespace Jobsy.Web.Components.Leerling
+
+<section class="band ll-g78-world-band"
+         style="@($"background-image:url('{ImagePath}');background-position:{BackgroundPosition};")"
+         aria-hidden="true"></section>
+
+@code {
+    [Parameter, EditorRequired] public string? ThemeKey { get; set; }
+    [Parameter, EditorRequired] public string WorldKey { get; set; } = "koraalrif";
+    [Parameter] public string BackgroundPosition { get; set; } = "center 30%";
+
+    private string ImagePath => PupilJourneyTheme.WorldBandImagePath(ThemeKey, WorldKey);
+}

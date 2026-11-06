@@ -1,0 +1,191 @@
+@page "/admin/match-calibration"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+
+<PageTitle>Match kalibratie · Lobsy</PageTitle>
+
+<AdminPageShell Title="Match kalibratie (V1)" Lead="Vergelijk legacy scores met MatchCalibrationV1. Zet de feature aan via Platforminstellingen.">
+    <section class="panel-section">
+        <p class="muted">
+            Acceptatie-only vergelijking. Logging: <code>MatchCalibrationV1 compare</code> in platform logs wanneer de flag aan staat.
+        </p>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Legacy %</th>
+                        <th>Fit (raw) %</th>
+                        <th>Betrouwbaarheid %</th>
+                        <th>Weergave %</th>
+                        <th>Band</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _rows)
+                    {
+                        <tr>
+                            <td>@row.Id — @row.Label</td>
+                            <td>@row.Legacy</td>
+                            <td>@(row.FitRaw?.ToString() ?? "—")</td>
+                            <td>@(row.Confidence?.ToString() ?? "—")</td>
+                            <td><strong>@row.Display</strong></td>
+                            <td>@row.Band</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</AdminPageShell>
+
+@code {
+    private readonly List<CompareRow> _rows = [];
+
+    protected override void OnInitialized()
+    {
+        _rows.Add(Compare("S1", "Geen tests, reis/uren onbekend, zelfde sector", BuildS1()));
+        _rows.Add(Compare("S2", "Horeca × Zorg, tests ~80%", BuildS2()));
+        _rows.Add(Compare("S3", "Retail × retail, deep career", BuildS3()));
+        _rows.Add(Compare("S4", "Reis/uren mismatch", BuildS4()));
+        _rows.Add(Compare("S5", "Broad admin (Multidimensional)", BuildS5()));
+    }
+
+    private static CompareRow Compare(string id, string label, ProfileVacancyMatchInput input)
+    {
+        var legacy = ProfileVacancyMatchCalculator.CalculateLegacy(input);
+        var v1 = ProfileVacancyMatchCalculator.Calculate(input, useMatchCalibrationV1: true);
+        return new CompareRow(
+            id,
+            label,
+            legacy.TotalPercent,
+            v1.FitRawPercent,
+            v1.ConfidencePercent,
+            v1.TotalPercent,
+            v1.ColorBand);
+    }
+
+    private sealed record CompareRow(
+        string Id,
+        string Label,
+        int Legacy,
+        int? FitRaw,
+        int? Confidence,
+        int Display,
+        string Band);
+
+    // Mirrors MatchCalibrationV1ScenarioTests inputs (doc §4.3).
+    private static ProfileVacancyMatchInput BuildS1() => new()
+    {
+        VacancyId = Guid.NewGuid(),
+        VacancyTitle = "Magazijnmedewerker",
+        WorkTypes = ["Logistiek"],
+        CandidateRoles = ["Logistiek medewerker"],
+        Core = new MatchScoreInput
+        {
+            VacancyHours = new HoursRange(32, 40),
+            VacancySchedule = SchedulePayload.Flexible(FlexibleScheduleSource.Manual),
+            CandidateAgeYears = 22
+        }
+    };
+
+    private static ProfileVacancyMatchInput BuildS2() => new()
+    {
+        VacancyId = Guid.NewGuid(),
+        VacancyTitle = "Verpleegkundige",
+        VacancyDescription = "Zorg en begeleiding.",
+        WorkTypes = ["Zorg"],
+        CandidateRoles = ["Horeca medewerker"],
+        CandidateCompetencies = new CompetencyScores(80, 80, 80, 80),
+        CandidateCultureScores = new CulturePersonalityScores(
+            60, 60, 60, 60, 60, 60, 60, 80, 60, 60, 70),
+        CandidateRiasecScores = new RiasecScores(30, 30, 30, 70, 40, 40),
+        Core = new MatchScoreInput
+        {
+            EstimatedTravelMinutes = 15,
+            MaxTravelMinutes = 30,
+            CandidateHours = new HoursRange(24, 32),
+            VacancyHours = new HoursRange(24, 36),
+            VacancySchedule = SchedulePayload.Flexible(FlexibleScheduleSource.Manual),
+            CandidateAgeYears = 28
+        }
+    };
+
+    private static ProfileVacancyMatchInput BuildS3() => new()
+    {
+        VacancyId = Guid.NewGuid(),
+        VacancyTitle = "Verkoopmedewerker mode",
+        WorkTypes = ["Winkel"],
+        CandidateRoles = ["Winkel"],
+        CandidateCompetencies = new CompetencyScores(85, 82, 78, 70),
+        CandidateCultureScores = new CulturePersonalityScores(
+            70, 65, 75, 60, 55, 70, 65, 88, 72, 70, 75),
+        CandidateValuesScores = new SchwartzValuesScores(70, 65, 75, 60, 55),
+        CandidateRiasecScores = new RiasecScores(25, 30, 35, 40, 85, 45),
+        CareerDeepCompleted = true,
+        Core = new MatchScoreInput
+        {
+            EstimatedTravelMinutes = 12,
+            MaxTravelMinutes = 25,
+            CandidateHours = new HoursRange(24, 32),
+            VacancyHours = new HoursRange(24, 32),
+            VacancySchedule = SchedulePayload.Flexible(FlexibleScheduleSource.Manual),
+            CandidateAgeYears = 24
+        }
+    };
+
+    private static ProfileVacancyMatchInput BuildS4() => new()
+    {
+        VacancyId = Guid.NewGuid(),
+        VacancyTitle = "Fulltime productiemedewerker",
+        WorkTypes = ["Productie"],
+        CandidateRoles = ["Productie"],
+        Core = new MatchScoreInput
+        {
+            EstimatedTravelMinutes = 90,
+            MaxTravelMinutes = 20,
+            CandidateHours = new HoursRange(8, 12),
+            VacancyHours = new HoursRange(32, 40),
+            VacancySchedule = SchedulePayload.Flexible(FlexibleScheduleSource.Manual),
+            CandidateAgeYears = 30
+        }
+    };
+
+    private static ProfileVacancyMatchInput BuildS5() => new()
+    {
+        VacancyId = Guid.NewGuid(),
+        VacancyTitle = "Business Controller",
+        VacancyDescription = "Financiële planning, rapportages en cijfers bewaken.",
+        WorkTypes = ["Administratie"],
+        CandidateRoles = ["Administratief medewerker", "Boekhoudkundig assistent"],
+        CandidateEducations = ["HBO"],
+        RequiredEducation = "HBO",
+        CandidateEmployerCount = 2,
+        CandidateCompetencies = new CompetencyScores(70, 88, 75, 60),
+        CandidateCultureScores = new CulturePersonalityScores(
+            55, 45, 60, 50, 40, 50, 50, 90, 45, 55, 70),
+        CandidateRiasecScores = new RiasecScores(20, 40, 20, 25, 50, 95),
+        CareerDeepCompleted = true,
+        CareerOccupations =
+        [
+            new CareerOccupationMatch(
+                "Financieel administratief medewerker",
+                88,
+                CareerCompassBuilder.BandStrong,
+                "Cijfers.",
+                ["financieel", "administratief", "boekhoud"])
+        ],
+        Core = new MatchScoreInput
+        {
+            EstimatedTravelMinutes = 12,
+            MaxTravelMinutes = 30,
+            CandidateHours = new HoursRange(32, 40),
+            VacancyHours = new HoursRange(32, 40),
+            VacancySchedule = SchedulePayload.Flexible(FlexibleScheduleSource.Manual),
+            CandidateAgeYears = 28
+        }
+    };
+}

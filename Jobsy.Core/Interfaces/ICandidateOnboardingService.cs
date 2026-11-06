@@ -20,7 +20,29 @@ public interface ICandidateOnboardingService
     /// (how-to not completed and profile not already complete).
     /// </summary>
     Task<bool> ShouldShowWizardAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<OnboardingNearbySignalDto> GetNearbySignalAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
+
+public sealed record OnboardingNearbySignalDto(
+    int Count,
+    int? WiderRadiusCount,
+    int MaxTravelMinutes,
+    string? PreferredTransport,
+    bool EmployersFeatureOff,
+    bool MissingHomeLocation,
+    IReadOnlyList<OnboardingNearbyVacancyCardDto> Examples);
+
+public sealed record OnboardingNearbyVacancyCardDto(
+    Guid VacancyId,
+    string Title,
+    double DistanceKm,
+    int TravelMinutes,
+    string HoursLabel,
+    string ScheduleHint,
+    string WhyLine);
 
 public sealed record CandidateOnboardingStateDto(
     int CurrentStep,
@@ -30,13 +52,16 @@ public sealed record CandidateOnboardingStateDto(
     bool ShouldShow,
     string? Source,
     IReadOnlyList<OnboardingStepAnalytics.StepEvent> Steps,
-    CandidateOnboardingImpressionDto? Impression = null);
+    CandidateOnboardingImpressionDto? Impression = null,
+    int WizardVersion = 2,
+    bool FinishReached = false);
 
 public sealed record CandidateOnboardingProgressRequest(
     int CurrentStep,
     bool? StepCompleted = null,
     bool? StepSkipped = null,
-    string? Source = null);
+    string? Source = null,
+    bool? FinishReached = null);
 
 public sealed record CandidateOnboardingImpressionDto(
     string Label,
@@ -46,7 +71,6 @@ public sealed record CandidateOnboardingImpressionDto(
     OnboardingImpressionItemDto? TopValue,
     int MatchingVacancyCount,
     IReadOnlyList<OnboardingMatchCardDto> MatchCards,
-    IReadOnlyList<string> DreamJobSuggestions,
     bool CompetencyProvisional,
     bool CareerProvisional,
     bool CultureProvisional,

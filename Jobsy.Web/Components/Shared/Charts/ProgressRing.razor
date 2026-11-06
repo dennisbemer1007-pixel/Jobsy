@@ -1,0 +1,58 @@
+@namespace Jobsy.Web.Components.Shared.Charts
+@using System.Globalization
+
+<span class="progress-ring @ModifierClass" style="--ring-size:64px" aria-hidden="true">
+    <svg class="progress-ring__svg" viewBox="0 0 36 36" width="64" height="64" focusable="false">
+        <circle class="progress-ring__track" cx="18" cy="18" r="15.5" />
+        @if (ProgressPercent > 0)
+        {
+            <circle class="progress-ring__value"
+                    cx="18"
+                    cy="18"
+                    r="15.5"
+                    stroke-dasharray="@DashArray"
+                    stroke-dashoffset="0" />
+        }
+    </svg>
+    <span class="progress-ring__label">@Answered/@Total</span>
+</span>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private const double Circumference = 2 * Math.PI * 15.5;
+
+    [Parameter] public int Answered { get; set; }
+
+    [Parameter] public int Total { get; set; }
+
+    [Parameter] public bool Complete { get; set; }
+
+    [Parameter] public bool Provisional { get; set; }
+
+    private double ProgressPercent =>
+        Total <= 0 ? 0 : Math.Clamp(Answered * 100.0 / Total, 0, 100);
+
+    private string DashArray
+    {
+        get
+        {
+            var filled = Circumference * (ProgressPercent / 100d);
+            var rest = Circumference - filled;
+            return $"{filled.ToString("0.###", Inv)} {rest.ToString("0.###", Inv)}";
+        }
+    }
+
+    private string ModifierClass
+    {
+        get
+        {
+            if (Complete)
+                return "progress-ring--complete";
+            if (Provisional)
+                return "progress-ring--provisional";
+            if (Answered <= 0)
+                return "progress-ring--empty";
+            return string.Empty;
+        }
+    }
+}

@@ -212,12 +212,16 @@ public class MolliePaymentMethodTests
         var stub = new MolliePaymentStub(db, features, NullLogger<MolliePaymentStub>.Instance);
         var http = new NamedHttpClientFactory(handler);
 
-        return new MolliePaymentService(
-            db,
+        var mollie = new MollieApiClient(
             credentials,
-            features,
             http,
             config,
+            new FakeHostEnvironment(),
+            NullLogger<MollieApiClient>.Instance);
+        return new MolliePaymentService(
+            db,
+            features,
+            mollie,
             new FakeHostEnvironment(),
             stub,
             NullLogger<MolliePaymentService>.Instance);
@@ -242,7 +246,11 @@ public class MolliePaymentMethodTests
             Address = "Test",
             Location = new GeoPoint(52, 4),
             Type = CompanyType.Employer,
-            PreferredPaymentMethod = preferred
+            PreferredPaymentMethod = preferred,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenPricings.Add(new TokenPricing
         {

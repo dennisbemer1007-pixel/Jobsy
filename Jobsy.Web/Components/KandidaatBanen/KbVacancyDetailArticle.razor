@@ -1,0 +1,124 @@
+@using Jobsy.Core.Media
+@using Jobsy.Core.Rules
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@* Shared candidate vacancy body — used on public detail and employer preview overlay. *@
+@if (Vacancy is null)
+{
+    <p class="muted">@Culture["Common.Loading"]</p>
+}
+else
+{
+    <article class="detail-card kb-detail kb-detail--preview" data-testid="kb-detail-preview">
+        <div class="kb-detail__layout kb-detail__layout--preview">
+            <div class="kb-detail__main-top">
+                @if (!string.IsNullOrWhiteSpace(Vacancy.ImageUrl) || !string.IsNullOrWhiteSpace(Vacancy.CompanyLogoUrl))
+                {
+                    <div class="kb-detail__photo">
+                        <VacancyPhoto Src="@Vacancy.ImageUrl"
+                                      FallbackSrc="@Vacancy.CompanyLogoUrl"
+                                      VacancyId="@(Vacancy.Id == Guid.Empty ? null : Vacancy.Id)"
+                                      WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
+                                      Class="detail-card__image vacancy-media__photo"
+                                      Width="720"
+                                      Height="480"
+                                      Eager="true"
+                                      Sizes="(max-width: 1024px) 100vw, 720px" />
+                    </div>
+                }
+
+                <div class="kb-detail__header">
+                    <h1>@Vacancy.Title</h1>
+                    <p class="kb-detail__company-line company">
+                        <span>@Vacancy.CompanyName</span>
+                        @if (!string.IsNullOrWhiteSpace(Vacancy.CompanyAddress))
+                        {
+                            <span>· @Vacancy.CompanyAddress</span>
+                        }
+                    </p>
+                    @if (Vacancy.WorkTypes.Length > 0)
+                    {
+                        <p class="muted">@string.Join(" · ", Vacancy.WorkTypes)</p>
+                    }
+                </div>
+
+                <div class="kb-facts-grid" aria-label="@Culture["Kb.Detail.FactsAria"]" data-testid="kb-facts-grid">
+                    @if (VacancyPublicDisplay.HasHoursInfo(Vacancy))
+                    {
+                        <div class="kb-facts-grid__item">
+                            <span class="kb-facts-grid__label">@Culture["Kb.Detail.HoursFact"]</span>
+                            <p class="kb-facts-grid__value">@VacancyPublicDisplay.HoursRangeText(Vacancy)</p>
+                        </div>
+                    }
+                    <div class="kb-facts-grid__item">
+                        <span class="kb-facts-grid__label">@Culture["Kb.Detail.WageFact"]</span>
+                        <p class="kb-facts-grid__value">
+                            @if (Vacancy.WageVisible && VacancyPublicDisplay.DisplayHourlyWage(Vacancy) is decimal wage)
+                            {
+                                <text>€ @wage.ToString("0.00")</text>
+                            }
+                            else
+                            {
+                                <text>—</text>
+                            }
+                        </p>
+                    </div>
+                    <div class="kb-facts-grid__item">
+                        <span class="kb-facts-grid__label">@Culture["Kb.Detail.WhenFact"]</span>
+                        <p class="kb-facts-grid__value">@VacancyPublicDisplay.DetailWhenLabel(Vacancy, key => Culture[key])</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kb-detail__main-bottom">
+                @if (VideoEmbed.TryGetEmbedUrl(Vacancy.VideoUrl) is not null)
+                {
+                    <p class="detail-card__video-link muted">@Culture["Vacancy.Video"]</p>
+                }
+
+                <div class="detail-card__body vacancy-description-html">
+                    @((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(Vacancy))
+                </div>
+
+                @if (VacancyPublicDisplay.HasHoursInfo(Vacancy) || Vacancy.FlexibleTimes || VacancyPublicDisplay.ScheduleChips(Vacancy).Count > 0)
+                {
+                    <aside class="vacancy-facts" aria-label="@Culture["Vacancy.Facts"]">
+                        @if (VacancyPublicDisplay.HasHoursInfo(Vacancy))
+                        {
+                            <div class="vacancy-facts__block">
+                                <h2 class="vacancy-facts__title">@Culture["Vacancy.HoursPerWeek"]</h2>
+                                <p class="vacancy-facts__text">@VacancyPublicDisplay.HoursRangeText(Vacancy)</p>
+                            </div>
+                        }
+                        @if (Vacancy.FlexibleTimes || VacancyPublicDisplay.ScheduleChips(Vacancy).Count > 0)
+                        {
+                            <div class="vacancy-facts__block">
+                                <h2 class="vacancy-facts__title">@Culture["Vacancy.DayParts"]</h2>
+                                @if (Vacancy.FlexibleTimes)
+                                {
+                                    <p class="vacancy-facts__text">@Culture["Vacancy.FlexibleTimes"]</p>
+                                }
+                                else
+                                {
+                                    <div class="vacancy-facts__chips">
+                                        @foreach (var chip in VacancyPublicDisplay.ScheduleChips(Vacancy))
+                                        {
+                                            <span class="vacancy-facts__chip">@chip</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </aside>
+                }
+            </div>
+        </div>
+    </article>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public VacancyListItem? Vacancy { get; set; }
+}

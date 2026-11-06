@@ -14,6 +14,12 @@ public interface IVacancyDiscoveryIndex
     /// <summary>Mark the snapshot stale so the next read (or the refresh job) rebuilds it.</summary>
     void Invalidate();
 
+    /// <summary>
+    /// Mark the snapshot stale after a company verification change so public channels
+    /// pick it up within one refresh cycle (≤ 60 s).
+    /// </summary>
+    Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default);
+
     /// <summary>Rebuild the snapshot from the database.</summary>
     Task RefreshAsync(CancellationToken cancellationToken = default);
 
@@ -21,6 +27,12 @@ public interface IVacancyDiscoveryIndex
     /// Return the current public snapshot, refreshing first when empty or stale.
     /// </summary>
     Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Public snapshot plus acceptatie test vacancies (same refresh rules as <see cref="GetActiveAsync"/>).
+    /// </summary>
+    Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Centroid + zoom of the current public snapshot, for MapLibre first paint.

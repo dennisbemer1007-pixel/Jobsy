@@ -9,11 +9,37 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class TravelReach
 {
+    /// <summary>
+    /// Single fastest flag in a combined preference (car before transit, bike, walking).
+    /// A candidate who can use several modes can take the quicker one.
+    /// </summary>
+    public static TransportMode Fastest(TransportMode mode)
+    {
+        TransportMode best = TransportMode.None;
+        var bestSpeed = -1.0;
+        foreach (var flag in new[] { TransportMode.Walking, TransportMode.Bike, TransportMode.PublicTransport, TransportMode.Car })
+        {
+            if (flag == TransportMode.None || !mode.HasFlag(flag))
+            {
+                continue;
+            }
+
+            var speed = CrowFliesKmPerHour(flag);
+            if (speed > bestSpeed)
+            {
+                bestSpeed = speed;
+                best = flag;
+            }
+        }
+
+        return best == TransportMode.None ? TransportMode.Bike : best;
+    }
+
     /// <summary>On-road cruise speed (km/h), not crow-flies.</summary>
     public static double SpeedKmPerHour(TransportMode mode)
     {
         if (mode.HasFlag(TransportMode.Bike)) return 18.0;
-        if (mode.HasFlag(TransportMode.Car)) return 40.0;
+        if (mode.HasFlag(TransportMode.Car)) return 80.0;
         if (mode.HasFlag(TransportMode.PublicTransport)) return 25.0;
         if (mode.HasFlag(TransportMode.Walking)) return 5.0;
         return 18.0;

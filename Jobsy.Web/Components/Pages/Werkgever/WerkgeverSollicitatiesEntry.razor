@@ -1,0 +1,69 @@
+@page "/werkgever/sollicitaties"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.WebUtilities
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject EmployerScopeBootstrap ScopeBootstrap
+@inject EmployerScopeState Scope
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>@Culture["WgNav.Applications"] · Lobsy</PageTitle>
+
+@if (_redirectIssued)
+{
+    <p class="state-message" role="status">@Culture["Common.Loading"]</p>
+}
+else if (_bodyHtml is not null)
+{
+    <WgPageShell Title="@Culture["WgNav.Applications"]" Lead="@Culture["WgApp.Lead"]">
+        @((MarkupString)_bodyHtml)
+    </WgPageShell>
+}
+
+@code {
+    private bool _redirectIssued;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+        var query = http.Request.Query;
+        if (!EmployerApplicationsListSsrQuery.IsListView(query))
+        {
+            if (!http.Response.HasStarted)
+            {
+                http.Response.Redirect(EmployerApplicationsListSsrQuery.BuildPipelineRedirectPath(query));
+                _redirectIssued = true;
+            }
+
+            return;
+        }
+
+        var parsed = EmployerApplicationsListSsrQuery.Parse(query);
+        var pageData = await EmployerApplicationsListSsrData.LoadAsync(
+            Api,
+            ScopeBootstrap,
+            Scope,
+            AuthState,
+            parsed,
+            http.RequestAborted);
+        _bodyHtml = EmployerApplicationsListSsrShells.BuildBody(Culture, pageData);
+    }
+}

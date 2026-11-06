@@ -1,75 +1,97 @@
 @inherits LayoutComponentBase
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
-@using System.Security.Claims
+@using Jobsy.Web.Media
+@using Jobsy.Web.Pwa
+@using Jobsy.Web.Seo
+@using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
+@inject PwaInstallSheetState PwaSheet
 @inject JobsyApiClient Api
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject Jobsy.Web.Branding.PlatformBrandingState Branding
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
-@inject ILogger<MainLayout> Logger
-@inject IHttpContextAccessor HttpContextAccessor
 @inject Jobsy.Web.Services.ApiCallTracker ApiCalls
+@inject AuthenticationStateProvider AuthState
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_banenkaartCandidateShell ? "app-shell--banenkaart-shell" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
-    @if (!_isMatchPage && !_isQuestionnairePage)
+    <PageRouteStylesHead />
+    <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
+    @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartMockupTopBar)
     {
-        <header class="app-header">
-            <div class="app-header__brand">
-                <a class="brand" href="/" aria-label="Lobsy">
-                    <LobsyLogo Class="brand__logo" Alt="Lobsy" />
-                    <span class="brand__text">
-                        <span class="brand__name">Lobsy</span>
-                        <span class="brand-tagline">@HeaderTagline</span>
-                    </span>
-                </a>
-            </div>
-            <div class="app-header__actions">
-                <PageHelp />
-                <NotificationBell />
-                <TokenWalletChip />
-                <SalesWalletChip />
-                <LanguageSelector />
-                <AuthHeader />
-            </div>
-        </header>
+        <AppShellHeader HomeHref="@_homeHref"
+                        HeaderTagline="@HeaderTagline"
+                        ShowCandidatePwaInstall="@(_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)" />
     }
 
     <main class="app-main">
-        <ErrorBoundary @ref="_errorBoundary">
-            <ChildContent>
-                @Body
-            </ChildContent>
-            <ErrorContent Context="ex">
-                @{
-                    LogCircuitError(ex);
+        <div class="app-main__content">
+            @if (ShowInstallBanner)
+            {
+                <PwaInstallBanner />
+            }
+            <CircuitErrorBoundary BoundaryTag="main">
+                @if (RendererInfo.IsInteractive)
+                {
+                    <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
+                    <AuthorizeView Roles="@JobsyRoles.Candidate">
+                        <Authorized>
+                            <Jobsy.Web.Components.Candidate.KandidatenkaartReAvailabilityBanner />
+                        </Authorized>
+                    </AuthorizeView>
                 }
-                <div class="panel-page circuit-error" role="alert">
-                    <h1>@Culture["Circuit.ErrorTitle"]</h1>
-                    <p class="login-lead">@Culture["Circuit.ErrorLead"]</p>
-                    <button type="button" class="login-submit" @onclick="RecoverFromError">@Culture["Circuit.ErrorRetry"]</button>
-                </div>
-            </ErrorContent>
-        </ErrorBoundary>
-        @if (!_isMatchPage && !_isQuestionnairePage)
+                @Body
+            </CircuitErrorBoundary>
+        </div>
+        @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
         {
             <AppFooter />
         }
     </main>
 
-    @if (!_isQuestionnairePage)
+    @if (!_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
     {
-        <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
+        @if (_noBlazorCandidateNav)
+        {
+            <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Bottom" />
+        }
+        else
+        {
+            <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
+        }
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
     {
+        <LobsyCoach Compact="_isQuestionnairePage" HasBottomNav="_hasBottomNav" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" UiVariant="AssistantChatUiVariant.Warm" />
+        <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+    }
+    else if (_noBlazorRuntime && _ssrCoachAvailable && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
+    {
+        <LobsyCoachSsr HasBottomNav="_hasBottomNav" AskLabel="@Culture["Coach.Ask"]" />
+    }
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage && !_hideFloatingChrome)
+    {
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+    }
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
+    {
+        <GratisDnaMerge />
         <PushPermissionBanner />
-        <PwaInstallBanner />
-        <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
-        <FeedbackWidget HasBottomNav="_hasBottomNav" />
+        @if (_isCandidate && !_suppressPwaInstallEntry)
+        {
+            <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstalledShareHint />
+        }
         <ConsentReacceptDialog />
     }
     else if (RendererInfo.IsInteractive)
@@ -77,6 +99,10 @@
         <ConsentReacceptDialog />
     }
     <CookieConsentBanner OnConsentChanged="OnCookieConsentChanged" />
+    @if (RendererInfo.IsInteractive && _isCandidate && !_suppressPwaInstallEntry)
+    {
+        <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallSheet />
+    }
     <SessionIdleGuard />
 </div>
 
@@ -84,74 +110,45 @@
     private bool _siteVisitRecorded;
     private bool _hasBottomNav;
     private bool _isMatchPage;
+    /// <summary>Public job map: hide app chrome for guests; logged-in candidates keep the normal shell.</summary>
+    private bool _banenkaartImmersive;
+    /// <summary>Logged-in candidate on banenkaart: app header + bottom nav; suppress duplicate discovery chrome header.</summary>
+    private bool _banenkaartCandidateShell;
+    /// <summary>Lagen mockup supplies its own <c>.top</c> bar; hide the app shell header on /banenkaart.</summary>
+    private bool _banenkaartMockupTopBar;
     private bool _isQuestionnairePage;
-    private ErrorBoundary? _errorBoundary;
-    private Exception? _loggedCircuitError;
+    private bool _isOnboardingWizardFocus;
+    private bool _hideCoachDock;
+    private bool _hideFloatingChrome;
+    private bool _isCandidate;
+    private bool _suppressInstallBanner;
+    private bool _suppressPwaInstallEntry;
+    private bool _pwaSheetOpen;
+    private bool _noBlazorRuntime;
+    private bool _noBlazorCandidateNav;
+    private bool _ssrCoachAvailable;
 
-    private void RecoverFromError()
+    private bool ShowInstallBanner =>
+        RendererInfo.IsInteractive
+        && !_isCandidate
+        && !_isMatchPage
+        && !_banenkaartImmersive
+        && !_isQuestionnairePage
+        && !_suppressInstallBanner;
+    private string _homeHref = "/";
+
+    protected override void OnInitialized()
     {
-        _loggedCircuitError = null;
-        _errorBoundary?.Recover();
-    }
-
-    private void LogCircuitError(Exception ex)
-    {
-        if (ReferenceEquals(_loggedCircuitError, ex))
+        if (CultureRequest.HasExplicitChoice(HttpContextAccessor.HttpContext))
         {
-            return;
+            Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         }
 
-        _loggedCircuitError = ex;
-        var route = SafeRoute();
-        var userId = ResolveUserId();
-        // Never surface technical details in the UI — only log/Sentry.
-        Logger.LogError(
-            ex,
-            "Circuit error boundary at {Route} for user {UserId}: {ExceptionType}",
-            route,
-            userId,
-            ex.GetType().Name);
-        try
-        {
-            Sentry.SentrySdk.CaptureException(ex, scope =>
-            {
-                scope.SetTag("route", route);
-                scope.SetTag("boundary", "main");
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    scope.User = new Sentry.SentryUser { Id = userId };
-                }
-            });
-        }
-        catch
-        {
-            // Sentry optional / not configured.
-        }
-    }
+        BootstrapCandidateFromHttpContext();
+        RefreshFocusedFlags();
 
-    private string SafeRoute()
-    {
-        try
-        {
-            return new Uri(Navigation.Uri).PathAndQuery;
-        }
-        catch
-        {
-            return "/";
-        }
-    }
-
-    private string ResolveUserId()
-    {
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-        {
-            return "";
-        }
-
-        return user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-               ?? user.FindFirst("sub")?.Value
-               ?? "";
+        PwaSheet.Changed += OnPwaSheetChanged;
+        _pwaSheetOpen = PwaSheet.IsOpen;
     }
 
     protected override async Task OnInitializedAsync()
@@ -160,11 +157,76 @@
         RegionHost.Changed += OnBrandingChanged;
         Branding.Changed += OnBrandingChanged;
         Navigation.LocationChanged += OnLocationChanged;
+        AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
         RefreshFocusedFlags();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
+        await RefreshHomeHrefAsync();
         // Do not block first paint (or /home dashboards) on region/slogan HTTP.
         _ = HydrateHostBrandingAsync();
+    }
+
+    private async Task RefreshHomeHrefAsync()
+    {
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            var wasCandidate = _isCandidate;
+            _isCandidate = user.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            var immersiveChanged = SyncBanenkaartImmersive();
+            if (!_isCandidate && IsOuderGuestShellPath(Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]))
+            {
+                _isCandidate = true;
+                _homeHref = "/";
+                _hasBottomNav = true;
+                if (wasCandidate != _isCandidate || immersiveChanged)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                return;
+            }
+
+            if (!_isCandidate)
+            {
+                _homeHref = "/";
+                if (wasCandidate != _isCandidate || immersiveChanged)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                return;
+            }
+
+            var flags = await FeatureFlags.GetAsync();
+            if (!flags.CandidatePassportEnabled)
+            {
+                // Flag OFF: logo stays on "/" (LandingRedirectMiddleware → banenkaart).
+                _homeHref = "/";
+                SyncBanenkaartImmersive();
+                if (wasCandidate != _isCandidate || immersiveChanged)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                return;
+            }
+
+            _homeHref = FeatureRoutes.HomeFor(
+                user,
+                flags,
+                passportReady: AuthRedirects.PassportReadyFromClaims(user));
+            if (wasCandidate != _isCandidate || immersiveChanged)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            _homeHref = "/";
+        }
     }
 
     private async Task HydrateHostBrandingAsync()
@@ -183,6 +245,23 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender && RendererInfo.IsInteractive)
+        {
+            TryApplyRouteDocumentTitle(Navigation.Uri);
+        }
+
+        if (RendererInfo.IsInteractive)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
+            }
+            catch
+            {
+                // CSS fallbacks keep the coach tab usable when JS is blocked.
+            }
+        }
+
         if (_siteVisitRecorded)
         {
             return;
@@ -212,7 +291,7 @@
 
     private Task OnBottomNavItemsChanged(bool hasItems)
     {
-        if (_isQuestionnairePage)
+        if (_isQuestionnairePage || _isOnboardingWizardFocus)
         {
             if (_hasBottomNav)
             {
@@ -234,10 +313,6 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // An error on one tab must never follow the user to the next route.
-        _loggedCircuitError = null;
-        _errorBoundary?.Recover();
-
         try
         {
             var path = new Uri(e.Location).AbsolutePath;
@@ -253,18 +328,127 @@
         {
             _ = InvokeAsync(StateHasChanged);
         }
+
+        TryApplyRouteDocumentTitle(e.Location);
+        _ = RefreshCandidateRoleAsync();
+    }
+
+    private void TryApplyRouteDocumentTitle(string location)
+    {
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        try
+        {
+            var path = PageSeoCatalog.Normalize(new Uri(location).AbsolutePath);
+            var entry = PageSeoCatalog.Resolve(path);
+            var title = PageSeoResolver.WithBrand(Culture[entry.TitleKey]);
+            _ = Js.InvokeVoidAsync("lobsyCandidateNav.applyDocumentTitle", title);
+        }
+        catch
+        {
+            // Disconnected circuit / prerender
+        }
+    }
+
+    private async Task RefreshCandidateRoleAsync()
+    {
+        var previous = _isCandidate;
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            _isCandidate = user.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        }
+        catch
+        {
+            _isCandidate = false;
+        }
+
+        SyncBanenkaartImmersive();
+        if (previous != _isCandidate)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void BootstrapCandidateFromHttpContext()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        var user = http?.User;
+        _noBlazorRuntime = http?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            _noBlazorCandidateNav = false;
+            _ssrCoachAvailable = false;
+            return;
+        }
+
+        if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            _noBlazorCandidateNav = false;
+            _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
+            return;
+        }
+
+        _isCandidate = true;
+        _ssrCoachAvailable = _noBlazorRuntime && AssistantChatHost.IsAvailableFor(user);
+        _noBlazorCandidateNav = _noBlazorRuntime;
+        if (_noBlazorCandidateNav && !_isQuestionnairePage && !_isOnboardingWizardFocus && !_banenkaartImmersive)
+        {
+            _hasBottomNav = true;
+        }
+
+        SyncBanenkaartImmersive();
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
+    {
+        try
+        {
+            _ = await authStateTask;
+            await RefreshHomeHrefAsync();
+        }
+        catch
+        {
+            // async void: swallow dispose/auth races.
+        }
     }
 
     private bool RefreshFocusedFlags()
     {
-        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]
-            .TrimStart('/');
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
-        var questionnaire = IsQuestionnairePath(path);
+        var banenkaart = IsBanenkaartPath(path);
+        var questionnaire = IsQuestionnairePath(path, relative);
+        var onboardingWizard = IsOnboardingWizardFocusPath(path);
+        var suppressInstall = SuppressesInstallBanner(path);
+        var suppressPwaEntry = SuppressesPwaInstallEntry(path);
         var changed = false;
         if (_isMatchPage != match)
         {
             _isMatchPage = match;
+            changed = true;
+        }
+
+        if (SyncBanenkaartImmersive(banenkaart))
+        {
+            changed = true;
+        }
+
+        if (_suppressInstallBanner != suppressInstall)
+        {
+            _suppressInstallBanner = suppressInstall;
+            changed = true;
+        }
+
+        if (_suppressPwaInstallEntry != suppressPwaEntry)
+        {
+            _suppressPwaInstallEntry = suppressPwaEntry;
             changed = true;
         }
 
@@ -279,16 +463,237 @@
             changed = true;
         }
 
+        if (_isOnboardingWizardFocus != onboardingWizard)
+        {
+            _isOnboardingWizardFocus = onboardingWizard;
+            if (onboardingWizard)
+            {
+                _hasBottomNav = false;
+            }
+
+            changed = true;
+        }
+
+        var hidePassportChrome = IsPassportOrProfileCoachHidden(path);
+        var hideCoach = IsLobsyCoachExcludedPath(path)
+                        || IsVacancyOrNotificationsCoachHidden(path);
+        if (_hideCoachDock != hideCoach)
+        {
+            _hideCoachDock = hideCoach;
+            changed = true;
+        }
+
+        var hideFloatingChrome = hidePassportChrome
+                                 || IsVacancyOrNotificationsCoachHidden(path);
+        if (_hideFloatingChrome != hideFloatingChrome)
+        {
+            _hideFloatingChrome = hideFloatingChrome;
+            changed = true;
+        }
+
         return changed;
     }
 
-    public static bool IsQuestionnairePath(string path)
+    private bool SyncBanenkaartImmersive(bool? onBanenkaartRoute = null)
     {
-        if (string.IsNullOrWhiteSpace(path))
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = relative.Split('?', '#')[0].TrimStart('/');
+        var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
+        var bedrijvenSsr = IsBedrijvenkaartSsrPath(path);
+        var immersive = onRoute && !_isCandidate && !bedrijvenSsr;
+        var candidateShell = onRoute;
+        var mockupTop = onRoute && !_isCandidate && !bedrijvenSsr;
+        var changed = false;
+        if (_banenkaartImmersive != immersive)
+        {
+            _banenkaartImmersive = immersive;
+            changed = true;
+        }
+
+        if (_banenkaartCandidateShell != candidateShell)
+        {
+            _banenkaartCandidateShell = candidateShell;
+            changed = true;
+        }
+
+        if (_banenkaartMockupTopBar != mockupTop)
+        {
+            _banenkaartMockupTopBar = mockupTop;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    public static bool IsOuderGuestShellPath(string path)
+        => path.TrimStart('/').Equals("ouder", StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsBanenkaartPath(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("banenkaart", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("banen", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("bedrijvenkaart", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("bedrijvenkaart/ssr", StringComparison.OrdinalIgnoreCase)
+               || IsCompanyKvkPath(path);
+    }
+
+    private static bool IsBedrijvenkaartSsrPath(string path)
+        => path.TrimStart('/').Equals("bedrijvenkaart/ssr", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsCompanyKvkPath(string path)
+    {
+        var segment = path.Split('/')[0];
+        return segment.Length == 8 && segment.All(char.IsDigit);
+    }
+
+    /// <summary>True when the job map should render without app header / bottom nav (anonymous visitors).</summary>
+    public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
+        => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
+
+    /// <summary>Hide floating chrome on profile (paspoort keeps Lobsy-hulp).</summary>
+    public static bool IsPassportOrProfileCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>
+    public static bool IsVacancyOrNotificationsCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        if (path.Equals("notifications", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.StartsWith("vacancies/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Lobsy-hulp uit op landing, inloggen en account-flow (mockup).</summary>
+    public static bool IsLobsyCoachExcludedPath(string path)
+    {
+        path = path.TrimStart('/');
+        if (string.IsNullOrEmpty(path))
+        {
+            return true;
+        }
+
+        if (path.Equals("login", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("inloggen", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.StartsWith("account-maken", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("account/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.Equals("ouder", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.Contains("/uwv-", StringComparison.OrdinalIgnoreCase)
+               || path.EndsWith("/uwv", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Legacy alias — coach stays visible on illustrated SSR pages.</summary>
+    public static bool IsIllustratedCandidateCoachHidden(string path) => false;
+
+    /// <summary>Hide floating coach on standalone Quick-Scan shells (scene bubble + progress).</summary>
+    public static bool IsStandaloneQuickScanCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Hide sticky LobsyCoach when the journey page already shows its own mascot (desktop grid or mobile dock / inline).</summary>
+    public static bool IsDiscoveryQuestionCoachHidden(string path, string relativeUri)
+    {
+        path = path.TrimStart('/');
+        if (!path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
+        if (!TryGetJourneyStap(relativeUri, out var stap) || string.IsNullOrWhiteSpace(stap))
+        {
+            return false;
+        }
+
+        if (stap.Equals("start", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n)
+            && n is >= 7 and <= 10)
+        {
+            return true;
+        }
+
+        if (int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var step)
+            && step is >= 1 and <= 6)
+        {
+            return true;
+        }
+
+        return stap.Equals("shed", StringComparison.OrdinalIgnoreCase)
+               || stap.Equals("klaar", StringComparison.OrdinalIgnoreCase)
+               || stap.Equals("toestemming", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetJourneyStap(string relativeUri, out string stap)
+    {
+        stap = "";
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0)
+        {
+            return false;
+        }
+
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0)
+        {
+            query = query[..hash];
+        }
+
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            stap = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]).Trim();
+            return !string.IsNullOrWhiteSpace(stap);
+        }
+
+        return false;
+    }
+
+    public static bool SuppressesPwaInstallEntry(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/share-in", StringComparison.OrdinalIgnoreCase)
+               || SuppressesInstallBanner(path);
+    }
+
+    public static bool SuppressesInstallBanner(string path)
+    {
         path = path.TrimStart('/');
         return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
@@ -296,8 +701,97 @@
                || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
+               || path.StartsWith("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsQuestionnairePath(string path)
+        => IsQuestionnairePath(path, path);
+
+    /// <summary>Onboarding wizard sticky footer must not fight the global bottom nav on mobile.</summary>
+    public static bool IsOnboardingWizardFocusPath(string path)
+        => path.TrimStart('/').Equals("candidate/start", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Focus mode for questionnaires / classic start / journey-in-progress.
+    /// Overview (<c>/candidate/ontdekkingsreis</c> without <c>stap</c>) keeps the normal nav.
+    /// </summary>
+    public static bool IsQuestionnairePath(string path, string relativeUri)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        path = path.TrimStart('/');
+        path = path.TrimStart('/');
+        if (path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
+            || (path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase)
+                && !path.Equals("candidate/deep-analysis/checkout", StringComparison.OrdinalIgnoreCase))
+            || path.Equals("account/mfa", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("account/mfa/", StringComparison.OrdinalIgnoreCase))
+        {
+            // Intro/finish keep normal nav (?stap=intro|klaar).
+            if (HasTestShellNavQuery(relativeUri))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        if (path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
+        {
+            // Static SSR keeps normal nav on all discovery screens (no focus trap).
+            return false;
+        }
+
+        return false;
+    }
+
+    private static bool HasJourneyStepQuery(string relativeUri)
+    {
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0) return false;
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0) query = query[..hash];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
+            var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        return false;
+    }
+
+    /// <summary>Intro/finish of free tests use ?stap=intro|klaar and keep the normal bottom nav.</summary>
+    private static bool HasTestShellNavQuery(string relativeUri)
+    {
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0) return false;
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0) query = query[..hash];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
+            var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
+            return value.Equals("intro", StringComparison.OrdinalIgnoreCase)
+                   || value.Equals("klaar", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
     }
 
     private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);
@@ -308,11 +802,25 @@
     private void OnBrandingChanged()
         => InvokeAsync(StateHasChanged);
 
+    private void OnPwaSheetChanged()
+    {
+        var open = PwaSheet.IsOpen;
+        if (_pwaSheetOpen == open)
+        {
+            return;
+        }
+
+        _pwaSheetOpen = open;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
+        PwaSheet.Changed -= OnPwaSheetChanged;
         Culture.Changed -= OnCultureChanged;
         RegionHost.Changed -= OnBrandingChanged;
         Branding.Changed -= OnBrandingChanged;
         Navigation.LocationChanged -= OnLocationChanged;
+        AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }

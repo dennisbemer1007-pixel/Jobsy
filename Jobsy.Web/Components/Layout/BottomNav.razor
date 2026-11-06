@@ -1,216 +1,162 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @using Jobsy.Core.Authorization
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
-@inject JobsyApiClient Api
-@inject BottomNavRefreshService NavRefresh
-@implements IDisposable
+@inject RoleNavItemsState NavItems
+@inject AuthenticationStateProvider AuthState
+@inject IJSRuntime Js
+@implements IAsyncDisposable
 
-@if (_items.Count > 0)
+@if (_items.Count > 0 && !_hideForDesktopViewport)
 {
-    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]">
+    <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]" @ref="_nav">
         @foreach (var item in _items)
         {
             var title = Culture[item.TitleKey];
+            var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
+                ? Culture[item.ShortTitleKey!]
+                : title;
             var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-            <a class="bottom-nav__item @(active ? "is-active" : null) @(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)"
-               href="@item.Href"
-               title="@title"
-               data-desktop-only="@(item.DesktopOnly ? "true" : null)"
-               aria-current="@(active ? "page" : null)">
+            <CandidateNavLink Class="@($"bottom-nav__item {(active ? "is-active" : null)} {(item.DesktopOnly ? "bottom-nav__item--desktop-only" : null)}")"
+                              Href="@item.Href"
+                              Title="@title"
+                              DesktopOnly="@(item.DesktopOnly ? "true" : null)"
+                              TestId="@(string.Equals(item.Href, RoleNavCatalog.HoursItem.Href, StringComparison.OrdinalIgnoreCase) ? "nav-maqqie-uren" : null)"
+                              AriaCurrent="@(active ? "page" : null)">
                 <span class="bottom-nav__icon" aria-hidden="true">
                     @((MarkupString)item.Svg)
                 </span>
-                <span class="bottom-nav__label">@title</span>
-            </a>
+                <span class="bottom-nav__label bottom-nav__label--full">@title</span>
+                <span class="bottom-nav__label bottom-nav__label--short">@shortTitle</span>
+            </CandidateNavLink>
         }
     </nav>
 }
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
-    private bool _hasTakeoverActions;
-    private bool _salesOnboardingComplete;
-    private bool _ambassadeurOnboardingComplete;
-    private bool _csvImportEnabled;
-    private bool _roleFlagsLoaded;
-    private string? _lastRoleFingerprint;
+    private ElementReference _nav;
+    /// <summary>≥1024px: hide bottom bar for non-candidates (employer/admin). Candidates always use bottom nav.</summary>
+    private bool _hideForDesktopViewport;
+    private bool _isCandidate;
+    private DotNetObjectReference<BottomNav>? _dotNetRef;
+    private IJSObjectReference? _viewportWatch;
 
     [Parameter]
     public EventCallback<bool> HasItemsChanged { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        await NavItems.EnsureInitializedAsync();
+        _items = NavItems.Items;
+        NavItems.Changed += OnNavItemsChanged;
         Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnCultureChanged;
-        NavRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
-        await RefreshItemsAsync(forceRoleApis: true);
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            _isCandidate = auth.User.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
+        }
+        catch
+        {
+            _isCandidate = false;
+        }
     }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
 
-    private async Task OnNavRefreshRequestedAsync()
+    private async void OnNavItemsChanged()
     {
-        await RefreshItemsAsync(forceRoleApis: true);
+        _items = NavItems.Items;
+        await NotifyHasBottomNavAsync();
         await InvokeAsync(StateHasChanged);
     }
 
-    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
-        await RefreshItemsAsync(forceRoleApis: false);
+        if (firstRender)
+        {
+            await RefreshDesktopViewportAsync();
+        }
+
+        try
+        {
+            if (_items.Count > 0 && !_hideForDesktopViewport)
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _nav, "--bottom-nav-h");
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--bottom-nav-h");
+            }
+        }
+        catch
+        {
+            // bUnit / prerender
+        }
+    }
+
+    private async Task RefreshDesktopViewportAsync()
+    {
+        try
+        {
+            _hideForDesktopViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            _viewportWatch ??= await Js.InvokeAsync<IJSObjectReference>(
+                "jobsyViewport.watchKompasWide", _dotNetRef, nameof(SetDesktopViewportHidden));
+            await NotifyHasBottomNavAsync();
+        }
+        catch
+        {
+            _hideForDesktopViewport = false;
+        }
+    }
+
+    [JSInvokable]
+    public async Task SetDesktopViewportHidden(bool isWide)
+    {
+        if (_isCandidate)
+        {
+            return;
+        }
+
+        if (_hideForDesktopViewport == isWide)
+        {
+            return;
+        }
+
+        _hideForDesktopViewport = isWide;
+        await NotifyHasBottomNavAsync();
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task RefreshItemsAsync(bool forceRoleApis)
+    private Task NotifyHasBottomNavAsync()
+        => HasItemsChanged.InvokeAsync(_items.Count > 0 && !_hideForDesktopViewport);
+
+    public async ValueTask DisposeAsync()
     {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        var fingerprint = string.Join(',', state.User.Claims
-            .Where(c => c.Type is System.Security.Claims.ClaimTypes.Role or "role")
-            .Select(c => c.Value)
-            .OrderBy(v => v, StringComparer.Ordinal));
-        var catalog = RoleNavCatalog.ForUser(state.User);
-
-        var rolesChanged = !string.Equals(_lastRoleFingerprint, fingerprint, StringComparison.Ordinal);
-        _lastRoleFingerprint = fingerprint;
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.BranchManager)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.RegionalManager))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshTakeoverFlagAsync();
-            }
-
-            if (!_hasTakeoverActions)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.Takeovers.Href, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.SalesManager)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshSalesOnboardingFlagAsync();
-            }
-
-            if (_salesOnboardingComplete)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, "/salesmanager/onboarding", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.Ambassadeur)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshAmbassadeurOnboardingFlagAsync();
-            }
-
-            if (_ambassadeurOnboardingComplete)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, "/ambassadeur/onboarding", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        // CSV import is no longer a bottom-nav item (Enterprise uses Organization hub).
-        // Defensive filter if a catalog still exposes the route and the company has CSV disabled.
-        if (catalog.Any(i => string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshCsvImportFlagAsync();
-            }
-
-            if (!_csvImportEnabled)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        _roleFlagsLoaded = true;
-
-        var previousCount = _items.Count;
-        _items = catalog;
-        if (previousCount != _items.Count || HasItemsChanged.HasDelegate)
-        {
-            await HasItemsChanged.InvokeAsync(_items.Count > 0);
-        }
-    }
-
-    private async Task RefreshTakeoverFlagAsync()
-    {
-        try
-        {
-            var inbox = await Api.GetTakeoverInboxAsync();
-            _hasTakeoverActions = inbox.Count > 0;
-        }
-        catch
-        {
-            _hasTakeoverActions = false;
-        }
-    }
-
-    private async Task RefreshSalesOnboardingFlagAsync()
-    {
-        try
-        {
-            var dash = await Api.GetMySalesManagerDashboardAsync();
-            _salesOnboardingComplete = dash?.IsOnboardingComplete == true;
-        }
-        catch
-        {
-            _salesOnboardingComplete = false;
-        }
-    }
-
-    private async Task RefreshAmbassadeurOnboardingFlagAsync()
-    {
-        try
-        {
-            var dash = await Api.GetMyAmbassadeurDashboardAsync();
-            _ambassadeurOnboardingComplete = dash?.IsOnboardingComplete == true;
-        }
-        catch
-        {
-            _ambassadeurOnboardingComplete = false;
-        }
-    }
-
-    private async Task RefreshCsvImportFlagAsync()
-    {
-        try
-        {
-            var companies = await Api.GetMyCompaniesAsync();
-            _csvImportEnabled = companies.Any(c => c.CsvBatchImportEnabled);
-        }
-        catch
-        {
-            _csvImportEnabled = false;
-        }
-    }
-
-    public void Dispose()
-    {
+        NavItems.Changed -= OnNavItemsChanged;
         Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnCultureChanged;
-        NavRefresh.RefreshRequested -= OnNavRefreshRequestedAsync;
+        try
+        {
+            if (_viewportWatch is not null)
+            {
+                await _viewportWatch.InvokeVoidAsync("dispose");
+                await _viewportWatch.DisposeAsync();
+            }
+        }
+        catch
+        {
+            // Best-effort unsubscribe.
+        }
+
+        _viewportWatch = null;
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
     }
 }

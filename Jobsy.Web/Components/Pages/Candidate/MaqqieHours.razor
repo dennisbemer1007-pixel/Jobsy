@@ -1,0 +1,174 @@
+@page "/candidate/uren"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Interfaces
+@attribute [RequiresFeature(PlatformFeature.EmployerPhase2)]
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject UserFacingError UserFacing
+
+<PageTitle>Uren doorgeven · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">Laden…</p>
+}
+else if (_overview is null)
+{
+    <p class="state-message">Je hebt nog geen actief Maqqie-contract.</p>
+}
+else
+{
+    <div class="maqqie-hours" data-testid="maqqie-hours-page">
+        <header class="maqqie-hours__head">
+            <h1>Uren doorgeven</h1>
+            <p class="muted">@_overview.EmployerName · @_overview.VacancyTitle</p>
+        </header>
+
+        @if (_overview.CurrentWeek is { } week)
+        {
+            <section class="wg-card">
+                <h2>Deze week (@week.WeekStart.ToString("dd-MM"))</h2>
+                <p class="muted">Status: @StatusLabel(week.Status)</p>
+                @if (!string.IsNullOrWhiteSpace(week.EmployerReturnNote))
+                {
+                    <p class="maqqie-hours__return-note" role="status">@week.EmployerReturnNote</p>
+                }
+                @if (week.Status == MaqqieHoursWeekStatus.Draft
+                     || week.Status == MaqqieHoursWeekStatus.ReturnedToCandidate)
+                {
+                    <div class="maqqie-hours__grid">
+                        @for (var d = 1; d <= 7; d++)
+                        {
+                            var day = d;
+                            <label>
+                                @DayLabel(day)
+                                <input type="number" min="0" max="24" step="0.5"
+                                       value="@GetHours(week, day)"
+                                       @onchange="e => OnHoursChanged(week, day, e)" />
+                            </label>
+                        }
+                    </div>
+                    <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SubmitAsync(week.Id)">
+                        Week indienen
+                    </button>
+                }
+            </section>
+        }
+
+        @if (_overview.PreviousWeeks.Count > 0)
+        {
+            <section class="wg-card">
+                <h2>Eerdere weken</h2>
+                <ul>
+                    @foreach (var w in _overview.PreviousWeeks)
+                    {
+                        <li>@w.WeekStart.ToString("dd-MM-yyyy") · @w.TotalHours u · @StatusLabel(w.Status)</li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <p class="state-message" role="status">@_message</p>
+}
+
+@code {
+    private MaqqieHoursOverviewDto? _overview;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _overview = await Api.GetMaqqieHoursOverviewAsync();
+        }
+        catch
+        {
+            _overview = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string StatusLabel(MaqqieHoursWeekStatus status) => status switch
+    {
+        MaqqieHoursWeekStatus.Draft => "Concept",
+        MaqqieHoursWeekStatus.Submitted => "Ingediend",
+        MaqqieHoursWeekStatus.EmployerApproved => "Goedgekeurd",
+        MaqqieHoursWeekStatus.SentToMaqqie => "Naar Maqqie",
+        MaqqieHoursWeekStatus.ReturnedToCandidate => "Teruggestuurd",
+        _ => status.ToString()
+    };
+
+    private static string DayLabel(int isoDay) => isoDay switch
+    {
+        1 => "Ma",
+        2 => "Di",
+        3 => "Wo",
+        4 => "Do",
+        5 => "Vr",
+        6 => "Za",
+        7 => "Zo",
+        _ => isoDay.ToString()
+    };
+
+    private static decimal GetHours(MaqqieHoursWeekDto week, int day)
+        => week.DailyHours.TryGetValue(day, out var h) ? h : 0;
+
+    private async Task OnHoursChanged(MaqqieHoursWeekDto week, int day, ChangeEventArgs e)
+    {
+        if (!decimal.TryParse(e.Value?.ToString()?.Replace(',', '.'), System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var hours))
+        {
+            return;
+        }
+
+        var map = new Dictionary<int, decimal>(week.DailyHours);
+        map[day] = hours;
+        _busy = true;
+        try
+        {
+            var updated = await Api.UpsertMaqqieHoursWeekAsync(week.WeekStart, map);
+            if (updated is not null && _overview is not null)
+            {
+                _overview = _overview with { CurrentWeek = updated };
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SubmitAsync(Guid weekId)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.SubmitMaqqieHoursWeekAsync(weekId);
+            _message = "Week ingediend. Je werkgever keurt goed.";
+            _overview = await Api.GetMaqqieHoursOverviewAsync();
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using Jobsy.Api.Security;
+using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Security;
@@ -23,28 +24,45 @@ public class RateLimitPartitioningUnitTests
     private const string Secret = "unit-test-internal-client-ip-secret";
 
     [Fact]
-    public void Prefers_client_ip_claim_over_user_id()
+    public void Prefers_user_id_over_client_ip_claim()
     {
+        var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         var http = new DefaultHttpContext();
         http.User = new ClaimsPrincipal(new ClaimsIdentity(
         [
-            new Claim("sub", Guid.NewGuid().ToString("D")),
+            new Claim("sub", userId.ToString("D")),
             new Claim(JobsyAccessToken.ClientIpClaim, "203.0.113.10")
         ], "JobsyJwt"));
         http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
 
         var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
-        Assert.Equal("cip:203.0.113.10", key);
+        Assert.Equal("uid:" + userId.ToString("D"), key);
     }
 
     [Fact]
-    public void Falls_back_to_user_id_when_claim_missing()
+    public void Falls_back_to_user_id_when_trusted_ip_missing()
     {
         var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         var http = new DefaultHttpContext();
         http.User = new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim("sub", userId.ToString("D"))],
             "JobsyJwt"));
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+
+        var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
+        Assert.Equal("uid:" + userId.ToString("D"), key);
+    }
+
+    [Fact]
+    public void Authenticated_user_ignores_forged_visitor_ip_header()
+    {
+        var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("sub", userId.ToString("D"))],
+            "JobsyJwt"));
+        http.Request.Headers[RateLimitPartitioning.ClientIpHeader] = "198.51.100.7";
+        http.Request.Headers[RateLimitPartitioning.InternalSecretHeader] = Secret;
         http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
 
         var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
@@ -61,6 +79,46 @@ public class RateLimitPartitioningUnitTests
 
         var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
         Assert.Equal("cip:198.51.100.7", key);
+    }
+
+    [Fact]
+    public void Pupil_session_partitions_by_pupil_code_id()
+    {
+        var codeId = Guid.Parse("cccccccc-dddd-eeee-ffff-000000000001");
+        var http = new DefaultHttpContext();
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(PupilClaimTypes.PupilCodeId, codeId.ToString("D"))],
+            PupilAuthDefaults.Scheme));
+        http.Connection.RemoteIpAddress = IPAddress.Parse("203.0.113.50");
+
+        var key = RateLimitPartitioning.ResolvePupilPartitionKey(http, Secret);
+        Assert.Equal("pupil:" + codeId.ToString("D"), key);
+    }
+
+    [Fact]
+    public void Anonymous_pupil_login_uses_ip_partition_not_pupil_code()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers[RateLimitPartitioning.ClientIpHeader] = "198.51.100.7";
+        http.Request.Headers[RateLimitPartitioning.InternalSecretHeader] = Secret;
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+
+        var key = RateLimitPartitioning.ResolvePupilPartitionKey(http, Secret);
+        Assert.Equal("cip:198.51.100.7", key);
+    }
+
+    [Fact]
+    public void Trusted_user_id_header_partitions_when_secret_matches()
+    {
+        var userId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        var http = new DefaultHttpContext();
+        http.Request.Headers[RateLimitPartitioning.ClientIpHeader] = "198.51.100.7";
+        http.Request.Headers[RateLimitPartitioning.InternalSecretHeader] = Secret;
+        http.Request.Headers[InternalClientIpHeaders.RateLimitUserIdHeader] = userId.ToString("D");
+        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.1");
+
+        var key = RateLimitPartitioning.ResolvePartitionKey(http, Secret);
+        Assert.Equal("uid:" + userId.ToString("D"), key);
     }
 
     [Fact]
@@ -110,6 +168,36 @@ public class RateLimitUserIsolationTests : IClassFixture<RateLimitIsolationFacto
         Assert.NotEmpty(values);
     }
 
+    [Fact]
+    public async Task Twenty_map_visitors_from_different_ips_do_not_get_429()
+    {
+        const string secret = "test-internal-client-ip-secret";
+        // Each anonymous visitor loads pins + a few cards (map session).
+        // Shared hop-IP bucket would exhaust after 100 total; per-visitor
+        // partitions keep every visitor under the 100/min public-read limit.
+        for (var visitor = 0; visitor < 20; visitor++)
+        {
+            using var client = _factory.CreateClient();
+            var visitorIp = $"198.51.100.{visitor + 1}";
+            client.DefaultRequestHeaders.Remove(RateLimitPartitioning.ClientIpHeader);
+            client.DefaultRequestHeaders.Remove(RateLimitPartitioning.InternalSecretHeader);
+            client.DefaultRequestHeaders.TryAddWithoutValidation(
+                RateLimitPartitioning.ClientIpHeader,
+                visitorIp);
+            client.DefaultRequestHeaders.TryAddWithoutValidation(
+                RateLimitPartitioning.InternalSecretHeader,
+                secret);
+
+            for (var i = 0; i < 8; i++)
+            {
+                using var response = await client.GetAsync("/api/vacancies/pins");
+                Assert.True(
+                    response.StatusCode != HttpStatusCode.TooManyRequests,
+                    $"Visitor {visitorIp} request {i + 1} got 429");
+            }
+        }
+    }
+
     private HttpClient CreateClient(Guid userId)
     {
         var client = _factory.CreateClient();
@@ -119,7 +207,7 @@ public class RateLimitUserIsolationTests : IClassFixture<RateLimitIsolationFacto
     }
 }
 
-public sealed class RateLimitIsolationFactory : WebApplicationFactory<Program>
+public sealed class RateLimitIsolationFactory : ApiWebApplicationFactory
 {
     public Guid UserAId { get; } = Guid.Parse("f1000000-0000-0000-0000-0000000000a1");
     public Guid UserBId { get; } = Guid.Parse("f1000000-0000-0000-0000-0000000000b2");

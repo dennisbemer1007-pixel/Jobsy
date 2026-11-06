@@ -1,0 +1,17 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+            <section class="profile-unsubscribe" aria-labelledby="profile-unsubscribe-title">
+                <h2 id="profile-unsubscribe-title" class="profile-page__title">@Culture["Profile.UnsubscribeTitle"]</h2>
+                <p class="login-lead">@Culture["Profile.UnsubscribeLead"]</p>
+                <button class="provider-btn provider-btn--danger" type="button" @onclick="Editor.OpenUnsubscribe">
+                    @Culture["Profile.Unsubscribe"]
+                </button>
+            </section>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+}

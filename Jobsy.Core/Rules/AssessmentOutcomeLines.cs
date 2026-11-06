@@ -23,8 +23,28 @@ public static class AssessmentOutcomeLines
             .ThenBy(x => x.Label, StringComparer.Ordinal)
             .ToList();
 
-        return ranked.Count == 0 ? null : $"Sterkst: {ranked[0].Label}";
+        if (ranked.Count == 0)
+        {
+            return null;
+        }
+
+        if (ranked.Count > 1 && ranked[0].Value == ranked[1].Value)
+        {
+            return null;
+        }
+
+        return StrongestLine(DimensionLabels.For(FriendlyCode(ranked[0].Label)), "nl");
     }
+
+    public static string StrongestLine(string label, string? lang)
+        => Jobsy.Core.Localization.JobsyLanguages.Normalize(lang) switch
+        {
+            "en" => $"Strongest: {label}",
+            "pl" => $"Najsilniej: {label}",
+            "ro" => $"Cel mai puternic: {label}",
+            "ar" => $"الأقوى: {label}",
+            _ => $"Sterkst: {label}"
+        };
 
     public static string? Career(
         int? realistic,
@@ -47,18 +67,16 @@ public static class AssessmentOutcomeLines
         int? innovation,
         int? peopleFirst)
     {
-        var culture = new (string Code, int? Value)[]
-        {
-            (CulturePersonalityCatalog.Autonomy, autonomy),
-            (CulturePersonalityCatalog.Informal, informal),
-            (CulturePersonalityCatalog.Collaboration, collaboration),
-            (CulturePersonalityCatalog.Flexibility, flexibility),
-            (CulturePersonalityCatalog.Innovation, innovation),
-            (CulturePersonalityCatalog.PeopleFirst, peopleFirst)
-        }
-            .Where(x => x.Value is not null)
-            .OrderByDescending(x => x.Value)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
+        var culture = DimensionRanking.Rank(
+            [
+                (CulturePersonalityCatalog.Autonomy, autonomy),
+                (CulturePersonalityCatalog.Informal, informal),
+                (CulturePersonalityCatalog.Collaboration, collaboration),
+                (CulturePersonalityCatalog.Flexibility, flexibility),
+                (CulturePersonalityCatalog.Innovation, innovation),
+                (CulturePersonalityCatalog.PeopleFirst, peopleFirst)
+            ],
+            DimensionRanking.CultureTieBreak)
             .Take(2)
             .Select(x => CulturePersonalityCatalog.EverydayLabel(x.Code))
             .ToList();
@@ -75,21 +93,36 @@ public static class AssessmentOutcomeLines
         int? stability,
         int? impact)
     {
-        var ranked = new (string Code, int? Value)[]
-        {
-            (SchwartzValuesCatalog.Autonomy, autonomy),
-            (SchwartzValuesCatalog.Connection, connection),
-            (SchwartzValuesCatalog.Achievement, achievement),
-            (SchwartzValuesCatalog.Stability, stability),
-            (SchwartzValuesCatalog.Impact, impact)
-        }
-            .Where(x => x.Value is not null)
-            .OrderByDescending(x => x.Value)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
-            .ToList();
+        var ranked = DimensionRanking.Rank(
+            [
+                (SchwartzValuesCatalog.Autonomy, autonomy),
+                (SchwartzValuesCatalog.Connection, connection),
+                (SchwartzValuesCatalog.Achievement, achievement),
+                (SchwartzValuesCatalog.Stability, stability),
+                (SchwartzValuesCatalog.Impact, impact)
+            ],
+            DimensionRanking.ValueTieBreak).ToList();
 
-        return ranked.Count == 0
-            ? null
-            : $"Prioriteit: {DimensionLabels.For(ranked[0].Code)}";
+        if (ranked.Count == 0)
+        {
+            return null;
+        }
+
+        if (ranked.Count > 1 && ranked[0].Score == ranked[1].Score)
+        {
+            return null;
+        }
+
+        return $"Prioriteit: {DimensionLabels.For(ranked[0].Code)}";
     }
+
+    private static string FriendlyCode(string label) => label switch
+    {
+        "extraversie" => CompetencyTestCatalog.Extraversie,
+        "samenwerken" => CompetencyTestCatalog.Samenwerken,
+        "resultaatgerichtheid" => CompetencyTestCatalog.Resultaatgerichtheid,
+        "stressbestendigheid" => CompetencyTestCatalog.Stressbestendigheid,
+        "innovatie" => CompetencyTestCatalog.Innovatie,
+        _ => label
+    };
 }

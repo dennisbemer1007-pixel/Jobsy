@@ -1,0 +1,69 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<section class="test-depth-mini-mirror @(Rich ? "test-depth-mini-mirror--rich" : null)"
+         aria-label="@Culture["TestDepthValue.MiniMirror.Aria"]">
+    <div class="test-depth-mini-mirror__hero">
+        <span class="test-depth-mini-mirror__badge">@Culture["TestDepthValue.MiniMirror.Badge"]</span>
+        <h2 class="test-depth-mini-mirror__title">@Culture["TestDepthValue.MiniMirror.Title"]</h2>
+        <p class="test-depth-mini-mirror__lead">@Culture["TestDepthValue.MiniMirror.Lead"]</p>
+    </div>
+    @if (_themes.Count > 0)
+    {
+        <div class="test-depth-mini-mirror__themes">
+            @foreach (var theme in _themes)
+            {
+                <article class="test-depth-mini-mirror__theme">
+                    <div class="test-depth-mini-mirror__theme-figure test-depth-figure-art test-depth-figure-art--card" style="@theme.ArtStyle" aria-hidden="true"></div>
+                    <div class="test-depth-mini-mirror__theme-copy">
+                        <small>@Culture["TestReflection.ThemeLabel"]</small>
+                        <h3>@theme.Label</h3>
+                        <p>@theme.Meaning @theme.Example</p>
+                        @if (Rich && theme.Energy is not null)
+                        {
+                            <p class="test-depth-mini-mirror__energy">
+                                <strong>@Culture["TestDepthValue.MiniMirror.EnergyLabel"]</strong> @theme.Energy
+                            </p>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> DomainCodes { get; set; } = [];
+    [Parameter] public bool Rich { get; set; }
+
+    private sealed record ThemeLine(string Label, string Meaning, string Example, string? Energy, string ArtStyle);
+
+    private IReadOnlyList<ThemeLine> _themes = [];
+
+    protected override void OnParametersSet()
+    {
+        _themes = DomainCodes
+            .Select(code =>
+            {
+                var label = DimensionLabels.For(code, Culture.Language);
+                var (url, pos) = TestDepthValueIllustratedArt.ForCompetencyDomain(code);
+                var artStyle = TestDepthValueIllustratedArt.InlineFigure(url, pos);
+                var copy = TestDepthValueMiniThemeCopy.TryGet(code, Culture.Language);
+                if (copy is null)
+                {
+                    return new ThemeLine(
+                        label,
+                        Culture.Format("TestDepthValue.ThemeBody", label),
+                        "",
+                        null,
+                        artStyle);
+                }
+
+                return new ThemeLine(label, copy.Meaning, copy.Example, copy.Energy, artStyle);
+            })
+            .ToList();
+    }
+}

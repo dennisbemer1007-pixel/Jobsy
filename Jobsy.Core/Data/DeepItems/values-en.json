@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I prefer to decide the order of my duties on a service.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "2": {
+  "prompt": "I like to find challenges that pull me out of my comfort zone.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "3": {
+  "prompt": "I feel most comfortable when every step of the work is set aside for me.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "4": {
+  "prompt": "I'm trying new methods when the old method feels slow.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "5": {
+  "prompt": "I think it's important to make my own choices about how to do a job.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "6": {
+  "prompt": "Fixed routines give me more rest than ever changing forms of work.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "7": {
+  "prompt": "I'm motivated by variety and new responsibilities.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "8": {
+  "prompt": "I dare depart from the manual if it is safe and smarter.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "9": {
+  "prompt": "I'm uncomfortable when I have to decide for myself without clear guidance.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "10": {
+  "prompt": "I learn faster if I can do a job myself.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "11": {
+  "prompt": "I'm actively looking for ways to make my work more interesting.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "12": {
+  "prompt": "I avoid tasks where I have to improvise a lot.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "13": {
+  "prompt": "I propose proposals on how we can improve processes.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "14": {
+  "prompt": "I like roles in which I can set my own priorities.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "15": {
+  "prompt": "Too much freedom makes me lose the overview.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "16": {
+  "prompt": "I get restless when my work gets too predictable.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "17": {
+  "prompt": "cope with a new product, tool or system.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "18": {
+  "prompt": "I'd rather wait for approval than make my own decision.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "19": {
+  "prompt": "I like to show colleagues how to do something else.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "20": {
+  "prompt": "I'm looking for work where I can grow into more own direction.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "21": {
+  "prompt": "I'm fine with my duties being the same every year.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "22": {
+  "prompt": "I combine ideas from different jobs into a personal approach.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "23": {
+  "prompt": "I get energetic from a day with unexpected problems to solve.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "24": {
+  "prompt": "I'd rather choose familiar tasks than something I've never done before.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "25": {
+  "prompt": "I don't take much initiative until someone explicitly asks.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "26": {
+  "prompt": "I think it is important to continue developing my professional skills.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "27": {
+  "prompt": "I get irritated when outright planning changes.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "28": {
+  "prompt": "I'd rather not start anything new until someone approved it.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "29": {
+  "prompt": "I feel at home on a team that gives confidence to act on my own.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "30": {
+  "prompt": "I'd rather follow the standard than spend time on improvement ideas.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "31": {
+  "prompt": "I also help colleagues if it is not strictly part of my own task.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "32": {
+  "prompt": "I'm watching people around me, not just the job.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "33": {
+  "prompt": "I prefer to stay away from personal conversations at work.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "34": {
+  "prompt": "I'll make new colleagues feel welcome soon.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "35": {
+  "prompt": "I'll be honest with you when someone does it right.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "36": {
+  "prompt": "I think team feelings are less important than my own results.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "37": {
+  "prompt": "I'm offering to take over a heavy duty if a colleague needs it.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "38": {
+  "prompt": "ییلدیرم: I listen quietly before I propose solutions.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "39": {
+  "prompt": "I don't care much about the atmosphere as long as the work ends.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "40": {
+  "prompt": "I'd rather settle with a conversation than silence.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "41": {
+  "prompt": "I think it's family.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "42": {
+  "prompt": "I find it hard to show empathy when someone is emotional.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "43": {
+  "prompt": "I like sharing knowledge so the whole team gets better.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "44": {
+  "prompt": "I'll check with colleagues to see if the workload is feasible.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "45": {
+  "prompt": "I prefer to work alone without much contact.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "46": {
+  "prompt": "I'm defending a colleague if someone is wrongly criticizing.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "47": {
+  "prompt": "I'd rather not see what's going on in private with colleagues.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "48": {
+  "prompt": "I give constructive feedback in a respectful way.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "49": {
+  "prompt": "I'm celebrating team success, not just my own.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "50": {
+  "prompt": "I think it's too much to discuss every mistake with gentleness.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "51": {
+  "prompt": "I'll find out soon if anyone feels left out.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "52": {
+  "prompt": "I'm offering help without anyone having to ask.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "53": {
+  "prompt": "I find it difficult to comfort colleagues when things go wrong.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "54": {
+  "prompt": "I'm not looking for long-term personal relationships with colleagues at work.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "55": {
+  "prompt": "I adjust my pace when a colleague needs additional explanation.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "56": {
+  "prompt": "extrapolated efficiency rather than a warm conversation.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "57": {
+  "prompt": "I make transfers between shifts personal and clear.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "58": {
+  "prompt": "I find respectful dealing with each other as澳大利亚 as important as quality.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "59": {
+  "prompt": "I see the work mostly as tasks, not relationships.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "60": {
+  "prompt": "I have little need to support colleagues personally.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "61": {
+  "prompt": "I want overcome that my bet makes measurable difference.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "62": {
+  "prompt": "I set myself high goals and work actively towards them.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "63": {
+  "prompt": "I'm fine with average performance while the work is done.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "64": {
+  "prompt": "I'm proud to surpass targets or standards.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "65": {
+  "prompt": "I'm looking for feedback to get better faster.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "66": {
+  "prompt": "I avoid responsibility for important results.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "67": {
+  "prompt": "I keep track of my progress so I can show you what I've accomplished.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "68": {
+  "prompt": "I'm gonna keep going when things get tough until the job's done.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "69": {
+  "prompt": "I prefer promotion or recognition to others.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "70": {
+  "prompt": "I want to be the best team member on my part.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "71": {
+  "prompt": "I'm learning new skills to become more competitive in my profession.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "72": {
+  "prompt": "I find competition between colleagues unhealthy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "73": {
+  "prompt": "I'll take on extra tasks if that accelerates my growth.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "74": {
+  "prompt": "I analyze what went well after a busy day.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "75": {
+  "prompt": "I'd rather set targets represent low levels so I'm sure I'll pass.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "76": {
+  "prompt": "I want my work to contribute visibly to turnover or quality.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "77": {
+  "prompt": "I'm looking for roles that reward performance fairly.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "78": {
+  "prompt": "I prefer to work without scoreboards or rankings.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "79": {
+  "prompt": "I plan my week around concrete results I want to get.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "80": {
+  "prompt": "I feel motivated by a difficult goal that is just feasible.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "81": {
+  "prompt": "I'll give up soon if success doesn't come right away.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "82": {
+  "prompt": "I'd rather not compare my performance to previous months.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "83": {
+  "prompt": "I'll be in charge if I have to to save the result.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "84": {
+  "prompt": "I don't think it's important to be the best.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "85": {
+  "prompt": "I'm looking for training that will advance my career.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "86": {
+  "prompt": "I avoid tasks where my performance is assessed openly.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "87": {
+  "prompt": "I' ought to go on until a problem is solved, not halfway.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "88": {
+  "prompt": "I want others to recognize my craftsmanship.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "89": {
+  "prompt": "I prefer peace to ambition.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "90": {
+  "prompt": "Recognition or promotion hardly motivates me.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "91": {
+  "prompt": "I feel calm when appointments about hours and tasks are clear.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "92": {
+  "prompt": "I like to work according to established procedures realised safe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "93": {
+  "prompt": "I find rules and protocols mostly obstructive.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "94": {
+  "prompt": "I'm looking for an employer who offers long-term security.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "95": {
+  "prompt": "I love a solid team and familiar faces on the floor.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "96": {
+  "prompt": "I get restless when my work doesn't change much.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "97": {
+  "prompt": "I'd rather double-check than take chances with unknown steps.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "98": {
+  "prompt": "I appreciate traditions and routines in the workplace.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "99": {
+  "prompt": "رموز is boring to me.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "100": {
+  "prompt": "I want to know what's expected of me before I start.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "101": {
+  "prompt": "I feel safe with clear hierarchy and responsibilities.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "102": {
+  "prompt": "I like to jump from roll to roll without a fixed pattern.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "103": {
+  "prompt": "I plan financially and practically with a fixed income in mind.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "104": {
+  "prompt": "I follow safety and quality rules when it's busy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "105": {
+  "prompt": "I'd rather take a chance than hold on to old habits.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "106": {
+  "prompt": "I like spending years with a reliable employer.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "107": {
+  "prompt": "I think it is important that agreements between teams remain the same.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "108": {
+  "prompt": "I'm getting impatient with long instructions and checklists.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "109": {
+  "prompt": "I rely on past experience to prevent mistakes.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "110": {
+  "prompt": "I feel comfortable inלקבל with clear values and habits.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "111": {
+  "prompt": "I think policy change is usually an improvement.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "112": {
+  "prompt": "I'm not worried about where I'll be in my position in a year.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "113": {
+  "prompt": "I work best with a fixed weekly schedule.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "114": {
+  "prompt": "I accept uncertainty about my schedule easily.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "115": {
+  "prompt": "I'm holding on to appointments that the team has been doing well for years.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "116": {
+  "prompt": "I'm fine with my duties being different every season.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "117": {
+  "prompt": "I report problems early so that the appreciably rest on the work floor is preserved.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "118": {
+  "prompt": "I respect the way senior colleagues have always done the job.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "119": {
+  "prompt": "I'd rather reject routines than follow them.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "120": {
+  "prompt": "I don't care about fixed contracts and long schedules.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "121": {
+  "prompt": "재상: I want my work to do something good for society or the environment.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "122": {
+  "prompt": "I prefer a company with fair and sustainable practices.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "123": {
+  "prompt": "I don't care if my work serves a greater purpose.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "124": {
+  "prompt": "I watch for waste and try to reduce it in the workplace.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "125": {
+  "prompt": "I address colleagues to unsafe or unfair behaviour.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "126": {
+  "prompt": "I only focus on my own tasks, not social themes.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "127": {
+  "prompt": "I like to help customers who are vulnerable or dependent.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "128": {
+  "prompt": "I think it makes sense to support local communities through my work.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "129": {
+  "prompt": "I think idealism at work is often exaggerated.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "130": {
+  "prompt": "I'm looking for work that contributes to health, care or education.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "131": {
+  "prompt": "I'm thinking about the ecological footprint of our processes.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "132": {
+  "prompt": "I buy or sell without worrying about origin or impact.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "133": {
+  "prompt": "I take responsibility if our work has negative consequences.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "134": {
+  "prompt": "I respect diversity and inclusion in the team.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "135": {
+  "prompt": "I find ethical discussions on the workplace a waste of time.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "136": {
+  "prompt": "I'll report abuses even if that's uncomfortable.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "137": {
+  "prompt": "I want our products or services to not harm anyone unnecessarily.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "138": {
+  "prompt": "I prefer to leave social issues to management.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "139": {
+  "prompt": "I choose suppliers or partners who handle people and the environment neatly.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "140": {
+  "prompt": "I think profit is more important than social contributions.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "141": {
+  "prompt": "I'dmajorly prefer not to explain to customers how we work safely and fairly.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "142": {
+  "prompt": "I'm looking for improvements that benefit both team and neighborhood.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "143": {
+  "prompt": "I don't think it's necessary to think about the long term of our work.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "144": {
+  "prompt": "I treat everyone equally, regardless of background.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "145": {
+  "prompt": "I feel proud when our Turns out to be open about impact.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "146": {
+  "prompt": "I'd rather ignore signals from unfairness than intervene.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "147": {
+  "prompt": "I want future generations to benefit from how we work now.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "148": {
+  "prompt": "scientifically, even if it makes a little less sense.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "149": {
+  "prompt": "I see my job mostly as income, not mission.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "150": {
+  "prompt": "Sustainability or social utility hardly affects my daily choices.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ }
+}

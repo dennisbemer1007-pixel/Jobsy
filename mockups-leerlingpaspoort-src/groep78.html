@@ -1,0 +1,192 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<style>
+body{font-family:'Nunito',sans-serif}
+h1,h2,h3,.f{font-family:'Fredoka',sans-serif}
+.hdr{display:flex;align-items:center;gap:14px;background:linear-gradient(110deg,#f4effb 0%,#fbeff7 55%,#fff1ec 100%);border-radius:22px;padding:14px 18px 14px 16px;position:relative}
+.hdr .logo{width:46px;height:46px}
+.hdr .t1{font-family:'Fredoka';font-weight:600;font-size:13px;color:var(--p);letter-spacing:.02em}
+.hdr h1{font-size:27px;font-weight:600;line-height:1.05;color:var(--ink)}
+.hdr h1 span{color:var(--m)}
+.hdr .meta{margin-left:auto;text-align:right;font-size:11px;color:var(--mut);line-height:1.5;padding-right:54px}
+.hdr .meta b{color:var(--ink);font-weight:800;font-size:12.5px}
+.code{display:inline-block;margin-top:3px;background:#fff;border:1px solid #e3d8f3;border-radius:999px;padding:1px 9px;font-family:ui-monospace,monospace;font-weight:700;font-size:10.5px;color:var(--p)}
+.mascot{position:absolute;right:12px;bottom:6px;width:52px;height:52px}
+.name{display:flex;align-items:flex-end;gap:10px;margin:12px 4px 0}
+.name .l{font-family:'Fredoka';font-size:13px;color:var(--mut);padding-bottom:5px}
+.name .w{flex:0 0 250px;border-bottom:2px dotted #c9b8e3;font-family:'Caveat';font-size:30px;line-height:1;color:var(--p);padding:0 8px 1px}
+.name .n{font-size:10px;color:#9a91aa;padding-bottom:5px;display:flex;align-items:center;gap:5px}
+.sec{margin-top:17px}
+.st{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.st h2{font-size:16.5px;font-weight:600}
+.st .b{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:13px;line-height:1}
+.st small{font-size:10px;color:var(--mut);font-family:'Nunito'}
+.story{display:grid;grid-template-columns:1.9fr repeat(4,1fr);gap:8px}
+.story .txt{background:var(--sp);border-radius:16px;padding:11px 13px;font-size:11.5px;display:flex;align-items:center;line-height:1.45;color:#3a2d52}
+.story .txt b{color:var(--p)}
+.tile{border-radius:16px;padding:10px 10px 9px;border:1.5px solid}
+.tile .e{font-size:19px;line-height:1}
+.tile .k{font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-top:5px;opacity:.85}
+.tile .v{font-family:'Fredoka';font-size:13px;font-weight:500;line-height:1.2;margin-top:2px;color:var(--ink)}
+.t1c{background:#fff4ef;border-color:#ffd9cc;color:#d9452f}.t2c{background:#f6f0fc;border-color:#e2d3f5;color:var(--p)}
+.t3c{background:#fdf0f8;border-color:#f3cfe6;color:var(--m)}.t4c{background:#eefaf5;border-color:#cdeedf;color:#17885c}
+.row2{display:grid;grid-template-columns:1.32fr 1fr;gap:12px}
+.dream{border:2px solid #e2d3f5;border-radius:20px;padding:13px 15px 13px;position:relative;background:#fff}
+.dream .top{display:flex;align-items:center;gap:11px}
+.dream .big{width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,#5b2a9a,#b5309a);display:grid;place-items:center;font-size:26px}
+.dream .lbl{font-size:10px;font-weight:800;letter-spacing:.07em;color:var(--m);text-transform:uppercase}
+.dream h3{font-size:24px;font-weight:600;line-height:1.05}
+.dots{margin-left:auto;text-align:right;font-size:10px;color:var(--mut)}
+.dots .d{display:flex;gap:4px;justify-content:flex-end;margin-bottom:3px}
+.dots i{width:12px;height:12px;border-radius:50%;background:#ece5f6;display:block}.dots i.on{background:var(--c)}
+.hv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.hv h4{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.hv ul{list-style:none}.hv li{font-size:11px;line-height:1.35;display:flex;gap:6px;margin-bottom:3px}
+.hv .ok{color:#17885c}.hv .ok li .ico{color:#1f9d6b;margin-top:1px}
+.hv .tr{color:#d9452f}.hv .tr li .ico{color:#f5503a;margin-top:1px}
+.hv li span{color:#3a2d52}
+.route{display:flex;align-items:flex-start;margin-top:11px;position:relative}
+.route:before{content:'';position:absolute;left:22px;right:22px;top:12px;border-top:2.5px dashed #d8c8ef}
+.rs{flex:1;text-align:center;position:relative;padding:0 3px}
+.rs .c{width:25px;height:25px;border-radius:50%;background:#fff;border:2.5px solid var(--p);color:var(--p);font-family:'Fredoka';font-weight:600;font-size:12px;display:grid;place-items:center;margin:0 auto 4px}
+.rs.goal .c{background:var(--c);border-color:var(--c);color:#fff;font-size:13px}
+.rs b{display:block;font-family:'Fredoka';font-weight:500;font-size:11.5px;line-height:1.15}
+.rs span{display:block;font-size:9.5px;color:var(--mut);line-height:1.25;margin-top:1px}
+.alt{margin-top:8px;font-size:10px;color:var(--mut);background:#faf8fd;border-radius:10px;padding:5px 9px}
+.likes{display:flex;flex-direction:column;gap:10px}
+.lk{border-radius:20px;padding:11px 13px;flex:1}
+.lk.y{background:#eefaf5}.lk.n{background:#fff4ef}
+.lk h3{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.lk.y h3{color:#127a52}.lk.n h3{color:#c63d28}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{background:#fff;border-radius:999px;padding:3px 10px 3px 7px;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:5px;color:#2f2445}
+.lk.y .chip{border:1.5px solid #c6ead9}.lk.n .chip{border:1.5px solid #ffd5c8}
+.chip em{font-style:normal;font-size:13px}
+.own{margin-top:8px;padding-top:7px;border-top:1.5px dashed rgba(0,0,0,.08);display:flex;align-items:center;gap:8px;font-size:10px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.own .chip{text-transform:none;letter-spacing:0;font-size:12px;border-style:dashed!important}
+.good{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gd{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:9px 12px}
+.gd .e{width:34px;height:34px;border-radius:12px;background:var(--sp);display:grid;place-items:center;font-size:17px;flex:none}
+.gd b{display:block;font-family:'Fredoka';font-weight:500;font-size:13.5px}
+.gd span{font-size:10.5px;color:var(--mut);line-height:1.25;display:block}
+.jobs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.job{border-radius:18px;padding:11px 13px 11px;background:#fff;border:1.5px solid var(--line);position:relative}
+.job .h{display:flex;align-items:center;gap:9px}
+.job .n{width:22px;height:22px;border-radius:50%;background:var(--p);color:#fff;font-family:'Fredoka';font-weight:600;font-size:12px;display:grid;place-items:center;flex:none}
+.job:nth-child(2) .n{background:var(--m)}.job:nth-child(3) .n{background:var(--c)}
+.job h3{font-size:15px;font-weight:600;line-height:1.1}
+.job .e{margin-left:auto;font-size:22px}
+.job p{font-size:10.8px;line-height:1.35;color:#3a2d52;margin-top:6px}
+.job .w{margin-top:7px;font-size:9.5px;font-weight:800;color:var(--mut);letter-spacing:.05em;text-transform:uppercase}
+.job .pp{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.job .pp span{font-size:10px;background:var(--sp);color:var(--p);border-radius:999px;padding:1px 8px;font-weight:700}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{border-radius:18px;padding:11px 14px}
+.box h3{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.box ul{list-style:none}.box li{font-size:11px;line-height:1.35;margin-bottom:4px;display:flex;gap:7px;color:#3a2d52}
+.box li:before{content:'';width:6px;height:6px;border-radius:50%;margin-top:5px;flex:none}
+.disc{background:var(--sp)}.disc h3{color:var(--p)}.disc li:before{background:var(--m)}
+.tip{background:#fff7e8;border:1.5px dashed #f3d49a}.tip h3{color:#a8640c}.tip li:before{background:#f0a630}
+.foot{position:absolute;left:36px;right:36px;bottom:24px;border-top:1.5px solid var(--line);padding-top:8px;display:flex;align-items:center;gap:12px}
+.foot .sh{width:30px;height:30px;border-radius:10px;background:#eefaf5;display:grid;place-items:center;color:#17885c;flex:none}
+.foot p{font-size:9.5px;color:var(--mut);line-height:1.4}
+.foot p b{color:var(--ink)}
+.foot .r{margin-left:auto;text-align:right;font-size:9.5px;color:var(--mut);white-space:nowrap;line-height:1.4}
+.foot .r b{color:var(--p);font-family:'Fredoka';font-weight:600;font-size:11px}
+</style></head><body><div class="page">
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="chk" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+<symbol id="sh" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+</defs></svg>
+
+<div class="hdr">
+  <img class="logo" src="assets/lobsy.png">
+  <div><div class="t1">Lobsy voor scholen</div><h1>Mijn <span>DNA-paspoort</span></h1></div>
+  <div class="meta"><b>Groep 8</b> · OBS De Kompasroos (fictief)<br>16 oktober 2026 · <span class="code">K7Q-M2P</span></div>
+  <img class="mascot" src="assets/mascot-128.png">
+</div>
+
+<div class="name"><div class="l">Dit paspoort is van</div><div class="w">Noor</div>
+<div class="n"><svg class="ico" style="width:11px;height:11px"><use href="#lock"/></svg>naam schrijf je zelf op · Lobsy bewaart geen namen</div></div>
+
+<div class="sec">
+ <div class="st"><div class="b" style="background:#f4effb">✨</div><h2>Dit ben ik</h2><small>uit mijn reis door de 4 werelden</small></div>
+ <div class="story">
+  <div class="txt"><p>Ik ben een <b>zorgzame ontdekker</b>. Ik help graag anderen en wil weten hoe dingen werken. Ik werk het fijnst samen, in een rustige klas met duidelijke afspraken.</p></div>
+  <div class="tile t1c"><div class="e">🪸</div><div class="k">Zo ben ik</div><div class="v">Behulpzaam en zorgvuldig</div></div>
+  <div class="tile t2c"><div class="e">💎</div><div class="k">Dit doe ik graag</div><div class="v">Helpen en uitzoeken</div></div>
+  <div class="tile t3c"><div class="e">🧭</div><div class="k">Belangrijk</div><div class="v">Eerlijk zijn en samen</div></div>
+  <div class="tile t4c"><div class="e">🏝️</div><div class="k">Hier voel ik me thuis</div><div class="v">Rustig, met vaste afspraken</div></div>
+ </div>
+</div>
+
+<div class="sec row2">
+ <div class="dream">
+  <div class="top"><div class="big">🐾</div><div><div class="lbl">Mijn droombaan</div><h3>Dierenarts</h3></div>
+   <div class="dots"><div class="d"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>3 van de 5 heb ik al</div></div>
+  <div class="hv">
+   <div class="ok"><h4>Dit heb ik al</h4><ul>
+    <li><svg class="ico" style="width:12px;height:12px"><use href="#chk"/></svg><span>Ik ben zorgzaam, voor mensen én dieren</span></li>
+    <li><svg class="ico" style="width:12px;height:12px"><use href="#chk"/></svg><span>Ik wil weten hoe iets werkt</span></li>
+    <li><svg class="ico" style="width:12px;height:12px"><use href="#chk"/></svg><span>Ik houd van dieren</span></li></ul></div>
+   <div class="tr"><h4>Hier ga ik mee oefenen</h4><ul>
+    <li><svg class="ico" style="width:12px;height:12px"><use href="#up"/></svg><span>Schoolwerk netjes afmaken</span></li>
+    <li><svg class="ico" style="width:12px;height:12px"><use href="#up"/></svg><span>Rustig blijven als iets spannend voelt</span></li></ul></div>
+  </div>
+  <div class="route">
+   <div class="rs"><div class="c">1</div><b>Nu: groep 8</b><span>straks biologie kiezen</span></div>
+   <div class="rs"><div class="c">2</div><b>Havo of vwo</b><span>afmaken</span></div>
+   <div class="rs"><div class="c">3</div><b>Diergeneeskunde</b><span>universiteit · 6 jaar</span></div>
+   <div class="rs goal"><div class="c">★</div><b>Dierenarts!</b><span>praktijk, dierentuin of boerderij</span></div>
+  </div>
+  <div class="alt">Ga je naar het vmbo? Via mbo Dierenartsassistent kun je ook verder.</div>
+ </div>
+ <div class="likes">
+  <div class="lk y"><h3>👍 Dit vind ik leuk</h3><div class="chips">
+   <div class="chip"><em>🐶</em>Dieren</div><div class="chip"><em>🌳</em>Buiten</div><div class="chip"><em>🎨</em>Tekenen</div>
+   <div class="chip"><em>🍳</em>Koken</div><div class="chip"><em>🌿</em>Natuur</div><div class="chip"><em>🧩</em>Puzzels</div></div><div class="own">Mijn eigen woord <div class="chip"><em>🐴</em>Paardrijden</div></div></div>
+  <div class="lk n"><h3>👎 Dit vind ik niet zo leuk</h3><div class="chips">
+   <div class="chip"><em>🪑</em>Lang stilzitten</div><div class="chip"><em>📢</em>Druk en lawaai</div><div class="chip"><em>🎤</em>Voor de klas staan</div></div><div class="own">Mijn eigen woord <div class="chip"><em>🕷️</em>Spinnen</div></div></div>
+ </div>
+</div>
+
+<div class="sec">
+ <div class="st"><div class="b" style="background:#fff1ec">💪</div><h2>Waar ben ik goed in</h2><small>zo zie ik mezelf</small></div>
+ <div class="good">
+  <div class="gd"><div class="e">🤝</div><div><b>Samenwerken</b><span>ik luister en denk mee</span></div></div>
+  <div class="gd"><div class="e">✏️</div><div><b>Zorgvuldig werken</b><span>ik doe dingen netjes</span></div></div>
+  <div class="gd"><div class="e">💛</div><div><b>Anderen helpen</b><span>ik zie het als iemand vastzit</span></div></div>
+ </div>
+</div>
+
+<div class="sec">
+ <div class="st"><div class="b" style="background:#f4effb">🗺️</div><h2>Deze beroepen passen bij mij</h2><small>om te ontdekken, geen vacatures</small></div>
+ <div class="jobs">
+  <div class="job"><div class="h"><div class="n">1</div><h3>Dierenverzorger</h3><div class="e">🦒</div></div>
+   <p>Je zorgt elke dag voor dieren: eten geven, verzorgen en kijken of ze gezond zijn.</p>
+   <div class="w">Past bij</div><div class="pp"><span>dieren</span><span>helpen</span></div></div>
+  <div class="job"><div class="h"><div class="n">2</div><h3>Bioloog</h3><div class="e">🔬</div></div>
+   <p>Je onderzoekt hoe planten en dieren leven, buiten in de natuur of in een lab.</p>
+   <div class="w">Past bij</div><div class="pp"><span>natuur</span><span>uitzoeken</span></div></div>
+  <div class="job"><div class="h"><div class="n">3</div><h3>Hovenier</h3><div class="e">🌷</div></div>
+   <p>Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.</p>
+   <div class="w">Past bij</div><div class="pp"><span>buiten</span><span>tekenen</span></div></div>
+ </div>
+</div>
+
+<div class="sec bottom">
+ <div class="box disc"><h3>🔍 Wat ik nog wil ontdekken</h3><ul>
+  <li>Hoe ziet een dag bij de dierenarts eruit?</li>
+  <li>Welke vakken horen bij biologie op de middelbare school?</li>
+  <li>Ben ik ook goed in iets maken met mijn handen?</li></ul></div>
+ <div class="box tip"><h3>💡 Tip voor thuis en in de klas</h3><ul>
+  <li>Ga samen naar een kinderboerderij of dierenasiel en vraag wat de verzorgers doen.</li>
+  <li>Vraag wat het leukst was. Er is geen goed of fout: dit is om te ontdekken.</li></ul></div>
+</div>
+
+<div class="foot"><div class="sh"><svg class="ico" style="width:16px;height:16px"><use href="#sh"/></svg></div>
+<p><b>Geen cijfer en geen schooladvies.</b> Dit paspoort is om te ontdekken, voor jou, je ouders en je leraar.<br>Lobsy bewaart geen namen. Je antwoorden worden na dit schooljaar gewist.</p>
+<div class="r"><b>lobsy.nl</b><br>pagina 1/1</div></div>
+<div class="legend"><span>MOCKUP · fictieve leerling en school</span><span>alle blokken uit bestaande leerlingdata, behalve de teksten bij "ontdekken" en "tip"</span></div>
+</div></body></html>

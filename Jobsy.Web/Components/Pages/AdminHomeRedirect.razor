@@ -1,0 +1,7 @@
+@* Admins landing on /home are sent to /admin (D13). *@
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+        => Navigation.NavigateTo("/admin", replace: true);
+}

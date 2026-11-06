@@ -10,6 +10,22 @@ namespace Jobsy.Tests;
 public class LobsyCommercialSettingsTests
 {
     [Fact]
+    public async Task GetAsync_parallel_calls_seed_settings_once()
+    {
+        var dbName = Guid.NewGuid().ToString("N");
+        var results = await Task.WhenAll(Enumerable.Range(0, 8).Select(async _ =>
+        {
+            await using var db = CreateDb(dbName);
+            return await new FlexCommercialService(db).GetAsync();
+        }));
+        Assert.All(results, dto => Assert.True(dto.ContactUnlockCostTokens > 0));
+        await using (var db = CreateDb(dbName))
+        {
+            Assert.Equal(1, await db.FlexCommercialSettings.CountAsync());
+        }
+    }
+
+    [Fact]
     public async Task Update_persists_all_amounts_and_syncs_contact_unlock_spend_cost()
     {
         await using var db = CreateDb();
@@ -18,9 +34,15 @@ public class LobsyCommercialSettingsTests
         var updated = await sut.UpdateAsync(new FlexCommercialSettingsUpdate(
             MarginPerHourEuro: 2.50m,
             BackofficePartnerName: "Partner X",
-            DeepAnalysisPriceEuro: 4.95m,
+            DeepTestPriceCompetenceEuro: 4.95m,
+            DeepTestPriceCareerEuro: 4.95m,
+            DeepTestPriceValuesEuro: 4.95m,
+            DeepTestPriceCultureEuro: 4.95m,
             AgencyAnnualPriceEuro: 3500m,
-            ContactUnlockCostTokens: 2m));
+            ContactUnlockCostTokens: 2m,
+            AcceptCandidatePilotCostTokens: 0.5m,
+            AcceptCandidatePilotEndsOn: null,
+            AcceptCandidateStandardCostTokens: 1m));
 
         Assert.Equal(2.50m, updated.MarginPerHourEuro);
         Assert.Equal("Partner X", updated.BackofficePartnerName);
@@ -46,13 +68,17 @@ public class LobsyCommercialSettingsTests
             Name = "Agency",
             KvkNumber = "12345678",
             Address = "Test",
-            Location = new Core.ValueObjects.GeoPoint(52.0, 4.3)
+            Location = new Core.ValueObjects.GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
         var sut = new FlexCommercialService(db);
         await sut.UpdateAsync(new FlexCommercialSettingsUpdate(
-            2m, "Yellowstone", 2.99m, 4500m, 1m));
+            2m, "Yellowstone", 2.99m, 2.99m, 2.99m, 2.99m, 4500m, 1m, 0.5m, null, 1m));
 
         var sub = await sut.ActivateAgencySubscriptionAsync(
             Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
@@ -61,10 +87,10 @@ public class LobsyCommercialSettingsTests
         Assert.Equal(4500m, (await db.AgencyAnnualSubscriptions.SingleAsync()).PriceEuro);
     }
 
-    private static JobsyDbContext CreateDb()
+    private static JobsyDbContext CreateDb(string? databaseName = null)
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString("N"))
             .Options;
         return new JobsyDbContext(options);
     }

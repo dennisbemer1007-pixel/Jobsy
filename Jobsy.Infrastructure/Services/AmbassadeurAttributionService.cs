@@ -12,22 +12,30 @@ public sealed class AmbassadeurAttributionService : IAmbassadeurAttributionServi
 {
     private readonly JobsyDbContext _db;
     private readonly IAmbassadeurSettingsService _settings;
+    private readonly IPlatformFeatureService _features;
     private readonly ILogger<AmbassadeurAttributionService> _logger;
 
     public AmbassadeurAttributionService(
         JobsyDbContext db,
         IAmbassadeurSettingsService settings,
-        ILogger<AmbassadeurAttributionService> logger)
+        ILogger<AmbassadeurAttributionService> logger,
+        IPlatformFeatureService features)
     {
         _db = db;
         _settings = settings;
         _logger = logger;
+        _features = features;
     }
 
     public async Task<Guid?> ResolveAmbassadeurUserIdAsync(
         string? trackingCode,
         CancellationToken cancellationToken = default)
     {
+        if (!await IsEnabledAsync(cancellationToken))
+        {
+            return null;
+        }
+
         var profile = await ResolveProfileAsync(trackingCode, cancellationToken);
         return profile?.UserId;
     }
@@ -37,6 +45,11 @@ public sealed class AmbassadeurAttributionService : IAmbassadeurAttributionServi
         string? trackingCode,
         CancellationToken cancellationToken = default)
     {
+        if (!await IsEnabledAsync(cancellationToken))
+        {
+            return false;
+        }
+
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == candidateUserId, cancellationToken);
         if (user is null || user.Role != UserRole.Candidate)
         {
@@ -69,6 +82,11 @@ public sealed class AmbassadeurAttributionService : IAmbassadeurAttributionServi
         string? trackingCode,
         CancellationToken cancellationToken = default)
     {
+        if (!await IsEnabledAsync(cancellationToken))
+        {
+            return false;
+        }
+
         var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
         if (company is null)
         {
@@ -124,6 +142,12 @@ public sealed class AmbassadeurAttributionService : IAmbassadeurAttributionServi
         await Task.CompletedTask;
         _ = ambassadeurUserId;
         _ = cancellationToken;
+    }
+
+    private async Task<bool> IsEnabledAsync(CancellationToken cancellationToken)
+    {
+        var snap = await _features.GetAsync(cancellationToken);
+        return snap.AmbassadorsEnabled;
     }
 
     private async Task<AmbassadeurProfile?> ResolveProfileAsync(

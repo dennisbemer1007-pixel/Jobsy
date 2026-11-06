@@ -1,0 +1,30 @@
+@namespace Jobsy.Web.Components.Werkgever
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="@Culture["WgVac.Confirm.OfflineAction"]"
+                         TitleId="wg-vac-offline"
+                         OnClose="OnCancel">
+        <p data-testid="wg-vac-offline-confirm">@Culture["WgVac.Confirm.Offline"]</p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact" data-testid="wg-vac-offline-cancel" disabled="@Busy" @onclick="OnCancel">@Culture["Common.Cancel"]</button>
+            <button type="button"
+                    class="btn-compact btn-compact--primary"
+                    data-testid="wg-vac-offline-confirm-btn"
+                    disabled="@Busy"
+                    @onclick="OnConfirm">
+                @Culture["WgVac.Confirm.OfflineAction"]
+            </button>
+        </div>
+    </LobsyFriendlyDialog>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+}

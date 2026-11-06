@@ -27,7 +27,14 @@ public sealed record PlatformCompanySnapshot(
     string? Phone,
     string? Email,
     string? VatBufferIban,
-    DateTime? UpdatedAtUtc)
+    DateTime? UpdatedAtUtc,
+    string? LegalName = null,
+    string? TradeName = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null,
+    string? SupportEmail = null,
+    string? PrivacyEmail = null)
 {
     public string FormatAddressBlock()
     {
@@ -67,4 +74,11 @@ public sealed record PlatformCompanyUpdate(
     string? VatNumber,
     string? Phone,
     string? Email,
-    string? VatBufferIban = null);
+    string? VatBufferIban = null,
+    string? LegalName = null,
+    string? TradeName = null,
+    string? PostalStreet = null,
+    string? PostalPostalCode = null,
+    string? PostalCity = null,
+    string? SupportEmail = null,
+    string? PrivacyEmail = null);

@@ -1,0 +1,37 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@*
+  The support-code card (E2). Shown on 500 and 429 so support can look the failure up.
+  Static SSR only: the copy button is progressive enhancement, the code stays selectable text.
+*@
+
+<div class="pub-card err-card">
+    <p class="err-card__label" id="err-code-label">@Culture["Status.Common.CodeLabel"]</p>
+    <p class="err-card__code" id="err-code" data-support-code="@Code">@Code</p>
+    <button type="button"
+            class="pub-btn pub-btn--ghost err-card__copy"
+            data-err-copy="err-code"
+            data-err-copied="@Culture["Status.Common.Copied"]"
+            aria-describedby="err-code-label">@Culture["Status.Common.Copy"]</button>
+</div>
+
+@* Progressive enhancement only: without JS the code above is plain selectable text. *@
+<script nonce="@Nonce">
+    (function () {
+        var button = document.querySelector("[data-err-copy]");
+        if (!button || !navigator.clipboard) { return; }
+        button.addEventListener("click", function () {
+            var target = document.getElementById(button.getAttribute("data-err-copy"));
+            if (!target) { return; }
+            navigator.clipboard.writeText(target.textContent.trim()).then(function () {
+                button.textContent = button.getAttribute("data-err-copied");
+            });
+        });
+    })();
+</script>
+
+@code {
+    [Parameter, EditorRequired] public string Code { get; set; } = string.Empty;
+
+    [Parameter] public string Nonce { get; set; } = string.Empty;
+}

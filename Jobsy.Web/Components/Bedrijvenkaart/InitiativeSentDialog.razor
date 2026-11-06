@@ -1,0 +1,42 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop bk-modal-backdrop--centered">
+        <div class="bk-modal bk-modal--sent" role="dialog" aria-modal="true" aria-labelledby="bk-sent-title">
+            <header class="bk-modal__header">
+                <h2 id="bk-sent-title">@Culture["Initiative.Sent.Title"]</h2>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <div class="bk-modal__body">
+                <div class="bk-sent-stepper" role="list">
+                    <div class="bk-sent-step is-done" role="listitem">
+                        <span class="bk-sent-step__dot" aria-hidden="true"></span>
+                        <span class="bk-sent-step__label">@Culture["Initiative.Sent.Step1"]</span>
+                    </div>
+                    <div class="bk-sent-step" role="listitem">
+                        <span class="bk-sent-step__dot" aria-hidden="true"></span>
+                        <span class="bk-sent-step__label">@Culture["Initiative.Sent.Step2"]</span>
+                    </div>
+                    <div class="bk-sent-step" role="listitem">
+                        <span class="bk-sent-step__dot" aria-hidden="true"></span>
+                        <span class="bk-sent-step__label">@Culture["Initiative.Sent.Step3"]</span>
+                    </div>
+                </div>
+                <p class="bk-modal__lead">@Culture["Initiative.Sent.Lead"]</p>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--primary" @onclick="Close">@Culture["Common.Close"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+}

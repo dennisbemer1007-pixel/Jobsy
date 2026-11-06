@@ -8,8 +8,13 @@ public class VatBufferTransfer
 {
     public Guid Id { get; set; }
 
-    public Guid TokenPurchaseInvoiceId { get; set; }
-    public TokenPurchaseInvoice Invoice { get; set; } = null!;
+    /// <summary>Set for token-pack invoices; null when this row is a kandidaat-aankoop.</summary>
+    public Guid? TokenPurchaseInvoiceId { get; set; }
+    public TokenPurchaseInvoice? Invoice { get; set; }
+
+    /// <summary>Set for consumer deep-test invoices; null for token-pack transfers.</summary>
+    public Guid? ConsumerPurchaseInvoiceId { get; set; }
+    public ConsumerPurchaseInvoice? ConsumerInvoice { get; set; }
 
     /// <summary>Copy of invoice number — used as bank omschrijving/kenmerk.</summary>
     public string InvoiceNumber { get; set; } = string.Empty;

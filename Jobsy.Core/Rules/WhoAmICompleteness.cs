@@ -210,8 +210,10 @@ public static class WhoAmICompleteness
         RiasecScores career,
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
-        SchwartzValuesScores? values = null)
-        => string.Join('|',
+        SchwartzValuesScores? values = null,
+        string? competenceSource = null)
+    {
+        var body = string.Join('|',
             competency.Samenwerken,
             competency.Resultaatgerichtheid,
             competency.Stressbestendigheid,
@@ -240,4 +242,6 @@ public static class WhoAmICompleteness
             values?.Stability,
             values?.Impact,
             profile?.FingerprintSuffix() ?? "");
+        return string.IsNullOrEmpty(competenceSource) ? body : body + "|" + competenceSource;
+    }
 }

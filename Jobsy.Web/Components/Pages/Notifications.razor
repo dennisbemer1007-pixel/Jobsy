@@ -1,0 +1,40 @@
+@page "/notifications"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Jobsy.Web.Components.Notifications
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Meldingen · Lobsy</PageTitle>
+
+@if (_redirecting)
+{
+    <p class="muted">…</p>
+}
+else
+{
+    <div class="panel-page notifications-page">
+        <header class="panel-header">
+            <h1>Meldingen</h1>
+            <p class="muted">Updates over sollicitaties, vacatures en je account.</p>
+        </header>
+        <NotificationsListPanel />
+    </div>
+}
+
+@code {
+    private bool _redirecting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var href = RoleNavCatalog.NotificationsHrefFor(state.User);
+        if (!string.Equals(href, "/notifications", StringComparison.OrdinalIgnoreCase))
+        {
+            _redirecting = true;
+            Navigation.NavigateTo(href, replace: true);
+        }
+    }
+}

@@ -2,11 +2,13 @@ using System.Text.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -22,19 +24,25 @@ public sealed class TalentPoolService : ITalentPoolService
     private readonly IRoutingService _routing;
     private readonly IUserNotificationService _notifications;
     private readonly IFlexCommercialService _commercial;
+    private readonly IFeatureFlags? _flags;
+    private readonly IConfiguration? _configuration;
 
     public TalentPoolService(
         JobsyDbContext db,
         ITokenLedgerService tokens,
         IRoutingService routing,
         IUserNotificationService notifications,
-        IFlexCommercialService commercial)
+        IFlexCommercialService commercial,
+        IFeatureFlags? flags = null,
+        IConfiguration? configuration = null)
     {
         _db = db;
         _tokens = tokens;
         _routing = routing;
         _notifications = notifications;
         _commercial = commercial;
+        _flags = flags;
+        _configuration = configuration;
     }
 
     public async Task<IReadOnlyList<AnonymousTalentCardDto>> SearchAsync(
@@ -59,29 +67,29 @@ public sealed class TalentPoolService : ITalentPoolService
             .ToListAsync(cancellationToken);
 
         var userIds = users.Select(u => u.Id).ToList();
-        var competencies = await _db.CandidateCompetencies.AsNoTracking()
+        var competencyRows = await _db.CandidateCompetencies.AsNoTracking()
             .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToDictionaryAsync(c => c.UserId, cancellationToken);
-        var careers = await _db.CandidateCareerInterests.AsNoTracking()
-            .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
-            .ToDictionaryAsync(c => c.UserId, cancellationToken);
-        var deepCompleted = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .Where(d => d.Status == CandidateDeepAnalysisStatuses.Completed && userIds.Contains(d.UserId))
-            .Select(d => new { d.UserId, d.Kind })
             .ToListAsync(cancellationToken);
-        var competenceDeep = deepCompleted
-            .Where(d => d.Kind == AssessmentKind.Competence)
-            .Select(d => d.UserId)
-            .ToHashSet();
-        var careerDeep = deepCompleted
-            .Where(d => d.Kind == AssessmentKind.Career)
-            .Select(d => d.UserId)
-            .ToHashSet();
-
+        var competencies = competencyRows
+            .GroupBy(c => c.UserId)
+            .ToDictionary(g => g.Key, g => g.First());
+        var careerRows = await _db.CandidateCareerInterests.AsNoTracking()
+            .Where(c => userIds.Contains(c.UserId) && c.Status == CandidateCompetencyStatuses.Completed)
+            .ToListAsync(cancellationToken);
+        var careers = careerRows
+            .GroupBy(c => c.UserId)
+            .ToDictionary(g => g.Key, g => g.First());
+        var showRiasec = _configuration?.GetValue(TalentPoolRiasecVisibility.ConfigKey, false) ?? false;
         var tagsFilter = query.Tags?
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Select(t => t.Trim())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // Off: career-test names, Dutch type labels and Holland codes never match. Competency tags still do.
+        var matchFilter = showRiasec || tagsFilter is null
+            ? tagsFilter
+            : tagsFilter
+                .Where(t => !TalentPoolRiasecVisibility.IsCareerTestOutput(t))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var results = new List<AnonymousTalentCardDto>();
         foreach (var user in users)
@@ -117,11 +125,22 @@ public sealed class TalentPoolService : ITalentPoolService
                 }
             }
 
-            if (tagsFilter is { Count: > 0 }
-                && !matchTags.Any(t => tagsFilter.Contains(t))
-                && !riasec.Any(t => tagsFilter.Contains(t)))
+            if (!showRiasec)
             {
-                continue;
+                matchTags = matchTags
+                    .Where(t => !TalentPoolRiasecVisibility.IsCareerTestOutput(t))
+                    .ToList();
+            }
+
+            if (tagsFilter is { Count: > 0 })
+            {
+                var matchesCompetency = matchFilter is { Count: > 0 }
+                    && matchTags.Any(t => matchFilter.Contains(t));
+                var matchesRiasec = showRiasec && riasec.Any(t => tagsFilter.Contains(t));
+                if (!matchesCompetency && !matchesRiasec)
+                {
+                    continue;
+                }
             }
 
             var prefs = DeserializePrefs(user.PreferencesJson);
@@ -159,43 +178,22 @@ public sealed class TalentPoolService : ITalentPoolService
                 continue;
             }
 
-            var scores = competency is null
-                ? null
-                : CompetencyTestCatalog.CompletedScoresOrNull(
-                    competency.Status,
-                    competency.SamenwerkenPercent,
-                    competency.ResultaatgerichtheidPercent,
-                    competency.StressbestendigheidPercent,
-                    competency.InnovatiePercent,
-                    competency.ExtraversiePercent);
-            var careerScores = career is null
-                ? null
-                : CareerTestCatalog.CompletedScoresOrNull(
-                    career.Status,
-                    career.RealisticPercent,
-                    career.InvestigativePercent,
-                    career.ArtisticPercent,
-                    career.SocialPercent,
-                    career.EnterprisingPercent,
-                    career.ConventionalPercent);
-
-            var availability = LobsyCvModelFactory.FormatAvailability(
+            var availability = LobsyCvModelFactory.FormatTalentPoolAvailability(
                 prefs.Availability,
-                prefs.FlexibleTimes == true);
+                prefs.FlexibleTimes == true,
+                prefs.MinHoursPerWeek,
+                prefs.MaxHoursPerWeek,
+                prefs.AvailabilityPresets);
 
             results.Add(new AnonymousTalentCardDto(
                 user.Id,
                 matchTags,
-                riasec,
-                scores,
-                careerScores,
-                career?.HollandCode,
+                showRiasec ? riasec : [],
+                showRiasec ? career?.HollandCode : null,
                 availability,
                 licenses,
                 travelMinutes,
-                LobsyCvModelFactory.ExtractCity(prefs.HomeAddress) ?? "Westland / Den Haag",
-                competenceDeep.Contains(user.Id),
-                careerDeep.Contains(user.Id)));
+                LobsyCvModelFactory.ExtractCity(prefs.HomeAddress) ?? "Westland / Den Haag"));
 
             if (results.Count >= take)
             {
@@ -300,18 +298,107 @@ public sealed class TalentPoolService : ITalentPoolService
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        await _notifications.CreateAsync(
-            new NotificationCreateRequest(
-                candidate.Id,
-                "Nieuw contactverzoek van een werkgever",
-                "Een werkgever wil contact via Lobsy. Reageer binnen 48 uur.",
-                "TalentContact",
-                DeepLink: "/candidate/talent-contacts",
-                ActionLabel: "Bekijk verzoek",
-                ActionUrl: "/candidate/talent-contacts",
-                RelatedEntityType: nameof(TalentContactRequest),
-                RelatedEntityId: request.Id),
+        // D18: with the Werkgevers gate off the candidate inbox is unreachable, so no ping.
+        var employersOn = _flags is null
+            || (await _flags.GetAsync(cancellationToken)).EmployersEnabled;
+        if (employersOn)
+        {
+            await _notifications.CreateAsync(
+                new NotificationCreateRequest(
+                    candidate.Id,
+                    "Nieuw contactverzoek van een werkgever",
+                    "Een werkgever wil contact via Lobsy. Reageer binnen 48 uur.",
+                    "TalentContact",
+                    DeepLink: "/candidate/talent-contacts",
+                    ActionLabel: "Bekijk verzoek",
+                    ActionUrl: "/candidate/talent-contacts",
+                    RelatedEntityType: nameof(TalentContactRequest),
+                    RelatedEntityId: request.Id),
+                cancellationToken);
+        }
+
+        return await ToDtoAsync(request.Id, revealPii: false, cancellationToken);
+    }
+
+    public async Task<TalentContactRequestDto> SendVacancyIntroductionAsync(
+        Guid companyId,
+        Guid employerUserId,
+        Guid vacancyId,
+        Guid candidateUserId,
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            throw new InvalidOperationException("Bericht is verplicht om contact te starten.");
+        }
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId && v.CompanyId == companyId, cancellationToken)
+            ?? throw new InvalidOperationException("Vacature niet gevonden.");
+
+        var candidate = await _db.Users
+            .FirstOrDefaultAsync(
+                u => u.Id == candidateUserId
+                     && u.Role == UserRole.Candidate
+                     && u.IsActive
+                     && u.OpenForWork
+                     && u.TalentPoolConsentAt != null,
+                cancellationToken)
+            ?? throw new InvalidOperationException("Kandidaat niet beschikbaar in de talentpool.");
+        if (!CandidateConsentRules.CanAppearInTalentPool(candidate))
+        {
+            throw new InvalidOperationException("Kandidaat niet beschikbaar in de talentpool.");
+        }
+
+        var openExisting = await _db.TalentContactRequests.AnyAsync(
+            r => r.CompanyId == companyId
+                 && r.CandidateUserId == candidateUserId
+                 && (r.Status == TalentContactStatus.Pending
+                     || r.Status == TalentContactStatus.RefundEligible
+                     || r.Status == TalentContactStatus.ContactShared),
             cancellationToken);
+        if (openExisting)
+        {
+            throw new InvalidOperationException("Er loopt al een contactverzoek voor deze kandidaat.");
+        }
+
+        var now = DateTime.UtcNow;
+        var request = new TalentContactRequest
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = companyId,
+            EmployerUserId = employerUserId,
+            CandidateUserId = candidateUserId,
+            VacancyId = vacancyId,
+            TokenChargeOnAccept = true,
+            Status = TalentContactStatus.Pending,
+            Message = message.Trim(),
+            CreatedAtUtc = now,
+            RespondByUtc = TalentContactRules.ComputeRespondByUtc(now)
+        };
+        _db.TalentContactRequests.Add(request);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var employersOn = _flags is null
+            || (await _flags.GetAsync(cancellationToken)).EmployersEnabled;
+        if (employersOn)
+        {
+            var companyName = vacancy.Company?.Name ?? "werkgever";
+            await _notifications.CreateAsync(
+                new NotificationCreateRequest(
+                    candidate.Id,
+                    ProactiveMatchingRules.FormatInAppIntroductionTitle(vacancy.Title, companyName),
+                    "Reageer binnen 48 uur — je deelt pas gegevens als je accepteert.",
+                    "TalentContact",
+                    DeepLink: "/candidate/talent-contacts",
+                    ActionLabel: "Bekijk verzoek",
+                    ActionUrl: "/candidate/talent-contacts",
+                    RelatedEntityType: nameof(TalentContactRequest),
+                    RelatedEntityId: request.Id),
+                cancellationToken);
+        }
 
         return await ToDtoAsync(request.Id, revealPii: false, cancellationToken);
     }
@@ -336,16 +423,58 @@ public sealed class TalentPoolService : ITalentPoolService
         request.RespondedAtUtc = now;
         if (accept && !alreadyPlaced)
         {
-            request.Status = TalentContactStatus.ContactShared;
-            request.ContactSharedAtUtc = now;
+            if (ProactiveIntroductionTokenRules.ShouldChargeTokenOnAccept(request, accept, alreadyPlaced))
+            {
+                var commercial = await _commercial.GetAsync(cancellationToken);
+                var unlockCost = commercial.ContactUnlockCostTokens;
+                var outcome = await _tokens.TrySpendAsync(
+                    request.CompanyId,
+                    TokenSpendReason.ContactUnlock,
+                    vacancyId: request.VacancyId,
+                    actorUserId: request.EmployerUserId,
+                    note: $"ContactUnlock:{request.Id}",
+                    onSuccessBeforeCommit: async ct =>
+                    {
+                        request.Status = TalentContactStatus.ContactShared;
+                        request.ContactSharedAtUtc = now;
+                        request.CandidateDeclineReason = null;
+                        await _db.SaveChangesAsync(ct);
+                    },
+                    costOverrides: new Dictionary<TokenSpendReason, decimal>
+                    {
+                        [TokenSpendReason.ContactUnlock] = unlockCost
+                    },
+                    cancellationToken: cancellationToken);
+                if (!outcome.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        outcome.ErrorMessage ?? "De werkgever heeft onvoldoende tokens om contact te delen.");
+                }
+
+                if (outcome.Transaction is { } spendTx)
+                {
+                    request.SpendTransactionId = spendTx.Id;
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
+            }
+            else
+            {
+                request.Status = TalentContactStatus.ContactShared;
+                request.ContactSharedAtUtc = now;
+                request.CandidateDeclineReason = null;
+                await _db.SaveChangesAsync(cancellationToken);
+            }
         }
         else
         {
             request.Status = TalentContactStatus.CandidateDeclined;
+            request.CandidateDeclineReason = TalentContactDeclineReasons.ForResponse(alreadyPlaced);
+            await _db.SaveChangesAsync(cancellationToken);
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
-        return await ToDtoAsync(request.Id, revealPii: request.Status == TalentContactStatus.ContactShared, cancellationToken);
+        var reveal = request.Status == TalentContactStatus.ContactShared
+                     && ProactiveIntroductionTokenRules.EmployerSeesPii(request);
+        return await ToDtoAsync(request.Id, revealPii: reveal, cancellationToken);
     }
 
     public async Task<TalentContactRequestDto> WithdrawAndRefundAsync(
@@ -390,24 +519,31 @@ public sealed class TalentPoolService : ITalentPoolService
                 .FirstOrDefaultAsync(t => t.Id == spendId, cancellationToken);
             refundAmount = spend is null ? 0m : Math.Abs(spend.Amount);
         }
+        else if (ProactiveIntroductionTokenRules.UsesDeferredTokenCharge(request))
+        {
+            refundAmount = 0;
+        }
         else
         {
             refundAmount = (await _commercial.GetAsync(cancellationToken)).ContactUnlockCostTokens;
         }
 
-        if (refundAmount <= 0)
+        if (refundAmount <= 0 && !ProactiveIntroductionTokenRules.UsesDeferredTokenCharge(request))
         {
             refundAmount = FlexCommercialSettings.DefaultContactUnlockCostTokens;
         }
 
-        var refund = await _tokens.GrantAsync(
-            companyId,
-            refundAmount,
-            employerUserId,
-            note: $"ContactUnlockRefund:{request.Id}",
-            cancellationToken);
+        if (refundAmount > 0)
+        {
+            var refund = await _tokens.GrantAsync(
+                companyId,
+                refundAmount,
+                employerUserId,
+                note: $"ContactUnlockRefund:{request.Id}",
+                cancellationToken);
+            request.RefundTransactionId = refund.Id;
+        }
 
-        request.RefundTransactionId = refund.Id;
         request.WithdrawnAtUtc = now;
         request.Status = TalentContactStatus.WithdrawnRefunded;
         await _db.SaveChangesAsync(cancellationToken);
@@ -419,22 +555,61 @@ public sealed class TalentPoolService : ITalentPoolService
         Guid companyId,
         CancellationToken cancellationToken = default)
     {
-        var ids = await _db.TalentContactRequests.AsNoTracking()
+        var rows = await _db.TalentContactRequests.AsNoTracking()
             .Where(r => r.CompanyId == companyId)
             .OrderByDescending(r => r.CreatedAtUtc)
-            .Select(r => r.Id)
             .Take(100)
             .ToListAsync(cancellationToken);
 
-        var list = new List<TalentContactRequestDto>();
-        foreach (var id in ids)
+        if (rows.Count == 0)
         {
-            var row = await _db.TalentContactRequests.AsNoTracking()
-                .FirstAsync(r => r.Id == id, cancellationToken);
-            list.Add(await ToDtoAsync(id, revealPii: row.Status == TalentContactStatus.ContactShared, cancellationToken));
+            return [];
         }
 
-        return list;
+        var revealIds = rows
+            .Where(r => r.Status == TalentContactStatus.ContactShared
+                        && ProactiveIntroductionTokenRules.EmployerSeesPii(r))
+            .Select(r => r.CandidateUserId)
+            .Distinct()
+            .ToList();
+
+        var candidates = revealIds.Count == 0
+            ? new Dictionary<Guid, TalentContactPii>()
+            : (await _db.Users.AsNoTracking()
+                .Where(u => revealIds.Contains(u.Id))
+                .ToListAsync(cancellationToken))
+                .ToDictionary(u => u.Id, TalentContactPii.For);
+
+        var companyName = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => c.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return rows.Select(request =>
+        {
+            var reveal = request.Status == TalentContactStatus.ContactShared
+                         && ProactiveIntroductionTokenRules.EmployerSeesPii(request);
+            var pii = reveal && candidates.TryGetValue(request.CandidateUserId, out var candidate)
+                ? candidate
+                : TalentContactPii.None;
+
+            return new TalentContactRequestDto(
+                request.Id,
+                request.CompanyId,
+                request.CandidateUserId,
+                request.Status,
+                request.Message,
+                request.CreatedAtUtc,
+                request.RespondByUtc,
+                request.RespondedAtUtc,
+                request.ContactSharedAtUtc,
+                PiiRevealed: reveal,
+                pii.Name,
+                pii.Email,
+                pii.Phone,
+                companyName,
+                request.CandidateDeclineReason);
+        }).ToList();
     }
 
     public async Task<IReadOnlyList<TalentContactRequestDto>> ListForCandidateAsync(
@@ -456,6 +631,30 @@ public sealed class TalentPoolService : ITalentPoolService
         }
 
         return list;
+    }
+
+    public async Task<TalentContactSharePreviewDto?> GetSharePreviewAsync(
+        Guid candidateUserId,
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await _db.TalentContactRequests.AsNoTracking()
+            .FirstOrDefaultAsync(
+                r => r.Id == requestId && r.CandidateUserId == candidateUserId,
+                cancellationToken);
+        if (request is null)
+        {
+            return null;
+        }
+
+        var pii = TalentContactPii.For(await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == candidateUserId, cancellationToken));
+        var companyName = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == request.CompanyId)
+            .Select(c => c.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return new TalentContactSharePreviewDto(companyName, pii.Name, pii.Email, pii.Phone);
     }
 
     public async Task<int> MarkExpiredAsRefundEligibleAsync(CancellationToken cancellationToken = default)
@@ -484,17 +683,13 @@ public sealed class TalentPoolService : ITalentPoolService
     {
         var request = await _db.TalentContactRequests.AsNoTracking()
             .FirstAsync(r => r.Id == requestId, cancellationToken);
-        string? name = null;
-        string? email = null;
-        string? phone = null;
-        if (revealPii || request.Status == TalentContactStatus.ContactShared)
-        {
-            var candidate = await _db.Users.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == request.CandidateUserId, cancellationToken);
-            name = candidate?.FullName;
-            email = candidate?.Email;
-            phone = candidate?.PhoneNumber;
-        }
+        var reveal = revealPii
+                     || (request.Status == TalentContactStatus.ContactShared
+                         && ProactiveIntroductionTokenRules.EmployerSeesPii(request));
+        var pii = reveal
+            ? TalentContactPii.For(await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == request.CandidateUserId, cancellationToken))
+            : TalentContactPii.None;
 
         var companyName = await _db.Companies.AsNoTracking()
             .Where(c => c.Id == request.CompanyId)
@@ -511,11 +706,12 @@ public sealed class TalentPoolService : ITalentPoolService
             request.RespondByUtc,
             request.RespondedAtUtc,
             request.ContactSharedAtUtc,
-            PiiRevealed: revealPii || request.Status == TalentContactStatus.ContactShared,
-            name,
-            email,
-            phone,
-            companyName);
+            PiiRevealed: reveal,
+            pii.Name,
+            pii.Email,
+            pii.Phone,
+            companyName,
+            request.CandidateDeclineReason);
     }
 
     private static CandidatePreferencesDto DeserializePrefs(string? json)

@@ -1,0 +1,45 @@
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Onboarding
+
+<OnboardingRustigShell ScreenId="kompas"
+                       Step="10"
+                       SidebarActiveSection="5"
+                       PhaseLabel="@Culture["Onboarding.Rustig.Phase.Kompas"]"
+                       Title="@Culture.Format("Onboarding.Finish.Title", FirstName)"
+                       Lead="@Culture["Onboarding.Rustig.Kompas.ShellLead"]"
+                       SaveStatus="@SaveStatus"
+                       OnLater="OnLater">
+    <Hero>
+        <OnboardingRustigIllustratedHero DesktopUrl="@OnboardingRustigKompasIllustrationAssets.DesktopJpg"
+                                         MobileUrl="@OnboardingRustigKompasIllustrationAssets.MobileJpg" />
+    </Hero>
+    <ChildContent>
+        <div class="ob-rustig__canvas ob-rustig__kompas">
+            <OnboardingRustigKompasFinale FirstName="@FirstName"
+                                          Impression="Impression"
+                                          MatchCount="MatchCount"
+                                          MaxTravelMinutes="MaxTravelMinutes"
+                                          HomeLabel="HomeLabel"
+                                          DreamJob="DreamJob"
+                                          CardsInput="CardsInput"
+                                          OnComplete="OnComplete" />
+        </div>
+    </ChildContent>
+</OnboardingRustigShell>
+
+@code {
+    [Parameter] public string FirstName { get; set; } = "";
+    [Parameter] public OnboardingImpression? Impression { get; set; }
+    [Parameter] public int MatchCount { get; set; }
+    [Parameter] public int MaxTravelMinutes { get; set; }
+    [Parameter] public string? HomeLabel { get; set; }
+    [Parameter] public string? DreamJob { get; set; }
+    [Parameter] public OnboardingFinaleCardsInput CardsInput { get; set; } = new(false, false, false, false, false, false);
+    [Parameter] public string? SaveStatus { get; set; }
+    [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

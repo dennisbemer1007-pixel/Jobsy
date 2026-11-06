@@ -10,6 +10,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// </summary>
 public sealed class UnconfirmedRegistrationCleanupHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<UnconfirmedRegistrationCleanupHostedService> _logger;
 
@@ -19,6 +20,7 @@ public sealed class UnconfirmedRegistrationCleanupHostedService : BackgroundServ
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(UnconfirmedRegistrationCleanupHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,6 +31,12 @@ public sealed class UnconfirmedRegistrationCleanupHostedService : BackgroundServ
         {
             try
             {
+                if (!await _employersGate.ShouldRunAsync(_scopeFactory, stoppingToken))
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken);
+                    continue;
+                }
+
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var registration = scope.ServiceProvider.GetRequiredService<ICompanyRegistrationService>();
                 var removed = await registration.PurgeExpiredUnconfirmedAsync(stoppingToken);

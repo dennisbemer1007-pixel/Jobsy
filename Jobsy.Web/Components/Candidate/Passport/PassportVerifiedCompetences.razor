@@ -1,0 +1,39 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+
+@if (Items.Count > 0)
+{
+    <section class="ref-verif-verified-competences @(Preview ? "ref-verif-preview-block" : null)"
+             aria-labelledby="@_titleId"
+             data-testid="ref-verif-verified-competences">
+        @if (Preview)
+        {
+            <p class="ref-verif-preview-block__title">@Culture["RefVerif.VerifiedCompetences.EmployerPreview"]</p>
+        }
+        <h3 id="@_titleId" class="passport-proof__h">@Culture["RefVerif.VerifiedCompetences.Title"]</h3>
+        <ul class="ref-verif-verified-list">
+            @foreach (var item in Items)
+            {
+                <li>
+                    <p class="ref-verif-verified-list__label">
+                        <span class="ref-verif-verified-list__check" aria-hidden="true">✓</span>
+                        @item.Label
+                    </p>
+                    <p class="ref-verif-verified-list__line">@item.RecognitionLine</p>
+                </li>
+            }
+        </ul>
+        <p class="ref-verif-disclaimer">@Culture["RefVerif.VerifiedCompetences.Disclaimer"]</p>
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<JobsyApiClient.VerifiedCompetenceItem> Items { get; set; } = [];
+
+    /// <summary>Employer-facing preview styling on passport overview.</summary>
+    [Parameter] public bool Preview { get; set; }
+
+    private readonly string _titleId = "ref-verif-verified-title-" + Guid.NewGuid().ToString("N");
+}

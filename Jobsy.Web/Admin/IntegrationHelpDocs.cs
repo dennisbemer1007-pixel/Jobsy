@@ -55,18 +55,18 @@ public static class IntegrationHelpDocs
         DocsUrlLabel: "Google Cloud Credentials");
 
     private static readonly Doc Mail = new(
-        Summary: "Uitgaande e-mail via Resend API (primair). SMTP alleen als fallback.",
-        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails — allemaal via Resend wanneer API-key + From gezet zijn.",
-        WhereToGetKey: "resend.com → API Keys → Create. Plak bij ‘Resend API-key’, of zet Mail__ResendApiKey / RESEND_API_KEY op de API-service. From: geverifieerd domein (Mail__FromAddress), of tijdelijk onboarding@resend.dev (alleen naar je eigen inbox).",
-        Tip: "Resend heeft voorrang op SMTP. Op cloud-hosts faalt Gmail-SMTP vaak (5.7.9) — gebruik Resend. Env-vars vullen lege Admin-velden; opgeslagen Admin-keys gaan voor. ‘Secrets wissen’ schakelt env-fill uit tot je opnieuw opslaat of ‘Omgeving opnieuw gebruiken’ kiest. Resend is pas klaar met key én From.",
-        DocsUrl: "https://resend.com/api-keys",
-        DocsUrlLabel: "Resend API keys");
+        Summary: "Uitgaande e-mail. Mail__Provider kiest Resend of Lettermint.",
+        UsedFor: "Registratie-activatiemail, sollicitatie-verificatiecodes, notificaties en overige platformmails.",
+        WhereToGetKey: "Lettermint: lettermint.co → project-token als Lettermint__ApiKey (of LETTERMINT_API_KEY) en Mail__Provider=Lettermint. Resend: resend.com → API Keys, alleen als Mail__Provider=Resend. From: Mail__FromAddress op een geverifieerd domein.",
+        Tip: "Ontbreekt de Lettermint-sleutel terwijl Mail__Provider=Lettermint staat, dan gaat er geen mail via Resend. De gezondheidscheck toont dan: Mail: niet ingesteld. De Lettermint-sleutel staat alleen in de omgeving, niet in dit formulier. Dit formulier blijft de Resend-sleutel. Op Acceptatie zet je Mail__AllowedRecipientPattern zodat alleen test-*@lobsy.nl (en extra adressen) mail krijgen.",
+        DocsUrl: "https://lettermint.co/docs/api-reference/sending/send",
+        DocsUrlLabel: "Lettermint Sending API");
 
     private static readonly Doc OpenAi = new(
-        Summary: "OpenAI API voor tekstmodellen.",
-        UsedFor: "Vacaturetekst-moderatie (ongepaste of risicovolle content markeren/blokkeren) én de interactieve coach in ‘Oefen je sollicitatiegesprek’ (met scripted fallback zonder key).",
-        WhereToGetKey: "platform.openai.com → API keys → Create new secret key. Model bijv. gpt-4o-mini. Base URL leeg of https://api.openai.com/v1/",
-        Tip: "Het veld toont na Opslaan geen key terug (alleen gemaskeerd). Test leest de opgeslagen key uit de database — eerst Opslaan of laat Test auto-opslaan.",
-        DocsUrl: "https://platform.openai.com/api-keys",
-        DocsUrlLabel: "OpenAI API keys");
+        Summary: "AI-tekstmodellen. De actieve aanbieder komt uit Ai__Provider (OpenAI of Mistral).",
+        UsedFor: "Vacaturetekst-moderatie en de coach in ‘Oefen je sollicitatiegesprek’. Zonder geldige sleutel voor de gekozen aanbieder blijft de AI uit.",
+        WhereToGetKey: "Mistral: console.mistral.ai, sleutel als Mistral__ApiKey, en Ai__Provider=Mistral. OpenAI: platform.openai.com, alleen als Ai__Provider=OpenAI. Model en regio staan bovenaan deze pagina.",
+        Tip: "Een ontbrekende Mistral-sleutel valt niet terug op OpenAI. Het model per onderdeel (verhaal, loopbaanrapport, kompas, coach) staat bovenaan en komt uit Mistral__Models__Story, Mistral__Models__CareerReport, Mistral__Models__Compass en Mistral__Models__Chat. Leeg betekent Mistral__Model. Vertaling, CV uitlezen en vacaturecontrole gebruiken een klein model als dat is gezet: het veld Klein model op deze tegel, of OpenAI__SmallModel. Bij Mistral zet je Mistral__SmallModel (Ai__SmallModel geldt als die leeg is). Leeg klein model = hetzelfde model als de kwaliteitsdiensten. Dag-in-het-leven gebruikt altijd OpenAI via OccupationDayInLife__Model (standaard gpt-4o) of anders het Model op deze tegel. Het veld toont na Opslaan geen key terug (alleen gemaskeerd). Test leest de opgeslagen key uit de database — eerst Opslaan of laat Test auto-opslaan.",
+        DocsUrl: "https://console.mistral.ai/",
+        DocsUrlLabel: "Mistral console");
 }

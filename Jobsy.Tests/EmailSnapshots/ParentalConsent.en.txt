@@ -1,0 +1,40 @@
+KEY: ParentalConsent
+SUBJECT: Sanne asks for your consent for Lobsy
+PREHEADER: See what Sanne is asking consent for.
+KIND: Essential
+--- TEXT ---
+Sanne asks for your consent
+===========================
+
+Hello,
+
+Sanne is younger than 16 and wants to use Lobsy to apply. Your consent is
+needed for that.
+
+Name: Sanne
+Link valid until: 7 October 2026
+
+On the page you read what Lobsy does and give consent with one button.
+
+Do you not know what this is about? Then you do not need to do anything.
+Without consent Sanne cannot apply.
+
+View consent: https://lobsy.nl/toestemming?t=voorbeeld
+
+Team Lobsy
+
+You get this email because Sanne gave your email as a parent or guardian.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Sanne asks for your consent
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View consent -> https://lobsy.nl/toestemming?t=voorbeeld
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

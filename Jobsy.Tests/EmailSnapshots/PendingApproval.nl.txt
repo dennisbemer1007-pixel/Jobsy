@@ -1,0 +1,34 @@
+KEY: PendingApproval
+SUBJECT: Vacature wacht op je goedkeuring: Weekendhulp verkoop
+PREHEADER: Keur de vacature goed om hem te publiceren.
+KIND: Essential
+--- TEXT ---
+Hallo,
+
+Een vacature wacht op jou
+=========================
+
+De vacature Weekendhulp verkoop van Bakkerij De Gouden Korrel wil online. Er
+zijn niet genoeg tokens om hem direct te publiceren. Jij kunt de aanvraag
+goedkeuren.
+
+Keur de aanvraag goed om de vacature te publiceren.
+
+Aanvraag bekijken: https://lobsy.nl/werkgever/tokens
+
+Team Lobsy
+
+Je krijgt deze mail omdat je Bakkerij De Gouden Korrel beheert op Lobsy.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Een vacature wacht op jou
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Aanvraag bekijken -> https://lobsy.nl/werkgever/tokens
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

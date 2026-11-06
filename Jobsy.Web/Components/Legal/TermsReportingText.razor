@@ -1,0 +1,49 @@
+@using Jobsy.Core.Legal
+
+@* "Iets melden": notice and action plus statement of reasons (DSA, 04.5).
+   An empty Legal:SupportEmail hides the address instead of showing a placeholder (D1). *@
+<p>
+    Zie je een vacature of een bedrijf dat niet klopt of niet mag (bijvoorbeeld nep, discriminerend of
+    illegaal)? Klik onderaan de vacature op “Meld deze vacature” of onderaan de bedrijfspagina op
+    “Meld dit bedrijf”. Je kunt ook meteen naar het <a href="/melden">meldformulier</a>@if (HasEmail)
+    {<text>, of mailen naar <a href="mailto:@SupportEmail">@SupportEmail</a></text>}.
+</p>
+<p>
+    Op het formulier kies je met één klik op de knop “Melding versturen” wat er aan de hand is. Laat je
+    je e-mailadres achter? Dan bevestigen we je melding. We kijken er zo snel mogelijk naar, meestal
+    binnen 5 werkdagen.
+</p>
+@if (Audience == TermsAudience.Employer)
+{
+    <p>
+        Halen we iets van jou weg of beperken we het? Dan krijg je een uitleg: wat we deden, waarom, en
+        hoe je bezwaar maakt. Wie de melding deed, krijgt ook bericht als die een e-mailadres gaf.
+    </p>
+}
+else
+{
+    <p>
+        Halen we iets weg of beperken we het? Dan krijgt de werkgever een uitleg: wat, waarom, en hoe
+        die bezwaar maakt. Jij krijgt ook bericht als je je e-mailadres gaf.
+    </p>
+}
+@if (HasEmail)
+{
+    <p>Ben je het er niet mee eens? Mail <a href="mailto:@SupportEmail">@SupportEmail</a> binnen 6 maanden.</p>
+    <p>
+        Contactpunt voor autoriteiten en gebruikers:
+        <a href="mailto:@SupportEmail">@SupportEmail</a> (Nederlands of Engels).
+    </p>
+}
+else
+{
+    <p>Ben je het er niet mee eens? Laat het ons binnen 6 maanden weten via het contactformulier.</p>
+}
+
+@code {
+    [Parameter, EditorRequired] public TermsAudience Audience { get; set; }
+
+    [Parameter] public string? SupportEmail { get; set; }
+
+    private bool HasEmail => !string.IsNullOrWhiteSpace(SupportEmail);
+}

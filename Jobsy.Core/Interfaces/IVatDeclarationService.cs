@@ -40,6 +40,7 @@ public sealed record VatOpenPeriodDto(
     string PeriodLabel,
     int OpenTokenInvoiceCount,
     int OpenSalesManagerInvoiceCount,
+    int OpenConsumerInvoiceCount,
     bool HasOpenItems);
 
 public sealed record VatDeclarationPreviewDto(
@@ -49,6 +50,9 @@ public sealed record VatDeclarationPreviewDto(
     int Rubriek1OmzetExVatCents,
     int Rubriek1VatCents,
     int TokenInvoiceCount,
+    int ConsumerInvoiceCount,
+    int ConsumerOmzetExVatCents,
+    int ConsumerVatCents,
     int GoodwillCount,
     int Rubriek5VoorbelastingCents,
     int Rubriek5CostExVatCents,

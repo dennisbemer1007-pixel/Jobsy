@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
@@ -7,6 +8,24 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class UserNotificationService : IUserNotificationService
 {
+    /// <summary>
+    /// After-match status alerts reuse stable titles; 24h dedupe would suppress repeat events (2e voorstel, nieuw bericht, …).
+    /// </summary>
+    internal static bool SkipsDuplicateGuard(string? category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return false;
+        }
+
+        return category.StartsWith("Interview", StringComparison.Ordinal)
+               || category.StartsWith("ApplicationNewMessage", StringComparison.Ordinal);
+    }
+
+    private static readonly Regex VacancyLink = new(
+        @"/vacancies/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private readonly JobsyDbContext _db;
 
     public UserNotificationService(JobsyDbContext db)
@@ -18,6 +37,32 @@ public sealed class UserNotificationService : IUserNotificationService
         NotificationCreateRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (request.RelatedEntityId is Guid relatedId
+            && !string.IsNullOrWhiteSpace(request.Category)
+            && !string.IsNullOrWhiteSpace(request.Title)
+            && !SkipsDuplicateGuard(request.Category))
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-24);
+            var duplicate = await _db.UserNotifications.AsNoTracking()
+                .AnyAsync(
+                    n => n.UserId == request.UserId
+                         && n.Category == request.Category
+                         && n.RelatedEntityId == relatedId
+                         && n.Title == request.Title
+                         && n.CreatedAtUtc >= cutoff,
+                    cancellationToken);
+            if (duplicate)
+            {
+                return await _db.UserNotifications.AsNoTracking()
+                    .Where(n => n.UserId == request.UserId
+                                && n.Category == request.Category
+                                && n.RelatedEntityId == relatedId
+                                && n.Title == request.Title)
+                    .OrderByDescending(n => n.CreatedAtUtc)
+                    .FirstAsync(cancellationToken);
+            }
+        }
+
         var row = new UserNotification
         {
             Id = Guid.NewGuid(),
@@ -87,16 +132,138 @@ public sealed class UserNotificationService : IUserNotificationService
         CancellationToken cancellationToken = default)
     {
         take = Math.Clamp(take, 1, 100);
-        return await _db.UserNotifications.AsNoTracking()
-            .Where(n => n.UserId == userId)
-            .OrderByDescending(n => n.CreatedAtUtc)
-            .Take(take)
-            .ToListAsync(cancellationToken);
+        const int batchSize = 100;
+        const int maxScan = 2000;
+        var result = new List<UserNotification>();
+        var skip = 0;
+        while (result.Count < take && skip < maxScan)
+        {
+            var batch = await _db.UserNotifications.AsNoTracking()
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAtUtc)
+                .Skip(skip)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken);
+            if (batch.Count == 0)
+            {
+                break;
+            }
+
+            skip += batch.Count;
+            var live = await KeepLiveAsync(batch, cancellationToken);
+            foreach (var row in live)
+            {
+                result.Add(row);
+                if (result.Count >= take)
+                {
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
-    public Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default)
-        => _db.UserNotifications.AsNoTracking()
-            .CountAsync(n => n.UserId == userId && !n.IsRead, cancellationToken);
+    public async Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var unread = await _db.UserNotifications.AsNoTracking()
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .ToListAsync(cancellationToken);
+        return (await KeepLiveAsync(unread, cancellationToken)).Count;
+    }
+
+    private async Task<List<UserNotification>> KeepLiveAsync(
+        List<UserNotification> rows,
+        CancellationToken cancellationToken)
+    {
+        if (rows.Count == 0)
+        {
+            return rows;
+        }
+
+        var appIds = rows
+            .Where(n => n.RelatedEntityType == "Application" && n.RelatedEntityId is Guid)
+            .Select(n => n.RelatedEntityId!.Value)
+            .Distinct()
+            .ToList();
+        var apps = appIds.Count == 0
+            ? []
+            : await _db.Applications.AsNoTracking()
+                .Where(a => appIds.Contains(a.Id))
+                .Select(a => new { a.Id, a.VacancyId })
+                .ToListAsync(cancellationToken);
+        var liveApps = apps.Select(a => a.Id).ToHashSet();
+        var vacIds = rows
+            .Where(n => n.RelatedEntityType == "Vacancy" && n.RelatedEntityId is Guid)
+            .Select(n => n.RelatedEntityId!.Value)
+            .Concat(apps.Select(a => a.VacancyId))
+            .Concat(rows.SelectMany(LinkedVacancyIds))
+            .Distinct()
+            .ToList();
+        HashSet<Guid> liveVacs = vacIds.Count == 0
+            ? []
+            : (await _db.Vacancies.AsNoTracking()
+                .Where(v => vacIds.Contains(v.Id))
+                .Select(v => v.Id)
+                .ToListAsync(cancellationToken)).ToHashSet();
+        var appVacancy = apps.ToDictionary(a => a.Id, a => a.VacancyId);
+
+        return rows.Where(n => IsLive(n, liveApps, liveVacs, appVacancy)).ToList();
+    }
+
+    private static bool IsLive(
+        UserNotification notification,
+        HashSet<Guid> liveApps,
+        HashSet<Guid> liveVacs,
+        Dictionary<Guid, Guid> appVacancy)
+    {
+        if (notification.RelatedEntityType == "Application" && notification.RelatedEntityId is Guid appId)
+        {
+            if (!liveApps.Contains(appId))
+            {
+                return false;
+            }
+
+            if (appVacancy.TryGetValue(appId, out var vacancyId) && !liveVacs.Contains(vacancyId))
+            {
+                return false;
+            }
+        }
+
+        if (notification.RelatedEntityType == "Vacancy"
+            && notification.RelatedEntityId is Guid vacancy
+            && !liveVacs.Contains(vacancy))
+        {
+            return false;
+        }
+
+        foreach (var linked in LinkedVacancyIds(notification))
+        {
+            if (!liveVacs.Contains(linked))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static IEnumerable<Guid> LinkedVacancyIds(UserNotification notification)
+    {
+        foreach (var raw in new[] { notification.DeepLink, notification.ActionUrl })
+        {
+            if (string.IsNullOrEmpty(raw))
+            {
+                continue;
+            }
+
+            var match = VacancyLink.Match(raw);
+            if (match.Success && Guid.TryParse(match.Groups[1].Value, out var id))
+            {
+                yield return id;
+            }
+        }
+    }
 
     public async Task<UserNotification?> MarkReadAsync(
         Guid userId,

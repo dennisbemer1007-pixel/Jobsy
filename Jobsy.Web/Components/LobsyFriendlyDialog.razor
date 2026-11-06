@@ -1,16 +1,20 @@
 @namespace Jobsy.Web.Components
 @inject CultureState Culture
+@inject IJSRuntime Js
 
 @if (IsOpen)
 {
     <div class="@BackdropCss"
          aria-hidden="true"
          @onclick="OnBackdropClick"></div>
-    <div class="@DialogCss"
+    <div @ref="_dialog"
+         class="@DialogCss"
          role="dialog"
          aria-modal="true"
          aria-labelledby="@TitleId"
-         style="@Style">
+         tabindex="-1"
+         style="@Style"
+         @onkeydown="OnKeyDown">
         @if (Mood == LobsyDialogMood.Celebrate)
         {
             <div class="lobsy-dialog__celebrate">
@@ -26,6 +30,7 @@
                     {
                         <button type="button"
                                 class="share-modal__close"
+                                data-jobsy-dialog-close
                                 disabled="@CloseDisabled"
                                 @onclick="CloseAsync"
                                 aria-label="@(CloseAriaLabel ?? Culture["Common.Close"])">×</button>
@@ -53,6 +58,7 @@
                         {
                             <button type="button"
                                     class="share-modal__close"
+                                    data-jobsy-dialog-close
                                     disabled="@CloseDisabled"
                                     @onclick="CloseAsync"
                                     aria-label="@(CloseAriaLabel ?? Culture["Common.Close"])">×</button>
@@ -91,6 +97,9 @@
     [Parameter] public string? MascotAlt { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
+    private ElementReference _dialog;
+    private bool _trapped;
+
     private string MascotAltResolved =>
         string.IsNullOrWhiteSpace(MascotAlt) ? "De vrolijke kreeft van Lobsy" : MascotAlt;
 
@@ -115,5 +124,37 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_trapped)
+        {
+            _trapped = true;
+            try
+            {
+                await _dialog.FocusAsync();
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _dialog);
+            }
+            catch (Exception)
+            {
+                // JS is optional in tests.
+            }
+        }
+        else if (!IsOpen && _trapped)
+        {
+            _trapped = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.release");
+            }
+            catch (Exception)
+            {
+                // JS is optional in tests.
+            }
+        }
+    }
+
     private Task CloseAsync() => OnClose.InvokeAsync();
+
+    private Task OnKeyDown(KeyboardEventArgs e)
+        => e.Key == "Escape" && !CloseDisabled ? CloseAsync() : Task.CompletedTask;
 }

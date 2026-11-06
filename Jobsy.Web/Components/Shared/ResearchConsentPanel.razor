@@ -1,0 +1,116 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<article class="research-consent-card company-card competency-profile-card profile-form"
+         data-testid="research-consent-panel"
+         aria-labelledby="research-consent-title">
+    <header class="research-consent-card__header">
+        <h2 id="research-consent-title" class="research-consent-card__title">
+            @Culture[Embedded ? "Research.Info.Title" : "Research.Demo.Title"]
+        </h2>
+        <p class="research-consent-card__lead login-lead">@Culture["Research.Consent.Lead"]</p>
+    </header>
+
+    <div class="research-consent-card__opt-in">
+        <label class="research-consent-card__check filter-check">
+            <input type="checkbox"
+                   @bind="_consentChecked"
+                   data-testid="research-consent-checkbox" />
+            <span class="research-consent-card__check-text">@Culture["Research.Consent.Label"]</span>
+        </label>
+        <p class="research-consent-card__info">
+            <a class="auth-link" href="/info/onderzoek" target="_blank" rel="noopener">@Culture["Research.Consent.InfoLink"]</a>
+        </p>
+    </div>
+
+    @if (_consentChecked)
+    {
+        <div class="research-consent-card__fields" data-testid="research-demographics">
+            <ResearchDemographicsSelect LabelKey="Research.Demo.Age"
+                                        OptionCategory="Age"
+                                        Options="ResearchDemographicsCatalog.AgeBands"
+                                        Id="@ResearchDemoAgeId"
+                                        @bind-Value="_age" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.Gender"
+                                        OptionCategory="Gender"
+                                        Options="ResearchDemographicsCatalog.Genders"
+                                        Id="@ResearchDemoGenderId"
+                                        @bind-Value="_gender" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.Education"
+                                        OptionCategory="Education"
+                                        Options="ResearchDemographicsCatalog.EducationLevels"
+                                        Id="@ResearchDemoEducationId"
+                                        @bind-Value="_education" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.NativeLang"
+                                        OptionCategory="Lang"
+                                        Options="ResearchDemographicsCatalog.Languages"
+                                        Id="@ResearchDemoNativeLangId"
+                                        @bind-Value="_native" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.TestLang"
+                                        OptionCategory="Lang"
+                                        Options="ResearchDemographicsCatalog.Languages"
+                                        Id="@ResearchDemoTestLangId"
+                                        @bind-Value="_testLang" />
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <p class="state-message" role="alert">@_message</p>
+    }
+
+    <footer class="research-consent-card__actions">
+        <button type="button" class="btn btn-primary" disabled="@Busy" data-testid="research-consent-save" @onclick="AcceptAsync">
+            @Culture["Research.Consent.Accept"]
+        </button>
+        @if (ShowSkip)
+        {
+            <button type="button" class="btn btn-secondary" disabled="@Busy" data-testid="research-consent-skip" @onclick="SkipAsync">
+                @Culture["Research.Consent.Skip"]
+            </button>
+        }
+    </footer>
+</article>
+
+@code {
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Embedded { get; set; }
+    [Parameter] public bool ShowSkip { get; set; } = true;
+    [Parameter] public EventCallback<ResearchDemographicsSubmit> OnAccept { get; set; }
+    [Parameter] public EventCallback OnSkip { get; set; }
+
+    private const string ResearchDemoAgeId = "_age";
+    private const string ResearchDemoGenderId = "_gender";
+    private const string ResearchDemoEducationId = "_education";
+    private const string ResearchDemoNativeLangId = "_native";
+    private const string ResearchDemoTestLangId = "_testLang";
+
+    private bool _consentChecked;
+    private string? _age;
+    private string? _gender;
+    private string? _education;
+    private string? _native;
+    private string? _testLang;
+    private string? _message;
+
+    private async Task AcceptAsync()
+    {
+        if (!_consentChecked)
+        {
+            _message = Culture["Research.Consent.NeedCheckbox"];
+            return;
+        }
+
+        await OnAccept.InvokeAsync(new ResearchDemographicsSubmit(_age, _gender, _education, _native, _testLang));
+    }
+
+    private Task SkipAsync() => OnSkip.InvokeAsync();
+
+    public sealed record ResearchDemographicsSubmit(
+        string? AgeBand,
+        string? Gender,
+        string? EducationLevel,
+        string? NativeLanguage,
+        string? TestLanguage);
+}

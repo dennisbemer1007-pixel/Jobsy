@@ -17,7 +17,8 @@ public sealed class LoginProtectionRateLimiter
         var accountKey = string.IsNullOrWhiteSpace(account)
             ? "missing"
             : account.Trim().ToLowerInvariant();
-        return TryAcquireBucket($"{operation}:ip:{ip}", 20, now)
+        // IP bucket is generous for school NAT (many pupils logging in behind one address).
+        return TryAcquireBucket($"{operation}:ip:{ip}", 120, now)
                && TryAcquireBucket($"{operation}:account:{accountKey}", 8, now);
     }
 

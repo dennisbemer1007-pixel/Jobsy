@@ -33,7 +33,8 @@ public class BandwidthGuardTests
         Assert.Contains("GetPublicImage", controller);
         Assert.Contains("{id:guid}/image", controller);
 
-        var client = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/JobsyApiClient.cs"));
+        var clientDir = Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
         Assert.Contains("int? take = null", client);
         Assert.Contains("&take={cap}", client);
         Assert.Contains("AutomaticDecompression", File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/JobsyApiClientFactory.cs")));
@@ -42,23 +43,17 @@ public class BandwidthGuardTests
     [Fact]
     public void Hidden_tabs_do_not_keep_polling_session_or_notifications()
     {
-        var bell = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Layout/NotificationBell.razor"));
-        Assert.Contains("PageIsVisibleAsync", bell);
-        Assert.Contains("jobsyPageVisible", bell);
+        // Polling lives in NotificationUnreadStore (not the bell remount).
+        var store = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Services/NotificationUnreadStore.cs"));
+        Assert.Contains("PageIsVisibleAsync", store);
+        Assert.Contains("jobsyPageVisible", store);
 
         var idle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/SessionIdleGuard.razor"));
         Assert.Contains("jobsyPageVisible", idle);
 
-        foreach (var relative in new[]
-                 {
-                     "Jobsy.Web/wwwroot/js/sessionIdle.js",
-                     "Jobsy.Web/wwwroot/js/app-extras.js"
-                 })
-        {
-            var js = File.ReadAllText(Path.Combine(FindRepoRoot(), relative));
-            Assert.Contains("document.visibilityState === \"hidden\"", js);
-            Assert.Contains("refreshTimeout();", js);
-        }
+        var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/js/app-extras.js"));
+        Assert.Contains("document.visibilityState === \"hidden\"", js);
+        Assert.Contains("refreshTimeout();", js);
     }
 
     [Fact]
@@ -69,6 +64,7 @@ public class BandwidthGuardTests
         Assert.Contains("cache.put", sw);
         Assert.Contains("addEventListener(\"push\"", sw);
         Assert.Contains("url.pathname.indexOf(\"/api/\") === 0", sw);
+        Assert.Contains("url.pathname.indexOf(\"/account/\") === 0", sw);
         Assert.Contains("request.mode === \"navigate\"", sw);
         Assert.Contains("showNotification", sw);
 

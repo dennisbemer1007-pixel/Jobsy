@@ -1,0 +1,88 @@
+@namespace Jobsy.Web.Components.Errors
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Core.Features
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
+@inject CultureState Culture
+@inject IConfiguration Configuration
+@*
+  404 content (errors 01 / E3). Shared by /status/404 and by pages that answer 404 while keeping
+  their own route and layout (VacancyDetail), the way ClosedVacancyView is shared for 410.
+  No API or DB call: the employers switch is the cached feature flag the layout already uses.
+*@
+
+<section class="err-hero @(Embedded ? "err-embed pub-theme" : null)" data-testid="not-found-view">
+    <div class="err-hero__text">
+        <p class="err-eyebrow">@Culture["Status.NotFound.CodeLabel"]</p>
+        <h1 class="err-hero__title">@Culture["Status.NotFound.Title"]</h1>
+        <p class="err-hero__lead">@Culture["Status.NotFound.Lead"]</p>
+
+        <div class="err-kcoach" role="note">
+            <div>
+                <b>@Culture["Status.NotFound.GoodToKnow"]</b>
+                @Culture["Status.NotFound.GoodToKnowBody"]
+            </div>
+        </div>
+
+        <div class="err-actions">
+            <a class="pub-btn pub-btn--primary" href="@_myLobsyHref">@Culture["Status.NotFound.ToMyLobsy"]</a>
+            <a class="pub-btn pub-btn--secondary" href="@_journeyHref">@Culture["Status.NotFound.ToJourney"]</a>
+        </div>
+
+        @if (!Embedded)
+        {
+            <p class="err-support">
+                @SupportLinePrefix<a class="err-support__link" href="@SupportMailto">@_supportEmail</a>@SupportLineSuffix
+            </p>
+        }
+    </div>
+    <div class="err-hero__art err-hero__art--kreeft" aria-hidden="true">
+        <img class="err-kreeft-scene" src="@KreeftErrorIllustrations.NotFoundScene" alt="" loading="lazy" decoding="async" />
+        <img class="err-kreeft-figure" src="@KreeftErrorIllustrations.NotFoundCrab" alt="" loading="lazy" decoding="async" />
+    </div>
+</section>
+
+@code {
+    /// <summary>True inside another page's layout (adds <c>err-embed pub-theme</c>).</summary>
+    [Parameter] public bool Embedded { get; set; }
+
+    [Parameter] public bool SignedInCandidate { get; set; }
+
+    private string _supportEmail = Jobsy.Web.Hosting.SupportContact.Default;
+    private string _myLobsyHref = PublicRoutes.Landing;
+    private string _journeyHref = OnboardingRoutes.KompasHubPath;
+
+    private string SupportMailto => Jobsy.Web.Hosting.SupportContact.MailtoLink(_supportEmail);
+
+    private string SupportLinePrefix => SplitSupportLine().Prefix;
+
+    private string SupportLineSuffix => SplitSupportLine().Suffix;
+
+    protected override Task OnInitializedAsync()
+    {
+        _supportEmail = Jobsy.Web.Hosting.SupportContact.Email(Configuration);
+        if (SignedInCandidate)
+        {
+            _myLobsyHref = FeatureRoutes.CandidateProfilePath;
+            _journeyHref = OnboardingRoutes.KompasHubPath;
+        }
+        else
+        {
+            _myLobsyHref = PublicRoutes.Landing;
+            _journeyHref = PublicRoutes.Test;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private (string Prefix, string Suffix) SplitSupportLine()
+    {
+        var template = Culture["Status.Common.SupportLine"];
+        var marker = template.IndexOf("{0}", StringComparison.Ordinal);
+        return marker < 0
+            ? (template + " ", string.Empty)
+            : (template[..marker], template[(marker + 3)..]);
+    }
+}

@@ -22,18 +22,20 @@ public class DashboardLoadGuardTests
     }
 
     [Theory]
-    [InlineData("Components/Pages/Admin/AdminHomePanel.razor")]
-    [InlineData("Components/Pages/EmployerHomePanel.razor")]
-    [InlineData("Components/Pages/Candidate/CandidateHomePanel.razor")]
-    [InlineData("Components/Pages/SalesManagerHomePanel.razor")]
-    [InlineData("Components/Pages/AmbassadeurHomePanel.razor")]
+    [InlineData("Components/Admin/Sections/AdminHomePanel.razor")]
+    [InlineData("Components/Home/EmployerHomePanel.razor")]
+    [InlineData("Components/Candidate/CandidateHomePanel.razor")]
+    [InlineData("Components/Home/AmbassadeurHomePanel.razor")]
     public void Role_dashboard_retries_load_after_first_interactive_render(string relativePath)
     {
         var text = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", relativePath));
         Assert.Contains("HomeDashboardLoad.TryBegin", text);
         Assert.Contains("OnAfterRenderAsync(bool firstRender)", text);
         Assert.Contains("TryLoadAsync()", text);
-        Assert.Contains("firstRender ? TryLoadAsync()", text);
+        Assert.True(
+            text.Contains("firstRender ? TryLoadAsync()", StringComparison.Ordinal)
+            || text.Contains("firstRender && !_redirecting ? TryLoadAsync()", StringComparison.Ordinal),
+            "Expected OnAfterRenderAsync to call TryLoadAsync on firstRender (optionally gated by !_redirecting).");
         Assert.DoesNotContain(
             """
                     if (!RendererInfo.IsInteractive)

@@ -24,6 +24,7 @@ public sealed class OsrmRoutingService : IExactRoutingService
     private readonly ILogger<OsrmRoutingService> _logger;
     private readonly string _osrmBase;
     private readonly string _transitPlanUrl;
+    private readonly bool _transitEnabled;
 
     public OsrmRoutingService(
         IHttpClientFactory http,
@@ -32,6 +33,7 @@ public sealed class OsrmRoutingService : IExactRoutingService
     {
         _http = http;
         _logger = logger;
+        _transitEnabled = ReadTransitEnabled(configuration);
         _osrmBase = TrimBase(configuration["Routing:OsrmBaseUrl"], "https://router.project-osrm.org");
         var transitBase = TrimBase(configuration["Routing:TransitBaseUrl"], "https://api.transitous.org");
         var planPath = configuration["Routing:TransitPlanPath"];
@@ -72,8 +74,10 @@ public sealed class OsrmRoutingService : IExactRoutingService
         try
         {
             result = mode == TransportMode.PublicTransport
-                ? await GetTransitAsync(fromLatitude, fromLongitude, toLatitude, toLongitude, cancellationToken)
-                    .ConfigureAwait(false)
+                ? (_transitEnabled
+                    ? await GetTransitAsync(fromLatitude, fromLongitude, toLatitude, toLongitude, cancellationToken)
+                        .ConfigureAwait(false)
+                    : null)
                 : await GetOsrmAsync(fromLatitude, fromLongitude, toLatitude, toLongitude, mode, cancellationToken)
                     .ConfigureAwait(false);
         }
@@ -268,6 +272,22 @@ public sealed class OsrmRoutingService : IExactRoutingService
         => string.Create(
             CultureInfo.InvariantCulture,
             $"{mode}:{Math.Round(fromLat, 5)}:{Math.Round(fromLng, 5)}:{Math.Round(toLat, 5)}:{Math.Round(toLng, 5)}");
+
+    internal static bool ReadTransitEnabled(IConfiguration configuration)
+    {
+        var raw = configuration["Transit:Enabled"];
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return true;
+        }
+
+        if (bool.TryParse(raw.Trim(), out var enabled))
+        {
+            return enabled;
+        }
+
+        return raw.Trim() != "0";
+    }
 
     private static string TrimBase(string? value, string fallback)
     {

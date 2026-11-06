@@ -38,6 +38,8 @@ public sealed class CandidateInsightsWorker : BackgroundService
 
             try
             {
+                // WhoAmI, compass and the competence report are candidate features.
+                // They run while employers are off. The match snapshot is skipped inside Recompute.
                 await using var scope = _scopes.CreateAsyncScope();
                 var computer = scope.ServiceProvider.GetRequiredService<ICandidateInsightsComputer>();
                 await computer.RecomputeAsync(userId, stoppingToken);

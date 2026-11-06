@@ -1,0 +1,14 @@
+@page "/admin/content/paginas"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+
+@* public-pages 08: the "Wie zijn wij" editor is gone (D10); only the flyer is left. *@
+<PageTitle>@Culture["AdminNav.Flyer"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.Flyer"]">
+    <MarketingFlyerSection />
+</AdminPageShell>

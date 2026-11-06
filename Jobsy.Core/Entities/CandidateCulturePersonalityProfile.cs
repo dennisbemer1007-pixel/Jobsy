@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -28,6 +30,10 @@ public class CandidateCulturePersonalityProfile
 
     public string MatchTagsJson { get; set; } = "[]";
 
+    public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
+
+    public int QuickScanHighestAnswered { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
@@ -44,6 +50,12 @@ public class CompanyCultureProfile
 
     public string Status { get; set; } = CandidateCompetencyStatuses.Draft;
     public string AnswersJson { get; set; } = "{}";
+
+    /// <summary>
+    /// How the profile was last completed: <c>Quick</c> (6 registration sliders) or <c>Full</c> (12-item scan).
+    /// Existing rows default to <c>Full</c>.
+    /// </summary>
+    public string Source { get; set; } = CompanyCultureSources.Full;
 
     public int? AutonomyPercent { get; set; }
     public int? InformalPercent { get; set; }
@@ -62,4 +74,13 @@ public class CompanyCultureProfile
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+}
+
+public static class CompanyCultureSources
+{
+    public const string Quick = "Quick";
+    public const string Full = "Full";
+
+    public static bool IsQuick(string? source)
+        => string.Equals(source, Quick, StringComparison.OrdinalIgnoreCase);
 }

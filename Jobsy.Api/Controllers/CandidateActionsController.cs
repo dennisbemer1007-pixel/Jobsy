@@ -11,34 +11,39 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/candidate-actions")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class CandidateActionsController : ControllerBase
 {
     private readonly JobsyDbContext _db;
     private readonly ICandidateActionTokenService _tokens;
     private readonly IUserNotificationService _notifications;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IUserLookupService _users;
+    private readonly IApplicationStatusRecorder _statusRecorder;
 
     public CandidateActionsController(
         JobsyDbContext db,
         ICandidateActionTokenService tokens,
         IUserNotificationService notifications,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
-        IUserLookupService users)
+        IUserLookupService users,
+        IApplicationStatusRecorder statusRecorder)
     {
         _db = db;
         _tokens = tokens;
         _notifications = notifications;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _users = users;
+        _statusRecorder = statusRecorder;
     }
 
     [HttpPost("set-unavailable")]
@@ -217,8 +222,12 @@ public class CandidateActionsController : ControllerBase
             cancellationToken);
         foreach (var other in others)
         {
-            other.Status = ApplicationStatus.Withdrawn;
-            other.RespondedAt = now;
+            _statusRecorder.SetStatus(
+                other,
+                ApplicationStatus.Withdrawn,
+                ApplicationStatusActorKind.Candidate,
+                userId,
+                now);
             ApplicationRules.ScrubPersonalDataOnWithdraw(other);
         }
 
@@ -244,11 +253,7 @@ public class CandidateActionsController : ControllerBase
 
             foreach (var contact in contacts)
             {
-                await _email.SendAsync(new EmailMessage(
-                    contact.Email,
-                    mail.Subject,
-                    mail.Html,
-                    mail.Category), cancellationToken);
+                await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
                 await _notifications.CreateAsync(
                     new NotificationCreateRequest(

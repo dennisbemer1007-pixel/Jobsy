@@ -1,0 +1,75 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Courses.Count > 0)
+{
+    <section class="career-step-learning" data-testid="career-step-learning" aria-labelledby="career-step-learning-title">
+        <h2 id="career-step-learning-title" class="career-step-learning__title">@Culture["Career.Illustrated.StepTrainingTitle"]</h2>
+        <div class="career-step-learning__grid">
+            @foreach (var course in Courses.Take(3))
+            {
+                var open = _expandedId == course.OfferId;
+                <article class="career-step-learning__card @(open ? "is-open" : null)">
+                    <div class="career-step-learning__card-head">
+                        <span class="career-step-learning__badge @(course.IsFree ? "is-free" : null)">
+                            @(course.IsFree ? Culture["Career.Illustrated.LearningBadgeFree"] : Culture["Career.Illustrated.LearningBadgePaid"])
+                        </span>
+                        <h3 class="career-step-learning__card-title">@course.Title</h3>
+                        <p class="career-step-learning__meta">
+                            <span>@course.ProviderName</span>
+                            @if (!string.IsNullOrWhiteSpace(DurationLabel(course)))
+                            {
+                                <span> · @DurationLabel(course)</span>
+                            }
+                        </p>
+                        <p class="career-step-learning__reason">@ReasonLine(course)</p>
+                        <button type="button"
+                                class="career-step-learning__toggle engagement-btn"
+                                aria-expanded="@(open ? "true" : "false")"
+                                @onclick="() => Toggle(course.OfferId)">
+                            @(open ? Culture["Career.Illustrated.LearningClose"] : Culture["Career.Illustrated.LearningView"])
+                        </button>
+                    </div>
+                    @if (open)
+                    {
+                        <div class="career-step-learning__detail">
+                            <p>@Culture.Format("Career.Illustrated.LearningDetail", course.Delivery, course.Type)</p>
+                            @if (!string.IsNullOrWhiteSpace(course.Location))
+                            {
+                                <p class="muted">@course.Location</p>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<PassportCourseCard> Courses { get; set; } = [];
+
+    private Guid? _expandedId;
+
+    private void Toggle(Guid id) => _expandedId = _expandedId == id ? null : id;
+
+    private string? DurationLabel(PassportCourseCard course)
+        => course.DurationValue is > 0 && !string.IsNullOrWhiteSpace(course.DurationUnit)
+            ? $"{course.DurationValue} {course.DurationUnit}"
+            : null;
+
+    private string ReasonLine(PassportCourseCard course)
+    {
+        var key = course.Title.Trim() switch
+        {
+            "Paraveterinair" => "Career.Illustrated.LearningReason.Paraveterinair",
+            "Dierenwelzijn in de praktijk" => "Career.Illustrated.LearningReason.Dierenwelzijn",
+            "EHBO voor huisdieren" => "Career.Illustrated.LearningReason.EhboHuisdieren",
+            _ => null
+        };
+
+        return key is not null ? Culture[key] : Culture.Format("Career.Illustrated.LearningReasonFallback", course.Title);
+    }
+}

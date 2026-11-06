@@ -34,24 +34,104 @@ public static class CandidateNameRules
         return (parts[0], parts[1]);
     }
 
-    public static string DisplayFirstName(string? firstName, string? fullName)
+    public static string DisplayFirstName(string? firstName, string? fullName, string? accountEmail = null)
     {
-        if (!string.IsNullOrWhiteSpace(firstName))
+        if (IsRealPersonName(firstName, accountEmail))
         {
-            return firstName.Trim();
+            return firstName!.Trim();
         }
 
-        return SplitFullName(fullName).FirstName ?? string.Empty;
+        if (IsRealPersonName(fullName, accountEmail))
+        {
+            return SplitFullName(fullName).FirstName ?? string.Empty;
+        }
+
+        return string.Empty;
     }
 
-    public static string DisplayLastName(string? lastName, string? fullName)
+    public static string DisplayLastName(string? lastName, string? fullName, string? accountEmail = null)
     {
-        if (!string.IsNullOrWhiteSpace(lastName))
+        if (IsRealPersonName(lastName, accountEmail))
         {
-            return lastName.Trim();
+            return lastName!.Trim();
         }
 
-        return SplitFullName(fullName).LastName ?? string.Empty;
+        if (IsRealPersonName(fullName, accountEmail))
+        {
+            return SplitFullName(fullName).LastName ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>Onboarding Voornaam/Achternaam — never e-mail or e-mail local-part placeholders.</summary>
+    public static (string FirstName, string LastName) ResolveOnboardingPrefill(
+        string? firstName,
+        string? lastName,
+        string? fullName,
+        string? accountEmail)
+    {
+        var resolvedFirst = IsRealPersonName(firstName, accountEmail) ? firstName!.Trim() : null;
+        var resolvedLast = IsRealPersonName(lastName, accountEmail) ? lastName!.Trim() : null;
+
+        if (resolvedFirst is null && resolvedLast is null && IsRealPersonName(fullName, accountEmail))
+        {
+            var split = SplitFullName(fullName);
+            resolvedFirst = split.FirstName;
+            resolvedLast = split.LastName;
+        }
+
+        if (resolvedFirst is not null
+            && resolvedLast is not null
+            && resolvedFirst.Contains(' ', StringComparison.Ordinal))
+        {
+            var split = SplitFullName(resolvedFirst);
+            if (!string.IsNullOrWhiteSpace(split.FirstName)
+                && !string.IsNullOrWhiteSpace(split.LastName)
+                && string.Equals(split.LastName, resolvedLast, StringComparison.OrdinalIgnoreCase))
+            {
+                resolvedFirst = split.FirstName;
+            }
+        }
+
+        return (resolvedFirst ?? string.Empty, resolvedLast ?? string.Empty);
+    }
+
+    public static bool IsRealPersonName(string? value, string? accountEmail)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Contains('@', StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(accountEmail))
+        {
+            return true;
+        }
+
+        var email = accountEmail.Trim();
+        if (trimmed.Equals(email, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var at = email.IndexOf('@');
+        if (at > 0)
+        {
+            var local = email[..at];
+            if (trimmed.Equals(local, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 

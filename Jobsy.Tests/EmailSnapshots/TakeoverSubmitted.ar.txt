@@ -1,0 +1,30 @@
+KEY: TakeoverSubmitted
+SUBJECT: Your request for ⁨Bakkerij De Gouden Korrel⁩ was sent
+PREHEADER: The manager decides. You will get an email.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+Your request was sent
+
+⁨Bakkerij De Gouden Korrel⁩ already has a manager. We sent your request to
+that person. You get an email when they decide.
+
+How does Lobsy work?: https://lobsy.nl/hoe-werkt-lobsy
+
+فريق Lobsy
+
+You get this email because you asked for access to ⁨Bakkerij De Gouden Korrel⁩.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Your request was sent
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: How does Lobsy work? -> https://lobsy.nl/hoe-werkt-lobsy
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

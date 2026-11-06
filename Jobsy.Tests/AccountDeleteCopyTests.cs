@@ -8,12 +8,16 @@ public class AccountDeleteCopyTests
         var root = FindRepoRoot();
         var extras = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStringsExtras.cs"));
         var ui = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStrings.cs"));
+        var legal = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStringsLegal.cs"));
         var privacy = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Legal", "PrivacyData.razor"));
 
         Assert.Contains("[\"Unsubscribe.Title\"] = \"Account verwijderen\"", extras);
         Assert.Contains("naam, e-mail, telefoon", extras);
         Assert.Contains("[\"Profile.Unsubscribe\"] = \"Account verwijderen\"", ui);
-        Assert.Contains("Account verwijderen", privacy);
+        // Mijn gegevens (public-pages 07) moved this copy into UiStringsLegal/Privacy.Data.*;
+        // the page itself only references the resource key.
+        Assert.Contains("Account verwijderen", legal);
+        Assert.Contains("Privacy.Data.Delete.Button", privacy);
         Assert.DoesNotContain("[\"Unsubscribe.Title\"] = \"Account afmelden\"", extras);
     }
 

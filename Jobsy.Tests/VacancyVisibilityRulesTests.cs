@@ -35,18 +35,33 @@ public class VacancyVisibilityRulesTests
         Assert.True(costs.Values.All(v => v > 0));
     }
 
-    private static Vacancy CreateVacancy(string title, VacancyStatus status, DateOnly today) => new()
+    private static Vacancy CreateVacancy(string title, VacancyStatus status, DateOnly today)
     {
-        Id = Guid.NewGuid(),
-        Title = title,
-        Description = title,
-        HourlyWage = 14m,
-        StartDate = today,
-        EndDate = today.AddMonths(1),
-        Status = status,
-        CompanyId = Guid.NewGuid(),
-        Location = new GeoPoint(52.0, 4.3),
-        RequiredTransport = TransportMode.Bike,
-        MaxApplications = 5
-    };
+        var company = new Company
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test",
+            KvkNumber = "12345678",
+            Address = "Straat 1",
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow
+        };
+        return new Vacancy
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Description = title,
+            HourlyWage = 14m,
+            StartDate = today,
+            EndDate = today.AddMonths(1),
+            Status = status,
+            CompanyId = company.Id,
+            Company = company,
+            Location = new GeoPoint(52.0, 4.3),
+            RequiredTransport = TransportMode.Bike,
+            MaxApplications = 5
+        };
+    }
 }

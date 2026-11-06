@@ -1,0 +1,511 @@
+using System.Threading;
+using Microsoft.Playwright;
+
+namespace Jobsy.Tests;
+
+/// <summary>
+/// Desktop lagen: Funda popup on the map (mockup c8ee9298) — not the docked cluster sheet.
+/// </summary>
+[Collection("BanenkaartPlaywright")]
+public sealed class BanenkaartLagenDesktopPopupPlaywrightTests : IAsyncLifetime
+{
+    private const string BanenkaartPath =
+        "/banenkaart?originLat=51.9944&originLng=4.2097&originLabel=Kasweg%2012%2C%202671%20AB%20Naaldwijk&maxMinutes=20&transport=Fiets&minHours=32&maxHours=40";
+
+    private const string VacancyWithPhoto = "b2000001-0000-0000-0000-000000000001";
+
+    private IPlaywright? _playwright;
+    private IBrowser? _browser;
+    private IllustratedPagesWebFactory? _web;
+    private string _baseUrl = "";
+
+    public async ValueTask InitializeAsync()
+    {
+        var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        Assert.Equal(0, exit);
+        _playwright = await Playwright.CreateAsync();
+        _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
+        _web = new IllustratedPagesWebFactory();
+        _baseUrl = _web.ServerAddress.TrimEnd('/');
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_browser is not null)
+        {
+            await _browser.DisposeAsync();
+        }
+
+        _playwright?.Dispose();
+        _web?.Dispose();
+    }
+
+    [Fact]
+    public async Task Desktop_1280_top_pin_popup_below_strip_and_close_clickable()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.Locator("[data-testid=kb-map-top-chrome] .strip .sc").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        await page.WaitForFunctionAsync(
+            "() => (window.jobMap?.__testGetPinCount?.() ?? 0) > 0",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync(
+            """
+            (vid) => {
+              const j = window.jobMap;
+              if (!j) return;
+              if (j.__testOpenTopRenderedPin?.()) return;
+              j.__testOpenVacancyNearMapTop?.(vid);
+            }
+            """,
+            VacancyWithPhoto);
+
+        await page.Locator(".maplibregl-popup.kb-popup-lagen-pop").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15_000
+        });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              window.jobMap?.refitDesktopPopupAfterTopChrome?.();
+              const pop = document.querySelector('.maplibregl-popup.kb-popup-lagen-pop');
+              const strip = document.querySelector('[data-testid=kb-map-top-chrome] .strip:not(.strip--empty)');
+              if (!pop || !strip) return false;
+              const card = pop.querySelector('[data-lagen-fcw]') || pop;
+              const pr = card.getBoundingClientRect();
+              const sr = strip.getBoundingClientRect();
+              return pr.top >= sr.bottom - 1;
+            }
+            """,
+            null,
+            new() { Timeout = 12_000 });
+
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              window.jobMap?.refitDesktopPopupAfterTopChrome?.();
+              const btn = document.querySelector('.kb-popup-lagen-pop [data-lagen-close]');
+              if (!btn) return false;
+              const r = btn.getBoundingClientRect();
+              const x = r.left + r.width / 2;
+              const y = r.top + r.height / 2;
+              const hit = document.elementFromPoint(x, y);
+              return !!(hit && (hit === btn || btn.contains(hit)
+                || (hit.closest && hit.closest('[data-lagen-close]'))));
+            }
+            """,
+            null,
+            new() { Timeout = 12_000 });
+    }
+
+    [Fact]
+    public async Task Desktop_1280_map_attached_funda_popup_wage_and_close()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1280, Height = 800 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(400);
+
+        Assert.True(await page.EvaluateAsync<bool>(
+            "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+            VacancyWithPhoto));
+
+        await page.Locator(".maplibregl-popup.kb-popup-lagen-pop").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15_000
+        });
+
+        await page.EvaluateAsync(
+            "() => document.querySelector('[data-lagen-wage]')?.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }))");
+        await page.WaitForFunctionAsync(
+            "() => { const t = document.querySelector('.kb-popup-lagen-pop .tip'); return t && !t.hasAttribute('hidden'); }",
+            null,
+            new() { Timeout = 8_000 });
+
+        await page.EvaluateAsync("() => document.querySelector('[data-lagen-close]')?.click()");
+        await page.WaitForFunctionAsync(
+            "() => !document.querySelector('.maplibregl-popup.kb-popup-lagen-pop')",
+            null,
+            new() { Timeout = 10_000 });
+    }
+
+    [Fact]
+    public async Task Desktop_popup_stays_in_map_focus_rect_and_heart_does_not_navigate()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var likedVacancyIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await context.RouteAsync("**/api/vacancies/*/like", async route =>
+        {
+            var path = route.Request.Url;
+            var idStart = path.IndexOf("/api/vacancies/", StringComparison.OrdinalIgnoreCase);
+            var idPart = idStart >= 0
+                ? path[(idStart + "/api/vacancies/".Length)..].Split('?', '#')[0].Trim('/')
+                : "";
+            var method = route.Request.Method;
+            if (method is "POST" or "PUT" && idPart.Length > 0)
+            {
+                likedVacancyIds.Add(idPart);
+            }
+            else if (method is "DELETE" && idPart.Length > 0)
+            {
+                likedVacancyIds.Remove(idPart);
+            }
+
+            var liked = idPart.Length > 0 && likedVacancyIds.Contains(idPart);
+            await route.FulfillAsync(new()
+            {
+                Status = 200,
+                ContentType = "application/json",
+                Body = $"{{\"liked\":{(liked ? "true" : "false")},\"Liked\":{(liked ? "true" : "false")}}}"
+            });
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(
+            _baseUrl + "/__test/sign-in?role=candidate&return=" + Uri.EscapeDataString(BanenkaartPath),
+            new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForURLAsync(
+            url => url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(400);
+
+        Assert.True(await page.EvaluateAsync<bool>(
+            "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+            VacancyWithPhoto));
+
+        await page.Locator(".maplibregl-popup.kb-popup-lagen-pop").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15_000
+        });
+        await page.EvaluateAsync("() => window.jobMap?.refitDesktopPopupAfterTopChrome?.()");
+        await page.WaitForTimeoutAsync(600);
+        Assert.True(await page.EvaluateAsync<bool>(
+            "() => window.jobMap?.__testPopupInMapFocus?.() ?? false"),
+            "Desktop popup should sit fully inside the map area below the job-card strip.");
+
+        var heart = page.Locator("[data-lagen-heart]").First;
+        await heart.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+        var canSave = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              try {
+                const node = document.getElementById("jobsy-map-boot");
+                const boot = JSON.parse(node.textContent || "{}");
+                const labels = (boot.mapInit && boot.mapInit.labels) || boot.labels;
+                return labels && (labels.canSave === true || labels.canSave === "true");
+              } catch (e) {
+                return false;
+              }
+            }
+            """);
+        Assert.True(canSave, "Candidate session should expose canSave in map boot labels.");
+        var boundSave = await heart.EvaluateAsync<string?>("el => el.dataset.boundSave ?? null");
+        Assert.Equal("1", boundSave);
+        var urlBefore = page.Url;
+        var pressedBefore = await heart.GetAttributeAsync("aria-pressed") ?? "false";
+        var navigated = false;
+        page.FrameNavigated += (_, frame) =>
+        {
+            if (frame == page.MainFrame)
+            {
+                navigated = true;
+            }
+        };
+        await heart.ClickAsync(new() { Position = new() { X = 12, Y = 12 } });
+        await page.WaitForTimeoutAsync(600);
+        Assert.False(navigated, "Heart click must not trigger a full document navigation.");
+        Assert.StartsWith(_baseUrl + "/banenkaart", page.Url, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(urlBefore, page.Url);
+        var pressedAfter = await heart.GetAttributeAsync("aria-pressed") ?? "false";
+        Assert.NotEqual(pressedBefore, pressedAfter);
+
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(600);
+        Assert.True(await page.EvaluateAsync<bool>(
+            "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+            VacancyWithPhoto));
+        await page.Locator("[data-lagen-heart].is-saved, [data-lagen-heart][aria-pressed=\"true\"]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+    }
+
+    [Fact]
+    public async Task Desktop_popup_skips_map_popup_photo_when_pin_has_no_image()
+    {
+        const string noPhotoId = "b2000002-0000-0000-0000-000000000001";
+        var photoRequests = 0;
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        await context.RouteAsync("**/map-popup-photo**", route =>
+        {
+            Interlocked.Increment(ref photoRequests);
+            return route.FulfillAsync(new() { Status = 404, Body = "" });
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        Assert.True(await page.EvaluateAsync<bool>(
+            "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+            noPhotoId));
+        await page.WaitForTimeoutAsync(2500);
+        Assert.Equal(0, photoRequests);
+        Assert.True(await page.EvaluateAsync<bool>(
+            "() => !!document.querySelector('.fph--category, .fph--empty')"));
+    }
+
+    [Fact]
+    public async Task Desktop_popup_shell_appears_before_vacancy_card_api()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        await context.RouteAsync("**/api/vacancies/*/card**", async route =>
+        {
+            await Task.Delay(8000);
+            await route.ContinueAsync();
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+
+        var elapsedMs = await page.EvaluateAsync<int>(
+            """
+            async (vid) => {
+              const t0 = performance.now();
+              if (!window.jobMap?.__testOpenVacancyById?.(vid)) return -1;
+              for (let i = 0; i < 120; i++) {
+                if (document.querySelector('.maplibregl-popup.kb-popup-lagen-pop .fcw')) {
+                  return Math.round(performance.now() - t0);
+                }
+                await new Promise(r => requestAnimationFrame(r));
+              }
+              return 9999;
+            }
+            """,
+            VacancyWithPhoto);
+
+        Assert.InRange(elapsedMs, 0, 350);
+    }
+
+    [Fact]
+    public async Task Desktop_map_view_and_popup_restore_after_browser_back()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(400);
+
+        const double targetZoom = 13.25;
+        await page.EvaluateAsync(
+            """
+            async ({ vid, z }) => {
+              const map = window.jobMap?.__testGetMap?.();
+              if (map) map.jumpTo({ zoom: z, duration: 0 });
+              window.jobMap?.__testOpenVacancyById?.(vid);
+            }
+            """,
+            new { vid = VacancyWithPhoto, z = targetZoom });
+
+        await page.Locator(".maplibregl-popup.kb-popup-lagen-pop").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15_000
+        });
+
+        await page.Locator(".fgo").First.ClickAsync();
+        await page.WaitForURLAsync("**/vacancies/**", new() { Timeout = 30_000 });
+        await page.GoBackAsync(new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+
+        await page.WaitForFunctionAsync(
+            """
+            (z) => {
+              const map = window.jobMap?.__testGetMap?.();
+              const pop = document.querySelector('.maplibregl-popup.kb-popup-lagen-pop');
+              return map && Math.abs(map.getZoom() - z) < 0.08 && !!pop;
+            }
+            """,
+            targetZoom,
+            new() { Timeout = 25_000 });
+    }
+
+    [Fact]
+    public async Task Desktop_cluster_pager_advances_counter()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(600);
+
+        var opened = await page.EvaluateAsync<bool>("() => window.jobMap?.__testTapLargestCluster?.() ?? false");
+        Assert.True(opened);
+
+        await page.Locator(".maplibregl-popup.kb-popup-lagen-pop [data-lagen-counter]").First.WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 15_000
+        });
+
+        var before = await page.Locator("[data-lagen-counter]").First.InnerTextAsync();
+        Assert.Contains("1 van", before, StringComparison.OrdinalIgnoreCase);
+
+        await page.Locator("[data-lagen-next]").First.ClickAsync();
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const t = document.querySelector('[data-lagen-counter]')?.textContent || '';
+              return /2\\s*van/i.test(t);
+            }
+            """,
+            null,
+            new() { Timeout = 8_000 });
+    }
+
+    [Fact]
+    public async Task Desktop_three_sequential_pin_opens_stay_in_focus_rect()
+    {
+        var ids = new[]
+        {
+            "b2000001-0000-0000-0000-000000000001",
+            "b2000003-0000-0000-0000-000000000001",
+            "b2000005-0000-0000-0000-000000000001"
+        };
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        await page.EvaluateAsync("() => { window.jobMap?.invalidate?.(); window.jobMap?.__testGetMap?.()?.resize?.(); }");
+        await page.WaitForTimeoutAsync(400);
+
+        foreach (var id in ids)
+        {
+            Assert.True(await page.EvaluateAsync<bool>(
+                "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+                id));
+            await page.Locator(".maplibregl-popup.kb-popup-lagen-pop").First.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 15_000
+            });
+            await page.EvaluateAsync("() => window.jobMap?.refitDesktopPopupAfterTopChrome?.()");
+            await page.WaitForTimeoutAsync(600);
+            Assert.True(await page.EvaluateAsync<bool>(
+                "() => window.jobMap?.__testPopupInMapFocus?.() ?? false"),
+                "Popup should stay fully visible below the strip on every open (id=" + id + ").");
+            await page.Locator("[data-lagen-close]").First.ClickAsync();
+            await page.WaitForFunctionAsync(
+                "() => !document.querySelector('.maplibregl-popup.kb-popup-lagen-pop')",
+                null,
+                new() { Timeout = 10_000 });
+        }
+    }
+
+    [Fact]
+    public async Task Desktop_popup_photo_loads_webp_from_api()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1113 },
+            IgnoreHTTPSErrors = true
+        });
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(_baseUrl + BanenkaartPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('[data-banenkaart-ssr=\"1\"]')?.dataset?.banenkaartSsrBound === '1'",
+            null,
+            new() { Timeout = 90_000 });
+        Assert.True(await page.EvaluateAsync<bool>(
+            "(vid) => window.jobMap?.__testOpenVacancyById?.(vid) ?? false",
+            VacancyWithPhoto));
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const img = document.querySelector('.kb-popup-lagen-pop .fph img');
+              return img && img.complete && img.naturalWidth > 0;
+            }
+            """,
+            null,
+            new() { Timeout = 15_000 });
+    }
+}

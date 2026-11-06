@@ -1,0 +1,68 @@
+@page "/candidate/ondernemerscheck"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IUwvFeaturesGate UwvGate
+@inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@UwvMockupCopy.Ondernemer.TestName(Culture.Language) · Lobsy</PageTitle>
+@if (_needsOndernemerScript)
+{
+    <HeadContent>
+        <script src="@($"/{WwwrootAssetCatalog.Url("js/uwv-ondernemer.js")}")" defer></script>
+    </HeadContent>
+}
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="cards" CardCount="1" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "stap")] public string? Stap { get; set; }
+
+    private bool _loading = true;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+    private bool _needsOndernemerScript;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is not null)
+            {
+                http.Response.Headers.CacheControl = "no-store";
+            }
+
+            var data = await OndernemersCheckSsrData.LoadAsync(UwvGate, Api, Stap, default);
+            _needsOndernemerScript = data.UwvEnabled && data.Phase == "question";
+            _bodyHtml = OndernemersCheckSsrShells.BuildBody(Culture, data);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Panel.ErrorInline"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

@@ -1,0 +1,162 @@
+@namespace Jobsy.Web.Components.Candidate.Pwa
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Pwa
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject PwaInstallSheetState SheetState
+@implements IDisposable
+
+@if (_open)
+{
+    <div class="pwa-entry-sheet-backdrop" data-testid="pwa-install-sheet-backdrop" @onclick="Close"></div>
+    <div class="pwa-entry-sheet @(_platform == PwaEntryPlatform.Ios ? "pwa-entry-sheet--ios" : "pwa-entry-sheet--samsung")"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="pwa-entry-sheet-title"
+         data-testid="pwa-install-sheet">
+        <div class="pwa-entry-sheet__header">
+            <h2 id="pwa-entry-sheet-title" class="pwa-entry-sheet__title">
+                @if (_platform == PwaEntryPlatform.Ios)
+                {
+                    @Culture["Pwa.Sheet.Ios.Title"]
+                }
+                else
+                {
+                    @Culture["Pwa.Sheet.Samsung.Title"]
+                }
+            </h2>
+            <button type="button" class="pwa-entry-sheet__close" @onclick="Close" aria-label="@Culture["Pwa.Sheet.Close"]">×</button>
+        </div>
+        <div class="pwa-entry-sheet__body">
+            @if (_platform == PwaEntryPlatform.Ios)
+            {
+                <p class="pwa-entry-sheet__lead">@Culture["Pwa.Sheet.Ios.Lead"]</p>
+                <ol class="pwa-entry-sheet__steps">
+                    <li>
+                        <span>@Culture["Pwa.Sheet.Ios.Step1"]</span>
+                        <span class="pwa-entry-sheet__share-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 3v12" stroke-linecap="round" />
+                                <path d="M8 7l4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                            </svg>
+                        </span>
+                    </li>
+                    <li>@Culture["Pwa.Sheet.Ios.Step2"]</li>
+                    <li>@Culture["Pwa.Sheet.Ios.Step3"]</li>
+                </ol>
+            }
+            else
+            {
+                <p class="pwa-entry-sheet__lead">@Culture["Pwa.Sheet.Samsung.Lead"]</p>
+                @if (!string.IsNullOrWhiteSpace(_chromeIntentUrl))
+                {
+                    <a class="login-submit pwa-entry-sheet__primary"
+                       href="@_chromeIntentUrl"
+                       data-testid="pwa-open-chrome">
+                        @Culture["Pwa.Sheet.Samsung.OpenChrome"]
+                    </a>
+                }
+                <button type="button" class="btn btn-secondary pwa-entry-sheet__secondary" @onclick="CopyLinkAsync">
+                    @Culture["Pwa.Sheet.Samsung.CopyLink"]
+                </button>
+                @if (!string.IsNullOrWhiteSpace(_copyMessage))
+                {
+                    <p class="pwa-entry-sheet__msg" role="status" data-testid="pwa-copy-confirm">@_copyMessage</p>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _open;
+    private PwaEntryPlatform _platform;
+    private string? _chromeIntentUrl;
+    private string? _copyMessage;
+
+    protected override void OnInitialized()
+    {
+        SheetState.Changed += OnSheetStateChanged;
+    }
+
+    private void OnSheetStateChanged()
+    {
+        if (SheetState.IsOpen)
+        {
+            _ = OpenInternalAsync(SheetState.Platform);
+        }
+        else
+        {
+            _open = false;
+            _ = InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public async Task OpenAsync(PwaEntryPlatform platform)
+    {
+        SheetState.Open(platform);
+        await OpenInternalAsync(platform);
+    }
+
+    public Task CloseAsync()
+    {
+        Close();
+        return Task.CompletedTask;
+    }
+
+    private async Task OpenInternalAsync(PwaEntryPlatform platform)
+    {
+        _platform = platform;
+        _copyMessage = null;
+        if (platform == PwaEntryPlatform.Samsung)
+        {
+            try
+            {
+                _chromeIntentUrl = await Js.InvokeAsync<string>("lobsyPwaInstall.buildChromeIntentUrl");
+            }
+            catch
+            {
+                _chromeIntentUrl = null;
+            }
+        }
+
+        _open = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void Close()
+    {
+        _open = false;
+        SheetState.Close();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        try
+        {
+            var result = await Js.InvokeAsync<CopyResult>("lobsyPwaInstall.copyPageLink");
+            _copyMessage = result?.Ok == true
+                ? Culture["Pwa.Sheet.Samsung.LinkCopied"]
+                : Culture["Pwa.Sheet.Samsung.LinkCopied"];
+        }
+        catch
+        {
+            _copyMessage = Culture["Pwa.Sheet.Samsung.LinkCopied"];
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SheetState.Changed -= OnSheetStateChanged;
+    }
+
+    private sealed class CopyResult
+    {
+        public bool Ok { get; set; }
+        public string? Url { get; set; }
+    }
+}

@@ -1,7 +1,10 @@
 namespace Jobsy.Web.Localization;
 
 /// <summary>
-/// Role-specific “Hoe werkt Lobsy” copy. Missing translations fall back to Dutch via <see cref="UiStrings"/>.
+/// Staff-only “Hoe werkt Lobsy” role guides (vestiging, regio, bedrijf, intermediair, sales,
+/// ambassadeur). Public visitor copy lives in <see cref="UiStringsPublicInfo"/> (<c>HowLobsy.*</c>).
+/// These guides ship in nl + en only; pl/ro/ar read the English draft until native review
+/// (see <c>docs/i18n/public-pages-review.md</c>).
 /// </summary>
 internal static class UiStringsHowLobsyRoles
 {
@@ -14,11 +17,11 @@ internal static class UiStringsHowLobsyRoles
     {
         Merge(nl, Nl());
         Merge(en, En());
-        // Keep catalog key parity across languages (LocalizationTests).
-        // Temporary Dutch copy until dedicated translations land.
-        Merge(pl, Nl());
-        Merge(ro, Nl());
-        Merge(ar, Nl());
+        // Key parity across languages (LocalizationParityReportTests) with the English draft,
+        // so staff who read pl/ro/ar do not get Dutch they cannot read.
+        Merge(pl, En());
+        Merge(ro, En());
+        Merge(ar, En());
     }
 
     private static void Merge(Dictionary<string, string> target, Dictionary<string, string> extra)
@@ -37,7 +40,7 @@ internal static class UiStringsHowLobsyRoles
         ["HowLobsy.Branch.Step1Title"] = "1. Start op je dashboard",
         ["HowLobsy.Branch.Step1Body"] = "Open {0} voor KPI’s van jouw vestiging: actieve vacatures, sollicitaties, clicks en meer. Kies een periode en klik een tegel voor detail.",
         ["HowLobsy.Branch.Step2Title"] = "2. Beheer en publiceer vacatures",
-        ["HowLobsy.Branch.Step2Body"] = "Onder {0} maak je concepten of publiceer je banen. Bij publiceren kies je basis, highlight, PushBom of verlengen — dat kost tokens. Bij te weinig saldo kan publicatie op goedkeuring wachten.",
+        ["HowLobsy.Branch.Step2Body"] = "Onder {0} maak je concepten of publiceer je banen. Bij publiceren kies je basis, uitlichten, pushbericht of verlengen — dat kost tokens. Bij te weinig saldo kan publicatie op goedkeuring wachten.",
         ["HowLobsy.Branch.Step3Title"] = "3. Beoordeel sollicitanten",
         ["HowLobsy.Branch.Step3Body"] = "Via vacatures of {0} zie je kandidaten. Contactgegevens (PII) verschijnen pas nadat je iemand accepteert of contact opneemt — privacy by design.",
         ["HowLobsy.Branch.Step4Title"] = "4. Houd je tokens in de gaten",
@@ -141,7 +144,7 @@ internal static class UiStringsHowLobsyRoles
         ["HowLobsy.Branch.Step1Title"] = "1. Start on your dashboard",
         ["HowLobsy.Branch.Step1Body"] = "Open {0} for your branch KPIs: active vacancies, applications, clicks and more. Pick a period and tap a tile for detail.",
         ["HowLobsy.Branch.Step2Title"] = "2. Manage and publish vacancies",
-        ["HowLobsy.Branch.Step2Body"] = "Under {0} you create drafts or publish jobs. When publishing you choose basic, highlight, PushBom or extend — that costs tokens. With a low balance, publishing may wait for approval.",
+        ["HowLobsy.Branch.Step2Body"] = "Under {0} you create drafts or publish jobs. When publishing you choose basic, feature, push message or extend — that costs tokens. With a low balance, publishing may wait for approval.",
         ["HowLobsy.Branch.Step3Title"] = "3. Review applicants",
         ["HowLobsy.Branch.Step3Body"] = "Via vacancies or {0} you see candidates. Contact details (PII) appear only after you accept someone or start contacting them — privacy by design.",
         ["HowLobsy.Branch.Step4Title"] = "4. Watch your tokens",

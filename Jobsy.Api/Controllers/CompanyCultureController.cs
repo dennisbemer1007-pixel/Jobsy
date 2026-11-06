@@ -4,12 +4,14 @@ using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/company/culture")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class CompanyCultureController : ControllerBase
 {
     private readonly ICompanyCultureService _culture;
@@ -41,6 +43,7 @@ public sealed class CompanyCultureController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<CompanyCultureStateDto>> Save(
         [FromQuery] Guid? companyId,

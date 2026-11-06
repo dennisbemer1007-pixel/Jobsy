@@ -44,11 +44,13 @@ public class AmbassadeurFlyerPdfServiceTests
         });
         await db.SaveChangesAsync();
 
+        var company = new FakeCompanySettings();
         var service = new AmbassadeurFlyerPdfService(
             db,
             new FakeSalesCommercial(packageCount: 8),
-            new FakeCompanySettings(),
-            new FakeFeatures());
+            company,
+            new FakeFeatures(),
+            new CompanyBackedLegalIdentity(company));
 
         var candidate = await service.RenderAsync("AM-FLYER1", AmbassadeurFlyerKind.Candidate);
         var entrepreneur = await service.RenderAsync("AM-FLYER1", AmbassadeurFlyerKind.Entrepreneur);
@@ -127,6 +129,10 @@ public class AmbassadeurFlyerPdfServiceTests
             decimal? year2DirectCommissionRate = null,
             decimal? year3DirectCommissionRate = null,
             decimal? referredYear1DirectCommissionRate = null,
+            int? commissionHoldDays = null,
+            decimal? payoutMinimumEuro = null,
+            int? ibanChangeHoldDays = null,
+            int? attributionCookieDays = null,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
@@ -172,8 +178,7 @@ public class AmbassadeurFlyerPdfServiceTests
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, false, false, "https://lobsy.nl", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.nl", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

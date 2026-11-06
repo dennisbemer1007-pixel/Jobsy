@@ -1,0 +1,31 @@
+KEY: WorkExperienceReferenceReminder
+SUBJECT: تذكير: ⁨Jan de Vries⁩ ينتظر تأكيدك
+PREHEADER: مرة أخرى، بلا حساب
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+تذكير
+
+⁨Jan de Vries⁩ ما زال ينتظر تأكيدك عن العمل لدى ⁨Bakkerij De Gouden Korrel⁩.
+
+هذا تذكير واحد على الأكثر. لا تريد؟ يمكنك الرفض في الصفحة.
+
+افتح الأسئلة: https://lobsy.nl/werk-referentie/voorbeeld
+
+فريق Lobsy
+
+سمّاك أحدهم شخصاً يستطيع تأكيد هذا العمل.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: تذكير
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: افتح الأسئلة -> https://lobsy.nl/werk-referentie/voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

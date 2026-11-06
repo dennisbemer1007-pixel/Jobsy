@@ -59,7 +59,7 @@ public sealed class CursorCloudAgentClient : ICursorCloudAgentClient
         var body = new CursorLaunchRequestDto(
             new CursorLaunchPromptDto(request.Prompt, images is { Count: > 0 } ? images : null),
             string.IsNullOrWhiteSpace(options.Model) ? null : options.Model,
-            new CursorLaunchSourceDto(options.Repository!.Trim(), string.IsNullOrWhiteSpace(options.Ref) ? "main" : options.Ref.Trim()),
+            new CursorLaunchSourceDto(options.Repository!.Trim(), string.IsNullOrWhiteSpace(options.Ref) ? "acceptatie" : options.Ref.Trim()),
             new CursorLaunchTargetDto(true, request.BranchName),
             TryWebhook(options));
 

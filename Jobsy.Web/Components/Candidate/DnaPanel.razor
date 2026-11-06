@@ -1,0 +1,519 @@
+@namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared.Charts
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@using Jobsy.Web.Components.Candidate.Dna
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+<div class="dna-panel">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    }
+    else
+    {
+        <section class="dna-story" aria-labelledby="dna-story-title">
+            <div class="dna-section__head">
+                <h3 id="dna-story-title" class="dna-section__title">@Culture["Dna.StoryTitle"]</h3>
+                @if (!string.IsNullOrWhiteSpace(_story))
+                {
+                    <ReadAloudButton Text="@_story" SpeechKey="dna-story" />
+                }
+            </div>
+
+            @if (string.IsNullOrWhiteSpace(_story))
+            {
+                <div class="dna-story__empty">
+                    <p class="login-lead">@Culture["Dna.StoryEmpty"]</p>
+                    <button type="button" class="login-submit" @onclick="GoTests">@Culture["Dna.StoryEmptyCta"]</button>
+                </div>
+            }
+            else
+            {
+                @if (_storyUpdating)
+                {
+                    <p class="dna-story__updating" aria-live="polite">@Culture["Dna.StoryUpdating"]</p>
+                }
+                <div class="dna-story__body @(_storyExpanded ?"is-expanded" : "is-clamped")">
+                    <div class="dna-story__text">
+                        @foreach (var para in StoryParagraphs(_story))
+                        {
+                            <p>@para</p>
+                        }
+                    </div>
+                    @if (!_storyExpanded)
+                    {
+                        <div class="dna-story__fade" aria-hidden="true"></div>
+                    }
+                </div>
+                <button type="button"
+                        class="dna-story__toggle"
+                        @onclick="ToggleStory">
+                    @(_storyExpanded ? Culture["Dna.StoryLess"] : Culture["Dna.StoryMore"])
+                </button>
+
+                @if (_keywords.Count > 0)
+                {
+                    <ul class="dna-story__chips" aria-label="@Culture["Dna.KeywordsLabel"]">
+                        @foreach (var keyword in _keywords.Take(6))
+                        {
+                            <li>@keyword</li>
+                        }
+                    </ul>
+                }
+
+                @if (_storyExpanded && _storyGeneratedAt is DateTime generated)
+                {
+                    <p class="dna-story__meta">
+                        @Culture.Format("Dna.StoryUpdated", NlDate.Day(generated))
+                    </p>
+                }
+            }
+        </section>
+
+        @if (_highlights.Count > 0)
+        {
+            <section class="dna-highlights" aria-labelledby="dna-highlights-title">
+                <div class="dna-section__head">
+                    <h3 id="dna-highlights-title" class="dna-section__title">@Culture["Dna.HighlightsTitle"]</h3>
+                    <span class="dna-section__aside">@Culture["Dna.HighlightsAside"]</span>
+                </div>
+                <div class="dna-highlights__grid">
+                    @foreach (var h in _highlights)
+                    {
+                        <article class="dna-highlight">
+                            <p class="dna-highlight__label">@Culture[h.LabelKey]</p>
+                            <p class="dna-highlight__value">@h.Value</p>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+
+        <section class="dna-carousel"
+                 role="region"
+                 aria-roledescription="carousel"
+                 aria-label="@Culture["Dna.CarouselLabel"]"
+                 aria-labelledby="dna-carousel-title">
+            <h3 id="dna-carousel-title" class="visually-hidden">@Culture["Dna.CarouselLabel"]</h3>
+            <div class="dna-carousel__track" @ref="_carouselTrack">
+                @for (var slideIndex = 0; slideIndex < _slides.Count; slideIndex++)
+                {
+                    var slide = _slides[slideIndex];
+                    var isActive = _activeSlide == slideIndex;
+                    <article class="dna-carousel__slide @(isActive ?"is-active" : null) @(slide.IsProvisional ? "dna-carousel__slide--provisional" : null) @(slide.IsGhost ? "dna-carousel__slide--ghost" : null)"
+                             tabindex="@(isActive ? 0 : -1)"
+                             aria-hidden="@(isActive ? "false" : "true")"
+                             aria-label="@slide.AriaName">
+                        <header class="dna-carousel__head">
+                            <h4 class="dna-carousel__title">@Culture[slide.TitleKey]</h4>
+                            @if (slide.IsGhost)
+                            {
+                                <span class="dna-card__badge dna-card__badge--empty">@Culture["Test.Status.NotDone"]</span>
+                            }
+                            else if (slide.Extended)
+                            {
+                                <span class="dna-card__badge dna-card__badge--success">@Culture["Test.Status.Extended"]</span>
+                            }
+                            else if (slide.Completed)
+                            {
+                                <span class="dna-card__badge dna-card__badge--success">@Culture["Dna.StatusComplete"]</span>
+                            }
+                            else if (slide.IsProvisional)
+                            {
+                                <span class="dna-card__badge dna-card__badge--provisional">@Culture["Onboarding.ProvisionalBadge"]</span>
+                            }
+                        </header>
+
+                        @if (slide.IsGhost)
+                        {
+                            <div class="dna-carousel__body dna-carousel__body--ghost">
+                                @if (slide.Kind == AssessmentKind.Career || slide.Kind == AssessmentKind.Competence)
+                                {
+                                    <RadarChart Axes="slide.Axes" Ghost="true" AriaLabel="@Culture[slide.ChartAltKey]" />
+                                }
+                                else if (slide.Kind == AssessmentKind.Culture)
+                                {
+                                    <PoleSliders Items="slide.Poles" Ghost="true" />
+                                }
+                                else
+                                {
+                                    <BarList Items="slide.Bars" Ghost="true" />
+                                }
+                                <p class="dna-teaser__text">@Culture[slide.TeaserKey]</p>
+                                <a class="dna-teaser__btn" href="@slide.StartHref">@Culture.Format("Dna.TeaserStart", Culture[slide.TitleKey], slide.QuestionCount)</a>
+                            </div>
+                        }
+                        else if (slide.Kind == AssessmentKind.Career)
+                        {
+                            <div class="dna-carousel__body dna-carousel__body--split">
+                                <RadarChart Axes="slide.Axes" Dashed="slide.IsProvisional" AriaLabel="@Culture[slide.ChartAltKey]" />
+                                <BarList Items="slide.Bars" ShowLetters="true" HighlightTop="3" />
+                            </div>
+                        }
+                        else if (slide.Kind == AssessmentKind.Competence)
+                        {
+                            <div class="dna-carousel__body">
+                                <RadarChart Axes="slide.Axes" Dashed="slide.IsProvisional" AriaLabel="@Culture[slide.ChartAltKey]" />
+                            </div>
+                        }
+                        else if (slide.Kind == AssessmentKind.Culture)
+                        {
+                            <div class="dna-carousel__body">
+                                <PoleSliders Items="slide.Poles" />
+                            </div>
+                        }
+                        else if (slide.Kind == AssessmentKind.Values)
+                        {
+                            <div class="dna-carousel__body">
+                                <BarList Items="slide.Bars" HighlightTop="3" />
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+            @if (_slides.Count > 1)
+            {
+                <div class="dna-carousel__dots" role="tablist" aria-label="@Culture["Dna.CarouselLabel"]">
+                    @for (var i = 0; i < _slides.Count; i++)
+                    {
+                        var index = i;
+                        <button type="button"
+                                class="dna-carousel__dot @(_activeSlide == index ?"is-active" : null)"
+                                role="tab"
+                                aria-selected="@(_activeSlide == index)"
+                                aria-label="@Culture.Format("Dna.CarouselDot", index + 1, _slides.Count)"
+                                @onclick="() => ScrollToSlide(index)">
+                        </button>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="dna-tiles" aria-labelledby="dna-tiles-title">
+            <div class="dna-section__head">
+                <h3 id="dna-tiles-title" class="dna-section__title">@Culture["Dna.TestsTitle"]</h3>
+                <span class="dna-section__aside">@Culture.Format("Dna.TestsProgress", _completedCount, _cards.Count)</span>
+            </div>
+            <div class="dna-tiles__grid">
+                @foreach (var card in _cards)
+                {
+                    var href = card.Completed ? card.DetailHref : card.StartHref;
+                    var statusText = card.Extended
+                        ? Culture["Test.Status.Extended"]
+                        : card.Completed
+                            ? Culture["Dna.StatusComplete"]
+                            : card.IsProvisional
+                                ? Culture["Onboarding.ProvisionalBadge"]
+                                : Culture["Test.Status.NotDone"];
+                    var cta = card.Completed
+                        ? Culture["Dna.ViewResult"]
+                        : card.IsProvisional
+                            ? Culture.Format("Dna.TileContinue", card.Remaining)
+                            : Culture.Format("Dna.TileStart", card.MinutesApprox);
+                    var a11y = Culture.Format(
+                        "Dna.TileA11y",
+                        Culture[card.TitleKey],
+                        statusText,
+                        card.Answered,
+                        card.QuestionCount);
+                    <a class="dna-tile @(card.Completed ?"dna-tile--complete" : null) @(card.IsProvisional ? "dna-tile--provisional" : null) @(!card.Completed && !card.IsProvisional ? "dna-tile--empty" : null)"
+                       href="@href"
+                       aria-label="@a11y">
+                        <header class="dna-tile__head">
+                            <h4 class="dna-tile__title">@Culture[card.TitleKey]</h4>
+                            @if (card.Extended || card.Completed)
+                            {
+                                <span class="dna-card__badge dna-card__badge--success">✓ @statusText</span>
+                            }
+                            else if (card.IsProvisional)
+                            {
+                                <span class="dna-card__badge dna-card__badge--provisional">@statusText</span>
+                            }
+                            else
+                            {
+                                <span class="dna-card__badge dna-card__badge--empty">@statusText</span>
+                            }
+                        </header>
+                        <ProgressRing Answered="card.Answered" Total="card.QuestionCount" Complete="card.Completed" Provisional="card.IsProvisional" />
+                        <p class="dna-tile__summary">@card.Summary</p>
+                        <span class="dna-tile__cta">@cta <span aria-hidden="true">›</span></span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        @if (_cultureDetail is { } cultureDetail)
+        {
+            <section class="dna-detail" aria-labelledby="dna-culture-detail-title">
+                <div class="dna-section__head">
+                    <h3 id="dna-culture-detail-title" class="dna-section__title">@Culture["Dna.CultureHomeTitle"]</h3>
+                    <span class="dna-section__aside">@cultureDetail.Aside</span>
+                </div>
+                @if (cultureDetail.IsGhost)
+                {
+                    <PoleSliders Items="cultureDetail.Poles" Ghost="true" />
+                    <p class="dna-teaser__text">@Culture["Dna.TeaserCulture"]</p>
+                    <a class="dna-teaser__btn" href="@cultureDetail.StartHref">@Culture.Format("Dna.TeaserStart", Culture["Test.Culture.Title"], cultureDetail.QuestionCount)</a>
+                }
+                else
+                {
+                    <PoleSliders Items="cultureDetail.Poles" />
+                }
+            </section>
+        }
+
+        @if (_valuesDetail is { } valuesDetail)
+        {
+            <section class="dna-detail" aria-labelledby="dna-values-detail-title">
+                <div class="dna-section__head">
+                    <h3 id="dna-values-detail-title" class="dna-section__title">@Culture["Dna.ValuesWorkTitle"]</h3>
+                    <span class="dna-section__aside">@valuesDetail.Aside</span>
+                </div>
+                @if (valuesDetail.IsGhost)
+                {
+                    <BarList Items="valuesDetail.Bars" Ghost="true" />
+                    <p class="dna-teaser__text">@Culture["Dna.TeaserValues"]</p>
+                    <a class="dna-teaser__btn" href="@valuesDetail.StartHref">@Culture.Format("Dna.TeaserStart", Culture["Test.Values.Title"], valuesDetail.QuestionCount)</a>
+                }
+                else
+                {
+                    <BarList Items="valuesDetail.Bars" HighlightTop="3" />
+                }
+            </section>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public EventCallback<string> OnOpenTab { get; set; }
+    [Parameter] public CandidateKompasState? Snapshot { get; set; }
+    [Parameter] public CandidateDnaSummary? DnaSnapshot { get; set; }
+    [CascadingParameter] public CandidateKompasState? CascadedKompas { get; set; }
+
+    private bool _loading = true;
+    private bool _loaded;
+    private bool _loadFailed;
+    private bool _storyExpanded;
+    private bool _storyUpdating;
+    private string? _story;
+    private DateTime? _storyGeneratedAt;
+    private readonly List<string> _keywords = [];
+    private readonly List<CandidateDnaViewBuilder.DnaCard> _cards = [];
+    private readonly List<CandidateDnaViewBuilder.DnaHighlight> _highlights = [];
+    private readonly List<CandidateDnaViewBuilder.DnaSlide> _slides = [];
+    private CandidateDnaViewBuilder.DetailBlock? _cultureDetail;
+    private CandidateDnaViewBuilder.DetailBlock? _valuesDetail;
+    private int _completedCount;
+    private int _activeSlide;
+    private ElementReference _carouselTrack;
+
+    private bool _employersOn = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
+        if (!Active)
+        {
+            return;
+        }
+
+        var shared = Snapshot ?? CascadedKompas;
+        if (shared is not null)
+        {
+            _loadFailed = false;
+            ApplySnapshot(shared);
+            return;
+        }
+
+        if (DnaSnapshot is not null)
+        {
+            _loadFailed = false;
+            ApplyDnaSnapshot(DnaSnapshot);
+            return;
+        }
+
+        if (!_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private void ApplySnapshot(CandidateKompasState kompas)
+    {
+        ApplyStory(kompas.WhoAmI);
+        Paint(
+            kompas.Competencies?.Status,
+            kompas.Competencies?.Scores ?? kompas.Competencies?.PreviewScores,
+            kompas.Competencies?.AnsweredCount ?? 0,
+            kompas.CareerInterests?.Status,
+            kompas.CareerInterests?.Scores ?? kompas.CareerInterests?.PreviewScores,
+            kompas.CareerInterests?.AnsweredCount ?? 0,
+            kompas.Culture?.Status,
+            kompas.Culture?.Scores ?? kompas.Culture?.PreviewScores,
+            kompas.Culture?.AnsweredCount ?? 0,
+            kompas.Values?.Status,
+            kompas.Values?.Scores ?? kompas.Values?.PreviewScores,
+            kompas.Values?.AnsweredCount ?? 0,
+            kompas.CompetenceDeep,
+            kompas.CareerDeep,
+            kompas.CultureDeep,
+            kompas.ValuesDeep);
+        _loaded = true;
+        _loading = false;
+    }
+
+    private void ApplyDnaSnapshot(CandidateDnaSummary dna)
+    {
+        ApplyStory(dna.WhoAmI);
+        var competence = dna.Competencies;
+        var career = dna.CareerInterests;
+        var culture = dna.Culture;
+        var values = dna.Values;
+        Paint(
+            competence?.Status,
+            competence?.Scores ?? competence?.PreviewScores,
+            competence?.AnsweredCount ?? 0,
+            career?.Status,
+            career?.Scores ?? career?.PreviewScores,
+            career?.AnsweredCount ?? 0,
+            culture?.Status,
+            culture?.Scores ?? culture?.PreviewScores,
+            culture?.AnsweredCount ?? 0,
+            values?.Status,
+            values?.Scores ?? values?.PreviewScores,
+            values?.AnsweredCount ?? 0,
+            DeepStub(competence?.DeepCompleted ?? false),
+            DeepStub(career?.DeepCompleted ?? false),
+            DeepStub(culture?.DeepCompleted ?? false),
+            DeepStub(values?.DeepCompleted ?? false));
+        _loaded = true;
+        _loading = false;
+    }
+
+    private static DeepAnalysisState? DeepStub(bool completed)
+        => completed ? new DeepAnalysisState { IsCompleted = true } : null;
+
+    private void ApplyStory(WhoAmIStorySummary? who)
+    {
+        _story = string.IsNullOrWhiteSpace(who?.Story)
+            ? null
+            : WhoAmIStoryBuilder.ForDisplay(who!.Story, _employersOn);
+        _storyGeneratedAt = who?.GeneratedAtUtc;
+        _storyUpdating = string.Equals(who?.Status, WhoAmIStoryStatuses.Updating, StringComparison.OrdinalIgnoreCase);
+        _keywords.Clear();
+        if (who?.Keywords is { Count: > 0 })
+        {
+            _keywords.AddRange(who.Keywords.Where(k => !string.IsNullOrWhiteSpace(k)).Take(6));
+        }
+    }
+
+    private Task RetryLoadAsync()
+    {
+        _loaded = false;
+        return LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            var result = await Api.GetMyKompasDnaResultAsync();
+            if (result.TemporarilyUnavailable)
+            {
+                _loadFailed = true;
+                return;
+            }
+
+            if (result.Value is not null)
+            {
+                ApplyDnaSnapshot(result.Value);
+            }
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+            _loaded = true;
+        }
+    }
+
+    private void Paint(
+        string? competenceStatus,
+        CompetencyScoreSet? competenceScores,
+        int competenceAnswered,
+        string? careerStatus,
+        RiasecScoreSet? careerScores,
+        int careerAnswered,
+        string? cultureStatus,
+        CulturePersonalityScoreSet? cultureScores,
+        int cultureAnswered,
+        string? valuesStatus,
+        SchwartzValuesScoreSet? valuesScores,
+        int valuesAnswered,
+        DeepAnalysisState? competenceDeep,
+        DeepAnalysisState? careerDeep,
+        DeepAnalysisState? cultureDeep,
+        DeepAnalysisState? valuesDeep)
+    {
+        var view = CandidateDnaViewBuilder.Paint(
+            competenceStatus, competenceScores, competenceAnswered,
+            careerStatus, careerScores, careerAnswered,
+            cultureStatus, cultureScores, cultureAnswered,
+            valuesStatus, valuesScores, valuesAnswered,
+            competenceDeep, careerDeep, cultureDeep, valuesDeep,
+            k => Culture[k],
+            (k, args) => Culture.Format(k, args),
+            Culture.Language);
+
+        _cards.Clear();
+        _cards.AddRange(view.Cards);
+        _highlights.Clear();
+        _highlights.AddRange(view.Highlights);
+        _slides.Clear();
+        _slides.AddRange(view.Slides);
+        _cultureDetail = view.CultureDetail;
+        _valuesDetail = view.ValuesDetail;
+        _completedCount = view.CompletedCount;
+        _activeSlide = 0;
+    }
+
+    private static IEnumerable<string> StoryParagraphs(string story)
+        => story.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private void ToggleStory() => _storyExpanded = !_storyExpanded;
+
+    private Task GoTests() => OnOpenTab.InvokeAsync(CandidateKompasTabs.Tests);
+
+    private void ScrollToSlide(int index)
+    {
+        _activeSlide = Math.Clamp(index, 0, Math.Max(0, _slides.Count - 1));
+    }
+}

@@ -1,0 +1,54 @@
+@inject CultureState Culture
+
+@if (Dist is null || Dist.Buckets.Count == 0)
+{
+    <span class="status-pill status-pill--neutral" data-testid="insights-insufficient">@Culture["Insights.Insufficient"]</span>
+}
+else
+{
+    <div class="insights-bars">
+        @foreach (var b in Dist.Buckets)
+        {
+            var label = ResolveLabel(b);
+            <div class="insights-bar">
+                <div class="insights-bar__meta">
+                    <span>@label</span>
+                    @if (b.Share.Status == "ok" && b.Share.Percent is int p)
+                    {
+                        <span>@p%</span>
+                    }
+                    else
+                    {
+                        <span class="status-pill status-pill--neutral" data-testid="insights-insufficient">@Culture["Insights.Insufficient"]</span>
+                    }
+                </div>
+                <div class="insights-bar__track">
+                    <span class="insights-bar__fill" style="@($"width:{(b.Share.Percent ?? 0)}%")"></span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public InsightsDistributionModel? Dist { get; set; }
+    [Parameter] public bool WorkKind { get; set; }
+    [Parameter] public bool PriorityLabels { get; set; }
+
+    private string ResolveLabel(InsightsDistributionBucketModel b)
+    {
+        if (WorkKind)
+        {
+            return Culture[$"Insights.WorkKind.{b.Key}"];
+        }
+
+        if (PriorityLabels)
+        {
+            var key = $"Insights.Priority.{b.Key}";
+            var translated = Culture[key];
+            return translated == key ? b.Label : translated;
+        }
+
+        return b.Label;
+    }
+}

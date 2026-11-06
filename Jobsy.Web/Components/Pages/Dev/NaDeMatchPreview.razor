@@ -1,0 +1,20 @@
+@page "/dev/na-de-match/{ScreenId}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Components.AfterMatch
+@inject IWebHostEnvironment Environment
+
+<PageTitle>Na de match preview @ScreenId</PageTitle>
+
+@if (!Environment.IsDevelopment())
+{
+    <p>Not found.</p>
+}
+else
+{
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    <NdMPreviewBody ScreenId="@ScreenId" />
+}
+
+@code {
+    [Parameter] public string ScreenId { get; set; } = "01";
+}

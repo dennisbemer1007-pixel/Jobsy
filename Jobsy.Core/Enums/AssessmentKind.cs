@@ -24,7 +24,9 @@ public static class AssessmentKindLabels
     {
         if (string.Equals(value, Competence, StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "competentie", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(value, "competency", StringComparison.OrdinalIgnoreCase))
+            || string.Equals(value, "competenties", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "competency", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "competencies", StringComparison.OrdinalIgnoreCase))
         {
             kind = AssessmentKind.Competence;
             return true;

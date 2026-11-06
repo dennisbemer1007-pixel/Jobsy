@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Email;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -12,25 +13,43 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 {
     private readonly IIntegrationCredentialService _credentials;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
+    private readonly IPlatformFeatureService _features;
     private readonly OpenAiOptions _openAiOptions;
+    private readonly MailOptions _mailOptions;
+    private readonly LettermintOptions _lettermintOptions;
+    private readonly AiOptions _aiOptions;
+    private readonly MistralOptions _mistralOptions;
     private readonly ILogger<IntegrationHealthStub> _logger;
     private readonly KvkHandelsregisterService? _kvk;
+    private readonly IOpenAiEndpointResolver? _aiEndpoints;
 
     public IntegrationHealthStub(
         IIntegrationCredentialService credentials,
         IHttpClientFactory httpClientFactory,
-        IEmailService email,
+        ITransactionalMailer mailer,
+        IPlatformFeatureService features,
         IOptions<OpenAiOptions> openAiOptions,
         ILogger<IntegrationHealthStub> logger,
-        KvkHandelsregisterService? kvk = null)
+        KvkHandelsregisterService? kvk = null,
+        IOpenAiEndpointResolver? aiEndpoints = null,
+        IOptions<MailOptions>? mailOptions = null,
+        IOptions<LettermintOptions>? lettermintOptions = null,
+        IOptions<AiOptions>? aiOptions = null,
+        IOptions<MistralOptions>? mistralOptions = null)
     {
         _credentials = credentials;
         _httpClientFactory = httpClientFactory;
-        _email = email;
+        _mailer = mailer;
+        _features = features;
         _openAiOptions = openAiOptions.Value;
+        _mailOptions = mailOptions?.Value ?? new MailOptions();
+        _lettermintOptions = lettermintOptions?.Value ?? new LettermintOptions();
+        _aiOptions = aiOptions?.Value ?? new AiOptions();
+        _mistralOptions = mistralOptions?.Value ?? new MistralOptions();
         _logger = logger;
         _kvk = kvk;
+        _aiEndpoints = aiEndpoints;
     }
 
     public async Task<IReadOnlyList<IntegrationHealthResult>> GetAllAsync(
@@ -59,7 +78,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         var view = await _credentials.GetAsync(key, cancellationToken);
         return new IntegrationHealthResult(
             key,
-            IntegrationCredentialService.DisplayName(key),
+            view?.DisplayName ?? IntegrationCredentialService.DisplayName(key),
             ok,
             message,
             DateTime.UtcNow,
@@ -82,18 +101,28 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
         var resendReady = SmtpEmailService.TryResolveResend(secrets, out _);
         var smtpReady = SmtpEmailService.TryResolveSmtp(secrets, out var smtp);
+        var lettermintReady = MailProviderChoice.Choose(
+            _mailOptions.Provider,
+            !string.IsNullOrWhiteSpace(_lettermintOptions.ApiKey)).Kind == MailProviderKind.Lettermint;
         var redacted = EmailServiceStub.RedactEmail(trimmed);
-        var composed = TransactionalEmails.MailTest(baseUrl: null);
-        var body = composed.Html;
-
-        if (!resendReady && !smtpReady)
+        var allow = MailRecipientAllowList.Evaluate(trimmed, _mailOptions);
+        if (allow.Blocked)
         {
-            await _email.SendAsync(
-                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
-                cancellationToken);
+            var blocked =
+                $"Testmail niet verstuurd. Dit adres staat niet op de lijst voor deze omgeving ({allow.MaskedAddress}).";
+            await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, blocked, cancellationToken);
+            return new SendTestMailResult(false, false, blocked);
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        var composed = TransactionalEmails.MailTest(features.PublicWebBaseUrl);
+
+        if (!lettermintReady && !resendReady && !smtpReady)
+        {
+            await _mailer.SendAsync(composed, trimmed, cancellationToken: cancellationToken);
             var stubMessage =
-                "Mail niet geconfigureerd. Vul Resend API-key + From in (aanbevolen op cloud), " +
-                "of SMTP-host/gebruiker/app-wachtwoord/From. " +
+                "Mail niet geconfigureerd. Vul Lettermint (Lettermint__ApiKey en Mail__Provider=Lettermint), " +
+                "Resend API-key + From, of SMTP-host/gebruiker/app-wachtwoord/From in. " +
                 $"Testmail naar {redacted} is alleen in PlatformLog gelogd — niet echt verzonden.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, false, stubMessage, cancellationToken);
             return new SendTestMailResult(false, false, stubMessage);
@@ -101,9 +130,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
         try
         {
-            var delivery = await _email.SendAsync(
-                new EmailMessage(trimmed, "Lobsy testmail", body, "MailTest"),
-                cancellationToken);
+            var delivery = await _mailer.SendAsync(composed, trimmed, cancellationToken: cancellationToken);
 
             if (!delivery.DeliveredViaProvider)
             {
@@ -114,9 +141,11 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
                 return new SendTestMailResult(false, true, failMessage);
             }
 
-            var via = resendReady
-                ? "Resend API"
-                : $"{smtp.Host}:{smtp.Port}";
+            var via = lettermintReady
+                ? "Lettermint"
+                : resendReady
+                    ? "Resend API"
+                    : $"{smtp.Host}:{smtp.Port}";
             var okMessage = $"Testmail verzonden naar {redacted} via {via}.";
             await _credentials.SavePingResultAsync(IntegrationKey.Mail, true, okMessage, cancellationToken);
             return new SendTestMailResult(true, true, okMessage);
@@ -191,6 +220,31 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
 
     private async Task<(bool Ok, string Message)> TestOpenAiAsync(CancellationToken cancellationToken)
     {
+        if (string.Equals(_aiOptions.Provider, AiProviderNames.Mistral, StringComparison.OrdinalIgnoreCase))
+        {
+            return (true, "OpenAI wordt niet gebruikt. De AI loopt via Mistral.");
+        }
+
+        if (_aiEndpoints is not null)
+        {
+            return await TestResolvedAiAsync(cancellationToken);
+        }
+
+        var decision = AiProviderChoice.Decide(_aiOptions.Provider, _mistralOptions.ApiKey);
+        if (!decision.Available)
+        {
+            return (false, "AI: niet ingesteld");
+        }
+
+        if (decision.Kind == AiProviderKind.Mistral)
+        {
+            return await ProbeAiAsync(
+                _mistralOptions.ApiKey,
+                string.IsNullOrWhiteSpace(_mistralOptions.Model) ? MistralOptions.DefaultModel : _mistralOptions.Model,
+                MistralEndpoint.EffectiveBaseUrl(_mistralOptions.BaseUrl),
+                cancellationToken);
+        }
+
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.OpenAI, cancellationToken);
         var apiKey = secrets?.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -214,7 +268,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(baseUrl, out var normalized, out var error)
             || string.IsNullOrWhiteSpace(normalized))
         {
-            return (false, error ?? "Ongeldige OpenAI Base URL.");
+            return (false, error ?? "Ongeldig AI-adres.");
         }
 
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
@@ -223,11 +277,101 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
         using var response = await client.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode)
         {
-            return (true, "Verbinding met OpenAI OK.");
+            return (true, "Verbinding met AI OK.");
         }
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        return (false, $"OpenAI gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
+        return (false, $"AI gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
+    }
+
+    /// <summary>
+    /// Pings the provider that actually serves AI calls (OpenAI or Mistral).
+    /// Mistral's GET /v1/models uses the same bearer shape as OpenAI.
+    /// </summary>
+    private async Task<(bool Ok, string Message)> TestResolvedAiAsync(CancellationToken cancellationToken)
+    {
+        var endpoint = await _aiEndpoints!.ResolveAsync(OpenAiFeature.VacancyContentModeration, cancellationToken);
+        if (endpoint.Unavailable)
+        {
+            return (false, "AI: niet ingesteld");
+        }
+
+        if (string.IsNullOrWhiteSpace(endpoint.ApiKey))
+        {
+            return (false, "Geen API-key geconfigureerd.");
+        }
+
+        if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(endpoint.BaseUrl, out var normalized, out var error)
+            || string.IsNullOrWhiteSpace(normalized))
+        {
+            return (false, error ?? "Ongeldige AI Base URL.");
+        }
+
+        var providerName = normalized.Contains("mistral.ai", StringComparison.OrdinalIgnoreCase)
+            ? "Mistral"
+            : "AI";
+        var region = ActiveProviderStatus.RegionCode(normalized);
+        var regionLabel = region switch
+        {
+            ActiveProviderStatus.RegionEu => "EU",
+            ActiveProviderStatus.RegionUs => "Verenigde Staten",
+            _ => "geen vaste regio"
+        };
+        var client = _httpClientFactory.CreateClient("IntegrationProbe");
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(normalized), "models"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", endpoint.ApiKey);
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, $"Verbinding met {providerName} OK. Model {endpoint.Model}. Regio {regionLabel} ({ActiveProviderStatus.HostOf(normalized)}).");
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        return (false, $"{providerName} gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
+    }
+
+    private Task<(bool Ok, string Message)> ProbeAiAsync(
+        string? apiKey,
+        string model,
+        string baseUrl,
+        CancellationToken cancellationToken)
+        => ProbeAiCoreAsync(apiKey, model, baseUrl, cancellationToken);
+
+    private async Task<(bool Ok, string Message)> ProbeAiCoreAsync(
+        string? apiKey,
+        string model,
+        string baseUrl,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return (false, "AI: niet ingesteld");
+        }
+
+        if (!IntegrationEndpointUrl.TryNormalizeBaseUrl(baseUrl, out var normalized, out var error)
+            || string.IsNullOrWhiteSpace(normalized))
+        {
+            return (false, error ?? "Ongeldig AI-adres.");
+        }
+
+        var region = ActiveProviderStatus.RegionCode(normalized);
+        var regionLabel = region switch
+        {
+            ActiveProviderStatus.RegionEu => "EU",
+            ActiveProviderStatus.RegionUs => "Verenigde Staten",
+            _ => "geen vaste regio"
+        };
+        var client = _httpClientFactory.CreateClient("IntegrationProbe");
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(normalized), "models"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return (true, $"Verbinding met AI OK. Model {model}. Regio {regionLabel} ({ActiveProviderStatus.HostOf(normalized)}).");
+        }
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        return (false, $"AI gaf {(int)response.StatusCode}: {(body.Length > 180 ? body[..180] : body)}");
     }
 
     private async Task<(bool Ok, string Message)> TestMollieAsync(CancellationToken cancellationToken)
@@ -313,6 +457,20 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
     private async Task<(bool Ok, string Message)> TestMailAsync(CancellationToken cancellationToken)
     {
         var secrets = await _credentials.GetSecretsAsync(IntegrationKey.Mail, cancellationToken);
+        var mail = ActiveMailStatus.Describe(
+            _mailOptions.Provider,
+            !string.IsNullOrWhiteSpace(_lettermintOptions.ApiKey),
+            _lettermintOptions.BaseUrl);
+        if (!mail.Available && string.Equals(_mailOptions.Provider, MailProviderNames.Lettermint, StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, "Mail: niet ingesteld");
+        }
+
+        if (mail.Provider == MailProviderNames.Lettermint && mail.Available)
+        {
+            return (true, $"Mail: Lettermint. Regio Nederland (EU). Adres {mail.EndpointHost}. Gebruik ‘Stuur testmail’ om echt te versturen.");
+        }
+
         if (SmtpEmailService.TryResolveResend(secrets, out _))
         {
             return (true, "Resend API-key + From aanwezig. Gebruik ‘Stuur testmail’ om echt te versturen.");
@@ -328,7 +486,7 @@ public sealed class IntegrationHealthStub : IIntegrationHealthService
             return (true, $"SMTP bereikbaar op {smtp.Host}:{smtp.Port}. Let op: Gmail blokkeert cloud-SMTP vaak (5.7.9) — Resend API is betrouwbaarder.");
         }
 
-        return (false, "Configureer Resend (API-key + From) of SMTP (host, poort, gebruiker, app-wachtwoord, From).");
+        return (false, "Configureer Lettermint (Lettermint__ApiKey), Resend (API-key + From) of SMTP (host, poort, gebruiker, app-wachtwoord, From).");
     }
 
     private async Task<(bool Ok, string Message)> TestOAuthAsync(

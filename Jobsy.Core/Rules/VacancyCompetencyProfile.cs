@@ -83,6 +83,27 @@ public static class VacancyCompetencyProfile
         return n == 0 ? 0.5 : sum / n;
     }
 
+    /// <summary>Symmetric person–job fit (penalizes over- and under-fit). Used by MatchCalibrationV1.</summary>
+    public static double Fit01Symmetric(CompetencyScores candidate, CompetencyScores vacancy)
+    {
+        var sum = 0d;
+        var n = 0;
+        foreach (var category in CompetencyTestCatalog.CategoryCodes)
+        {
+            var c = candidate.TryGet(category);
+            var t = vacancy.TryGet(category) ?? 60;
+            if (c is null)
+            {
+                continue;
+            }
+
+            sum += 1.0 - Math.Abs(c.Value - t) / 100.0;
+            n++;
+        }
+
+        return n == 0 ? 0 : sum / n;
+    }
+
     private static CompetencyScores ForWorkType(string label) => label.Trim() switch
     {
         WorkTypeLabels.Horeca => new(80, 65, 85, 45),

@@ -17,6 +17,17 @@ public interface IMetricsQueryService
         string period,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Same Uitsplitsing rows as <see cref="GetDrilldownAsync"/>, limited to one vacancy.
+    /// Admin vacatures use this so the drilldown does not depend on the employers feature flag.
+    /// </summary>
+    Task<IReadOnlyList<MetricDrilldownItemDto>> GetVacancyDrilldownAsync(
+        string key,
+        Guid vacancyId,
+        string period,
+        CancellationToken cancellationToken = default)
+        => GetDrilldownAsync(key, includePlatformOnly: true, companyIds: null, period, cancellationToken);
+
     Task<VacancyPerformanceBoardDto> GetVacancyPerformanceAsync(
         IReadOnlyCollection<Guid>? companyIds,
         string period,

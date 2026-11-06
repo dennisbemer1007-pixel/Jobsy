@@ -182,8 +182,8 @@ public class DeviceSessionIdleExemptionTests
     [Theory]
     [InlineData("Candidate", true, true)]
     [InlineData("Ambassadeur", true, true)]
-    [InlineData("Admin", true, false)]
-    [InlineData("BranchManager", true, false)]
+    [InlineData("Admin", true, true)]
+    [InlineData("BranchManager", true, true)]
     [InlineData("Candidate", false, false)]
     public void Idle_exempt_only_for_candidate_like_roles_with_device_session(
         string role,

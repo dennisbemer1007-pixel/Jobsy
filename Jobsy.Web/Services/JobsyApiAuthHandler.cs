@@ -6,6 +6,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -49,7 +50,9 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var user = await ResolveUserAsync();
 
         ApplyAccessToken(request, user, httpContext);
-        ApplyTrustedClientIp(request, httpContext);
+        ApplyTrustedClientIp(request, httpContext, user);
+        user = await ApplyPupilCookieAsync(request, httpContext, user, cancellationToken);
+        ApplyParentCookie(request, httpContext, user);
 
         try
         {
@@ -66,7 +69,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         // Identity is the Jobsy ES256 access token only — do not overwrite with IdP access_token.
 
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        ApplyDefaultAccept(request);
 
         byte[]? bodyBytes = null;
         if (request.Content is not null
@@ -85,6 +88,8 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         var response = await base.SendAsync(request, cancellationToken);
+        CaptureRenewedApiTicket(response, httpContext);
+        CaptureRenewedParentApiTicket(response, httpContext, user);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
             && retried)
@@ -96,7 +101,14 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var refreshed = await TrySilentDeviceRefreshAsync(httpContext, cancellationToken);
         if (!refreshed)
         {
-            await NotifySessionExpiredAsync(httpContext);
+            var apiPath = request.RequestUri?.AbsolutePath ?? "";
+            // Pupil/parent API 401s are handled by SSR endpoints (retry / code login).
+            // Never sign the browser out of the Web cookie on a stale API ticket alone.
+            if (!ShouldNotifySessionExpiredOnApi401(user, apiPath))
+            {
+                await NotifySessionExpiredAsync(httpContext);
+            }
+
             return response;
         }
 
@@ -105,9 +117,239 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         var retry = await CloneRequestAsync(request, bodyBytes, cancellationToken);
         retry.Options.Set(new HttpRequestOptionsKey<bool>("jobsy-retried"), true);
         ApplyAccessToken(retry, user, httpContext);
-        ApplyTrustedClientIp(retry, httpContext);
-        retry.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        return await base.SendAsync(retry, cancellationToken);
+        ApplyTrustedClientIp(retry, httpContext, user);
+        user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
+        ApplyParentCookie(retry, httpContext, user);
+        ApplyDefaultAccept(retry);
+        var retriedResponse = await base.SendAsync(retry, cancellationToken);
+        CaptureRenewedApiTicket(retriedResponse, httpContext);
+        CaptureRenewedParentApiTicket(retriedResponse, httpContext, user);
+        return retriedResponse;
+    }
+
+    /// <summary>
+    /// Forwards the API-minted pupil ticket (stored opaquely as
+    /// <see cref="PupilApiSessionCookie"/>) to <c>api/pupil/*</c>. The browser's
+    /// <c>Lobsy.Leerling</c> cookie is protected with the Web key ring and the
+    /// API cannot unprotect it.
+    /// </summary>
+    /// <summary>
+    /// Progress and result calls need the API ticket. Right after an in-circuit
+    /// navigation the principal can still be anonymous for a moment. Wait briefly
+    /// so the first call is not sent without a ticket.
+    /// </summary>
+    private async Task<ClaimsPrincipal> ApplyPupilCookieAsync(
+        HttpRequestMessage request,
+        HttpContext? httpContext,
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (!ForwardsPupilCookie(path))
+        {
+            return user;
+        }
+
+        var cookie = ReadPupilTicket(httpContext, user);
+        if (string.IsNullOrWhiteSpace(cookie) && NeedsStoredPupilTicket(path))
+        {
+            for (var i = 0; i < 4 && string.IsNullOrWhiteSpace(cookie); i++)
+            {
+                await Task.Delay(80, cancellationToken);
+                user = await ResolveUserAsync();
+                cookie = ReadPupilTicket(httpContext, user);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(cookie))
+        {
+            return user;
+        }
+
+        if (request.Headers.TryGetValues("Cookie", out var existing))
+        {
+            request.Headers.Remove("Cookie");
+            request.Headers.TryAddWithoutValidation(
+                "Cookie",
+                string.Join("; ", existing.Append($"{PupilAuthDefaults.CookieName}={cookie}")));
+        }
+        else
+        {
+            request.Headers.TryAddWithoutValidation("Cookie", $"{PupilAuthDefaults.CookieName}={cookie}");
+        }
+
+        return user;
+    }
+
+    private string? ReadPupilTicket(HttpContext? httpContext, ClaimsPrincipal user)
+    {
+        if (!IsPupilPrincipal(user))
+        {
+            return null;
+        }
+
+        return _services.GetService<PupilRequestApiTicket>()?.GetForForwarding(httpContext)
+               ?? (httpContext is null ? null : PupilApiSessionCookie.Read(httpContext));
+    }
+
+    /// <summary>Session calls. The public school list must not wait for a ticket.</summary>
+    internal static bool NeedsStoredPupilTicket(string absolutePath)
+        => absolutePath.Contains("/api/pupil/progress", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/result", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/dreamjob", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/passport/", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/api/pupil/progress/vakscores", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The API may slide its own pupil cookie. Store the new value. Never copy
+    /// it onto <c>Lobsy.Leerling</c>: that name is the Web session.
+    /// </summary>
+    /// <summary>
+    /// Pupil and parent sessions use their own code login — an API 401 must not
+    /// sign out the Web cookie or send the browser to staff login.
+    /// </summary>
+    internal static bool ShouldNotifySessionExpiredOnApi401(ClaimsPrincipal user, string _)
+        => !IsPupilPrincipal(user) && !IsParentPassportPrincipal(user);
+
+    private void CaptureRenewedApiTicket(
+        HttpResponseMessage response,
+        HttpContext? httpContext)
+    {
+        if (!TryReadSetCookieHeaders(response, out var values))
+        {
+            return;
+        }
+
+        foreach (var header in values)
+        {
+            if (!PupilApiSessionCookie.TryReadTicket(header, out var value))
+            {
+                continue;
+            }
+
+            _services.GetService<PupilRequestApiTicket>()?.ApplyRefresh(value, httpContext);
+
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Pupil progress lives under <c>/api/pupil</c>. The story PDF is
+    /// <c>GET /leerling/pdf</c> on the API (not under <c>/api/pupil</c>), so the
+    /// web proxy must forward the pupil cookie there too.
+    /// </summary>
+    internal static bool ForwardsPupilCookie(string absolutePath)
+        => absolutePath.Contains("/api/pupil", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/leerling/", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool ForwardsParentPassportCookie(string absolutePath)
+        => absolutePath.Contains("/api/parent/", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase)
+           || absolutePath.Contains("/ouder/antwoorden/pdf", StringComparison.OrdinalIgnoreCase);
+
+    private void ApplyParentCookie(HttpRequestMessage request, HttpContext? httpContext, ClaimsPrincipal user)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (!ForwardsParentPassportCookie(path))
+        {
+            return;
+        }
+
+        var cookie = httpContext is null ? null : ParentApiSessionCookie.Read(httpContext);
+        if (string.IsNullOrWhiteSpace(cookie) && IsParentPassportPrincipal(user))
+        {
+            var codeId = user.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+            cookie = _services.GetService<ParentApiTicketStore>()?.Get(codeId);
+        }
+
+        if (string.IsNullOrWhiteSpace(cookie))
+        {
+            return;
+        }
+
+        AppendCookie(request, $"{ParentPassportAuthDefaults.CookieName}={cookie}");
+    }
+
+    private static void AppendCookie(HttpRequestMessage request, string pair)
+    {
+        if (request.Headers.TryGetValues("Cookie", out var existing))
+        {
+            request.Headers.Remove("Cookie");
+            request.Headers.TryAddWithoutValidation(
+                "Cookie",
+                string.Join("; ", existing.Append(pair)));
+        }
+        else
+        {
+            request.Headers.TryAddWithoutValidation("Cookie", pair);
+        }
+    }
+
+    private static bool TryReadSetCookieHeaders(HttpResponseMessage response, out IEnumerable<string> values)
+    {
+        var list = new List<string>();
+        if (response.Headers.TryGetValues("Set-Cookie", out var headers))
+        {
+            list.AddRange(headers);
+        }
+
+        if (response.TrailingHeaders.TryGetValues("Set-Cookie", out var trailing))
+        {
+            list.AddRange(trailing);
+        }
+
+        values = list;
+        return list.Count > 0;
+    }
+
+    private void CaptureRenewedParentApiTicket(HttpResponseMessage response, HttpContext? httpContext, ClaimsPrincipal user)
+    {
+        if (!TryReadSetCookieHeaders(response, out var values))
+        {
+            return;
+        }
+
+        foreach (var header in values)
+        {
+            if (!ParentApiSessionCookie.TryReadTicket(header, out var value))
+            {
+                continue;
+            }
+
+            var codeId = user.FindFirst(ParentPassportClaimTypes.PupilCodeId)?.Value;
+            _services.GetService<ParentApiTicketStore>()?.Set(codeId, value);
+            if (httpContext is not null && !httpContext.Response.HasStarted)
+            {
+                ParentApiSessionCookie.Set(httpContext, value);
+            }
+
+            return;
+        }
+    }
+
+    public static bool IsParentPassportPrincipal(ClaimsPrincipal? user)
+    {
+        if (user is null)
+        {
+            return false;
+        }
+
+        foreach (var identity in user.Identities)
+        {
+            if (!identity.IsAuthenticated)
+            {
+                continue;
+            }
+
+            if (string.Equals(identity.AuthenticationType, ParentPassportAuthDefaults.Scheme, StringComparison.Ordinal)
+                || identity.HasClaim(c => c.Type == ParentPassportClaimTypes.PupilCodeId))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ApplyAccessToken(HttpRequestMessage request, ClaimsPrincipal user, HttpContext? httpContext)
@@ -127,7 +369,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return;
         }
 
-        var clientIp = httpContext?.Connection.RemoteIpAddress?.ToString();
+        var clientIp = VacancyMapApiForwarder.ResolveVisitorIp(httpContext);
         var jwt = _accessTokens.TryCreate(user, clientIp);
         if (!string.IsNullOrWhiteSpace(jwt))
         {
@@ -136,29 +378,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     }
 
     /// <summary>
-    /// Forwards the browser client IP to the API behind a shared internal secret so
-    /// anonymous public-* rate limits can partition by real user, not the Web hop.
+    /// Forwards the browser client IP (CF-Connecting-IP when present) to the API
+    /// behind a shared internal secret so anonymous public-* rate limits partition
+    /// per visitor, not the shared Web→API hop.
     /// </summary>
-    private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext)
-    {
-        request.Headers.Remove("X-Jobsy-Client-Ip");
-        request.Headers.Remove("X-Jobsy-Internal-Secret");
-
-        var secret = _configuration["JobsyAuth:InternalClientIpSecret"];
-        if (string.IsNullOrWhiteSpace(secret))
-        {
-            return;
-        }
-
-        var clientIp = httpContext?.Connection.RemoteIpAddress?.ToString();
-        if (string.IsNullOrWhiteSpace(clientIp))
-        {
-            return;
-        }
-
-        request.Headers.TryAddWithoutValidation("X-Jobsy-Client-Ip", clientIp);
-        request.Headers.TryAddWithoutValidation("X-Jobsy-Internal-Secret", secret.Trim());
-    }
+    private void ApplyTrustedClientIp(HttpRequestMessage request, HttpContext? httpContext, ClaimsPrincipal user)
+        => Jobsy.Web.Auth.TrustedClientIpHandler.ApplyTrustedClientIp(request, httpContext, user, _configuration);
 
     private async Task<bool> TrySilentDeviceRefreshAsync(HttpContext? httpContext, CancellationToken cancellationToken)
     {
@@ -204,10 +429,11 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             }
 
             var principal = AuthPrincipalFactory.FromDeviceRefresh(profile);
+            JobsyAuthCookieChunks.DeleteAll(httpContext);
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic());
+                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic(httpContext));
             SessionActivityCookie.Stamp(httpContext, DateTimeOffset.UtcNow);
             if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.ExpiresAtUtc is DateTime exp)
             {
@@ -240,6 +466,27 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             // ignore
         }
 
+        // A pupil principal must never land on the staff e-mail form.
+        if (ShouldRedirectPupilToCodeLogin(httpContext))
+        {
+            try
+            {
+                await httpContext.SignOutAsync(PupilAuthDefaults.Scheme);
+                PupilApiSessionCookie.Clear(httpContext);
+            }
+            catch (InvalidOperationException)
+            {
+                // Headers already went out; the page still must not show staff login.
+            }
+
+            if (!httpContext.Response.HasStarted)
+            {
+                httpContext.Response.Redirect("/leerling?error=expired");
+            }
+
+            return;
+        }
+
         // Interactive navigations for an authenticated session: send the browser to login.
         // Anonymous SSR routinely gets 401 from optional layout chips (notifications, sales
         // dashboard) — never hijack those into a /login redirect loop.
@@ -255,6 +502,57 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         await Task.CompletedTask;
     }
 
+    /// <summary>Pupil API 401s go back to the code form, not the staff login.</summary>
+    public static bool ShouldRedirectPupilToCodeLogin(HttpContext httpContext)
+    {
+        if (httpContext.Response.HasStarted)
+        {
+            return false;
+        }
+
+        var path = httpContext.Request.Path.Value ?? string.Empty;
+        if (!path.StartsWith("/leerling", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/leerling", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/leerling/login", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!IsPupilPrincipal(httpContext.User)
+            && !httpContext.Request.Cookies.ContainsKey(PupilAuthDefaults.CookieName)
+            && !httpContext.Request.Cookies.ContainsKey(PupilApiSessionCookie.Name))
+        {
+            return false;
+        }
+
+        return httpContext.Request.Headers.Accept.ToString()
+            .Contains("text/html", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsPupilPrincipal(ClaimsPrincipal? user)
+    {
+        if (user is null)
+        {
+            return false;
+        }
+
+        foreach (var identity in user.Identities)
+        {
+            if (!identity.IsAuthenticated)
+            {
+                continue;
+            }
+
+            if (string.Equals(identity.AuthenticationType, PupilAuthDefaults.Scheme, StringComparison.Ordinal)
+                || identity.HasClaim(c => c.Type == PupilClaimTypes.PupilCodeId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Whether an API 401 during an HTML document request should bounce the browser to login.
     /// </summary>
@@ -266,6 +564,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         if (httpContext.User?.Identity?.IsAuthenticated != true)
+        {
+            return false;
+        }
+
+        // Pupil sessions use the code form. Never the staff login.
+        if (IsPupilPrincipal(httpContext.User) || IsParentPassportPrincipal(httpContext.User))
         {
             return false;
         }
@@ -290,6 +594,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         byte[]? bodyBytes,
         CancellationToken cancellationToken)
     {
+        _ = cancellationToken;
         var clone = new HttpRequestMessage(request.Method, request.RequestUri);
         foreach (var header in request.Headers)
         {
@@ -309,31 +614,6 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         return Task.FromResult(clone);
-    }
-
-    /// <summary>
-    /// Never fall back to display name — API DevelopmentAuth looks up users by email.
-    /// </summary>
-    internal static string? ResolveEmail(ClaimsPrincipal user)
-    {
-        foreach (var type in new[]
-                 {
-                     ClaimTypes.Email,
-                     "email",
-                     "preferred_username",
-                     "emails",
-                     ClaimTypes.NameIdentifier,
-                     "sub"
-                 })
-        {
-            var value = user.FindFirst(type)?.Value?.Trim();
-            if (!string.IsNullOrWhiteSpace(value) && value.Contains('@', StringComparison.Ordinal))
-            {
-                return value;
-            }
-        }
-
-        return null;
     }
 
     private async Task<ClaimsPrincipal> ResolveUserAsync()
@@ -373,20 +653,58 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             return httpUser;
         }
 
+        // /_blazor has no staff cookie. The circuit principal is the pupil, not HttpContext.User
+        // on later interactive calls (that context is often null or still anonymous).
+        try
+        {
+            var state = await _authStateProvider.GetAuthenticationStateAsync();
+            if (IsPupilPrincipal(state.User))
+            {
+                return state.User;
+            }
+
+            if (IsParentPassportPrincipal(state.User))
+            {
+                return state.User;
+            }
+
+            if (httpContext is not null
+                && !httpContext.Request.Cookies.ContainsKey("Jobsy.Auth"))
+            {
+                return new ClaimsPrincipal(new ClaimsIdentity());
+            }
+
+            if (state.User.Identity?.IsAuthenticated == true)
+            {
+                return state.User;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Outside a circuit scope.
+        }
+
         if (httpContext is not null
             && !httpContext.Request.Cookies.ContainsKey("Jobsy.Auth"))
         {
             return new ClaimsPrincipal(new ClaimsIdentity());
         }
 
-        try
+        return httpUser ?? new ClaimsPrincipal(new ClaimsIdentity());
+    }
+
+    private static void ApplyDefaultAccept(HttpRequestMessage request)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (path.Contains("/leerling/pdf", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/ouder/pdf", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("/ouder/antwoorden/pdf", StringComparison.OrdinalIgnoreCase))
         {
-            var state = await _authStateProvider.GetAuthenticationStateAsync();
-            return state.User;
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/pdf"));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*", 0.8));
+            return;
         }
-        catch (InvalidOperationException)
-        {
-            return httpUser ?? new ClaimsPrincipal(new ClaimsIdentity());
-        }
+
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 }

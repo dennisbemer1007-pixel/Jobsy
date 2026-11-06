@@ -1,0 +1,31 @@
+KEY: TakeoverSubmitted
+SUBJECT: Je verzoek voor Bakkerij De Gouden Korrel is verstuurd
+PREHEADER: De beheerder beslist. Je krijgt een mail.
+KIND: Essential
+--- TEXT ---
+Hallo Alex,
+
+Je verzoek is verstuurd
+=======================
+
+Bakkerij De Gouden Korrel heeft al een beheerder. We hebben je verzoek naar
+die persoon gestuurd. Je krijgt een mail zodra die beslist.
+
+Hoe werkt Lobsy?: https://lobsy.nl/hoe-werkt-lobsy
+
+Team Lobsy
+
+Je krijgt deze mail omdat je toegang hebt gevraagd tot Bakkerij De Gouden Korrel.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Je verzoek is verstuurd
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Hoe werkt Lobsy? -> https://lobsy.nl/hoe-werkt-lobsy
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

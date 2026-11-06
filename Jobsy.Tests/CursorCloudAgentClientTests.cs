@@ -27,7 +27,7 @@ public class CursorCloudAgentClientTests
         {
             ApiKey = "test-key",
             Repository = "https://github.com/lobsy/lobsy",
-            Ref = "acc",
+            Ref = "acceptatie",
             WebhookUrl = "https://api.lobsy.nl/api/feedback/cursor-webhook",
             WebhookSecret = "unit-test-webhook-secret-32chars!!"
         });
@@ -52,7 +52,7 @@ public class CursorCloudAgentClientTests
         Assert.Equal("iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
             root.GetProperty("prompt").GetProperty("images")[0].GetProperty("data").GetString());
         Assert.Equal("https://github.com/lobsy/lobsy", root.GetProperty("source").GetProperty("repository").GetString());
-        Assert.Equal("acc", root.GetProperty("source").GetProperty("ref").GetString());
+        Assert.Equal("acceptatie", root.GetProperty("source").GetProperty("ref").GetString());
         Assert.True(root.GetProperty("target").GetProperty("autoCreatePr").GetBoolean());
         Assert.Equal("fix/feedback-aabbccdd", root.GetProperty("target").GetProperty("branchName").GetString());
         Assert.Equal("https://api.lobsy.nl/api/feedback/cursor-webhook",

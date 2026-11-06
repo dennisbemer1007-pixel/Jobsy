@@ -1,0 +1,61 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using System.Globalization
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="test-mirror-bridge" aria-labelledby="test-mirror-bridge-title">
+    <div class="test-mirror-bridge__pic" aria-hidden="true"></div>
+    <div class="test-mirror-bridge__copy">
+        <small>@Culture["TestReflection.Bridge.Eyebrow"]</small>
+        <h3 id="test-mirror-bridge-title">@Culture["TestReflection.Bridge.Title"]</h3>
+        <p>@Culture["TestReflection.Bridge.Lead"]</p>
+        <ul class="test-mirror-bridge__benefits">
+            <li><span class="test-mirror-bridge__icon" aria-hidden="true">@((MarkupString)IconLayers)</span>@Culture["TestReflection.Bridge.Benefit.Facets"]</li>
+            <li><span class="test-mirror-bridge__icon" aria-hidden="true">@((MarkupString)IconPeople)</span>@Culture["TestReflection.Bridge.Benefit.Comparison"]</li>
+            <li><span class="test-mirror-bridge__icon" aria-hidden="true">@((MarkupString)IconFlag)</span>@Culture["TestReflection.Bridge.Benefit.ActionPlan"]</li>
+            <li><span class="test-mirror-bridge__icon" aria-hidden="true">@((MarkupString)IconDoc)</span>@Culture["TestReflection.Bridge.Benefit.Pdf"]</li>
+        </ul>
+    </div>
+    <div class="test-mirror-bridge__cta">
+        <button type="button" class="btn btn-outline-brand" disabled="@Busy" @onclick="OnOffer">
+            @Culture["TestReflection.Bridge.Cta"]
+        </button>
+        @if (ShowSamplePdf)
+        {
+            <button type="button" class="test-mirror-bridge__link" disabled="@Busy" @onclick="OnSamplePdf">
+                @Culture["TestResult.Gold.SamplePdf"]
+            </button>
+        }
+        <p class="test-mirror-bridge__fine">
+            @Culture.Format(
+                "TestReflection.Bridge.Meta",
+                QuestionCount,
+                MinutesApprox,
+                PriceEuro.ToString("0.00", CultureInfo.CurrentUICulture),
+                Culture["TestReflection.Bridge.Fine"])
+        </p>
+    </div>
+</section>
+
+@code {
+    private const string IconLayers =
+        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></svg>""";
+
+    private const string IconPeople =
+        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.8-3.5 3.2-5 6-5s5.2 1.5 6 5M15 15c2.5 0 4.5 1.4 5.5 4.5"/></svg>""";
+
+    private const string IconFlag =
+        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>""";
+
+    private const string IconDoc =
+        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>""";
+
+    [Parameter] public int QuestionCount { get; set; } = 150;
+    [Parameter] public int MinutesApprox { get; set; } = 30;
+    [Parameter] public decimal PriceEuro { get; set; } = 2.99m;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool ShowSamplePdf { get; set; } = true;
+    [Parameter] public EventCallback OnOffer { get; set; }
+    [Parameter] public EventCallback OnSamplePdf { get; set; }
+}

@@ -1,0 +1,22 @@
+@inject CultureState Culture
+
+<div class="wg-kpi-locked detail-card" data-testid="@TestId" role="group" aria-label="@Title">
+    <div class="wg-kpi-locked__head">
+        <span class="wg-kpi-locked__label">@Title</span>
+        <span class="test-result-lock-chip">
+            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 1 1 6 0v3H9Z"/></svg>
+            @Culture["Insights.Kpi.Premium"]
+        </span>
+    </div>
+    <div class="wg-kpi-locked__value" aria-hidden="true">•••</div>
+    @if (!string.IsNullOrWhiteSpace(Question))
+    {
+        <p class="wg-kpi-locked__q">@Question</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Question { get; set; }
+    [Parameter] public string? TestId { get; set; }
+}

@@ -1,0 +1,205 @@
+@page "/werkgever/overnames"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,EnterpriseManager,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["WgNav.Takeovers"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["Employer.AccessRequests"]" Lead="@Culture["WaAccess.Privacy"]">
+    <ChildContent>
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <h2>@Culture["Employer.AccessRequests"]</h2>
+        @if (_access.Count == 0)
+        {
+            <p class="muted">@Culture["Employer.Access.Empty"]</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var item in _access)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@item.RequesterName</strong>
+                            <span class="muted">@item.RequesterFunction · @item.RequesterEmail</span>
+                            <span class="muted">@item.RequestedRole · @item.TargetCompanyName · @item.AgeWorkingDays werkdagen</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Message))
+                            {
+                                <span class="muted">@item.Message</span>
+                            }
+                        </div>
+                        <div class="wizard-actions">
+                            <button class="btn-compact" type="button" disabled="@_busy"
+                                    @onclick="() => RejectAccessAsync(item.RequestId)">@Culture["Employer.Access.Reject"]</button>
+                            <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy"
+                                    @onclick="() => ApproveAccessAsync(item)">@Culture["Employer.Access.Grant"]</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <h2>@Culture["Employer.TakeoversSection"]</h2>
+        @if (_takeovers.Count == 0)
+        {
+            <p class="muted">@Culture["WgTakeovers.Empty"]</p>
+        }
+        else
+        {
+            <div class="table-list">
+                @foreach (var item in _takeovers)
+                {
+                    <div class="table-row">
+                        <div>
+                            <strong>@item.TargetCompanyName</strong>
+                            <span class="muted">@item.KvkEstablishmentId · scope @item.Scope</span>
+                            <span class="muted">Aanvrager: @item.RequesterName (@item.RequesterEmail)</span>
+                        </div>
+                        <div class="wizard-actions">
+                            <button class="btn-compact" type="button" disabled="@_busy"
+                                    @onclick="() => RejectTakeoverAsync(item.TakeoverId)">@Culture["WgTakeovers.Reject"]</button>
+                            <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy"
+                                    @onclick="() => ApproveTakeoverAsync(item.TakeoverId)">@Culture["WgTakeovers.Approve"]</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+    </ChildContent>
+</WgPageShell>
+
+@code {
+    private List<AccessRequestInboxItemModel> _access = [];
+    private List<TakeoverInboxItem> _takeovers = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _access = (await Api.GetAccessRequestInboxAsync()).ToList();
+            _takeovers = (await Api.GetTakeoverInboxAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ApproveAccessAsync(AccessRequestInboxItemModel item)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.ApproveAccessRequestAsync(item.RequestId, item.RequestedRole);
+            _message = Culture["Employer.Access.Grant"];
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAccessAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.RejectAccessRequestAsync(id);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ApproveTakeoverAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var result = await Api.ApproveTakeoverAsync(id);
+            _message = result.Message;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectTakeoverAsync(Guid id)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            await Api.RejectTakeoverAsync(id);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

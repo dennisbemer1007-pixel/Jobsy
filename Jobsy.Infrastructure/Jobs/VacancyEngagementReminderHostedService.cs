@@ -1,9 +1,11 @@
 using System.Net;
 using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,6 +18,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// </summary>
 public sealed class VacancyEngagementReminderHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<VacancyEngagementReminderHostedService> _logger;
 
@@ -25,6 +28,7 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(VacancyEngagementReminderHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -48,9 +52,14 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
+        if (!await _employersGate.ShouldRunAsync(_scopeFactory, cancellationToken))
+        {
+            return;
+        }
+
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var mailer = scope.ServiceProvider.GetRequiredService<ITransactionalMailer>();
         var notifications = scope.ServiceProvider.GetRequiredService<IUserNotificationService>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
 
@@ -91,28 +100,13 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
                          && a.Status != ApplicationStatus.Withdrawn,
                     cancellationToken);
 
+            var tipKind = VacancyEngagementReminderRules.BuildHeuristicTipKind(
+                impressions, views, shares, saved, applications);
             var tip = VacancyEngagementReminderRules.BuildHeuristicTip(
                 impressions, views, shares, saved, applications);
 
             vacancy.EngagementReminderTip = tip.Length <= 2000 ? tip : tip[..2000];
             vacancy.EngagementReminderSentAtUtc = now;
-
-            var mail = TransactionalEmails.VacancyEngagementReminder(
-                baseUrl,
-                vacancy.Title,
-                vacancy.Id,
-                impressions,
-                views,
-                shares,
-                saved,
-                applications,
-                tip,
-                vacancy.Company.Name);
-            var bodyHtml = mail.Html;
-
-            var notifyTitle = mail.Subject;
-            var notifyBody =
-                $"Zoek: {impressions} · bekeken: {views} · gedeeld: {shares} · bewaard: {saved} · sollicitaties: {applications}. Tip: {tip}";
 
             var contacts = await db.Users.AsNoTracking()
                 .Where(u => u.IsActive
@@ -122,27 +116,41 @@ public sealed class VacancyEngagementReminderHostedService : BackgroundService
                                 || (vacancy.Company.ParentCompanyId != null
                                     && (u.CompanyId == vacancy.Company.ParentCompanyId
                                         || u.CompanyMemberships.Any(m => m.CompanyId == vacancy.Company.ParentCompanyId.Value)))))
-                .Select(u => new { u.Id, u.Email })
+                .Select(u => new { u.Id, u.Email, u.FullName, u.PreferencesJson })
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
+            var notifyBody =
+                $"Zoek: {impressions} · bekeken: {views} · gedeeld: {shares} · bewaard: {saved} · sollicitaties: {applications}. Tip: {tip}";
+
             foreach (var contact in contacts)
             {
-                await email.SendAsync(new EmailMessage(
-                    contact.Email,
-                    notifyTitle,
-                    bodyHtml,
-                    "VacancyEngagementReminder"), cancellationToken);
+                var culture = EmailCulture.ForLanguage(
+                    EmailLanguageResolver.ReadLanguage(contact.PreferencesJson));
+                var mail = TransactionalEmails.VacancyEngagementReminder(
+                    baseUrl,
+                    vacancy.Title,
+                    vacancy.Id,
+                    impressions,
+                    views,
+                    shares,
+                    saved,
+                    applications,
+                    tipKind,
+                    vacancy.Company.Name,
+                    contact.FullName,
+                    culture);
+                await mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
                 await notifications.CreateAsync(
                     new NotificationCreateRequest(
                         contact.Id,
-                        notifyTitle,
+                        mail.Subject,
                         notifyBody,
                         "VacatureEngagementReminder",
-                        $"/branch/vacancies/new?edit={vacancy.Id}",
-                        "Vacature nu verbeteren",
-                        $"/branch/vacancies/new?edit={vacancy.Id}",
+                        $"/werkgever/vacatures/nieuw?edit={vacancy.Id}",
+                        "Vacature verbeteren",
+                        $"/werkgever/vacatures/nieuw?edit={vacancy.Id}",
                         "Vacancy",
                         vacancy.Id),
                     cancellationToken);

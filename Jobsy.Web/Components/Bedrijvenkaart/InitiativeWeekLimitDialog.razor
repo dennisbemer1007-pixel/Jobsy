@@ -1,0 +1,39 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop bk-modal-backdrop--centered">
+        <div class="bk-modal bk-modal--sent" role="dialog" aria-modal="true" aria-labelledby="bk-weeklimit-title">
+            <header class="bk-modal__header">
+                <h2 id="bk-weeklimit-title">@Culture["Initiative.WeekLimit.Title"]</h2>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <div class="bk-modal__body">
+                <p class="bk-modal__lead">@Culture["Initiative.WeekLimit.Body"]</p>
+            </div>
+            <footer class="bk-modal__footer">
+                @if (DraftId is Guid draft)
+                {
+                    <button type="button" class="btn--primary" @onclick="() => OnSendDraft.InvokeAsync(draft)">
+                        @Culture["Initiative.WeekLimit.SendMonday"]
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn--primary" @onclick="Close">@Culture["Common.Close"]</button>
+                }
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public Guid? DraftId { get; set; }
+    [Parameter] public EventCallback<Guid> OnSendDraft { get; set; }
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+}

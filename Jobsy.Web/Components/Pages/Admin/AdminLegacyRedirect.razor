@@ -1,0 +1,47 @@
+@* In-circuit safety net for legacy English admin URLs (enhanced navigation). *@
+@page "/admin/cockpit"
+@page "/admin/users"
+@page "/admin/sales-managers"
+@page "/admin/ambassadeurs"
+@page "/admin/companies"
+@page "/admin/cnames"
+@page "/admin/vacancies"
+@page "/admin/ats-vacancies"
+@page "/admin/moderation"
+@page "/admin/vacancy-categories"
+@page "/admin/wages"
+@page "/admin/finance"
+@page "/admin/sales"
+@page "/admin/tokens"
+@page "/admin/token-finance"
+@page "/admin/about"
+@page "/admin/marketing-flyer"
+@page "/admin/training"
+@page "/admin/masterdata"
+@page "/admin/exclusivity"
+@page "/admin/mail-test"
+@page "/admin/notifications"
+@page "/admin/settings"
+@page "/admin/company"
+@page "/admin/integrations"
+@page "/admin/api-keys"
+@page "/admin/personal-data-access-log"
+@page "/admin/logging"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        var relative = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (AdminLegacyRoutes.TryMap(relative, out var dest))
+        {
+            Navigation.NavigateTo(dest, replace: true);
+            return;
+        }
+
+        Navigation.NavigateTo("/admin", replace: true);
+    }
+}

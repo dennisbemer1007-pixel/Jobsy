@@ -1,6 +1,12 @@
 @using Jobsy.Web.Admin
+@using Jobsy.Core.Email
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Hosting
+@using Microsoft.Extensions.Options
 @* Expandable integration settings tile with green/red status and live test. *@
 @inject CultureState Culture
+@inject IOptions<MailOptions> MailOptions
+@inject IHostEnvironment HostEnvironment
 
 <article class="company-card integration-tile @(StatusClass)" @onclick="Toggle">
     <div class="integration-tile__header">
@@ -162,6 +168,11 @@
                     Model
                     <input @bind="_model" @bind:event="oninput" @bind:after="MarkDirty" placeholder="gpt-4o-mini" />
                 </label>
+                <label>
+                    Klein model (goedkope diensten)
+                    <input @bind="_smallModel" @bind:event="oninput" @bind:after="MarkDirty" placeholder="leeg = zelfde als Model" />
+                </label>
+                <p class="muted">Voor vertaling, het uitlezen van een CV en de controle van een vacaturetekst. Laat leeg om het model hierboven te gebruiken.</p>
             }
 
             @if (Credential.SupportsBaseUrl)
@@ -176,6 +187,14 @@
                 @if (IsKvkIntegration)
                 {
                     <p class="muted">Leeg = productie <code>https://api.kvk.nl/api/</code>. Testomgeving: <code>https://api.kvk.nl/test/api/</code>. Na opslaan <strong>Test verbinding</strong> — pas dan is live lookup actief.</p>
+                    @if (!string.IsNullOrWhiteSpace(_kvkUsageLine))
+                    {
+                        <p class="muted">@_kvkUsageLine</p>
+                    }
+                    @if (_kvkBudgetWarning)
+                    {
+                        <p class="state-message error">KVK-profielbudget ≥ 80 % van het maandbudget. Verhoog <code>Kvk:MonthlyProfileBudget</code> of beperk zoeken.</p>
+                    }
                 }
                 @if (IsMailIntegration)
                 {
@@ -201,8 +220,16 @@
                     <input @bind="_fromAddress"
                            @bind:event="oninput"
                            @bind:after="MarkDirty"
-                           placeholder="@(IsMailIntegration ? "onboarding@resend.dev of jouw@domein.nl" : "noreply@example.com")" />
+                           placeholder="@(IsMailIntegration ? "Lobsy <hallo@mail.lobsy.nl>" : "noreply@example.com")" />
                 </label>
+                @if (IsMailIntegration)
+                {
+                    <p class="muted">Effectief From: <code>@_effectiveFrom</code> · Reply-To: <code>@_effectiveReplyTo</code></p>
+                    @if (_fromDomainWarning)
+                    {
+                        <p class="muted" role="status">Afzender wijkt af van het afgesproken adres (<code>mail.lobsy.nl</code>).</p>
+                    }
+                }
             }
 
             <div class="inline-actions">
@@ -236,7 +263,11 @@
                             @onclick:stopPropagation="true">
                         Stuur testmail
                     </button>
-                    <p class="muted">Stuurt een echte testmail via Resend (als API-key gezet is) of SMTP.</p>
+                    <p class="muted">Stuurt een echte testmail via de verzender die nu aan staat, of via SMTP.</p>
+                    @if (_mailLegalFooterMissing)
+                    {
+                        <p class="state-message error" data-testid="mail-legal-footer-warning">De e-mailfooter mist een adres of KvK-nummer. Vul Bedrijfsgegevens in. Of zet Mail:LegalAddress en Mail:KvkNumber.</p>
+                    }
                 </div>
             }
 
@@ -267,10 +298,14 @@
     private string _clientSecret = "";
     private string _tenantId = "";
     private string _model = "gpt-4o-mini";
+    private string _smallModel = "";
     private string _baseUrl = "";
     private string _smtpPort = "587";
     private string _fromAddress = "";
     private string _testMailTo = "";
+    private string? _kvkUsageLine;
+    private bool _kvkBudgetWarning;
+    private bool _mailLegalFooterMissing;
 
     private IntegrationHelpDocs.Doc? Help => IntegrationHelpDocs.TryGet(Credential.Key);
 
@@ -298,6 +333,18 @@
     private bool IsMailIntegration =>
         string.Equals(Credential.Key, "Mail", StringComparison.OrdinalIgnoreCase);
 
+    private string _effectiveFrom =>
+        MailAddressResolution.ResolveFromAddress(
+            string.IsNullOrWhiteSpace(_fromAddress) ? Credential.FromAddress : _fromAddress,
+            MailOptions.Value);
+
+    private string _effectiveReplyTo => MailAddressResolution.EffectiveReplyTo(MailOptions.Value);
+
+    private bool _fromDomainWarning =>
+        IsMailIntegration
+        && HostEnvironment.IsProduction()
+        && MailAddressResolution.IsFromDomainMismatch(_effectiveFrom);
+
     private bool IsKvkIntegration =>
         string.Equals(Credential.Key, "Kvk", StringComparison.OrdinalIgnoreCase);
 
@@ -310,6 +357,7 @@
 
     protected override void OnParametersSet()
     {
+        _mailLegalFooterMissing = IsMailIntegration && Credential.LegalFooterMissing;
         var keyChanged = !string.Equals(_boundKey, Credential.Key, StringComparison.OrdinalIgnoreCase);
         var serverUpdated = Credential.UpdatedAtUtc != _boundUpdatedAtUtc;
         if (keyChanged)
@@ -336,6 +384,7 @@
         _clientId = Credential.ClientId ?? "";
         _tenantId = Credential.TenantId ?? "";
         _model = Credential.Model ?? "gpt-4o-mini";
+        _smallModel = Credential.SmallModel ?? "";
         SplitHostAndPort(Credential.BaseUrl, out _baseUrl, out _smtpPort);
         _fromAddress = Credential.FromAddress ?? "";
         if (IsMailIntegration && string.IsNullOrWhiteSpace(_testMailTo) && !string.IsNullOrWhiteSpace(_fromAddress))
@@ -404,6 +453,31 @@
             SyncDraftsFromCredential();
             _localMessage = null;
         }
+
+        if (_expanded && IsKvkIntegration)
+        {
+            _ = LoadKvkUsageAsync();
+        }
+    }
+
+    private async Task LoadKvkUsageAsync()
+    {
+        try
+        {
+            var usage = await Api.GetKvkUsageAsync();
+            if (usage is null)
+            {
+                return;
+            }
+
+            _kvkUsageLine = usage.TodaySummary;
+            _kvkBudgetWarning = usage.BudgetWarning;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Non-blocking admin hint.
+        }
     }
 
     private void ToggleHelp()
@@ -415,6 +489,7 @@
     {
         ApiKey = Credential.SupportsApiKey ? _apiKey : null,
         Model = Credential.SupportsModel ? _model : null,
+        SmallModel = Credential.SupportsModel ? _smallModel : null,
         ClientId = Credential.SupportsOAuth ? _clientId : null,
         ClientSecret = Credential.SupportsOAuth ? _clientSecret : null,
         TenantId = Credential.SupportsTenantId ? _tenantId : null,

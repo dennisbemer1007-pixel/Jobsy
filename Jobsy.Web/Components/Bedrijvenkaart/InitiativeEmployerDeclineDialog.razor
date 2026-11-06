@@ -1,0 +1,61 @@
+@using Jobsy.Core.Contracts
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+@if (IsOpen && Item is not null)
+{
+    <div class="bk-modal-backdrop bk-modal-backdrop--centered" @onclick="Close">
+        <div class="bk-modal bk-modal--sent" role="dialog" aria-modal="true" aria-labelledby="bk-decline-title" @onclick:stopPropagation="true">
+            <header class="bk-modal__header">
+                <h2 id="bk-decline-title">@Culture["Initiative.Employer.Decline"]</h2>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <div class="bk-modal__body">
+                <p class="bk-modal__lead">@Culture["Initiative.Employer.DeclineLead"]</p>
+                <label class="bk-wg-toggle bk-wg-toggle--compact bk-decline-toggle">
+                    <span class="bk-wg-toggle__label">@Culture["Initiative.Employer.DeclineKeepOpen"]</span>
+                    <input type="checkbox" class="bk-wg-toggle__input" @bind="_keepOpen" />
+                    <span class="bk-wg-toggle__track" aria-hidden="true"></span>
+                </label>
+            </div>
+            <footer class="bk-modal__footer bk-modal__footer--compact">
+                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn--primary" disabled="@_busy" @onclick="DeclineAsync">@Culture["Initiative.Employer.Decline"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EmployerInitiativeInboxItemDto? Item { get; set; }
+    [Parameter] public EventCallback OnDeclined { get; set; }
+
+    private bool _busy;
+    private bool _keepOpen = true;
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+
+    private async Task DeclineAsync()
+    {
+        if (Item is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DeclineWorkInitiativeAsync(Item.Id, _keepOpen);
+            await OnDeclined.InvokeAsync();
+            await Close();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

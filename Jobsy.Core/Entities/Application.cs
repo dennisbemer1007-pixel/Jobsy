@@ -61,6 +61,11 @@ public class Application
     /// <summary>JSON array of { name, year } certificates/courses at apply.</summary>
     public string? SnapshotCertificatesJson { get; set; }
 
+    /// <summary>
+    /// JSON array of foreign-diploma evaluation facts at apply. Document bytes are never snapshotted.
+    /// </summary>
+    public string? SnapshotDiplomaEvaluationsJson { get; set; }
+
     /// <summary>Whether the candidate allows address/map on the Lobsy-CV.</summary>
     public bool SnapshotShowAddressOnCv { get; set; } = true;
 
@@ -94,6 +99,14 @@ public class Application
     /// <summary>JSON snapshot of the optional "Wie ben ik?" CV bijlage at apply.</summary>
     public string? SnapshotWhoAmIJson { get; set; }
 
+    /// <summary>
+    /// PDF attached at apply: <see cref="Rules.ApplicationAttachedDocumentRules.LobsyCv"/> or
+    /// <see cref="Rules.ApplicationAttachedDocumentRules.Passport"/>. Null = legacy (paspoort when V2 on).
+    /// </summary>
+    public string? SnapshotAttachedDocument { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
+
+    public ICollection<ApplicationStatusHistory> StatusHistory { get; set; } = new List<ApplicationStatusHistory>();
 }

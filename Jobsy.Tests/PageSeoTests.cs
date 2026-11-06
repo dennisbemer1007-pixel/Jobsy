@@ -19,7 +19,8 @@ public class PageSeoCatalogTests
     [InlineData("/westland", true)]
     [InlineData("/lancering", true)]
     [InlineData("/partner", true)]
-    [InlineData("/partner/SM-ABCDEF", true)]
+    [InlineData("/partner/SM-ABCDEF", false)]
+    [InlineData("/hoe-werkt-lobsy", true)]
     [InlineData("/vacancies/c1000000-0000-0000-0000-000000000010", true)]
     [InlineData("/12345678", true)]
     [InlineData("/12345678/0001", true)]
@@ -27,10 +28,9 @@ public class PageSeoCatalogTests
     [InlineData("/admin", false)]
     [InlineData("/admin/users", false)]
     [InlineData("/candidate/profile", false)]
-    [InlineData("/employer/tokens", false)]
-    [InlineData("/register/activate", false)]
+    [InlineData("/werkgever/tokens", false)]
     [InlineData("/privacy/data", false)]
-    [InlineData("/banen", false)]
+    [InlineData("/banenkaart", true)]
     public void Indexability_matches_public_vs_private_surfaces(string path, bool indexable)
         => Assert.Equal(indexable, PageSeoCatalog.IsIndexable(path));
 
@@ -68,9 +68,11 @@ public class PageSeoCatalogTests
     {
         var root = FindRepoRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("<html lang=\"nl\">", app);
+        Assert.Contains("<html lang=\"@HtmlLang\"", app);
+        Assert.Contains("HtmlLang", app);
         Assert.Contains("theme-color", app);
-        Assert.Contains("Lobsy — vacatures op reistijd", app);
+        Assert.Contains("Lobsy — een loopbaangids in je eigen taal", app);
+        Assert.Contains("<title>@DocumentTitle</title>", app);
         Assert.Contains("HeadOutlet", app);
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "MainLayout.razor"));
@@ -78,6 +80,9 @@ public class PageSeoCatalogTests
 
         var teaser = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "TeaserLayout.razor"));
         Assert.Contains("PageSeoHead", teaser);
+
+        var publicLayout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "PublicLayout.razor"));
+        Assert.Contains("PageSeoHead", publicLayout);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Program.cs"));
         Assert.Contains("MapSeoEndpoints", program);
@@ -98,6 +103,25 @@ public class PageSeoCatalogTests
         Assert.DoesNotContain("prerender: false", company);
     }
 
+    [Theory]
+    [InlineData("/privacy", "Legal.Privacy")]
+    [InlineData("/toegankelijkheid", "A11y.Seo.Title")]
+    [InlineData("/scholen", "Seo.SchoolsTitle")]
+    public void Static_public_pages_have_their_own_catalog_titles(string path, string titleKey)
+    {
+        var entry = PageSeoCatalog.Resolve(path);
+        Assert.Equal(titleKey, entry.TitleKey);
+        Assert.NotEqual(PageSeoCatalog.Fallback.TitleKey, entry.TitleKey);
+        Assert.Contains(path, PageSeoCatalog.StaticIndexablePaths);
+        foreach (var lang in new[] { "nl", "en", "pl", "ro", "ar" })
+        {
+            var text = UiStrings.Get(entry.TitleKey, lang);
+            Assert.NotEqual(entry.TitleKey, text);
+            var branded = PageSeoResolver.WithBrand(text);
+            Assert.DoesNotContain("een loopbaangids in je eigen taal", branded, StringComparison.Ordinal);
+        }
+    }
+
     private static string SamplePath(string template)
     {
         if (template.Contains("KvkNumber", StringComparison.Ordinal))
@@ -111,6 +135,8 @@ public class PageSeoCatalogTests
             .Replace("{Id:guid}", "c1000000-0000-0000-0000-000000000010", StringComparison.Ordinal)
             .Replace("{TableId:guid}", "c2000000-0000-0000-0000-000000000020", StringComparison.Ordinal)
             .Replace("{CompanyId:guid}", "c3000000-0000-0000-0000-000000000030", StringComparison.Ordinal)
+            .Replace("{ApplicationId:guid}", "c4000000-0000-0000-0000-000000000040", StringComparison.Ordinal)
+            .Replace("{applicationId:guid}", "c4000000-0000-0000-0000-000000000040", StringComparison.Ordinal)
             .Replace("{TrackingCode?}", "", StringComparison.Ordinal)
             .Replace("{TrackingCode}", "SM-ABCDEF", StringComparison.Ordinal)
             .Replace("{Key}", "clicks", StringComparison.Ordinal);
@@ -235,7 +261,7 @@ public class StructuredDataAndSitemapTests
         var json = StructuredData.WebsiteAndOrganization("https://lobsy.nl");
         Assert.Contains("WebSite", json);
         Assert.Contains("Organization", json);
-        Assert.Contains("/?q={search_term_string}", json);
+        Assert.Contains("/banenkaart?q={search_term_string}", json);
         Assert.DoesNotContain("email", json, StringComparison.OrdinalIgnoreCase);
     }
 

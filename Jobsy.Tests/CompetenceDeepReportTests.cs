@@ -212,6 +212,15 @@ public class CompetenceDeepReportTests
 
         Assert.False(string.IsNullOrWhiteSpace(CompetenceDeepReportTexts.TemplateSummary(report.Traits)));
         Assert.NotEmpty(CompetenceDeepReportTexts.TemplateActionPlan(report.Traits));
+
+        var wordsOnly = CompetenceDeepReportTexts.TemplateSummaryWordsOnly(report.Traits);
+        Assert.DoesNotContain('%', wordsOnly);
+        Assert.False(System.Text.RegularExpressions.Regex.IsMatch(
+            wordsOnly, @"\bscore\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+        foreach (var occ in report.Occupations)
+        {
+            Assert.DoesNotContain('%', occ.Reason);
+        }
     }
 
     [Fact]

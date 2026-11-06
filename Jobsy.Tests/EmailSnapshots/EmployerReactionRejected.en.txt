@@ -1,0 +1,32 @@
+KEY: EmployerReactionRejected
+SUBJECT: News about your application at Bakkerij De Gouden Korrel
+PREHEADER: There are more vacancies near you.
+KIND: Essential
+--- TEXT ---
+Hi Alex,
+
+Not this time
+=============
+
+Thanks for applying for Weekendhulp verkoop at Bakkerij De Gouden Korrel.
+They chose someone else this time. That is a pity. There are still plenty of
+other vacancies near you.
+
+Browse other vacancies: https://lobsy.nl/banenkaart
+
+Team Lobsy
+
+You get this email because you applied via Lobsy.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Not this time
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Browse other vacancies -> https://lobsy.nl/banenkaart
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

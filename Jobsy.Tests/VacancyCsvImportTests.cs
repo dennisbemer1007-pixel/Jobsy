@@ -108,6 +108,14 @@ public class VacancyCsvParserTests
         Assert.Equal(8, date.Value.Month);
         Assert.Equal(1, date.Value.Day);
     }
+
+    [Fact]
+    public void TryParseDate_accepts_month_only_as_end_of_month()
+    {
+        var date = VacancyCsvParser.TryParseDate("10-2026");
+        Assert.NotNull(date);
+        Assert.Equal(new DateOnly(2026, 10, 31), date);
+    }
 }
 
 public class HtmlSanitizeImageTests

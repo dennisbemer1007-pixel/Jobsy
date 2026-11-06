@@ -1,18 +1,57 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Data;
 
+/// <summary>Deterministic ids for local demo school E2E (Development only).</summary>
+public static class DemoSchoolIds
+{
+    public static readonly Guid SchoolId = Guid.Parse("99999999-1111-1111-1111-111111111111");
+    public static readonly Guid Class1AId = Guid.Parse("99999999-2222-2222-2222-222222222222");
+    /// <summary>Demo groep 7/8 klas (apart van VMBO 2A).</summary>
+    public static readonly Guid ClassGroep78Id = Guid.Parse("99999999-3333-3333-3333-333333333333");
+    public const string ClassGroep78Name = "8B";
+    public static readonly Guid ClassMbo2Id = Guid.Parse("99999999-4444-4444-4444-444444444444");
+    public const string ClassMbo2Name = "MBO 2";
+    public static readonly Guid ClassHboId = Guid.Parse("99999999-5555-5555-5555-555555555555");
+    public const string ClassHboName = "HBO";
+    public static readonly Guid SchoolAdminUserId = Guid.Parse("bbbbbbbb-2222-2222-2222-222222222222");
+    public static readonly Guid TeacherUserId = Guid.Parse("bbbbbbbb-3333-3333-3333-333333333333");
+    public static readonly Guid WerkcoachUserId = Guid.Parse("bbbbbbbb-4444-4444-4444-444444444444");
+}
+
+public static class DemoCandidateIds
+{
+    public static readonly Guid OnboardingE2eUserId = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444");
+}
+
+public static class DemoGemeenteIds
+{
+    public static readonly Guid CompanyId = Guid.Parse("88888888-8888-8888-8888-888888888888");
+    public static readonly Guid RegionalUserId = Guid.Parse("cccccccc-2222-2222-2222-222222222222");
+}
+
 internal static class DemoUsersSeeder
 {
     /// <summary>Documented public-demo password for every @jobsy.local seed account.</summary>
     public const string DemoPassword = "Jobsy123!";
+
+    private const string OnboardingE2eEmail = "onboarding.e2e@jobsy.local";
+
+    /// <summary>Haaglanden demo home for banenkaart/match UAT (aligned with vacancy stub).</summary>
+    private const string OnboardingE2eHomeAddress = "Kasweg 12, 2671 AB Naaldwijk";
+
+    private static readonly string OnboardingE2ePreferencesJson =
+        $$"""{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20,"preferredTransport":"Fiets","homeAddress":"{{OnboardingE2eHomeAddress}}"}""";
 
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CafeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -23,11 +62,22 @@ internal static class DemoUsersSeeder
     {
         var added = 0;
 
+        try
+        {
+            await PassportPdfMartaDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Passport PDF Marta demo seed failed; continuing.");
+        }
+
         added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
-            Email = "kandidaat@jobsy.local",
-            FullName = "Demo Kandidaat",
+            Email = "sanne@jobsy.local",
+            FullName = KandidaatDemoProfileEnsurer.DemoFullName,
+            FirstName = KandidaatDemoProfileEnsurer.DemoFirstName,
+            LastName = KandidaatDemoProfileEnsurer.DemoLastName,
             Role = UserRole.Candidate,
             CompanyId = null,
             DateOfBirth = new DateOnly(1998, 4, 12),
@@ -66,6 +116,67 @@ internal static class DemoUsersSeeder
             IsActive = true
         });
 
+        // Dedicated e2e candidate. The test fixture can reset this deterministic account
+        // without altering the public candidate demo profile.
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = DemoCandidateIds.OnboardingE2eUserId,
+            Email = OnboardingE2eEmail,
+            FullName = "Onboarding E2E",
+            Role = UserRole.Candidate,
+            CompanyId = null,
+            DateOfBirth = new DateOnly(2000, 3, 1),
+            OpenForWork = true,
+            HomeLocation = new GeoPoint(51.9930, 4.2150),
+            PreferencesJson = OnboardingE2ePreferencesJson,
+            IsActive = true
+        });
+
+        // Named test candidate (login email + display name Twalieb).
+        added += await EnsureUserAsync(
+            db,
+            new User
+            {
+                Id = Guid.Parse("aaaaaaaa-6666-6666-6666-666666666666"),
+                Email = "twalieb@jobsy.local",
+                FullName = "Twalieb",
+                Role = UserRole.Candidate,
+                CompanyId = null,
+                DateOfBirth = new DateOnly(1996, 6, 15),
+                OpenForWork = true,
+                HomeLocation = new GeoPoint(51.9930, 4.2150),
+                PreferencesJson = """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":35}""",
+                IsActive = true
+            },
+            password: "Lobsy123!");
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = ReferenceVerificationDemoIds.UserId,
+            Email = ReferenceVerificationDemoIds.Email,
+            FirstName = "Sanne",
+            FullName = "Sanne de Vries",
+            Role = UserRole.Candidate,
+            OpenForWork = true,
+            IsActive = true
+        });
+
+        // Named test candidate Valentine (Acceptatie login).
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = Guid.Parse("aaaaaaaa-8888-8888-8888-888888888888"),
+            Email = "valentine@jobsy.local",
+            FullName = "Valentine",
+            FirstName = "Valentine",
+            Role = UserRole.Candidate,
+            CompanyId = null,
+            DateOfBirth = new DateOnly(1999, 2, 14),
+            OpenForWork = true,
+            HomeLocation = new GeoPoint(51.9850, 4.2300),
+            PreferencesJson = """{"roles":["horeca","retail"],"maxTravelMinutes":30}""",
+            IsActive = true
+        });
+
         var branchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
         added += await EnsureUserAsync(db, new User
         {
@@ -93,7 +204,7 @@ internal static class DemoUsersSeeder
         {
             Id = enterpriseManagerId,
             Email = "enterprise@jobsy.local",
-            FullName = "Bedrijfsmanager Jobsy Retail",
+            FullName = "Linda de Wit",
             Role = UserRole.EnterpriseManager,
             CompanyId = SupermarketId,
             IsActive = true
@@ -147,6 +258,9 @@ internal static class DemoUsersSeeder
 
         await EnsureAmbassadeurProfileAsync(db, ambassadeurId);
 
+        added += await EnsureDemoSchoolStaffAsync(db);
+        added += await EnsureDemoGemeentePartnerAsync(db);
+
         await EnsureMembershipAsync(db, branchManagerId, WestlandId);
         await EnsureMembershipAsync(db, regionalManagerId, CafeId);
         await EnsureMembershipAsync(db, regionalManagerId, SupermarketId);
@@ -157,6 +271,15 @@ internal static class DemoUsersSeeder
         await EnsureMembershipAsync(db, intermediaryId, CafeId);
         await EnsureMembershipAsync(db, intermediaryId, SupermarketId);
 
+        // Playwright + docs still sign in as kandidaat@jobsy.local (same user as sanne@jobsy.local).
+        await EnsureLoginEmailAliasAsync(
+            db,
+            KandidaatDemoProfileEnsurer.PrimaryDemoCandidateId,
+            KandidaatDemoProfileEnsurer.DemoLoginEmail);
+        await KandidaatDemoProfileEnsurer.EnsureAsync(db, logger);
+
+        await OnboardingE2eProfileEnsurer.EnsureAsync(db, logger);
+
         if (added > 0 || db.ChangeTracker.HasChanges())
         {
             await db.SaveChangesAsync();
@@ -166,9 +289,21 @@ internal static class DemoUsersSeeder
         {
             logger.LogInformation("Ensured {Count} demo role user(s) (candidates, managers, intermediary, admin).", added);
         }
+
+        try
+        {
+            await ExternalVacancyDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "External vacancy demo seed failed; continuing.");
+        }
     }
 
-    private static async Task<int> EnsureUserAsync(JobsyDbContext db, User template)
+    private static Task<int> EnsureUserAsync(JobsyDbContext db, User template)
+        => EnsureUserAsync(db, template, DemoPassword);
+
+    private static async Task<int> EnsureUserAsync(JobsyDbContext db, User template, string password)
     {
         StampDemoConsent(template);
 
@@ -192,9 +327,44 @@ internal static class DemoUsersSeeder
                 existing.CompanyId = companyId;
             }
 
+            if (template.SchoolId is Guid schoolId && existing.SchoolId != schoolId)
+            {
+                existing.SchoolId = schoolId;
+            }
+
+            if (!string.Equals(existing.FullName, template.FullName, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(template.FullName))
+            {
+                existing.FullName = template.FullName;
+            }
+
+            if (template.HomeLocation is not null && existing.HomeLocation is null)
+            {
+                existing.HomeLocation = template.HomeLocation;
+            }
+
+            if (!string.IsNullOrWhiteSpace(template.PreferencesJson)
+                && string.IsNullOrWhiteSpace(existing.PreferencesJson))
+            {
+                existing.PreferencesJson = template.PreferencesJson;
+            }
+
+            if (ShouldForceRefreshOnboardingE2e(email))
+            {
+                existing.OpenForWork = true;
+                existing.FullName = template.FullName;
+                existing.HomeLocation = template.HomeLocation ?? existing.HomeLocation;
+                existing.PreferencesJson = template.PreferencesJson;
+            }
+
+            if (template.DateOfBirth is not null && existing.DateOfBirth is null)
+            {
+                existing.DateOfBirth = template.DateOfBirth;
+            }
+
             // Demo accounts stay on the current consent version so version bumps don't block the public demo.
             StampDemoConsent(existing);
-            await EnsureDemoPasswordAsync(db, existing);
+            await EnsurePasswordAsync(db, existing, password);
 
             return 0;
         }
@@ -206,15 +376,48 @@ internal static class DemoUsersSeeder
         }
 
         db.Users.Add(template);
-        await EnsureDemoPasswordAsync(db, template);
+        await EnsurePasswordAsync(db, template, password);
         return 1;
     }
 
-    /// <summary>
-    /// Creates or resets the local-login hash so demo accounts always accept <see cref="DemoPassword"/>.
-    /// Production web login uses <c>POST api/auth/local-login</c> (demo-store is Development-only unless allowed).
-    /// </summary>
-    private static async Task EnsureDemoPasswordAsync(JobsyDbContext db, User user)
+    private static bool ShouldForceRefreshOnboardingE2e(string normalizedEmail)
+        => string.Equals(normalizedEmail, OnboardingE2eEmail, StringComparison.Ordinal);
+
+    private static async Task EnsureLoginEmailAliasAsync(JobsyDbContext db, Guid userId, string aliasEmail)
+    {
+        var email = aliasEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return;
+        }
+
+        var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.Email == email);
+        if (credential is null)
+        {
+            db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Email = email,
+                PasswordHash = JobsyPasswordHasher.Hash(DemoPassword)
+            });
+            return;
+        }
+
+        credential.UserId = userId;
+        if (!JobsyPasswordHasher.Verify(DemoPassword, credential.PasswordHash)
+            || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
+        {
+            credential.PasswordHash = JobsyPasswordHasher.Hash(DemoPassword);
+        }
+
+        credential.FailedLoginCount = 0;
+        credential.LockoutUntil = null;
+        credential.LockoutCount = 0;
+    }
+
+    private static async Task EnsurePasswordAsync(JobsyDbContext db, User user, string password)
     {
         var email = user.Email.Trim().ToLowerInvariant();
         var credential = await db.LocalAuthCredentials.FirstOrDefaultAsync(c => c.UserId == user.Id)
@@ -227,17 +430,17 @@ internal static class DemoUsersSeeder
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
                 Email = email,
-                PasswordHash = JobsyPasswordHasher.Hash(DemoPassword)
+                PasswordHash = JobsyPasswordHasher.Hash(password)
             });
             return;
         }
 
         credential.UserId = user.Id;
         credential.Email = email;
-        if (!JobsyPasswordHasher.Verify(DemoPassword, credential.PasswordHash)
+        if (!JobsyPasswordHasher.Verify(password, credential.PasswordHash)
             || JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
         {
-            credential.PasswordHash = JobsyPasswordHasher.Hash(DemoPassword);
+            credential.PasswordHash = JobsyPasswordHasher.Hash(password);
         }
     }
 
@@ -350,5 +553,235 @@ internal static class DemoUsersSeeder
                 UpdatedAtUtc = now
             });
         }
+    }
+
+    private static async Task<int> EnsureDemoSchoolStaffAsync(JobsyDbContext db)
+    {
+        var added = 0;
+        var schoolAdminId = DemoSchoolIds.SchoolAdminUserId;
+        var teacherId = DemoSchoolIds.TeacherUserId;
+        var coachId = DemoSchoolIds.WerkcoachUserId;
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = schoolAdminId,
+            Email = "schoolbeheer@jobsy.local",
+            FullName = "Demo Schoolbeheerder",
+            Role = UserRole.SchoolAdmin,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true
+        });
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = teacherId,
+            Email = "leraar@jobsy.local",
+            FullName = "Demo Leraar",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true
+        });
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = coachId,
+            Email = "werkcoach@jobsy.local",
+            FullName = "Demo Werkcoach",
+            Role = UserRole.Teacher,
+            SchoolId = DemoSchoolIds.SchoolId,
+            IsActive = true
+        });
+
+        var now = DateTime.UtcNow;
+        var school = await db.Schools.FirstOrDefaultAsync(s => s.Id == DemoSchoolIds.SchoolId);
+        if (school is null)
+        {
+            school = new School
+            {
+                Id = DemoSchoolIds.SchoolId,
+                Name = "Demo College Lobsy",
+                City = "Naaldwijk",
+                BrinCode = "99ZZ00",
+                AllowedEmailDomains = """["jobsy.local"]""",
+                IsActive = true,
+                IsTestData = true,
+                CreatedAtUtc = now,
+                CreatedByUserId = schoolAdminId,
+                ProcessorAgreementSignedOn = DateOnly.FromDateTime(now),
+                ProcessorAgreementVersion = "demo-local"
+            };
+            db.Schools.Add(school);
+            added++;
+        }
+
+        var yearStart = SchoolYear.Current(DateOnly.FromDateTime(now));
+        var schoolClass = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == DemoSchoolIds.Class1AId);
+        if (schoolClass is null)
+        {
+            schoolClass = new SchoolClass
+            {
+                Id = DemoSchoolIds.Class1AId,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = "2A",
+                Level = SchoolLevel.VmboGt,
+                QuestionSet = PupilQuestionSet.Vo,
+                Year = 2,
+                SchoolYearStart = yearStart,
+                PupilCount = 5,
+                IsTestData = true,
+                CreatedAtUtc = now
+            };
+            db.SchoolClasses.Add(schoolClass);
+            added++;
+        }
+
+        var groep78 = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == DemoSchoolIds.ClassGroep78Id);
+        if (groep78 is null)
+        {
+            groep78 = new SchoolClass
+            {
+                Id = DemoSchoolIds.ClassGroep78Id,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = DemoSchoolIds.ClassGroep78Name,
+                Level = SchoolLevel.Groep78,
+                QuestionSet = PupilQuestionSet.Groep78,
+                Year = 8,
+                SchoolYearStart = yearStart,
+                PupilCount = 10,
+                TestWindow = TestWindowState.Open,
+                IsTestData = true,
+                CreatedAtUtc = now
+            };
+            db.SchoolClasses.Add(groep78);
+            added++;
+        }
+        else
+        {
+            groep78.Name = DemoSchoolIds.ClassGroep78Name;
+            groep78.Level = SchoolLevel.Groep78;
+            groep78.QuestionSet = PupilQuestionSet.Groep78;
+            groep78.PupilCount = Math.Max(groep78.PupilCount, 10);
+            groep78.TestWindow = TestWindowState.Open;
+        }
+
+        added += await EnsureDemoMboHboClassAsync(
+            db,
+            DemoSchoolIds.ClassMbo2Id,
+            DemoSchoolIds.ClassMbo2Name,
+            SchoolLevel.Mbo2,
+            year: 2,
+            yearStart,
+            now);
+        added += await EnsureDemoMboHboClassAsync(
+            db,
+            DemoSchoolIds.ClassHboId,
+            DemoSchoolIds.ClassHboName,
+            SchoolLevel.Hbo,
+            year: 1,
+            yearStart,
+            now);
+
+        foreach (var uid in new[] { teacherId, coachId })
+        {
+            foreach (var classId in new[]
+                     {
+                         DemoSchoolIds.ClassGroep78Id,
+                         DemoSchoolIds.Class1AId,
+                         DemoSchoolIds.ClassMbo2Id,
+                         DemoSchoolIds.ClassHboId
+                     })
+            {
+                if (!await db.TeacherClassAssignments.AnyAsync(
+                        a => a.TeacherUserId == uid && a.SchoolClassId == classId))
+                {
+                    db.TeacherClassAssignments.Add(new TeacherClassAssignment
+                    {
+                        TeacherUserId = uid,
+                        SchoolClassId = classId,
+                        CreatedAtUtc = now
+                    });
+                    added++;
+                }
+            }
+        }
+
+        return added;
+    }
+
+    private static async Task<int> EnsureDemoMboHboClassAsync(
+        JobsyDbContext db,
+        Guid classId,
+        string name,
+        SchoolLevel level,
+        int year,
+        int schoolYearStart,
+        DateTime now)
+    {
+        var added = 0;
+        var questionSet = SchoolLevelRules.QuestionSetFor(level);
+        var schoolClass = await db.SchoolClasses.FirstOrDefaultAsync(c => c.Id == classId);
+        if (schoolClass is null)
+        {
+            db.SchoolClasses.Add(new SchoolClass
+            {
+                Id = classId,
+                SchoolId = DemoSchoolIds.SchoolId,
+                Name = name,
+                Level = level,
+                QuestionSet = questionSet,
+                Year = year,
+                SchoolYearStart = schoolYearStart,
+                PupilCount = 5,
+                TestWindow = TestWindowState.Open,
+                IsTestData = true,
+                CreatedAtUtc = now
+            });
+            added++;
+        }
+        else
+        {
+            schoolClass.Name = name;
+            schoolClass.Level = level;
+            schoolClass.QuestionSet = questionSet;
+            schoolClass.TestWindow = TestWindowState.Open;
+        }
+
+        return added;
+    }
+
+    private static async Task<int> EnsureDemoGemeentePartnerAsync(JobsyDbContext db)
+    {
+        var added = 0;
+        if (!await db.Companies.AnyAsync(c => c.Id == DemoGemeenteIds.CompanyId))
+        {
+            db.Companies.Add(new Company
+            {
+                Id = DemoGemeenteIds.CompanyId,
+                Name = "Gemeente Westland (demo)",
+                KvkNumber = "99887766",
+                KvkEstablishmentId = "99887766_0001",
+                Address = "Raadhuisplein 1, Naaldwijk",
+                Type = CompanyType.Employer,
+                Location = new GeoPoint(51.994, 4.209),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.Manual,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
+            added++;
+        }
+
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = DemoGemeenteIds.RegionalUserId,
+            Email = "gemeente@jobsy.local",
+            FullName = "Demo Gemeente Regio",
+            Role = UserRole.RegionalManager,
+            CompanyId = DemoGemeenteIds.CompanyId,
+            IsActive = true
+        });
+
+        await EnsureMembershipAsync(db, DemoGemeenteIds.RegionalUserId, DemoGemeenteIds.CompanyId);
+        return added;
     }
 }

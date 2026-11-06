@@ -29,6 +29,12 @@ public class Vacancy
     public bool ShowClientAddressOnMap { get; set; }
 
     /// <summary>
+    /// For intermediary vacancies: discovery map circle radius in km (2, 5 or 10). Default 2.
+    /// Distance search uses the area centre (postcode/place geocode).
+    /// </summary>
+    public int PublicMapRadiusKm { get; set; } = 2;
+
+    /// <summary>
     /// Origin channel: Manual / Api / Csv = Regulier; Ats = scrape pipeline.
     /// </summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
@@ -90,6 +96,11 @@ public class Vacancy
     public bool IsHighlighted { get; set; }
 
     /// <summary>
+    /// True only for acceptatie CLI-seeded sample vacancies. Never set via API/UI.
+    /// </summary>
+    public bool IsTestData { get; set; }
+
+    /// <summary>
     /// UTC expiry of the paid highlight. When in the past, the vacancy is no longer treated as featured
     /// on the banenkaart (carousel / pulse marker), even if <see cref="IsHighlighted"/> is still true.
     /// </summary>
@@ -112,6 +123,13 @@ public class Vacancy
     public Guid? FulfilledByApplicationId { get; set; }
 
     public int MaxApplications { get; set; } = 5;
+
+    /// <summary>Target hires for kandidatenkaart invite rounds. 0 = not tracked.</summary>
+    public int PositionsTarget { get; set; }
+
+    /// <summary>Hires counted toward <see cref="PositionsTarget"/> via kandidatenkaart or hire flow.</summary>
+    public int PositionsFilled { get; set; }
+
     public Guid? SalaryTableId { get; set; }
     public CompanySalaryTable? SalaryTable { get; set; }
 
@@ -157,6 +175,17 @@ public class Vacancy
     /// </summary>
     public bool RequireEmailVerification { get; set; }
 
+    /// <summary>
+    /// When true on an unverified company, this draft is "klaar" and auto-publishes on verification.
+    /// </summary>
+    public bool PublishOnVerification { get; set; }
+
+    /// <summary>When <see cref="PublishOnVerification"/> was set.</summary>
+    public DateTime? ReadyMarkedAtUtc { get; set; }
+
+    /// <summary>User who marked the vacancy klaar (actor for auto-publish).</summary>
+    public Guid? ReadyMarkedByUserId { get; set; }
+
     /// <summary>When the 14-day engagement reminder e-mail/notification was sent.</summary>
     public DateTime? EngagementReminderSentAtUtc { get; set; }
 
@@ -168,6 +197,18 @@ public class Vacancy
 
     /// <summary>JSON array of 3–5 culture pillar ids (see <c>CulturePillarCatalog</c>).</summary>
     public string? CulturePillarsJson { get; set; }
+
+    /// <summary>Optional werkcontext for matching (module E, V1–V4). Null = infer only.</summary>
+    public string? VacancyWorkContextJson { get; set; }
+
+    /// <summary>Optional explicit competency targets (V5–V8). Null when <see cref="VacancyUseInferredCompetencies"/>.</summary>
+    public string? VacancyCompetencyTargetsJson { get; set; }
+
+    /// <summary>Team-culture delta vs company profile (V9).</summary>
+    public string? VacancyCultureDeltaJson { get; set; }
+
+    /// <summary>When true (default), competency targets come from infer, not sliders.</summary>
+    public bool VacancyUseInferredCompetencies { get; set; } = true;
 
     /// <summary>
     /// Optional formal randvoorwaarden JSON (high/low barrier, diplomas, certifications, experience).

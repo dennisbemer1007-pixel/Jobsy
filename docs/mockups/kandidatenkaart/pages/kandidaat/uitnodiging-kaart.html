@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="nl" class="vp-desktop">
+<head>
+  <meta charset="utf-8"/>
+  <title>Kandidaat — uitnodiging (in-app)</title>
+  <link rel="stylesheet" href="../../shared/kandidaat.css"/>
+</head>
+
+<body>
+<div class="k-shell k-shell--behind-overlay">
+  <header class="k-header">
+    <a class="k-brand" href="#"><img src="../../shared/assets/lobsy-64.webp" width="44" height="44" alt=""/> Lobsy</a>
+    <div class="k-header__actions">
+      <button type="button" class="k-icon-btn k-icon-btn--active" aria-label="Meldingen">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <span class="k-badge-dot" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+  <div class="k-dashboard" aria-hidden="true">
+    <img class="k-dashboard__art" src="../../shared/candidate-home-bg.svg" width="390" height="700" alt=""/>
+  </div>
+  <nav class="k-bottom-nav" aria-label="Hoofdmenu">
+    <a class="is-on" href="#">Home</a>
+    <a href="#">Sollicitaties</a>
+    <a href="#">Profiel</a>
+    <a href="#">Meer</a>
+  </nav>
+  <div class="k-notif-scrim" aria-hidden="true"></div>
+  <aside class="k-notif-panel" role="dialog" aria-labelledby="invite-card-title">
+    <div class="k-notif-panel__head">
+      <h2 id="invite-card-title">Meldingen</h2>
+      <button type="button" class="k-btn k-btn--ghost" aria-label="Sluiten">Sluiten</button>
+    </div>
+    <ul class="k-notif-list">
+      <li class="k-notif-item k-notif-item--highlight k-invite-card">
+        <div class="k-notif-item__tag">
+          <svg class="i" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14.1l-3-3"/></svg>
+          Uitnodiging
+        </div>
+        <div class="k-invite-card__head">
+          <h3 class="k-invite-card__title">Productiemedewerker</h3>
+          <span class="k-match-pill">84% match</span>
+        </div>
+        <p class="k-invite-card__employer">Demo Bakkerij Noord · Amersfoort</p>
+        <p class="k-invite-card__slots"><strong>Nog 2 plekken open</strong> · 24–32 uur · per direct</p>
+        <p class="k-invite-card__lead">Je bent anoniem zichtbaar voor deze werkgever. Jij kiest of je reageert.</p>
+        <div class="k-notif-item__actions">
+          <button type="button" class="k-btn k-btn--primary">Bekijk vacature</button>
+          <button type="button" class="k-btn">Niet interessant</button>
+        </div>
+        <p class="k-notif-item__fine">Afwijzen telt als reactie. Daar hoort geen waarschuwing of andere consequentie bij.</p>
+      </li>
+    </ul>
+  </aside>
+</div></body></html>

@@ -1,0 +1,73 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="wc stack">
+    <div class="row">
+        <span class="av w" style="width:46px;height:46px">@Initials</span>
+        <div>
+            <h3 style="font-size:1.25rem">@Thread.CandidateName</h3>
+            <p class="small muted">@Subtitle</p>
+        </div>
+    </div>
+    <div class="hr"></div>
+    <NdMTimeline CurrentStep="@Step" YesDate="@YesDate" InterviewHint="@InterviewHint" />
+    @if (ShowEmployerWhat)
+    {
+        <div class="what">
+            <div>
+                <b>@Culture["AfterMatch.Employer.WhatNow.Slots.Title"]</b>
+                <p class="small">@Culture["AfterMatch.Employer.WhatNow.Slots.Body"]</p>
+            </div>
+            <div>
+                <b>@Culture["AfterMatch.What.Interview.Title"]</b>
+                <p class="small">@Culture["AfterMatch.Employer.WhatNow.Interview.Body"]</p>
+            </div>
+            <div>
+                <b>@Culture["AfterMatch.What.Outcome.Title"]</b>
+                <p class="small">@Culture["AfterMatch.Employer.WhatNow.Outcome.Body"]</p>
+            </div>
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Note))
+    {
+        <div class="note">
+            <span>@((MarkupString)NdMIcons.Info)</span>
+            <span>@Note</span>
+        </div>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AfterMatchThreadDto Thread { get; set; } = default!;
+    [Parameter] public int Step { get; set; } = 1;
+    [Parameter] public bool ShowEmployerWhat { get; set; }
+    [Parameter] public string? Note { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string Subtitle =>
+        string.Join(" · ", new[]
+        {
+            Thread.VacancyTitle,
+            Culture["AfterMatch.Demo.Team"],
+            YesDate is not null ? string.Format(Culture["AfterMatch.Employer.YesOn"], YesDate) : null
+        }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private string Initials
+    {
+        get
+        {
+            var parts = Thread.CandidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length >= 2
+                ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+                : Thread.CandidateName.Length >= 2 ? Thread.CandidateName[..2].ToUpperInvariant() : "?";
+        }
+    }
+
+    private string? YesDate =>
+        Thread.AcceptedAtUtc?.ToLocalTime().ToString("d MMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
+    private string? InterviewHint =>
+        Thread.ScheduledStartUtc?.ToLocalTime().ToString("d MMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+}

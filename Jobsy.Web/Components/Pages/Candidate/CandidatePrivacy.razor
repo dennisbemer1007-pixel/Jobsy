@@ -1,0 +1,41 @@
+@page "/candidate/privacy"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<PageTitle>@Culture["CandidatePrivacy.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page candidate-hub">
+    <header class="panel-header">
+        <h1>@Culture["CandidatePrivacy.Title"]</h1>
+        <p class="candidate-hub__lead">@Culture["CandidatePrivacy.Lead"]</p>
+    </header>
+
+    <ul class="candidate-hub__list">
+        <li>
+            <a class="candidate-hub__link" href="/privacy">
+                <span class="candidate-hub__link-title">@Culture["CandidatePrivacy.Policy.Title"]</span>
+                <span class="candidate-hub__link-desc">@Culture["CandidatePrivacy.Policy.Desc"]</span>
+            </a>
+        </li>
+        <li>
+            <a class="candidate-hub__link" href="/privacy/data">
+                <span class="candidate-hub__link-title">@Culture["CandidatePrivacy.Data.Title"]</span>
+                <span class="candidate-hub__link-desc">@Culture["CandidatePrivacy.Data.Desc"]</span>
+            </a>
+        </li>
+        <li>
+            <a class="candidate-hub__link" href="/candidate/paspoort?tab=data#consent">
+                <span class="candidate-hub__link-title">@Culture["CandidatePrivacy.Consent.Title"]</span>
+                <span class="candidate-hub__link-desc">@Culture["CandidatePrivacy.Consent.Desc"]</span>
+            </a>
+        </li>
+        <li>
+            <a class="candidate-hub__link" href="/account/mail-instellingen">
+                <span class="candidate-hub__link-title">@Culture["CandidatePrivacy.Mail.Title"]</span>
+                <span class="candidate-hub__link-desc">@Culture["CandidatePrivacy.Mail.Desc"]</span>
+            </a>
+        </li>
+    </ul>
+</div>

@@ -1,0 +1,137 @@
+@page "/preview/uwv-mockups"
+@page "/preview/uwv-mockups/{Screen}"
+@layout Jobsy.Web.Components.Layout.UwvMockupLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>UWV mockup · @_screenKey · Lobsy</PageTitle>
+
+<div class="uwv-mockup-page @(_wide ? "uwv-mockup-page--wide" : null)" data-uwv-screen="@_screenKey" data-uwv-lang="@_lang">
+    @if (_screenKey == "banenkaart")
+    {
+        <div class="uwv-mockup-page--banenkaart">
+            <UwvBanenkaartKansLayer Lang="@_lang" />
+        </div>
+    }
+    else if (_screenKey == "workshops")
+    {
+        <div class="opl-page panel-page--cand-ill">
+            <CandidateIllustratedHero Eyebrow="@UwvMockupCopy.Workshops.Title(_lang)"
+                                      CoralEyebrow="true"
+                                      Title="@UwvMockupCopy.Workshops.Title(_lang)"
+                                      Lead="@UwvMockupCopy.Workshops.Lead(_lang)"
+                                      ArtUrl="@CandidateIllustratedImages.LearnGrowHero"
+                                      ArtUrlDesktop="@CandidateIllustratedImages.LearnGrowHeroWide"
+                                      ArtUrlMobileFigures="@CandidateIllustratedImages.LearnGrowHeroFiguresMobile"
+                                      ArtUrlMobileAtmosphere="@CandidateIllustratedImages.LearnGrowHeroMobileAtmosphere"
+                                      ArtPosition="68% center"
+                                      ArtPositionDesktop="right center"
+                                      CssClass="cand-hero--learn-grow" />
+            <div class="uwv-mockup-stack opl-wrap">
+                <UwvOmscholenBlock />
+                <UwvWorkshopsPartnersBlock />
+            </div>
+        </div>
+    }
+    else if (_screenKey == "drijfveren")
+    {
+        <div class="journey-page panel-page--cand-ill uwv-drijfveren-page">
+            <CandidateIllustratedHero Eyebrow="@(UwvMockupCopy.IsEnglish(_lang) ? "My results" : "Mijn resultaten")"
+                                      Title="@UwvMockupCopy.Drijfveren.SectionTitle(_lang)"
+                                      Lead="@UwvMockupCopy.Drijfveren.Lead(_lang)"
+                                      ArtUrl="@CandidateIllustratedImages.KompasHeroWide"
+                                      ArtUrlMobileFigures="@CandidateIllustratedImages.MobFiguresKompas"
+                                      ArtPosition="right center"
+                                      ArtPositionDesktop="right center"
+                                      CssClass="cand-hero--kompas-band cand-hero--with-art uwv-drijfveren-hero" />
+            <div class="uwv-mockup-stack">
+                <UwvDrijfverenResults />
+            </div>
+        </div>
+    }
+    else if (_screenKey == "adviseur")
+    {
+        <UwvAdviseurSharePanel />
+    }
+    else if (_screenKey == "ondernemer-intro")
+    {
+        <UwvOndernemerTestPanel Phase="intro" Lang="@_lang" />
+    }
+    else if (_screenKey == "ondernemer-question")
+    {
+        <UwvOndernemerTestPanel Phase="question" Lang="@_lang" />
+    }
+    else if (_screenKey == "ondernemer-result")
+    {
+        <UwvOndernemerTestPanel Phase="result" Lang="@_lang" />
+    }
+    else
+    {
+        <div class="journey-page career-page career-page--illustrated panel-page--cand-ill">
+            <CandidateIllustratedHero Eyebrow="@UwvMockupCopy.Career.Eyebrow(_lang)"
+                                      CoralEyebrow="true"
+                                      Title="@UwvMockupCopy.Career.Title(_lang)"
+                                      Lead="@UwvMockupCopy.Career.Lead(_lang)"
+                                      ArtUrl="@CandidateIllustratedImages.DroombaanProfessionWide"
+                                      ArtUrlMobileFigures="@CandidateIllustratedImages.MobFiguresOpleiding"
+                                      ArtPosition="right center"
+                                      ArtPositionDesktop="right center"
+                                      CssClass="cand-hero--profession-band cand-hero--with-art uwv-carriere-hero" />
+            <div class="uwv-mockup-stack">
+                <UwvKansberoepenBlock />
+                <UwvSimilarOccupationsBlock />
+                <UwvOmscholenBlock />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Screen { get; set; }
+
+    private string _lang = "nl";
+    private string _screenKey = "carriere";
+    private bool _wide;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (CultureRequest.HasExplicitChoice(http))
+        {
+            Culture.InitializeFromRequest(http);
+        }
+        else if (http?.Request.Query.TryGetValue("lang", out var q) == true)
+        {
+            Culture.InitializeFromLanguage(q.ToString());
+        }
+
+        _lang = Culture.Language;
+        _screenKey = NormalizeScreen(Screen);
+        _wide = http?.Request.Query.ContainsKey("wide") == true
+                || string.Equals(http?.Request.Query["viewport"], "1920", StringComparison.Ordinal);
+    }
+
+    private static string NormalizeScreen(string? screen)
+    {
+        var s = (screen ?? "carriere").Trim().ToLowerInvariant();
+        return s switch
+        {
+            "" or "carriere" or "career" => "carriere",
+            "banenkaart" or "map" => "banenkaart",
+            "workshops" or "leren" or "opleidingen" => "workshops",
+            "drijfveren" or "drivers" => "drijfveren",
+            "adviseur" or "share" => "adviseur",
+            "ondernemer-intro" or "entrepreneur-intro" => "ondernemer-intro",
+            "ondernemer-question" or "entrepreneur-question" => "ondernemer-question",
+            "ondernemer-result" or "entrepreneur-result" => "ondernemer-result",
+            _ => s
+        };
+    }
+}

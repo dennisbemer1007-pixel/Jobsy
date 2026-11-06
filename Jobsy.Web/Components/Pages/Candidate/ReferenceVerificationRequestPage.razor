@@ -1,0 +1,317 @@
+@page "/candidate/paspoort/referentie/vraag/{EntryId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IFeatureFlags FeatureFlags
+
+<PageTitle>@Culture["RefVerif.Request.Title"] · Lobsy</PageTitle>
+
+@if (!_flagsLoaded)
+{
+    <div class="panel-page ref-verif-request-page">
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    </div>
+}
+else if (!_featureOn)
+{
+    <div class="panel-page ref-verif-request-page">
+        <p class="state-message">@Culture["Common.Error.TryAgain"]</p>
+    </div>
+}
+else if (!_eligible)
+{
+    <div class="panel-page ref-verif-request-page">
+        @RenderSimpleMessage(Culture["RefVerif.Request.NotEligible"], @<a class="ref-verif-request__cancel" href="/candidate/paspoort">@Culture["RefVerif.Request.Back"]</a>)
+    </div>
+}
+else if (_entry is null)
+{
+    <div class="panel-page ref-verif-request-page">
+        @RenderSimpleMessage(Culture["RefVerif.Request.NotFound"], @<a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=proof">@Culture["RefVerif.Request.Back"]</a>)
+    </div>
+}
+else
+{
+    <div class="ref-verif-request-layout @(_cardVisible ? "ref-verif-request-layout--ready" : null)">
+        <RefVerifGevoeligHero Title="@Culture["RefVerif.Request.Title"]"
+                                  Lead="@Culture["RefVerif.Request.Lead"]"
+                                  ArtUrl="@CandidateIllustratedImages.RefVerifRequest"
+                                  MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
+                                  ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
+                                  MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
+                                  CssClass="" />
+
+        <div class="ref-verif-request-layout__body">
+            <div class="ref-verif-request-layout__grid ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
+                <div class="ref-verif-request__card detail-card">
+                    <div class="ref-verif-request__body">
+                        @if (_sent)
+                        {
+                            <div class="ref-verif-request__confirm" data-testid="ref-verif-request-sent" role="status">
+                                <ReferenceVerificationDrawCheck Size="lg" Animate="@_confirmAnimate" />
+                                <p class="ref-verif-request__confirm-title">@Culture.Format("RefVerif.Request.SentToName", _sentReferentName)</p>
+                                <p class="ref-verif-request__confirm-note muted">@Culture["RefVerif.Request.SentValidity"]</p>
+                                <p class="ref-verif-request__confirm-link">
+                                    <a href="/candidate/paspoort?tab=references">@Culture["RefVerif.Request.Back"]</a>
+                                </p>
+                                @if (_alternateAsk is { } alternateAsk)
+                                {
+                                    <p class="ref-verif-request__confirm-more muted">
+                                        @Culture["RefVerif.Request.ConfirmAskAnother"]
+                                        <a href="@alternateAsk.Href">@Culture.Format("RefVerif.Request.ConfirmAskAnotherLink", alternateAsk.EmployerName)</a>
+                                    </p>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="ref-verif-request__summary">
+                                <strong>@_entry.EmployerName</strong>
+                                @if (!string.IsNullOrWhiteSpace(_entry.Role))
+                                {
+                                    <span class="muted"> · @_entry.Role</span>
+                                }
+                            </div>
+
+                            <div class="ref-verif-request__grid">
+                                <label class="ref-verif-request__field" for="ref-name">
+                                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Name"]</span>
+                                    <input id="ref-name" class="ref-verif-request__input" @bind="_name" @bind:event="oninput" maxlength="80" autocomplete="name" />
+                                </label>
+                                <label class="ref-verif-request__field" for="ref-email">
+                                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Email"]</span>
+                                    <input id="ref-email" class="ref-verif-request__input" type="email" @bind="_email" @bind:event="oninput" maxlength="254" autocomplete="email" />
+                                </label>
+
+                                <label class="ref-verif-request__field ref-verif-request__field--full" for="ref-relation">
+                                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Relation"]</span>
+                                    <select id="ref-relation" class="ref-verif-request__input ref-verif-request__select" @bind="_relation">
+                                        @foreach (var relationCode in RelationCodes)
+                                        {
+                                            <option value="@relationCode">@Culture[$"RefVerif.Relation.{relationCode}"]</option>
+                                        }
+                                    </select>
+                                </label>
+
+                                <label class="ref-verif-request__consent ref-verif-request__field--full" for="ref-consent">
+                                    <input id="ref-consent" type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" @bind:event="onchange" />
+                                    <span class="ref-verif-request__consent-text">@Culture["RefVerif.Request.Consent"]</span>
+                                </label>
+
+                                @if (!string.IsNullOrWhiteSpace(_message))
+                                {
+                                    <p class="ref-verif-request__error ref-verif-request__field--full" role="alert">@_message</p>
+                                }
+                            </div>
+
+                            <footer class="ref-verif-request__footer">
+                                <a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=references">@Culture["Common.Cancel"]</a>
+                                <button type="button" class="btn btn-primary ref-verif-request__submit" disabled="@_busy" @onclick="SendAsync">
+                                    @Culture["RefVerif.Request.Send"]
+                                </button>
+                            </footer>
+                        }
+                    </div>
+                </div>
+                <ReferenceVerificationRequestSidePanel />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid EntryId { get; set; }
+
+    private static readonly string[] RelationCodes = ["leidinggevende", "collega", "opdrachtgever", "anders"];
+
+    private bool _flagsLoaded;
+    private bool _featureOn;
+    private bool _eligible;
+    private bool _busy;
+    private bool _sent;
+    private bool _cardVisible;
+    private bool _confirmAnimate;
+    private string? _message;
+    private string _sentReferentName = "";
+    private CandidateEmployerHistory? _entry;
+    private string _name = "";
+    private string _email = "";
+    private string _relation = RelationCodes[0];
+    private bool _consent;
+    private (string Href, string EmployerName)? _alternateAsk;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _featureOn = flags.ReferenceVerificationEnabled;
+        _flagsLoaded = true;
+        if (!_featureOn)
+        {
+            return;
+        }
+
+        _eligible = await Api.GetReferenceVerificationEligibleAsync();
+        var profile = await Api.GetMyProfileAsync();
+        var employers = profile?.Preferences?.Employers ?? [];
+        foreach (var emp in employers)
+        {
+            if (emp.EntryId == EntryId)
+            {
+                _entry = emp;
+                break;
+            }
+        }
+
+        if (_entry is null)
+        {
+            foreach (var emp in WorkExperienceEntryIds.EnsureIds(
+                         employers.Select(MapEmployer).ToList()))
+            {
+                if (WorkExperienceEntryIds.ResolveEntryId(emp) == EntryId)
+                {
+                    _entry = MapFromDto(emp);
+                    break;
+                }
+            }
+        }
+
+        if (_entry is not null && _eligible)
+        {
+            _cardVisible = true;
+            _alternateAsk = ResolveAlternateAskEntry(profile?.Preferences?.Employers);
+        }
+    }
+
+    private (string Href, string EmployerName)? ResolveAlternateAskEntry(IReadOnlyList<CandidateEmployerHistory>? employers)
+    {
+        if (employers is null || employers.Count < 2)
+        {
+            return null;
+        }
+
+        foreach (var emp in employers)
+        {
+            var id = emp.EntryId ?? WorkExperienceEntryIds.ResolveEntryId(MapEmployer(emp));
+            if (id != EntryId && !string.IsNullOrWhiteSpace(emp.EmployerName))
+            {
+                return ($"/candidate/paspoort/referentie/vraag/{id:D}", emp.EmployerName.Trim());
+            }
+        }
+
+        return null;
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_sent && !_confirmAnimate)
+        {
+            _confirmAnimate = true;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private RenderFragment RenderSimpleMessage(string message, RenderFragment? actions) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "ref-verif-request__card detail-card");
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "ref-verif-request__body");
+        builder.OpenElement(4, "p");
+        builder.AddAttribute(5, "class", "state-message");
+        builder.AddContent(6, message);
+        builder.CloseElement();
+        if (actions is not null)
+        {
+            builder.AddContent(7, actions);
+        }
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+
+    private async Task SendAsync()
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            if (!_consent)
+            {
+                _message = Culture["RefVerif.Request.Consent"];
+                return;
+            }
+
+            var (ok, error) = await Api.RequestWorkExperienceReferenceAsync(
+                EntryId,
+                _name,
+                _relation,
+                _email,
+                true);
+            if (ok)
+            {
+                _sentReferentName = string.IsNullOrWhiteSpace(_name) ? Culture["RefVerif.Request.SentNameFallback"] : _name.Trim();
+                _confirmAnimate = false;
+                _sent = true;
+                return;
+            }
+
+            _message = MapError(error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string MapError(string? error) => error switch
+    {
+        "disabled" => Culture["Common.Error.TryAgain"],
+        "consent" => Culture["RefVerif.Request.Consent"],
+        "referent" => Culture["RefVerif.Request.Name"],
+        "not_found" => Culture["RefVerif.Request.NotFound"],
+        "not_eligible" => Culture["RefVerif.Request.NotEligible"],
+        "limit_entry" or "limit_month" => Culture["RefVerif.Error.Limit"],
+        "already" => Culture["RefVerif.Error.Already"],
+        "mail" => Culture["Common.Error.TryAgain"],
+        _ => Culture["Common.Error.TryAgain"]
+    };
+
+    private static CandidateEmployerHistoryDto MapEmployer(CandidateEmployerHistory e)
+        => new(
+            e.EmployerName,
+            e.Role,
+            e.Years,
+            e.Description,
+            e.StartMonth,
+            e.EndMonth,
+            e.IsCurrent,
+            e.EscoId,
+            e.EntryId);
+
+    private static CandidateEmployerHistory MapFromDto(CandidateEmployerHistoryDto e)
+        => new()
+        {
+            EntryId = e.EntryId,
+            EmployerName = e.EmployerName,
+            Role = e.Role,
+            Years = e.Years,
+            Description = e.Description,
+            StartMonth = e.StartMonth,
+            EndMonth = e.EndMonth,
+            IsCurrent = e.IsCurrent,
+            EscoId = e.EscoId
+        };
+}

@@ -1,0 +1,82 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Components.Shared
+@inject CultureState Culture
+
+<p class="passport-data__private-note">
+    <span aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+    @Culture["Discovery.Dislike.PrivateNote"]
+</p>
+
+<fieldset class="profile-roles">
+    <legend>@Culture["Profile.Section.Dislikes"]</legend>
+    <ChoiceTileGrid Class="profile-chip-grid" AriaLabel="@Culture["Profile.Section.Dislikes"]">
+        @foreach (var code in DiscoveryCatalogs.DislikeCodes)
+        {
+            var selected = Editor.Dislikes.Contains(code);
+            <ChoiceTile Class="kompas-chip"
+                        Label="@Culture[DiscoveryCatalogs.DislikeLabelKey(code)]"
+                        Icon="@ChoiceTileIcons.ForDislike(code)"
+                        Selected="selected"
+                        OnClick="@(() => Editor.ToggleDislike(code, !selected))" />
+        }
+        @for (var i = 0; i < Editor.CustomDislikes.Count; i++)
+        {
+            var index = i;
+            <div class="profile-language-row">
+                <input type="text"
+                       maxlength="@DiscoveryCatalogs.MaxCustomDislikeLength"
+                       value="@Editor.CustomDislikes[index]"
+                       placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
+                       @oninput="e => OnCustomInput(index, e.Value?.ToString())" />
+                <button type="button" class="btn btn-secondary" @onclick="() => RemoveCustom(index)">×</button>
+            </div>
+        }
+        @if (Editor.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
+        {
+            <ChoiceTile Class="kompas-chip"
+                        IsAdd="true"
+                        Label="@Culture["Discovery.Dislike.SomethingElse"]"
+                        OnClick="@AddCustom" />
+        }
+    </ChoiceTileGrid>
+</fieldset>
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private void AddCustom()
+    {
+        if (Editor.CustomDislikes.Count >= DiscoveryCatalogs.MaxCustomDislikes)
+        {
+            return;
+        }
+
+        Editor.CustomDislikes.Add("");
+        Editor.Notify();
+    }
+
+    private void RemoveCustom(int index)
+    {
+        if (index < 0 || index >= Editor.CustomDislikes.Count)
+        {
+            return;
+        }
+
+        Editor.CustomDislikes.RemoveAt(index);
+        Editor.Notify();
+    }
+
+    private void OnCustomInput(int index, string? value)
+    {
+        if (index < 0 || index >= Editor.CustomDislikes.Count)
+        {
+            return;
+        }
+
+        Editor.CustomDislikes[index] = value ?? "";
+        Editor.Notify();
+    }
+}

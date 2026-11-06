@@ -1,0 +1,21 @@
+@namespace Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+
+@if (SelectedCount > 0)
+{
+    <div class="admin-bulk-bar" role="status">
+        <span class="admin-bulk-bar__count">@string.Format(Culture["AdminUi.Selected"], SelectedCount)</span>
+        <div class="admin-bulk-bar__actions">
+            @ChildContent
+            <button type="button" class="btn-compact" @onclick="ClearAsync">@Culture["AdminUi.ClearSelection"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int SelectedCount { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private Task ClearAsync() => OnClear.InvokeAsync();
+}

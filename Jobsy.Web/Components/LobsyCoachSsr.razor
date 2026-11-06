@@ -1,0 +1,47 @@
+@namespace Jobsy.Web.Components
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<div id="lobsy-assistant-ssr-config" hidden
+     data-chat-url="/api/assistant-client/chat"
+     data-title="@Culture["Assistant.BotName"]"
+     data-subtitle="@Culture["Assistant.SubtitleWarm"]"
+     data-greeting="@Culture["Assistant.Greeting"]"
+     data-you="@Culture["Assistant.You"]"
+     data-close="@Culture["Assistant.Close"]"
+     data-new-chat="@Culture["Assistant.NewChat"]"
+     data-send="@Culture["Assistant.Send"]"
+     data-placeholder="@Culture["Assistant.PlaceholderWarm"]"
+     data-typing="@Culture["Assistant.Typing"]"
+     data-disclaimer="@Culture["Assistant.Disclaimer"]"></div>
+
+<div class="lobsy-coach-dock @(HasBottomNav ? "lobsy-coach-dock--has-nav" : null)"
+     data-lobsy-coach
+     data-ssr-coach="true">
+    <button type="button"
+            id="lobsy-coach-btn"
+            class="lobsy-coach-dock__btn lobsy-coach-dock__btn--warm"
+            aria-label="@AskLabel"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="lobsy-assistant-panel"
+            data-ssr-coach-open>
+        <span class="lobsy-coach-dock__medallion" aria-hidden="true">
+            <img src="@BrandImages.MarkSvg"
+                 srcset="@BrandImages.SrcSet56"
+                 sizes="56px"
+                 alt=""
+                 width="56"
+                 height="56"
+                 decoding="async" />
+        </span>
+        <span class="lobsy-coach-dock__label">@AskLabel</span>
+        <span class="visually-hidden">@AskLabel</span>
+    </button>
+</div>
+
+@code {
+    [Parameter] public bool HasBottomNav { get; set; }
+    [Parameter] public string AskLabel { get; set; } = "Lobsy-hulp";
+}

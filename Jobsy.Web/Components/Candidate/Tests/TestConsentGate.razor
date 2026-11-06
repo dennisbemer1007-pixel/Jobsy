@@ -1,0 +1,147 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+@if (_loading)
+{
+    <div class="test-page journey-page">
+        <div class="test-skeleton" aria-busy="true">
+            <span class="skeleton-line skeleton-line--title"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+        </div>
+    </div>
+}
+else if (_parentalMissing)
+{
+    <div class="test-page journey-page">
+        <div class="test-consent card" data-consent="parental">
+            <h2>@Culture["TestFlow.Consent.ParentalTitle"]</h2>
+            <p>@Culture["TestFlow.Consent.ParentalLead"]</p>
+            <a class="btn btn-primary" href="/candidate/profile">@Culture["TestFlow.Consent.ParentalCta"]</a>
+        </div>
+    </div>
+}
+else if (_loadFailed)
+{
+    <TestLoadError OnRetry="RefreshAsync" />
+}
+else if (_testConsentMissing)
+{
+    <div class="test-page journey-page">
+        <div class="test-consent card" data-consent="test">
+            <h2>@Culture["TestFlow.Consent.Title"]</h2>
+            <p>@Culture["TestFlow.Consent.Lead"]</p>
+            <p class="muted">@Culture["AssessmentV2.Transparency.NotDiagnosis"]</p>
+            <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GiveConsentAsync">
+                @Culture["TestFlow.Consent.Cta"]
+            </button>
+            <p><a href="/privacy">@Culture["TestFlow.Consent.Why"]</a></p>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="form-error" role="alert">@_error</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="test-page journey-page">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback<bool> GateChanged { get; set; }
+    [Parameter] public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
+
+    private bool _loading = true;
+    private bool _loadFailed;
+    private bool _parentalMissing;
+    private bool _testConsentMissing;
+    private bool _busy;
+    private string? _error;
+    private int _loadGeneration;
+    public bool IsOpen => !_loading && !_loadFailed && !_parentalMissing && !_testConsentMissing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    public async Task RefreshAsync()
+    {
+        var generation = Interlocked.Increment(ref _loadGeneration);
+        _loading = true;
+        _loadFailed = false;
+        _error = null;
+        using var timeout = new CancellationTokenSource(TestPlayerLoad.Timeout);
+        try
+        {
+            var result = await Api.GetMyProfileResultAsync(timeout.Token);
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
+            if (result.TemporarilyUnavailable)
+            {
+                _loadFailed = true;
+                _parentalMissing = false;
+                _testConsentMissing = false;
+            }
+            else if (result.Value is null)
+            {
+                _parentalMissing = false;
+                _testConsentMissing = true;
+            }
+            else
+            {
+                _parentalMissing = !GratisDnaMergeProfileRules.CanUseCandidateFeatures(result.Value);
+                _testConsentMissing = !_parentalMissing && !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(result.Value);
+            }
+        }
+        catch (Exception) when (generation == _loadGeneration)
+        {
+            _loadFailed = true;
+            _parentalMissing = false;
+            _testConsentMissing = false;
+        }
+        finally
+        {
+            if (generation == _loadGeneration)
+            {
+                _loading = false;
+                await GateChanged.InvokeAsync(IsOpen);
+            }
+        }
+    }
+
+    private async Task GiveConsentAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var updated = await Api.AcceptTestAiConsentAsync();
+            if (updated is null || !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(updated))
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            await RefreshAsync();
+        }
+        catch
+        {
+            _error = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

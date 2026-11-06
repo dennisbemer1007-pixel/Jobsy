@@ -1,0 +1,50 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+@inject CultureState Culture
+
+@if (Minutes is int mins and > 0)
+{
+    var mode = string.IsNullOrWhiteSpace(Transport) ? TransportLabels.Bike : Transport;
+    var verb = KbLabels.TransportVerb(Culture, mode);
+    var modeWord = KbLabels.Transport(Culture, mode);
+    <span class="kb-travel @(Large ? "kb-travel--large" : null) @(ToBureau ? "kb-travel--bureau" : null)"
+          aria-label="@string.Format(Culture["Kb.Travel.Aria"], mins, verb)">
+        <span class="kb-travel__icon" aria-hidden="true">@KbIcons.Transport(TransportLabels.Canonical(mode))</span>
+        @if (Approx)
+        {
+            <span class="kb-travel__approx">@Culture["Kb.Travel.Approx"]</span>
+        }
+        @if (Large)
+        {
+            <span class="kb-travel__minutes">@mins</span>
+            <span class="kb-travel__mode">@verb</span>
+        }
+        else
+        {
+            <span class="kb-travel__text">@string.Format(Culture["Kb.Travel.Minutes"], mins, verb)</span>
+        }
+        @if (ToBureau)
+        {
+            <span class="kb-travel__bureau">
+                @if (string.IsNullOrWhiteSpace(BureauRegion))
+                {
+                    @* KB-FALLBACK(A): no gemeente leak — simple bureau travel label *@
+                    @Culture["Kb.Travel.ToBureauSimple"]
+                }
+                else
+                {
+                    @string.Format(Culture["Kb.Travel.ToBureau"], BureauRegion)
+                }
+            </span>
+        }
+    </span>
+}
+
+@code {
+    [Parameter] public int? Minutes { get; set; }
+    [Parameter] public string? Transport { get; set; }
+    [Parameter] public bool Approx { get; set; }
+    [Parameter] public bool ToBureau { get; set; }
+    [Parameter] public string? BureauRegion { get; set; }
+    /// <summary>Large travel figure for full-width list rows (06).</summary>
+    [Parameter] public bool Large { get; set; }
+}

@@ -13,7 +13,12 @@ public interface IProfileVacancyMatchService
         Guid userId,
         CancellationToken cancellationToken = default);
 
-    IReadOnlyDictionary<Guid, ProfileVacancyMatch> Score(
+    /// <summary>
+    /// Scores vacancies for a candidate. Loads employer culture once per batch
+    /// (own profile, else parent organisation) and applies it per vacancy company.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, ProfileVacancyMatch>> ScoreAsync(
         ProfileVacancyMatchContext context,
-        IEnumerable<(VacancyDiscoveryRecord Record, int? TravelMinutes)> vacancies);
+        IEnumerable<(VacancyDiscoveryRecord Record, int? TravelMinutes)> vacancies,
+        CancellationToken cancellationToken = default);
 }

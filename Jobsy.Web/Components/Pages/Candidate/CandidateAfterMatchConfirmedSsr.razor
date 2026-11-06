@@ -1,0 +1,101 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match/confirmed-ssr"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Web.Applications
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Features
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["AfterMatch.Screen05.PageTitle"] · Lobsy</PageTitle>
+<PageSeo Title="@Culture["AfterMatch.Screen05.PageTitle"]" />
+<HeadContent>
+<link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/sollicitaties-page.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/na-de-match.css")" />
+    <script src="@($"/{WwwrootAssetCatalog.Url("js/ndm-confirmed.js")}")" defer></script>
+</HeadContent>
+
+@if (_loading)
+{
+    <PageContentSkeleton Variant="apps" CardCount="2" LoadingLabel="@Culture["Common.Loading"]" />
+}
+else if (_redirecting)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private bool _loading = true;
+    private bool _redirecting;
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                _fatalMessage = Culture["Apps.Sollicitation.Gone"];
+                return;
+            }
+
+            var query = QueryHelpers.ParseQuery(http.Request.QueryString.Value ?? "");
+            query.TryGetValue("return", out var returnValues);
+            var returnUrl = returnValues.FirstOrDefault();
+            var data = await AfterMatchConfirmedSsrData.LoadAsync(
+                Api,
+                Culture,
+                ApplicationId,
+                returnUrl);
+
+            if (data is null)
+            {
+                _redirecting = true;
+                var thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId, http.RequestAborted);
+                var dispatch = AfterMatchPanelRouting.DispatchSuffixForThread(thread);
+                var suffix = dispatch
+                    ?? (thread?.InterviewStatus == InterviewStatus.RescheduleRequested
+                        ? AfterMatchPanelRouting.WaitSsrSuffix
+                        : AfterMatchPanelRouting.PickSlotSsrSuffix);
+                var querySuffix = http.Request.QueryString.HasValue ? http.Request.QueryString.Value : "";
+                var target =
+                    $"/candidate/applications/{ApplicationId:D}/after-match{suffix}{querySuffix}";
+                http.Response.Redirect(target);
+                return;
+            }
+
+            _bodyHtml = AfterMatchConfirmedSsrShells.BuildBody(Culture, data, ApplicationId);
+        }
+        catch
+        {
+            _fatalMessage = Culture["Apps.Sollicitation.Gone"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

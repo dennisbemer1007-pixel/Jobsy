@@ -1,5 +1,8 @@
+using Jobsy.Api.Authorization;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
@@ -11,24 +14,30 @@ namespace Jobsy.Api.Controllers;
 [ApiController]
 [Route("api/employer/talent")]
 [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class TalentPoolController : ControllerBase
 {
     private readonly ITalentPoolService _talent;
     private readonly IUserLookupService _users;
     private readonly ICompanyAuthorizationService _authz;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public TalentPoolController(
         ITalentPoolService talent,
         IUserLookupService users,
-        ICompanyAuthorizationService authz)
+        ICompanyAuthorizationService authz,
+        IPersonalDataAccessLogger accessLog)
     {
         _talent = talent;
         _users = users;
         _authz = authz;
+        _accessLog = accessLog;
     }
 
     [HttpGet("search")]
+    [HttpGet("/api/werkgever/talentpool/search")]
     [EnableRateLimiting("public-read")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<IReadOnlyList<AnonymousTalentCardDto>>> Search(
         [FromQuery] string? tags,
         [FromQuery] int? maxTravelMinutes,
@@ -68,7 +77,9 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpPost("unlock")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<TalentContactRequestDto>> Unlock(
         [FromBody] TalentUnlockRequest body,
         CancellationToken cancellationToken = default)
@@ -81,12 +92,23 @@ public sealed class TalentPoolController : ControllerBase
 
         try
         {
-            return Ok(await _talent.UnlockAsync(
+            var dto = await _talent.UnlockAsync(
                 companyId.Value,
                 user.Id,
                 body.CandidateUserId,
                 body.Message ?? "",
-                cancellationToken));
+                cancellationToken);
+            await this.LogPersonalDataAccessAsync(
+                _accessLog,
+                user.Id,
+                PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                "talentpool.unlock",
+                "reveal",
+                subjectUserId: body.CandidateUserId,
+                subjectCompanyId: companyId,
+                reason: "contact-unlock",
+                cancellationToken: cancellationToken);
+            return Ok(dto);
         }
         catch (InvalidOperationException ex)
         {
@@ -95,7 +117,9 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpPost("{requestId:guid}/withdraw")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("public-write")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<TalentContactRequestDto>> Withdraw(
         Guid requestId,
         CancellationToken cancellationToken = default)
@@ -122,6 +146,7 @@ public sealed class TalentPoolController : ControllerBase
     }
 
     [HttpGet("requests")]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<IReadOnlyList<TalentContactRequestDto>>> ListRequests(
         CancellationToken cancellationToken = default)
     {
@@ -161,6 +186,7 @@ public sealed record TalentUnlockRequest(Guid CandidateUserId, string? Message);
 [ApiController]
 [Route("api/me/talent-contacts")]
 [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class CandidateTalentContactsController : ControllerBase
 {
     private readonly ITalentPoolService _talent;
@@ -179,10 +205,30 @@ public sealed class CandidateTalentContactsController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound();
+            return NotFound(new { code = NotFoundCode });
         }
 
         return Ok(await _talent.ListForCandidateAsync(user.Id, cancellationToken));
+    }
+
+    /// <summary>
+    /// Exactly what the employer receives when the candidate says yes (04 §1). Own request only.
+    /// </summary>
+    [HttpGet("{requestId:guid}/share-preview")]
+    public async Task<ActionResult<TalentContactSharePreviewDto>> SharePreview(
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { code = NotFoundCode });
+        }
+
+        var preview = await _talent.GetSharePreviewAsync(user.Id, requestId, cancellationToken);
+        return preview is null
+            ? NotFound(new { code = NotFoundCode })
+            : Ok(preview);
     }
 
     [HttpPost("{requestId:guid}/respond")]
@@ -195,7 +241,14 @@ public sealed class CandidateTalentContactsController : ControllerBase
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
         if (user is null)
         {
-            return NotFound();
+            return NotFound(new { code = NotFoundCode });
+        }
+
+        // Accepting shares name, e-mail and phone; old clients and scripts must send the
+        // explicit confirmation from the share dialog (04 §1).
+        if (body.Accept && !body.AlreadyPlaced && !body.ConfirmedShare)
+        {
+            return BadRequest(new { code = ConfirmShareRequiredCode });
         }
 
         try
@@ -203,15 +256,22 @@ public sealed class CandidateTalentContactsController : ControllerBase
             return Ok(await _talent.CandidateRespondAsync(
                 user.Id, requestId, body.Accept, body.AlreadyPlaced, cancellationToken));
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
-            return BadRequest(new { message = ex.Message });
+            return Conflict(new { code = CannotRespondCode });
         }
         catch (KeyNotFoundException)
         {
-            return NotFound();
+            return NotFound(new { code = NotFoundCode });
         }
     }
+
+    private const string NotFoundCode = "not_found";
+    private const string CannotRespondCode = "cannot_respond";
+    private const string ConfirmShareRequiredCode = "confirm_share_required";
 }
 
-public sealed record TalentRespondRequest(bool Accept, bool AlreadyPlaced = false);
+public sealed record TalentRespondRequest(
+    bool Accept,
+    bool AlreadyPlaced = false,
+    bool ConfirmedShare = false);

@@ -25,8 +25,8 @@ public interface ITranslationService
         string description,
         string sourceLanguage,
         string targetLanguage,
-        CancellationToken cancellationToken = default,
-        Guid? vacancyId = null);
+        Guid? vacancyId = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Batch-translate vacancy titles/descriptions. DB hits skip AI; misses run with parallelism ≤ 4.

@@ -1,21 +1,22 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-v20260925-coral2";
+var CACHE_VERSION = "lobsy-shell-v20261024-52";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 
 var PRECACHE = [
-    "/",
-    "/manifest.webmanifest?v=20260925-coral",
-    "/css/app.min.css?v=20260926-q-compact",
-    "/js/app-core.js?v=20260925-coralicon",
-    "/icons/icon-192.png?v=20260925-coral",
-    "/icons/icon-512.png?v=20260925-coral",
-    "/favicon.png?v=20260925-coral",
-    "/images/brand/lobsy-128.webp"
+    "/manifest.webmanifest?v=20261004-14",
+    "/css/tokens.css?v=20261018-06",
+    "/css/critical.css?v=20261023-37",
+    "/css/features/stijl-a.css?v=20261018-03",
+    "/icons/icon-192.png?v=20261018-23",
+    "/icons/icon-512.png?v=20261018-23",
+    "/favicon.ico?v=20261018-23",
+    "/brand/svg/lobsy-merkteken.svg?v=20261018-23"
 ];
 
 self.addEventListener("install", function (event) {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(SHELL_CACHE).then(function (cache) {
             return cache.addAll(PRECACHE.map(function (url) {
@@ -23,10 +24,14 @@ self.addEventListener("install", function (event) {
             })).catch(function () {
                 /* Offline install still activates; missing assets filled on fetch. */
             });
-        }).then(function () {
-            return self.skipWaiting();
         })
     );
+});
+
+self.addEventListener("message", function (event) {
+    if (event.data && event.data.type === "SKIP_WAITING") {
+        self.skipWaiting();
+    }
 });
 
 self.addEventListener("activate", function (event) {
@@ -58,8 +63,7 @@ function isStaticAsset(pathname) {
         || pathname.indexOf("/lib/") === 0
         || pathname === "/manifest.webmanifest"
         || pathname === "/favicon.ico"
-        || pathname === "/favicon.png"
-        || pathname.indexOf("/_framework/") === 0;
+        || pathname === "/favicon.png";
 }
 
 self.addEventListener("fetch", function (event) {
@@ -74,6 +78,7 @@ self.addEventListener("fetch", function (event) {
     if (url.pathname.indexOf("/api/") === 0
         || url.pathname.indexOf("/account/") === 0
         || url.pathname.indexOf("/_blazor") === 0
+        || url.pathname.indexOf("/_framework/") === 0
         || url.search.indexOf("_blazor") >= 0) {
         return;
     }
@@ -83,25 +88,29 @@ self.addEventListener("fetch", function (event) {
         return;
     }
 
+    /* HTML: always network — never serve a stale document from cache. */
     if (request.mode === "navigate") {
-        event.respondWith(
-            fetch(request).then(function (response) {
-                var copy = response.clone();
-                caches.open(SHELL_CACHE).then(function (cache) {
-                    cache.put("/", copy);
-                });
-                return response;
-            }).catch(function () {
-                return caches.match("/") || caches.match(request);
-            })
-        );
         return;
     }
 
     if (isStaticAsset(url.pathname)) {
-        event.respondWith(staleWhileRevalidate(SHELL_CACHE, request));
+        /* Network-first: stale cached JS/CSS must never break a fresh HTML document. */
+        event.respondWith(networkFirst(SHELL_CACHE, request));
     }
 });
+
+function networkFirst(cacheName, request) {
+    return caches.open(cacheName).then(function (cache) {
+        return fetch(request).then(function (response) {
+            if (response && response.ok) {
+                cache.put(request, response.clone());
+            }
+            return response;
+        }).catch(function () {
+            return cache.match(request);
+        });
+    });
+}
 
 function cacheFirst(cacheName, request) {
     return caches.open(cacheName).then(function (cache) {
@@ -115,22 +124,6 @@ function cacheFirst(cacheName, request) {
                 }
                 return response;
             });
-        });
-    });
-}
-
-function staleWhileRevalidate(cacheName, request) {
-    return caches.open(cacheName).then(function (cache) {
-        return cache.match(request).then(function (hit) {
-            var network = fetch(request).then(function (response) {
-                if (response && response.ok) {
-                    cache.put(request, response.clone());
-                }
-                return response;
-            }).catch(function () {
-                return hit;
-            });
-            return hit || network;
         });
     });
 }
@@ -154,8 +147,8 @@ self.addEventListener("push", function (event) {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            icon: "/icons/icon-192.png?v=20260925-coral",
-            badge: "/icons/icon-192.png?v=20260925-coral",
+            icon: "/icons/icon-192.png?v=20261018-23",
+            badge: "/icons/icon-192.png?v=20261018-23",
             tag: payload.tag || "lobsy",
             renotify: true,
             data: { url: payload.url },

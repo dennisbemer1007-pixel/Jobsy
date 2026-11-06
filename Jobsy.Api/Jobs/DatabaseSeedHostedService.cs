@@ -1,5 +1,9 @@
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Hosting;
+using Jobsy.Infrastructure.Ops;
+using Jobsy.Infrastructure.Scholen;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -38,7 +42,21 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Database migrate failed during startup.");
+            _logger.LogError(
+                ex,
+                "Database migrate failed during startup (see JobsyDbSeeder logs for EF Database.MigrateAsync exception detail and pending migration id).");
+            _logger.LogError("Database migrate failed during startup — full exception: {ExceptionDetail}", ex.ToString());
+            throw;
+        }
+
+        try
+        {
+            await SystemAdminAccountProvisioner.ProvisionAsync(
+                _services, _configuration, _logger, stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "SystemAdmin provisioning failed during startup.");
             throw;
         }
 
@@ -63,6 +81,13 @@ public sealed class DatabaseSeedHostedService : BackgroundService
             }
         }
 
+        await TryRepairAcceptatieTestCandidateAsync(stoppingToken);
+        await TryEnsureOnboardingE2eAccProfileAsync(stoppingToken);
+        await TryEnsureDemoRecordingCandidatesAsync(stoppingToken);
+        await TryEnsureAcceptatieSollicitatiesDemoAsync(stoppingToken);
+        await TryEnsureAcceptatieScholenClass2ACodesAsync(stoppingToken);
+        await TryEnsureAcceptatieScholenMboHboDemoAsync(stoppingToken);
+
         try
         {
             var index = _services.GetRequiredService<IVacancyDiscoveryIndex>();
@@ -72,6 +97,239 @@ public sealed class DatabaseSeedHostedService : BackgroundService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "Banenkaart index refresh after seed failed; the 15s job will retry.");
+        }
+    }
+
+    /// <summary>
+    /// Acceptatie only. Rewrites the seeded complete candidate's assessment rows.
+    /// The guard refuses production, and this never calls the full seed.
+    /// </summary>
+    private async Task TryRepairAcceptatieTestCandidateAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            var input = TestAccountGuardInputFactory.FromConfiguration(
+                _configuration, _environment, isWebRuntime: true);
+            var guard = TestAccountEnvironmentGuard.Evaluate(input);
+            if (!guard.Allowed)
+            {
+                _logger.LogInformation(
+                    "Test-account assessment repair skipped ({Codes}).",
+                    guard.CodesSummary());
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var seeder = new TestAccountsSeedService(db, _configuration);
+            var repaired = await seeder.RepairCompleteCandidateAssessmentsAsync(_logger, stoppingToken);
+            if (!repaired)
+            {
+                _logger.LogInformation("Test-account assessment repair skipped (account missing).");
+                return;
+            }
+
+            await db.SaveChangesAsync(stoppingToken);
+            _logger.LogInformation("Test-account assessment repair applied.");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Test-account assessment repair failed; API continues.");
+        }
+    }
+
+    /// <summary>
+    /// Acceptatie only: idempotent sollicitaties mockup rows for the CLI test candidate
+    /// (incl. <c>lobsy-test@mail.grokbot.com</c> when flagged as test account).
+    /// </summary>
+    private async Task TryEnsureOnboardingE2eAccProfileAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            await OnboardingE2eProfileEnsurer.EnsureAsync(db, _logger, stoppingToken);
+            if (db.ChangeTracker.HasChanges())
+            {
+                await db.SaveChangesAsync(stoppingToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Onboarding E2E profile ensure failed; API continues.");
+        }
+    }
+
+    private async Task TryEnsureAcceptatieScholenClass2ACodesAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var pupilCodes = scope.ServiceProvider.GetService<IPupilCodeService>();
+            if (pupilCodes is null)
+            {
+                _logger.LogInformation(
+                    "Acceptatie scholen 2A codes: skipped (Scholen:CodeHmacKey / IPupilCodeService unavailable).");
+                return;
+            }
+
+            await AcceptatieScholenClass2APupilCodesEnsurer.TryEnsureAsync(
+                db,
+                pupilCodes,
+                _configuration,
+                _logger,
+                stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Acceptatie scholen 2A pupil codes ensure failed; API continues.");
+        }
+    }
+
+    private async Task TryEnsureAcceptatieScholenMboHboDemoAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            var pupilCodes = scope.ServiceProvider.GetService<IPupilCodeService>();
+            if (pupilCodes is null)
+            {
+                _logger.LogInformation(
+                    "Acceptatie MBO/HBO demo: skipped (Scholen:CodeHmacKey / IPupilCodeService unavailable).");
+                return;
+            }
+
+            await AcceptatieScholenMboHboDemoEnsurer.TryEnsureAsync(
+                db,
+                pupilCodes,
+                _configuration,
+                _logger,
+                stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Acceptatie MBO/HBO demo ensure failed; API continues.");
+        }
+    }
+
+    private async Task TryEnsureDemoRecordingCandidatesAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(_configuration))
+            {
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            await AcceptatieDemoRecordingCandidatesEnsurer.EnsureAsync(db, _logger, stoppingToken);
+            if (db.ChangeTracker.HasChanges())
+            {
+                await db.SaveChangesAsync(stoppingToken);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Demo recording candidates ensure failed; API continues.");
+        }
+    }
+
+    private async Task TryEnsureAcceptatieSollicitatiesDemoAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            var input = TestAccountGuardInputFactory.FromConfiguration(
+                _configuration, _environment, isWebRuntime: false);
+            _logger.LogInformation(
+                "Acceptatie sollicitaties demo probe: service={Service} deployment={Deployment} testAccountsEnabled={TestAccountsEnabled} dbName={DatabaseName} dbParseFailed={DbParseFailed} apiHost={ApiHost} (web SSR uses ApiBaseUrl → same API DB when configured for lobsy-acc-api).",
+                input.RenderServiceName,
+                input.DeploymentEnvironment,
+                input.TestAccountsEnabled,
+                input.DatabaseName ?? "(null)",
+                input.ConnectionStringParseFailed,
+                input.ApiBaseUrlHost ?? "(null)");
+            var guard = TestAccountEnvironmentGuard.Evaluate(input);
+            if (!guard.Allowed)
+            {
+                AcceptatieSollicitatiesDemoStartupState.Record(
+                    "skipped_guard:" + guard.CodesSummary());
+                foreach (var failure in guard.Failures)
+                {
+                    _logger.LogInformation(
+                        "Acceptatie sollicitaties demo skipped: {Code} — {Message}",
+                        failure.Code,
+                        failure.Message);
+                }
+
+                return;
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            try
+            {
+                await JobsyDbSeeder.EnsureAfterMatchDemoApplicationsAsync(db, _logger);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Acceptatie after-match employer demo seed failed; continuing.");
+            }
+
+            var applied = await TestAccountsSollicitatiesDemoSeeder.TryEnsureForAcceptatieAsync(
+                db,
+                _configuration,
+                guard,
+                _logger,
+                cancellationToken: stoppingToken);
+            if (!applied)
+            {
+                AcceptatieSollicitatiesDemoStartupState.Record("skipped_no_candidate_or_manager");
+                _logger.LogInformation(
+                    "Acceptatie sollicitaties demo skipped (no allowlisted candidate or branch manager).");
+            }
+            else
+            {
+                var candidate = await TestAccountsSollicitatiesDemoSeeder.FindAcceptatieDemoCandidateAsync(
+                    db,
+                    _configuration,
+                    _logger,
+                    stoppingToken);
+                if (candidate is not null)
+                {
+                    var outcome = await TestAccountsSollicitatiesDemoSeeder.BuildDemoHealthOutcomeAsync(
+                        db,
+                        candidate.Id,
+                        stoppingToken);
+                    AcceptatieSollicitatiesDemoStartupState.Record(outcome);
+                }
+                else
+                {
+                    AcceptatieSollicitatiesDemoStartupState.Record("applied");
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            AcceptatieSollicitatiesDemoStartupState.RecordError(ex);
+            _logger.LogError(ex, "Acceptatie sollicitaties demo ensure failed; API continues.");
         }
     }
 }

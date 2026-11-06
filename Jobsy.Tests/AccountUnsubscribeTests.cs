@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -28,7 +29,11 @@ public class AccountUnsubscribeTests
             Name = "Demo BV",
             Address = "Straat 1",
             KvkNumber = "123",
-            Location = new GeoPoint(52.0, 4.3)
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -105,30 +110,40 @@ public class AccountUnsubscribeTests
             ActionUrl = "/candidate/actions/set-unavailable?token=secret",
             CreatedAtUtc = DateTime.UtcNow
         });
-            db.CandidateActionTokens.Add(new CandidateActionToken
-            {
-                Id = Guid.NewGuid(),
-                UserId = candidateId,
-                Purpose = "SetUnavailable",
-                TokenHash = VerificationCodes.Hash("abcdef"),
-                ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
-                CreatedAtUtc = DateTime.UtcNow
-            });
-            db.CandidateCompetencies.Add(new CandidateCompetency
-            {
-                Id = Guid.NewGuid(),
-                UserId = candidateId,
-                Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = """{"1":5,"2":4}""",
-                SamenwerkenPercent = 72,
-                ResultaatgerichtheidPercent = 68,
-                StressbestendigheidPercent = 55,
-                InnovatiePercent = 60,
-                CreatedAtUtc = DateTime.UtcNow,
-                UpdatedAtUtc = DateTime.UtcNow,
-                CompletedAtUtc = DateTime.UtcNow
-            });
-            await db.SaveChangesAsync();
+        db.CandidateActionTokens.Add(new CandidateActionToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Purpose = "SetUnavailable",
+            TokenHash = VerificationCodes.Hash("abcdef"),
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+            CreatedAtUtc = DateTime.UtcNow
+        });
+        db.OneTimeLinks.Add(new OneTimeLink
+        {
+            Id = Guid.NewGuid(),
+            Purpose = OneTimeLinkPurpose.SetPassword,
+            TokenHash = VerificationCodes.Hash("set-password-token"),
+            UserId = candidateId,
+            Email = email,
+            CreatedAtUtc = DateTime.UtcNow,
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7)
+        });
+        db.CandidateCompetencies.Add(new CandidateCompetency
+        {
+            Id = Guid.NewGuid(),
+            UserId = candidateId,
+            Status = CandidateCompetencyStatuses.Completed,
+            AnswersJson = """{"1":5,"2":4}""",
+            SamenwerkenPercent = 72,
+            ResultaatgerichtheidPercent = 68,
+            StressbestendigheidPercent = 55,
+            InnovatiePercent = 60,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow,
+            CompletedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
 
         var privacy = CreatePrivacy(db, out var mail);
         var principal = CreatePrincipal(email);
@@ -184,6 +199,7 @@ public class AccountUnsubscribeTests
         Assert.Equal(0, await db.LocalAuthCredentials.CountAsync(c => c.UserId == candidateId));
         Assert.Equal(0, await db.UserNotifications.CountAsync(n => n.UserId == candidateId));
         Assert.Equal(0, await db.CandidateActionTokens.CountAsync(t => t.UserId == candidateId));
+        Assert.Equal(0, await db.OneTimeLinks.CountAsync(l => l.UserId == candidateId));
         Assert.Equal(0, await db.CandidateCompetencies.CountAsync(c => c.UserId == candidateId));
 
         var confirmLog = await db.PlatformLogs
@@ -210,7 +226,11 @@ public class AccountUnsubscribeTests
             Name = "Export Co",
             Address = "Straat 1",
             KvkNumber = "999",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -470,6 +490,94 @@ public class AccountUnsubscribeTests
     }
 
     [Fact]
+    public async Task After_account_delete_same_email_can_create_new_active_user()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        const string email = "reuse-after-delete@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "Te verwijderen",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        db.LocalAuthCredentials.Add(new LocalAuthCredential
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Email = email,
+            PasswordHash = "hash"
+        });
+        await db.SaveChangesAsync();
+
+        var privacy = CreatePrivacy(db, out var mail);
+        var principal = CreatePrincipal(email);
+        await privacy.RequestUnsubscribeAsync(principal, AccountUnsubscribeReasons.Privacy, null);
+        await privacy.ConfirmUnsubscribeAsync(principal, ExtractOtpFromMail(mail));
+
+        var deleted = await db.Users.SingleAsync(u => u.Id == userId);
+        Assert.False(deleted.IsActive);
+        Assert.StartsWith("deleted-", deleted.Email);
+        Assert.False(await db.LocalAuthCredentials.AnyAsync(c => c.UserId == userId));
+        Assert.False(await db.UserExternalLogins.AnyAsync(l => l.UserId == userId));
+
+        var freshId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = freshId,
+            Email = email,
+            FullName = "Opnieuw",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        Assert.Equal(email, (await db.Users.SingleAsync(u => u.Id == freshId)).Email);
+        Assert.False(await db.CandidateOnboardings.AnyAsync(o => o.UserId == freshId));
+    }
+
+    [Fact]
+    public async Task Delete_removes_external_vacancy_outbounds_before_parent_rows()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        const string email = "external-delete@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "External",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        var externalId = Guid.NewGuid();
+        db.CandidateExternalVacancies.Add(new CandidateExternalVacancy
+        {
+            Id = externalId,
+            CandidateUserId = userId,
+            SourceUrl = "https://example.com/vacancy",
+            SourceHost = "example.com",
+            SavedAtUtc = DateTime.UtcNow
+        });
+        db.CandidateExternalVacancyOutbounds.Add(new CandidateExternalVacancyOutbound
+        {
+            Id = Guid.NewGuid(),
+            ExternalVacancyId = externalId,
+            EmployerEmailNormalized = "werkgever@example.com",
+            Motivation = "Graag solliciteren",
+            InitialSentAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await CreatePrivacy(db).DeleteOrAnonymizeAsync(CreatePrincipal(email));
+
+        Assert.False(await db.CandidateExternalVacancyOutbounds.AnyAsync());
+        Assert.False(await db.CandidateExternalVacancies.AnyAsync(v => v.CandidateUserId == userId));
+    }
+
+    [Fact]
     public void Candidate_user_relation_catalog_requires_anonymize_coverage_for_every_model_entity()
     {
         using var db = CreateDb();
@@ -486,32 +594,63 @@ public class AccountUnsubscribeTests
         // explicitly reviewed and added to PrivacyDataService.AnonymizeUserAsync.
         var anonymizeCoverage = new[]
         {
+            typeof(AfterMatchReminderPreference),
             typeof(AmbassadeurProfile),
             typeof(Application),
+            typeof(AssessmentResearchAttempt),
             typeof(CandidateActionToken),
+            typeof(CandidateAssessmentAdjustment),
+            typeof(CandidateAssessmentAttempt),
             typeof(CandidateCareerInterest),
+            typeof(CandidateCareerGeneration),
             typeof(CandidateCareerPlan),
             typeof(CandidateCareerStepProgress),
             typeof(CandidateCompetency),
             typeof(CandidateCulturePersonalityProfile),
             typeof(CandidateDeepAnalysis),
+            typeof(CandidateDiplomaEvaluation),
+            typeof(CandidateExternalVacancy),
             typeof(CandidateMatchSnapshot),
             typeof(CandidateOnboarding),
+            typeof(CandidateProactiveMatchingSettings),
+            typeof(CandidateKandidatenkaartSettings),
+            typeof(KandidatenkaartInviteDelivery),
             typeof(CandidateReference),
+            typeof(CandidateReminderPreference),
+            typeof(WorkExperienceReferenceRequest),
+            typeof(ReferenceConfirmation),
+            typeof(ReferenceConfirmationConsentLog),
+            typeof(ReferenceMisuseReport),
             typeof(CandidateRoleFitCheck),
+            typeof(CandidateTestReflection),
             typeof(CandidateUploadedCv),
+            typeof(CandidateUwvAdviseurShare),
+            typeof(CandidateUwvToolkitState),
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
             typeof(CandidateWhoAmIProfile),
+            typeof(ComebackReminderLog),
+            typeof(ConsumerPurchaseInvoice),
+            typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
+            typeof(InterviewReminder),
             typeof(LocalAuthCredential),
+            typeof(MfaTrustedDevice),
+            typeof(OneTimeLink),
             typeof(PartnerAffiliateProfile),
+            typeof(PassportAccessLog),
+            typeof(PassportPartnerCandidateLink),
+            typeof(PhoneVerificationChallenge),
             typeof(PlatformFeedback),
+            typeof(ProactiveMatchSuggestion),
+            typeof(SalesIbanChangePending),
             typeof(SalesManagerProfile),
+            typeof(SalesSelfBillingConsent),
             typeof(SiteVisit),
             typeof(TalentContactRequest),
             typeof(TrainingClick),
+            typeof(TrainingEnrollment),
             typeof(UserCompany),
             typeof(UserDeviceSession),
             typeof(UserExternalLogin),
@@ -520,7 +659,9 @@ public class AccountUnsubscribeTests
             typeof(VacancyLike),
             typeof(VacancySearchImpression),
             typeof(VacancyShare),
-            typeof(WebPushSubscription)
+            typeof(WebPushSubscription),
+            typeof(WorkInitiative),
+            typeof(WorkInitiativeDraft)
         }
         .OrderBy(type => type.Name)
         .ToArray();
@@ -555,7 +696,11 @@ public class AccountUnsubscribeTests
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
             ReferredByAmbassadeurUserId = userId,
-            CommissionAmbassadeurRateSnapshot = 0.05m
+            CommissionAmbassadeurRateSnapshot = 0.05m,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Vacancies.Add(new Vacancy
         {
@@ -609,6 +754,13 @@ public class AccountUnsubscribeTests
         db.CandidateMatchSnapshots.Add(new CandidateMatchSnapshot { Id = Guid.NewGuid(), UserId = userId });
         db.CandidateOnboardings.Add(new CandidateOnboarding { Id = Guid.NewGuid(), UserId = userId });
         db.CandidateWhoAmIProfiles.Add(new CandidateWhoAmIProfile { Id = Guid.NewGuid(), UserId = userId });
+        db.CandidatePrivatePreferences.Add(new CandidatePrivatePreferences
+        {
+            UserId = userId,
+            DislikesJson = """["night-shifts"]""",
+            CustomDislikesJson = "[]",
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         db.UserExternalLogins.Add(new UserExternalLogin
         {
             Id = Guid.NewGuid(),
@@ -650,6 +802,7 @@ public class AccountUnsubscribeTests
         Assert.False(await db.CandidateMatchSnapshots.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.CandidateOnboardings.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.CandidateWhoAmIProfiles.AnyAsync(row => row.UserId == userId));
+        Assert.False(await db.CandidatePrivatePreferences.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.UserExternalLogins.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.UserDeviceSessions.AnyAsync(row => row.UserId == userId));
         Assert.False(await db.DeviceLoginHandoffs.AnyAsync(row => row.UserId == userId));
@@ -758,6 +911,13 @@ public class AccountUnsubscribeTests
             UserId = userId,
             StoryText = "Mijn verhaal"
         });
+        db.CandidatePrivatePreferences.Add(new CandidatePrivatePreferences
+        {
+            UserId = userId,
+            DislikesJson = """["night-shifts"]""",
+            CustomDislikesJson = """["drukke winkels"]""",
+            UpdatedAtUtc = DateTime.UtcNow
+        });
         await db.SaveChangesAsync();
 
         var export = await CreatePrivacy(db).ExportAsync(CreatePrincipal(email));
@@ -771,6 +931,8 @@ public class AccountUnsubscribeTests
         Assert.Contains("Pushabonnementen", json);
         Assert.Contains("ExterneAanmeldingen", json);
         Assert.Contains("WieBenIkMomentopnamen", json);
+        Assert.Contains("PrivatePreferences", json);
+        Assert.Contains("night-shifts", json);
         Assert.Contains("google", json);
         Assert.Contains("Mijn verhaal", json);
         Assert.DoesNotContain("refresh-secret", json);
@@ -784,7 +946,7 @@ public class AccountUnsubscribeTests
     private static PrivacyDataService CreatePrivacy(JobsyDbContext db, out CapturingEmailService email)
     {
         email = new CapturingEmailService();
-        return new PrivacyDataService(db, new StubUserLookup(db), email);
+        return new PrivacyDataService(db, new StubUserLookup(db), email, new AlwaysOnFeatures());
     }
 
     private static PrivacyDataService CreatePrivacy(JobsyDbContext db)
@@ -820,8 +982,20 @@ public class AccountUnsubscribeTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class CapturingEmailService : IEmailService
+    private sealed class CapturingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Messages { get; } = [];
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)

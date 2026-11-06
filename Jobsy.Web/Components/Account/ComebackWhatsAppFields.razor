@@ -1,0 +1,26 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Available)
+{
+    <fieldset class="comeback-whatsapp" data-comeback-whatsapp>
+        <legend>@Culture["Comeback.WhatsApp.Title"]</legend>
+        <p class="muted">@Culture["Comeback.WhatsApp.Hint"]</p>
+        <label class="checkbox-row" style="display:flex;gap:0.75rem;align-items:flex-start;margin:0.75rem 0">
+            <input type="checkbox" name="whatsapp_optin" value="1" checked="@OptedIn" />
+            <span>@Culture["Comeback.WhatsApp.Title"]</span>
+        </label>
+        <label class="login-field">
+            <span>@Culture["Comeback.WhatsApp.Phone"]</span>
+            <input type="tel" name="whatsapp_phone" value="@Phone" autocomplete="tel" inputmode="tel" />
+            <span class="muted">@Culture["Comeback.WhatsApp.PhoneHint"]</span>
+        </label>
+        <input type="hidden" name="whatsapp_shown" value="1" />
+    </fieldset>
+}
+
+@code {
+    [Parameter] public bool Available { get; set; }
+    [Parameter] public bool OptedIn { get; set; }
+    [Parameter] public string? Phone { get; set; }
+}

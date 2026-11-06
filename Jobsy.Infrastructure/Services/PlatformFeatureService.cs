@@ -1,11 +1,15 @@
 using Jobsy.Core;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
@@ -17,15 +21,21 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private readonly JobsyDbContext _db;
     private readonly JobsyFeatureOptions _options;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache? _cache;
+    private readonly IHostEnvironment? _environment;
 
     public PlatformFeatureService(
         JobsyDbContext db,
         IOptions<JobsyFeatureOptions> options,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMemoryCache? cache = null,
+        IHostEnvironment? environment = null)
     {
         _db = db;
         _options = options.Value;
         _configuration = configuration;
+        _cache = cache;
+        _environment = environment;
     }
 
     public async Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
@@ -45,18 +55,249 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row = new PlatformFeatureSettings { Id = SingletonId };
             _db.PlatformFeatureSettings.Add(row);
+            ApplyDefaultsForInsert(row);
         }
 
-        row.VacancyContentModerationEnabled = update.VacancyContentModerationEnabled;
-        row.AuthenticatorEnabled = update.AuthenticatorEnabled;
-        row.ExposeRegistrationActivationLinks = update.ExposeRegistrationActivationLinks;
-        row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
-        row.SessionInactivityTimeoutMinutes =
-            SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
+        if (update.VacancyContentModerationEnabled is bool moderation)
+        {
+            row.VacancyContentModerationEnabled = moderation;
+        }
+
+        if (update.AuthenticatorEnabled is bool authenticator)
+        {
+            row.AuthenticatorEnabled = authenticator;
+        }
+
+        if (update.InactiveCompanyDays is int inactiveDays)
+        {
+            row.InactiveCompanyDays = Math.Clamp(inactiveDays, 30, 730);
+        }
+
+        if (update.SessionInactivityTimeoutMinutes is int timeout)
+        {
+            row.SessionInactivityTimeoutMinutes = SessionSecurityRules.ClampTimeoutMinutes(timeout);
+        }
+
         if (update.MinimumSessionVersion is int minSession)
         {
             row.MinimumSessionVersion = Math.Max(0, minSession);
         }
+
+        if (update.SupportAccessNotifyAdmins is bool notifyAdmins)
+        {
+            row.SupportAccessNotifyAdmins = notifyAdmins;
+        }
+
+        if (update.SupportAccessNotifySubject is bool notifySubject)
+        {
+            row.SupportAccessNotifySubject = notifySubject;
+        }
+
+        if (update.CandidateInsightsEnabled is bool insightsEnabled)
+        {
+            row.CandidateInsightsEnabled = insightsEnabled;
+        }
+
+        if (update.CandidateInsightsUnlockDays is int unlockDays)
+        {
+            row.CandidateInsightsUnlockDays = CandidateInsightsAccess.ClampUnlockDays(unlockDays);
+        }
+        else if (isNew)
+        {
+            row.CandidateInsightsUnlockDays = CandidateInsightsAccess.DefaultUnlockDays;
+        }
+
+        if (update.CandidateInsightsUnlockPerBranch is bool perBranch)
+        {
+            row.CandidateInsightsUnlockPerBranch = perBranch;
+        }
+
+        if (update.SchoolsEnabled is bool schoolsEnabled)
+        {
+            row.SchoolsEnabled = schoolsEnabled;
+        }
+
+        if (update.SchoolPerCodeResultsEnabled is bool perCode)
+        {
+            row.SchoolPerCodeResultsEnabled = perCode;
+        }
+
+        if (update.SchoolRetentionCutoffMonth is int || update.SchoolRetentionCutoffDay is int)
+        {
+            var month = update.SchoolRetentionCutoffMonth ?? row.SchoolRetentionCutoffMonth;
+            var day = update.SchoolRetentionCutoffDay ?? row.SchoolRetentionCutoffDay;
+            Jobsy.Core.Scholen.SchoolYear.ValidateCutoff(month, day);
+            row.SchoolRetentionCutoffMonth = month;
+            row.SchoolRetentionCutoffDay = day;
+        }
+
+        if (update.AmbassadorsEnabled is bool ambassadorsEnabled)
+        {
+            row.AmbassadorsEnabled = ambassadorsEnabled;
+        }
+        if (update.EmployersEnabled is bool employersEnabled)
+        {
+            row.EmployersEnabled = employersEnabled;
+        }
+
+        if (update.CandidatePassportEnabled is bool passportEnabled)
+        {
+            row.CandidatePassportEnabled = passportEnabled;
+        }
+
+        if (update.PassportPartnersEnabled is bool partnersEnabled)
+        {
+            row.PassportPartnersEnabled = partnersEnabled;
+        }
+
+        if (update.PassportPdfV2Enabled is bool pdfV2Enabled)
+        {
+            row.PassportPdfV2Enabled = pdfV2Enabled;
+        }
+
+        ApplyAdminBoolUpdate(row, "PupilPassportV2Enabled", update.PupilPassportV2Enabled, v => row.PupilPassportV2Enabled = v);
+        ApplyAdminBoolUpdate(row, "StudentPassportEnabled", update.StudentPassportEnabled, v => row.StudentPassportEnabled = v);
+
+        if (update.PassportPdfDnaBlocksEnabled is bool dnaBlocksEnabled)
+        {
+            row.PassportPdfDnaBlocksEnabled = dnaBlocksEnabled;
+        }
+
+        if (update.PhoneVerificationEnabled is bool phoneVerificationEnabled)
+        {
+            row.PhoneVerificationEnabled = phoneVerificationEnabled;
+        }
+
+        if (update.WhatsAppRemindersEnabled is bool whatsAppRemindersEnabled)
+        {
+            row.WhatsAppRemindersEnabled = whatsAppRemindersEnabled;
+        }
+
+        if (update.CompactTestPdfEnabled is bool compactTestPdfEnabled)
+        {
+            row.CompactTestPdfEnabled = compactTestPdfEnabled;
+        }
+
+        if (update.HonestAdviceEnabled is bool honestAdviceEnabled)
+        {
+            row.HonestAdviceEnabled = honestAdviceEnabled;
+        }
+
+        if (update.FutureJobsForYouEnabled is bool futureJobsForYouEnabled)
+        {
+            row.FutureJobsForYouEnabled = futureJobsForYouEnabled;
+        }
+
+        if (update.EmployerPhase2Enabled is bool employerPhase2Enabled)
+        {
+            row.EmployerPhase2Enabled = employerPhase2Enabled;
+        }
+
+        if (update.CandidateExternalVacanciesEnabled is bool externalVacanciesEnabled)
+        {
+            row.CandidateExternalVacanciesEnabled = externalVacanciesEnabled;
+        }
+
+        if (update.ProactiveMatchingEnabled is bool proactiveMatchingEnabled)
+        {
+            row.ProactiveMatchingEnabled = proactiveMatchingEnabled;
+        }
+
+        if (update.TestsV2Enabled is bool testsV2Enabled)
+        {
+            row.TestsV2Enabled = testsV2Enabled;
+        }
+
+        if (update.TestItemExamplesEnabled is bool testItemExamplesEnabled)
+        {
+            row.TestItemExamplesEnabled = testItemExamplesEnabled;
+        }
+
+        if (update.TestProgressInsightEnabled is bool testProgressInsightEnabled)
+        {
+            row.TestProgressInsightEnabled = testProgressInsightEnabled;
+        }
+
+        if (update.MatchCalibrationV1Enabled is bool matchCalibrationV1)
+        {
+            row.MatchCalibrationV1Enabled = matchCalibrationV1;
+        }
+
+        if (update.EmployerFitQuestionnairesEnabled is bool employerFitQuestionnaires)
+        {
+            row.EmployerFitQuestionnairesEnabled = employerFitQuestionnaires;
+        }
+
+        if (update.KandidatenkaartEnabled is bool kandidatenkaartEnabled)
+        {
+            row.KandidatenkaartEnabled = kandidatenkaartEnabled;
+        }
+
+        ApplyAdminBoolUpdate(row, "CompanyMapInitiativeEnabled", update.CompanyMapInitiativeEnabled, v => row.CompanyMapInitiativeEnabled = v);
+        ApplyAdminBoolUpdate(row, "AfterMatchEnabled", update.AfterMatchEnabled, v => row.AfterMatchEnabled = v);
+        ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
+        ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
+        ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
+        ApplyAdminBoolUpdate(row, "UwvFeaturesEnabled", update.UwvFeaturesEnabled, v => row.UwvFeaturesEnabled = v);
+        ApplyAdminBoolUpdate(row, "ActivityLogEnabled", update.ActivityLogEnabled, v => row.ActivityLogEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestJourneyIllustrationEnabled", update.TestJourneyIllustrationEnabled, v => row.TestJourneyIllustrationEnabled = v);
+        ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
+        ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
+        ApplyAdminBoolUpdate(row, "ResearchConsentEnabled", update.ResearchConsentEnabled, v => row.ResearchConsentEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestEditModeEnabled", update.TestEditModeEnabled, v => row.TestEditModeEnabled = v);
+        ApplyAdminBoolUpdate(row, "SamplePdfEnabled", update.SamplePdfEnabled, v => row.SamplePdfEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestDepthValueMockupEnabled", update.TestDepthValueMockupEnabled, v => row.TestDepthValueMockupEnabled = v);
+
+        if (update.ClearAdminFlagOverrideKeys is { Count: > 0 } clearKeys)
+        {
+            var json = row.AdminFlagOverridesJson;
+            foreach (var key in clearKeys)
+            {
+                json = PlatformFeatureFlagOverrides.RemoveKey(json, key);
+            }
+
+            row.AdminFlagOverridesJson = json;
+        }
+
+        if (update.CandidateApplyPerMinuteLimit is int perMinute)
+        {
+            row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
+        }
+
+        if (update.CandidateApplyPerHourLimit is int perHour)
+        {
+            row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.ClampPerHour(perHour);
+        }
+
+        if (update.CandidateApplyPerDayLimit is int perDay)
+        {
+            row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.ClampPerDay(perDay);
+        }
+
+        if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
+        {
+            row.FreeCandidateTestsEnabled = freeCandidateTestsEnabled;
+        }
+
+        if (update.MaintenanceEnabled is bool maintenanceEnabled)
+        {
+            row.MaintenanceEnabled = maintenanceEnabled;
+        }
+
+        if (update.ClearMaintenanceExpectedEndUtc)
+        {
+            row.MaintenanceExpectedEndUtc = null;
+        }
+        else if (update.MaintenanceExpectedEndUtc is DateTime expectedEnd)
+        {
+            row.MaintenanceExpectedEndUtc = DateTime.SpecifyKind(expectedEnd, DateTimeKind.Utc);
+        }
+
+        if (update.MaintenanceNote is not null)
+        {
+            row.MaintenanceNote = MaintenanceRules.NormalizeNote(update.MaintenanceNote);
+        }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -71,6 +312,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.FreePublishUntil = FreePublishRules.DefaultUntil;
         }
+
+        // Null PublicWebBaseUrl = keep. Non-empty = set after validation.
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
@@ -82,13 +325,150 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
             row.PublicWebBaseUrl = normalized.TrimEnd('/');
         }
-        else
-        {
-            row.PublicWebBaseUrl = null;
-        }
+
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        _cache?.Remove(FeatureFlags.CacheKey);
+        _cache?.Remove(MaintenanceRules.CacheKey);
+        _cache?.Remove(CandidateApplyRateLimitProvider.CacheKey);
         return ToSnapshot(row);
+    }
+
+    /// <summary>
+    /// No settings row means employers OFF (decision 20). Development test hosts may set
+    /// <c>Jobsy:TestEmployersEnabled</c> so existing suites keep the previous no-row behaviour.
+    /// A stored row always wins, including an explicit false.
+    /// </summary>
+    private bool ResolveEmployersEnabled(bool? stored)
+    {
+        if (stored is bool value)
+        {
+            return value;
+        }
+
+        var env = _environment?.EnvironmentName
+            ?? _configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase)
+            && bool.TryParse(_configuration["Jobsy:TestEmployersEnabled"], out var testOverride))
+        {
+            return testOverride;
+        }
+
+        return false;
+    }
+
+    private bool ResolvePupilPassportV2Enabled(PlatformFeatureSettings? row)
+    {
+        var stored = row?.PupilPassportV2Enabled ?? false;
+        return ResolveAdminBool(row, "PupilPassportV2Enabled", stored, stored, "JobsyFeatures:PupilPassportV2Enabled");
+    }
+
+    private bool ResolveStudentPassportEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "StudentPassportEnabled", row?.StudentPassportEnabled ?? false, false, "Jobsy:StudentPassportEnabled");
+
+    private bool ResolveSensitiveExperienceEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "SensitiveExperienceEnabled", row?.SensitiveExperienceEnabled ?? false, false, "Jobsy:SensitiveExperienceEnabled");
+
+    private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TrainingPartnersEnabled", row?.TrainingPartnersEnabled ?? false, false, "Jobsy:TrainingPartnersEnabled");
+
+    private bool ResolveUwvFeaturesEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "UwvFeaturesEnabled", row?.UwvFeaturesEnabled ?? true, true, "Features:UwvFeatures");
+
+    private bool ResolveActivityLogEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "ActivityLogEnabled", row?.ActivityLogEnabled ?? _options.ActivityLogEnabled, false, "JobsyFeatures:ActivityLogEnabled");
+
+    private bool ResolveTestItemExamplesEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(
+            row,
+            "TestItemExamplesEnabled",
+            row?.TestItemExamplesEnabled ?? _options.TestItemExamplesEnabled,
+            _options.TestItemExamplesEnabled,
+            "JobsyFeatures:TestItemExamplesEnabled");
+
+    private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
+    {
+        var baseline = row?.ReferenceVerificationEnabled ?? false;
+        if (bool.TryParse(_configuration["Jobsy:ReferenceVerificationEnabled"], out var configured))
+        {
+            baseline = configured;
+        }
+
+        return ResolveAdminBool(row, "ReferenceVerificationEnabled", baseline, false, configurationKey: null);
+    }
+
+    private bool ResolveTestJourneyIllustrationEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestJourneyIllustrationEnabled", row?.TestJourneyIllustrationEnabled ?? false, false, "TestJourneyIllustrationEnabled");
+
+    private bool ResolveOnboardingFinaleV2Enabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "OnboardingFinaleV2Enabled", row?.OnboardingFinaleV2Enabled ?? false, false, "Onboarding:FinaleV2Enabled");
+
+    private bool ResolveOccupationDayInLifeEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "OccupationDayInLifeEnabled", row?.OccupationDayInLifeEnabled ?? true, true, "OccupationDayInLifeEnabled");
+
+    private bool ResolveResearchConsentEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "ResearchConsentEnabled", row?.ResearchConsentEnabled ?? false, false, "JobsyFeatures:ResearchConsentEnabled");
+
+    private bool ResolveTestEditModeEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestEditModeEnabled", row?.TestEditModeEnabled ?? false, false, "JobsyFeatures:TestEditMode");
+
+    private bool ResolveSamplePdfEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "SamplePdfEnabled", row?.SamplePdfEnabled ?? false, false, "JobsyFeatures:SamplePdf");
+
+    private bool ResolveTestDepthValueMockupEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestDepthValueMockupEnabled", row?.TestDepthValueMockupEnabled ?? true, true, "TestDepthValueMockupEnabled");
+
+    private bool ResolveAdminBool(
+        PlatformFeatureSettings? row,
+        string key,
+        bool rowStoredValue,
+        bool defaultWhenMissing,
+        string? configurationKey)
+    {
+        var overrides = PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson);
+        if (row is not null && overrides.Contains(key))
+        {
+            return rowStoredValue;
+        }
+
+        if (configurationKey is not null
+            && bool.TryParse(_configuration[configurationKey], out var configured))
+        {
+            return configured;
+        }
+
+        return defaultWhenMissing;
+    }
+
+    private static void ApplyAdminBoolUpdate(
+        PlatformFeatureSettings row,
+        string key,
+        bool? value,
+        Action<bool> setter)
+    {
+        if (value is not bool v)
+        {
+            return;
+        }
+
+        setter(v);
+        row.AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(row.AdminFlagOverridesJson, key);
+    }
+
+    private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
+    {
+        row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
+        row.AuthenticatorEnabled = _options.AuthenticatorEnabled;
+        row.InactiveCompanyDays = 120;
+        row.SessionInactivityTimeoutMinutes = SessionSecurityRules.DefaultInactivityTimeoutMinutes;
+        row.SupportAccessNotifyAdmins = false;
+        row.SupportAccessNotifySubject = false;
+        row.FreeCandidateTestsEnabled = true;
+        row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
+        row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
+        row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
+        row.UwvFeaturesEnabled = true;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -148,7 +528,6 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return new PlatformFeatureSnapshot(
             row?.VacancyContentModerationEnabled ?? _options.VacancyContentModerationEnabled,
             row?.AuthenticatorEnabled ?? _options.AuthenticatorEnabled,
-            row?.ExposeRegistrationActivationLinks ?? _options.ExposeRegistrationActivationLinks,
             string.IsNullOrWhiteSpace(row?.PublicWebBaseUrl)
                 ? configBase
                 : JobsyPublicUrl.NormalizeOrigin(row.PublicWebBaseUrl),
@@ -158,6 +537,67 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 row?.SessionInactivityTimeoutMinutes
                 ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes),
             freeUntil,
-            row?.MinimumSessionVersion ?? 0);
+            row?.MinimumSessionVersion ?? 0,
+            row?.SupportAccessNotifyAdmins ?? false,
+            row?.SupportAccessNotifySubject ?? false,
+            row?.CandidateInsightsEnabled ?? true,
+            row is null
+                ? CandidateInsightsAccess.DefaultUnlockDays
+                : CandidateInsightsAccess.ClampUnlockDays(row.CandidateInsightsUnlockDays),
+            row?.CandidateInsightsUnlockPerBranch ?? false,
+            row?.SchoolsEnabled ?? false,
+            row?.SchoolPerCodeResultsEnabled ?? true,
+            row?.SchoolRetentionCutoffMonth is >= 1 and <= 12
+                ? row.SchoolRetentionCutoffMonth
+                : 7,
+            row?.SchoolRetentionCutoffDay is >= 1 and <= 31
+                ? row.SchoolRetentionCutoffDay
+                : 31,
+            row?.AmbassadorsEnabled ?? false,
+            ResolveEmployersEnabled(row?.EmployersEnabled),
+            row?.CandidatePassportEnabled ?? true,
+            row?.MaintenanceEnabled ?? false,
+            row?.MaintenanceExpectedEndUtc is DateTime end
+                ? DateTime.SpecifyKind(end, DateTimeKind.Utc)
+                : null,
+            row?.MaintenanceNote,
+            row?.PassportPartnersEnabled ?? false,
+            row?.PassportPdfV2Enabled ?? false,
+            ResolvePupilPassportV2Enabled(row),
+            ResolveStudentPassportEnabled(row),
+            row?.PassportPdfDnaBlocksEnabled ?? true,
+            row?.PhoneVerificationEnabled ?? false,
+            row?.WhatsAppRemindersEnabled ?? false,
+            row?.CompactTestPdfEnabled ?? false,
+            row?.FreeCandidateTestsEnabled ?? true,
+            row?.HonestAdviceEnabled ?? false,
+            row?.FutureJobsForYouEnabled ?? false,
+            row?.EmployerPhase2Enabled ?? false,
+            row?.CandidateExternalVacanciesEnabled ?? false,
+            row?.ProactiveMatchingEnabled ?? false,
+            row?.TestsV2Enabled ?? _options.TestsV2Enabled,
+            ResolveTestItemExamplesEnabled(row),
+            row?.TestProgressInsightEnabled ?? _options.TestProgressInsightEnabled,
+            row?.MatchCalibrationV1Enabled ?? false,
+            row?.EmployerFitQuestionnairesEnabled ?? false,
+            row?.KandidatenkaartEnabled ?? false,
+            row?.CompanyMapInitiativeEnabled ?? true,
+            row?.AfterMatchEnabled ?? _options.NaDeMatchEnabled,
+            ResolveReferenceVerificationEnabled(row),
+            ResolveSensitiveExperienceEnabled(row),
+            ResolveTrainingPartnersEnabled(row),
+            ResolveUwvFeaturesEnabled(row),
+            ResolveActivityLogEnabled(row),
+            ResolveTestJourneyIllustrationEnabled(row),
+            ResolveOnboardingFinaleV2Enabled(row),
+            ResolveOccupationDayInLifeEnabled(row),
+            ResolveResearchConsentEnabled(row),
+            ResolveTestEditModeEnabled(row),
+            ResolveSamplePdfEnabled(row),
+            ResolveTestDepthValueMockupEnabled(row),
+            AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
+            CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
+            CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
+            CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));
     }
 }

@@ -20,7 +20,11 @@ public class TokenLedgerServiceTests
             Name = "Co",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenSpendCosts.Add(new TokenSpendCost
         {
@@ -61,7 +65,11 @@ public class TokenLedgerServiceTests
             Name = "Co",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenSpendCosts.Add(new TokenSpendCost
         {
@@ -100,7 +108,11 @@ public class TokenLedgerServiceTests
             Name = "Co",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Vacancies.Add(new Vacancy
         {

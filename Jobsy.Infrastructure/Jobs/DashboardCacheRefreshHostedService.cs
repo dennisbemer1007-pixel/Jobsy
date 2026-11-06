@@ -8,11 +8,13 @@ namespace Jobsy.Infrastructure.Jobs;
 /// <summary>
 /// Recomputes recently used dashboard snapshots every 10 minutes so heavy aggregations stay warm.
 /// Live operational fields are still overlaid on read.
+/// Employer/sales/ambassadeur kinds pause when Employers is OFF; candidate metrics are elsewhere.
 /// </summary>
 public sealed class DashboardCacheRefreshHostedService : BackgroundService
 {
     public static readonly TimeSpan RefreshInterval = TimeSpan.FromMinutes(10);
 
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DashboardCacheRefreshHostedService> _logger;
 
@@ -22,6 +24,7 @@ public sealed class DashboardCacheRefreshHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(DashboardCacheRefreshHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,9 +59,15 @@ public sealed class DashboardCacheRefreshHostedService : BackgroundService
             var metrics = scope.ServiceProvider.GetRequiredService<IMetricsQueryService>();
             var sales = scope.ServiceProvider.GetRequiredService<ISalesManagerDashboardService>();
             var ambassadeurs = scope.ServiceProvider.GetRequiredService<IAmbassadeurDashboardService>();
+            var employersOn = await _employersGate.ShouldRunAsync(scope.ServiceProvider, cancellationToken);
 
             foreach (var (key, descriptor) in tracked)
             {
+                if (!employersOn && IsEmployerDashboard(descriptor.Kind))
+                {
+                    continue;
+                }
+
                 cache.Remove(key);
                 try
                 {
@@ -75,6 +84,13 @@ public sealed class DashboardCacheRefreshHostedService : BackgroundService
             _logger.LogWarning(ex, "Scheduled dashboard cache refresh failed.");
         }
     }
+
+    private static bool IsEmployerDashboard(DashboardCacheKind kind) => kind is
+        DashboardCacheKind.MetricsSummary
+        or DashboardCacheKind.VacancyPerformance
+        or DashboardCacheKind.ClientPerformance
+        or DashboardCacheKind.SalesDashboard
+        or DashboardCacheKind.AmbassadeurDashboard;
 
     private static Task RecomputeAsync(
         DashboardCacheDescriptor descriptor,

@@ -1,0 +1,45 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="wc stack">
+    <div class="note warm">
+        <span>@((MarkupString)NdMIcons.Info)</span>
+        <span>@Culture["AfterMatch.Employer.Reschedule.Note"]</span>
+    </div>
+    @if (Thread.RecentChanges.FirstOrDefault() is { } change)
+    {
+        <div class="card">
+            <b style="color:var(--brand)">@Thread.CandidateName</b>
+            <p class="small" style="margin-top:6px">@change.Reason</p>
+        </div>
+    }
+    @if (Thread.OpenSlots.Count > 0)
+    {
+        <span class="lbl">@Culture["AfterMatch.Screen04.ProposeOther"]</span>
+        <div class="cal3">
+            @foreach (var slot in Thread.OpenSlots)
+            {
+                <div class="slot">
+                    <div><b>@FormatSlot(slot)</b><span class="small muted">@slot.Reason</span></div>
+                </div>
+            }
+        </div>
+    }
+    <div class="row wrapflex">
+        <a class="btn" href="@ProposeHref">@Culture["AfterMatch.Employer.Reschedule.Counter"]</a>
+        <a class="btn line" href="@MessagesHref">@Culture["AfterMatch.Employer.Action.Messages"]</a>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AfterMatchThreadDto Thread { get; set; } = default!;
+    [Parameter] public string ProposeHref { get; set; } = "";
+    [Parameter] public string MessagesHref { get; set; } = "";
+
+    private static string FormatSlot(AfterMatchSlotDto slot)
+    {
+        var start = slot.StartUtc.ToLocalTime();
+        return start.ToString("dddd d MMMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+}

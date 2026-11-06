@@ -1,0 +1,34 @@
+KEY: KandidatenkaartInviteWithdrawn
+SUBJECT: Uitnodiging ingetrokken: Weekendhulp verkoop
+PREHEADER: Vacature is vol
+KIND: Optional
+--- TEXT ---
+Hoi Alex,
+
+Uitnodiging ingetrokken
+=======================
+
+De vacature Weekendhulp verkoop bij Bakkerij De Gouden Korrel is vervuld. Je
+uitnodiging is daarom ingetrokken.
+
+Naar banenkaart: https://lobsy.nl/
+
+Team Lobsy
+
+Je krijgt deze mail omdat je vacatures in de buurt wilt ontvangen.
+Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Uitnodiging ingetrokken
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar banenkaart -> https://lobsy.nl/
+a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

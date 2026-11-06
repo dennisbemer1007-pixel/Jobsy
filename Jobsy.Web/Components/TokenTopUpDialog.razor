@@ -162,7 +162,9 @@
         }
         catch (Exception ex)
         {
-            _loadError = ex.Message;
+            _loadError = ex is ApiErrorException { StatusCode: 403 }
+                ? "Vraag tokens aan bij je bedrijfsmanager."
+                : "Kon betaalopties niet laden.";
         }
         finally
         {

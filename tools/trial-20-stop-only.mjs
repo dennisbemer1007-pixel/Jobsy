@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+const BASE = 'https://acceptatie.lobsy.nl';
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+page.on('response', (r) => {
+  if (r.url().includes('onrender.com') || r.url().includes('occupation-day')) console.log(r.status(), r.url());
+});
+await page.goto(`${BASE}/login`);
+await page.locator('input[name="email"], input[type="email"]').first().fill('admin@jobsy.local');
+await page.locator('input[name="password"], input[type="password"]').first().fill('Jobsy123!');
+await page.locator('button[type="submit"]').click();
+await page.waitForURL((u) => !u.pathname.includes('/login'));
+await page.goto(`${BASE}/admin/content/dag-in-het-leven`, { waitUntil: 'networkidle' });
+console.log('bezig', await page.getByText(/^Bezig:/).isVisible().catch(() => false));
+const stop = page.getByRole('button', { name: /^Stoppen$/ });
+console.log('stop enabled', await stop.isEnabled());
+if (await stop.isEnabled()) await stop.click();
+await page.waitForTimeout(8000);
+await page.reload({ waitUntil: 'networkidle' });
+console.log('bezig after', await page.getByText(/^Bezig:/).isVisible().catch(() => false));
+await browser.close();

@@ -21,6 +21,47 @@ public static class ApplicationPreferenceRedaction
     /// Converts preference JSON, JSON arrays, or already-human text into a short Dutch summary.
     /// Returns null when the value is empty or only technical metadata.
     /// </summary>
+    /// <summary>Hours range only (excludes travel/transport noise).</summary>
+    public static string? ToHoursReadable(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || !LooksLikeJson(value.Trim()))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(value);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var root = doc.RootElement;
+            decimal? min = null;
+            decimal? max = null;
+            if (root.TryGetProperty("minHoursPerWeek", out var minEl)
+                && minEl.ValueKind == JsonValueKind.Number
+                && minEl.TryGetDecimal(out var minVal))
+            {
+                min = minVal;
+            }
+
+            if (root.TryGetProperty("maxHoursPerWeek", out var maxEl)
+                && maxEl.ValueKind == JsonValueKind.Number
+                && maxEl.TryGetDecimal(out var maxVal))
+            {
+                max = maxVal;
+            }
+
+            return ProfileVacancyMatchCalculator.FormatHoursRange(min, max);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     public static string? ToHumanReadable(string? value, bool includeCity = false)
     {
         if (string.IsNullOrWhiteSpace(value))

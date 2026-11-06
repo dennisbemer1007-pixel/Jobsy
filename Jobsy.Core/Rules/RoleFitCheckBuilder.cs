@@ -40,13 +40,15 @@ public static class RoleFitCheckBuilder
         CompetencyScores competencies,
         RiasecScores career,
         bool fromDeepAnalysis,
-        CulturePersonalityScores? culture = null)
+        CulturePersonalityScores? culture = null,
+        bool employersOn = true)
     {
         var title = NormalizeTitle(jobTitle) ?? "deze functie";
-        var occupation = FindClosestOccupation(title);
-        var interestPercent = occupation is null
-            ? Average(career)
-            : CareerCompassBuilder.Score(occupation, career).Percent;
+        var occupation = CareerCompassBuilder.WeightedOccupation(title);
+        var sourcedFit = CareerCompassBuilder.CatalogueFit(title, career);
+        var interestPercent = sourcedFit is decimal fit
+            ? (int)decimal.Round(fit, 0, MidpointRounding.AwayFromZero)
+            : Average(career);
         var competencePercent = CompetenceFit(occupation, competencies);
         var culturePercent = culture is { IsComplete: true } completeCulture
             ? CulturePersonalityFitRules.FitPercent(occupation, completeCulture)
@@ -68,7 +70,7 @@ public static class RoleFitCheckBuilder
         var strengths = BuildStrengths(title, occupation, competencies, career, culture);
         var gaps = BuildGaps(occupation, competencies, career, culture);
         var path = CareerPathPlanner.ForTitle(title);
-        var steps = BuildSteps(title, gaps, fromDeepAnalysis, path);
+        var steps = BuildSteps(title, gaps, fromDeepAnalysis, path, employersOn);
         var similar = RoleFitFunnel.SuggestSimilar(title, career);
 
         return Sanitize(new RoleFitCheckSnapshot(
@@ -168,30 +170,6 @@ public static class RoleFitCheckBuilder
             .ToList();
     }
 
-    private static CareerOccupation? FindClosestOccupation(string title)
-    {
-        CareerOccupation? best = null;
-        var bestHits = 0;
-        var foldedTitle = CareerOccupationKeys.Fold(title);
-        foreach (var job in CareerCompassBuilder.Occupations)
-        {
-            var keys = CareerOccupationKeys.FromTitle(job.Title);
-            var hits = keys.Count(key => CareerOccupationKeys.Hits(foldedTitle, key));
-            if (CareerOccupationKeys.Hits(foldedTitle, CareerOccupationKeys.Fold(job.Title)))
-            {
-                hits += 3;
-            }
-
-            if (hits > bestHits)
-            {
-                bestHits = hits;
-                best = job;
-            }
-        }
-
-        return bestHits > 0 ? best : null;
-    }
-
     private static int Average(RiasecScores scores)
     {
         var values = CareerTestCatalog.RiasecCodes.Select(scores.Get).OrderByDescending(v => v).Take(2).ToList();
@@ -245,10 +223,16 @@ public static class RoleFitCheckBuilder
         {
             foreach (var category in CulturePersonalityFitRules.NeededFacets(occupation))
             {
+                var label = CulturePersonalityCatalog.EverydayLabel(category);
+                if (string.IsNullOrWhiteSpace(label))
+                {
+                    continue;
+                }
+
                 var value = culture.Get(category);
                 if (value >= 70)
                 {
-                    lines.Add($"Bij {CulturePersonalityCatalog.EverydayLabel(category)} scoor je {value}%. Dat sluit aan bij hoe deze functie dagelijks loopt.");
+                    lines.Add($"Bij {label} sluit jouw profiel aan bij hoe deze functie dagelijks loopt.");
                 }
             }
         }
@@ -307,7 +291,13 @@ public static class RoleFitCheckBuilder
                 var value = culture.Get(category);
                 if (value < 55)
                 {
-                    lines.Add($"{CulturePersonalityCatalog.EverydayLabel(category)} scoort {value}%. In dit team wordt dat vaker gevraagd — een workshop helpt.");
+                    var label = CulturePersonalityCatalog.EverydayLabel(category);
+                    if (string.IsNullOrWhiteSpace(label))
+                    {
+                        continue;
+                    }
+
+                    lines.Add($"{label}: in dit team wordt dat vaker gevraagd, een workshop helpt.");
                 }
             }
         }
@@ -348,7 +338,7 @@ public static class RoleFitCheckBuilder
         return path with { Steps = steps };
     }
 
-    private static List<string> BuildSteps(string title, IReadOnlyList<string> gaps, bool fromDeepAnalysis, CareerPathPlan? path)
+    private static List<string> BuildSteps(string title, IReadOnlyList<string> gaps, bool fromDeepAnalysis, CareerPathPlan? path, bool employersOn = true)
     {
         var role = title.ToLowerInvariant();
         var steps = new List<string>();
@@ -357,11 +347,16 @@ public static class RoleFitCheckBuilder
             steps.Add(path.Summary);
         }
 
-        steps.Add($"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.");
+        if (employersOn)
+        {
+            steps.Add($"Zoek op de Lobsy-banenkaart in Den Haag en het Westland naar {role} en filter op hoge match.");
+        }
         steps.Add(TrainingCopy.GapAdvice);
         steps.Add(gaps.Count > 0
             ? "Pak het grootste gat uit de lijst hierboven: volg een korte training of vraag of je die taak mag oefenen."
-            : "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit.");
+            : employersOn
+                ? "Bewaar twee vacatures die voelen als ‘dit is het’ en solliciteer op de beste fit."
+                : "Kies twee beroepen uit je lijst die voelen als ‘dit is het’ en zet die als droombaan.");
         if (!fromDeepAnalysis)
         {
             steps.Add("Wil je een scherper groeistappenplan? Vul de uitgebreide diepte-analyse in.");

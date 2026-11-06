@@ -20,6 +20,16 @@ public static class HtmlSanitize
         "section", "h2", "h3", "p", "ul", "ol", "li", "strong", "b", "em", "i", "u", "a", "br"
     };
 
+    private static readonly HashSet<string> VacancyDescriptionTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "h2", "h3", "p", "ul", "ol", "li", "strong", "b", "em", "i", "u", "a", "br", "span"
+    };
+
+    private static readonly HashSet<string> AllowedTextAlign = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "left", "center", "right", "justify"
+    };
+
     /// <summary>Strip tags and encode — safe for preview / non-trusted HTML.</summary>
     public static string ToPlainPreview(string? html, int maxLength = 800)
     {
@@ -100,6 +110,136 @@ public static class HtmlSanitize
 
         sb.Append(input, last, input.Length - last);
         return sb.ToString().Trim();
+    }
+
+    /// <summary>Vacancy descriptions: headings, lists, links, text-align on p, brand palette colors on span.</summary>
+    public static string ToVacancyDescriptionHtml(string? html, int maxLength = 20_000)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return string.Empty;
+        }
+
+        var input = html.Length > maxLength ? html[..maxLength] : html;
+        input = DangerousBlockRegex.Replace(input, string.Empty);
+        input = Regex.Replace(input, @"\son\w+\s*=\s*(""[^""]*""|'[^']*'|[^\s>]+)", string.Empty, RegexOptions.IgnoreCase);
+
+        var sb = new StringBuilder(input.Length);
+        var last = 0;
+        foreach (Match match in TagTokenRegex.Matches(input))
+        {
+            sb.Append(input, last, match.Index - last);
+            last = match.Index + match.Length;
+
+            var name = match.Groups[1].Value;
+            if (!VacancyDescriptionTags.Contains(name))
+            {
+                continue;
+            }
+
+            var attrs = match.Groups[2].Value;
+            var isClosing = match.Value.StartsWith("</", StringComparison.Ordinal);
+            if (isClosing)
+            {
+                sb.Append("</").Append(name.ToLowerInvariant()).Append('>');
+                continue;
+            }
+
+            if (name.Equals("br", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append("<br />");
+                continue;
+            }
+
+            if (name.Equals("a", StringComparison.OrdinalIgnoreCase))
+            {
+                var href = ExtractAttribute(attrs, "href");
+                if (!IsSafeLinkHref(href))
+                {
+                    continue;
+                }
+
+                sb.Append("<a class=\"auth-link\" href=\"")
+                    .Append(WebUtility.HtmlEncode(href!.Trim()))
+                    .Append("\">");
+                continue;
+            }
+
+            if (name.Equals("p", StringComparison.OrdinalIgnoreCase))
+            {
+                var align = ExtractStyleTextAlign(attrs);
+                if (align is not null)
+                {
+                    sb.Append("<p style=\"text-align:")
+                        .Append(align)
+                        .Append("\">");
+                }
+                else
+                {
+                    sb.Append("<p>");
+                }
+
+                continue;
+            }
+
+            if (name.Equals("span", StringComparison.OrdinalIgnoreCase))
+            {
+                var color = ExtractStyleColor(attrs);
+                if (color is not null)
+                {
+                    sb.Append("<span style=\"color:")
+                        .Append(color)
+                        .Append("\">");
+                }
+                else
+                {
+                    sb.Append("<span>");
+                }
+
+                continue;
+            }
+
+            sb.Append('<').Append(name.ToLowerInvariant()).Append('>');
+        }
+
+        sb.Append(input, last, input.Length - last);
+        return sb.ToString().Trim();
+    }
+
+    private static string? ExtractStyleTextAlign(string attributes)
+    {
+        var style = ExtractAttribute(attributes, "style");
+        if (string.IsNullOrWhiteSpace(style))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(style, @"text-align\s*:\s*([a-z]+)", RegexOptions.IgnoreCase);
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        var align = match.Groups[1].Value.Trim().ToLowerInvariant();
+        return AllowedTextAlign.Contains(align) ? align : null;
+    }
+
+    private static string? ExtractStyleColor(string attributes)
+    {
+        var style = ExtractAttribute(attributes, "style");
+        if (string.IsNullOrWhiteSpace(style))
+        {
+            return null;
+        }
+
+        var match = Regex.Match(style, @"color\s*:\s*(#[0-9a-fA-F]{3,8})", RegexOptions.IgnoreCase);
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        var hex = VacancyRichtextPalette.NormalizeHex(match.Groups[1].Value);
+        return string.IsNullOrEmpty(hex) ? null : hex;
     }
 
     public static bool IsSafeHttpsUrl(string? url)

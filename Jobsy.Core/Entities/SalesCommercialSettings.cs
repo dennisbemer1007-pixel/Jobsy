@@ -55,5 +55,17 @@ public class SalesCommercialSettings
     /// </summary>
     public int CommissionDurationDays { get; set; } = 1095;
 
+    /// <summary>Days commission stays "In behandeling" before available (default 14).</summary>
+    public int CommissionHoldDays { get; set; } = 14;
+
+    /// <summary>Minimum available balance (EUR ex VAT) to request a payout (default 50).</summary>
+    public decimal PayoutMinimumEuro { get; set; } = 50m;
+
+    /// <summary>Days payouts to a new IBAN are held after change (default 3).</summary>
+    public int IbanChangeHoldDays { get; set; } = 3;
+
+    /// <summary>First-click attribution cookie lifetime in days (default 30).</summary>
+    public int AttributionCookieDays { get; set; } = 30;
+
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

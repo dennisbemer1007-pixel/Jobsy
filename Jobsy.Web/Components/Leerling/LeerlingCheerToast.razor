@@ -1,0 +1,55 @@
+@namespace Jobsy.Web.Components.Leerling
+@implements IDisposable
+
+@if (Show)
+{
+    <p class="ll-cheer-toast"
+       role="status"
+       aria-live="polite"
+       data-testid="ll-cheer-toast">@Text</p>
+}
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public int VisibleMs { get; set; } = 4500;
+    [Parameter] public EventCallback OnHidden { get; set; }
+
+    private CancellationTokenSource? _hideCts;
+    private bool _armed;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Show)
+        {
+            _armed = false;
+            _hideCts?.Cancel();
+            return;
+        }
+
+        if (_armed)
+        {
+            return;
+        }
+
+        _armed = true;
+        _hideCts?.Cancel();
+        _hideCts = new CancellationTokenSource();
+        var token = _hideCts.Token;
+        try
+        {
+            await Task.Delay(VisibleMs, token);
+            await OnHidden.InvokeAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // Replaced by a newer cheer or the toast was dismissed.
+        }
+    }
+
+    public void Dispose()
+    {
+        _hideCts?.Cancel();
+        _hideCts?.Dispose();
+    }
+}

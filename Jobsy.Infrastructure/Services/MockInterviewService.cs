@@ -2,13 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -74,6 +73,7 @@ public sealed class MockInterviewService : IMockInterviewService
         5. Never ask for SSN/BSN, bank details, passwords, or other highly sensitive data.
         6. If asked whether this is real: explain it is a Lobsy practice chat.
         7. After 5–6 questions, wrap up with a compliment + 2 takeaways + one "use this tomorrow" line.
+        8. Never use numeric scores, percentages, star ratings, or "X/10" in feedback. Describe quality in words only.
         """;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -82,19 +82,16 @@ public sealed class MockInterviewService : IMockInterviewService
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<MockInterviewService> _logger;
 
     public MockInterviewService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         ILogger<MockInterviewService> logger)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
     }
 
@@ -108,13 +105,19 @@ public sealed class MockInterviewService : IMockInterviewService
         var lang = JobsyLanguages.Normalize(language);
         var labels = Jobsy.Core.Localization.MockInterviewLabels.For(lang);
         var sanitized = SanitizeHistory(history);
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.MockInterview, cancellationToken);
+        if (endpoint.Unavailable)
+        {
+            return new MockInterviewTurnResult(AiUnavailableCopy.For(lang), UsedAi: false);
+        }
+
+        var apiKey = endpoint.ApiKey;
         if (!string.IsNullOrWhiteSpace(apiKey))
         {
             try
             {
-                var model = await ResolveModelAsync(cancellationToken);
-                var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+                var model = endpoint.Model;
+                var baseUrl = endpoint.BaseUrl;
                 var reply = await CompleteWithOpenAiAsync(
                     vacancy, candidate, sanitized, labels, apiKey, model, baseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(reply))
@@ -374,49 +377,8 @@ public sealed class MockInterviewService : IMockInterviewService
     private static string Truncate(string value, int max)
         => value.Length <= max ? value : value[..(max - 1)].TrimEnd() + "…";
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {
@@ -457,7 +419,7 @@ public sealed class MockInterviewService : IMockInterviewService
                 {
                     return
                         $"Hi! I'll help you practice for {plan.Title} at {plan.Company}. " +
-                        "This is a Lobsy practice chat — not a real interview, but with questions from the vacancy text" +
+                        "This is a Lobsy practice chat, not a real interview, but with questions from the vacancy text" +
                         (plan.HasGapQuestions ? " and your profile fit" : "") + ".\n\n" +
                         $"Key themes I see: {plan.ThemeSummary}.\n\n" +
                         $"{labels.Question} {PickQuestion(plan, 0, useEnglish: true)}";
@@ -465,7 +427,7 @@ public sealed class MockInterviewService : IMockInterviewService
 
                 return
                     $"Hoi! Ik help je oefenen voor {plan.Title} bij {plan.Company}. " +
-                    "Dit is een oefengesprek via Lobsy — geen echt gesprek, wél met vragen uit de vacaturetekst" +
+                    "Dit is een oefengesprek via Lobsy, geen echt gesprek, wél met vragen uit de vacaturetekst" +
                     (plan.HasGapQuestions ? " én over verschillen met jouw profiel" : "") + ".\n\n" +
                     $"In de tekst zie ik vooral: {plan.ThemeSummary}.\n\n" +
                     $"{labels.Question} {PickQuestion(plan, 0, useEnglish: false)}";
@@ -513,8 +475,8 @@ public sealed class MockInterviewService : IMockInterviewService
             if (index < 0 || index >= plan.Questions.Count)
             {
                 return useEnglish
-                    ? "Last practice question: what would you ask the employer about this vacancy — and why is that a smart question?"
-                    : "Laatste oefenvraag: welke vraag zou jij zelf aan de werkgever stellen over deze vacature — en waarom is die vraag slim?";
+                    ? "Last practice question: what would you ask the employer about this vacancy? Why is that a smart question?"
+                    : "Laatste oefenvraag: welke vraag zou jij zelf aan de werkgever stellen over deze vacature? Waarom is die vraag slim?";
             }
 
             return useEnglish ? plan.EnglishQuestions[index] : plan.Questions[index];
@@ -727,11 +689,11 @@ public sealed class MockInterviewService : IMockInterviewService
             var workTypes = vacancy.WorkTypes ?? [];
             var transportModes = vacancy.RequiredTransport ?? [];
             var haystack = $"{title} {plain} {string.Join(' ', workTypes)}".ToLowerInvariant();
-            var transport = transportModes.FirstOrDefault() ?? "fiets of OV";
+            var transport = transportModes.Count > 0 ? transportModes[0] : "fiets of OV";
 
             var themes = new List<InterviewTheme>();
             var snippets = ExtractDutySnippets(plain, max: 3);
-            var snippet = snippets.FirstOrDefault() ?? title.ToLowerInvariant();
+            var snippet = snippets.Count > 0 ? snippets[0] : title.ToLowerInvariant();
 
             // Lead with a question that quotes the vacancy text when we have a duty sentence.
             if (snippets.Count > 0)
@@ -741,8 +703,8 @@ public sealed class MockInterviewService : IMockInterviewService
                     themes,
                     "vacaturetekst",
                     "taken uit de vacaturetekst",
-                    $"In de vacature staat: „{Capitalize(quote)}”. Hoe pak jij dat aan — graag met een kort voorbeeld?",
-                    $"The vacancy says: \"{Capitalize(quote)}\". How would you handle that — with a short example?");
+                    $"In de vacature staat: „{Capitalize(quote)}”. Hoe pak jij dat aan, graag met een kort voorbeeld?",
+                    $"The vacancy says: \"{Capitalize(quote)}\". How would you handle that, with a short example?");
             }
 
             // Domain cues from typical Westland / youth job ads
@@ -832,8 +794,8 @@ public sealed class MockInterviewService : IMockInterviewService
                 themes.Add(new InterviewTheme(
                     "motivatie",
                     "motivatie voor deze rol",
-                    $"Waarom past {title} bij jou — noem iets uit de vacaturetekst dat je aanspreekt.",
-                    $"Why does {title} fit you — mention something from the vacancy text that appeals to you."));
+                    $"Vertel kort waarom je solliciteert als {title} bij {company}. Wat spreekt je aan in de vacature?",
+                    $"Tell us briefly why you are applying for {title} at {company}. What appeals to you in the vacancy?"));
             }
 
             while (themes.Count < 3)

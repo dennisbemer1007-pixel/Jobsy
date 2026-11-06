@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
@@ -8,6 +9,7 @@ using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Core.Email;
 
 namespace Jobsy.Tests;
 
@@ -73,7 +75,7 @@ public class CompanyApiKeyServiceTests
     }
 
     [Fact]
-    public async Task EmailCredentials_sends_before_persisting_and_rotates()
+    public async Task EmailCredentials_sends_reveal_link_without_rotating_yet()
     {
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
@@ -86,13 +88,15 @@ public class CompanyApiKeyServiceTests
         Assert.True(result.Sent);
         Assert.Equal("manager@example.com", result.RecipientEmail);
         Assert.Single(email.Messages);
-        Assert.Contains("lobsy_", email.Messages[0].BodyHtml);
-        Assert.Contains("https://api.example.test/api/external/vacancies", email.Messages[0].BodyHtml);
-        Assert.Contains("https://api.example.test/swagger", email.Messages[0].BodyHtml);
+        Assert.Contains("/koppeling/sleutel?t=", email.Messages[0].BodyHtml);
         Assert.DoesNotContain(first.PlaintextKey, email.Messages[0].BodyHtml);
+        Assert.DoesNotContain(first.KeyPrefix, email.Messages[0].BodyHtml);
+        Assert.Contains("/swagger", email.Messages[0].BodyHtml);
+        Assert.DoesNotContain("/api/external/vacancies", email.Messages[0].BodyHtml);
         Assert.Equal(1, await db.ApiKeys.CountAsync(k => k.IsActive));
-        Assert.Equal(2, await db.ApiKeys.CountAsync());
-        Assert.Null(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
+        Assert.Equal(1, await db.ApiKeys.CountAsync());
+        Assert.NotNull(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
+        Assert.Equal(1, await db.OneTimeLinks.CountAsync(l => l.CompanyId == companyId && l.UsedAtUtc == null));
     }
 
     [Fact]
@@ -120,7 +124,18 @@ public class CompanyApiKeyServiceTests
         var childId = Guid.NewGuid();
         var foreignId = Guid.NewGuid();
         db.Companies.AddRange(
-            new Company { Id = parentId, Name = "Parent", KvkNumber = "1", Address = "a", Location = new GeoPoint(52, 4) },
+            new Company
+            {
+                Id = parentId,
+                Name = "Parent",
+                KvkNumber = "1",
+                Address = "a",
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
             new Company
             {
                 Id = childId,
@@ -128,9 +143,24 @@ public class CompanyApiKeyServiceTests
                 KvkNumber = "1",
                 Address = "b",
                 Location = new GeoPoint(52.1, 4.1),
-                ParentCompanyId = parentId
+                ParentCompanyId = parentId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             },
-            new Company { Id = foreignId, Name = "Other", KvkNumber = "9", Address = "c", Location = new GeoPoint(52.2, 4.2) });
+            new Company
+            {
+                Id = foreignId,
+                Name = "Other",
+                KvkNumber = "9",
+                Address = "c",
+                Location = new GeoPoint(52.2, 4.2),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         await db.SaveChangesAsync();
 
         var auth = new CompanyAuthorizationService(db);
@@ -157,11 +187,13 @@ public class CompanyApiKeyServiceTests
         Assert.NotEqual(hash, ApiKeyHasher.Hash("lobsy_other"));
     }
 
-    private static CompanyApiKeyService CreateSut(JobsyDbContext db, IEmailService? email = null)
+    private static CompanyApiKeyService CreateSut(JobsyDbContext db, ITransactionalMailer? email = null)
         => new(
             db,
             email ?? new RecordingEmailService(),
             new FixedConfig("PublicApiBaseUrl", "https://api.example.test"),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
+            new AlwaysOnFeatures(),
             NullLogger<CompanyApiKeyService>.Instance);
 
     private sealed class FixedConfig : Microsoft.Extensions.Configuration.IConfiguration
@@ -237,7 +269,11 @@ public class CompanyApiKeyServiceTests
             Name = "Test Co",
             KvkNumber = "12345678",
             Address = "Straat 1",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
         return id;
@@ -251,8 +287,20 @@ public class CompanyApiKeyServiceTests
         return new JobsyDbContext(options);
     }
 
-    private sealed class RecordingEmailService : IEmailService
+    private sealed class RecordingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public List<EmailMessage> Messages { get; } = [];
 
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
@@ -262,8 +310,20 @@ public class CompanyApiKeyServiceTests
         }
     }
 
-    private sealed class FailingEmailService : IEmailService
+    private sealed class FailingEmailService : IEmailService, ITransactionalMailer
     {
+        public async Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            var delivery = await SendAsync(
+                new EmailMessage(to, mail.Subject, mail.Html ?? string.Empty, mail.Category),
+                cancellationToken);
+            return new EmailSendOutcome(true, false, null, delivery.Kind);
+        }
+
         public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
             => throw new InvalidOperationException("SMTP down");
     }

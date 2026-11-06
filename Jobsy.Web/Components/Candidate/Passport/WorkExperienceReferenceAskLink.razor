@@ -1,0 +1,16 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (EntryId is Guid id)
+{
+    <a class="btn btn-secondary btn-compact"
+       data-testid="ref-verif-ask-link"
+       href="@($"/candidate/paspoort/referentie/vraag/{id:D}")">
+        @Culture["RefVerif.AskReferent"]
+    </a>
+}
+
+@code {
+    [Parameter] public Guid? EntryId { get; set; }
+}

@@ -47,6 +47,12 @@ public interface ICompanyRegistrationService
         bool isAdmin,
         string? note = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Confirms the ownership-transfer letter code before admin approval (07.5).</summary>
+    Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record RegistrationSubmitRequest(
@@ -55,7 +61,7 @@ public sealed record RegistrationSubmitRequest(
     RegistrationScope Scope,
     string ContactName,
     string ContactEmail,
-    string? ContactPhone,
+    string? ContactPhone = null,
     bool AcceptedTerms = false,
     string? ConsentVersion = null,
     string? SalesManagerTrackingCode = null,
@@ -71,7 +77,17 @@ public sealed record RegistrationSubmitRequest(
     string? ManualEstablishmentNumber = null,
     double? ManualLatitude = null,
     double? ManualLongitude = null,
-    bool? ManualIsIntermediarySbi = null);
+    bool? ManualIsIntermediarySbi = null,
+    IReadOnlyList<string>? SelectedEstablishmentIds = null,
+    Guid? SalesManagerUserId = null,
+    DateTime? RepresentationConsentAtUtc = null,
+    string? RepresentationConsentVersion = null,
+    string? PreferredLoginProvider = null,
+    bool LocationUnknown = false,
+    /// <summary>Code from the first-click <c>lobsy_sales_ref</c> cookie (typed code still wins).</summary>
+    string? CookieTrackingCode = null,
+    /// <summary>Employer invite token from external vacancy apply flow (<c>extToken</c> query).</summary>
+    string? ExternalVacancyInviteToken = null);
 
 public sealed record RegistrationSubmitResult(
     Guid RegistrationId,
@@ -89,11 +105,6 @@ public sealed record RegistrationActivationResult(
     string Role,
     Guid? CompanyId,
     IReadOnlyList<Guid> CompanyIds,
-    /// <summary>
-    /// Legacy one-time temporary password when none was chosen at register
-    /// (service layer only; API must not echo outside Development). Empty when the user set a password.
-    /// </summary>
-    string TemporaryPassword,
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId,
     bool UsedChosenPassword = false,
@@ -105,7 +116,9 @@ public sealed record RegistrationActivationResult(
     /// <summary>True when the one-time welcome ledger credit was granted.</summary>
     bool WelcomeTokenGranted = false,
     /// <summary>Inclusive free-publish end date when the promo is active at activation time.</summary>
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    /// <summary>When set, the Web UI should redirect here after sign-in (external vacancy onboarding).</summary>
+    string? PostActivationWebPath = null);
 
 public sealed record TakeoverInboxItem(
     Guid TakeoverId,

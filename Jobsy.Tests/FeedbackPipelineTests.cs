@@ -52,7 +52,7 @@ public class FeedbackPipelineTests
         Assert.Contains("Candidate", prompt);
         Assert.Contains("fix/feedback-aaaaaaaabbbbccccddddeeeeeeeeeeee", prompt);
         Assert.Contains("acc", prompt);
-        Assert.Contains("Jobsy.Web/Components/Pages/Banen.razor", prompt);
+        Assert.Contains("Jobsy.Web/Components/Pages/Banenkaart.razor", prompt);
         Assert.Contains("bijgevoegd", prompt);
         Assert.Contains("niet vertrouwen", prompt);
     }
@@ -281,7 +281,8 @@ public class FeedbackPipelineTests
             sut,
             new StubUserLookup(db),
             Options.Create(new CursorCloudOptions { WebhookSecret = secret }),
-            new StubHostEnvironment { EnvironmentName = Environments.Production });
+            new StubHostEnvironment { EnvironmentName = Environments.Production },
+            new NoopPersonalDataAccessLogger());
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -366,7 +367,8 @@ public class FeedbackPipelineTests
         var privacy = new PrivacyDataService(
             db,
             new StubUserLookup(db),
-            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures());
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
         [
             new Claim(ClaimTypes.Email, "forget@jobsy.local"),
@@ -410,7 +412,9 @@ public class FeedbackPipelineTests
             sut,
             new StubUserLookup(db),
             Options.Create(new CursorCloudOptions()),
-            new StubHostEnvironment());
+            new StubHostEnvironment(),
+            new NoopPersonalDataAccessLogger());
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         var listed = await controller.List(null, null);
         var ok = Assert.IsType<OkObjectResult>(listed.Result);
         var items = Assert.IsAssignableFrom<IEnumerable<FeedbackListItemDto>>(ok.Value);
@@ -433,7 +437,8 @@ public class FeedbackPipelineTests
             sut,
             new StubUserLookup(db),
             Options.Create(new CursorCloudOptions { WebhookSecret = "unit-test-webhook-secret-32chars!!" }),
-            new StubHostEnvironment { EnvironmentName = Environments.Production });
+            new StubHostEnvironment { EnvironmentName = Environments.Production },
+            new NoopPersonalDataAccessLogger());
 
         controller.ControllerContext = new ControllerContext
         {

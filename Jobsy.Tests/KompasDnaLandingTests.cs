@@ -96,6 +96,21 @@ public class KompasDnaLandingTests
             culture,
             null);
         Assert.Equal(WhoAmIStoryStatuses.Ready, matched.Status);
+
+        var persona = CandidateKompasService.BuildWhoAmIStory(
+            null, null, null, null, false,
+            profileFilled: true,
+            competencyDone: true,
+            careerDone: true,
+            cultureDone: true,
+            competency,
+            career,
+            culture,
+            new SchwartzValuesScores(60, 70, 55, 50, 65));
+        Assert.Equal(WhoAmIStoryStatuses.Ready, persona.Status);
+        Assert.False(string.IsNullOrWhiteSpace(persona.Story));
+        Assert.Contains("Ik", persona.Story, StringComparison.Ordinal);
+        Assert.DoesNotContain("wordt geschreven", persona.Story, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -115,6 +130,7 @@ public class KompasDnaLandingTests
 
         var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/CandidateKompasController.cs"));
         Assert.Contains("[EnableRateLimiting(\"public-read\")]", controller);
+        Assert.Contains("HttpGet(\"dna\")", controller, StringComparison.Ordinal);
         Assert.DoesNotContain("EnableRateLimiting(\"ai\")", controller);
 
         var webModel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Models/CompetencyModels.cs"));
@@ -126,9 +142,10 @@ public class KompasDnaLandingTests
     public void Profiel_redirects_to_candidate_profile_and_nav_points_there()
     {
         var root = RepoRoot.Find();
-        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfile.razor"));
+        var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfileSsr.razor"));
         Assert.Contains("@page \"/profiel\"", page);
-        Assert.Contains("NavigateTo(\"/candidate/profile\"", page);
+        Assert.Contains("@page \"/candidate/profile\"", page);
+        Assert.Contains("[NoBlazorRuntime]", page);
         Assert.DoesNotContain("profile-hub-kompas", page);
 
         var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RoleNavCatalog.cs"));
@@ -142,18 +159,27 @@ public class KompasDnaLandingTests
     public void Dna_panel_has_story_and_summary_cards_without_old_list()
     {
         var root = RepoRoot.Find();
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
         Assert.Contains("Dna.StoryTitle", panel);
         Assert.Contains("Dna.TestsTitle", panel);
-        Assert.Contains("dna-tests__grid", panel);
-        Assert.Contains("DnaSummarySentences", panel);
+        Assert.Contains("Dna.HighlightsTitle", panel);
+        Assert.Contains("dna-tiles__grid", panel);
+        Assert.Contains("dna-carousel", panel);
+        Assert.Contains("RadarChart", panel);
         Assert.Contains("Test.Status.Extended", panel);
-        Assert.Contains("Dna.StartTest", panel);
         Assert.DoesNotContain("dna-summary__item", panel);
         Assert.DoesNotContain("Dna.ViewTests", panel);
 
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
-        Assert.Contains("Kompas.CompletenessLine", kompas);
+        var builder = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Dna/CandidateDnaViewBuilder.cs"));
+        Assert.Contains("DnaSummarySentences", builder);
+        Assert.Contains("CandidateDnaViewBuilder", panel);
+
+        var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-dna.css"));
+        Assert.Contains(".dna-tiles__grid", css);
+        Assert.Contains(".dna-highlights__grid", css);
+
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
+        Assert.Contains("CandidateMatchDisplay.CompletenessLineKey", kompas);
         Assert.Contains("ShouldShowSide", kompas);
         Assert.Contains("jobsyViewport.isKompasWide", kompas);
     }

@@ -41,7 +41,7 @@ public sealed class HowLobsyRoleGuidesTests
         Assert.Equal("/partner/SM-ABC", partnerStep.Links[0].Href);
 
         var withoutCode = HowLobsyRoleGuides.BuildSalesGuide(null);
-        Assert.Equal("/salesmanager/toolkit", withoutCode.Steps[2].Links[0].Href);
+        Assert.Equal("/sales/link", withoutCode.Steps[2].Links[0].Href);
     }
 
     [Fact]

@@ -1,19 +1,49 @@
 @page "/access-denied"
 @attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout ErrorLayout
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
 @inject CultureState Culture
+@*
+  Cookie AccessDeniedPath target (endpoint [Authorize] failures append ?ReturnUrl=), and the
+  direct/legacy link with ?reason=. Same 403 page as the in-place NotAuthorized render
+  (Routes.razor / AccessDeniedView).
+*@
 
-<PageTitle>@Culture["Page.AccessDeniedTitle"]</PageTitle>
+<PageTitle>@PageHeading</PageTitle>
 
-<div class="login-page">
-    <div class="login-card">
-        <h1>@Culture["Access.Title"]</h1>
-        <p class="login-lead">
-            @Culture["Access.Lead"]
-        </p>
-        <p>
-            <a class="auth-link" href="/home">@Culture["Access.ToHome"]</a>
-            ·
-            <a class="auth-link" href="/login">@Culture["Auth.Login"]</a>
-        </p>
-    </div>
-</div>
+<AccessDeniedView ReturnUrl="@_returnUrl" Reason="@_reason" />
+
+@code {
+    private string _returnUrl = "/home";
+    private string? _reason;
+    private bool _employersOff;
+    private bool _schoolsOff;
+
+    private string PageHeading => _schoolsOff
+        ? Culture["Status.Forbidden.SchoolsOffTitle"]
+        : _employersOff
+            ? Culture["Status.Forbidden.EmployersOffTitle"]
+            : Culture["Page.AccessDeniedTitle"];
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        // The cookie middleware appends "ReturnUrl" (capital R); a direct link may use "returnUrl".
+        var raw = QueryValue(query, "ReturnUrl") ?? QueryValue(query, "returnUrl");
+        _returnUrl = AuthRedirects.ResolveRequestedReturnUrl(raw);
+
+        _reason = QueryValue(query, "reason");
+        _employersOff = string.Equals(_reason, "employers-off", StringComparison.OrdinalIgnoreCase);
+        _schoolsOff = string.Equals(_reason, "schools-off", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? QueryValue(Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query, string key)
+        => query.TryGetValue(key, out var value) ? value.ToString() : null;
+}

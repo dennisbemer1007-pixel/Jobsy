@@ -2,6 +2,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Jobsy.Api.Controllers;
 
@@ -19,6 +20,7 @@ public class ExclusivitySettingsController : ControllerBase
     /// <summary>Active exclusivity options for vacancy forms and public badges.</summary>
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<IEnumerable<ExclusivitySettingDto>>> ListActive(CancellationToken cancellationToken)
         => Ok(await _service.ListAsync(activeOnly: true, cancellationToken));
 
@@ -29,6 +31,7 @@ public class ExclusivitySettingsController : ControllerBase
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<ExclusivitySettingDto>> Get(Guid id, CancellationToken cancellationToken)
     {
         var item = await _service.GetAsync(id, cancellationToken);

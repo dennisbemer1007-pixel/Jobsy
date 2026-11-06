@@ -1,0 +1,33 @@
+KEY: KandidatenkaartInactivityCheck
+SUBJECT: Still looking for work?
+PREHEADER: Confirm you are still available
+KIND: Optional
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+Still looking?
+
+We have not seen you for a while. Are you still open to employer
+invitations?
+
+Settings: https://lobsy.nl/candidate/settings/kandidatenkaart
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تريد وظائف قريبة.
+لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Still looking?
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Settings -> https://lobsy.nl/candidate/settings/kandidatenkaart
+a: لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

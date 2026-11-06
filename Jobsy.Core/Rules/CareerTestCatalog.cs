@@ -119,30 +119,20 @@ public static class CareerTestCatalog
         => LikertAnswerJson.ParseTags(json);
 
     public static RiasecScores? Score(IReadOnlyDictionary<int, int> answers)
+        => Score(answers, Questions);
+
+    /// <summary>Same math as <see cref="Score(IReadOnlyDictionary{int,int})"/> over an explicit item list (pupil bank).</summary>
+    public static RiasecScores? Score(
+        IReadOnlyDictionary<int, int> answers,
+        IEnumerable<CareerQuestion> items)
     {
-        int? ScoreType(string code)
-        {
-            var items = Questions.Where(q => q.Category == code).ToList();
-            var scored = new List<int>();
-            foreach (var question in items)
-            {
-                if (!answers.TryGetValue(question.Id, out var raw) || !IsValidAnswer(raw))
-                {
-                    continue;
-                }
-
-                scored.Add(question.Reverse ? LikertMax + LikertMin - raw : raw);
-            }
-
-            return scored.Count == 0 ? null : LikertAnswerJson.ToPercent(scored);
-        }
-
-        var r = ScoreType(Realistic);
-        var i = ScoreType(Investigative);
-        var a = ScoreType(Artistic);
-        var s = ScoreType(Social);
-        var e = ScoreType(Enterprising);
-        var c = ScoreType(Conventional);
+        var list = items.Select(q => (q.Id, q.Category, q.Reverse)).ToList();
+        var r = LikertCategoryScorer.ScoreCategory(list, answers, Realistic);
+        var i = LikertCategoryScorer.ScoreCategory(list, answers, Investigative);
+        var a = LikertCategoryScorer.ScoreCategory(list, answers, Artistic);
+        var s = LikertCategoryScorer.ScoreCategory(list, answers, Social);
+        var e = LikertCategoryScorer.ScoreCategory(list, answers, Enterprising);
+        var c = LikertCategoryScorer.ScoreCategory(list, answers, Conventional);
         if (r is null && i is null && a is null && s is null && e is null && c is null)
         {
             return null;

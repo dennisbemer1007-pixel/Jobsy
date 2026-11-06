@@ -1,0 +1,20 @@
+@inject GratisDnaMergeService Merge
+@inject AuthenticationStateProvider Auth
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var state = await Auth.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated != true || !state.User.IsInRole("Candidate"))
+        {
+            return;
+        }
+
+        await Merge.TryMergeAsync();
+    }
+}

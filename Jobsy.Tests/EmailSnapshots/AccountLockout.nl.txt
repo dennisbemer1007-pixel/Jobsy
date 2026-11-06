@@ -1,0 +1,35 @@
+KEY: AccountLockout
+SUBJECT: Je Lobsy-account is even op pauze
+PREHEADER: Je kunt tot 2 oktober 2026, 13:05 niet inloggen met je wachtwoord.
+KIND: Essential
+--- TEXT ---
+Even pauze
+==========
+
+Er is 5 keer een verkeerd wachtwoord ingevuld. Daarom kun je 15 minuten niet
+inloggen met je wachtwoord, tot 2 oktober 2026, 13:05.
+
+Pauze tot: 2 oktober 2026, 13:05
+
+Was jij dit? Dan kun je het daarna gewoon weer proberen. Was jij dit niet?
+Neem dan contact op met support.
+
+Wachtwoord vergeten?: https://lobsy.nl/wachtwoord-vergeten
+
+Team Lobsy
+
+Je krijgt deze mail om je account te beschermen.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Even pauze
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Wachtwoord vergeten? -> https://lobsy.nl/wachtwoord-vergeten
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

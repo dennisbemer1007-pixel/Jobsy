@@ -1,6 +1,9 @@
+@* Legacy referral aliases (/werven/{code}, /ambassadeur/ref/{code}) kept for printed flyers and bookmarks. *@
 @page "/werven/{TrackingCode}"
 @page "/ambassadeur/ref/{TrackingCode}"
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Core.Rules
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor

@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Jobsy.Api.Models;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Entities;
@@ -23,17 +24,20 @@ public sealed class FeedbackController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly IOptions<CursorCloudOptions> _cursorOptions;
     private readonly IHostEnvironment _environment;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public FeedbackController(
         IFeedbackService feedback,
         IUserLookupService users,
         IOptions<CursorCloudOptions> cursorOptions,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        IPersonalDataAccessLogger accessLog)
     {
         _feedback = feedback;
         _users = users;
         _cursorOptions = cursorOptions;
         _environment = environment;
+        _accessLog = accessLog;
     }
 
     [HttpPost]
@@ -103,6 +107,20 @@ public sealed class FeedbackController : ControllerBase
         if (row?.ScreenshotBytes is not { Length: > 0 })
         {
             return NotFound();
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is not null)
+        {
+            await this.LogPersonalDataAccessAsync(
+                _accessLog,
+                actor.Id,
+                PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                "feedback.screenshot.view",
+                "view",
+                subjectUserId: row.UserId,
+                reason: $"feedbackId={id}",
+                cancellationToken: cancellationToken);
         }
 
         return File(row.ScreenshotBytes, row.ScreenshotContentType ?? "image/png");

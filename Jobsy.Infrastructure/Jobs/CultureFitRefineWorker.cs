@@ -8,6 +8,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// <summary>Drains <see cref="ICultureFitRefineQueue"/> and runs OpenAI culture-fit refine off the request path.</summary>
 public sealed class CultureFitRefineWorker : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly ICultureFitRefineQueue _queue;
     private readonly IServiceScopeFactory _scopes;
     private readonly ILogger<CultureFitRefineWorker> _logger;
@@ -20,6 +21,7 @@ public sealed class CultureFitRefineWorker : BackgroundService
         _queue = queue;
         _scopes = scopes;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(CultureFitRefineWorker));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,6 +41,11 @@ public sealed class CultureFitRefineWorker : BackgroundService
 
             try
             {
+                if (!await _employersGate.ShouldRunAsync(_scopes, stoppingToken))
+                {
+                    continue;
+                }
+
                 await using var scope = _scopes.CreateAsyncScope();
                 var service = scope.ServiceProvider.GetRequiredService<ICandidateVacancyCultureFitService>();
                 await service.RefineAsync(userId, vacancyId, stoppingToken);

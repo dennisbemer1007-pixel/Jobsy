@@ -2,12 +2,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -21,20 +20,20 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<CareerCompassGenerationService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public CareerCompassGenerationService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
-        ILogger<CareerCompassGenerationService> logger)
+        IOpenAiEndpointResolver openAi,
+        ILogger<CareerCompassGenerationService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<CareerCompassSnapshot> GenerateFromCareerDeepAsync(
@@ -42,21 +41,63 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         CancellationToken cancellationToken = default)
     {
         var scores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career);
-        var local = CareerCompassBuilder.Build(DeepAnalysisCatalog.ToRiasecScores(scores), fromDeepAnalysis: true);
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var riasec = DeepAnalysisCatalog.ToRiasecScores(scores);
+        var local = CareerCompassSanitize.EnsureDepth(
+            CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true),
+            riasec);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CareerCompass, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return local;
         }
 
+        var sheet = CandidateFactSheet.ForCareer(scores, answers);
         try
         {
-            var model = await ResolveModelAsync(cancellationToken);
-            var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
-            var generated = await GenerateWithOpenAiAsync(scores, answers, apiKey, model, baseUrl, cancellationToken);
-            if (generated is { HasOccupations: true })
+            var model = endpoint.Model;
+            var baseUrl = endpoint.BaseUrl;
+            var systems = new[]
             {
-                return generated;
+                CareerCompassPrompt.System,
+                CareerCompassPrompt.System + "\n" + CandidateFactGuard.StrictAddendum
+            };
+            for (var attempt = 1; attempt <= systems.Length; attempt++)
+            {
+                var (generated, reason, rejectedText) = await GenerateWithOpenAiAsync(
+                    sheet,
+                    systems[attempt - 1],
+                    apiKey,
+                    model,
+                    baseUrl,
+                    cancellationToken);
+                if (reason is not null)
+                {
+                    await AiFactRejectionLog.WriteAsync(
+                        _platformLog,
+                        _logger,
+                        "compass",
+                        reason,
+                        attempt,
+                        cancellationToken,
+                        model,
+                        rejectedText);
+                }
+
+                if (generated is not null)
+                {
+                    generated = CareerCompassSanitize.EnsureDepth(generated, riasec);
+                }
+
+                if (generated is { HasOccupations: true })
+                {
+                    if (generated.Strengths.Count < 3)
+                    {
+                        generated = generated with { Strengths = local.Strengths };
+                    }
+
+                    return generated;
+                }
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -67,15 +108,14 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         return local;
     }
 
-    private async Task<CareerCompassSnapshot?> GenerateWithOpenAiAsync(
-        IReadOnlyList<DeepAnalysisDomainScore> scores,
-        IReadOnlyDictionary<int, int> answers,
+    private async Task<(CareerCompassSnapshot? Snapshot, string? Reason, string? RejectedText)> GenerateWithOpenAiAsync(
+        CandidateFactSheet sheet,
+        string systemPrompt,
         string apiKey,
         string model,
         string baseUrl,
         CancellationToken cancellationToken)
     {
-        var user = CareerCompassPrompt.User(scores, answers);
         var client = _httpClientFactory.CreateClient(HttpClientName);
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
@@ -84,12 +124,12 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
         request.Content = JsonContent.Create(new
         {
             model,
-            temperature = 0.3,
+            temperature = 0.1,
             response_format = new { type = "json_object" },
             messages = new object[]
             {
-                new { role = "system", content = CareerCompassPrompt.System },
-                new { role = "user", content = user }
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = sheet.ToPrompt() }
             }
         });
 
@@ -99,63 +139,25 @@ public sealed class CareerCompassGenerationService : ICareerCompassGenerationSer
             _logger.LogWarning(
                 "OpenAI beroepen-kompas gaf {StatusCode} (response body not logged).",
                 (int)response.StatusCode);
-            return null;
+            return (null, null, null);
         }
 
         var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
         var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
-        if (string.IsNullOrWhiteSpace(content))
+        var reason = CandidateFactGuard.CompassRejection(content, sheet);
+        if (reason is not null)
         {
-            return null;
+            return (null, reason, content);
         }
 
         var parsed = CareerCompassJson.TryDeserialize(content);
-        return parsed is null ? null : parsed with { FromOpenAi = true, FromDeepAnalysis = true };
+        return parsed is null
+            ? (null, "unreadable", content)
+            : (parsed with { FromOpenAi = true, FromDeepAnalysis = true }, null, null);
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

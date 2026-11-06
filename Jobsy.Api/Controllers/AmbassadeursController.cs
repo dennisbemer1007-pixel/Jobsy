@@ -1,14 +1,19 @@
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/ambassadeurs")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class AmbassadeursController : ControllerBase
 {
     private readonly IAmbassadeurInviteService _invite;
@@ -19,7 +24,8 @@ public class AmbassadeursController : ControllerBase
     private readonly ISelfBillingInvoiceService _invoices;
     private readonly ISalesManagerPayoutService _payouts;
     private readonly IUserLookupService _users;
-    private readonly IHostEnvironment _environment;
+    private readonly ISupportAccessService _supportAccess;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public AmbassadeursController(
         IAmbassadeurInviteService invite,
@@ -30,7 +36,8 @@ public class AmbassadeursController : ControllerBase
         ISelfBillingInvoiceService invoices,
         ISalesManagerPayoutService payouts,
         IUserLookupService users,
-        IHostEnvironment environment)
+        ISupportAccessService supportAccess,
+        IPersonalDataAccessLogger accessLog)
     {
         _invite = invite;
         _onboarding = onboarding;
@@ -40,7 +47,8 @@ public class AmbassadeursController : ControllerBase
         _invoices = invoices;
         _payouts = payouts;
         _users = users;
-        _environment = environment;
+        _supportAccess = supportAccess;
+        _accessLog = accessLog;
     }
 
     [HttpPost("invite")]
@@ -52,10 +60,7 @@ public class AmbassadeursController : ControllerBase
         try
         {
             var result = await _invite.InviteAsync(request.Email, request.FullName, cancellationToken);
-            return Ok(result with
-            {
-                TemporaryPassword = _environment.IsDevelopment() ? result.TemporaryPassword : string.Empty
-            });
+            return Ok(result);
         }
         catch (ArgumentException ex)
         {
@@ -70,7 +75,43 @@ public class AmbassadeursController : ControllerBase
     [HttpGet]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<IEnumerable<AmbassadeurListItemDto>>> List(CancellationToken cancellationToken)
-        => Ok(await _dashboard.ListAmbassadeursAsync(cancellationToken));
+    {
+        var rows = await _dashboard.ListAmbassadeursAsync(cancellationToken);
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var result = new List<AmbassadeurListItemDto>(rows.Count);
+        foreach (var r in rows)
+        {
+            Guid? grantId = null;
+            if (actor is not null)
+            {
+                grantId = await _supportAccess.FindActiveGrantIdAsync(
+                    actor.Id, r.UserId, null, SupportAccessScope.Contact, cancellationToken);
+            }
+
+            var reveal = grantId is not null;
+            if (reveal && actor is not null)
+            {
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    actor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "ambassadeur.contact.reveal",
+                    "reveal",
+                    subjectUserId: r.UserId,
+                    reason: "support-access",
+                    supportAccessGrantId: grantId,
+                    cancellationToken: cancellationToken);
+            }
+
+            result.Add(r with
+            {
+                Email = reveal ? r.Email : PersonalDataMasker.MaskEmail(r.Email),
+                FullName = reveal ? r.FullName : PersonalDataMasker.MaskName(r.FullName)
+            });
+        }
+
+        return Ok(result);
+    }
 
     [HttpGet("settings")]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]

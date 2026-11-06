@@ -1,10 +1,11 @@
 @namespace Jobsy.Web.Components.Admin
+@inject IJSRuntime Js
 
 @* Friendly checklist: how to wire a new regional CNAME end-to-end. *@
 @if (IsOpen)
 {
     <div class="cname-help-backdrop" @onclick="Close" aria-hidden="true"></div>
-    <aside class="cname-help-panel"
+    <aside @ref="_panel" class="cname-help-panel"
            role="dialog"
            aria-modal="true"
            aria-labelledby="cname-help-title"
@@ -18,7 +19,7 @@
                     Werkt hetzelfde voor elk regio-subdomein.
                 </p>
             </div>
-            <button type="button" class="cname-help-panel__close" @onclick="Close" aria-label="Sluiten">×</button>
+            <button type="button" class="cname-help-panel__close" data-jobsy-dialog-close @onclick="Close" aria-label="Sluiten">×</button>
         </header>
 
         <ol class="cname-help-steps">
@@ -119,6 +120,35 @@
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private ElementReference _panel;
+    private bool _trapped;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_trapped)
+        {
+            _trapped = true;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _panel);
+            }
+            catch (Exception)
+            {
+            }
+        }
+        else if (!IsOpen && _trapped)
+        {
+            _trapped = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.release");
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
 
     private async Task Close()
     {

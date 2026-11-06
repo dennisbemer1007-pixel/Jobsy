@@ -1,0 +1,131 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="adult.css">
+<style>
+.dna4{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:6px}
+.dl{border-radius:10px;padding:7px 9px;background:var(--sc)}
+.dl:nth-child(2),.dl:nth-child(3){background:var(--sp)}
+.dl .k{font-size:8px;font-weight:700;letter-spacing:.07em;color:var(--mut);text-transform:uppercase;display:flex;gap:5px;align-items:center}
+.dl .k em{font-style:normal;font-size:11px}
+.dl .v{font-size:11px;font-weight:700;margin-top:2px;line-height:1.25}
+.ch h3{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px}
+.lbl{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin:8px 0 4px}
+.job{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.job .h{display:flex;align-items:baseline;gap:6px}
+.job h3{font-size:12.5px;font-weight:800}
+.job .sub{font-size:9.5px;color:var(--mut);margin-top:1px}
+.job .meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.job .meta span{font-size:9px;font-weight:600;background:#f5f3f8;color:#4e4462;border-radius:6px;padding:2px 6px;display:flex;align-items:center;gap:3px}
+.job .meta .ico{width:9px;height:9px}
+.job .why{font-size:9.8px;line-height:1.35;margin-top:6px;color:#3a2d52}
+.job .why b{color:var(--m)}
+.rt{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.rt .s{display:flex;gap:9px;align-items:flex-start}
+.rt .n{width:20px;height:20px;border-radius:50%;border:2px solid var(--p);color:var(--p);font-size:10px;font-weight:800;display:grid;place-items:center;flex:none}
+.rt .s.goal .n{background:var(--c);border-color:var(--c);color:#fff}
+.rt b{font-size:11px;display:block}.rt span{font-size:9.5px;color:var(--mut);display:block;line-height:1.3}
+.learn li{font-size:10.5px;line-height:1.35;display:flex;gap:7px;margin-bottom:5px;list-style:none}
+.learn li .ico{color:var(--m);width:12px;height:12px;margin-top:1px}
+.note{font-size:9px;color:var(--mut);margin-top:6px;line-height:1.35}
+.quote{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;gap:12px;align-items:flex-start}
+.quote .ico{width:18px;height:18px;color:#d9c7f0;fill:#ece2f8;stroke:none;margin-top:2px}
+.quote p{font-size:11px;line-height:1.5;color:#3a2d52}.quote span{display:block;font-size:9px;color:var(--mut);margin-top:3px}
+.quote h3{font-size:12.5px;font-weight:800;margin-bottom:3px}
+.foot .shd{width:30px;height:30px;border-radius:9px;background:#e9f7f0;color:#14825a;display:grid;place-items:center;flex:none}
+.sh{display:flex;align-items:center;gap:8px;margin:15px 0 8px}</style></head><body><div class="page">
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="chk" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7Z"/></symbol>
+<symbol id="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="brief" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></symbol>
+<symbol id="dna" viewBox="0 0 24 24"><path d="M7 3c0 6 10 6 10 12s-10 6-10 6M17 3c0 6-10 6-10 12s10 6 10 6"/><path d="M8 7h8M8 17h8"/></symbol>
+<symbol id="flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+<symbol id="bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
+<symbol id="sh" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="quote" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5H3v8h4c0 4-2 5-4 5zM14 21c3 0 7-1 7-8V5h-7v8h4c0 4-2 5-4 5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</defs></svg>
+
+<div class="top"><img class="logo" src="assets/lobsy.png"><div><div class="bt">Lobsy</div><div class="bs">DNA-paspoort · middelbare school</div></div>
+<div class="badge"><div class="ck"><svg class="ico"><use href="#chk"/></svg></div><div><b>4/4 werelden afgerond</b><span>Lobsy voor scholen · 14 okt 2026</span></div></div></div>
+<div class="rule"></div>
+
+<div class="id"><div class="av">SB</div><div style="flex:1">
+<h1>Sara Bakker <span class="tag new">NIEUW</span></h1>
+<div class="ty">Zorgzame onderzoeker — wil weten hoe het zit én helpt graag <span class="tag der">AFGELEID</span></div>
+<div class="pills"><span class="pill"><svg class="ico"><use href="#cap"/></svg>Havo 4 · klas 4B</span><span class="pill">Profiel Natuur &amp; Gezondheid <span class="tag new">NIEUW</span></span><span class="pill o"><svg class="ico"><use href="#pin"/></svg>Amersfoort (school)</span><span class="pill o">Code K7Q-M2P</span></div>
+</div></div>
+
+<div class="cards4">
+<div class="ic p"><div class="k">Niveau</div><div class="v">Havo 4</div><div class="s">examen in 2028 · daarna hbo</div></div>
+<div class="ic p"><div class="k">Leukste vakken <span class="tag new">NIEUW</span></div><div class="v">Biologie · Tekenen</div><div class="s">ook Engels</div></div>
+<div class="ic c"><div class="k">Bijbaan <span class="tag new">NIEUW</span></div><div class="v">Za + wo-middag</div><div class="s">max. 8 uur per week · overdag</div></div>
+<div class="ic c"><div class="k">Vervoer <span class="tag new">NIEUW</span></div><div class="v">Fiets</div><div class="s">max. 20 min vanaf huis</div></div>
+</div>
+
+<div class="g2" style="margin-top:12px">
+<div class="card ch"><h3>Mijn interesses</h3>
+<div class="lbl">Dit vind ik leuk</div>
+<div class="chips"><span class="chip p">Dieren</span><span class="chip p">Natuur</span><span class="chip p">Tekenen</span><span class="chip p">Koken</span><span class="chip p">Puzzels</span><span class="chip p">Paardrijden (eigen woord)</span></div>
+<div class="lbl">Liever niet</div>
+<div class="chips"><span class="chip n">Lang stilzitten</span><span class="chip n">Druk en lawaai</span><span class="chip n">Voor de klas staan</span></div>
+</div>
+<div class="card ch"><h3>Mijn DNA in 4 lagen</h3>
+<div class="dna4">
+<div class="dl"><div class="k"><em>🦞</em>Zo ben ik</div><div class="v">Behulpzaam en zorgvuldig</div></div>
+<div class="dl"><div class="k"><em>📡</em>Dit doe ik graag</div><div class="v">Helpen en onderzoeken (S-I)</div></div>
+<div class="dl"><div class="k"><em>🧭</em>Belangrijk</div><div class="v">Eerlijkheid, samen iets doen</div></div>
+<div class="dl"><div class="k"><em>🪨</em>Hier voel ik me thuis</div><div class="v">Rustig team, vaste afspraken</div></div>
+</div></div>
+</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#star"/></svg></div><h2>Sterke punten</h2><small>zelfbeeld uit de Lobsy-test · 14 okt 2026</small></div>
+<div class="g3">
+<div class="sp"><b>Samenwerken</b><span>denkt mee, helpt als iemand vastloopt</span></div>
+<div class="sp"><b>Zorgvuldig werken</b><span>controleert haar werk voor het inleveren</span></div>
+<div class="sp"><b>Rustig onder druk</b><span>blijft kalm bij een drukke dag of toets</span></div>
+</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#arr"/></svg></div><h2>Sectoren die bij mij passen</h2><span class="tag der">AFGELEID</span><small>uit mijn tests en interesses</small></div>
+<div class="g3 sec3">
+<div class="card"><h3>1. Dieren &amp; natuur</h3><ul><li>Houdt van dieren en buiten zijn</li><li>Zorgzaam én nieuwsgierig</li></ul></div>
+<div class="card"><h3>2. Zorg &amp; welzijn</h3><ul><li>Helpt graag, blijft rustig</li><li>Werkt fijn in een vast team</li></ul></div>
+<div class="card"><h3>3. Onderzoek &amp; lab</h3><ul><li>Wil weten hoe iets werkt</li><li>Precies en zorgvuldig</li></ul></div>
+</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#brief"/></svg></div><h2>Bijbanen en stages die bij mij passen</h2><span class="tag new">NIEUW</span><small>soorten werk, passend bij 15 jaar</small></div>
+<div class="g3">
+<div class="job"><h3>Hulp op een kinderboerderij</h3><div class="sub">bijbaan of vrijwilligerswerk</div>
+<div class="meta"><span><svg class="ico"><use href="#clock"/></svg>zaterdag</span><span>vanaf 15</span><span>overdag</span></div>
+<div class="why"><b>Waarom:</b> dieren verzorgen, buiten werken, vast team.</div></div>
+<div class="job"><h3>Snuffelstage dierenkliniek</h3><div class="sub">loopbaanstage (LOB) · 1 week</div>
+<div class="meta"><span><svg class="ico"><use href="#clock"/></svg>schoolweek</span><span>via school</span></div>
+<div class="why"><b>Waarom:</b> kijkt mee bij haar droombaan, past bij biologie.</div></div>
+<div class="job"><h3>Vakkenvuller drogisterij</h3><div class="sub">eerste bijbaan</div>
+<div class="meta"><span><svg class="ico"><use href="#clock"/></svg>wo-middag + za</span><span>vanaf 15</span><span>tot 19:00</span></div>
+<div class="why"><b>Waarom:</b> zorgvuldig werken, rustig tempo, korte diensten.</div></div>
+</div>
+
+<div class="g2" style="margin-top:12px">
+<div class="card"><h3 style="font-size:12.5px;font-weight:800">Droombaan en studierichting</h3>
+<div class="rt">
+<div class="s"><div class="n">1</div><div><b>Havo afmaken</b><span>biologie en scheikunde in het pakket</span></div></div>
+<div class="s"><div class="n">2</div><div><b>Hbo-propedeuse of vwo</b><span>toegang tot Diergeneeskunde (Universiteit Utrecht)</span></div></div>
+<div class="s goal"><div class="n">★</div><div><b>Dierenarts</b><span>ook interessant: mbo-4 Dierenartsassistent paraveterinair</span></div></div>
+</div></div>
+<div class="card learn"><h3 style="font-size:12.5px;font-weight:800;margin-bottom:7px">Wat ik wil leren</h3><ul>
+<li><svg class="ico"><use href="#flag"/></svg>Presenteren voor een groep, zonder spieken</li>
+<li><svg class="ico"><use href="#flag"/></svg>Plannen voor mijn profielwerkstuk</li>
+<li><svg class="ico"><use href="#flag"/></svg>Mijn eerste werkervaring opdoen</li></ul>
+<div class="note">Gekozen door Sara. Haar leraar of mentor kan hier in een gesprek op doorvragen.</div></div>
+</div>
+
+<div class="quote"><svg class="ico"><use href="#quote"/></svg><div><h3>In mijn eigen woorden <span class="tag new" style="display:inline-block;margin-top:0">NIEUW</span></h3><p>"Ik ben graag bezig met dieren en wil later echt weten wat er met een dier aan de hand is. Ik werk het liefst rustig en netjes, samen met anderen. Voor een groep praten vind ik nog spannend, daar wil ik beter in worden."</p><span>Geschreven door Sara · niet aangepast door Lobsy</span></div></div>
+<div class="foot"><div class="shd"><svg class="ico" style="width:16px;height:16px"><use href="#sh"/></svg></div>
+<p><b>Gespreksinput, geen beoordeling.</b> Geen cijfer, ranking of schooladvies. Geen adres, telefoon, foto of geboortedatum.<br>Bij schoolcodes bewaart Lobsy geen namen; antwoorden worden na dit schooljaar gewist. Voor Sara, haar ouders en mentor.</p>
+<div class="r">Gemaakt 16 okt 2026<br>pagina 1/1 · <b>lobsy.nl</b></div></div>
+<div class="legend"><span>MOCKUP · fictieve leerling</span><span><b>NIEUW</b> = bestaat nog niet in datamodel · <i>AFGELEID</i> = berekend uit bestaande data</span></div>
+</div></body></html>

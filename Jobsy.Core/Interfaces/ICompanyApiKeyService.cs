@@ -28,11 +28,18 @@ public interface ICompanyApiKeyService
     Task<bool> DeactivateForCompanyAsync(Guid companyId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Rotates to a new key and e-mails the plaintext secret to the company contact address.
+    /// Creates a single-use reveal link and e-mails it. Does not rotate the key until reveal.
     /// </summary>
     Task<EmailApiKeyResult> EmailCredentialsAsync(
         Guid companyId,
         string recipientEmail,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Consumes a reveal link, rotates the company key, and returns the plaintext once.
+    /// </summary>
+    Task<ApiKeyRevealResult?> RevealFromTokenAsync(
+        string token,
         CancellationToken cancellationToken = default);
 }
 
@@ -64,7 +71,15 @@ public record GeneratedApiKeyResult(
     DateTime CreatedAt);
 
 public record EmailApiKeyResult(
-    Guid Id,
+    Guid LinkId,
     string RecipientEmail,
-    string KeyPrefix,
     bool Sent);
+
+public record ApiKeyRevealResult(
+    Guid Id,
+    Guid CompanyId,
+    string CompanyName,
+    string Name,
+    string KeyPrefix,
+    string PlaintextKey,
+    string ApiBaseUrl);

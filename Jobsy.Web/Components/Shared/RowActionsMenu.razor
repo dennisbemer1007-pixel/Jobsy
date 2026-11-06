@@ -1,12 +1,14 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
+@inject IJSRuntime Js
 
-<div class="row-actions-menu @( _open ? "is-open" : null)" @onfocusout="OnFocusOut">
+<div class="row-actions-menu @(_open ? "is-open" : null)" @ref="_root" @onfocusout="OnFocusOut">
     <button type="button"
+            @ref="_toggle"
             class="icon-btn row-actions-menu__toggle"
             aria-haspopup="menu"
-            aria-expanded="@_open"
+            aria-expanded="@(_open ? "true" : "false")"
             aria-label="@(AriaLabel ?? Culture["Common.Actions"])"
             title="@(AriaLabel ?? Culture["Common.Actions"])"
             @onclick="Toggle"
@@ -15,7 +17,8 @@
     </button>
     @if (_open)
     {
-        <div class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true">
+        <div @ref="_panel" class="row-actions-menu__panel" role="menu" @onclick="Close" @onclick:stopPropagation="true" @onkeydown="OnKey">
+            <button type="button" class="visually-hidden" data-jobsy-dialog-close @onclick="Close">@Culture["AdminUi.CloseDrawer"]</button>
             @ChildContent
         </div>
     }
@@ -26,17 +29,117 @@
     [Parameter] public string? AriaLabel { get; set; }
 
     private bool _open;
+    private bool _trapped;
+    private TaskCompletionSource _trapReady = CompletedTrap();
+    private ElementReference _root;
+    private ElementReference _toggle;
+    private ElementReference _panel;
 
     private void Toggle()
-        => _open = !_open;
+    {
+        _open = !_open;
+        if (_open)
+        {
+            _trapReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+    }
 
     private void Close()
         => _open = false;
 
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _open = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_open && !_trapped)
+        {
+            _trapped = true;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _panel);
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                _trapReady.TrySetResult();
+            }
+        }
+        else if (!_open && _trapped)
+        {
+            _trapped = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.release");
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
+                await _toggle.FocusAsync();
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
     private async Task OnFocusOut(FocusEventArgs _)
     {
-        await Task.Delay(150);
+        if (!_open)
+        {
+            return;
+        }
+
+        // jobsyDialog.trap moves focus into the panel and that focusout bubbles.
+        // Wait until the trap has landed, then close only if focus really left.
+        var trapReady = _trapReady.Task;
+        try
+        {
+            await trapReady.WaitAsync(TimeSpan.FromSeconds(2));
+        }
+        catch (TimeoutException)
+        {
+        }
+
+        await Task.Delay(50);
+        if (!_open)
+        {
+            return;
+        }
+
+        var left = false;
+        try
+        {
+            left = await Js.InvokeAsync<bool>("jobsyDialog.focusLeft", _root);
+        }
+        catch (Exception)
+        {
+            left = false;
+        }
+
+        if (!left || !_open)
+        {
+            return;
+        }
+
         _open = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private static TaskCompletionSource CompletedTrap()
+    {
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ready.TrySetResult();
+        return ready;
     }
 }

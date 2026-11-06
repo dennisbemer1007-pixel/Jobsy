@@ -1,0 +1,395 @@
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<div class="admin-sublinks admin-sublinks--wrap">
+        <a class="admin-sublink" href="/admin/financien/uitbetalingen">@Culture["AdminNav.Payouts"]</a>
+        <a class="admin-sublink admin-sublink--active" href="/admin/gebruikers/sales" aria-current="page">Salesmanagers</a>
+    </div>
+
+    <EntTabs Tabs="_tabs" ActiveKey="@_tab" BasePath="/admin/gebruikers/sales" />
+
+    @if (_tab == "uitbetalingen")
+    {
+        @* // moves to /admin/financien/uitbetalingen (admin-redesign 06.4) *@
+        <PayoutRunsSection />
+        <p class="muted">@Culture["SalesAdmin.Runs.CrossLinkFinance"]</p>
+    }
+    else
+    {
+    <section class="panel-section">
+        <h2>Direct uitnodigen (Admin)</h2>
+        <p class="muted">Alleen Admin kan initiële (tier-0) salesmanagers aanmaken die zelf mogen werven.</p>
+        <form class="login-form" style="max-width:480px" @onsubmit="InviteAsync" @onsubmit:preventDefault>
+            <label>Naam <input @bind="_inviteName" required /></label>
+            <label>E-mail <input type="email" @bind="_inviteEmail" required /></label>
+            <button class="login-submit" type="submit" disabled="@_busy">Uitnodigen</button>
+        </form>
+        @if (!string.IsNullOrEmpty(_inviteResult))
+        {
+            <p class="state-message">@_inviteResult</p>
+        }
+    </section>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <section class="panel-section">
+            <h2>Openstaande aanbevelingen</h2>
+            <p class="muted">Salesmanagers kunnen kandidaten voordragen; goedkeuring door Admin is verplicht vóór accountprovisioning.</p>
+            @if (_applications.Count == 0)
+            {
+                <p class="muted">Geen openstaande aanbevelingen.</p>
+            }
+            else
+            {
+                <div class="table-list">
+                    @foreach (var app in _applications)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@(string.IsNullOrWhiteSpace(app.CandidateFullName) ? "Gegevens verwijderd" : app.CandidateFullName)</strong>
+                                <div class="muted">@app.CandidateEmail</div>
+                                <div class="muted">Via @app.ReferrerFullName (@app.ReferrerTrackingCode)</div>
+                                <div>@app.Motivation</div>
+                                @if (app.SubjectNotifiedAtUtc is DateTime notified)
+                                {
+                                    <div class="muted">@Culture.Format("SalesAdmin.Application.Notified", notified.ToLocalTime().ToString("g"))</div>
+                                }
+                            </div>
+                            <div class="inline-actions">
+                                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy"
+                                        @onclick="() => ApproveAsync(app.Id)">Goedkeuren</button>
+                                <button type="button" class="btn-compact" disabled="@_busy"
+                                        @onclick="() => RejectAsync(app.Id)">Afwijzen</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(_applicationResult))
+            {
+                <p class="state-message">@_applicationResult</p>
+            }
+        </section>
+
+        <section class="panel-section">
+            <h2>Overzicht</h2>
+            <div class="table-list">
+                @foreach (var sm in _list)
+                {
+                    <button type="button" class="table-row table-row--link" @onclick="() => SelectAsync(sm.UserId)">
+                        <div>
+                            <strong>@sm.FullName</strong>
+                            <div class="muted">
+                                @sm.Email · @(sm.TrackingCode ?? "geen code") · @sm.SupplierCount suppliers
+                                · @(sm.CanRecruitSalesManagers ? "mag werven" : "referral (geen werving)")
+                            </div>
+                        </div>
+                        <span>€ @sm.BalanceExVat.ToString("0.00")</span>
+                    </button>
+                }
+            </div>
+        </section>
+
+        @if (_selected is not null)
+        {
+            <section class="panel-section">
+                <h2>@_selected.FullName</h2>
+                <p class="muted">Code: @(_selected.TrackingCode ?? "—") · Onboarding: @(_selected.IsOnboardingComplete ? "ja" : "nee")</p>
+                @if (_activeGrant is not null && _activeGrant.SubjectUserId == _selected.UserId)
+                {
+                    <p class="state-message">
+                        @string.Format(Culture["Admin.SupportAccessBanner"],
+                            _activeGrant.SubjectUserId.Value.ToString("D")[..8] + "…",
+                            _activeGrant.ExpiresAt.ToLocalTime().ToString("HH:mm"),
+                            _activeGrant.Reason)
+                        <button class="provider-btn" type="button" disabled="@_busy" @onclick="RevokeActiveAsync">
+                            @Culture["Admin.SupportAccessRevoke"]
+                        </button>
+                    </p>
+                }
+                else
+                {
+                    <button class="provider-btn" type="button" @onclick="OpenSupport">@Culture["Admin.WhySeeThis"]</button>
+                }
+                <SupportAccessDialog IsOpen="_supportOpen"
+                                     SubjectUserId="_selected.UserId"
+                                     OnClose="CloseSupport"
+                                     OnGranted="OnGrantedAsync" />
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <span class="stat-card__label">Saldo excl. BTW</span>
+                        <strong class="stat-card__value">€ @_selected.BalanceExVat.ToString("0.00")</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-card__label">Openstaand issued</span>
+                        <strong class="stat-card__value">€ @_selected.OutstandingIssuedExVat.ToString("0.00")</strong>
+                    </div>
+                </div>
+
+                <h3>Suppliers</h3>
+                <div class="table-list">
+                    @foreach (var s in _selected.Suppliers)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@s.Name</strong>
+                                <div class="muted">slot @(s.FirstYearSupplierSlot?.ToString() ?? "—")</div>
+                            </div>
+                            <span>@(s.HasPaidOnboarding ? "betaald" : "open")</span>
+                        </div>
+                    }
+                </div>
+
+                <h3>Facturen</h3>
+                <div class="table-list">
+                    @foreach (var inv in _selected.Invoices)
+                    {
+                        <div class="table-row">
+                            <div>
+                                <strong>@inv.InvoiceNumber</strong>
+                                <div class="muted">@inv.Status</div>
+                            </div>
+                            <div style="display:flex;gap:.5rem;align-items:center">
+                                <span>€ @inv.TotalInclVat.ToString("0.00")</span>
+                                @if (inv.Status == "Issued")
+                                {
+                                    <button type="button" class="provider-btn" disabled="@_busy" @onclick="() => MarkPaidAsync(inv.Id)">Markeer betaald</button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        @* // moves to /admin/gebruikers/sales *@
+        <AttributionSection />
+        <p class="muted">@Culture["SalesAdmin.Runs.CrossLinkFinance"]</p>
+    }
+    }
+@code {
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    private readonly IReadOnlyList<EntTabs.Tab> _tabs =
+    [
+        new("salesmanagers", "Salesmanagers"),
+        new("uitbetalingen", "Uitbetalingen")
+    ];
+
+    private string _tab = "salesmanagers";
+    private List<SalesManagerListItem> _list = [];
+    private List<SalesManagerApplicationItem> _applications = [];
+    private SalesManagerDashboard? _selected;
+    private string _inviteName = "";
+    private string _inviteEmail = "";
+    private string? _inviteResult;
+    private string? _applicationResult;
+    private string? _error;
+    private bool _loading = true;
+    private bool _busy;
+    private bool _supportOpen;
+    private SupportAccessGrantItem? _activeGrant;
+
+    protected override void OnInitialized()
+    {
+        Culture.Changed += OnCultureChanged;
+        ResolveTab();
+    }
+
+    protected override void OnParametersSet() => ResolveTab();
+
+    private void ResolveTab()
+    {
+        _tab = string.Equals(TabQuery, "uitbetalingen", StringComparison.OrdinalIgnoreCase)
+            ? "uitbetalingen"
+            : "salesmanagers";
+    }
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync() => await ReloadListAsync();
+
+    private async Task ReloadListAsync()
+    {
+        _loading = true;
+        try
+        {
+            _list = await Api.GetSalesManagersAsync();
+            _applications = await Api.GetSalesManagerApplicationsAsync(pendingOnly: true);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ApproveAsync(Guid applicationId)
+    {
+        _busy = true;
+        _error = null;
+        _applicationResult = null;
+        try
+        {
+            var result = await Api.ApproveSalesManagerApplicationAsync(applicationId);
+            _applicationResult = result is null
+                ? "Goedgekeurd."
+                : $"Uitnodiging gemaild naar {result.CandidateEmail}.";
+            await ReloadListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAsync(Guid applicationId)
+    {
+        _busy = true;
+        _error = null;
+        _applicationResult = null;
+        try
+        {
+            await Api.RejectSalesManagerApplicationAsync(applicationId, "Afgewezen door admin");
+            _applicationResult = "Aanbeveling afgewezen.";
+            await ReloadListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        _busy = true;
+        _error = null;
+        _inviteResult = null;
+        try
+        {
+            var result = await Api.InviteSalesManagerAsync(_inviteEmail.Trim(), _inviteName.Trim());
+            _inviteResult = result is null
+                ? "Uitgenodigd."
+                : $"Uitnodiging gemaild naar {result.Email}.";
+            _inviteEmail = "";
+            _inviteName = "";
+            await ReloadListAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SelectAsync(Guid userId)
+    {
+        _error = null;
+        try
+        {
+            _selected = await Api.GetSalesManagerDashboardAsync(userId);
+            var grants = await Api.ListSupportAccessAsync(activeOnly: true, take: 20);
+            _activeGrant = grants.FirstOrDefault(g => g.IsActive && g.SubjectUserId == userId);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void OpenSupport() => _supportOpen = true;
+
+    private Task CloseSupport()
+    {
+        _supportOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnGrantedAsync(SupportAccessGrantItem grant)
+    {
+        _activeGrant = grant;
+        if (_selected is not null)
+        {
+            await SelectAsync(_selected.UserId);
+            await ReloadListAsync();
+        }
+    }
+
+    private async Task RevokeActiveAsync()
+    {
+        if (_activeGrant is null) return;
+        _busy = true;
+        try
+        {
+            await Api.RevokeSupportAccessAsync(_activeGrant.Id);
+            _activeGrant = null;
+            if (_selected is not null)
+            {
+                await SelectAsync(_selected.UserId);
+                await ReloadListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task MarkPaidAsync(Guid invoiceId)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.MarkSelfBillingInvoicePaidAsync(invoiceId);
+            if (_selected is not null)
+            {
+                await SelectAsync(_selected.UserId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

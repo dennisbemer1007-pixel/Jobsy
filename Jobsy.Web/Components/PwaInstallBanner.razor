@@ -37,29 +37,53 @@
     private bool _visible;
     private bool _ios;
     private bool _checked;
+    private DotNetObjectReference<PwaInstallBanner>? _self;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_checked || !firstRender)
+        if (!firstRender)
         {
             return;
         }
 
-        _checked = true;
-        try
+        if (!_checked)
         {
-            await Js.InvokeAsync<int>("lobsyPwaInstall.bumpVisit");
-            _ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
-            _visible = await Js.InvokeAsync<bool>("lobsyPwaInstall.shouldShowBanner");
-            if (_visible)
+            _checked = true;
+            try
             {
-                await InvokeAsync(StateHasChanged);
+                if (await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone"))
+                {
+                    _visible = false;
+                    return;
+                }
+
+                await Js.InvokeAsync<int>("lobsyPwaInstall.bumpVisit");
+                _ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
+                _visible = await Js.InvokeAsync<bool>("lobsyPwaInstall.shouldShowBanner");
+                _self ??= DotNetObjectReference.Create(this);
+                await Js.InvokeVoidAsync("lobsyPwaInstall.watchBanner", _self);
+                if (_visible)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch
+            {
+                _checked = false;
             }
         }
-        catch
+    }
+
+    [JSInvokable]
+    public void SetPwaBannerVisible(bool visible)
+    {
+        if (_visible == visible)
         {
-            _checked = false;
+            return;
         }
+
+        _visible = visible;
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private async Task InstallAsync()
@@ -90,5 +114,17 @@
         _visible = false;
     }
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPwaInstall.unwatchBanner");
+        }
+        catch
+        {
+            // Circuit may be gone.
+        }
+
+        _self?.Dispose();
+    }
 }

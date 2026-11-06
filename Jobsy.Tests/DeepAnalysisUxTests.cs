@@ -36,41 +36,28 @@ public class DeepAnalysisUxTests
     }
 
     [Fact]
-    public void Boosters_fire_every_25_questions_with_friendly_copy()
+    public void Motivation_replaces_modal_boosters()
     {
-        Assert.Equal(25, DeepAnalysisBoosters.Interval);
-        Assert.Equal([25, 50, 75, 100, 125, 150, 175], DeepAnalysisBoosters.Milestones);
-        Assert.Null(DeepAnalysisBoosters.TryMessage(24));
-        Assert.Null(DeepAnalysisBoosters.TryMessage(26));
-        foreach (var milestone in DeepAnalysisBoosters.Milestones)
-        {
-            var message = DeepAnalysisBoosters.TryMessage(milestone, DeepAnalysisCatalog.CareerQuestionCount);
-            Assert.False(string.IsNullOrWhiteSpace(message));
-            Assert.False(CareerCompassBuilder.ContainsForbiddenJargon(message!));
-            Assert.False(string.IsNullOrWhiteSpace(DeepAnalysisBoosters.TitleFor(milestone)));
-        }
-        Assert.Null(DeepAnalysisBoosters.TryMessage(175, DeepAnalysisCatalog.QuestionCount));
-        Assert.False(string.IsNullOrWhiteSpace(
-            DeepAnalysisBoosters.TryMessage(125, DeepAnalysisCatalog.QuestionCount)));
+        Assert.Equal(DeepTestMotivation.Halfway,
+            DeepTestMotivation.ForProgress(AssessmentKind.Competence, 75, 150,
+                DeepTestMotivation.PartIndexForGlobalIndex(AssessmentKind.Competence, 75)));
+        Assert.True(DeepTestMotivation.IsPausePoint(AssessmentKind.Competence, 30));
     }
 
     [Fact]
-    public void Deep_analysis_page_exposes_progress_topics_info_and_boosters()
+    public void Deep_analysis_page_uses_question_flow_shell_not_modals()
     {
         var root = RepoRoot.Find();
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DeepAnalysis.razor"));
-        Assert.Contains("deep-analysis-chrome", page, StringComparison.Ordinal);
-        Assert.Contains("QuestionnaireShell", page, StringComparison.Ordinal);
-        Assert.Contains("deep-analysis-topics", page, StringComparison.Ordinal);
-        Assert.Contains("OpenExample", page, StringComparison.Ordinal);
-        Assert.Contains("Questionnaire.ExampleLink", page, StringComparison.Ordinal);
-        Assert.Contains("DeepAnalysisBoosters", page, StringComparison.Ordinal);
-        Assert.Contains("LobsyDialogMood.Celebrate", page, StringComparison.Ordinal);
+        Assert.Contains("TestQuestionFlow", page, StringComparison.Ordinal);
+        Assert.Contains("TestPageShell", page, StringComparison.Ordinal);
+        Assert.Contains("DeepTestMotivation", page, StringComparison.Ordinal);
         Assert.Contains("QuestionnaireAutosave", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("DeepAnalysisBoosters", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("LobsyDialogMood.Celebrate", page, StringComparison.Ordinal);
 
-        Assert.Equal("{0}% voltooid", Jobsy.Web.Localization.UiStrings.Get("Deep.ProgressPercent", "nl"));
-        Assert.Equal("Voorbeeld uit de praktijk", Jobsy.Web.Localization.UiStrings.Get("Deep.InfoTitle", "nl"));
-        Assert.Equal("Afronden en bekijk je resultaat", Jobsy.Web.Localization.UiStrings.Get("Questionnaire.FinishCta", "nl"));
+        Assert.Equal("Voorbeeld uit de praktijk", Jobsy.Web.Localization.UiStrings.Get("TestFlow.Example", "nl"));
+        Assert.Equal("Duik tot de bodem", Jobsy.Web.Localization.UiStrings.Get("Deep.Offer.Title", "nl"));
 
         var dto = File.ReadAllText(Path.Combine(root, "Jobsy.Core/Interfaces/IDeepAnalysisService.cs"));
         Assert.Contains("ExampleNl", dto, StringComparison.Ordinal);

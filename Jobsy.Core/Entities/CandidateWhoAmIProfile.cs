@@ -17,4 +17,7 @@ public class CandidateWhoAmIProfile
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? StoryGeneratedAtUtc { get; set; }
+
+    /// <summary>Last model attempt for this fingerprint. Same fingerprint waits 24 hours.</summary>
+    public DateTime? LastAttemptUtc { get; set; }
 }

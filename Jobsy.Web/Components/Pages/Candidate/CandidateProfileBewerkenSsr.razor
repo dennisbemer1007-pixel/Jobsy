@@ -1,0 +1,57 @@
+@page "/candidate/profile/bewerken"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
+
+@if (_showLegacyHint)
+{
+    <p class="state-message" role="status">@Culture["Common.Loading"]</p>
+}
+
+@code {
+    private bool _showLegacyHint;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null || http.Response.HasStarted)
+        {
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+
+        var flags = await FeatureFlags.GetAsync(http.RequestAborted);
+        var section = http.Request.Query["section"].FirstOrDefault()?.Trim().ToLowerInvariant();
+        if (section is not ("personal" or "preferences" or "availability" or "experience"))
+        {
+            section = "personal";
+        }
+
+        if (flags.CandidatePassportEnabled)
+        {
+            var target = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
+                "/candidate/paspoort",
+                new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["tab"] = "data",
+                    ["section"] = section,
+                });
+            http.Response.StatusCode = StatusCodes.Status308PermanentRedirect;
+            http.Response.Headers.Location = target;
+            return;
+        }
+
+        var legacy = "/candidate/profile/bewerken/legacy" + http.Request.QueryString.Value;
+        http.Response.StatusCode = StatusCodes.Status307TemporaryRedirect;
+        http.Response.Headers.Location = legacy;
+        _showLegacyHint = true;
+    }
+}

@@ -1,0 +1,70 @@
+@page "/toegankelijkheid"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Web.Components.Legal
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
+
+<PageTitle>@Culture["A11y.Seo.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section pp-about" aria-labelledby="a11y-title">
+    <header class="pp-doc__hero">
+        <p class="pp-doc__eyebrow">
+            <PubEmoji Glyph="♿" />
+            <span>@Culture["A11y.Eyebrow"]</span>
+        </p>
+        <h1 id="a11y-title" class="pp-doc__title">@Culture["A11y.Title"]</h1>
+        <p class="pp-doc__lead">@Culture["A11y.Lead"]</p>
+    </header>
+
+    <article class="pp-about__story">
+        <h2>@Culture["A11y.StatusTitle"]</h2>
+        <p>@Culture["A11y.StatusBody"]</p>
+    </article>
+    <article class="pp-about__story">
+        <h2>@Culture["A11y.CheckTitle"]</h2>
+        <p>@Culture["A11y.CheckBody"]</p>
+    </article>
+    <article class="pp-about__story">
+        <h2>@Culture["A11y.GapsTitle"]</h2>
+        <ul>
+            <li>@Culture["A11y.Gap1"]</li>
+            <li>@Culture["A11y.Gap2"]</li>
+            <li>@Culture["A11y.Gap3"]</li>
+        </ul>
+    </article>
+    <article class="pp-about__story">
+        <h2>@Culture["A11y.DateTitle"]</h2>
+        <p>@Culture["A11y.DateBody"]</p>
+    </article>
+    <article class="pp-about__contact">
+        <h2>@Culture["A11y.ContactTitle"]</h2>
+        <p>@Culture["A11y.ContactBody"]</p>
+        @if (!string.IsNullOrWhiteSpace(_contact))
+        {
+            <p class="pp-about__mail">
+                <a class="pub-btn pub-btn--primary" href="mailto:@_contact">@_contact</a>
+            </p>
+        }
+        <p>
+            <a href="@PublicRoutes.Contact">@Culture["A11y.ContactLink"]</a>
+        </p>
+        <LegalIdentityCard />
+    </article>
+</section>
+
+@code {
+    private string? _contact;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        _contact = legal.PrivacyContact;
+    }
+}

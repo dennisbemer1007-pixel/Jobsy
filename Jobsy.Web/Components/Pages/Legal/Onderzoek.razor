@@ -1,0 +1,57 @@
+@page "/info/onderzoek"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["Research.Info.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section" aria-labelledby="research-info-title">
+    <article class="pp-doc">
+        <header class="pp-doc__hero">
+            <p class="pp-doc__eyebrow">
+                <PubEmoji Glyph="🔬" />
+                <span>@Culture["Research.Info.Eyebrow"]</span>
+            </p>
+            <h1 id="research-info-title" class="pp-doc__title">@Culture["Research.Info.Title"]</h1>
+            <p class="pp-doc__lead">@Culture["Research.Info.Lead"]</p>
+        </header>
+
+        <div class="pp-doc__body">
+            <section class="pp-sec" aria-labelledby="research-data-title">
+                <h2 id="research-data-title" class="pp-sec__title">@Culture["Research.Info.DataTitle"]</h2>
+                <div class="pp-sec__body">
+                    <ul>
+                        <li>@Culture["Research.Info.Data1"]</li>
+                        <li>@Culture["Research.Info.Data2"]</li>
+                        <li>@Culture["Research.Info.Data3"]</li>
+                        <li>@Culture["Research.Info.Data4"]</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="pp-sec" aria-labelledby="research-choice-title">
+                <h2 id="research-choice-title" class="pp-sec__title">@Culture["Research.Info.ChoiceTitle"]</h2>
+                <div class="pp-sec__body">
+                    <p>@Culture["Research.Info.ChoiceBody"]</p>
+                </div>
+            </section>
+
+            <section class="pp-sec" aria-labelledby="research-questions-title">
+                <h2 id="research-questions-title" class="pp-sec__title">@Culture["Research.Info.QuestionsTitle"]</h2>
+                <div class="pp-sec__body">
+                    <p>
+                        @Culture["Research.Info.QuestionsBody"]
+                        <a class="auth-link" href="mailto:privacy@lobsy.nl">privacy@lobsy.nl</a>.
+                    </p>
+                    <p>
+                        <a class="auth-link" href="@PublicRoutes.Privacy">@Culture["Research.Info.BackPrivacy"]</a>
+                    </p>
+                </div>
+            </section>
+        </div>
+    </article>
+</section>

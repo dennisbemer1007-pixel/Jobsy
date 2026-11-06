@@ -32,7 +32,7 @@ public sealed record RoleFitCheckResultDto(
     IReadOnlyList<string> Gaps,
     IReadOnlyList<string> ActionSteps,
     IReadOnlyList<string> SearchKeys,
-    string MapHref,
+    string? MapHref,
     bool FromDeepAnalysis,
     bool FromOpenAi,
     bool ShowDeepUpsell,

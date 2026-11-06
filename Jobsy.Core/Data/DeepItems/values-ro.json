@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "Prefer să stabilesc ordinea îndatoririlor mele într-un serviciu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "2": {
+  "prompt": "Îmi place să găsesc provocări careactivated mă scoate din zona mea de confort.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "3": {
+  "prompt": "Mă simt foarte confortabil cu fiecare pas care mi se aplică.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "4": {
+  "prompt": "Încerc metode noi când vechea metodă se simte lentă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "5": {
+  "prompt": "Cred că e important să fac propriile alegeri despre cum să fac o treabă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "6": {
+  "prompt": "Rutine scandaloase fixe îmi dau mai multă odihnă decât oricând schimbarea formelor de muncă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "7": {
+  "prompt": "Sunt motivat de varietate şi noi responsabilităţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "8": {
+  "prompt": "Îndrăznesc să plec din manual dacă e mai sigur şi mai deştept.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "9": {
+  "prompt": "Nu mă simt în largul meu când trebuie să decid singur fără îndrumare clară.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "10": {
+  "prompt": "Învăţ mai repede dacă pot face şi eu o treabă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "11": {
+  "prompt": "Caut moduri de a-mi face munca mai interesantă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "12": {
+  "prompt": "Evit sarcinile unde trebuie să improvizez mult.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "13": {
+  "prompt": "Propun propuneri privind modul în care putem îmbunătăți procesele.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "14": {
+  "prompt": "Îmi plac rolurile în care îmi pot stabili propriile priorităţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "15": {
+  "prompt": "Prea multă libertate mă face să pierd imaginea de ansamblu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "16": {
+  "prompt": "Devin sunt agitat când munca mea devine prea previzibil.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "17": {
+  "prompt": "Îmi place să despachetez un nou produs, unealta sau sistemul.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "18": {
+  "prompt": "Prefer să aştept aprobarea decât să iau propria decizie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "19": {
+  "prompt": "Îmi place să le arăt colegilor cum să facă altceva.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "20": {
+  "prompt": "Caut de lucru în cazul în care pot deveni mai mult propria direcție.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "21": {
+  "prompt": "Sunt de acord ca îndatoririle mele să fie la fel în fiecare an.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "22": {
+  "prompt": "Am combina idei de la diferite locuri de muncă într-o abordare personală.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "23": {
+  "prompt": "Devin energic dintr-o zi cu probleme neaşteptate de rezolvat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "24": {
+  "prompt": "Prefer să aleg sarcini familiare decât ceva ce n-am mai făcut până acum.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "25": {
+  "prompt": "Nu iau prea multă iniţiativă până nu întreabă cineva în mod explicit.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "26": {
+  "prompt": "Cred că este important să continui să-mi dezvolt abilităţile profesionale.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "27": {
+  "prompt": "Mă enervez când se schimbă programul.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "28": {
+  "prompt": "Aş prefera să nu încep nimic nou până când cineva nu l-ar aproba.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "29": {
+  "prompt": "Mă simt ca acasă într-o echipă care dă încredere să acţimerald pe cont propriu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "30": {
+  "prompt": "Prefer să urmez standardul decât să petrec timp cu idei de îmbunătăţire.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "31": {
+  "prompt": "De asemenea, îi ajut pe colegi dacă aceasta nu face doar parte din sarcina mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "32": {
+  "prompt": "Am grijă de oamenii din jurul meu, nu doar de slujbă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "33": {
+  "prompt": "Prefer să stau departe de conversaţiile personale la serviciu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "34": {
+  "prompt": "Voi face noi colegi să se simtă bineveniţi în curând.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "35": {
+  "prompt": "Voi fi sincer cu tine când cineva o face bine.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "36": {
+  "prompt": "Cred că sentimentele de echipă sunt mai puţin importante decât rezultatele mele.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "37": {
+  "prompt": "Mă ofer să preiau o datorie grea dacă un coleg are nevoie de ea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "38": {
+  "prompt": "Ascult în linişte înainte să propun soluţii.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "39": {
+  "prompt": "Nu-mi pasă de atmosferă atâta timp cât se termină munca.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "40": {
+  "prompt": "Prefer să rezolv tensiunile cu o conversaţie decât cu tăcere.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "41": {
+  "prompt": "Cred că e familia.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "42": {
+  "prompt": "este un sentiment de sentimente.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "43": {
+  "prompt": "Îmi place să împart cunoştinţeplex că toată echipa să se facă bine.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "44": {
+  "prompt": "Voi verifica cu colegii pentru a vedea dacă volumul de muncă este fezabil.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "45": {
+  "prompt": "Prefer să lucrez singur fără prea mult contact.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "46": {
+  "prompt": "Apăr un coleg dacă cineva critică greşit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "47": {
+  "prompt": "Aş prefera să nu văd ce se întâmplă în particular cu colegii.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "48": {
+  "prompt": "Ofer feedback constructiv într-un mod respectuos.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "49": {
+  "prompt": "Sărbătoresc succesul echipei, nu doar al meu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "50": {
+  "prompt": "Cred că e prea mult pentru a discuta fiecare greșeală cu blândețe.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "51": {
+  "prompt": "Voi afla în curând dacă cineva se simte lăsat pe dinafară.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "52": {
+  "prompt": "Ofer ajutor fără ca cineva să întrebe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "53": {
+  "prompt": "Mi-e greu să consolez colegii când lucrurile merg prost.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "54": {
+  "prompt": "Nu caut relaţii personale pe termen lung cu colegii de la muncă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "55": {
+  "prompt": "Îmi reglez majoritatea când un coleg are nevoie de explicaţii suplimentare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "56": {
+  "prompt": "Prefer eficienţa unei conversaţii calde.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "57": {
+  "prompt": "Fac transferuri între schimburi personale şi clare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "58": {
+  "prompt": "Mi se pare respectuos de-a face unul cu altul la fel de important ca calitatea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "59": {
+  "prompt": "Eu văd munca mai ales ca sarcini, nu relații.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "60": {
+  "prompt": "Nu doresc să sprijin personal colegii hotărâţi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "61": {
+  "prompt": "Vreau să văd că pariul meu face diferenţa măsurabilă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "62": {
+  "prompt": "Mi-am stabilit obiective înalte şi am lucrat activ pentru ele. Transfrontalier.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "63": {
+  "prompt": "Sunt bine cu performanța medie în timp ce munca se face.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "64": {
+  "prompt": "Sunt tentat să depăşesc obiectivele sau standardele.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "65": {
+  "prompt": "Caut feedback pentru a obține mai bine mai repede.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "66": {
+  "prompt": "Evit responsabilitatea pentru rezultate importante.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "67": {
+  "prompt": "Ţin evidenţa progresului meu ca să-ţi pot arăta ce am realizat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "68": {
+  "prompt": "Voi continua să merg când lucrurile devin dificile până se termină treaba.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "69": {
+  "prompt": "Prefer promovarea sau recunoaşterea altora.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "70": {
+  "prompt": "Vreau să fiu cel mai bun membru al echipei din partea mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "71": {
+  "prompt": "Învăţ noi abilităţi pentru a deveni mai competitiv în profesia mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "72": {
+  "prompt": "Mi se pare o competiţie nesănătoasă între colegi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "73": {
+  "prompt": "Îmi asum sarcini suplimentare dacă creşterea ifostrich accelerează.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "74": {
+  "prompt": "Analizez ce a mers bine după o zi plină.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "75": {
+  "prompt": "Aş prefera să pun ţintele jos, aşa că voi trece cu siguranţă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "76": {
+  "prompt": "Vreau ca munca mea să contribuie vizibil la cifra de afaceri sau calitate.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "77": {
+  "prompt": "Caut roluri care recompensează corect performanţa.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "78": {
+  "prompt": "Prefer să lucrez fără tabele de scor sau clasamente.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "79": {
+  "prompt": "Îmi plănuiesc săptămâna cu rezultate concrete pe care vreau să le obţin.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "80": {
+  "prompt": "Mă simt motivat de un obiectiv dificil care este fezabil.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "81": {
+  "prompt": "Voi renunţa în curând dacă succesul nu vine imediat.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "82": {
+  "prompt": "Prefer să nu-mi compar performanţele cu lunile anterioare.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "83": {
+  "prompt": "Preiau conducerea dacă e nevoie să salvez rezultatul.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "84": {
+  "prompt": "Nu cred că e important să fii cel mai bun.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "85": {
+  "prompt": "Caut de formare care va avansa cariera mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "86": {
+  "prompt": "Evit sarcinile în care performanţa mea este evaluată deschis.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "87": {
+  "prompt": "Voi continua până la rezolvarea unei probleme, nu la jumătatea drumului.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "88": {
+  "prompt": "Vreau ca alţii să-mi recunoască meseria.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "89": {
+  "prompt": "Prefer pacea în locul ambiţiei.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "90": {
+  "prompt": "Recunoaşterea sau promovarea cu greu mă motivează.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "91": {
+  "prompt": "Mă simt calm când programările despre ore şi sarcini sunt clare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "92": {
+  "prompt": "Îmi place să lucrez conform procedurilor stabilite care sunt dovedite sigure.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "93": {
+  "prompt": "Mi se accentuează regulile şi protocoalele.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "94": {
+  "prompt": "Caut un angajator care oferă securitate pe termen lung.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "95": {
+  "prompt": "Îmi place o echipă solidă și fețe familiare pe podea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "96": {
+  "prompt": "Devin agitat când munca mea nu se schimbă prea mult.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "97": {
+  "prompt": "Aş prefera să verific de două ori decât să fac paşi deviaţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "98": {
+  "prompt": "Apreciez tradiţiile şi rutina la locul de muncă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "99": {
+  "prompt": "Mi se pare previzibil plictisitor.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "100": {
+  "prompt": "Vreau să ştiu ce se aşteaptă de la mine înainte să încep.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "101": {
+  "prompt": "Mă simt în siguranţă cu ierarhie şi responsabilităţi clare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "102": {
+  "prompt": "Îmi place să sară de la rola la rola fără un model fix.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "103": {
+  "prompt": "Plănuiesc financiar şi practic cu un venit fix în minte.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "104": {
+  "prompt": "Urmez regulile de siguranţă şi calitate când sunt ocupate.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "105": {
+  "prompt": "Prefer să risc decât să mă ţin de vechile obiceiuri.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "106": {
+  "prompt": "Îmi place să petrec ani cu un angajator de încredere.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "107": {
+  "prompt": "Cred că este important ca aranjamentele dintre schimburi să rămână aceleaşi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "108": {
+  "prompt": "Primesc nerăbdător cu instrucțiuni lungi și liste de verificare.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "109": {
+  "prompt": "Mă bazez pe experienţa din trecut pentru a preveni greşelile.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "110": {
+  "prompt": "Mă simt confortabil într-o organizaţie cu valori şi obiceiuri clare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "111": {
+  "prompt": "Cred că schimbarea politicii este de obicei o îmbunătăţire.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "112": {
+  "prompt": "Nu-mi fac griji pentru poziţia mea într-un an.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "113": {
+  "prompt": "Lucrez cel mai bine cu un program săptămânal fix.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "114": {
+  "prompt": "Mi-am stabilit cu uşurinţă programul.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "115": {
+  "prompt": "Mă ţin de programări pe care echipa le face bine de ani de zile.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "116": {
+  "prompt": "Sunt de acord ca îndatoririle mele să fie diferite în fiecare sezon.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "117": {
+  "prompt": "Raportez problemele mai devreme ca restul să fie păstrat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "118": {
+  "prompt": "Respect modul în care colegii seniori au făcut întotdeauna treaba.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "119": {
+  "prompt": "Prefer să resping rutinele decât să le urmez.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "120": {
+  "prompt": "Nu-mi pasă de contracte fixe şi programe lungi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "121": {
+  "prompt": "Vreau ca munca mea să facă ceva variabil pentru societate sau mediu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "122": {
+  "prompt": "Prefer o companie cu practici corecte şi durabile.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "123": {
+  "prompt": "Nu-mi pasă dacă munca mea servește unui scop mai mare.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "124": {
+  "prompt": "Mă uit după deşeuri şi încerc să le reduc la locul de muncă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "125": {
+  "prompt": "Mă adresez colegilor unui comportament nesigur sau nedrept.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "126": {
+  "prompt": "Mă concentrez doar pe sarcinile mele, nu pe temele sociale.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "127": {
+  "prompt": "Îmi place să ajut clienţii vulnerabili sau dependenţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "128": {
+  "prompt": "Cred că are sens să susţin comunităţile locale prin munca mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "129": {
+  "prompt": "Cred că idealismul la locul de muncă este adesea guitar.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "130": {
+  "prompt": "Caut de lucru care contribuie la sănătate,LOW îngrijire sau educaţie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "131": {
+  "prompt": "Mă gândesc la amprenta ecologică a proceselor noastre.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "132": {
+  "prompt": "Cumpăr sau vând fără să-mi fac griji pentru origine sau impact.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "133": {
+  "prompt": "Îmi asum responsabilitatea dacă munca noastră are consecinţe negative.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "134": {
+  "prompt": "Respect diversitatea şi includerea în echipă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "135": {
+  "prompt": "Consider că discuţiile etice la locul de muncă sunt o pierdere de timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "136": {
+  "prompt": "Voi raporta abuzuri chiar dacă asta e incomod.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "137": {
+  "prompt": "Vreau ca produsele sau serviciile noastre să nu facă rău nimănui inutil.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "138": {
+  "prompt": "Prefer să las problemele sociale în seama conducerii.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "139": {
+  "prompt": "Aleg furnizori sau parteneri care se ocupă de oameni și mediul curat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "140": {
+  "prompt": "Cred că profitul este mai important decât contribuțiile sociale.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "141": {
+  "prompt": "Aşaw prefera să nu le explic clienţilor cum lucrăm în siguranţă şi cu sinceritate.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "142": {
+  "prompt": "Caut îmbunătăţiri care să aducă beneficii echipei şi cartierului.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "143": {
+  "prompt": "Nu cred că este necesar să ne gândim la durata lungă a muncii noastre.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "144": {
+  "prompt": "Îi tratez pe toţi la fel, indiferent de trecut.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "145": {
+  "prompt": "Mă simt mândru când compania noastră oferă deschidere despre impact.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "146": {
+  "prompt": "Prefer să ignor semnalele din nedreptate decât să intervin.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "147": {
+  "prompt": "în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "148": {
+  "prompt": "Aleg munca cinstită, chiar dacă are mai puţin sens.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "149": {
+  "prompt": "Îmi văd slujba mai ales ca pe un venit, nu ca pe o misiune.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "150": {
+  "prompt": "Sustenabilitatea sau utilitatea socială nu prea îmi afectează alegerile zilnice.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ }
+}

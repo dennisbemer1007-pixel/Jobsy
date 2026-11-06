@@ -1,0 +1,82 @@
+@namespace Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Core.Ai
+@using Jobsy.Core.Features
+@using Jobsy.Core.Options
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject CultureState Culture
+@inject IServiceProvider Services
+@inject IFeatureFlags FeatureFlags
+
+@using Microsoft.AspNetCore.Components.Forms
+                            <fieldset class="profile-employers">
+                                <legend>@Culture["Profile.OwnCv"]</legend>
+                                <p class="profile-employers__hint">@Culture[OwnCvLeadKey]</p>
+                                @if (Editor.UploadedCv is not null)
+                                {
+                                    <p class="profile-cv__file">@Culture.Format("Profile.OwnCvPresent", Editor.UploadedCv.FileName)</p>
+                                }
+                                <div class="profile-cv__actions">
+                                    <label class="btn btn-primary">
+                                        @(Editor.CvBusy ? Culture["Profile.CvUploading"] : Editor.UploadedCv is null ? Culture["Profile.UploadCv"] : Culture["Profile.ReplaceCv"])
+                                        <InputFile OnChange="Editor.OnCvSelectedAsync" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                                    </label>
+                                    @if (Editor.UploadedCv is not null)
+                                    {
+                                        <button class="btn btn-primary" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DownloadOwnCvAsync">
+                                            @Culture["Profile.DownloadOwnCv"]
+                                        </button>
+                                        <button class="btn btn-primary" type="button" disabled="@Editor.CvBusy" @onclick="Editor.DeleteOwnCvAsync">
+                                            @Culture["Profile.RemoveOwnCv"]
+                                        </button>
+                                    }
+                                </div>
+                            </fieldset>
+
+                            @if (Editor.AuthenticatorEnabled)
+                            {
+                                <p class="login-lead">@Culture["Profile.AuthenticatorHint"]</p>
+                            }
+
+                            <button class="btn btn-primary" type="button" data-testid="profile-download-pdf" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">
+                                @(Editor.PdfBusy ? Culture["Common.Loading"] : Culture[_dnaPassport ? "Passport.DownloadDna" : "Profile.DownloadLobsyCv"])
+                            </button>
+                            <p class="profile-address__hint">@Culture["Profile.LobsyCvHint"]</p>
+                            @if (_dnaPassport)
+                            {
+                                <p class="profile-address__hint">@Culture["Passport.DownloadDnaHint"]</p>
+                            }
+
+@code {
+    [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private bool _dnaPassport;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _dnaPassport = flags.PassportPdfV2Enabled;
+    }
+
+    private string OwnCvLeadKey
+    {
+        get
+        {
+            var mistral = Services.GetService<IOptions<MistralOptions>>()?.Value;
+            var decision = AiProviderChoice.Decide(
+                Services.GetService<IOptions<AiOptions>>()?.Value.Provider,
+                mistral?.ApiKey);
+            if (decision.Kind != AiProviderKind.Mistral)
+            {
+                return "Profile.OwnCvLead";
+            }
+
+            return MistralEndpoint.InferenceStaysInEu(mistral?.BaseUrl)
+                ? "Profile.OwnCvLead.Mistral"
+                : "Profile.OwnCvLead.Mistral.Global";
+        }
+    }
+}

@@ -22,8 +22,8 @@ public static class WebPerformanceExtensions
                 "application/json"
             ]);
         });
-        services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
-        services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+        services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Optimal);
+        services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.SmallestSize);
         return services;
     }
 

@@ -1,0 +1,48 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="what ndm-pick-facts">
+    <div>
+        <b>@FormatLabel</b>
+        <p class="small">@LocationLine</p>
+    </div>
+    <div>
+        <b>@WithWhomLine</b>
+        <p class="small">@WithWhomHint</p>
+    </div>
+    <div>
+        <b>@TravelTitle</b>
+        <p class="small">@TravelHint</p>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AfterMatchThreadDto Thread { get; set; } = default!;
+
+    private string FormatLabel => Thread.Format switch
+    {
+        InterviewFormat.Online => Culture["AfterMatch.Screen03.Format.Online"],
+        InterviewFormat.Phone => Culture["AfterMatch.Screen03.Format.Phone"],
+        _ => Culture["AfterMatch.Pick.OnSiteTitle"]
+    };
+
+    private string LocationLine => string.IsNullOrWhiteSpace(Thread.LocationOrLink)
+        ? Thread.CompanyName
+        : Thread.LocationOrLink!;
+
+    private string WithWhomLine => string.IsNullOrWhiteSpace(Thread.WithWhom)
+        ? Thread.CompanyName
+        : Thread.WithWhom!;
+
+    private string WithWhomHint => string.Format(
+        Culture["AfterMatch.Pick.WithWhomHint"],
+        Thread.CompanyName);
+
+    private string TravelTitle => string.IsNullOrWhiteSpace(Thread.TravelLabel)
+        ? Culture["AfterMatch.Pick.TravelFallbackTitle"]
+        : Thread.TravelLabel!;
+
+    private string TravelHint => Culture["AfterMatch.Pick.TravelHint"];
+}

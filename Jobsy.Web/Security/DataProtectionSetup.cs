@@ -55,6 +55,8 @@ public static class DataProtectionSetup
                 {
                     options.XmlRepository = repository;
                 }));
+            Console.WriteLine(
+                "Data Protection: using Postgres key ring (__DataProtectionKeys) so auth cookies survive redeploys.");
         }
         catch (InvalidOperationException)
         {

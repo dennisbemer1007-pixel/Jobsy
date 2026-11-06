@@ -119,7 +119,6 @@ public static class DashboardCacheKeys
 
     public static string Ambassadeur(Guid userId) => $"ambassadeur:{userId:D}";
 
-    public static string ScopePrefix(string scope) => $"{scope}:";
 
     public static string MetricsPrefix(string scope) => $"metrics:{scope}:";
 
@@ -147,6 +146,7 @@ public static class DashboardLiveMetricKeys
         "active_boosts",
         "users_open_for_work",
         "users_active",
+        "users_active_candidates",
         "errors",
         "unpublished_vacancies"
     };

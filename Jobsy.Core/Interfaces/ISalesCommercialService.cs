@@ -46,7 +46,11 @@ public sealed record SalesCommercialAdminDto(
     decimal PartnerCommissionRate = 0.05m,
     decimal Year2DirectCommissionRate = 0.10m,
     decimal Year3DirectCommissionRate = 0.05m,
-    decimal ReferredYear1DirectCommissionRate = 0.20m);
+    decimal ReferredYear1DirectCommissionRate = 0.20m,
+    int CommissionHoldDays = 14,
+    decimal PayoutMinimumEuro = 50m,
+    int IbanChangeHoldDays = 3,
+    int AttributionCookieDays = 30);
 
 public interface ISalesCommercialService
 {
@@ -69,6 +73,10 @@ public interface ISalesCommercialService
         decimal? year2DirectCommissionRate = null,
         decimal? year3DirectCommissionRate = null,
         decimal? referredYear1DirectCommissionRate = null,
+        int? commissionHoldDays = null,
+        decimal? payoutMinimumEuro = null,
+        int? ibanChangeHoldDays = null,
+        int? attributionCookieDays = null,
         CancellationToken cancellationToken = default);
 
     Task<VacancyTypeTokenCost> UpdateVacancyTypeCostAsync(

@@ -1,0 +1,30 @@
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Http
+@inject CultureState Culture
+
+<div class="login-page">
+    <div class="login-card">
+        @if (IsNotFound)
+        {
+            <h1>@Culture["Status.NotFound.Title"]</h1>
+            <p class="login-lead">@Culture["Status.NotFound.Lead"]</p>
+            <div class="inline-actions">
+                <a class="login-submit" href="/">@Culture["Status.NotFound.ToMap"]</a>
+                <a class="btn-compact" href="/hoe-werkt-lobsy">@Culture["Status.NotFound.HowLobsy"]</a>
+            </div>
+        }
+        else
+        {
+            <h1>@Culture["Status.Generic.Title"]</h1>
+            <p class="login-lead">@Culture["Status.Generic.Lead"]</p>
+            <a class="login-submit" href="/">@Culture["Status.Generic.Home"]</a>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>HTTP status the page reports. 404 gets its own copy and links.</summary>
+    [Parameter] public int Code { get; set; } = StatusCodes.Status404NotFound;
+
+    private bool IsNotFound => Code == StatusCodes.Status404NotFound;
+}

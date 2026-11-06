@@ -100,7 +100,7 @@ public class PlatformSloganAndJobMapWordingTests
         Assert.Contains("JobsyPublic", branding);
         Assert.DoesNotContain("JobsyApiClient _api", branding);
 
-        var admin = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Admin", "CompanySettingsAdmin.razor"));
+        var admin = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Admin", "Sections", "LobsyCompanySection.razor"));
         Assert.Contains("maxlength=\"240\"", admin);
         Assert.Contains("Branding.RefreshAsync()", admin);
     }

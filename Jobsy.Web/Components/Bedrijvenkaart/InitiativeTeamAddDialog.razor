@@ -1,0 +1,53 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop bk-modal-backdrop--centered" @onclick="Close">
+        <div class="bk-modal bk-modal--wide" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <header class="bk-modal__header">
+                <h2>@Culture["Initiative.TeamAdd.Title"]</h2>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <div class="bk-modal__body">
+                <div class="bk-wg-form">
+                    <div class="bk-wg-field">
+                        <label class="bk-wg-label" for="bk-team-name">@Culture["Initiative.TeamAdd.Name"]</label>
+                        <input id="bk-team-name" class="bk-wg-input" @bind="_name" />
+                    </div>
+                    <div class="bk-wg-field">
+                        <label class="bk-wg-label" for="bk-team-desc">@Culture["Initiative.TeamAdd.Description"]</label>
+                        <textarea id="bk-team-desc" class="bk-wg-input" maxlength="140" rows="3" @bind="_description"></textarea>
+                    </div>
+                    <div class="bk-wg-field">
+                        <label class="bk-wg-label" for="bk-team-email">@Culture["Initiative.TeamAdd.Email"]</label>
+                        <input id="bk-team-email" type="email" class="bk-wg-input" @bind="_email" />
+                    </div>
+                </div>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn--primary" @onclick="Save">@Culture["Initiative.Settings.Save"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<(string Name, string Description, string Email)> OnSave { get; set; }
+
+    private string _name = "";
+    private string _description = "";
+    private string _email = "";
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+
+    private async Task Save()
+    {
+        await OnSave.InvokeAsync((_name, _description, _email));
+        await Close();
+    }
+}

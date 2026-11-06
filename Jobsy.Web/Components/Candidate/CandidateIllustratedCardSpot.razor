@@ -1,0 +1,12 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<div class="kompas-card-spot @Class" style="@StyleAttr" aria-hidden="true"></div>
+
+@code {
+    [Parameter, EditorRequired] public string ImageUrl { get; set; } = "";
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Position { get; set; } = "end";
+
+    private string StyleAttr =>
+        $"background-image:url('{ImageUrl}');--kompas-spot-pos:{Position};";
+}

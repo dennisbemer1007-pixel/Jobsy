@@ -62,15 +62,18 @@ public class EmployerInviteCompanyOptionsTests
     }
 
     [Fact]
-    public void Users_page_lists_extra_lidmaatschappen_from_helper()
+    public void Team_page_opens_single_invite_drawer_not_inline_extra_memberships()
     {
-        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Employer/Users.razor"));
-        Assert.Contains("InviteExtraCompanies", users);
-        Assert.Contains("EditExtraCompanies", users);
-        Assert.Contains("EmployerInviteCompanyOptions", users);
-        Assert.Contains("@foreach (var c in InviteExtraCompanies)", users);
-        Assert.Contains("@foreach (var c in EditExtraCompanies)", users);
-        Assert.Contains("DropCoveredMemberships(_editMemberships", users);
+        var users = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
+        Assert.Contains("WgInviteDrawer", users);
+        Assert.DoesNotContain("InviteExtraCompanies", users);
+        Assert.DoesNotContain("EditExtraCompanies", users);
+
+        var drawer = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Werkgever/Team/WgInviteDrawer.razor"));
+        Assert.Contains("InviteCompanyUserAsync", drawer);
+        Assert.Contains("TeamRoleCopy.Cards", drawer);
+        Assert.Contains("WgInvite.Branch", drawer);
+        Assert.Contains("WgInvite.Region", drawer);
     }
 
     private static List<InviteCompanyOption> BemerOrgAndBranch() =>

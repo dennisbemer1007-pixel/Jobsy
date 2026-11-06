@@ -2,11 +2,9 @@ using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
-using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
 
@@ -16,16 +14,16 @@ public sealed class DeviceSessionsController : ControllerBase
 {
     private readonly IDeviceSessionService _sessions;
     private readonly IUserLookupService _users;
-    private readonly JobsyDbContext _db;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
 
     public DeviceSessionsController(
         IDeviceSessionService sessions,
         IUserLookupService users,
-        JobsyDbContext db)
+        IMfaTrustedDeviceService trustedDevices)
     {
         _sessions = sessions;
         _users = users;
-        _db = db;
+        _trustedDevices = trustedDevices;
     }
 
     [HttpPost]
@@ -44,7 +42,7 @@ public sealed class DeviceSessionsController : ControllerBase
         var created = await _sessions.CreateAsync(
             user.Id,
             request?.UserAgent ?? Request.Headers.UserAgent.ToString(),
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         return Ok(new DeviceSessionCreatedDto(
             created.DeviceSessionId,
@@ -90,7 +88,8 @@ public sealed class DeviceSessionsController : ControllerBase
             rotated.SessionVersion,
             rotated.SessionToken,
             rotated.UserId,
-            rotated.MfaVerified));
+            rotated.MfaVerified,
+            rotated.IsTestAccount));
     }
 
     [HttpGet]
@@ -155,6 +154,7 @@ public sealed class DeviceSessionsController : ControllerBase
             DeviceSessionRules.RevokeReasonLogoutAll,
             bumpSessionVersion: true,
             cancellationToken);
+        await _trustedDevices.RevokeAllForUserAsync(user.Id, cancellationToken);
         return NoContent();
     }
 
@@ -220,7 +220,7 @@ public sealed class DeviceSessionsController : ControllerBase
         var created = await _sessions.CreateAsync(
             user.Id,
             request.UserAgent ?? Request.Headers.UserAgent.ToString(),
-            cancellationToken);
+            cancellationToken: cancellationToken);
         return Ok(new DeviceSessionCreatedDto(
             created.DeviceSessionId,
             created.RefreshToken,

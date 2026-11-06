@@ -1,10 +1,15 @@
+using System.Security.Claims;
 using Jobsy.Api.Models;
+using Jobsy.Api.Security;
+using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -14,12 +19,18 @@ namespace Jobsy.Api.Controllers;
 public class MasterdataController : ControllerBase
 {
     private readonly JobsyDbContext _db;
+    private readonly IAdminAuditLog _audit;
 
-    public MasterdataController(JobsyDbContext db) => _db = db;
+    public MasterdataController(JobsyDbContext db, IAdminAuditLog audit)
+    {
+        _db = db;
+        _audit = audit;
+    }
 
     /// <summary>Active options for forms (candidate/vacancy/discovery).</summary>
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<IReadOnlyList<MasterdataOptionDto>>> GetActive(
         [FromQuery] string? category = null,
         [FromQuery] string? audience = null,
@@ -45,6 +56,7 @@ public class MasterdataController : ControllerBase
             .OrderBy(o => o.Category)
             .ThenBy(o => o.SortOrder)
             .ThenBy(o => o.Label)
+            .Take(PublicApiLimits.MaxMasterdataOptions)
             .Select(o => ToDto(o))
             .ToListAsync(cancellationToken);
 
@@ -107,6 +119,7 @@ public class MasterdataController : ControllerBase
 
         _db.MasterdataOptions.Add(entity);
         await _db.SaveChangesAsync(cancellationToken);
+        await WriteMasterdataAsync(AdminAuditKeys.MasterdataCreate, entity, cancellationToken);
         return CreatedAtAction(nameof(GetActive), new { category }, ToDto(entity));
     }
 
@@ -166,6 +179,7 @@ public class MasterdataController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await WriteMasterdataAsync(AdminAuditKeys.MasterdataUpdate, entity, cancellationToken);
         return Ok(ToDto(entity));
     }
 
@@ -179,9 +193,30 @@ public class MasterdataController : ControllerBase
             return NotFound();
         }
 
+        var label = entity.Label;
+        var optionId = entity.Id;
         _db.MasterdataOptions.Remove(entity);
         await _db.SaveChangesAsync(cancellationToken);
+        await WriteMasterdataAsync(AdminAuditKeys.MasterdataDelete, optionId, label, cancellationToken);
         return NoContent();
+    }
+
+    private Task WriteMasterdataAsync(string action, MasterdataOption entity, CancellationToken cancellationToken)
+        => WriteMasterdataAsync(action, entity.Id, entity.Label, cancellationToken);
+
+    private Task WriteMasterdataAsync(string action, Guid id, string label, CancellationToken cancellationToken)
+    {
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        Guid? actor = Guid.TryParse(raw, out var parsed) ? parsed : null;
+        return _audit.WriteAsync(
+            new AdminAuditEntry(
+                Action: action,
+                TargetType: "masterdata",
+                TargetId: id.ToString("D"),
+                TargetLabel: label,
+                ActorUserId: actor,
+                ActorRole: "Admin"),
+            cancellationToken);
     }
 
     private static bool TryNormalize(

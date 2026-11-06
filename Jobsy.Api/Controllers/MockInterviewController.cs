@@ -1,5 +1,6 @@
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Privacy;
@@ -20,15 +21,18 @@ public sealed class MockInterviewController : ControllerBase
     private readonly JobsyDbContext _db;
     private readonly IMockInterviewService _interviews;
     private readonly IUserLookupService _users;
+    private readonly IFeatureFlags _featureFlags;
 
     public MockInterviewController(
         JobsyDbContext db,
         IMockInterviewService interviews,
-        IUserLookupService users)
+        IUserLookupService users,
+        IFeatureFlags featureFlags)
     {
         _db = db;
         _interviews = interviews;
         _users = users;
+        _featureFlags = featureFlags;
     }
 
     /// <summary>
@@ -45,6 +49,17 @@ public sealed class MockInterviewController : ControllerBase
         if (request.VacancyId == Guid.Empty)
         {
             return BadRequest(new { message = "Vacature ontbreekt." });
+        }
+
+        if (!await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken))
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "Feature 'Employers' is not available.",
+                Type = "feature_disabled"
+            });
         }
 
         if (request.Messages.Count > MockInterviewService.MaxHistoryMessages)

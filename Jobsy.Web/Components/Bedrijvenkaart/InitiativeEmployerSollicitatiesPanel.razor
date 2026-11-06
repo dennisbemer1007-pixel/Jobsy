@@ -1,0 +1,224 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+<div class="bk-wg-apps">
+    <div class="bk-wg-apps__filters" role="group" aria-label="@Culture["WgNav.Applications"]">
+        <button type="button" class="bk-wg-apps__pill @(Source == "all" ? "is-active" : null)" @onclick='() => SourceChanged.InvokeAsync("all")'>
+            @Culture["Kb.Apps.FilterAll"] · @_allCount
+        </button>
+        <button type="button" class="bk-wg-apps__pill @(Source == "vacancy" ? "is-active" : null)" @onclick='() => SourceChanged.InvokeAsync("vacancy")'>
+            @Culture["Bk.Apps.FilterVacancy"] · @_vacancyCount
+        </button>
+        <button type="button" class="bk-wg-apps__pill @(Source == "open" ? "is-active" : null)" @onclick='() => SourceChanged.InvokeAsync("open")'>
+            @Culture["Bk.Apps.FilterInitiatives"] · @_initiativeCount
+        </button>
+    </div>
+
+    @if (_loading)
+    {
+        <p class="muted">@Culture["Common.Loading"]</p>
+    }
+    else if (Source == "vacancy")
+    {
+        <p class="state-message">@Culture["WgApp.EmptyFilter"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">Geen open initiatieven.</p>
+    }
+    else
+    {
+        <div class="bk-wg-apps__split">
+            <div class="bk-wg-apps__list" role="list">
+                @foreach (var item in _items)
+                {
+                    var active = _selected?.Id == item.Id;
+                    <button type="button"
+                            role="listitem"
+                            class="bk-wg-apps__card @(active ? "is-active" : null)"
+                            @onclick="() => Select(item)">
+                        <div class="bk-wg-apps__card-top">
+                            <strong>@item.DisplayName</strong>
+                            <span class="bk-chip bk-chip--match">@Culture[InitiativeMatchWordingRules.ResourceKey(item.MatchLabel)]</span>
+                        </div>
+                        <p class="bk-wg-apps__card-meta">
+                            <span class="bk-chip bk-chip--open">OPEN</span>
+                            @item.RoleTitle
+                        </p>
+                        <p class="muted bk-wg-apps__card-dna">@item.WorkDnaSummary</p>
+                        <p class="bk-wg-apps__card-age">@AgeLabel(item)</p>
+                    </button>
+                }
+            </div>
+            @if (_selected is not null)
+            {
+                <article class="bk-wg-apps__detail">
+                    <header class="bk-wg-apps__detail-head">
+                        <h2>@_selected.DisplayName</h2>
+                        <span class="bk-chip bk-chip--open">OPEN SOLLICITATIE</span>
+                        <p class="muted">
+                            @Culture[InitiativeMatchWordingRules.ResourceKey(_selected.MatchLabel)] · @_selected.RoleTitle
+                        </p>
+                    </header>
+                    <div class="bk-wg-apps__facts">
+                        <div><span class="muted">Gewenste functie</span><strong>@_selected.RoleTitle</strong></div>
+                        <div><span class="muted">Regio</span><strong>@_selected.RegionLabel</strong></div>
+                        <div><span class="muted">Uren</span><strong>@HoursLabel(_selected)</strong></div>
+                        <div><span class="muted">Beschikbaar</span><strong>@_selected.AvailabilitySummary</strong></div>
+                    </div>
+                    <section class="bk-wg-apps__block">
+                        <h3>WERK-DNA</h3>
+                        <p>@_selected.WorkDnaSummary</p>
+                    </section>
+                    <section class="bk-wg-apps__block bk-wg-apps__locked @(_selected.PiiRevealed ? "is-open" : null)">
+                        <h3>MOTIVATIE</h3>
+                        @if (_selected.PiiRevealed)
+                        {
+                            <p>@(_selected.Motivation ?? "—")</p>
+                        }
+                        else
+                        {
+                            <p class="bk-wg-apps__blur">Lorem ipsum motivatie — zichtbaar na accepteren.</p>
+                            <span class="bk-wg-apps__lock">🔒 Zichtbaar na accepteren</span>
+                        }
+                    </section>
+                    <section class="bk-wg-apps__block bk-wg-apps__locked @(_selected.PiiRevealed ? "is-open" : null)">
+                        <h3>NAAM EN CONTACT</h3>
+                        @if (_selected.PiiRevealed)
+                        {
+                            <p><strong>@(_selected.CandidateName ?? "—")</strong><br />@(_selected.CandidateEmail ?? "—")</p>
+                        }
+                        else
+                        {
+                            <p class="bk-wg-apps__blur">Naam en e-mail verborgen tot acceptatie.</p>
+                            <span class="bk-wg-apps__lock">🔒 Zichtbaar na accepteren</span>
+                        }
+                    </section>
+                    <footer class="bk-wg-apps__detail-foot">
+                        <p class="muted">Melding gemaild naar team, zonder persoonsgegevens.</p>
+                        <div class="bk-wg-apps__actions">
+                            @if (_selected.Status == WorkInitiativeStatus.Accepted)
+                            {
+                                <p class="state-message">Geaccepteerd — contactgegevens zichtbaar.</p>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn--secondary bk-wg-btn" @onclick="() => OpenDecline(_selected)">@Culture["Initiative.Employer.Decline"]</button>
+                                <button type="button" class="btn--primary bk-wg-btn" @onclick="() => OpenAccept(_selected)">@Culture.Format("Initiative.Employer.AcceptWithToken", 1)</button>
+                            }
+                        </div>
+                    </footer>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+<InitiativeEmployerAcceptDialog IsOpen="_acceptOpen"
+                                IsOpenChanged="v => _acceptOpen = v"
+                                Item="_selected"
+                                BillingCompanyId="BillingCompanyId"
+                                OnAccepted="ReloadAsync" />
+<InitiativeEmployerDeclineDialog IsOpen="_declineOpen"
+                                 IsOpenChanged="v => _declineOpen = v"
+                                 Item="_selected"
+                                 OnDeclined="ReloadAsync" />
+
+@code {
+    [Parameter] public Guid BillingCompanyId { get; set; }
+    [Parameter] public string Source { get; set; } = "open";
+    [Parameter] public EventCallback<string> SourceChanged { get; set; }
+    [Parameter] public Guid? SelectedInitiativeId { get; set; }
+    [Parameter] public bool DemoAcceptOpen { get; set; }
+    [Parameter] public bool DemoDeclineOpen { get; set; }
+
+    private IReadOnlyList<EmployerInitiativeInboxItemDto> _items = [];
+    private EmployerInitiativeInboxItemDto? _selected;
+    private bool _loading = true;
+    private bool _acceptOpen;
+    private bool _declineOpen;
+    private int _allCount = 5;
+    private int _vacancyCount = 2;
+    private int _initiativeCount;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await ReloadAsync();
+        if (DemoAcceptOpen && _selected is not null)
+        {
+            _acceptOpen = true;
+        }
+
+        if (DemoDeclineOpen && _selected is not null)
+        {
+            _declineOpen = true;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var all = await Api.GetEmployerInitiativeInboxAsync(BillingCompanyId);
+            _items = Source switch
+            {
+                "open" => all.Where(i => i.Status is WorkInitiativeStatus.Pending or WorkInitiativeStatus.Viewed or WorkInitiativeStatus.Accepted).ToList(),
+                "vacancy" => [],
+                _ => all
+            };
+            _initiativeCount = all.Count(i => i.Status is WorkInitiativeStatus.Pending or WorkInitiativeStatus.Viewed);
+            _allCount = _vacancyCount + _initiativeCount;
+            if (SelectedInitiativeId is Guid id)
+            {
+                _selected = _items.FirstOrDefault(i => i.Id == id) ?? _items.FirstOrDefault();
+            }
+            else
+            {
+                _selected ??= _items.FirstOrDefault(i => i.Status is WorkInitiativeStatus.Pending or WorkInitiativeStatus.Viewed)
+                             ?? _items.FirstOrDefault();
+            }
+        }
+        catch
+        {
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Select(EmployerInitiativeInboxItemDto item) => _selected = item;
+
+    private void OpenAccept(EmployerInitiativeInboxItemDto item)
+    {
+        _selected = item;
+        _acceptOpen = true;
+    }
+
+    private void OpenDecline(EmployerInitiativeInboxItemDto item)
+    {
+        _selected = item;
+        _declineOpen = true;
+    }
+
+    private string AgeLabel(EmployerInitiativeInboxItemDto item)
+    {
+        var days = (int)(DateTime.UtcNow - item.CreatedAtUtc).TotalDays;
+        if (days <= 0)
+        {
+            return Culture["Initiative.Inbox.NewToday"];
+        }
+
+        return days == 1
+            ? Culture.Format("Initiative.Inbox.NewOneDayAgo", 1)
+            : Culture.Format("Initiative.Inbox.NewDaysAgo", days);
+    }
+
+    private static string HoursLabel(EmployerInitiativeInboxItemDto item)
+        => item.HoursPerWeek is int h ? $"{h} uur per week" : "—";
+}

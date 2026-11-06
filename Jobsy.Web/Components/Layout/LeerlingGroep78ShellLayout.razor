@@ -1,0 +1,117 @@
+@namespace Jobsy.Web.Components.Layout
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Seo
+@using Jobsy.Web.Security
+@using Jobsy.Web.Services
+@inherits LayoutComponentBase
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@inject JobsyApiClient Api
+@implements IDisposable
+
+<PageRouteStylesHead />
+@{
+    var routePath = PageSeoCatalog.Normalize(new Uri(Nav.Uri).AbsolutePath);
+}
+<HeadContent>
+    @foreach (var href in PageAssetCatalog.LeerlingGroep78ThemeStylesheets(routePath))
+    {
+        <link rel="stylesheet" href="@href" data-leerling-g78-theme-css="true" />
+    }
+</HeadContent>
+<div class="ll-g78-shell @_themeClass" lang="@Culture.Language">
+    <header class="top">
+        <a class="brand" href="/leerling/wereld">
+            <img src="/leerling/werelden/img/embleem.png" width="40" height="40" alt="" />
+            Lobsy
+            <small>@Culture["Leerling.Wereld.HeaderGrade"]</small>
+        </a>
+        <div class="sp"></div>
+        @if (!string.IsNullOrEmpty(_chip))
+        {
+            <span class="chip-code">@_chip</span>
+        }
+        @if (_showPause)
+        {
+            <form method="post" action="/leerling/pauze">
+                <AntiforgeryToken />
+                <button type="submit" class="btn-pauze">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                    <span>@Culture["Leerling.Pause"]</span>
+                </button>
+            </form>
+        }
+    </header>
+    @Body
+    <footer>
+        <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
+        <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
+    </footer>
+</div>
+
+@code {
+    private string _chip = "";
+    private bool _showPause = true;
+    private string _themeClass = PupilJourneyTheme.Groep78ShellClass(PupilJourneyTheme.ZeeExpeditie);
+    private IDisposable? _displayLanguage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _displayLanguage ??= Culture.PushDisplayLanguage("nl");
+
+        _chip = "";
+        var pupil = PupilFromRequest();
+        if (pupil is null)
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (JobsyApiAuthHandler.IsPupilPrincipal(state.User))
+            {
+                pupil = state.User;
+            }
+        }
+
+        if (pupil is not null)
+        {
+            var cls = pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+            var code = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+            if (!string.IsNullOrWhiteSpace(cls) && !string.IsNullOrWhiteSpace(code))
+            {
+                _chip = $"{cls} · {code}";
+            }
+        }
+
+        try
+        {
+            var progress = await Api.GetPupilProgressAsync();
+            if (PupilJourneyTheme.IsValid(progress?.JourneyThemeKey))
+            {
+                _themeClass = PupilJourneyTheme.Groep78ShellClass(progress!.JourneyThemeKey);
+            }
+        }
+        catch
+        {
+            // Prerender / offline: default zee shell.
+        }
+    }
+
+    private ClaimsPrincipal? PupilFromRequest()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is ClaimsPrincipal pupil
+            && pupil.Identity?.IsAuthenticated == true
+            && JobsyApiAuthHandler.IsPupilPrincipal(pupil))
+        {
+            return pupil;
+        }
+
+        return null;
+    }
+
+    public void Dispose() => _displayLanguage?.Dispose();
+}

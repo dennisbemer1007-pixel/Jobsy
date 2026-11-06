@@ -1,0 +1,231 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Features
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<section class="ob-finale @(HideHero ? "ob-finale--no-hero" : null)" data-testid="onboarding-finale-v2">
+    @if (!HideHero)
+    {
+        <div class="ob-finale__hero">
+            <figure class="ob-finale__art" aria-hidden="true">
+                <img src="/images/onboarding/finale-hero.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
+            <header class="ob-finale__intro">
+                <div class="ob-finale__hero-inner">
+                    <span class="ob-finale__badge"><i></i>@Culture["Onboarding.FinaleV2.Badge"]</span>
+                    <h1>@Culture.Format("Onboarding.Finish.Title", FirstName)</h1>
+                    <p class="ob-finale__lead">@Culture["Onboarding.FinaleV2.Lead"]</p>
+                    <div class="ob-finale__ctas">
+                        <button type="button" class="ob-finale__btn" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+                        <a class="ob-finale__link" href="/home?tab=tests">@Culture["Onboarding.FinaleV2.FullTests"]</a>
+                    </div>
+                </div>
+            </header>
+        </div>
+    }
+
+    @if (HeaderContent is not null)
+    {
+        @HeaderContent
+    }
+
+    <div class="ob-finale__wrap">
+        @if (HideHero && ShowHerolessPrimaryCtas)
+        {
+            <div class="ob-finale__ctas ob-finale__ctas--heroless" data-testid="onboarding-finale-heroless-ctas">
+                <button type="button" class="ob-finale__btn" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+                <a class="ob-finale__link" href="/home?tab=tests">@Culture["Onboarding.FinaleV2.FullTests"]</a>
+            </div>
+        }
+
+        @if (ShowMatchBar)
+        {
+            <a class="ob-finale__hl" href="@KbRoutes.Map" data-testid="onboarding-finale-match-bar">
+                <span class="ob-finale__hl-n">@MatchCount</span>
+                <div class="ob-finale__hl-copy">
+                    <b>@Culture.Format("Onboarding.FinaleV2.Highlight.Title", MatchCount)</b>
+                    @if (!string.IsNullOrWhiteSpace(MatchTravelLine))
+                    {
+                        <small>@MatchTravelLine</small>
+                    }
+                </div>
+                <span class="ob-finale__hl-go">@Culture["Onboarding.FinaleV2.Highlight.Link"]</span>
+            </a>
+        }
+
+        @if (!HideInsights && _insights.Count > 0)
+        {
+            <h2>@Culture["Onboarding.FinaleV2.Insights.Title"]</h2>
+            <p class="ob-finale__h2s">@Culture["Onboarding.FinaleV2.Insights.Lead"]</p>
+            <div class="ob-finale__insg" data-testid="onboarding-finale-insights">
+                @foreach (var insight in _insights)
+                {
+                    <article class="ob-finale__ins @InsightClass(insight.Kind)">
+                        <span class="ob-finale__ii" aria-hidden="true">@InsightIcon(insight.Kind)</span>
+                        <div>
+                            <small>@Culture[insight.LabelKey]</small>
+                            <p>@insight.Text</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        <h2>@Culture["Onboarding.FinaleV2.Do.Title"]</h2>
+        <p class="ob-finale__h2s">@Culture["Onboarding.FinaleV2.Do.Lead"]</p>
+        <div class="ob-finale__dog" data-testid="onboarding-finale-now-cards">
+            @foreach (var card in _nowCards)
+            {
+                <article class="ob-finale__do">
+                    <span class="ob-finale__di" aria-hidden="true">@CardIcon(card.Id)</span>
+                    <h4>@CardTitle(card)</h4>
+                    <p>@CardBody(card)</p>
+                </article>
+            }
+        </div>
+
+        @if (!HideSoon && _soonCards.Count > 0)
+        {
+            <div class="ob-finale__soon" data-testid="onboarding-finale-soon">
+                <div class="ob-finale__soon-title">@Culture["Onboarding.FinaleV2.Soon.Title"]</div>
+                <div class="ob-finale__sng">
+                    @foreach (var card in _soonCards)
+                    {
+                        <article class="ob-finale__sn">
+                            <span class="ob-finale__si" aria-hidden="true">@CardIcon(card.Id)</span>
+                            <div>
+                                <em class="ob-finale__tag">@Culture["Onboarding.FinaleV2.Soon.Tag"]</em>
+                                <h4>@Culture[card.TitleKey]</h4>
+                                <p>@Culture[card.BodyKey]</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!HideTimeline)
+        {
+            <h2>@Culture["Onboarding.FinaleV2.Timeline.Title"]</h2>
+            <p class="ob-finale__h2s">@Culture["Onboarding.FinaleV2.Timeline.Lead"]</p>
+            <ol class="ob-finale__tl">
+                <li>
+                    <b>@Culture["Onboarding.FinaleV2.Timeline.Today"]</b>
+                    <span>@Culture.Format("Onboarding.FinaleV2.Timeline.TodayBody", MatchCount)</span>
+                </li>
+                <li>
+                    <b>@Culture["Onboarding.FinaleV2.Timeline.Week"]</b>
+                    <span>@Culture["Onboarding.FinaleV2.Timeline.WeekBody"]</span>
+                </li>
+                <li>
+                    <b>@Culture["Onboarding.FinaleV2.Timeline.Ongoing"]</b>
+                    <span>@OngoingText</span>
+                </li>
+            </ol>
+        }
+
+        @if (!HideEndBlock)
+        {
+            <div class="ob-finale__end">
+                <p><b>@Culture["Onboarding.FinaleV2.End.Title"]</b>@Culture["Onboarding.FinaleV2.End.Lead"]</p>
+                <button type="button" class="ob-finale__btn" data-ob-kompas-complete data-testid="onboarding-kompas-complete" @onclick="OnComplete">@Culture["Onboarding.Finish.Cta"]</button>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string FirstName { get; set; } = "";
+    [Parameter] public OnboardingImpression? Impression { get; set; }
+    [Parameter] public int MatchCount { get; set; }
+    [Parameter] public int MaxTravelMinutes { get; set; }
+    [Parameter] public string? HomeLabel { get; set; }
+    [Parameter] public string? DreamJob { get; set; }
+    [Parameter] public OnboardingFinaleCardsInput CardsInput { get; set; } = new(false, false, false, false, false, false);
+    [Parameter] public EventCallback OnComplete { get; set; }
+    [Parameter] public bool HideHero { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public bool HideInsights { get; set; }
+    [Parameter] public bool HideSoon { get; set; }
+    [Parameter] public bool HideTimeline { get; set; }
+    [Parameter] public bool HideEndBlock { get; set; }
+    [Parameter] public bool HideDreamRouteCard { get; set; }
+    [Parameter] public bool HideKompasWordsCard { get; set; }
+    [Parameter] public bool ShowHerolessPrimaryCtas { get; set; }
+
+    private IReadOnlyList<OnboardingFinaleInsight> _insights = [];
+    private IReadOnlyList<OnboardingFinaleCard> _nowCards = [];
+    private IReadOnlyList<OnboardingFinaleCard> _soonCards = [];
+
+    private bool ShowMatchBar => MatchCount > 0;
+
+    private string? MatchTravelLine => MaxTravelMinutes > 0 && !string.IsNullOrWhiteSpace(HomeLabel)
+        ? Culture.Format("Onboarding.FinaleV2.Highlight.Sub", MaxTravelMinutes, HomeLabel)
+        : null;
+
+    private string OngoingText => CardsInput.ProactiveMatchingEnabled
+        ? Culture["Onboarding.FinaleV2.Timeline.OngoingBody.Proactive"]
+        : Culture["Onboarding.FinaleV2.Timeline.OngoingBody"];
+
+    protected override void OnParametersSet()
+    {
+        _insights = OnboardingFinaleInsights.FromImpression(Impression, $" {Culture["Onboarding.And"]} ");
+        _nowCards = OnboardingFinaleCards.BuildNow(CardsInput);
+        if (HideDreamRouteCard)
+        {
+            _nowCards = _nowCards.Where(c => c.Id != OnboardingFinaleCardId.DreamRoute).ToList();
+        }
+
+        if (HideKompasWordsCard)
+        {
+            _nowCards = _nowCards.Where(c => c.Id != OnboardingFinaleCardId.KompasWords).ToList();
+        }
+
+        _soonCards = OnboardingFinaleCards.BuildSoon(CardsInput);
+    }
+
+    private string CardTitle(OnboardingFinaleCard card)
+        => card.Id == OnboardingFinaleCardId.DreamRoute && !string.IsNullOrWhiteSpace(DreamJob)
+            ? Culture.Format(card.TitleKey, DreamJob)
+            : Culture[card.TitleKey];
+
+    private string CardBody(OnboardingFinaleCard card)
+        => card.Id switch
+        {
+            OnboardingFinaleCardId.Banenkaart when !string.IsNullOrWhiteSpace(HomeLabel)
+                => Culture.Format(card.BodyKey, HomeLabel),
+            OnboardingFinaleCardId.DreamRoute when !string.IsNullOrWhiteSpace(DreamJob)
+                => Culture.Format(card.BodyKey, DreamJob),
+            _ => Culture[card.BodyKey]
+        };
+
+    private static string InsightClass(OnboardingFinaleInsightKind kind) => kind switch
+    {
+        OnboardingFinaleInsightKind.Strength => "ob-finale__ins--strength",
+        OnboardingFinaleInsightKind.Work => "ob-finale__ins--work",
+        _ => "ob-finale__ins--value"
+    };
+
+    private MarkupString InsightIcon(OnboardingFinaleInsightKind kind) => (MarkupString)(kind switch
+    {
+        OnboardingFinaleInsightKind.Strength => OnboardingFinaleIcons.Star,
+        OnboardingFinaleInsightKind.Work => OnboardingFinaleIcons.Leaf,
+        _ => OnboardingFinaleIcons.Heart
+    });
+
+    private MarkupString CardIcon(OnboardingFinaleCardId id) => (MarkupString)(id switch
+    {
+        OnboardingFinaleCardId.Matching => OnboardingFinaleIcons.Match,
+        OnboardingFinaleCardId.Banenkaart => OnboardingFinaleIcons.Map,
+        OnboardingFinaleCardId.KompasWords => OnboardingFinaleIcons.Compass,
+        OnboardingFinaleCardId.DreamRoute => OnboardingFinaleIcons.Route,
+        OnboardingFinaleCardId.Passport => OnboardingFinaleIcons.Passport,
+        OnboardingFinaleCardId.Deeper => OnboardingFinaleIcons.Deeper,
+        OnboardingFinaleCardId.References => OnboardingFinaleIcons.References,
+        OnboardingFinaleCardId.MatchNotifications => OnboardingFinaleIcons.Bell,
+        OnboardingFinaleCardId.EmployerDiscovery => OnboardingFinaleIcons.Employers,
+        _ => OnboardingFinaleIcons.Match
+    });
+}

@@ -1,0 +1,63 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@inject CultureState Culture
+
+<div class="bk-wg-page pub-card" style="padding:1.25rem">
+    <h1>Sollicitaties</h1>
+    <p class="login-lead">OPEN initiatieven</p>
+    <article class="bk-wg-inbox__row">
+        <div>
+            <strong>Kandidaat #a1b2c3d4</strong>
+            <span class="bk-chip bk-chip--open">OPEN</span>
+            <p>Retail / vitrine · @Culture["Initiative.Match.Good"]</p>
+            <p>Sociaal, nauwkeurig, ochtendmens</p>
+        </div>
+        @if (Screen.Contains("06b", StringComparison.Ordinal) || Screen.Contains("06c", StringComparison.Ordinal))
+        {
+            <p class="bk-wg-token-cost">Accepteren kost 1 token</p>
+        }
+        <div class="bk-wg-inbox__actions">
+            @if (Screen.Contains("06c", StringComparison.Ordinal))
+            {
+                <p class="state-message">Geaccepteerd — contactgegevens zichtbaar.</p>
+            }
+            else
+            {
+                <button type="button" class="btn--primary">Accepteren</button>
+                <button type="button" class="btn--secondary">Nu niet</button>
+            }
+        </div>
+    </article>
+</div>
+
+@if (Screen.Contains("06b", StringComparison.Ordinal))
+{
+    <InitiativeEmployerAcceptDialog IsOpen="true"
+                                    Item="@MockItem"
+                                    BillingCompanyId="@Guid.Parse("33333333-3333-3333-3333-333333333333")" />
+}
+@if (Screen.Contains("07-", StringComparison.Ordinal))
+{
+    <InitiativeEmployerDeclineDialog IsOpen="true" Item="@MockItem" />
+}
+
+@code {
+    [Parameter] public string Screen { get; set; } = "";
+
+    private static EmployerInitiativeInboxItemDto MockItem => new(
+        Guid.NewGuid(),
+        "Kandidaat #a1b2c3d4",
+        "Retail / vitrine",
+        "Den Haag",
+        "Do–zo",
+        24,
+        InitiativeMatchLabel.Good,
+        "Sociaal, nauwkeurig",
+        WorkInitiativeStatus.Viewed,
+        DateTime.UtcNow.AddDays(-2),
+        DateTime.UtcNow.AddDays(3),
+        false,
+        null,
+        null,
+        null);
+}

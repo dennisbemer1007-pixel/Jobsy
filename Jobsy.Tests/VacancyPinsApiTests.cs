@@ -39,6 +39,15 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
+    public async Task Pins_accepts_fractional_zoom_query()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync(
+            "api/vacancies/pins?transport=Fiets&maxMinutes=30&minLat=52&minLng=4&maxLat=52.5&maxLng=5&zoom=12.5");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Pins_supports_etag_304()
     {
         var client = _factory.CreateClient();
@@ -63,7 +72,8 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("LoadBootPinsAsync", discovery);
         Assert.Contains("pinsUrl", discovery);
         Assert.Contains("VacancyCardPageSize = 20", discovery);
-        Assert.Contains("jobsyList.observeMore", discovery);
+        Assert.Contains("jobsyDiscovery.observeMore", discovery);
+        Assert.DoesNotContain("jobsyList.observeMore", discovery);
         Assert.DoesNotContain("[\"title\"] = v.Title", discovery);
         Assert.DoesNotContain("[\"company\"] = v.CompanyName", discovery);
 
@@ -72,8 +82,11 @@ public class VacancyPinsApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("function fetchVacancyDetail", js);
         Assert.Contains("function normalizePin", js);
         Assert.Contains("reloadPins", js);
+        Assert.Contains("viewportQueryString", js);
+        Assert.Contains("syncViewportList", js);
+        Assert.Contains("OnMapViewportChanged", discovery);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("/login", maps);
         Assert.Contains("Never pull MapLibre", maps);
     }

@@ -13,7 +13,12 @@ public sealed class MatchProfileGateViewModel
     public bool CompetencyCompleted { get; set; }
     public bool CareerCompleted { get; set; }
     public bool CultureCompleted { get; set; }
+    public bool ValuesCompleted { get; set; }
     public bool HasProvisionalScores { get; set; }
+
+    /// <summary>D2: culture or values test done — or starter mini-tests from onboarding.</summary>
+    public bool FitGateOpen =>
+        CultureCompleted || ValuesCompleted || (WizardCompleted && HasProvisionalScores);
 
     /// <summary>True when every required Match checklist item is done.</summary>
     public bool IsProfileComplete { get; set; }

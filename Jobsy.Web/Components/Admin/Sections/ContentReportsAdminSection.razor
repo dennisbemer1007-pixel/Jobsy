@@ -1,0 +1,250 @@
+@namespace Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Core.Time
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<p class="muted">@Culture["Report.Admin.Lead"]</p>
+
+<div class="filter-bar">
+    <label>
+        @Culture["Report.Admin.Status"]
+        <select @bind="_filter" @bind:after="LoadAsync">
+            <option value="open">@Culture["Report.Admin.FilterOpen"]</option>
+            <option value="closed">@Culture["Report.Admin.FilterClosed"]</option>
+        </select>
+    </label>
+</div>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <p class="state-message" role="status">@_message</p>
+}
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else if (_rows.Count == 0)
+{
+    <p class="state-message">@Culture["Report.Admin.Empty"]</p>
+}
+else
+{
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="data-table__col--wrap">@Culture["Report.Admin.What"]</th>
+                    <th>@Culture["Report.Admin.Reason"]</th>
+                    <th>@Culture["Report.Admin.When"]</th>
+                    <th>@Culture["Report.Admin.Count"]</th>
+                    <th>@Culture["Report.Admin.Status"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in _rows)
+                {
+                    <tr @onclick="() => OpenAsync(row)">
+                        <td class="data-table__col--wrap">
+                            <span class="muted">@TargetKind(row)</span>
+                            @(" ")
+                            @(row.TargetLabel ?? Culture["Report.About.Unknown"])
+                        </td>
+                        <td>@Culture[$"Report.Reason.{row.Reason}"]</td>
+                        <td>@AmsterdamTime.FormatDateTime(row.CreatedAtUtc)</td>
+                        <td>@row.TargetReportCount</td>
+                        <td>@Culture[$"Report.Admin.Status.{row.Status}"]</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<AdminDrawer Open="_drawerOpen"
+             OpenChanged="@(open => _drawerOpen = open)"
+             Title="@(_selected?.TargetLabel ?? Culture["Report.Admin.Tab"])">
+    @if (_selected is not null)
+    {
+        <p>
+            @if (PublicPath(_selected) is string publicPath)
+            {
+                <a href="@publicPath" target="_blank" rel="noopener">@Culture["Report.Admin.OpenPublic"]</a>
+            }
+            @if (AdminPath(_selected) is string adminPath)
+            {
+                @(" · ")
+                <a href="@adminPath">@Culture["Report.Admin.OpenAdmin"]</a>
+            }
+        </p>
+
+        <ul>
+            @foreach (var report in _targetReports)
+            {
+                <li>
+                    <strong>@Culture[$"Report.Reason.{report.Reason}"]</strong>
+                    @(" · ")
+                    @AmsterdamTime.FormatDateTime(report.CreatedAtUtc)
+                    @(" · ")
+                    <span class="muted">@Culture["Report.Admin.Reporter"]:</span>
+                    @(report.ReporterEmailMasked ?? Culture["Report.Admin.Anonymous"])
+                    @if (!string.IsNullOrWhiteSpace(report.Details))
+                    {
+                        <p>@report.Details</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(report.DecisionReason))
+                    {
+                        <p class="muted">@report.DecisionReason</p>
+                    }
+                </li>
+            }
+        </ul>
+
+        @if (_selected.Status == nameof(ContentReportStatus.Open))
+        {
+            <fieldset>
+                <legend>@Culture["Report.Admin.DecisionLegend"]</legend>
+                <label for="report-decision-reason">@Culture["Report.Admin.ReasonLabel"]</label>
+                <textarea id="report-decision-reason"
+                          rows="3"
+                          maxlength="@ContentReportRules.DecisionReasonMaxLength"
+                          @bind="_reason"></textarea>
+                <p class="muted">@Culture["Report.Admin.ReasonHint"]</p>
+                @if (_reasonMissing)
+                {
+                    <p class="state-message error" role="alert">@Culture["Report.Admin.ReasonRequired"]</p>
+                }
+                <div class="inline-actions">
+                    <button type="button"
+                            class="btn-compact"
+                            disabled="@_busy"
+                            @onclick="@(() => DecideAsync(ContentReportStatus.NoAction))">
+                        @Culture["Report.Admin.NoAction"]
+                    </button>
+                    @if (_selected.TargetType == nameof(ContentReportTargetType.Vacancy))
+                    {
+                        <button type="button"
+                                class="btn-compact"
+                                disabled="@_busy"
+                                @onclick="@(() => DecideAsync(ContentReportStatus.Restricted))">
+                            @Culture["Report.Admin.Restrict"]
+                        </button>
+                    }
+                    <button type="button"
+                            class="btn-compact"
+                            disabled="@_busy"
+                            @onclick="@(() => DecideAsync(ContentReportStatus.Removed))">
+                        @Culture["Report.Admin.Remove"]
+                    </button>
+                </div>
+            </fieldset>
+        }
+    }
+</AdminDrawer>
+
+@code {
+    private string _filter = "open";
+    private bool _loading = true;
+    private string? _error;
+    private string? _message;
+    private List<AdminContentReportItem> _rows = [];
+    private List<AdminContentReportItem> _targetReports = [];
+    private AdminContentReportItem? _selected;
+    private bool _drawerOpen;
+    private bool _busy;
+    private bool _reasonMissing;
+    private string _reason = string.Empty;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rows = (await Api.GetContentReportsAsync(_filter)).ToList();
+        }
+        catch (Exception)
+        {
+            _error = Culture["Common.Error"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenAsync(AdminContentReportItem row)
+    {
+        _selected = row;
+        _reason = string.Empty;
+        _reasonMissing = false;
+        _message = null;
+        _drawerOpen = true;
+        try
+        {
+            _targetReports = (await Api.GetContentReportsForTargetAsync(row.TargetType, row.TargetId)).ToList();
+        }
+        catch (Exception)
+        {
+            _targetReports = [row];
+        }
+    }
+
+    private async Task DecideAsync(ContentReportStatus decision)
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        var reason = ContentReportRules.NormalizeDecisionReason(_reason);
+        _reasonMissing = ContentReportRules.RequiresReason(decision) && reason is null;
+        if (_reasonMissing)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DecideContentReportAsync(_selected.TargetType, _selected.TargetId, decision.ToString(), reason);
+            _message = Culture["Report.Admin.Saved"];
+            _drawerOpen = false;
+            _selected = null;
+            await LoadAsync();
+        }
+        catch (Exception)
+        {
+            _error = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string TargetKind(AdminContentReportItem row)
+        => row.TargetType == nameof(ContentReportTargetType.Company)
+            ? Culture["Report.Admin.Kind.Company"]
+            : Culture["Report.Admin.Kind.Vacancy"];
+
+    private static string? PublicPath(AdminContentReportItem row)
+        => row.TargetType == nameof(ContentReportTargetType.Company)
+            ? string.IsNullOrWhiteSpace(row.TargetKvk) ? null : $"/{row.TargetKvk}"
+            : row.TargetId == Guid.Empty ? null : $"/vacancies/{row.TargetId:D}";
+
+    private static string? AdminPath(AdminContentReportItem row)
+        => row.TargetType == nameof(ContentReportTargetType.Vacancy) && row.TargetId != Guid.Empty
+            ? $"/admin/vacatures?id={row.TargetId:D}"
+            : null;
+}

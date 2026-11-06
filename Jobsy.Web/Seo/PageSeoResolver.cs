@@ -30,15 +30,25 @@ public static class PageSeoResolver
         var canonicalPath = overlay?.CanonicalPath;
         if (string.IsNullOrWhiteSpace(canonicalPath))
         {
+            canonicalPath = entry.CanonicalPath;
+        }
+
+        if (string.IsNullOrWhiteSpace(canonicalPath))
+        {
             canonicalPath = path;
         }
 
         var canonical = CanonicalUrl(navigationUri, canonicalPath, configuration);
         var image = AbsoluteAssetUrl(
-            FirstNonEmpty(overlay?.ImageUrl, BrandImages.AbsoluteWebp256),
+            FirstNonEmpty(overlay?.ImageUrl, BrandImages.AbsoluteOgImage),
             canonical);
 
         var ogType = FirstNonEmpty(overlay?.OgType, entry.OgType, "website")!;
+        if (configuration.GetValue<bool>("Seo:NoIndex"))
+        {
+            indexable = false;
+        }
+
         var robots = indexable ? "index,follow" : "noindex,nofollow";
 
         return new PageSeoModel(
@@ -84,6 +94,18 @@ public static class PageSeoResolver
         }
 
         return "https://lobsy.nl";
+    }
+
+    /// <summary>
+    /// Origin for structured data (public-pages 09): <c>PublicWebBaseUrl</c> wins over the request
+    /// host, so a JSON-LD <c>url</c> never points at a preview or proxy host.
+    /// </summary>
+    public static string ConfiguredOrigin(string navigationUri, IConfiguration configuration)
+    {
+        var configured = JobsyPublicUrl.NormalizeOrigin(configuration["PublicWebBaseUrl"]);
+        return string.IsNullOrWhiteSpace(configured)
+            ? Origin(navigationUri, configuration)
+            : configured.TrimEnd('/');
     }
 
     public static string AbsoluteAssetUrl(string? url, string canonicalPageUrl)

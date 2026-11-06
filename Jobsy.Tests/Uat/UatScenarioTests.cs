@@ -43,7 +43,21 @@ public sealed class UatScenarioTests
 
         foreach (var role in roles)
         {
-            var items = RoleNavCatalog.ForUser(Principal(role));
+            var items = BottomNavItemsForRole(role);
+            if (role == JobsyRoles.Admin)
+            {
+                Assert.Empty(items);
+                continue;
+            }
+
+            if (role == JobsyRoles.SalesManager)
+            {
+                // Nav moved to SalesNav / SalesLayout (salesmanager-1).
+                Assert.Empty(items);
+                Assert.NotEmpty(Jobsy.Web.Navigation.SalesNav.VisibleItems(canRecruit: true));
+                continue;
+            }
+
             Assert.NotEmpty(items);
             foreach (var item in items)
             {
@@ -52,6 +66,22 @@ public sealed class UatScenarioTests
                     $"{role} nav href {item.Href} has no @page.");
             }
         }
+    }
+
+    private static IReadOnlyList<NavItem> BottomNavItemsForRole(string role)
+    {
+        var principal = Principal(role);
+        var employerRole = WerkgeverNav.ResolveRole(principal);
+        if (employerRole is { } er)
+        {
+            return WerkgeverNav.MobileItems(er, new WerkgeverNavContext(CandidateInsightsEnabled: true, HasTakeovers: true))
+                .Where(i => i.Key != "meer")
+                .Select(i => new NavItem(i.LabelKey, i.Href, i.Svg))
+                .ToList();
+        }
+
+        var on = new Jobsy.Core.Features.FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        return RoleNavCatalog.ForUser(principal, on);
     }
 
     [Theory]

@@ -1,0 +1,185 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Time
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<div class="ref-verif-tab" data-testid="passport-references-tab">
+    <header class="ref-verif-tab__head">
+        <div class="ref-verif-tab__intro">
+            <p class="ref-verif-tab__crumb muted">Paspoort › Referenties</p>
+            <h2 class="ref-verif-tab__title">Referenties</h2>
+            <p class="login-lead ref-verif-tab__lead">@Culture["RefVerif.Tab.Intro"]</p>
+        </div>
+        @if (FirstWorkExperienceEntryId is Guid entry)
+        {
+            <a class="btn btn-primary ref-verif-tab__new" href="@($"/candidate/paspoort/referentie/vraag/{entry:D}")">
+                @Culture["RefVerif.Tab.NewRequest"]
+            </a>
+        }
+    </header>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <p class="state-message" role="alert">@Culture["Panel.ErrorInline"]</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@Culture["Panel.ErrorRetry"]</button>
+    }
+    else if (_rows.Count == 0)
+    {
+        <p class="muted">@Culture["RefVerif.Tab.Empty"]</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="ref-verif-status-table">
+                <thead>
+                    <tr>
+                        <th scope="col">@Culture["RefVerif.Col.Referent"]</th>
+                        <th scope="col">@Culture["RefVerif.Col.WorkExperience"]</th>
+                        <th scope="col">@Culture["RefVerif.Col.Status"]</th>
+                        <th scope="col"><span class="visually-hidden">@Culture["Common.Actions"]</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _rows)
+                    {
+                        <tr data-testid="ref-verif-row">
+                            <td>
+                                <strong>@row.ReferentName</strong><br />
+                                <span class="muted">@Culture[$"RefVerif.Relation.{row.Relation}"]</span>
+                            </td>
+                            <td>
+                                <strong>@row.RoleTitle</strong> · @row.EmployerName<br />
+                                <span class="muted">@Subline(row)</span>
+                            </td>
+                            <td>
+                                <span class="ref-verif-status-pill @StatusClass(row.DisplayStatus)">
+                                    @Culture[$"RefVerif.Status.{row.DisplayStatus}"]
+                                </span>
+                            </td>
+                            <td class="ref-verif-tab__actions">
+                                @ActionCell(row)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="ref-verif-tab__privacy muted">@Culture["RefVerif.Tab.PrivacyNote"]</p>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+
+    [Parameter] public Guid? FirstWorkExperienceEntryId { get; set; }
+
+    private bool _loading = true;
+    private bool _loadFailed;
+    private bool _loaded;
+    private bool _busy;
+    private List<JobsyApiClient.ReferenceVerificationListItem> _rows = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Active && !_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            _rows = (await Api.GetReferenceVerificationListAsync()).ToList();
+            _loaded = true;
+        }
+        catch
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string Subline(JobsyApiClient.ReferenceVerificationListItem row) => row.DisplayStatus switch
+    {
+        "confirmed" when row.CompletedAtUtc is DateTime d =>
+            Culture.Format("RefVerif.Subline.Confirmed", AmsterdamTime.FormatDate(d)),
+        "sent" when row.SentAtUtc is DateTime s && row.DaysRemaining is int days =>
+            Culture.Format("RefVerif.Subline.Sent", AmsterdamTime.FormatDate(s), days),
+        "expired" when row.ExpiresAtUtc is DateTime e =>
+            Culture.Format("RefVerif.Subline.Expired", AmsterdamTime.FormatDate(e)),
+        _ => ""
+    };
+
+    private RenderFragment ActionCell(JobsyApiClient.ReferenceVerificationListItem row) => builder =>
+    {
+        if (row.DisplayStatus == "confirmed")
+        {
+            builder.OpenElement(0, "a");
+            builder.AddAttribute(1, "class", "ref-verif-tab__action");
+            builder.AddAttribute(2, "href", $"/candidate/paspoort/referenties/{row.Id:D}");
+            builder.AddContent(3, Culture["RefVerif.Action.View"]);
+            builder.CloseElement();
+            return;
+        }
+
+        if (row.DisplayStatus == "sent")
+        {
+            builder.OpenElement(4, "button");
+            builder.AddAttribute(5, "type", "button");
+            builder.AddAttribute(6, "class", "ref-verif-tab__action");
+            builder.AddAttribute(7, "disabled", _busy);
+            builder.AddAttribute(8, "onclick", EventCallback.Factory.Create(this, () => RevokeAsync(row.Id)));
+            builder.AddContent(9, Culture["RefVerif.Revoke"]);
+            builder.CloseElement();
+            return;
+        }
+
+        if (row.DisplayStatus == "expired")
+        {
+            builder.OpenElement(10, "a");
+            builder.AddAttribute(11, "class", "ref-verif-tab__action");
+            builder.AddAttribute(12, "href", $"/candidate/paspoort/referentie/vraag/{row.WorkExperienceEntryId:D}");
+            builder.AddContent(13, Culture["RefVerif.Action.Resend"]);
+            builder.CloseElement();
+        }
+    };
+
+    private async Task RevokeAsync(Guid id)
+    {
+        _busy = true;
+        try
+        {
+            if (await Api.RevokeReferenceVerificationAsync(id))
+            {
+                await LoadAsync();
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string StatusClass(string status) => status switch
+    {
+        "confirmed" => "is-confirmed",
+        "sent" => "is-sent",
+        "expired" => "is-expired",
+        "declined" => "is-declined",
+        _ => "is-neutral"
+    };
+}

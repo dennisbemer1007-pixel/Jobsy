@@ -131,3 +131,33 @@ Alle bedragen onder **Admin → Settings → Lobsy Flex & talent**:
 6. ContactUnlock debiteert configureerbaar aantal tokens (default 1); refund na intrekken bij timeout/declined-unavailable.
 7. Flex-publicatie kost 0 tokens; settings tonen configureerbare marge (default € 2,00).
 8. Actief uitzend-jaarabonnement: carte blanche publish; jaartarief admin-configureerbaar (default € 4.000).
+9. `/carriere` toont nooit een match-percentage: alleen een fit-band in woorden en stappen die de kandidaat zelf kan afronden.
+10. Een stap afronden kan alleen op de stap die nu aan de beurt is; een eerdere stap moet eerst ongedaan worden gemaakt.
+11. Contactgegevens van de kandidaat gaan pas naar de werkgever na een expliciete **Ja** op de deelvraag; de preview toont precies welke velden worden gedeeld.
+12. Een kandidaat kan een cursus niet zelf afvinken; bewijs loopt via het paspoort.
+
+---
+
+## 6. Carrièreplan & contactverzoeken (kandidaat)
+
+### 6.1 Carrièreplan (`/carriere`)
+
+- Zonder plan is er één kaart: waar wil jij naartoe groeien? Suggesties komen uit echte beroepen, plus zoeken. Eén generatie per klik (de knop gaat direct op disabled).
+- Het plan is een reeks stappen van "nu" naar de droombaan, getoond als groeiende schelpen. Per stap: wat je al hebt, wat je nog mist (in klauwen, geen percentage), een fit-band in woorden en echte cursussen (gratis eerst, maximaal één partnerlink).
+- Stapdetail is deep-linkbaar via `?stap={n}`; alleen de stap die nu aan de beurt is heeft een afrondknop. Afronden is een rustig groeimoment (oude schaal valt, nieuwe gouden schaal), met "Toch nog niet klaar" ernaast.
+- Bewijs voor cursussen en ervaring loopt via het paspoort; de kandidaat vinkt niets zelf af. De oude self-claim-endpoint antwoordt `410 use_passport_proof`.
+- Droombaan wijzigen bewaart wat je al haalde ("Die tellen mee"). Het oude plan gaat **30 dagen** naar *Eerdere plannen* en kan vanuit de UI worden teruggezet.
+- Werkgevers-feature UIT verbergt elke vacaturelink, -telling en -regel; het plan blijft werken.
+
+### 6.2 Contactverzoeken (`/candidate/talent-contacts`)
+
+- Statussen staan in woorden ("Wacht op jou", "Je zei ja", "Je zei nee", "Gestopt"), nooit als enum.
+- Delen vraagt een expliciete **Ja**: de deelvraag toont eerst een preview met exact de naam / e-mail / telefoon die de werkgever krijgt (ontbrekend telefoonnummer leest "niet ingevuld"). Zonder bevestiging weigert de API met `400 confirm_share_required`.
+- Afwijzen legt de reden vast (geen interesse / al voorzien) en deelt niets.
+- Datums zijn Amsterdamse kloktijd in de taal van de gebruiker; API-fouten verschijnen als code-gestuurde tekst, nooit als ruwe foutmelding.
+
+### 6.3 Hoe werkt Lobsy (kandidaat)
+
+- Vijf stenen in volgorde: ontdekkingsreis → paspoort → carrière → banenkaart → sollicitaties, met per steen een status en een link. De steen waar je nu staat heeft `aria-current="step"`.
+- De pagina is Candidate-only; andere rollen hebben hun eigen guide op `/hoe-werkt-lobsy`.
+- Werkgevers UIT laat banenkaart en sollicitaties weg; een onbekende route laat de steen weg in plaats van naar een 404 te linken.

@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
@@ -84,10 +85,11 @@ public sealed class DeviceSessionRefreshMiddleware
             }
 
             var principal = AuthPrincipalFactory.FromDeviceRefresh(profile);
+            JobsyAuthCookieChunks.DeleteAll(http);
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic());
+                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic(http));
             SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
             if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.ExpiresAtUtc is DateTime exp)
             {
@@ -117,6 +119,7 @@ public sealed class DeviceSessionRefreshMiddleware
                || string.Equals(path, "/offline.html", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/manifest.webmanifest", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/logout", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(path, "/logout", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/login", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/demo-login", StringComparison.OrdinalIgnoreCase)
                || string.Equals(path, "/account/complete-login", StringComparison.OrdinalIgnoreCase)
@@ -142,6 +145,7 @@ public sealed class DeviceSessionRefreshMiddleware
         public string? SessionToken { get; set; }
         public Guid? UserId { get; set; }
         public bool MfaVerified { get; set; }
+        public bool IsTestAccount { get; set; }
     }
 }
 
@@ -205,6 +209,13 @@ public static class AuthPrincipalFactory
         if (profile.MfaVerified)
         {
             identity.AddClaim(new Claim(JobsyClaimTypes.MfaVerified, "1"));
+        }
+
+        if (profile.IsTestAccount)
+        {
+            identity.AddClaim(new Claim(
+                TestAccountClaimTypes.TestAccount,
+                TestAccountClaimTypes.TestAccountValue));
         }
 
         return new ClaimsPrincipal(identity);

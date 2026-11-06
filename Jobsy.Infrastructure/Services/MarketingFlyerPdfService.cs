@@ -47,7 +47,8 @@ public sealed class MarketingFlyerPdfService : IMarketingFlyerPdfService
         var platform = await _companySettings.GetAsync(cancellationToken);
         var features = await _features.GetAsync(cancellationToken);
         var logo = _companySettings.GetBrandLogoPng();
-        var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
+        var legal = LegalIdentityService.Compose(null, platform);
+        var brand = string.IsNullOrWhiteSpace(legal.TradeName) ? legal.DisplayName : legal.TradeName.Trim();
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
         var qrTarget = BuildQrTarget(baseUrl, content.QrPath);
         var qrPng = RenderQrPng(qrTarget);

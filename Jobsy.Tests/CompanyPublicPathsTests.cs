@@ -48,7 +48,11 @@ public class PublicCompanyPageLookupTests
             KvkNumber = "12345678",
             KvkEstablishmentId = "12345678_0001",
             Location = new GeoPoint(52.0, 4.3),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -73,7 +77,11 @@ public class PublicCompanyPageLookupTests
                 KvkNumber = "87654321",
                 KvkEstablishmentId = "87654321_0001",
                 Location = new GeoPoint(52.0, 4.3),
-                Type = CompanyType.Employer
+                Type = CompanyType.Employer,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             },
             new Company
             {
@@ -83,7 +91,11 @@ public class PublicCompanyPageLookupTests
                 KvkNumber = "87654321",
                 KvkEstablishmentId = "87654321_0002",
                 Location = new GeoPoint(52.1, 4.4),
-                Type = CompanyType.Employer
+                Type = CompanyType.Employer,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
         await db.SaveChangesAsync();
 

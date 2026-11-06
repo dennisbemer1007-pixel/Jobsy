@@ -1,0 +1,33 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<div class="cand-band @(FullBleed ? "cand-band--full-bleed" : null)">
+    <div class="cand-band__copy">
+        @if (!string.IsNullOrWhiteSpace(Eyebrow))
+        {
+            <span class="cand-band__eyebrow @(CoralEyebrow ? "cand-band__eyebrow--coral" : null)">@Eyebrow</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <h1>@Title</h1>
+        }
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="cand-band__lead">@Lead</p>
+        }
+        @ChildContent
+    </div>
+    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    {
+        <div class="cand-band__art" style="background-image:url('@ArtUrl')" aria-hidden="true"></div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool CoralEyebrow { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public bool FullBleed { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,12 @@
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:794px;height:1123px}
+body{font-family:'Inter',sans-serif;color:#23173a;-webkit-font-smoothing:antialiased;background:#fff;overflow:hidden}
+@page{size:A4;margin:0}
+.page{width:794px;height:1123px;position:relative;overflow:hidden;padding:30px 36px 0}
+:root{--p:#5b2a9a;--m:#b5309a;--c:#f5503a;--ink:#23173a;--sp:#f4effb;--sc:#fff1ec;--mut:#6f6582;--line:#e7e1f0;--grn:#1f9d6b}
+.ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tag{display:inline-block;font-size:7px;font-weight:700;letter-spacing:.06em;padding:1px 4px;border-radius:4px;vertical-align:middle;margin-left:4px;line-height:1.4;font-family:'Inter',sans-serif}
+.tag.new{color:#e2432c;border:1px dashed #f5503a}
+.tag.der{color:#5b2a9a;border:1px dashed #8b62c4}
+.legend{position:absolute;left:36px;right:36px;bottom:8px;font-size:7px;color:#9a91aa;letter-spacing:.04em;display:flex;justify-content:space-between}
+.legend b{color:#e2432c;font-weight:700}.legend i{font-style:normal;color:#5b2a9a;font-weight:700}

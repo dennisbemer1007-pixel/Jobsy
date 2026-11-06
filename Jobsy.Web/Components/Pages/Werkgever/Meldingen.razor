@@ -1,0 +1,16 @@
+@page "/werkgever/meldingen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@using Jobsy.Web.Components.Notifications
+@using Jobsy.Web.Components.Werkgever.Shell
+@inject CultureState Culture
+
+<PageTitle>@Culture["WgNav.Notifications"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.Notifications"]" Lead="@Culture["WgNotifications.Lead"]">
+    <div class="notifications-page">
+        <NotificationsListPanel />
+    </div>
+</WgPageShell>

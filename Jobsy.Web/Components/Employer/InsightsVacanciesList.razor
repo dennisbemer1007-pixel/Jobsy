@@ -1,0 +1,28 @@
+@inject CultureState Culture
+
+@if (Data is null || Data.Vacancies.Count == 0)
+{
+    <span class="status-pill status-pill--neutral">@Culture["Insights.Insufficient"]</span>
+}
+else
+{
+    @foreach (var v in Data.Vacancies)
+    {
+        <div class="insights-vacancy">
+            <strong>@v.Title</strong>
+            <span class="profile-address__hint">@v.BranchName</span>
+            @if (v.MatchingCandidates.Status == "ok" && v.MatchingCandidates.Value is int n)
+            {
+                <span>@string.Format(Culture["Insights.MatchingCount"], n)</span>
+            }
+            else
+            {
+                <span class="status-pill status-pill--neutral">@Culture["Insights.Insufficient"]</span>
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public CandidateInsightsDto? Data { get; set; }
+}

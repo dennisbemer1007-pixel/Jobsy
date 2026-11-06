@@ -20,12 +20,53 @@ public record SubmitRegistrationRequest(
     string? ManualEstablishmentNumber = null,
     double? ManualLatitude = null,
     double? ManualLongitude = null,
-    bool? ManualIsIntermediarySbi = null);
+    bool? ManualIsIntermediarySbi = null,
+    IReadOnlyList<string>? SelectedEstablishmentIds = null,
+    Guid? SalesManagerUserId = null,
+    DateTime? RepresentationConsentAtUtc = null,
+    string? RepresentationConsentVersion = null,
+    string? PreferredLoginProvider = null,
+    bool LocationUnknown = false,
+    bool AcceptedRepresentation = false,
+    string? CookieTrackingCode = null,
+    string? ExternalVacancyInviteToken = null);
 
 public record KvkEstablishmentsLookupResponse(
     string Status,
     string? Message,
     IReadOnlyList<Jobsy.Core.Interfaces.KvkEstablishmentResult> Establishments);
+
+public record KvkAddressLineDto(
+    string Street,
+    string HouseNumber,
+    string? HouseLetter,
+    string Postcode,
+    string Place,
+    string FormattedLine);
+
+public record KvkEstablishmentProfileDto(
+    string KvkNumber,
+    string EstablishmentNumber,
+    string KvkEstablishmentId,
+    string Name,
+    string Address,
+    double Latitude,
+    double Longitude,
+    bool IsInUse,
+    IReadOnlyList<string> SbiCodes,
+    KvkAddressLineDto? VisitingAddress,
+    KvkAddressLineDto? PostalAddress);
+
+public record KvkCompanyProfileResponse(
+    string Status,
+    string KvkNumber,
+    string Name,
+    string Address,
+    string? LegalForm,
+    IReadOnlyList<string> SbiCodes,
+    IReadOnlyList<string> Websites,
+    IReadOnlyList<KvkEstablishmentProfileDto> Establishments,
+    string? Message = null);
 
 public record RegistrationSubmitResponse(
     Guid RegistrationId,
@@ -45,13 +86,15 @@ public record RegistrationActivationResponse(
     string Role,
     Guid? CompanyId,
     IReadOnlyList<Guid> CompanyIds,
-    string? TemporaryPassword,
     Guid? OrganizationCompanyId,
     Guid? BranchCompanyId,
     bool UsedChosenPassword = false,
     bool EmailVerifiedAwaitingTakeover = false,
     bool WelcomeTokenGranted = false,
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    string? SessionToken = null,
+    bool InstantlyVerified = false,
+    string? PreferredLoginProvider = null);
 
 public record TakeoverInboxItemDto(
     Guid TakeoverId,
@@ -73,7 +116,13 @@ public record TakeoverDecisionResponse(
 
 public record RejectTakeoverRequest(string? Note = null);
 
-public record LocalLoginRequest(string Email, string Password, bool RememberDevice = true);
+public record SessionLoginRequest(string SessionToken);
+
+public record LocalLoginRequest(
+    string Email,
+    string Password,
+    bool RememberDevice = true,
+    string? MfaTrustToken = null);
 
 public record LocalLoginResponse(
     string Email,
@@ -95,16 +144,35 @@ public record LocalLoginResponse(
     bool MfaEnrolled = false,
     string? MfaChallengeToken = null,
     bool MfaVerified = false,
-    IReadOnlyList<string>? RecoveryCodes = null);
+    IReadOnlyList<string>? RecoveryCodes = null,
+    Guid? SchoolId = null,
+    int? RecoveryCodesLeft = null,
+    bool UsedRecoveryCode = false,
+    string? MfaTrustToken = null,
+    string? AuthMethod = null,
+    bool IsTestAccount = false,
+    bool IsSystemAdminAccount = false);
 
 public record MfaEnrollmentRequest(string ChallengeToken);
 
-public record MfaEnrollmentResponse(string Secret, string ProvisioningUri);
+public record MfaEnrollmentResponse(string Secret, string ProvisioningUri, string QrSvgDataUri);
+
+public record MfaStateRequest(string ChallengeToken);
+
+public record MfaStateResponse(bool Enrolled, string Email, string MaskedEmail);
 
 public record MfaVerifyRequest(
     string ChallengeToken,
     string? Code = null,
-    string? RecoveryCode = null);
+    string? RecoveryCode = null,
+    bool TrustDevice = false,
+    string? Method = null);
+
+public record MfaRegenerateRecoveryCodesRequest(string Code);
+
+public record AdminMfaResetRequest(string Reason, string? ConfirmCode = null);
+
+public record AdminTestUnlockResetRequest(string Reason);
 
 public record EnsureExternalUserRequest(
     string Email,
@@ -113,6 +181,8 @@ public record EnsureExternalUserRequest(
     string? Provider = null,
     /// <summary>Stable subject (Entra OID / OIDC sub).</summary>
     string? ProviderSubject = null,
+    /// <summary>Entra tenant id (<c>tid</c>); null for Google.</summary>
+    string? ProviderTenantId = null,
     /// <summary>Optional Ambassadeur tracking code (AM-…) for new candidates.</summary>
     string? ReferralCode = null,
     bool RememberDevice = true,
@@ -136,7 +206,8 @@ public record EnsureExternalUserResponse(
     Guid? UserId = null,
     bool RequiresMfa = false,
     bool MfaEnrolled = false,
-    string? MfaChallengeToken = null);
+    string? MfaChallengeToken = null,
+    string? AuthMethod = null);
 
 public record ExternalProvidersStatusResponse(bool Entra, bool Google);
 
@@ -145,3 +216,18 @@ public record ExternalProviderConfigResponse(
     string ClientId,
     string ClientSecret,
     string? TenantId);
+
+public record EmailCodeStartRequest(
+    string Email,
+    string? FirstName = null,
+    string? ReferralCode = null,
+    string? ReturnUrl = null,
+    string? Culture = null);
+
+public record EmailCodeStartResponse(Guid ChallengeId);
+
+public record EmailCodeVerifyRequest(
+    Guid ChallengeId,
+    string Code,
+    bool RememberDevice = true,
+    string? UserAgent = null);

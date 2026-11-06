@@ -1,0 +1,31 @@
+KEY: ApplicationCvViewed
+SUBJECT: Your application was viewed at Bakkerij De Gouden Korrel
+PREHEADER: Bakkerij De Gouden Korrel viewed your CV.
+KIND: Essential
+--- TEXT ---
+Hi Alex,
+
+Bakkerij De Gouden Korrel viewed your application
+=================================================
+
+Bakkerij De Gouden Korrel has viewed your application for Weekendhulp
+verkoop.
+
+View your application: https://lobsy.nl/candidate/applications?tab=sollicitaties&sel=22222222-2222-2222-2222-222222222222
+
+Team Lobsy
+
+You get this email because you applied via Lobsy.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Bakkerij De Gouden Korrel viewed your application
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View your application -> https://lobsy.nl/candidate/applications?tab=sollicitaties&sel=22222222-2222-2222-2222-222222222222
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

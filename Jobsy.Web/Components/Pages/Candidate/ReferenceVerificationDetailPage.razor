@@ -1,0 +1,140 @@
+@page "/candidate/paspoort/referenties/{RequestId:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Time
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+<PageTitle>@Culture["RefVerif.Detail.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page ref-verif-detail" data-testid="ref-verif-detail">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!_featureOn)
+    {
+        <p class="state-message">@Culture["Common.Error.TryAgain"]</p>
+    }
+    else if (_detail is null)
+    {
+        <p class="state-message">@Culture["RefVerif.Detail.NotFound"]</p>
+        <a class="btn btn-secondary" href="/candidate/paspoort?tab=references">@Culture["RefVerif.Detail.Back"]</a>
+    }
+    else
+    {
+        <p class="ref-verif-detail__crumb muted">Paspoort › Referenties › @Culture["RefVerif.Detail.Title"]</p>
+        <header class="ref-verif-detail__head">
+            <h1>@Culture["RefVerif.Detail.Title"]</h1>
+            @if (_detail.CompletedAtUtc is DateTime completed)
+            {
+                <p class="login-lead">
+                    @Culture.Format("RefVerif.Detail.Intro", _detail.ReferentName, AmsterdamTime.FormatDate(completed))
+                </p>
+            }
+        </header>
+
+        <div class="ref-verif-detail__summary detail-card">
+            <p class="ref-verif-detail__role">
+                <strong>@_detail.RoleTitle</strong> · @_detail.EmployerName
+            </p>
+            <p class="muted">@FormatPeriod(_detail)</p>
+            <p class="muted">
+                @_detail.ReferentName · @Culture[$"RefVerif.Relation.{_detail.Relation}"]
+            </p>
+        </div>
+
+        <section class="detail-card ref-verif-detail__section" aria-labelledby="ref-verif-facts-title">
+            <h2 id="ref-verif-facts-title" class="passport-proof__h">@Culture["RefVerif.Detail.FactsTitle"]</h2>
+            <ul class="ref-verif-detail__facts">
+                <li>
+                    <span class="ref-verif-detail__fact-label">@Culture.Format("RefVerif.Detail.FactEmployer", _detail.EmployerName)</span>
+                    <span class="ref-verif-detail__fact-value">@FactLabel(_detail.ConfirmedEmployer)</span>
+                </li>
+                <li>
+                    <span class="ref-verif-detail__fact-label">@Culture["RefVerif.Detail.FactPeriod"]</span>
+                    <span class="ref-verif-detail__fact-value">@FactLabel(_detail.ConfirmedPeriod)</span>
+                </li>
+                <li>
+                    <span class="ref-verif-detail__fact-label">@Culture.Format("RefVerif.Detail.FactRole", _detail.RoleTitle)</span>
+                    <span class="ref-verif-detail__fact-value">@FactLabel(_detail.ConfirmedRole)</span>
+                </li>
+            </ul>
+        </section>
+
+        @if (_detail.EndorsedCompetences.Count > 0)
+        {
+            <section class="detail-card ref-verif-detail__section" aria-labelledby="ref-verif-comp-title">
+                <h2 id="ref-verif-comp-title" class="passport-proof__h">@Culture["RefVerif.VerifiedCompetences.Title"]</h2>
+                <ul class="ref-verif-verified-list">
+                    @foreach (var item in _detail.EndorsedCompetences)
+                    {
+                        <li>
+                            <p class="ref-verif-verified-list__label">
+                                <span class="ref-verif-verified-list__check" aria-hidden="true">✓</span>
+                                @item.Label
+                            </p>
+                        </li>
+                    }
+                </ul>
+                <p class="ref-verif-detail__recognition">@_detail.RecognitionLine</p>
+            </section>
+        }
+
+        <section class="detail-card ref-verif-detail__section ref-verif-detail__comment" aria-labelledby="ref-verif-comment-title">
+            <h2 id="ref-verif-comment-title" class="passport-proof__h">@Culture["RefVerif.Detail.CommentTitle"]</h2>
+            <p class="ref-verif-detail__private muted">@Culture["RefVerif.Detail.CommentPrivate"]</p>
+            @if (string.IsNullOrWhiteSpace(_detail.ReferentComment))
+            {
+                <p class="muted">@Culture["RefVerif.Detail.CommentEmpty"]</p>
+            }
+            else
+            {
+                <p class="ref-verif-detail__comment-body">@_detail.ReferentComment</p>
+            }
+        </section>
+
+        <p class="ref-verif-disclaimer">@Culture["RefVerif.VerifiedCompetences.Disclaimer"]</p>
+
+        <a class="btn btn-secondary" href="/candidate/paspoort?tab=references">@Culture["RefVerif.Detail.Back"]</a>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid RequestId { get; set; }
+
+    private bool _loading = true;
+    private bool _featureOn;
+    private JobsyApiClient.ReferenceVerificationDetailItem? _detail;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var flags = await FeatureFlags.GetAsync();
+        _featureOn = flags.ReferenceVerificationEnabled;
+        if (_featureOn)
+        {
+            _detail = await Api.GetReferenceVerificationDetailAsync(RequestId);
+        }
+
+        _loading = false;
+    }
+
+    private string FactLabel(bool? value) => value switch
+    {
+        true => Culture["RefVerif.Detail.FactYes"],
+        false => Culture["RefVerif.Detail.FactNo"],
+        _ => "—"
+    };
+
+    private static string FormatPeriod(JobsyApiClient.ReferenceVerificationDetailItem detail)
+    {
+        static string Part(string? m) => string.IsNullOrWhiteSpace(m) ? "…" : m;
+        var end = detail.IsCurrent ? "heden" : Part(detail.EndMonth);
+        return $"{Part(detail.StartMonth)} – {end}";
+    }
+}

@@ -1,0 +1,9 @@
+@* Replaced by WgLockedCard (gold locked pattern). Kept as thin wrapper for existing probes. *@
+@inject CultureState Culture
+
+<WgLockedCard Title="@Culture["Insights.Locked.Chip"]" TestId="@TestId" />
+
+@code {
+    [Parameter] public string TokensHref { get; set; } = "/werkgever/tokens";
+    [Parameter] public string? TestId { get; set; }
+}

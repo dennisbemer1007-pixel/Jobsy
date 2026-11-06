@@ -1,0 +1,23 @@
+@namespace Jobsy.Web.Components.Shared.Charts
+
+<div class="pole-sliders @(Ghost ? "pole-sliders--ghost" : null)">
+    @foreach (var item in Items)
+    {
+        <div class="pole-sliders__row">
+            <span class="pole-sliders__end pole-sliders__end--low">@item.LowLabel</span>
+            <div class="pole-sliders__track" aria-hidden="true">
+                @if (!Ghost && item.Percent is int pct)
+                {
+                    <span class="pole-sliders__dot" style="--p:@(pct)%"></span>
+                }
+            </div>
+            <span class="pole-sliders__end pole-sliders__end--high">@item.HighLabel</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<(string LowLabel, string HighLabel, int? Percent)> Items { get; set; } = [];
+
+    [Parameter] public bool Ghost { get; set; }
+}

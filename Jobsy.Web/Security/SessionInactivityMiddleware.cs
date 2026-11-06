@@ -51,16 +51,13 @@ public sealed class SessionInactivityMiddleware
 
         if (lastActivity is null)
         {
+            // Unreadable legacy cookie (deploy/key-ring/subject migration) or truly missing:
+            // recover while Jobsy.Auth is still valid — same as /account/session-activity.
             if (hasActivityCookie)
             {
-                // Present but unreadable (tampered / future / key mismatch) → force re-auth.
-                await ExpireSessionAsync(context);
-                return;
+                SessionActivityCookie.Clear(context);
             }
 
-            // Truly missing: recover by stamping. This covers the post-login race and avoids
-            // blocking POST /account/login when an old auth cookie is still present.
-            // Deleting the cookie is equivalent to an activity ping (same as /account/session-activity).
             SessionActivityCookie.Stamp(context, now);
             await _next(context);
             return;
@@ -77,25 +74,7 @@ public sealed class SessionInactivityMiddleware
     }
 
     private static bool IsIdleExempt(System.Security.Claims.ClaimsPrincipal user)
-    {
-        if (!DeviceSessionCookie.HasDeviceSessionClaim(user))
-        {
-            return false;
-        }
-
-        // Idle logout stays for Employer and Admin roles even with a device session.
-        if (user.IsInRole("Admin")
-            || user.IsInRole("BranchManager")
-            || user.IsInRole("RegionalManager")
-            || user.IsInRole("EnterpriseManager")
-            || user.IsInRole("Intermediary")
-            || user.IsInRole("SalesManager"))
-        {
-            return false;
-        }
-
-        return user.IsInRole("Candidate") || user.IsInRole("Ambassadeur");
-    }
+        => DeviceSessionCookie.HasDeviceSessionClaim(user);
 
     private static bool ShouldSkip(HttpContext context)
     {
@@ -111,10 +90,12 @@ public sealed class SessionInactivityMiddleware
             || string.Equals(path, "/manifest.webmanifest", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/image-cache-sw.js", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/logout", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/logout", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/session-security", StringComparison.OrdinalIgnoreCase)
             // Login must always be reachable even when a stale auth cookie is still present.
             || string.Equals(path, "/account/login", StringComparison.OrdinalIgnoreCase)
             || string.Equals(path, "/account/demo-login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/leerling", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/account/external", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/signin-", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/login", StringComparison.OrdinalIgnoreCase))

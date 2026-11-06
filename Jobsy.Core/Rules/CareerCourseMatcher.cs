@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Rules;
 
@@ -85,7 +86,7 @@ public static class CareerCourseMatcher
         return count;
     }
 
-    /// <summary>0–100 share of step courses present on the profile (0 when the step has no courses).</summary>
+    /// <summary>Internal planning metric only — never show this to candidates or employers.</summary>
     public static int StepMatchPercent(IReadOnlyList<string> courses, IEnumerable<CandidateCertificateDto>? certificates)
     {
         if (courses.Count == 0)
@@ -99,6 +100,45 @@ public static class CareerCourseMatcher
 
     public static bool AllCoursesMatched(IReadOnlyList<string> courses, IEnumerable<CandidateCertificateDto>? certificates)
         => courses.Count > 0 && MatchedCount(courses, certificates) == courses.Count;
+
+    /// <summary>Localization key for why an offer fits (no percentages).</summary>
+    public static string RelevanceReasonKey(
+        TrainingOfferSection section,
+        string? competencyCategory,
+        string? stepTitle)
+    {
+        if (section == TrainingOfferSection.NextStep && !string.IsNullOrWhiteSpace(stepTitle))
+        {
+            return "Training.Reason.NextStep";
+        }
+
+        if (section == TrainingOfferSection.Growth && !string.IsNullOrWhiteSpace(competencyCategory))
+        {
+            return $"Training.Reason.Growth.{competencyCategory}";
+        }
+
+        return section switch
+        {
+            TrainingOfferSection.General => "Training.Reason.General",
+            _ => "Training.Reason.Fallback"
+        };
+    }
+
+    public static string FormatRelevanceReason(
+        bool english,
+        string? reasonNl,
+        string? reasonEn,
+        string fallbackNl,
+        string fallbackEn)
+    {
+        var custom = english ? reasonEn : reasonNl;
+        if (!string.IsNullOrWhiteSpace(custom))
+        {
+            return custom.Trim();
+        }
+
+        return english ? fallbackEn : fallbackNl;
+    }
 
     private static string StripDiacritics(string? value)
     {

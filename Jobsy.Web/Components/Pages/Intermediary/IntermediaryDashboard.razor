@@ -1,6 +1,8 @@
 @page "/intermediary"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Dashboard
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -15,7 +17,7 @@
             <p class="login-lead">Prestaties per opdrachtgever: werving, conversie, tokens en acties die aandacht vragen.</p>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:flex-end">
-            <DashboardRefreshButton Period="_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <DashboardRefreshButton Period="@_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
             <div class="period-tabs period-tabs--compact" role="tablist" aria-label="@Culture["Common.Period"]">
             @foreach (var p in PeriodKeys)
             {
@@ -89,7 +91,7 @@
                                     <th scope="col" class="client-perf-table__num">Clicks</th>
                                     <th scope="col" class="client-perf-table__num">Sollicitaties</th>
                                     <th scope="col" class="client-perf-table__num">Conversie</th>
-                                    <th scope="col">Match</th>
+                                    <th scope="col">Reistijd</th>
                                     <th scope="col" class="client-perf-table__num">Tokens</th>
                                     <th scope="col" class="client-perf-table__num">Verloopt</th>
                                     <th scope="col">Acties</th>
@@ -109,7 +111,7 @@
                                         </th>
                                         <td data-label="Status">
                                             <span class="client-perf-badge client-perf-badge--@badgeMod">
-                                                @ClientPerformanceStatus.LabelNl(badge)
+                                                @ClientPerformanceStatus.LabelNl(badge, row.TokenBalance)
                                             </span>
                                         </td>
                                         <td data-label="Vacatures" class="client-perf-table__num">@row.ActiveVacancies</td>
@@ -119,7 +121,7 @@
                                         <td data-label="Clicks" class="client-perf-table__num">@row.Clicks</td>
                                         <td data-label="Sollicitaties" class="client-perf-table__num">@row.Applications</td>
                                         <td data-label="Conversie" class="client-perf-table__num">@row.ConversionRate.ToString("0.#")%</td>
-                                        <td data-label="Match" class="client-perf-table__match">
+                                        <td data-label="Reistijd" class="client-perf-table__match">
                                             @if (row.AvgTravelMinutes > 0 || !string.IsNullOrWhiteSpace(row.TopTransportMode))
                                             {
                                                 <span>@row.AvgTravelMinutes.ToString("0.#") min</span>
@@ -142,13 +144,13 @@
                                         <td data-label="Acties">
                                             <div class="client-perf-actions">
                                                 <a class="client-perf-action"
-                                                   href="@($"/employer/vacancies?q={Uri.EscapeDataString(row.CompanyName)}")">
+                                                   href="@($"/werkgever/vacatures?q={Uri.EscapeDataString(row.CompanyName)}")">
                                                     Vacatures
                                                 </a>
-                                                <a class="client-perf-action" href="/branch/applicants">
+                                                <a class="client-perf-action" href="/werkgever/sollicitaties">
                                                     Sollicitaties
                                                 </a>
-                                                <a class="client-perf-action" href="/employer/tokens">
+                                                <a class="client-perf-action" href="/werkgever/tokens">
                                                     Tokens
                                                 </a>
                                             </div>

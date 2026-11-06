@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -22,8 +23,10 @@ public class FreePublishRulesTests
     [InlineData(null, "2026-11-01", false)]
     public void IsActive_respects_inclusive_end_date(string? untilRaw, string nowRaw, bool expected)
     {
-        DateOnly? until = untilRaw is null ? null : DateOnly.Parse(untilRaw);
-        var now = DateTime.Parse(nowRaw + "T12:00:00Z").ToUniversalTime();
+        DateOnly? until = untilRaw is null
+            ? null
+            : DateOnly.ParseExact(untilRaw, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var now = DateTime.Parse(nowRaw + "T12:00:00Z", CultureInfo.InvariantCulture).ToUniversalTime();
         Assert.Equal(expected, FreePublishRules.IsActive(until, now));
     }
 
@@ -71,7 +74,7 @@ public class FreePublishProductTests
     }
 
     [Fact]
-    public async Task Publish_costs_again_after_promo_ends()
+    public async Task Publish_stays_free_after_promo_ends()
     {
         await using var db = CreateDb();
         SeedFreePublish(db, new DateOnly(2020, 1, 1));
@@ -83,7 +86,10 @@ public class FreePublishProductTests
         var result = await sut.PublishAsync(vacancy, new VacancyPublishOptions(), actorUserId: null);
 
         Assert.True(result.Succeeded, result.ErrorMessage);
-        Assert.Equal(0m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
+        Assert.DoesNotContain(
+            await db.TokenTransactions.Where(t => t.CompanyId == companyId).ToListAsync(),
+            t => t.Kind == TokenTransactionKind.Spend && t.Reason == TokenSpendReason.Publish);
+        Assert.Equal(1m, await db.TokenTransactions.Where(t => t.CompanyId == companyId).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -113,12 +119,12 @@ public class FreePublishProductTests
         Assert.Equal(FreePublishRules.DefaultUntil, activated.FreePublishUntil);
 
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
-        Assert.True(branch.HasReceivedWelcomeToken);
+        Assert.False(branch.HasReceivedWelcomeToken);
         Assert.Equal(0m, await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => t.Amount));
     }
 
     [Fact]
-    public async Task Welcome_token_granted_when_promo_disabled()
+    public async Task Welcome_token_not_granted_at_activation_when_promo_disabled()
     {
         await using var db = CreateDb();
         SeedFreePublish(db, freeUntil: null);
@@ -140,11 +146,12 @@ public class FreePublishProductTests
             .SingleAsync();
 
         var activated = await sut.ActivateAsync(token!);
-        Assert.True(activated.WelcomeTokenGranted);
+        Assert.False(activated.WelcomeTokenGranted);
         Assert.Null(activated.FreePublishUntil);
 
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
-        Assert.Equal(1m, await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => t.Amount));
+        Assert.False(branch.HasReceivedWelcomeToken);
+        Assert.Equal(0m, await db.TokenTransactions.Where(t => t.CompanyId == branch.Id).SumAsync(t => t.Amount));
     }
 
     [Fact]
@@ -180,7 +187,18 @@ public class FreePublishProductTests
         var companyId = activated.BranchCompanyId!.Value;
         var company = await db.Companies.SingleAsync(c => c.Id == companyId);
         Assert.Equal(KvkVerificationStatus.Verified, company.KvkVerificationStatus);
+        Assert.Equal(CompanyVerificationStatus.Unverified, company.VerificationStatus);
         Assert.Equal(0m, await BalanceAsync(db, companyId));
+
+        // Verify company so free-publish promo can apply.
+        company.VerificationStatus = CompanyVerificationStatus.Verified;
+        company.VerificationMethod = CompanyVerificationMethod.Manual;
+        company.VerifiedAtUtc = DateTime.UtcNow;
+        company.VerificationUpdatedAtUtc = DateTime.UtcNow;
+        // Promo active → skip welcome at verification path would mark HasReceived; simulate that.
+        company.HasReceivedWelcomeToken = true;
+        company.WelcomeTokenLedgerCredited = false;
+        await db.SaveChangesAsync();
 
         var products = CreateProducts(db);
 
@@ -198,25 +216,24 @@ public class FreePublishProductTests
             await db.TokenTransactions.Where(t => t.CompanyId == companyId).ToListAsync(),
             t => t.Kind == TokenTransactionKind.Spend);
 
-        // 3) Highlight bij publiceren zonder saldo → onvoldoende tokens (highlight kost wél)
+        // 3) Highlight bij publiceren zonder saldo → pending approval (highlight kost wél)
         var draft2 = await SeedDraftForCompanyAsync(db, companyId, "Wil highlight");
-        var blocked = await products.PublishAsync(
+        var pending = await products.PublishAsync(
             draft2,
             new VacancyPublishOptions(Highlight: true),
             actorUserId: activated.UserId);
-        Assert.False(blocked.Succeeded);
-        Assert.True(blocked.InsufficientTokens);
-        Assert.Equal(VacancyStatus.Draft, draft2.Status);
+        Assert.True(pending.Succeeded);
+        Assert.True(pending.PendingApproval);
+        Assert.Equal(VacancyStatus.PendingApproval, draft2.Status);
         Assert.Equal(0m, await BalanceAsync(db, companyId));
 
-        // 4) Tokens kopen/grant → publiceren mét highlight: alleen highlight-tokens (2) afgeschreven
+        // 4) Tokens kopen/grant → goedkeuren: alleen highlight-tokens (2) afgeschreven
         await GrantTokensAsync(db, companyId, 5m);
         Assert.Equal(5m, await BalanceAsync(db, companyId));
 
-        var withHighlight = await products.PublishAsync(
+        var withHighlight = await products.ApprovePublishAsync(
             draft2,
-            new VacancyPublishOptions(Highlight: true),
-            actorUserId: activated.UserId);
+            activated.UserId);
         Assert.True(withHighlight.Succeeded, withHighlight.ErrorMessage);
         Assert.Equal(VacancyStatus.Active, draft2.Status);
         Assert.True(draft2.IsHighlighted);
@@ -290,6 +307,18 @@ public class FreePublishProductTests
         Assert.NotNull(activated.OrganizationCompanyId);
         Assert.NotNull(activated.BranchCompanyId);
 
+        var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
+        branch.VerificationStatus = CompanyVerificationStatus.Verified;
+        branch.VerificationMethod = CompanyVerificationMethod.Manual;
+        branch.VerifiedAtUtc = DateTime.UtcNow;
+        branch.VerificationUpdatedAtUtc = DateTime.UtcNow;
+        var org = await db.Companies.SingleAsync(c => c.Id == activated.OrganizationCompanyId);
+        org.VerificationStatus = CompanyVerificationStatus.Verified;
+        org.VerificationMethod = CompanyVerificationMethod.Manual;
+        org.VerifiedAtUtc = DateTime.UtcNow;
+        org.VerificationUpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
         var orgDraft = await SeedDraftForCompanyAsync(db, activated.BranchCompanyId!.Value, "Org gratis");
         var orgPublish = await products.PublishAsync(
             orgDraft,
@@ -307,7 +336,6 @@ public class FreePublishProductTests
         var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             FreePublishUntil: new DateOnly(2026, 12, 31)));
 
@@ -317,7 +345,6 @@ public class FreePublishProductTests
         var preserved = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             SessionInactivityTimeoutMinutes: 15));
         Assert.Equal(new DateOnly(2026, 12, 31), preserved.FreePublishUntil);
@@ -326,7 +353,6 @@ public class FreePublishProductTests
         var cleared = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             FreePublishUntil: null,
             ClearFreePublishUntil: true));
@@ -341,7 +367,6 @@ public class FreePublishProductTests
         var created = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             SessionInactivityTimeoutMinutes: 30));
         Assert.Equal(FreePublishRules.DefaultUntil, created.FreePublishUntil);
@@ -353,7 +378,6 @@ public class FreePublishProductTests
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             VacancyContentModerationEnabled = true,
-            ExposeRegistrationActivationLinks = true,
             FreePublishUntil = freeUntil,
             UpdatedAtUtc = DateTime.UtcNow
         });
@@ -397,7 +421,11 @@ public class FreePublishProductTests
                 KvkNumber = "1",
                 Address = "a",
                 Location = new GeoPoint(51.98, 4.22),
-                KvkVerificationStatus = KvkVerificationStatus.Verified
+                KvkVerificationStatus = KvkVerificationStatus.Verified,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
         }
 

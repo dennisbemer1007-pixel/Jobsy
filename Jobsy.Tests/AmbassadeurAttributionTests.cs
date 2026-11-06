@@ -1,3 +1,4 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -53,8 +54,7 @@ public class AmbassadeurAttributionTests
         await db.SaveChangesAsync();
 
         var settings = new AmbassadeurSettingsService(db);
-        var attribution = new AmbassadeurAttributionService(
-            db, settings, NullLogger<AmbassadeurAttributionService>.Instance);
+        var attribution = new AmbassadeurAttributionService(db, settings, NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures());
 
         var candidateId = Guid.NewGuid();
         db.Users.Add(new User
@@ -83,7 +83,11 @@ public class AmbassadeurAttributionTests
             KvkNumber = "87654321",
             Address = "X",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -139,13 +143,21 @@ public class AmbassadeurAttributionTests
         db.Users.AddRange(
             new User
             {
-                Id = c1, Email = "c1@t.local", FullName = "C1", Role = UserRole.Candidate,
-                IsActive = true, ReferredByAmbassadeurUserId = ambassadeurId
+                Id = c1,
+                Email = "c1@t.local",
+                FullName = "C1",
+                Role = UserRole.Candidate,
+                IsActive = true,
+                ReferredByAmbassadeurUserId = ambassadeurId
             },
             new User
             {
-                Id = c2, Email = "c2@t.local", FullName = "C2", Role = UserRole.Candidate,
-                IsActive = true, ReferredByAmbassadeurUserId = ambassadeurId
+                Id = c2,
+                Email = "c2@t.local",
+                FullName = "C2",
+                Role = UserRole.Candidate,
+                IsActive = true,
+                ReferredByAmbassadeurUserId = ambassadeurId
             });
 
         var companyId = Guid.NewGuid();
@@ -155,7 +167,11 @@ public class AmbassadeurAttributionTests
             Name = "Co",
             KvkNumber = "11111111",
             Address = "A",
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancyId = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy
@@ -182,7 +198,7 @@ public class AmbassadeurAttributionTests
         });
         await db.SaveChangesAsync();
 
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var settings = new AmbassadeurSettingsService(db);
         var dashboard = new AmbassadeurDashboardService(db, ledger, settings);
         var dto = await dashboard.GetDashboardAsync(ambassadeurId);

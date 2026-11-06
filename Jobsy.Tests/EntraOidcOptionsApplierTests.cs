@@ -26,6 +26,8 @@ public class EntraOidcOptionsApplierTests
 
         Assert.Equal("real-client-id", options.ClientId);
         Assert.Equal("real-client-secret", options.ClientSecret);
+        Assert.Equal("real-client-id", options.TokenValidationParameters.ValidAudience);
+        Assert.Contains("real-client-id", options.TokenValidationParameters.ValidAudiences);
         Assert.Equal(
             "https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555/v2.0",
             options.Authority);
@@ -36,6 +38,7 @@ public class EntraOidcOptionsApplierTests
     [Theory]
     [InlineData("https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555/v2.0")]
     [InlineData("https://sts.windows.net/11111111-2222-3333-4444-555555555555/")]
+    [InlineData("https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0")]
     public void ValidateMicrosoftIssuer_accepts_entra_issuers(string issuer)
     {
         var result = EntraOidcOptionsApplier.ValidateMicrosoftIssuer(

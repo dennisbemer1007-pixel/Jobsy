@@ -19,6 +19,8 @@ public static class VacancyCategoryExtraFields
     public const string PhysicalLoad = "physicalLoad";
     public const string ContractType = "contractType";
     public const string ExperienceLevel = "experienceLevel";
+    /// <summary>ESCO occupation id linked to the vacancy title (wizard / day-in-life).</summary>
+    public const string OccupationEscoId = "occupationEscoId";
 
     public sealed record FieldDefinition(
         string Key,

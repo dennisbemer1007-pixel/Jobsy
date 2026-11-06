@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Security.Claims;
+using Jobsy.Core.Options;
+using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Web.Security;
 
@@ -27,10 +30,12 @@ public static class SessionActivityCookie
         var payload = subject + "|" + utcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
         var protectedValue = protector.Protect(payload);
 
+        var opts = http.RequestServices.GetService<IOptions<SessionAuthOptions>>()?.Value;
+        var lifetimeMinutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(opts);
         http.Response.Cookies.Append(
             SessionInactivityMiddleware.LastActivityCookieName,
             protectedValue,
-            BuildCookieOptions(http, utcNow.AddHours(12)));
+            BuildCookieOptions(http, utcNow.AddMinutes(lifetimeMinutes)));
     }
 
     public static DateTimeOffset? TryRead(HttpContext http)

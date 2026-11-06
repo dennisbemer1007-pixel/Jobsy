@@ -14,6 +14,13 @@ public interface ITrainingUpskillService
         string campaign,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Passport "Groei verder" slots — empty when no curated free match (D5).</summary>
+    Task<IReadOnlyList<PassportCourseCardDto>> RecommendPassportAsync(
+        Guid userId,
+        string? searchBlob,
+        IReadOnlyList<string>? searchKeys,
+        CancellationToken cancellationToken = default);
+
     Task<TrainingTrackedLinkDto> TrackAsync(
         Guid userId,
         Guid offerId,
@@ -53,6 +60,19 @@ public sealed record TrainingOfferCardDto(
     string CtaLabel,
     string Advice);
 
+public sealed record PassportCourseCardDto(
+    Guid OfferId,
+    string Title,
+    string ProviderName,
+    string Type,
+    int? DurationValue,
+    string? DurationUnit,
+    string Delivery,
+    string? Location,
+    bool IsFree,
+    bool IsPartner,
+    string Rel);
+
 public sealed record TrainingTrackedLinkDto(Guid ClickId, string Url, string CandidateHash);
 
 public sealed record TrainingProviderAdminDto(
@@ -79,7 +99,16 @@ public sealed record TrainingOfferAdminDto(
     string KeysCsv,
     string? ExternalPath,
     bool IsActive,
-    int SortOrder);
+    int SortOrder,
+    string Type,
+    int? DurationValue,
+    string? DurationUnit,
+    string Delivery,
+    string? Location,
+    bool IsFree,
+    bool IsPartner,
+    string? AffiliateCode,
+    bool ShowInPassport);
 
 public sealed record TrainingProviderUpsertRequest(
     Guid? Id,
@@ -104,7 +133,16 @@ public sealed record TrainingOfferUpsertRequest(
     string? KeysCsv,
     string? ExternalPath,
     bool IsActive,
-    int SortOrder);
+    int SortOrder,
+    TrainingOfferType Type = TrainingOfferType.Cursus,
+    int? DurationValue = null,
+    TrainingDurationUnit? DurationUnit = null,
+    TrainingDeliveryMode Delivery = TrainingDeliveryMode.Online,
+    string? Location = null,
+    bool IsFree = false,
+    bool IsPartner = false,
+    string? AffiliateCode = null,
+    bool ShowInPassport = false);
 
 public sealed record TrainingConversionRequest(
     Guid? ClickId,

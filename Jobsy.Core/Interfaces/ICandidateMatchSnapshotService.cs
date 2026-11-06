@@ -24,4 +24,7 @@ public interface ICandidateMatchSnapshotService
         CancellationToken cancellationToken = default);
 
     void InvalidateContextCache(Guid userId);
+
+    /// <summary>Marks stored matches stale after test/preference writes (avoids fingerprint on every GET).</summary>
+    Task MarkInputsStaleAsync(Guid userId, CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,77 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<header class="test-result-header @CssClass">
+    <div class="test-result-header__main">
+        <h1>@Culture[TitleKey]</h1>
+        <p class="test-detail__status-row">
+            <span class="test-status-badge test-status-badge--@(DeepCompleted ? "gold" : "success")">
+                <span aria-hidden="true">@(DeepCompleted ? "★" : "✓")</span>
+                @Culture[DeepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
+            </span>
+            @if (!string.IsNullOrWhiteSpace(CompletedMeta))
+            {
+                <span class="muted">@CompletedMeta · @Culture.Format("TestResult.ThemesFromQuestions", ThemeCount, QuestionCount)</span>
+            }
+        </p>
+    </div>
+    <div class="test-result-actions">
+        <div class="test-result-actions__btns">
+            @if (EditModeEnabled)
+            {
+                <button type="button"
+                        class="btn-outline-brand"
+                        disabled="@(Busy || AdjustmentsRemaining <= 0)"
+                        aria-describedby="@QuotaElementId"
+                        @onclick="OnEdit">
+                    ✎ @Culture["TestResult.EditAnswers"]
+                </button>
+            }
+            <button type="button"
+                    class="test-result-actions__ghost"
+                    disabled="@(Busy || AdjustmentsRemaining <= 0)"
+                    aria-describedby="@QuotaElementId"
+                    @onclick="OnRetake">
+                ↻ @Culture["TestResult.Retake"]
+            </button>
+        </div>
+        @if (AdjustmentsRemaining <= 0)
+        {
+            <p id="@QuotaElementId" class="test-result-quota test-result-quota--zero" role="status">
+                <span class="test-result-quota__icon" aria-hidden="true">ⓘ</span>
+                @Culture.Format("TestResult.Quota.Zero", AdjustmentsMax)
+            </p>
+        }
+        else
+        {
+            <p id="@QuotaElementId" class="test-result-quota" role="status">
+                <span aria-hidden="true">ⓘ</span>
+                @if (AdjustmentsRemaining == 1)
+                {
+                    @Culture.Format("TestResult.Quota.LineOne", AdjustmentsMax)
+                }
+                else
+                {
+                    @Culture.Format("TestResult.Quota.Line", AdjustmentsRemaining, AdjustmentsMax)
+                }
+            </p>
+        }
+    </div>
+</header>
+
+@code {
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter, EditorRequired] public string TitleKey { get; set; } = "";
+    [Parameter] public bool DeepCompleted { get; set; }
+    [Parameter] public string? CompletedMeta { get; set; }
+    [Parameter] public int ThemeCount { get; set; }
+    [Parameter] public int QuestionCount { get; set; }
+    [Parameter] public bool EditModeEnabled { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public int AdjustmentsRemaining { get; set; }
+    [Parameter] public int AdjustmentsMax { get; set; }
+    [Parameter] public string QuotaElementId { get; set; } = "test-result-quota";
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnRetake { get; set; }
+}

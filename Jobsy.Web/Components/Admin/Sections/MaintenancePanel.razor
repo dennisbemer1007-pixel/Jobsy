@@ -1,0 +1,372 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Core.Time
+@using Jobsy.Web.Components
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+@*
+  The maintenance switch (errors 05 §05.5). Lives in "Platforminstellingen → Functies" next to the
+  catalog-driven rows, but keeps its own endpoint because it carries an end time and an internal note.
+*@
+<section class="detail-card admin-settings-group admin-maintenance" aria-labelledby="settings-group-maintenance">
+    <h2 id="settings-group-maintenance">@Culture["Admin.Maintenance.Title"]</h2>
+    <p class="muted admin-settings-group__desc">@Culture["Admin.Maintenance.Desc"]</p>
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <AdminToggleRow Title="@Culture["Admin.Maintenance.Title"]"
+                        Description="@Culture["Admin.Maintenance.Desc"]"
+                        Meta="@StatusMeta"
+                        IsDirty="@_enabled">
+            <Control>
+                <button type="button"
+                        class="admin-switch @(_enabled ? "is-on" : null)"
+                        role="switch"
+                        aria-checked="@(_enabled ? "true" : "false")"
+                        aria-label="@Culture["Admin.Maintenance.Title"]"
+                        disabled="@_busy"
+                        @onclick="ToggleAsync">
+                    <span class="admin-switch__thumb"></span>
+                </button>
+            </Control>
+            <Impact>
+                <AdminImpactNote Tone="danger">
+                    @Culture["Admin.Maintenance.Impact"]
+                </AdminImpactNote>
+            </Impact>
+        </AdminToggleRow>
+
+        <div class="admin-maintenance__fields">
+            <label class="admin-maintenance__field">
+                <span>@Culture["Admin.Maintenance.ExpectedEnd"]</span>
+                <div class="jobsy-date-field jobsy-date-field--typed admin-maintenance__datetime">
+                    <div class="jobsy-date-field__control">
+                        <input type="text"
+                               class="admin-settings-input admin-settings-input--datetime jobsy-date-field__text"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               lang="@_htmlLang"
+                               placeholder="@_expectedEndPlaceholder"
+                               value="@_expectedEndDisplay"
+                               disabled="@_busy"
+                               @onchange="OnExpectedEndDisplayChanged" />
+                        <button type="button"
+                                class="jobsy-date-field__picker-btn"
+                                tabindex="-1"
+                                disabled="@_busy"
+                                aria-label="@_pickerLabel"
+                                @onclick="OpenExpectedEndPickerAsync">
+                            <span class="jobsy-date-field__calendar-icon" aria-hidden="true"></span>
+                        </button>
+                        <input @ref="_expectedEndNative"
+                               type="datetime-local"
+                               class="jobsy-date-field__input jobsy-date-field__input--native admin-maintenance__datetime-native"
+                               lang="@_htmlLang"
+                               value="@_expectedEndLocal"
+                               tabindex="-1"
+                               aria-hidden="true"
+                               disabled="@_busy"
+                               @onchange="OnExpectedEndNativeChanged" />
+                    </div>
+                </div>
+                <span class="admin-maintenance__hint">@Culture["Admin.Maintenance.ExpectedEndHint"]</span>
+            </label>
+            <label class="admin-maintenance__field">
+                <span>@Culture["Admin.Maintenance.Note"]</span>
+                <input type="text"
+                       class="admin-settings-input admin-settings-input--wide"
+                       maxlength="@MaintenanceRules.NoteMaxLength"
+                       value="@_note"
+                       disabled="@_busy"
+                       @onchange="OnNoteChanged" />
+                <span class="admin-maintenance__hint">@Culture["Admin.Maintenance.NoteHint"]</span>
+            </label>
+        </div>
+
+        <p class="admin-maintenance__hint">@Culture["Admin.Maintenance.Propagation"]</p>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+</section>
+
+<LobsyFriendlyDialog IsOpen="_confirmOpen"
+                     Title="@Culture["Admin.Maintenance.ConfirmTitle"]"
+                     Lead="@Culture["Admin.Maintenance.ConfirmLead"]"
+                     OnClose="CancelConfirm">
+    <div class="inline-actions">
+        <button type="button" class="btn-compact" @onclick="CancelConfirm">@Culture["Common.Cancel"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
+            @Culture["Common.Confirm"]
+        </button>
+    </div>
+</LobsyFriendlyDialog>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _confirmOpen;
+    private bool _enabled;
+    private string _expectedEndLocal = "";
+    private string _expectedEndDisplay = "";
+    private string _htmlLang = "nl-NL";
+    private string _expectedEndPlaceholder = "dd-mm-jjjj uu:mm";
+    private string _pickerLabel = "Kalender openen";
+    private ElementReference _expectedEndNative;
+    private string _note = "";
+    private DateTime? _updatedAtUtc;
+    private string? _message;
+
+    /// <summary>"Actief sinds {tijd} door {admin}" while on; the audit log holds the actor name.</summary>
+    private string? StatusMeta
+    {
+        get
+        {
+            if (!_enabled || _updatedAtUtc is not DateTime since)
+            {
+                return null;
+            }
+
+            return string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                Culture["Admin.Maintenance.ActiveSince"],
+                AmsterdamTime.FormatDateTime(since),
+                Culture["Admin.Maintenance.UnknownAdmin"]);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _htmlLang = Culture.Language switch
+        {
+            "en" => "en-GB",
+            "pl" => "pl-PL",
+            "ro" => "ro-RO",
+            "ar" => "ar",
+            _ => "nl-NL"
+        };
+        _expectedEndPlaceholder = Culture.Language switch
+        {
+            "en" => "dd-mm-yyyy hh:mm",
+            _ => "dd-mm-jjjj uu:mm"
+        };
+        _pickerLabel = Culture.Language switch
+        {
+            "en" => "Open date and time picker",
+            _ => "Datum en tijd kiezen"
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Apply(await Api.GetMaintenanceAsync());
+        }
+        catch (Exception ex)
+        {
+            _message = Jobsy.Web.Services.UserFacingError.MessageKeyFor(ex) is { } key
+                ? Culture[key]
+                : Culture["Common.Error.TryAgain"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    /// <summary>Turning it on asks for a confirm; turning it off saves straight away (05.5).</summary>
+    private Task ToggleAsync()
+    {
+        if (_enabled)
+        {
+            return SaveAsync(false);
+        }
+
+        _confirmOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelConfirm()
+    {
+        _confirmOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private void OnExpectedEndDisplayChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        _expectedEndDisplay = raw;
+        if (TryParseExpectedEndLocal(raw, Culture.Language, out var local))
+        {
+            SyncExpectedEndFromLocal(local);
+        }
+        else if (string.IsNullOrWhiteSpace(raw))
+        {
+            _expectedEndLocal = "";
+        }
+    }
+
+    private void OnExpectedEndNativeChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        _expectedEndLocal = raw;
+        if (TryParseInvariantDateTimeLocal(raw, out var local))
+        {
+            _expectedEndDisplay = FormatExpectedEndDisplay(local, Culture.Language);
+        }
+        else if (string.IsNullOrWhiteSpace(raw))
+        {
+            _expectedEndDisplay = "";
+        }
+    }
+
+    private async Task OpenExpectedEndPickerAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        await Js.InvokeVoidAsync("jobsyExtras.ensure");
+        await Js.InvokeVoidAsync("jobsyExtras.openDatePicker", _expectedEndNative);
+    }
+
+    private void OnNoteChanged(ChangeEventArgs e)
+        => _note = e.Value?.ToString() ?? "";
+
+    private async Task SaveAsync(bool enabled)
+    {
+        _confirmOpen = false;
+        _busy = true;
+        _message = null;
+        try
+        {
+            Apply(await Api.SaveMaintenanceAsync(new MaintenanceUpdateForm
+            {
+                Enabled = enabled,
+                ExpectedEndUtc = ParseExpectedEndUtc(_expectedEndLocal),
+                Note = _note
+            }));
+            _message = Culture["Admin.Maintenance.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _message = Culture[Jobsy.Web.Services.UserFacingError.MessageKeyFor(ex)];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Apply(MaintenanceStateItem? item)
+    {
+        _enabled = item?.Enabled ?? false;
+        _note = item?.Note ?? "";
+        _updatedAtUtc = item?.UpdatedAtUtc;
+        if (item?.ExpectedEndUtc is DateTime end)
+        {
+            var local = AmsterdamTime.ToLocal(end);
+            SyncExpectedEndFromLocal(local);
+        }
+        else
+        {
+            _expectedEndLocal = "";
+            _expectedEndDisplay = "";
+        }
+    }
+
+    private void SyncExpectedEndFromLocal(DateTime local)
+    {
+        _expectedEndLocal = local.ToString("yyyy-MM-dd\\THH:mm", System.Globalization.CultureInfo.InvariantCulture);
+        _expectedEndDisplay = FormatExpectedEndDisplay(local, Culture.Language);
+    }
+
+    internal static string FormatExpectedEndDisplay(DateTime localAmsterdam, string? language)
+        => language switch
+        {
+            "en" => localAmsterdam.ToString("dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
+            _ => localAmsterdam.ToString("dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+        };
+
+    internal static bool TryParseExpectedEndLocal(string? text, string? language, out DateTime local)
+    {
+        local = default;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var trimmed = text.Trim();
+        if (TryParseInvariantDateTimeLocal(trimmed, out local))
+        {
+            return true;
+        }
+
+        var culture = language switch
+        {
+            "en" => System.Globalization.CultureInfo.GetCultureInfo("en-GB"),
+            _ => System.Globalization.CultureInfo.GetCultureInfo("nl-NL")
+        };
+        var formats = new[]
+        {
+            "dd-MM-yyyy HH:mm",
+            "dd-MM-yyyy H:mm",
+            "d-M-yyyy HH:mm",
+            "d-M-yyyy H:mm"
+        };
+        return DateTime.TryParseExact(
+            trimmed,
+            formats,
+            culture,
+            System.Globalization.DateTimeStyles.None,
+            out local);
+    }
+
+    internal static bool TryParseInvariantDateTimeLocal(string? value, out DateTime local)
+    {
+        local = default;
+        return !string.IsNullOrWhiteSpace(value)
+               && DateTime.TryParse(
+                   value,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.None,
+                   out local);
+    }
+
+    /// <summary>The admin types Amsterdam time; the API stores UTC.</summary>
+    internal static DateTime? ParseExpectedEndUtc(string? localValue)
+    {
+        if (string.IsNullOrWhiteSpace(localValue))
+        {
+            return null;
+        }
+
+        if (TryParseInvariantDateTimeLocal(localValue, out var fromNative))
+        {
+            return AmsterdamTime.ToUtc(fromNative);
+        }
+
+        if (TryParseExpectedEndLocal(localValue, null, out var fromDisplay))
+        {
+            return AmsterdamTime.ToUtc(fromDisplay);
+        }
+
+        return null;
+    }
+
+    /// <summary>Test hooks for the bUnit panel test.</summary>
+    public bool IsOnForTests => _enabled;
+
+    public Task ConfirmOnForTestsAsync() => SaveAsync(true);
+}

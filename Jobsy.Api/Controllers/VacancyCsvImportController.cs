@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -17,6 +18,7 @@ namespace Jobsy.Api.Controllers;
 [Authorize(Roles = $"{JobsyRoles.Intermediary},{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
 [EnableRateLimiting("public-write")]
 [RequestSizeLimit(10 * 1024 * 1024)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class VacancyCsvImportController : ControllerBase
 {
     public const string PublishHint =

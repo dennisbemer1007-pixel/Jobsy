@@ -48,7 +48,11 @@ public sealed class HybridDashboardCacheTests
             KvkNumber = "11112222",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Vacancies.Add(new Vacancy
         {
@@ -112,15 +116,16 @@ public sealed class HybridDashboardCacheTests
         var root = FindRepoRoot();
         var button = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Shared", "DashboardRefreshButton.razor"));
         Assert.Contains("Ververs", button, StringComparison.Ordinal);
-        Assert.Contains("api/dashboard/refresh", File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Services", "JobsyApiClient.cs")));
+        var clientDir = Path.Combine(root, "Jobsy.Web", "Services", "ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
+        Assert.Contains("api/dashboard/refresh", client);
 
         string[] files =
         [
-            "Components/Pages/Admin/AdminHomePanel.razor",
-            "Components/Pages/EmployerHomePanel.razor",
+            "Components/Admin/Sections/AdminHomePanel.razor",
+            "Components/Home/EmployerHomePanel.razor",
             "Components/Pages/Intermediary/IntermediaryDashboard.razor",
-            "Components/Pages/SalesManagerHomePanel.razor",
-            "Components/Pages/AmbassadeurHomePanel.razor"
+            "Components/Home/AmbassadeurHomePanel.razor"
         ];
 
         foreach (var relative in files)
@@ -240,23 +245,27 @@ public sealed class HybridDashboardCacheTests
             => Task.FromResult<IReadOnlyList<CommissionLedgerEntry>>([]);
 
         public Task<CommissionLedgerEntry?> TryCreditFounderBonusAsync(
-            Guid salesManagerUserId, Guid companyId, string paymentId, int? firstYearSlot, CancellationToken cancellationToken = default)
+            Guid salesManagerUserId, Guid companyId, string paymentId, int? firstYearSlot,
+            DateTime? availableFromUtc = null, CancellationToken cancellationToken = default)
             => Task.FromResult<CommissionLedgerEntry?>(null);
 
         public Task<CommissionLedgerEntry?> TryCreditTokenCommissionAsync(
             Guid salesManagerUserId, Guid companyId, Guid tokenCheckoutId, decimal purchaseAmountEuro,
             DateTime? firstYearStartedAt, decimal? directRate = null, int? durationDays = null,
-            decimal? year2Rate = null, decimal? year3Rate = null, CancellationToken cancellationToken = default)
+            decimal? year2Rate = null, decimal? year3Rate = null, DateTime? availableFromUtc = null,
+            CancellationToken cancellationToken = default)
             => Task.FromResult<CommissionLedgerEntry?>(null);
 
         public Task<CommissionLedgerEntry?> TryCreditIndirectTokenCommissionAsync(
             Guid referringSalesManagerUserId, Guid companyId, Guid tokenCheckoutId, decimal purchaseAmountEuro,
-            DateTime? firstYearStartedAt, decimal? indirectRate = null, int? durationDays = null, CancellationToken cancellationToken = default)
+            DateTime? firstYearStartedAt, decimal? indirectRate = null, int? durationDays = null,
+            DateTime? availableFromUtc = null, CancellationToken cancellationToken = default)
             => Task.FromResult<CommissionLedgerEntry?>(null);
 
         public Task<CommissionLedgerEntry?> TryCreditAmbassadeurTokenCommissionAsync(
             Guid ambassadeurUserId, Guid companyId, Guid tokenCheckoutId, decimal purchaseAmountEuro,
-            DateTime? firstYearStartedAt, decimal rate, int? durationDays = null, CancellationToken cancellationToken = default)
+            DateTime? firstYearStartedAt, decimal rate, int? durationDays = null,
+            DateTime? availableFromUtc = null, CancellationToken cancellationToken = default)
             => Task.FromResult<CommissionLedgerEntry?>(null);
 
         public Task AttachEntriesToInvoiceAsync(

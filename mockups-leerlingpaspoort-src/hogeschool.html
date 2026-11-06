@@ -1,0 +1,204 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="adult.css">
+<style>
+html,body{height:auto;overflow:visible}
+.page{page-break-after:always;break-after:page}
+.svc{display:flex;gap:3px;margin-top:4px}.svc span{font-size:9px;font-weight:700;padding:2px 5px;border-radius:5px;background:var(--p);color:#fff}
+.svc span.off{background:transparent;color:#b3abc2;text-decoration:line-through}
+.lang{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:6px 12px;margin-top:6px}
+.lang b{font-size:11px}.lang em{font-style:normal;font-size:9.5px;color:var(--mut);text-align:right}
+.lang .d{display:flex;gap:2px}.lang .d i{width:11px;height:5px;border-radius:2px;background:#e8e0f3;display:block}.lang .d i.on{background:var(--p)}
+.ch h3{font-size:12.5px;font-weight:800}
+.vac{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}
+.vac .k{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--m);text-transform:uppercase}
+.vac h3{font-size:12px;font-weight:800;margin-top:3px;line-height:1.25}
+.vac .org{font-size:9.5px;color:var(--mut);margin-top:2px}
+.vac .meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.vac .meta span{font-size:9px;font-weight:600;background:#f5f3f8;color:#4e4462;border-radius:6px;padding:2px 6px}
+.vac ul{list-style:none;margin-top:6px}.vac li{font-size:9.6px;line-height:1.35;display:flex;gap:6px;margin-bottom:2px}
+.vac li:before{content:'';width:5px;height:5px;border-radius:50%;background:var(--c);margin-top:4px;flex:none}
+.exp{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.er{display:flex;justify-content:space-between;gap:8px;padding:5px 0}
+.er+.er{border-top:1px solid #f1edf6}
+.er b{font-size:11px;display:block}.er span{font-size:9.5px;color:var(--mut)}.er em{font-style:normal;font-size:9.5px;color:var(--mut);white-space:nowrap}
+.mini .k{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin-top:6px}
+.mini .k:first-child{margin-top:0}
+.mini .v{font-size:11px;font-weight:700;margin-top:2px}.mini .v span{font-weight:400;color:var(--mut);font-size:9.5px}
+.qr{display:flex;gap:12px;align-items:center}
+.qr img{width:58px;height:58px;padding:4px;border:1px solid var(--line);border-radius:8px}
+.qr b{font-size:11px;color:var(--ink)}
+/* page 2 */
+.top2 .logo{width:34px;height:34px}.top2 .bt{font-size:17px;color:var(--p)}
+.dna{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.dc{background:var(--sc);border:1px solid #fbdccf;border-radius:12px;padding:10px 11px}
+.dc .e{font-size:18px;line-height:1}.dc b{display:block;font-size:12px;margin-top:5px}
+.dc .k{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mut);text-transform:uppercase}
+.dc .v{font-size:11px;font-weight:700;margin-top:5px;line-height:1.3}
+.dc .s{font-size:9px;color:var(--mut);margin-top:4px}
+.bl ul{list-style:none;margin-top:6px}.bl li{font-size:10px;line-height:1.4;display:flex;gap:6px;margin-bottom:3px}
+.bl li:before{content:'';width:5px;height:5px;border-radius:50%;background:var(--c);margin-top:5px;flex:none}
+.bl li span{color:var(--mut)}
+.tipc{background:var(--sp);border-color:#e4d8f4}
+.sec3 .vf{font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin-top:6px}
+.sec3 .vv{font-size:9.6px;margin-top:2px;line-height:1.35}
+.sec3 .first{background:var(--sp);border-color:#e4d8f4}
+.goal{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.gl{border:1px solid var(--line);border-radius:12px;padding:9px 11px;display:flex;gap:9px}
+.gl .n{width:22px;height:22px;border-radius:7px;background:var(--sc);color:#d9452f;font-size:11px;font-weight:800;display:grid;place-items:center;flex:none}
+.gl b{font-size:11px;display:block}.gl span{font-size:9.5px;color:var(--mut);line-height:1.3;display:block;margin-top:1px}
+.quote{border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.quote p{font-size:11px;line-height:1.55}.quote span{font-size:9px;color:var(--mut);display:block;margin-top:4px}
+.ver{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ver h4{font-size:11px;font-weight:800;display:flex;gap:5px;align-items:center}
+.ver ul{list-style:none;margin-top:4px}.ver li{font-size:9.8px;line-height:1.4;display:flex;gap:6px}
+.ver li:before{content:'';width:5px;height:5px;border-radius:50%;background:var(--c);margin-top:5px;flex:none}
+.sh{margin:19px 0 8px}
+.zoekt{font-size:10px;margin-top:9px;color:var(--mut)}.zoekt b{color:var(--ink)}
+.dc{padding:12px 12px}.quote p{font-size:11.5px}
+.bl li>div{flex:1}
+.p1 .rule{margin:14px 0 18px}.p1 .cards4{margin-top:18px}.p1 .ic{padding:11px 12px}
+.p1 .vac{padding:12px 13px}.p1 .sp{padding:11px 13px}.p1 .card{padding:12px 13px}.p1 .er{padding:7px 0}
+.p1 .sh{margin:21px 0 9px}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="chk" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7Z"/></symbol>
+<symbol id="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="brief" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+<symbol id="heart" viewBox="0 0 24 24"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></symbol>
+<symbol id="dna" viewBox="0 0 24 24"><path d="M7 3c0 6 10 6 10 12s-10 6-10 6M17 3c0 6-10 6-10 12s10 6 10 6"/><path d="M8 7h8M8 17h8"/></symbol>
+<symbol id="flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+<symbol id="bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
+<symbol id="sh" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="quote" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5H3v8h4c0 4-2 5-4 5zM14 21c3 0 7-1 7-8V5h-7v8h4c0 4-2 5-4 5z"/></symbol>
+<symbol id="users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</defs></svg>
+
+<div class="page p1">
+<div class="top"><img class="logo" src="assets/lobsy.png"><div><div class="bt">Lobsy</div><div class="bs">DNA-paspoort · student</div></div>
+<div class="badge"><div class="ck"><svg class="ico"><use href="#chk"/></svg></div><div><b>Lobsy-geverifieerd</b><span>4/4 DNA-tests afgerond · 2 okt 2026</span></div></div></div>
+<div class="rule"></div>
+
+<div class="id"><div class="av">YE</div><div style="flex:1">
+<h1>Yara El Amrani</h1>
+<div class="ty">Rustige zorgverlener — houdt overzicht én luistert echt <span class="tag der">AFGELEID</span></div>
+<div class="pills"><span class="pill"><svg class="ico"><use href="#cap"/></svg>Hbo Verpleegkunde · jaar 3 <span class="tag new">NIEUW</span></span><span class="pill"><svg class="ico"><use href="#pin"/></svg>Utrecht e.o.</span><span class="pill g">● Zoekt afstudeerstage + bijbaan</span><span class="pill o">Paspoortnr. LB-73120</span></div>
+</div></div>
+
+<div class="cards4">
+<div class="ic p"><div class="k">Beschikbaar <span class="tag new">NIEUW</span></div><div class="v">Stage vanaf 1 feb 2027</div><div class="s">bijbaan 12–16 uur per week</div></div>
+<div class="ic p"><div class="k">Diensten</div><div class="svc"><span>Ocht.</span><span>Midd.</span><span>Avond</span><span class="off">Nacht</span></div><div class="s">weekend prima · roosters van tevoren</div></div>
+<div class="ic c"><div class="k">Vervoer</div><div class="v">OV en fiets</div><div class="s">studenten-OV · max. 40 min · geen auto</div></div>
+<div class="ic c"><div class="k">Contact</div><div class="v">+31 6 0000 0000</div><div class="s">✓ WhatsApp · yara@example.com</div></div>
+</div>
+
+<div class="g2" style="margin-top:16px">
+<div class="card ch"><h3>Talen</h3><div class="lang">
+<b>Nederlands</b><em>moedertaal</em><div class="d"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+<b>Engels</b><em>B2</em><div class="d"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+<b>Arabisch (Marokkaans)</b><em>spreken: goed</em><div class="d"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+</div><div class="s" style="font-size:9.5px;color:var(--mut);margin-top:7px">helpt soms met tolken bij oudere cliënten</div></div>
+<div class="card ch"><h3>Werkvoorkeuren</h3>
+<div class="kv"><span>Afdeling</span><b>interne, ouderenzorg</b></div>
+<div class="kv"><span>Werkomgeving</span><b>ziekenhuis of wijk</b></div>
+<div class="kv"><span>Team</span><b>vast team, korte lijnen</b></div>
+<div class="kv"><span>Begeleiding</span><b>wekelijks feedbackmoment <span class="tag new">NIEUW</span></b></div>
+</div></div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#star"/></svg></div><h2>Sterke punten</h2><small>zelfinzicht uit Lobsy-competentietest · 24 sep 2026 · door Yara gekozen</small></div>
+<div class="g3">
+<div class="sp"><b>Overzicht houden</b><span>plant zorgmomenten, vergeet niets</span></div>
+<div class="sp"><b>Rustig onder druk</b><span>blijft kalm als het op de afdeling druk is</span></div>
+<div class="sp"><b>Echt luisteren</b><span>vraagt door, cliënten voelen zich gehoord</span></div>
+</div>
+<div class="chips" style="margin-top:7px"><span class="chip">Betrouwbaar</span><span class="chip">Empathisch</span><span class="chip">Nauwkeurig</span><span class="chip">Leergierig</span></div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#brief"/></svg></div><h2>Top 3 vacatures die bij mij passen</h2><span class="tag der">AFGELEID</span><small>op Lobsy · door Yara bewaard · stage, bijbaan en flexpool</small></div>
+<div class="g3">
+<div class="vac"><div class="k">Afstudeerstage</div><h3>Verpleegkunde, interne geneeskunde</h3><div class="org">Ziekenhuis Domstad (fictief) · Utrecht</div>
+<div class="meta"><span>feb–jul 2027</span><span>32 uur</span><span>stagevergoeding</span></div>
+<ul><li>Sluit aan op stage jaar 2, zelfde specialisme</li><li>Vast team en wekelijkse begeleiding</li></ul></div>
+<div class="vac"><div class="k">Bijbaan</div><h3>Zorgassistent thuiszorg (weekend)</h3><div class="org">Thuiszorg De Linde (fictief) · Utrecht-Oost</div>
+<div class="meta"><span>12 uur</span><span>za + zo</span><span>fiets 15 min</span></div>
+<ul><li>Past naast stage en studie</li><li>3 jaar ervaring bij deze doelgroep</li></ul></div>
+<div class="vac"><div class="k">Flexpool</div><h3>Studentverpleegkundige</h3><div class="org">Zorggroep Vecht (fictief) · Maarssen</div>
+<div class="meta"><span>8–16 uur</span><span>avond</span><span>OV 30 min</span></div>
+<ul><li>Zelf diensten kiezen, ook in vakanties</li><li>Ouderenzorg = 2e voorkeur</li></ul></div>
+</div>
+<div class="zoekt"><b>Zoekt:</b> afstudeerstage ziekenhuis · bijbaan in de zorg &nbsp;·&nbsp; <b>Contract:</b> stage → na afstuderen vast <span class="tag new">NIEUW</span> &nbsp;·&nbsp; <b>Afstuderen:</b> zomer 2028</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#cap"/></svg></div><h2>Ervaring &amp; opleiding</h2></div>
+<div class="exp">
+<div class="card">
+<div class="er"><div><b>Stagiair verpleegkunde, interne geneeskunde</b><span>Ziekenhuis Domstad (fictief) · stage jaar 2</span></div><em>20 weken · 2026</em></div>
+<div class="er"><div><b>Zorgassistent (bijbaan)</b><span>Thuiszorg De Linde (fictief) · sep 2023 – nu</span></div><em>3 jr 1 mnd</em></div>
+<div class="er"><div><b>Vrijwilliger huiswerkbegeleiding</b><span>Buurthuis De Pijler (fictief) · 2021 – 2023</span></div><em>2 jr</em></div>
+</div>
+<div class="card mini">
+<div class="k">Opleiding</div><div class="v">Hbo Verpleegkunde <span>· jaar 3 van 4 · 2024 – 2028</span></div>
+<div class="v" style="margin-top:3px">Havo, Natuur &amp; Gezondheid <span>· 2024</span></div>
+<div class="k">Certificaten</div><div class="v">BLS-reanimatie <span>2026</span> · Medicatieveiligheid <span>2025</span></div><div class="k">Referenties</div><div class="v">Stagebegeleider ziekenhuis <span>· op aanvraag</span></div>
+</div></div>
+
+<div class="foot"><div class="qr"><img src="assets/qr.png"><div><b>Scan voor de live, geverifieerde versie</b><p>lobsy.nl/v/9RXP-T4K · gedeeld door de kandidaat · geldig t/m 16 nov 2026<br>Bewust niet op dit paspoort: geboortedatum, foto, nationaliteit, BSN, gezondheid.<br><b>Gespreksinput, geen beoordeling:</b> Lobsy geeft werkgevers geen score of ranking.</p></div></div>
+<div class="r">Gemaakt 16 okt 2026 · pagina 1/2<br><b>lobsy.nl</b></div></div>
+<div class="legend"><span>MOCKUP · fictieve student</span><span><b>NIEUW</b> = bestaat nog niet in datamodel · <i>AFGELEID</i> = berekend uit bestaande data/tests</span></div>
+</div>
+
+<div class="page">
+<div class="top top2"><img class="logo" src="assets/lobsy.png"><div><div class="bt">Yara El Amrani</div><div class="bs">DNA-paspoort · verdieping · LB-73120</div></div>
+<div class="badge"><div class="ck"><svg class="ico"><use href="#chk"/></svg></div><div><b>Lobsy-geverifieerd</b><span>4/4 DNA-tests afgerond · 2 okt 2026</span></div></div></div>
+<div class="rule"></div>
+
+<div class="sh" style="margin-top:4px"><div class="b"><svg class="ico"><use href="#arr"/></svg></div><h2>Sectoren die bij mij passen</h2><span class="tag der">AFGELEID</span><small>volgens mijn tests, stage en voorkeuren · door mij op volgorde gezet</small></div>
+<div class="g3 sec3">
+<div class="card first"><h3>1. Ziekenhuiszorg</h3><div class="sub">Mijn eerste keus</div><ul><li>Sociaal-onderzoekend profiel (S-I)</li><li>Rustig onder druk, houdt overzicht</li><li>Stage interne geneeskunde ging goed</li><li>Houdt van tempo en samenwerken met artsen</li></ul><div class="vf">Voorbeeldfuncties</div><div class="vv">Verpleegkundige interne · verpleegkundige acute zorg</div></div>
+<div class="card"><h3>2. Wijk- en thuiszorg</h3><div class="sub">Ook interessant</div><ul><li>3 jaar ervaring in de thuiszorg</li><li>Werkt zelfstandig en luistert goed</li><li>Spreekt ook Marokkaans-Arabisch</li><li>Neemt graag tijd voor één cliënt</li></ul><div class="vf">Voorbeeldfuncties</div><div class="vv">Wijkverpleegkundige · casemanager</div></div>
+<div class="card"><h3>3. Ouderenzorg</h3><div class="sub">Wil ik in groeien</div><ul><li>Geduldig, waardeert vaste cliënten</li><li>Wil leren over dementiezorg</li><li>Vast team geeft haar rust</li><li>Waarde "iets betekenen" weegt zwaar</li></ul><div class="vf">Voorbeeldfuncties</div><div class="vv">Verpleegkundige verpleeghuis · specialist ouderen</div></div>
+</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#dna"/></svg></div><h2>Mijn DNA in 4 lagen</h2></div>
+<div class="dna">
+<div class="dc"><div class="e">🦞</div><b>Mijn scharen</b><div class="k">Competenties</div><div class="v">Overzicht houden · rustig onder druk</div><div class="s">✓ afgerond 24 sep 2026</div></div>
+<div class="dc"><div class="e">📡</div><b>Mijn antennes</b><div class="k">Loopbaaninteresse</div><div class="v">Helpen &amp; onderzoeken (S-I)</div><div class="s">✓ afgerond 26 sep 2026</div></div>
+<div class="dc"><div class="e">🪨</div><b>Mijn rots</b><div class="k">Werkcultuur</div><div class="v">Vast team, duidelijke afspraken</div><div class="s">✓ afgerond 29 sep 2026</div></div>
+<div class="dc"><div class="e">🧭</div><b>Mijn kompas</b><div class="k">Waarden</div><div class="v">Iets betekenen · eerlijkheid · groei</div><div class="s">✓ afgerond 2 okt 2026</div></div>
+</div>
+
+<div class="g2" style="margin-top:12px">
+<div class="card bl"><h3 style="font-size:12.5px;font-weight:800">Hoe ik graag werk</h3><ul>
+<li><div><b>Duidelijke overdracht</b> <span>— wil weten wat er speelt bij de cliënt</span></div></li>
+<li><div><b>Samen in een vast team</b> <span>— korte lijnen, elkaar helpen</span></div></li>
+<li><div><b>Ruimte om te vragen</b> <span>— liever één keer te veel gevraagd</span></div></li>
+<li><div><b>Minder: steeds wisselende afdelingen</b> <span>— wil kunnen verdiepen</span></div></li></ul></div>
+<div class="card bl tipc"><h3 style="font-size:12.5px;font-weight:800">Zo haal je het beste uit Yara <span class="tag new">NIEUW</span></h3><ul>
+<li>Koppel haar aan één vaste werkbegeleider</li>
+<li>Plan een wekelijks kort feedbackmoment</li>
+<li>Geef haar na een paar weken eigen cliënten</li>
+<li>Benoem wat goed gaat, niet alleen wat beter kan</li></ul></div>
+</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#flag"/></svg></div><h2>Mijn leerdoelen voor de afstudeerstage</h2><span class="tag new">NIEUW</span></div>
+<div class="goal">
+<div class="gl"><div class="n">1</div><div><b>Zelfstandig een groep cliënten</b><span>van opname tot ontslag, met eigen zorgplannen</span></div></div>
+<div class="gl"><div class="n">2</div><div><b>Klinisch redeneren</b><span>sneller signaleren en onderbouwen in de overdracht</span></div></div>
+<div class="gl"><div class="n">3</div><div><b>Regie in het team</b><span>leren delegeren aan collega's en stagiairs</span></div></div>
+</div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#quote"/></svg></div><h2>In mijn eigen woorden</h2></div>
+<div class="quote"><p>"In de thuiszorg merkte ik dat ik het fijn vind om echt tijd te nemen voor iemand. In het ziekenhuis vond ik het tempo en het samenwerken met artsen juist leuk. Voor mijn afstudeerstage zoek ik een afdeling waar ik veel verantwoordelijkheid krijg, met een team dat mij daarin begeleidt."</p><span>Geschreven door de kandidaat</span></div>
+
+<div class="sh"><div class="b"><svg class="ico"><use href="#sh"/></svg></div><h2>Wat betekent "Lobsy-geverifieerd"?</h2></div>
+<div class="card ver">
+<div><h4 style="color:#14825a"><svg class="ico" style="width:12px;height:12px"><use href="#chk"/></svg>Gecontroleerd door Lobsy</h4><ul><li>4/4 DNA-tests zelf afgerond op dit account (datum per test)</li><li>E-mail en telefoon bevestigd</li><li>Paspoortinhoud = live-versie op de QR-datum</li><li>Vacatures in de top 3 zelf bewaard door de kandidaat</li></ul></div>
+<div><h4 style="color:#e2432c"><svg class="ico" style="width:12px;height:12px"><use href="#x"/></svg>Niet gecontroleerd</h4><ul><li>Inschrijving bij de opleiding en studiejaar</li><li>Echtheid van diploma's en certificaten</li><li>Referenties van stage en bijbaan</li><li>BIG-registratie (volgt na afstuderen)</li></ul></div>
+</div>
+
+<div class="foot"><div class="qr"><img src="assets/qr.png"><div><b>Live-versie &amp; echtheid controleren</b><p>lobsy.nl/v/9RXP-T4K · gedeeld door de kandidaat · geldig t/m 16 nov 2026<br>Testantwoorden en ruwe scores blijven privé en staan nooit op het paspoort. Lobsy geeft werkgevers geen score,<br>ranking of automatische selectie: dit paspoort is gespreksinput.</p></div></div>
+<div class="r">pagina 2/2<br><b>lobsy.nl</b></div></div>
+<div class="legend"><span>MOCKUP · fictieve student</span><span><b>NIEUW</b> = bestaat nog niet in datamodel · <i>AFGELEID</i> = berekend uit bestaande data/tests</span></div>
+</div>
+</body></html>

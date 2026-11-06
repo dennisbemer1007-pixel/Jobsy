@@ -196,15 +196,13 @@ public class CompetencyMatchingTests
     }
 
     [Fact]
-    public void Deep_analysis_upsell_copy_is_kind_specific()
+    public void Deep_analysis_upsell_copy_is_key_based()
     {
         var competence = DeepAnalysisService.FormatUpsellCopy(2.99m, AssessmentKind.Competence);
-        Assert.Contains("€ 2,99", competence, StringComparison.Ordinal);
-        Assert.Contains("competentie-analyse", competence, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("DeepPay.Upsell", competence);
 
         var career = DeepAnalysisService.FormatUpsellCopy(2.99m, AssessmentKind.Career);
-        Assert.Contains("€ 2,99", career, StringComparison.Ordinal);
-        Assert.Contains("beroepentest", career, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("DeepPay.Upsell", career);
     }
 
     [Fact]
@@ -301,6 +299,8 @@ public class CompetencyMatchingTests
         Assert.Equal(TransportLabels.EBike, TransportLabels.Canonical("ebike"));
         Assert.True(TransportLabels.MatchesRequired([TransportLabels.Bike], TransportLabels.EBike));
         Assert.False(TransportLabels.MatchesRequired([TransportLabels.Car], TransportLabels.EBike));
+        Assert.True(TransportLabels.CandidateCanReach([TransportLabels.Bike], TransportLabels.Car));
+        Assert.False(TransportLabels.CandidateCanReach([TransportLabels.Car], TransportLabels.Bike));
     }
 
     [Fact]
@@ -467,7 +467,7 @@ public class CompetencyMatchingTests
     {
         var src = File.ReadAllText(Path.Combine(RepoRoot.Find(), "Jobsy.Api/Controllers/VacanciesController.cs"));
         Assert.Contains("if (_companyAuth.IsCandidate(User))", src, StringComparison.Ordinal);
-        Assert.Contains("MatchPercent = match.TotalPercent", src, StringComparison.Ordinal);
+        Assert.Contains("MatchPercent = applied.MatchPercent", src, StringComparison.Ordinal);
         Assert.Contains("minMatchPercent", src, StringComparison.Ordinal);
         Assert.Contains("LegalAgeKnown && !match.Core.LegalEligible", src, StringComparison.Ordinal);
     }
@@ -514,6 +514,12 @@ public class CompetencyMatchingTests
             CareerDeepCompleted = careerDeepCompleted,
             VacancyRiasecTags = vacancyRiasec,
             CareerOccupations = careerOccupations,
+            CompetencyMatchEvidence = competencies is not null
+                ? AssessmentMatchEvidence.FullQuickScan
+                : AssessmentMatchEvidence.None,
+            CareerMatchEvidence = candidateRiasecScores is not null || candidateRiasec is { Count: > 0 } || careerDeepCompleted
+                ? careerDeepCompleted ? AssessmentMatchEvidence.DeepAnalysis : AssessmentMatchEvidence.FullQuickScan
+                : AssessmentMatchEvidence.None,
             Core = new MatchScoreInput
             {
                 EstimatedTravelMinutes = travelMinutes,

@@ -1,0 +1,61 @@
+---
+description: Dennis/Lobsy vaste regels (28 okt 2026) — Skia, plain 2-pagina PR's, scoped acc-test
+alwaysApply: true
+---
+
+# Dennis / Lobsy vaste regels (28 okt 2026)
+
+Gelden voor **alle** agent- en PR-werk vanaf deze datum, tenzij Dennis expliciet anders zegt.
+
+**Werkwijze:** kleine stapjes, snel vooruit.
+
+## 1. Fix faalt → max één patch, daarna rebuild
+
+Werkt een fix **niet** na **één** gerichte poging op **acceptatie**, bouw dat onderdeel **opnieuw vanaf nul**. Geen eindeloos patchen op hetzelfde kapotte pad.
+
+## 2. Gefilmde stromen (eindtotaal)
+
+Na afloop van de prioriteitenlijst: één **totale** test. Onboarding 1–10, Match, banenkaart, #1301 — zero visible defects; laadtijd doel **&lt; 1 s**, max **3 s**; banenkaart-filters **&lt; 500 ms**.
+
+Geen volledige regressie **per PR** (behalve waar plain per pagina expliciet alles test, §6).
+
+## 3. Taakverdeling (28 okt ~07:49)
+
+**Deze agent (bouwer 1):**
+
+1. **#1307** — scoped acc-test van de gemergede fixes (eigen run + evidence)
+2. **#1308** — ImageSharp → SkiaSharp (MIT)
+3. **Plain-stijl kandidaat** (#878) — mockup `docs/mockups/kandidaat/plain` @ `592a3596f` (§6)
+4. **#1290** — drie werelden
+
+**Bouwer 2 (`bc-0b311ff5`):** #1305 (banenkaart/Match), #1301 (demo-bugs + Sam de Wit), AssessmentItemExamples-bug.
+
+**Niet aanraken:** branches/PR's van #1305, #1301 en AssessmentItemExamples — geen commits, rebase of PR-updates door bouwer 1.
+
+**Dennis:** eindcontrole (totale test).
+
+Plain: eerst pagina's **buiten** onboarding, daarna onboarding.
+
+## 4. Acceptatie zelf-test (28 okt ~07:27)
+
+Op **https://acceptatie.lobsy.nl** met **@jobsy.local** seed-accounts. Wachtwoord: `DemoUsersSeeder` — **nooit** in PR, logs, screenshots, commits of samenvattingen.
+
+Veiligheid: nepdata; accounts niet verwijderen; **niet** klikken op Later verder / Account verwijderen / Begin opnieuw / Intrekken; geen echte sollicitaties; geen nieuwe leerling-codes zonder noodzaak; geen **Roland** in user-facing tekst.
+
+## 5. Acc-evidence per gewone PR (scoped)
+
+**Jij** test de **gefixte onderdelen** na deploy: werkt het, knoppen/links in scope klikbaar, laadtijd, screenshots **1440 + 390** in de melding.
+
+## 6. Plain-stijl PR's (#878)
+
+- **Precies 2 pagina's per PR**, target **acceptatie**.
+- **Per pagina** na deploy op acc:
+  - Alles **strak** (layout, geen fouten/leeg/haperen)
+  - **Elke** knop, link en veld **klikbaar en werkend**
+  - Laadtijd **&lt; 1 s** (max **3 s**)
+  - **Screenshots 1440 en 390 per pagina** in je melding
+- Werkt iets niet: §1 (max één fix, daarna rebuild).
+
+## 7. PR melden
+
+Pas melden als scoped acc-check + evidence klaar is. Eindtotaal-test pas na hele lijst (§2–3).

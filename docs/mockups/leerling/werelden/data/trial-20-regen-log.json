@@ -1,0 +1,24 @@
+{
+  "investigationUtc": "2026-10-31T08:00:00Z",
+  "acceptatieApiHealthCommit": "1b11779ce079c55e2166a3e27577d33809b098fc",
+  "merge3011cf22OnAcceptatie": true,
+  "note3011cf22": "3011cf22 is an ancestor of origin/acceptatie; Acc API /health reports 1b11779 (includes #1357 occupation-day B1 batch).",
+  "acceptatieWebCommitMeta": "1b11779ce079c55e2166a3e27577d33809b098fc",
+  "regenDidNotRunBecause": [
+    "Playwright filled the textarea DOM but Blazor Server @bind (default onchange) never updated _pick; server re-render cleared the field.",
+    "RegenerateAsync short-circuits with Admin.Day.PickEmpty — no POST to api/admin/occupation-day-in-life/regenerate.",
+    "Direct API: DevelopmentPrivateKeyPem → HTTP 401; sessionToken from local-login is not a JWT Bearer → HTTP 401.",
+    "Acceptatie Web does not yet include @bind:event=oninput nor ?ids= query prefill (fix on PR #1363 branch, unmerged)."
+  ],
+  "openAiKeyOnAcceptatie": "Not exercised — regenerate never reached the API. Confirm Integraties tile / OpenAI__ApiKey on Acc API if regen fails after deploy.",
+  "unblock": [
+    "Merge PR #1363 (or cherry-pick OccupationDayAdmin.razor) to acceptatie and redeploy Web, then run tools/trial-20-regenerate-acceptatie.mjs",
+    "OR set JobsyAuth__Jwt__PrivateKeyPem (Acc API key pair) and run tools/AccOccupationDayRegen"
+  ],
+  "priorPlaywrightRun": {
+    "targetCommit": "3011cf22",
+    "waitPerOccMs": 420000,
+    "startedAt": "2026-10-31T04:37:30.487Z",
+    "itemsSample": "empty message or Laden… — no API regen"
+  }
+}

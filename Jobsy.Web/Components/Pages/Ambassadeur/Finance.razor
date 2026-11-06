@@ -1,6 +1,8 @@
 @page "/ambassadeur/finance"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Ambassadeur")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture

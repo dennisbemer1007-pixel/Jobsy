@@ -1,0 +1,76 @@
+@inherits LayoutComponentBase
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Http
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject EmployerScopeState Scope
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@implements IDisposable
+
+<div class="wg-shell @(ShowBottomNav ? "wg-has-bottom-nav" : null)"
+     dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <PageSeoHead />
+    <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
+    <WgTopBar />
+
+    <div class="wg-shell__body">
+        <div class="wg-shell__sidebar wg-shell__sidebar--desktop">
+            <WgSidebar />
+        </div>
+        <main class="wg-main">
+            <CircuitErrorBoundary BoundaryTag="werkgever">
+                @Body
+            </CircuitErrorBoundary>
+        </main>
+    </div>
+
+    @if (ShowBottomNav)
+    {
+        <WgBottomNav />
+    }
+
+    @if (RendererInfo.IsInteractive)
+    {
+        <PushPermissionBanner />
+        <PwaInstallBanner />
+        <LobsyAssistantChat HasBottomNav="ShowBottomNav" UiVariant="AssistantChatUiVariant.Business" />
+        <FeedbackWidget HasBottomNav="ShowBottomNav" />
+        <ConsentReacceptDialog />
+    }
+    else if (_ssrAssistant)
+    {
+        <LobsyAssistantBusinessSsr HasBottomNav="ShowBottomNav" />
+    }
+    <CookieConsentBanner />
+    <SessionIdleGuard />
+</div>
+
+@code {
+    private bool ShowBottomNav => true; // CSS hides ≥1024
+    private bool _ssrAssistant;
+
+    protected override void OnInitialized()
+    {
+        _ssrAssistant = !RendererInfo.IsInteractive
+                        && AssistantChatHost.IsAvailableFor(HttpContextAccessor.HttpContext?.User);
+        Culture.Changed += OnCultureChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+        Scope.Changed += OnScopeChanged;
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    private void OnScopeChanged() => InvokeAsync(StateHasChanged);
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+        Scope.Changed -= OnScopeChanged;
+    }
+}

@@ -1,0 +1,72 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+
+<OnboardingRustigShell ScreenId="@($"step-{Step:D2}")"
+                       Step="@Step"
+                       PhaseLabel="@Culture["Onboarding.Rustig.Phase.WieBenJij"]"
+                       SaveStatus="@SaveStatus"
+                       OnLater="OnLater">
+    <Hero>
+        <OnboardingRustigHero DesktopUrl="@OnboardingRustigPanoramaAssets.DesktopForStep(Step)"
+                              MobileUrl="@OnboardingRustigPanoramaAssets.MobileForStep(Step)" />
+    </Hero>
+    <ChildContent>
+        @if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <p class="state-message error">@Error</p>
+        }
+        <div class="ob-rustig__canvas ob-rustig__canvas--mini-test" data-testid="@($"onboarding-step-{Step}-rustig")">
+            <OnboardingClientStepIsland Step="@Step"
+                                        Draft="Draft"
+                                        Seed="ClientSeed" />
+            <div class="ob-rustig__footer-actions">
+                <button type="button"
+                        class="ob-rustig__btn"
+                        data-testid="onboarding-back"
+                        disabled="@Busy"
+                        @onclick="OnLeave">
+                    @Culture["Onboarding.Back"]
+                </button>
+                <button type="button"
+                        class="ob-rustig__btn ob-rustig__btn--primary"
+                        data-testid="onboarding-next"
+                        disabled="@Busy"
+                        @onclick="OnNext">
+                    @Culture["Onboarding.Next"]
+                </button>
+            </div>
+        </div>
+    </ChildContent>
+</OnboardingRustigShell>
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public OnboardingClientStepSeed? ClientSeed { get; set; }
+    [Parameter] public int Step { get; set; }
+    [Parameter] public int FlowEpoch { get; set; }
+    [Parameter] public int CurrentQuestion { get; set; }
+    [Parameter] public IReadOnlyList<OnboardingMiniTest.TestTab> TestTabs { get; set; } = [];
+    [Parameter] public IReadOnlyList<OnboardingMiniTest.MiniQuestion> Questions { get; set; } = [];
+    [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
+    [Parameter] public TestDepthLevel Depth { get; set; } = TestDepthLevel.First;
+    [Parameter] public string InputPrefix { get; set; } = "";
+    [Parameter] public string? LaterLabel { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public string? SaveStatus { get; set; }
+    [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
+    [Parameter] public EventCallback OnFinished { get; set; }
+    [Parameter] public EventCallback OnLeave { get; set; }
+    [Parameter] public EventCallback OnNext { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public EventCallback OnTestsLater { get; set; }
+    [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
+    [Parameter] public Func<OnboardingMiniTest.MiniQuestion, string>? ResolveQuestionText { get; set; }
+    [Parameter] public bool ShowProgressInsight { get; set; }
+    [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
+    [Parameter] public EventCallback<TestQuestionFlow.ProgressInsightSnapshot> ProgressInsightChanged { get; set; }
+
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

@@ -2,7 +2,9 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Sales;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Infrastructure.Services;
@@ -13,11 +15,19 @@ public sealed class SalesCommercialService : ISalesCommercialService
 
     private readonly JobsyDbContext _db;
     private readonly ITokenLedgerService _tokens;
+    private readonly ISalesPriceQuote _priceQuote;
 
-    public SalesCommercialService(JobsyDbContext db, ITokenLedgerService tokens)
+    public SalesCommercialService(JobsyDbContext db, ITokenLedgerService tokens, ISalesPriceQuote priceQuote)
     {
         _db = db;
         _tokens = tokens;
+        _priceQuote = priceQuote;
+    }
+
+    // Backward-compatible ctor for older tests that don't inject the quote yet.
+    public SalesCommercialService(JobsyDbContext db, ITokenLedgerService tokens)
+        : this(db, tokens, new SalesPriceQuoteService(db))
+    {
     }
 
     public async Task<SalesCommercialSettings> GetSettingsAsync(CancellationToken cancellationToken = default)
@@ -69,8 +79,12 @@ public sealed class SalesCommercialService : ISalesCommercialService
             .ThenBy(p => p.Name)
             .ToListAsync(cancellationToken);
 
+        // D14: public € amounts come from active TokenPricing packs via SalesPriceQuote.
+        var quote = await _priceQuote.GetAsync(cancellationToken);
+        var perToken = quote.MinPricePerToken;
+
         return new PartnerSalesCatalogDto(
-            settings.BaseTokenValueEuro,
+            perToken,
             settings.HighlightCarouselTokens,
             settings.HighlightPulseTokens,
             settings.HighlightCarouselDays,
@@ -79,7 +93,7 @@ public sealed class SalesCommercialService : ISalesCommercialService
                 c.Kind.ToString(),
                 VacancyKindLabels.ToDutch(c.Kind),
                 c.CostTokens,
-                Math.Round(c.CostTokens * settings.BaseTokenValueEuro, 2),
+                Math.Round(c.CostTokens * perToken, 2, MidpointRounding.AwayFromZero),
                 c.IsActive)).ToList(),
             packages.Select(MapPackage).ToList());
     }
@@ -120,7 +134,11 @@ public sealed class SalesCommercialService : ISalesCommercialService
             settings.PartnerCommissionRate,
             settings.Year2DirectCommissionRate,
             settings.Year3DirectCommissionRate,
-            settings.ReferredYear1DirectCommissionRate);
+            settings.ReferredYear1DirectCommissionRate,
+            settings.CommissionHoldDays,
+            settings.PayoutMinimumEuro,
+            settings.IbanChangeHoldDays,
+            settings.AttributionCookieDays);
     }
 
     public async Task<SalesCommercialSettings> UpdateSettingsAsync(
@@ -136,6 +154,10 @@ public sealed class SalesCommercialService : ISalesCommercialService
         decimal? year2DirectCommissionRate = null,
         decimal? year3DirectCommissionRate = null,
         decimal? referredYear1DirectCommissionRate = null,
+        int? commissionHoldDays = null,
+        decimal? payoutMinimumEuro = null,
+        int? ibanChangeHoldDays = null,
+        int? attributionCookieDays = null,
         CancellationToken cancellationToken = default)
     {
         if (baseTokenValueEuro < 0
@@ -186,6 +208,26 @@ public sealed class SalesCommercialService : ISalesCommercialService
             throw new ArgumentException("Aangedragen jaar-1 commissie moet tussen 0 en 100% liggen.");
         }
 
+        if (commissionHoldDays is < 0 or > 60)
+        {
+            throw new ArgumentException("Wachttijd commissie moet tussen 0 en 60 dagen liggen.");
+        }
+
+        if (payoutMinimumEuro is < 0 or > 1000)
+        {
+            throw new ArgumentException("Minimum uitbetaling moet tussen 0 en 1000 euro liggen.");
+        }
+
+        if (ibanChangeHoldDays is < 0 or > 14)
+        {
+            throw new ArgumentException("IBAN-wachtperiode moet tussen 0 en 14 dagen liggen.");
+        }
+
+        if (attributionCookieDays is < 1 or > 90)
+        {
+            throw new ArgumentException("Attributie-cookieduur moet tussen 1 en 90 dagen liggen.");
+        }
+
         if (directCommissionRate is decimal d
             && indirectCommissionRate is decimal i
             && d + i + SalesCommissionRules.AmbassadorShareRate > 1m)
@@ -233,6 +275,26 @@ public sealed class SalesCommercialService : ISalesCommercialService
         if (referredYear1DirectCommissionRate is not null)
         {
             settings.ReferredYear1DirectCommissionRate = referredYear1DirectCommissionRate.Value;
+        }
+
+        if (commissionHoldDays is not null)
+        {
+            settings.CommissionHoldDays = commissionHoldDays.Value;
+        }
+
+        if (payoutMinimumEuro is not null)
+        {
+            settings.PayoutMinimumEuro = payoutMinimumEuro.Value;
+        }
+
+        if (ibanChangeHoldDays is not null)
+        {
+            settings.IbanChangeHoldDays = ibanChangeHoldDays.Value;
+        }
+
+        if (attributionCookieDays is not null)
+        {
+            settings.AttributionCookieDays = attributionCookieDays.Value;
         }
 
         settings.UpdatedAtUtc = DateTime.UtcNow;

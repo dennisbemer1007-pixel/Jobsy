@@ -41,6 +41,24 @@ public sealed class TrainingUpskillController : ControllerBase
             cancellationToken));
     }
 
+    [HttpGet("passport")]
+    public async Task<ActionResult<IReadOnlyList<PassportCourseCardDto>>> RecommendPassport(
+        [FromQuery] string? skill,
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        return Ok(await _training.RecommendPassportAsync(
+            user.Id,
+            skill,
+            null,
+            cancellationToken));
+    }
+
     [HttpPost("{offerId:guid}/track")]
     [EnableRateLimiting("public-write")]
     public async Task<ActionResult<TrainingTrackedLinkDto>> Track(

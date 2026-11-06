@@ -20,6 +20,17 @@ public static class VerificationCodes
 
     private static string? _configuredPepper;
 
+    static VerificationCodes()
+    {
+        // Hosts call ConfigurePepper at startup. Unit tests that hash before any host
+        // starts must use the same pepper, or a parallel host boot changes the hash mid-test.
+        var fromEnv = Environment.GetEnvironmentVariable("VerificationCodes__Pepper");
+        if (!string.IsNullOrWhiteSpace(fromEnv))
+        {
+            _configuredPepper = fromEnv.Trim();
+        }
+    }
+
     /// <summary>Optional deploy-time pepper (call once at startup from configuration).</summary>
     public static void ConfigurePepper(string? pepper)
     {

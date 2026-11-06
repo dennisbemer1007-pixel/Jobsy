@@ -140,7 +140,7 @@ public static class DutchInterviewAnswerHeuristics
         }
 
         var text = answer.ToLowerInvariant();
-        return StarMarkers.Count(m => text.Contains(m, StringComparison.Ordinal)) >= 1;
+        return StarMarkers.Any(m => text.Contains(m, StringComparison.Ordinal));
     }
 
     public static string BuildRewriteSuggestion(string answer, string vacancyHook)

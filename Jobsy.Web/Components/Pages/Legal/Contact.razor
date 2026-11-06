@@ -1,0 +1,51 @@
+@page "/contact"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@layout PublicLayout
+@using Jobsy.Web.Components.Legal
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
+
+<PageTitle>@Culture["Contact.Seo.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section pp-about" aria-labelledby="contact-title">
+    <header class="pp-doc__hero">
+        <p class="pp-doc__eyebrow">
+            <PubEmoji Glyph="✉️" />
+            <span>@Culture["Contact.Eyebrow"]</span>
+        </p>
+        <h1 id="contact-title" class="pp-doc__title">@Culture["About.Contact.Title"]</h1>
+        <p class="pp-doc__lead">@Culture["About.Contact.Lead"]</p>
+    </header>
+
+    <article class="pp-about__contact">
+        @if (!string.IsNullOrWhiteSpace(_supportEmail))
+        {
+            <p class="pp-about__mail">
+                <a class="pub-btn pub-btn--primary" href="mailto:@_supportEmail">@Culture["About.Contact.MailCta"]</a>
+            </p>
+        }
+        <LegalIdentityCard />
+        <p class="pp-about__privacy">
+            @Culture["About.Contact.PrivacyNote"]
+            <a class="auth-link" href="@PublicRoutes.Privacy">@Culture["Legal.Privacy"]</a>
+        </p>
+        <p class="pp-about__privacy">
+            @Culture["Contact.ReportHint"]
+            <a class="auth-link" href="/melden">@Culture["Report.Title"]</a>
+        </p>
+    </article>
+</section>
+
+@code {
+    private string? _supportEmail;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        _supportEmail = legal.SupportEmail?.Trim();
+    }
+}

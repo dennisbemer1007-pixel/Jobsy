@@ -1,0 +1,271 @@
+namespace Jobsy.Web.Localization;
+
+/// <summary>Candidate test / deep-pay UI strings in nl/en/pl/ro/ar.</summary>
+public static class UiStringsTests
+{
+    public static void MergeAll(
+        Dictionary<string, string> nl, Dictionary<string, string> en,
+        Dictionary<string, string> pl, Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
+    {
+        void Add(string key, string nlText, string enText, string plText, string roText, string arText)
+        {
+            nl[key] = nlText;
+            en[key] = enText;
+            pl[key] = plText;
+            ro[key] = roText;
+            ar[key] = arText;
+        }
+
+        Add("TestFlow.LoadErrorTitle", "Dit lukt even niet", "This did not load", "To się teraz nie udało", "Nu a mers acum", "لم ينجح هذا الآن");
+        Add("TestFlow.LoadError", "De vragen zijn niet geladen. Probeer het nog eens.", "The questions did not load. Try again.", "Pytania się nie wczytały. Spróbuj jeszcze raz.", "Întrebările nu s-au încărcat. Încearcă din nou.", "لم تُحمَّل الأسئلة. حاول مرة أخرى.");
+        Add("TestFlow.LoadRetry", "Opnieuw proberen", "Try again", "Spróbuj ponownie", "Încearcă din nou", "حاول مرة أخرى");
+        Add("DeepPay.Title", "Uitgebreide test", "Extended test", "Rozszerzony test", "Test extins", "اختبار موسّع");
+        Add("DeepPay.What", "Uitgebreide {0}", "Extended {0}", "Rozszerzony {0}", "Extins {0}", "موسّع {0}");
+        Add("DeepPay.Questions", "{0} vragen", "{0} questions", "{0} pytania", "{0} întrebări", "{0} أسئلة");
+        Add("DeepPay.Get.1", "Uitgebreide uitslag met alle onderdelen", "Extended results for every part", "Rozszerzony results for every part", "Extins results for every part", "موسّع results for every part");
+        Add("DeepPay.Get.2", "PDF-rapport om te bewaren", "PDF report to keep", "PDF raport to keep", "PDF raport to keep", "PDF تقرير to keep");
+        Add("DeepPay.Get.3", "Tags voor betere matches", "Tags for better matches", "Tags for better matches ·", "Tags for better matches", "‏Tags for better matches");
+        Add("DeepPay.Get.4", "Je gratis uitslag blijft van jou", "Your free results stay yours", "Twój free results stay tyrs", "Your free results stay yours", "‏Your free results stay yours");
+        Add("DeepPay.PriceOnce", "Eenmalig · inclusief btw", "One-time · including VAT", "Jednorazowo · z VAT", "O singură dată · cu TVA", "مرة واحدة · شامل الضريبة");
+        Add("DeepPay.Methods", "Betaalmethoden", "Payment methods", "Metody płatności", "Metode de plată", "طرق الدفع");
+        // D7/05: the checkbox itself reuses "Terms.Waiver.Checkbox" word for word (one source of truth);
+        // only the "read more" link text lives here.
+        Add("DeepPay.WaiverReadMore", "Lees meer over bedenktijd", "Read more about the cooling-off period", "Przeczytaj więcej o prawie odstąpienia", "Citește mai multe despre perioada de retragere", "اقرأ المزيد عن فترة التراجع");
+        Add("DeepPay.FreeKeeps", "Je gratis uitslag blijft van jou.", "Your free results stay yours.", "Twój free results stay tyrs.", "Your free results stay yours.", "‏Your free results stay yours.");
+        Add("DeepPay.NotNow", "Nu niet", "Not now", "Nie teraz", "Nu acum", "ليس الآن");
+        Add("DeepPay.PayCta", "Naar betalen · € {0}", "Pay · € {0}", "Pay · € {0} ·", "Pay · € {0}", "‏Pay · € {0}");
+        Add("DeepPay.Terms", "Voorwaarden", "Terms", "Warunki", "Condiții", "الشروط");
+        Add("DeepPay.SecureMollie", "Veilig betalen via Mollie", "Secure payment via Mollie", "Bezpieczna płatność przez Mollie", "Plată sigură prin Mollie", "دفع آمن عبر Mollie");
+        Add("DeepPay.StubHint", "Testbetaling: er wordt niets afgeschreven.", "Test payment: nothing will be charged.", "Test płatność: nothing will be charged.", "Test plată: nothing will be charged.", "Test دفع: nothing will be charged.");
+        Add("DeepPay.TestAccountFree", "Testaccount: gratis", "Test account: free", "Konto testowe: za darmo", "Cont de test: gratuit", "حساب تجريبي: مجاناً");
+        Add("DeepPay.TestAccountNote", "Dit testaccount opent de uitgebreide analyse zonder betaling.", "This test account opens the extended analysis without payment.", "To konto testowe otwiera rozszerzoną analizę bez płatności.", "Acest cont de test deschide analiza extinsă fără plată.", "هذا الحساب التجريبي يفتح التحليل الموسّع بدون دفع.");
+        Add("DeepPay.TestAccountCta", "Gratis openen", "Open for free", "Otwórz za darmo", "Deschide gratuit", "افتح مجاناً");
+        Add("DeepPay.EveryoneFree", "Gratis", "Free", "Za darmo", "Gratuit", "مجاناً");
+        Add("DeepPay.EveryoneNote", "De uitgebreide test is nu gratis. Je hoeft niet te betalen.", "The extended test is free right now. You do not have to pay.", "Rozszerzony test jest teraz za darmo. Nie musisz płacić.", "Testul extins este acum gratuit. Nu trebuie să plătești.", "الاختبار الموسّع مجاني الآن. لا تحتاج إلى الدفع.");
+        Add("DeepPay.EveryonePrice", "Prijs: gratis", "Price: free", "Cena: za darmo", "Preț: gratuit", "السعر: مجاناً");
+        Add("DeepPay.Err.waiver_required", "Zet eerst het vinkje.", "Tick the box first.", "Tick the box first. ·", "Tick the box first.", "‏Tick the box first.");
+        Add("DeepPay.Err.already_unlocked", "Je hebt deze test al. Begin meteen.", "You already have this test. Start now.", "You already have this test. Start now. ·", "You already have this test. Începe now.", "You already have this test. ابدأ now.");
+        Add("DeepPay.Err.payments_unavailable", "Betalen lukt nu even niet. Probeer het later nog eens.", "Payment is unavailable right now. Try again later.", "Payment is unavailable right now. Spróbuj ponownie later.", "Payment is unavailable right now. Încearcă din nou later.", "Payment is unavailable right now. حاول مرة أخرى later.");
+        Add("DeepPay.Err.consent_required", "Je moet eerst toestemming geven voor de tests.", "You must consent to the tests first.", "You must consent to the tests first. ·", "You must consent to the tests first.", "‏You must consent to the tests first.");
+        Add("DeepPay.Checking", "We checken je betaling", "We’re checking your payment", "Sprawdzamy płatność", "Verificăm plata", "نتحقق من الدفع");
+        Add("DeepPay.CheckingLead", "Dit duurt meestal een paar seconden.", "This usually takes a few seconds.", "This usually takes a few seconds. ·", "This usually takes a few seconds.", "‏This usually takes a few seconds.");
+        Add("DeepPay.CheckingLong", "Duurt het langer dan een minuut? Je mag deze pagina sluiten. We sturen je een mail als het klaar is.", "Taking longer than a minute? You can close this page. We’ll email you when it’s ready.", "Taking longer than a minuta? You can close this page. We’ll email ty when it’s ready.", "Taking longer than a minute? You can close this page. We’ll email you when it’s ready.", "‏Taking longer than a minute? You can close this page. We’ll email you when it’s ready.");
+        Add("DeepPay.BackToTest", "Terug naar de test", "Back to the test", "Wstecz to the test", "Înapoi to the test", "رجوع to the test");
+        Add("DeepPay.PaidTitle", "Betaald. Je kunt beginnen", "Paid. You can start", "Opłacone. Możesz zacząć", "Plătit. Poți începe", "تم الدفع. يمكنك البدء");
+        Add("DeepPay.OpenedTitle", "Klaar om te beginnen", "Ready to start", "Możesz zaczynać", "Gata de început", "جاهز للبدء");
+        Add("DeepPay.PriceFree", "Prijs: gratis (testaccount)", "Price: free (test account)", "Cena: za darmo (konto testowe)", "Preț: gratuit (cont de test)", "السعر: مجاناً (حساب تجريبي)");
+        Add("Coach.Ask", "Lobsy-hulp", "Lobsy help", "Lobsy help", "Lobsy help", "Lobsy help");
+        Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
+        Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
+        Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");
+        Add("DeepPay.StartQ1", "Begin met vraag 1", "Start with question 1", "Zacznij od pytania 1", "Începe cu întrebarea 1", "ابدأ بالسؤال 1");
+        Add("DeepPay.Later", "Later beginnen", "Start later", "Zacznij później", "Începe mai târziu", "ابدأ لاحقًا");
+        Add("DeepPay.FailedTitle", "De betaling is niet gelukt", "Payment failed", "Płatność się nie udała", "Plata nu a reușit", "لم تنجح عملية الدفع");
+        Add("DeepPay.FailedLead", "Er is niets afgeschreven.", "Nothing was charged.", "Nothing was charged. ·", "Nothing was charged.", "لاthing was charged.");
+        Add("DeepPay.RetryPay", "Opnieuw betalen", "Try again", "Zapłać ponownie", "Plătește din nou", "ادفع مرة أخرى");
+        Add("DeepPay.StubFinish", "Testbetaling afronden", "Complete test payment", "Complete test płatność", "Complete test plată", "Complete test دفع");
+        Add("DeepPay.NotFound", "We vinden deze betaling niet.", "We can’t find this payment.", "We can’t find this płatność.", "We can’t find this plată.", "We can’t find this دفع.");
+        Add("DeepPay.ToMyTests", "Naar Mijn tests", "Go to My tests", "Do Moich testów", "Către testele mele", "إلى اختباراتي");
+        Add("DeepPay.Fact.What", "Wat", "What", "What ·", "What", "‏What");
+        Add("DeepPay.Fact.Amount", "Bedrag (incl. btw)", "Amount (incl. VAT)", "Amount (incl. VAT) ·", "Amount (incl. VAT)", "‏Amount (incl. VAT)");
+        Add("DeepPay.Fact.Date", "Datum", "Date", "Date ·", "Date", "‏Date");
+        Add("DeepPay.Fact.Invoice", "Factuurnummer", "Invoice number", "Invoice number ·", "Invoice number", "‏Invoice number");
+        Add("TestErr.SaveBanner", "Je laatste antwoord is nog niet bewaard. Probeer het opnieuw.", "Your last answer is not saved yet. Please try again.", "Twój last answer is not saved yet. Please try again.", "Your last answer is not saved yet. Please try again.", "‏Your last answer is not saved yet. Please try again.");
+        Add("TestErr.Retry", "Opnieuw proberen", "Try again", "Spróbuj ponownie", "Încearcă din nou", "حاول مرة أخرى");
+        Add("TestErr.Consent", "Je moet eerst toestemming geven voor de tests.", "You must consent to the tests first.", "You must consent to the tests first. ·", "You must consent to the tests first.", "‏You must consent to the tests first.");
+        Add("TestErr.unknown_question", "Die vraag kent deze test niet.", "That question is not part of this test.", "That pytanie is not part of this test.", "That întrebare is not part of this test.", "That سؤال is not part of this test.");
+        Add("TestErr.invalid_answer", "Kies een antwoord van 1 tot 5.", "Choose an answer from 1 to 5.", "Choose an answer from 1 to 5. ·", "Choose an answer from 1 to 5.", "‏Choose an answer from 1 to 5.");
+        Add("TestErr.consent_required", "Je moet eerst toestemming geven voor de tests.", "You must consent to the tests first.", "You must consent to the tests first. ·", "You must consent to the tests first.", "‏You must consent to the tests first.");
+        Add("TestErr.parental_consent_required", "Je ouder of verzorger moet eerst toestemming geven.", "A parent or guardian must consent first.", "A parent or guardian must consent first. ·", "A parent or guardian must consent first.", "‏A parent or guardian must consent first.");
+        Add("TestErr.Limit", "Je kunt deze test niet meer aanpassen.", "You cannot change this test any more.", "You cannot change this test any more. ·", "You cannot change this test any more.", "‏You cannot change this test any more.");
+        Add("TestFlow.DraftBanner", "Je past je antwoorden aan. Pas als je op Afronden drukt, telt het als 1 van je 3 keer. Nog {0} over.", "You are editing answers. Only when you press Finish does it count as 1 of your 3 times. {0} left.", "You are editing answers. Only when ty press Zakończ does it count as 1 of tyr 3 times. {0} left.", "You are editing answers. Only when you press Finalizează does it count as 1 of your 3 times. {0} left.", "You are editing answers. Only when you press إنهاء does it count as 1 of your 3 times. {0} left.");
+        Add("TestFlow.DraftStop", "Stoppen zonder aanpassen", "Stop without changing", "Stop without changing ·", "Stop without changing", "‏Stop without changing");
+        Add("TestFlow.QuotaZero", "Je hebt je antwoorden 3 keer aangepast. Dit is je uitslag.", "You have changed your answers 3 times. This is your result.", "You have changed tyr answers 3 times. This is tyr result.", "You have changed your answers 3 times. This is your result.", "‏You have changed your answers 3 times. This is your result.");
+        Add("TestFlow.Rail.Aria", "Jouw duik", "Your dive", "Twój dive", "Your dive", "‏Your dive");
+        Add("TestFlow.Eyebrow.Intro", "Mijn tests · {0}", "My tests · {0}", "Moje testy · {0}", "Testele mele · {0}", "اختباراتي · {0}");
+        Add("TestFlow.Eyebrow.Dive", "In de diepte · {0} · {1}", "Diving · {0} · {1}", "Nurkowanie · {0} · {1}", "Scufundare · {0} · {1}", "غوص · {0} · {1}");
+        Add("TestFlow.Eyebrow.QuickScan", "Snelle scan · {0} · {1}", "Quick-Scan · {0} · {1}", "Quick-Scan · {0} · {1}", "Quick-Scan · {0} · {1}", "Quick-Scan · {0} · {1}");
+        Add("TestFlow.QuestionLead", "Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.", "How well does this sentence fit you? There are no wrong answers.", "Jak dobrze pasuje do ciebie to zdanie? Nie ma złych odpowiedzi.", "Cât de bine ți se potrivește această propoziție? Nu există răspunsuri greșite.", "ما مدى مناسبة هذه الجملة لك؟ لا توجد إجابات خاطئة.");
+        Add("TestFlow.Lead.Competence", "25 korte zinnen over hoe je werkt. Zo zien we waar je sterk in bent.", "25 short sentences about how you work. We see where you are strong.", "25 krótkich zdań o tym, jak pracujesz. Widzimy, w czym jesteś mocny.", "25 de propoziții scurte despre cum lucrezi. Vedem unde ești puternic.", "25 جملة قصيرة عن طريقة عملك. نرى أين أنت قوي.");
+        Add("TestFlow.Lead.Career", "25 korte zinnen over werk dat je leuk vindt. Zo vinden we beroepen die bij je passen.", "25 short sentences about work you like. We find careers that fit.", "25 krótkich zdań o pracy, którą lubisz. Szukamy zawodów, które do ciebie pasują.", "25 de propoziții scurte despre munca care îți place. Găsim meserii care ți se potrivesc.", "25 جملة قصيرة عن العمل الذي تحبه. نجد مهناً تناسبك.");
+        Add("TestFlow.Lead.Culture", "18 korte zinnen over waar je graag werkt. Zo vinden we werkplekken waar je je thuis voelt.", "18 short sentences about where you like to work. We find places where you feel at home.", "18 krótkich zdań o tym, gdzie lubisz pracować. Szukamy miejsc, w których czujesz się dobrze.", "18 propoziții scurte despre unde îți place să lucrezi. Găsim locuri unde te simți bine.", "18 جملة قصيرة عن المكان الذي تحب العمل فيه. نجد أماكن تشعر فيها بالراحة.");
+        Add("TestFlow.Lead.Values", "25 korte zinnen over wat je belangrijk vindt in werk.", "25 short sentences about what matters to you at work.", "25 krótkich zdań o tym, co jest dla ciebie ważne w pracy.", "25 de propoziții scurte despre ce este important pentru tine la muncă.", "25 جملة قصيرة عما يهمك في العمل.");
+        Add("TestFlow.Lead.Competence.V2", "{0} korte zinnen over hoe je werkt. Zo zien we waar je sterk in bent.", "{0} short sentences about how you work. We see where you are strong.", "{0} krótkich zdań o tym, jak pracujesz. Widzimy, w czym jesteś mocny.", "{0} propoziții scurte despre cum lucrezi. Vedem unde ești puternic.", "{0} جملة قصيرة عن طريقة عملك. نرى أين أنت قوي.");
+        Add("TestFlow.Lead.Career.V2", "{0} korte zinnen over werk dat je leuk vindt. Zo vinden we beroepen die bij je passen.", "{0} short sentences about work you like. We find careers that fit.", "{0} krótkich zdań o pracy, którą lubisz. Szukamy zawodów, które do ciebie pasują.", "{0} propoziții scurte despre munca care îți place. Găsim meserii care ți se potrivesc.", "{0} جملة قصيرة عن العمل الذي تحبه. نجد مهناً تناسبك.");
+        Add("TestFlow.Lead.Culture.V2", "{0} korte zinnen over waar je graag werkt. Zo vinden we werkplekken waar je je thuis voelt.", "{0} short sentences about where you like to work. We find places where you feel at home.", "{0} krótkich zdań o tym, gdzie lubisz pracować. Szukamy miejsc, w których czujesz się dobrze.", "{0} propoziții scurte despre unde îți place să lucrezi. Găsim locuri unde te simți bine.", "{0} جملة قصيرة عن المكان الذي تحب العمل فيه. نجد أماكن تشعر فيها بالراحة.");
+        Add("TestFlow.Lead.Values.V2", "{0} korte zinnen over wat je belangrijk vindt in werk.", "{0} short sentences about what matters to you at work.", "{0} krótkich zdań o tym, co jest dla ciebie ważne w pracy.", "{0} propoziții scurte despre ce este important pentru tine la muncă.", "{0} جملة قصيرة عما يهمك في العمل.");
+        Add("TestFlow.Measures.Competence",
+            "Deze test meet hoe je werkt: samenwerken, resultaatgerichtheid, omgaan met druk, innovatie en contact met anderen. Je ziet geen scores — wel een beeld voor passend werk.",
+            "This test measures how you work: collaboration, getting things done, handling pressure, trying new things, and connecting with others. You will not see scores — only a picture to match you with fitting work.",
+            "Ten test mierzy, jak pracujesz: współpraca, realizacja celów, radzenie sobie z presją, innowacje i kontakt z innymi. Bez wyników liczbowych — obraz dopasowanej pracy.",
+            "Acest test măsoară cum lucrezi: colaborare, orientare spre rezultate, gestionarea presiunii, inovație și legătura cu ceilalți. Fără scoruri — doar o imagine pentru muncă potrivită.",
+            "يقيس هذا الاختبار طريقة عملك: التعاون، إنجاز المهام، التعامل مع الضغط، التجديد، والتواصل مع الآخرين. بدون درجات — صورة للعمل المناسب.");
+        Add("TestFlow.Measures.Career",
+            "De beroepentest meet welk soort werk en taken je energie geven (beroepsinteresses). Geen cijfers — wel richting naar beroepen die bij je passen.",
+            "The career test measures what kinds of work and tasks energize you (vocational interests). No numbers — just direction toward careers that fit you.",
+            "Test zawodów mierzy, jaki rodzaj pracy i zadań dodaje ci energii (zainteresowania zawodowe). Bez liczb — kierunek do pasujących zawodów.",
+            "Testul de carieră măsoară ce fel de muncă și sarcini îți dau energie (interese vocaționale). Fără cifre — direcție spre meserii potrivite.",
+            "يقيس اختبار المهنة أنواع العمل والمهام التي تمنحك طاقة (الاهتمامات المهنية). بدون أرقام — اتجاه نحو مهن تناسبك.");
+        Add("TestFlow.Measures.Culture",
+            "Cultuur & persoonlijkheid meet waar je je thuis voelt op de werkvloer: sfeer, structuur en omgang met anderen. Geen scores — wel wat voor werkplek bij je past.",
+            "Culture & personality measures where you feel at home at work: atmosphere, structure, and how you relate to others. No scores — just what kind of workplace suits you.",
+            "Kultura i osobowość mierzą, gdzie czujesz się dobrze w pracy: atmosferę, strukturę i relacje z innymi. Bez wyników — jaki typ miejsca pracy do ciebie pasuje.",
+            "Cultura și personalitatea măsoară unde te simți acasă la job: atmosferă, structură și relația cu ceilalți. Fără scoruri — ce fel de loc de muncă ți se potrivește.",
+            "يقيس ثقافة العمل والشخصية أين تشعر بالراحة في العمل: الأجواء والبنية وعلاقتك بالآخرين. بدون درجات — نوع مكان العمل الذي يناسبك.");
+        Add("TestFlow.Measures.Values",
+            "Waarden op werk meet wat jij belangrijk vindt in werk en met wie je samenwerkt. Geen scores — wel wat voor baan en werkgever bij je past.",
+            "Work values measures what matters to you at work and in teams. No scores — just what jobs and employers fit you.",
+            "Wartości w pracy mierzą, co jest dla ciebie ważne w pracy i w zespole. Bez wyników — jakie oferty i pracodawcy pasują.",
+            "Valorile la muncă măsoară ce contează pentru tine la job și în echipă. Fără scoruri — ce joburi și angajatori ți se potrivesc.",
+            "يقيس قيم العمل ما يهمك في العمل وفي الفريق. بدون درجات — الوظائف وأصحاب العمل المناسبين.");
+        Add("TestFlow.DepthPick", "Hoe diep wil je duiken?", "How deep do you want to dive?", "Jak głęboko chcesz zejść?", "Cât de adânc vrei să te scufunzi?", "إلى أي عمق تريد أن تغوص؟");
+        Add("TestFlow.DepthMeta", "{0} vragen · + {1} min", "{0} questions · + {1} min", "{0} pytania · + {1} min", "{0} întrebări · + {1} min", "{0} أسئلة · + {1} min");
+        Add("TestFlow.DepthMetaShort", "{0}", "{0}", "{0}", "{0}", "{0}");
+        Add("TestFlow.ToMyTests", "Mijn tests", "My tests", "Moje testy", "Testele mele", "اختباراتي");
+        Add("TestFlow.Begin", "Begin", "Start", "Start", "Începe", "ابدأ");
+        Add("TestFlow.ContinueAt", "Ga verder bij vraag {0}", "Continue at question {0}", "Kontynuuj od pytania {0}", "Continuă de la întrebarea {0}", "تابع من السؤال {0}");
+        Add("TestFlow.Bubble.IntroStart", "Klaar voor een duik? Ik ga met je mee.", "Ready for a dive? I’ll come with you.", "Gotowy na nurkowanie? Idę z tobą.", "Gata de scufundare? Vin cu tine.", "مستعد للغوص؟ سأذهب معك.");
+        Add("TestFlow.Bubble.IntroContinue", "{0} vragen heb je al gedaan. Zullen we samen wat dieper gaan?", "You’ve already done {0} questions. Shall we go a bit deeper?", "Masz już {0} pytań za sobą. Zejdziemy trochę głębiej?", "Ai răspuns deja la {0} întrebări. Mergem puțin mai în adânc?", "أجبت بالفعل على {0} أسئلة. نغوص أعمق قليلًا؟");
+        Add("TestFlow.Bubble.IntroDone", "Je bent klaar. Bekijk je uitslag of doe de test opnieuw.", "You’re done. View your result or take the test again.", "Gotowe. Zobacz wynik albo zrób test ponownie.", "Gata. Vezi rezultatul sau reia testul.", "انتهيت. شاهد النتيجة أو أعد الاختبار.");
+        Add("TestFlow.Again", "Opnieuw doen", "Take it again", "Zrób ponownie", "Reia testul", "أعد الاختبار");
+        Add("TestFlow.Bubble.Question", "Er zijn geen foute antwoorden. Kies wat het eerst in je opkomt.", "There are no wrong answers. Choose what comes first.", "There are no wrong answers. Choose what comes first. ·", "There are no wrong answers. Choose what comes first.", "‏There are no wrong answers. Choose what comes first.");
+        Add("TestDone.Title", "Weer een laag eraf", "Another layer off", "Kolejna warstwa spadła", "Încă un strat a căzut", "طبقة أخرى سقطت");
+        Add("TestDone.Eyebrow", "In de diepte · {0} · {1} klaar", "Diving · {0} · {1} done", "Nurkowanie · {0} · {1} done", "Scufundare · {0} · {1} done", "غوص · {0} · {1} done");
+        Add("TestDone.LeadFull",
+            "{0} is helemaal klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
+            "{0} is fully done. Your scores are in tyr passport; your personal mirror stays private.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
+            "‏{0} is fully done. Your scores are in your passport; your personal mirror stays private.");
+        Add("TestDone.LeadLevel",
+            "{0}: {1} is klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your scores are in tyr passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
+            "‏{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.");
+        Add("TestDone.Live", "Weer een laag eraf. {0} {1} is klaar.", "Another layer off. {0} {1} is done.", "Another warstwa off. {0} {1} is done.", "Another layer off. {0} {1} is done.", "‏Another layer off. {0} {1} is done.");
+        Add("TestDone.Back", "Terug naar Mijn tests", "Back to My tests", "Wstecz to Moje testy", "Înapoi to Testele mele", "رجوع to اختباراتي");
+        Add("TestDone.ViewResult", "Bekijk je uitslag", "View your result", "View tyr result", "View your result", "‏View your result");
+        Add("TestDone.BackToJourney", "Terug naar de reis", "Back to the journey", "Wstecz to the journey", "Înapoi to the journey", "رجوع to the journey");
+        Add("TestDone.Bubble.Competence", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter hoe je werkt.", "Feel that? Another layer off. I see better how you work.", "Feel that? Another warstwa off. I see better how ty work.", "Feel that? Another layer off. I see better how you work.", "‏Feel that? Another layer off. I see better how you work.");
+        Add("TestDone.Bubble.Career", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter wat je leuk vindt.", "Feel that? Another layer off. I see better what you like.", "Feel that? Another warstwa off. I see better what ty like.", "Feel that? Another layer off. I see better what you like.", "‏Feel that? Another layer off. I see better what you like.");
+        Add("TestDone.Bubble.Culture", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter waar je je thuis voelt.", "Feel that? Another layer off. I see better where you feel at home.", "Feel that? Another warstwa off. I see better where ty feel at home.", "Feel that? Another layer off. I see better where you feel at home.", "‏Feel that? Another layer off. I see better where you feel at home.");
+        Add("TestDone.Bubble.Values", "Voel je dat? Weer een laag eraf. Nu zie ik nog beter wat je belangrijk vindt.", "Feel that? Another layer off. I see better what matters to you.", "Feel that? Another warstwa off. I see better what matters to ty.", "Feel that? Another layer off. I see better what matters to you.", "‏Feel that? Another layer off. I see better what matters to you.");
+        Add("TestDone.Gain.Strength", "Je sterke kant komt duidelijker naar voren", "Your strength comes through more clearly", "Twój strength comes through more clearly", "Your strength comes through more clearly", "‏Your strength comes through more clearly");
+        Add("TestDone.Gain.Strength2", "We zien beter waar je energie van krijgt", "We see better what gives you energy", "We see better what gives ty energy", "We see better what gives you energy", "‏We see better what gives you energy");
+        Add("TestDone.Gain.Less", "En wat minder jouw ding is", "And what is less your thing", "And what is less tyr thing", "And what is less your thing", "‏And what is less your thing");
+        Add("TestDone.Gain.Values1", "Wat je belangrijk vindt komt duidelijker naar voren", "What matters to you comes through more clearly", "Wyraźniej widać, co jest dla ciebie ważne", "Se vede mai clar ce este important pentru tine", "يظهر بوضوح أكبر ما يهمك");
+        Add("TestDone.Gain.Values2", "We zien beter welke waarden je energie geven", "We see better which values give you energy", "Lepiej widać, które wartości dają ci energię", "Vedem mai bine ce valori îți dau energie", "نرى أفضل أي القيم تمنحك الطاقة");
+        Add("TestDone.Gain.Values3", "En welke waarden minder bij je passen", "And which values fit you less", "I które wartości pasują mniej", "Și ce valori ți se potrivesc mai puțin", "وأي القيم تناسبك أقل");
+        Add("TestDone.Gain.Career1", "Welk werk je leuk vindt komt duidelijker naar voren", "The work you enjoy comes through more clearly", "Wyraźniej widać, jaka praca ci się podoba", "Se vede mai clar ce muncă îți place", "يظهر بوضوح أكبر العمل الذي تحبه");
+        Add("TestDone.Gain.Career2", "We zien beter welke richting daarbij past", "We see better which direction fits", "Lepiej widać, który kierunek pasuje", "Vedem mai bine ce direcție ți se potrivește", "نرى أفضل أي اتجاه يناسبك");
+        Add("TestDone.Gain.Career3", "En welk werk minder jouw ding is", "And which work is less your thing", "I jaka praca pasuje mniej", "Și ce muncă ți se potrivește mai puțin", "وأي عمل يناسبك أقل");
+        Add("TestDone.Gain.Culture1", "Waar je je thuis voelt komt duidelijker naar voren", "Where you feel at home comes through more clearly", "Wyraźniej widać, gdzie czujesz się u siebie", "Se vede mai clar unde te simți acasă", "يظهر بوضوح أكبر أين تشعر أنك في مكانك");
+        Add("TestDone.Gain.Culture2", "We zien beter welke sfeer bij je past", "We see better which atmosphere fits you", "Lepiej widać, jaka atmosfera pasuje", "Vedem mai bine ce atmosferă ți se potrivește", "نرى أفضل أي أجواء تناسبك");
+        Add("TestDone.Gain.Culture3", "En welke werkplek minder bij je past", "And which workplace fits you less", "I które miejsce pracy pasuje mniej", "Și ce loc de muncă ți se potrivește mai puțin", "وأي مكان عمل يناسبك أقل");
+        Add("TestDone.CareerMatches", "{0} vacatures passen goed bij wat je leuk vindt", "{0} vacancies fit well with what you like", "{0} vacancies fit well with what ty like", "{0} vacancies fit well with what you like", "‏{0} vacancies fit well with what you like");
+        Add("TestDone.CareerMatchesLink", "Bekijk ze", "View them", "View them ·", "View them", "‏View them");
+        Add("TestDepth.First", "Eerste indruk", "First look", "Pierwsze wrażenie", "Prima impresie", "انطباع أول");
+        Add("TestDepth.FirstShort", "Eerste", "First", "Pierwsze", "Prima", "أول");
+        Add("TestDepth.DeeperShort", "Dieper", "Deeper", "Głębiej", "Mai adânc", "أعمق");
+        Add("TestDepth.FullShort", "Heel diep", "Very deep", "B. głęboko", "F. adânc", "عميق");
+        Add("TestDepth.Deeper", "Iets dieper", "A bit deeper", "Trochę głębiej", "Un pic mai adânc", "أعمق قليلًا");
+        Add("TestDepth.Full", "Heel diep", "Very deep", "Bardzo głęboko", "Foarte adânc", "عميق جدًا");
+        Add("TestDepth.Bottom", "De bodem", "The bottom", "Dno", "Fundul", "القاع");
+        Add("TestFlow.QuestionOf", "Vraag {0} van {1}", "Question {0} of {1}", "Question {0} of {1} ·", "Question {0} of {1}", "‏Question {0} of {1}");
+        Add("TestFlow.LevelDone", "{0} gedaan", "{0} done", "{0} done ·", "{0} done", "‏{0} done");
+        Add("TestFlow.LevelNext", "Nog {0} vragen tot je {1}", "{0} more questions to your {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
+        Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice", "Example from practice ·", "Example from practice", "‏Example from practice");
+        Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})", "Answered ({0}) ·", "Answered ({0})", "‏Answered ({0})");
+        Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");
+        Add("TestFlow.ProgressInsight.Title", "Jouw beeld tot nu toe", "Your picture so far", "Twój obraz dotąd", "Imaginea ta până acum", "صورتك حتى الآن");
+        Add("TestFlow.ProgressInsight.Lead", "Op basis van je antwoorden tot nu toe:", "Based on your answers so far:", "Na podstawie dotychczasowych odpowiedzi:", "Pe baza răspunsurilor tale de până acum:", "بناءً على إجاباتك حتى الآن:");
+        Add("TestFlow.ProgressInsight.Empty", "Na een paar antwoorden vullen we dit rustig aan.", "After a few answers we gently add to this.", "Po kilku odpowiedziach uzupełnimy to spokojnie.", "După câteva răspunsuri completăm treptat.", "بعد بعض الإجابات نملأ هذا تدريجياً.");
+        Add("TestFlow.ProgressInsight.Line", "{0}: {1}", "{0}: {1}", "{0}: {1}", "{0}: {1}", "{0}: {1}");
+        Add("TestFlow.ProgressInsight.Prefix.Competence", "Hoe je werkt", "How you work", "Jak pracujesz", "Cum lucrezi", "كيف تعمل");
+        Add("TestFlow.ProgressInsight.Prefix.Career", "Werk dat bij je past", "Work that fits you", "Praca dla ciebie", "Muncă potrivită", "عمل يناسبك");
+        Add("TestFlow.ProgressInsight.Prefix.Culture", "Sfeer op de werkvloer", "Workplace vibe", "Klimat w pracy", "Atmosfera la job", "أجواء العمل");
+        Add("TestFlow.ProgressInsight.Prefix.Values", "Belangrijk voor jou", "Important to you", "Ważne dla ciebie", "Important pentru tine", "مهم لك");
+        Add("TestFlow.ProgressInsight.Mobile", "Jouw beeld: {0}", "Your picture: {0}", "Twój obraz: {0}", "Imaginea ta: {0}", "صورتك: {0}");
+        Add("TestFlow.ProgressInsight.MobileNew", "+{0} nieuw", "+{0} new", "+{0} nowe", "+{0} nou", "+{0} جديد");
+        Add("TestFlow.ProgressInsight.Block", "Blok {0}", "Block {0}", "Część {0}", "Blocul {0}", "الكتلة {0}");
+        Add("TestFlow.JumpToQuestion", "Ga naar vraag {0}", "Go to question {0}", "Przejdź do pytania {0}", "Mergi la întrebarea {0}", "‏انتقل إلى السؤال {0}");
+        Add("TestFlow.Adjust", "Aanpassen", "Adjust", "Adjust ·", "Adjust", "‏Adjust");
+        Add("TestFlow.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
+        Add("TestFlow.Later", "Later verder", "Continue later", "Później", "Mai târziu", "لاحقًا");
+        Add("TestFlow.Next", "Volgende", "Next", "Dalej", "Următorul", "التالي");
+        Add("TestFlow.Finish", "Afronden", "Finish", "Zakończ", "Finalizează", "إنهاء");
+        Add("TestFlow.Scale.Low", "Past niet", "Does not fit", "Nie pasuje", "Nu se potrivește", "لا يناسب");
+        Add("TestFlow.Scale.High", "Past heel goed", "Fits very well", "Pasuje bardzo dobrze", "Se potrivește foarte bine", "يناسب جدًا");
+        Add("TestFlow.Scale.Aria.1", "1, past niet", "1, does not fit", "1, does not fit ·", "1, does not fit", "‏1, does not fit");
+        Add("TestFlow.Scale.Aria.2", "2", "2", "2 ·", "RO: 2", "عربي: 2");
+        Add("TestFlow.Scale.Aria.3", "3", "3", "3 ·", "RO: 3", "عربي: 3");
+        Add("TestFlow.Scale.Aria.4", "4", "4", "4 ·", "RO: 4", "عربي: 4");
+        Add("TestFlow.Scale.Aria.5", "5, past heel goed", "5, fits very well", "5, fits very well ·", "5, fits very well", "‏5, fits very well");
+        Add("TestFlow.Saved", "Automatisch bewaard", "Saved automatically", "Zapisano automatycznie", "Salvat automat", "تم الحفظ تلقائياً");
+        Add("TestFlow.SaveFailed", "Je laatste antwoord is nog niet bewaard", "Your last answer is not saved yet", "Twój last answer is not saved yet", "Your last answer is not saved yet", "‏Your last answer is not saved yet");
+        Add("TestFlow.Consent.Title", "Eerst even toestemming", "Consent first", "Zgoda first", "Consimțământ first", "موافقة first");
+        Add("TestFlow.Consent.Lead", "Voor de tests gebruiken we je antwoorden om te kijken welk werk bij je past. Werkgevers zien je antwoorden niet.", "We use your answers to see which work fits you. Employers do not see your answers.", "We use tyr answers to see which work fits ty. Employers do not see tyr answers.", "We use your answers to see which work fits you. Employers do not see your answers.", "‏We use your answers to see which work fits you. Employers do not see your answers.");
+        Add("TestFlow.Consent.Cta", "Toestemming geven", "Give consent", "Udziel zgody", "Give consent", "‏Give consent");
+        Add("TestFlow.Consent.Why", "Waarom vragen we dit?", "Why do we ask this?", "Why do we ask this? ·", "Why do we ask this?", "‏Why do we ask this?");
+        Add("TestFlow.Consent.ParentalTitle", "Toestemming van je ouder", "Parent consent needed", "Parent consent needed ·", "Parent consent needed", "‏Parent consent needed");
+        Add("TestFlow.Consent.ParentalLead", "Je ouder of verzorger moet eerst toestemming geven.", "A parent or guardian must consent first.", "A parent or guardian must consent first. ·", "A parent or guardian must consent first.", "‏A parent or guardian must consent first.");
+        Add("TestFlow.Consent.ParentalCta", "Naar toestemming", "Go to consent", "Go to consent ·", "Go to consent", "‏Go to consent");
+        Add("DeepPay.Upsell", "Ontdek meer over jezelf met de uitgebreide test: {0} vragen en een rapport.", "Discover more about yourself with the extended test: {0} questions and a report.", "Discover more about tyrself with the extended test: {0} pytania and a raport.", "Discover more about yourself with the extended test: {0} întrebări and a raport.", "Discover more about yourself with the extended test: {0} أسئلة and a تقرير.");
+        Add("Deep.UnknownTitle", "Deze test bestaat niet.", "This test does not exist.", "Ten test nie istnieje.", "Acest test nu există.", "هذا الاختبار غير موجود.");
+        Add("Deep.UnknownLead", "Kies een test via Mijn tests.", "Pick a test from My tests.", "Pick a test from Moje testy.", "Pick a test from Testele mele.", "Pick a test from اختباراتي.");
+        Add("Deep.Eyebrow.Part", "De bodem · {0} · deel {1} van 5", "The bottom · {0} · part {1} of 5", "Dno · {0} · część {1} z 5", "Fundul · {0} · partea {1} din 5", "القاع · {0} · الجزء {1} من 5");
+        Add("Deep.TopicsLabel", "Delen", "Parts", "Części", "Părți", "أجزاء");
+        Add("Deep.Bubble.Question", "Hier beneden is het stil. Neem je tijd, we gaan in stukjes.", "It’s quiet down here. Take your time; we go in pieces.", "It’s quiet down here. Take tyr time; we go in pieces.", "It’s quiet down here. Take your time; we go in pieces.", "‏It’s quiet down here. Take your time; we go in pieces.");
+        Add("Deep.Motivation.PartStart", "Deel {0} van 5: {1}.", "Part {0} of 5: {1}.", "Część {0} z 5: {1}.", "Partea {0} din 5: {1}.", "الجزء {0} من 5: {1}.");
+        Add("Deep.Motivation.Halfway", "Je bent halverwege. Goed bezig.", "You’re halfway. Well done.", "You’re halfway. Well done. ·", "You’re halfway. Well done.", "‏You’re halfway. Well done.");
+        Add("Deep.Motivation.LastPart", "Laatste deel. Bijna op de bodem.", "Last part. Almost at the bottom.", "Ostatnia część. Prawie na dnie.", "Ultima parte. Aproape de fund.", "الجزء الأخير. قرب القاع.");
+        Add("Deep.Motivation.BeforePause", "Na dit deel komt een rustpunt. Stoppen mag: alles is bewaard.", "After this part comes a pause. Stopping is fine: everything is saved.", "Po tej części jest przerwa. Możesz stanąć: wszystko jest zapisane.", "După partea asta vine o pauză. Poți opri: totul e salvat.", "بعد هذا الجزء استراحة. يمكنك التوقف: كل شيء محفوظ.");
+        Add("Deep.Pause.Title", "Rustpunt", "Pause point", "Przerwa", "Pauză", "استراحة");
+        Add("Deep.Pause.Lead", "Deel {0} is klaar. Je hebt {1} van {2} vragen gedaan.", "Part {0} is done. You have answered {1} of {2} questions.", "Część {0} gotowa. Masz {1} z {2} pytań.", "Partea {0} e gata. Ai {1} din {2} întrebări.", "الجزء {0} جاهز. أجبت على {1} من {2} أسئلة.");
+        Add("Deep.Pause.Live", "Rustpunt. Deel {0} is klaar.", "Pause. Part {0} is done.", "Przerwa. Część {0} gotowa.", "Pauză. Partea {0} e gata.", "استراحة. الجزء {0} جاهز.");
+        Add("Deep.Pause.Continue", "Verder met deel {0}", "Continue with part {0}", "Dalej z częścią {0}", "Continuă cu partea {0}", "تابع مع الجزء {0}");
+        Add("Deep.Pause.Bubble", "Even ademhalen mag. Ik blijf hier.", "A breath is fine. I’ll stay here.", "A breath is fine. I’ll stay here. ·", "A breath is fine. I’ll stay here.", "‏A breath is fine. I’ll stay here.");
+        Add("Deep.Done.Eyebrow", "De bodem · {0} van {1}", "The bottom · {0} of {1}", "The dno · {0} of {1}", "The fund · {0} of {1}", "The القاع · {0} of {1}");
+        Add("Deep.Done.Lead", "Je bent op de bodem. Je rapport is klaar.", "You’re at the bottom. Your report is ready.", "You’re at the dno. Twój raport is ready.", "You’re at the fund. Your raport is ready.", "You’re at the القاع. Your تقرير is ready.");
+        Add("Deep.Done.ViewReport", "Bekijk je rapport", "View your report", "Zobacz swój raport", "Vezi raportul", "اعرض تقريرك");
+        Add("Deep.Done.DownloadPdf", "Download als PDF", "Download as PDF", "Pobierz jako PDF", "Descarcă PDF", "نزّل كملف PDF");
+        Add("Deep.Done.Bubble", "Voel je dat? Nu ken ik je echt.", "Feel that? Now I really know you.", "Feel that? Now I really know ty.", "Feel that? Now I really know you.", "Feel that? لاw I really know you.");
+        Add("Deep.Offer.Eyebrow", "De bodem · uitgebreide test", "The bottom · extended test", "The dno · extended test", "The fund · extended test", "The القاع · extended test");
+        Add("Deep.Offer.Title", "Duik tot de bodem", "Dive to the bottom", "Zanurkuj na dno", "Scufundă-te până la fund", "اغص إلى القاع");
+        Add("Deep.Offer.Lead", "{0} vragen in de {1}. Daarna krijg je een rapport, helemaal over jou.", "{0} questions in the {1}. Then you get a report, all about you.", "{0} pytań w teście „{1}”. Potem dostajesz raport, cały o tobie.", "{0} întrebări în testul „{1}”. Apoi primești un raport, numai despre tine.", "{0} سؤالًا في اختبار «{1}». بعدها تحصل على تقرير عنك بالكامل.");
+        Add("Deep.Offer.WhatTitle", "Wat krijg je?", "What do you get?", "What do ty get?", "What do you get?", "‏What do you get?");
+        Add("Deep.Offer.Sample", "Bekijk eerst een voorbeeld", "View a sample first", "View a sample first ·", "View a sample first", "‏View a sample first");
+        Add("Deep.Offer.TileMin", "± {0} minuten", "± {0} minutes", "± {0} minuty", "± {0} minute", "± {0} دقائق");
+        Add("Deep.Offer.TileParts", "In stukjes. Alles wordt bewaard.", "In pieces. Everything is saved.", "In pieces. Everything is saved. ·", "In pieces. Everything is saved.", "‏In pieces. Everything is saved.");
+        Add("Deep.Offer.TileFreeKeep", "Je gratis uitslag blijft", "Your free result stays", "Twój free result stays", "Your free result stays", "‏Your free result stays");
+        Add("Deep.Offer.TileFreeKeepLead", "Die {0} vragen blijven altijd van jou.", "Those {0} questions stay yours forever.", "Those {0} pytania stay tyrs forever.", "Those {0} întrebări stay yours forever.", "Those {0} أسئلة stay yours forever.");
+        Add("Deep.Offer.Bubble", "Daar beneden ligt nog meer van jou. Kijken mag, het hoeft niet.", "There’s more of you down there. Looking is fine; it doesn’t have to.", "There’s more of ty down there. Looking is fine; it doesn’t have to.", "There’s more of you down there. Looking is fine; it doesn’t have to.", "‏There’s more of you down there. Looking is fine; it doesn’t have to.");
+        Add("Deep.Rail.FreeDone", "Heel diep · {0} vragen · gedaan", "Very deep · {0} questions · done", "Very deep · {0} pytania · done", "Very deep · {0} întrebări · done", "Very deep · {0} أسئلة · done");
+        Add("Deep.Rail.BottomZone", "De bodem · uitgebreid", "The bottom · extended", "The dno · extended", "The fund · extended", "The القاع · extended");
+        Add("Deep.Rail.PaidReady", "Betaald · klaar om te duiken", "Paid · ready to dive", "Paid · ready to dive ·", "Paid · ready to dive", "‏Paid · ready to dive");
+        Add("Deep.Rail.OpenedReady", "Geopend · klaar om te duiken", "Opened · ready to dive", "Otwarte · gotowe do nurkowania", "Deschis · gata de scufundare", "مفتوح · جاهز للغوص");
+        Add("Deep.Chrome", "Uitgebreide test · deel {0} van {1} · vraag {2} van {3}", "Extended test · part {0} of {1} · question {2} of {3}", "Test rozszerzony · część {0} z {1} · pytanie {2} z {3}", "Test extins · partea {0} din {1} · întrebarea {2} din {3}", "الاختبار الموسّع · الجزء {0} من {1} · السؤال {2} من {3}");
+        Add("Tests.ResumeHint", "Je bent bij vraag {0} van {1} · Ga verder", "You are at question {0} of {1} · Continue", "Jesteś przy pytaniu {0} z {1} · Dalej", "Ești la întrebarea {0} din {1} · Continuă", "أنت عند السؤال {0} من {1} · تابع");
+        Add("Tests.StartExtendedFree", "Start uitgebreide test: gratis (testaccount)", "Start the extended test: free (test account)", "Zacznij test rozszerzony: za darmo (konto testowe)", "Începe testul extins: gratuit (cont de test)", "ابدأ الاختبار الموسّع: مجاناً (حساب تجريبي)");
+        Add("Tests.StartExtendedEveryoneFree", "Start uitgebreide test: gratis", "Start the extended test: free", "Zacznij test rozszerzony: za darmo", "Începe testul extins: gratuit", "ابدأ الاختبار الموسّع: مجاناً");
+        Add("Deep.Rail.PartProgress", "Vraag {0} van {1}", "Question {0} of {1}", "Question {0} of {1} ·", "Question {0} of {1}", "‏Question {0} of {1}");
+        Add("Deep.Rail.Footer", "{0} van {1} vragen · ± {2} min nog", "{0} of {1} questions · ± {2} min left", "{0} of {1} pytania · ± {2} min left", "{0} of {1} întrebări · ± {2} min left", "{0} of {1} أسئلة · ± {2} min left");
+        Add("Deep.Checkout.Bubble.Checking", "Even geduld. We kijken of de betaling gelukt is.", "One moment. We’re checking the payment.", "One moment. We’re checking the płatność.", "One moment. We’re checking the plată.", "One moment. We’re checking the دفع.");
+        Add("Deep.Checkout.Bubble.Paid", "Gelukt! Zullen we samen naar de bodem duiken?", "Done! Shall we dive to the bottom together?", "Done! Shall we dive to the dno together?", "Done! Shall we dive to the fund together?", "Done! Shall we dive to the القاع together?");
+        Add("Deep.Checkout.Bubble.Failed", "Geen zorgen. Er is niets afgeschreven.", "No worries. Nothing was charged.", "No worries. Nothing was charged. ·", "No worries. Nothing was charged.", "لا worries. لاthing was charged.");
+        Add("Deep.Checkout.NoDouble", "Je betaalt nooit twee keer voor dezelfde test.", "You never pay twice for the same test.", "You never pay twice for the same test. ·", "You never pay twice for the same test.", "‏You never pay twice for the same test.");
+        Add("Deep.Checkout.PaidLead", "Fijn! Je {0} staat voor je klaar.", "Nice! Your {0} is ready.", "Super! Twój {0} jest gotowy.", "Gata! {0} te așteaptă.", "‏رائع! {0} جاهز لك.");
+        Add("Deep.Checkout.FailedLead", "Er is niets afgeschreven. Dat kan gebeuren, bijvoorbeeld als je het scherm van je bank sloot.", "Nothing was charged. That can happen if you closed your bank screen.", "Nothing was charged. That can happen if ty closed tyr bank screen.", "Nothing was charged. That can happen if you closed your bank screen.", "لاthing was charged. That can happen if you closed your bank screen.");
+        Add("Deep.Checkout.TipRetry", "Je kunt het opnieuw proberen.", "You can try again.", "You can try again. ·", "You can try again.", "‏You can try again.");
+        Add("Deep.Checkout.TipKept", "Je eerdere antwoorden blijven bewaard.", "Your earlier answers stay saved.", "Twój earlier answers stay saved.", "Your earlier answers stay saved.", "‏Your earlier answers stay saved.");
+        Add("Deep.Checkout.TipHelp", "Is er toch geld afgeschreven? Tik op Assistent. Dan zoeken we het uit.", "Was money charged anyway? Tap Assistant and we’ll look into it.", "Was money charged anyway? Tap Assistant and we’ll look into it. ·", "Was money charged anyway? Tap Assistant and we’ll look into it.", "‏Was money charged anyway? Tap Assistant and we’ll look into it.");
+        Add("Deep.Checkout.TileQs", "{0} vragen · ± {1} min", "{0} questions · ± {1} min", "{0} pytania · ± {1} min", "{0} întrebări · ± {1} min", "{0} أسئلة · ± {1} min");
+        Add("Deep.Checkout.TileParts", "In 5 onderwerpen, met rustpunten.", "In 5 topics, with pause points.", "In 5 topics, with pause points. ·", "In 5 topics, with pause points.", "‏In 5 topics, with pause points.");
+        Add("Deep.Checkout.TileStop", "Stoppen mag", "Stopping is fine", "Stopping is fine ·", "Stopping is fine", "‏Stopping is fine");
+        Add("Deep.Checkout.TileStopLead", "Je gaat later verder waar je was.", "You’ll continue later where you left off.", "You’ll continue later where ty left off.", "You’ll continue later where you left off.", "‏You’ll continue later where you left off.");
+
+        UiStringsTestReflection.MergeAll(nl, en, pl, ro, ar);
+    }
+}

@@ -1,10 +1,13 @@
 using System.Text;
 using Jobsy.Api.Authorization;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
 
 namespace Jobsy.Api.Controllers;
 
@@ -15,16 +18,25 @@ public sealed class TokenFinanceController : ControllerBase
 {
     private readonly ITokenFinanceQueryService _finance;
     private readonly ITokenPurchaseInvoiceService _invoices;
+    private readonly IConsumerInvoiceService _consumerInvoices;
     private readonly IVatBufferTransferService _vatBuffer;
+    private readonly IUserLookupService _users;
+    private readonly IPersonalDataAccessLogger _accessLog;
 
     public TokenFinanceController(
         ITokenFinanceQueryService finance,
         ITokenPurchaseInvoiceService invoices,
-        IVatBufferTransferService vatBuffer)
+        IConsumerInvoiceService consumerInvoices,
+        IVatBufferTransferService vatBuffer,
+        IUserLookupService users,
+        IPersonalDataAccessLogger accessLog)
     {
         _finance = finance;
         _invoices = invoices;
+        _consumerInvoices = consumerInvoices;
         _vatBuffer = vatBuffer;
+        _users = users;
+        _accessLog = accessLog;
     }
 
     [HttpGet("finance/purchases")]
@@ -35,6 +47,27 @@ public sealed class TokenFinanceController : ControllerBase
     {
         var rows = await _finance.GetPurchasesAsync(year, quarter, cancellationToken);
         return Ok(rows.Select(ToDto));
+    }
+
+    /// <summary>Kandidaat-aankopen (uitgebreide tests) — number, date, amount, test type; no answers.</summary>
+    [HttpGet("finance/consumer-purchases")]
+    public async Task<ActionResult<IEnumerable<ConsumerPurchaseFinanceDto>>> GetConsumerPurchases(
+        [FromQuery] int? year = null,
+        [FromQuery] int? quarter = null,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _consumerInvoices.ListAsync(year, quarter, cancellationToken);
+        return Ok(rows.Select(i => new ConsumerPurchaseFinanceDto(
+            i.Id,
+            i.InvoiceNumber,
+            i.IssuedAt,
+            i.TotalAmountCents,
+            TokenVatPricing.FromCents(i.TotalAmountCents),
+            i.Kind.ToString(),
+            DeepAnalysisPricing.DescriptionNl(i.Kind),
+            i.PaymentMethod,
+            i.VatDeclarationStatusLabel,
+            i.IsStub)));
     }
 
     [HttpGet("finance/goodwill")]
@@ -79,27 +112,54 @@ public sealed class TokenFinanceController : ControllerBase
     }
 
     [HttpGet("finance/purchases/export")]
+    [AdminAudit(AdminAuditKeys.ExportCreate, TargetType = AdminAuditKeys.TargetTypes.Export)]
     public async Task<IActionResult> ExportPurchases(
         [FromQuery] int? year = null,
         [FromQuery] int? quarter = null,
+        [FromQuery] int? month = null,
         CancellationToken cancellationToken = default)
     {
-        var csv = await _finance.ExportPurchasesCsvAsync(year, quarter, cancellationToken);
+        var csv = await _finance.ExportPurchasesCsvAsync(year, quarter, month, cancellationToken);
+        await LogFinanceExportAsync("finance.purchases.export", year, quarter, cancellationToken);
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
-        var name = $"token-aankopen-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
+        var name = TokenExportFileNames.Purchases(year, quarter, month);
         return File(bytes, "text/csv; charset=utf-8", name);
     }
 
     [HttpGet("finance/goodwill/export")]
+    [AdminAudit(AdminAuditKeys.ExportCreate, TargetType = AdminAuditKeys.TargetTypes.Export)]
     public async Task<IActionResult> ExportGoodwill(
         [FromQuery] int? year = null,
         [FromQuery] int? quarter = null,
         CancellationToken cancellationToken = default)
     {
         var csv = await _finance.ExportGoodwillCsvAsync(year, quarter, cancellationToken);
+        await LogFinanceExportAsync("finance.goodwill.export", year, quarter, cancellationToken);
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray();
         var name = $"token-goodwill-{(year?.ToString() ?? "all")}-Q{(quarter?.ToString() ?? "all")}.csv";
         return File(bytes, "text/csv; charset=utf-8", name);
+    }
+
+    private async Task LogFinanceExportAsync(
+        string resource,
+        int? year,
+        int? quarter,
+        CancellationToken cancellationToken)
+    {
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (actor is null)
+        {
+            return;
+        }
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            actor.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            resource,
+            "export",
+            reason: $"year={year};quarter={quarter}",
+            cancellationToken: cancellationToken);
     }
 
     [HttpGet("invoices/{invoiceId:guid}/pdf")]
@@ -139,7 +199,9 @@ public sealed class TokenFinanceController : ControllerBase
             TokenVatPricing.FromCents(r.TotalAmountCents),
             r.IssuedAt,
             r.InvoicePdfPath,
-            r.VatDeclarationStatusLabel);
+            r.VatDeclarationStatusLabel,
+            r.MollieStatus,
+            r.PaymentMethod);
 
     private static string MaskIban(string? iban)
     {
@@ -168,7 +230,9 @@ public sealed record TokenPurchaseFinanceDto(
     decimal TotalAmountEuro,
     DateTime IssuedAt,
     string InvoicePdfUrl,
-    string? VatDeclarationStatusLabel = null);
+    string? VatDeclarationStatusLabel = null,
+    string MollieStatus = "Paid",
+    string? PaymentMethod = null);
 
 public sealed record TokenGoodwillFinanceDto(
     Guid TransactionId,
@@ -185,7 +249,7 @@ public sealed record TokenGoodwillFinanceDto(
 
 public sealed record VatBufferTransferDto(
     Guid Id,
-    Guid InvoiceId,
+    Guid? InvoiceId,
     string InvoiceNumber,
     string DestinationIbanMasked,
     int AmountCents,

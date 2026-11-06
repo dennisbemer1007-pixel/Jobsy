@@ -1,0 +1,26 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+
+<section class="ref-verif-hero @CssClass" style="@Style" aria-hidden="@(AriaHidden ? "true" : null)">
+    <div class="ref-verif-hero__art" aria-hidden="true"></div>
+    <div class="ref-verif-hero__cream" aria-hidden="true"></div>
+    <div class="ref-verif-hero__inner">
+        @ChildContent
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string ImageUrl { get; set; } = "";
+
+    [Parameter] public string? CssClass { get; set; }
+
+    [Parameter] public string ObjectPosition { get; set; } = "72% 38%";
+
+    [Parameter] public string? MobileObjectPosition { get; set; }
+
+    [Parameter] public bool AriaHidden { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string Style =>
+        $"--ref-verif-hero-image: url('{ImageUrl}'); --ref-verif-hero-position: {ObjectPosition}; --ref-verif-hero-position-mobile: {MobileObjectPosition ?? ObjectPosition};";
+}

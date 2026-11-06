@@ -1,3 +1,6 @@
+using Jobsy.Core.Options;
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -10,9 +13,7 @@ public class PlatformFeatureSettings
     /// <summary>When false, vacancy save skips AI/heuristic content moderation.</summary>
     public bool VacancyContentModerationEnabled { get; set; } = true;
 
-    public bool AuthenticatorEnabled { get; set; } = true;
-
-    public bool ExposeRegistrationActivationLinks { get; set; }
+    public bool AuthenticatorEnabled { get; set; }
 
     public string? PublicWebBaseUrl { get; set; }
 
@@ -26,7 +27,7 @@ public class PlatformFeatureSettings
     /// Interactive session inactivity timeout in minutes (cookie + UI idle timer).
     /// Default 30 minutes; admin-configurable.
     /// </summary>
-    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+    public int SessionInactivityTimeoutMinutes { get; set; } = SessionAuthDefaults.InactivityTimeoutMinutes;
 
     /// <summary>
     /// Global floor for cookie <c>session_version</c>. Raise on a release to force every
@@ -34,12 +35,214 @@ public class PlatformFeatureSettings
     /// </summary>
     public int MinimumSessionVersion { get; set; }
 
+    /// <summary>When true, research consent UI and exports are available (COTAN validation).</summary>
+    public bool ResearchConsentEnabled { get; set; }
+
     /// <summary>
     /// Inclusive last calendar day (UTC date) on which publishing a vacancy costs 0 tokens.
     /// Highlight and PushBom stay paid. Null = promo off (normal publish rates).
     /// Seeded default: 2026-11-18.
     /// </summary>
     public DateOnly? FreePublishUntil { get; set; }
+
+    /// <summary>When true, other admins receive e-mail when support access is granted (default off).</summary>
+    public bool SupportAccessNotifyAdmins { get; set; }
+
+    /// <summary>
+    /// When true, the subject's privacy/data page notes that support accessed their data (default off).
+    /// </summary>
+    public bool SupportAccessNotifySubject { get; set; }
+
+    /// <summary>When false, Kandidaatinzichten nav/API are hidden/404 (D18). Default true.</summary>
+    public bool CandidateInsightsEnabled { get; set; } = true;
+
+    /// <summary>Paid unlock duration in days (7–365). Default 90. Snapshot on purchase.</summary>
+    public int CandidateInsightsUnlockDays { get; set; } = 90;
+
+    /// <summary>
+    /// When true, unlock is per vestiging (VM can unlock own from allocated balance).
+    /// When false (default), unlock is organisation-wide (BM only).
+    /// </summary>
+    public bool CandidateInsightsUnlockPerBranch { get; set; }
+
+    // —— Scholen (moves into PlatformSettingsCatalog group "Scholen") ——
+
+    /// <summary>Master switch for school/teacher/pupil surfaces. Retention always runs. Default false.</summary>
+    public bool SchoolsEnabled { get; set; }
+
+    /// <summary>When true, schoolbeheerders see per-code short results. Default true.</summary>
+    public bool SchoolPerCodeResultsEnabled { get; set; } = true;
+
+    /// <summary>Retention cutoff month (1–12). Default 7 (July).</summary>
+    public int SchoolRetentionCutoffMonth { get; set; } = 7;
+
+    /// <summary>Retention cutoff day. Default 31.</summary>
+    public int SchoolRetentionCutoffDay { get; set; } = 31;
+
+    /// <summary>
+    /// When false (default), the Ambassadeur role is parked: no pages, links, or new commission.
+    /// Existing data is kept.
+    /// </summary>
+    public bool AmbassadorsEnabled { get; set; }
+    /// <summary>
+    /// When false (default until phase 2, decision 20), employer/vacancy surfaces are hidden and blocked.
+    /// Existing data is never deleted when toggled off. Admins can turn it on deliberately.
+    /// </summary>
+    public bool EmployersEnabled { get; set; }
+
+    /// <summary>
+    /// Phase-2 employer product: ½-token accept, Maqqie placement, agency map radius, candidate hours.
+    /// Default false. Requires <see cref="EmployersEnabled"/> for any effect.
+    /// </summary>
+    public bool EmployerPhase2Enabled { get; set; }
+
+    /// <summary>
+    /// When true, candidates see Mijn Paspoort instead of the classic profile. Default true.
+    /// </summary>
+    public bool CandidatePassportEnabled { get; set; } = true;
+
+    /// <summary>Partner portal, codes and consent. Default false. Does not imply PDF v2.</summary>
+    public bool PassportPartnersEnabled { get; set; }
+
+    /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
+    public bool PassportPdfV2Enabled { get; set; }
+
+    /// <summary>Age-specific school DNA-paspoort PDFs (groep 7/8 + VO). Default false; on in non-production when unset.</summary>
+    public bool PupilPassportV2Enabled { get; set; }
+
+    /// <summary>Student/stagiair DNA-paspoort (2-page, with vacancies). Default false; on in non-production when unset.</summary>
+    public bool StudentPassportEnabled { get; set; }
+
+    /// <summary>
+    /// When true, the DNA paspoort PDF shows the four DNA layer cards plus “Hoe ik graag werk”
+    /// and “Zo haal je het beste uit …”. Default true (acceptatie/dev); can be turned off per platform.
+    /// </summary>
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
+
+    /// <summary>SMS phone verification. Stays false until an SMS provider is chosen.</summary>
+    public bool PhoneVerificationEnabled { get; set; }
+
+    /// <summary>
+    /// When false (default), come-back reminders are not sent on WhatsApp and the
+    /// candidate does not see that choice.
+    /// </summary>
+    public bool WhatsAppRemindersEnabled { get; set; }
+
+    /// <summary>
+    /// When true, paid personal deep-test PDFs use the compact chart layout.
+    /// Default false keeps today's longer pages.
+    /// </summary>
+    public bool CompactTestPdfEnabled { get; set; }
+
+    /// <summary>
+    /// When true, job detail shows the stored honest-advice line for that occupation.
+    /// Default false. The text is read from embedded JSON. Nothing is generated per candidate.
+    /// </summary>
+    public bool HonestAdviceEnabled { get; set; }
+
+    /// <summary>
+    /// When true, candidates see "Werk met toekomst dat bij jou past" on Functiefit and Carrière.
+    /// Default false. Does not turn employers on.
+    /// </summary>
+    public bool FutureJobsForYouEnabled { get; set; }
+
+    /// <summary>
+    /// When true, candidates can import external vacancy URLs and e-mail employers (mockups 6a–6e).
+    /// Default false.
+    /// </summary>
+    public bool CandidateExternalVacanciesEnabled { get; set; }
+
+    /// <summary>Proactive matching (Lobsy zoekt voor je + werkgever-shortlist). Default false.</summary>
+    public bool ProactiveMatchingEnabled { get; set; }
+
+    /// <summary>Quick-Scan v2 catalogs for newly started candidate tests. Default false.</summary>
+    public bool TestsV2Enabled { get; set; }
+
+    /// <summary>Per-item practice examples on Quick-Scan flows. Default false.</summary>
+    public bool TestItemExamplesEnabled { get; set; }
+
+    /// <summary>Progress insight card + motivation on Quick-Scan. Default false.</summary>
+    public bool TestProgressInsightEnabled { get; set; }
+
+    /// <summary>
+    /// Realistic match calibration (fit + confidence, no neutral inflation). Default false.
+    /// </summary>
+    public bool MatchCalibrationV1Enabled { get; set; }
+
+    /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
+    public bool EmployerFitQuestionnairesEnabled { get; set; }
+
+    /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
+    public bool KandidatenkaartEnabled { get; set; }
+
+    /// <summary>Bedrijvenkaart and open-application initiative flows. Default true.</summary>
+    public bool CompanyMapInitiativeEnabled { get; set; } = true;
+
+    /// <summary>Na de match: gesprek plannen en berichten. Default false.</summary>
+    public bool AfterMatchEnabled { get; set; }
+
+    /// <summary>Work-experience reference verification for candidates. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
+    /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
+    public bool SensitiveExperienceEnabled { get; set; }
+
+    /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
+    public bool TrainingPartnersEnabled { get; set; }
+
+    /// <summary>UWV werkmap flows for candidates. Default false.</summary>
+    public bool UwvFeaturesEnabled { get; set; }
+
+    /// <summary>Mijn activiteiten (UWV). Default false.</summary>
+    public bool ActivityLogEnabled { get; set; }
+
+    /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
+    public bool TestJourneyIllustrationEnabled { get; set; }
+
+    /// <summary>Onboarding finale v2 cards layout. Default false.</summary>
+    public bool OnboardingFinaleV2Enabled { get; set; }
+
+    /// <summary>Dag-in-het-leven links on occupation detail. Default true.</summary>
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+    /// <summary>Antwoorden wijzigen on completed tests. Default false.</summary>
+    public bool TestEditModeEnabled { get; set; }
+
+    /// <summary>Voorbeeld-PDF on test result pages. Default false.</summary>
+    public bool SamplePdfEnabled { get; set; }
+
+    /// <summary>Progressive test depth mockup (mini-spiegel, unlock cards). Default true.</summary>
+    public bool TestDepthValueMockupEnabled { get; set; } = true;
+
+    /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
+    public string AdminFlagOverridesJson { get; set; } = "[]";
+
+    /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
+    public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
+
+    /// <summary>Max authenticated apply POSTs per candidate per hour. Default 30.</summary>
+    public int CandidateApplyPerHourLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerHour;
+
+    /// <summary>Max authenticated apply POSTs per candidate per day. Default 100.</summary>
+    public int CandidateApplyPerDayLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerDay;
+
+    /// <summary>
+    /// When true, every candidate unlocks the uitgebreide analyse without Mollie.
+    /// Default true so acceptatie is free after deploy. An admin can turn it off.
+    /// Test accounts stay free even when this is false.
+    /// </summary>
+    public bool FreeCandidateTestsEnabled { get; set; } = true;
+
+    /// <summary>
+    /// When true, everyone except admins gets the 503 maintenance page (errors 05). Default false.
+    /// </summary>
+    public bool MaintenanceEnabled { get; set; }
+
+    /// <summary>Optional moment the maintenance window is expected to end (UTC).</summary>
+    public DateTime? MaintenanceExpectedEndUtc { get; set; }
+
+    /// <summary>Internal note for admins only. Never shown to visitors.</summary>
+    public string? MaintenanceNote { get; set; }
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

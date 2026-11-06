@@ -1,8 +1,8 @@
 using System.Globalization;
 using Jobsy.Core;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Rules;
-using QRCoder;
+using Jobsy.Core.Sales;
+using Jobsy.Infrastructure.Sales;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -55,12 +55,13 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
         var logo = _companySettings.GetBrandLogoPng();
         var culture = CultureInfo.GetCultureInfo("nl-NL");
         var code = NormalizeTrackingCode(trackingCode);
-        var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
+        var legal = LegalIdentityService.Compose(null, platform);
+        var brand = string.IsNullOrWhiteSpace(legal.TradeName) ? legal.DisplayName : legal.TradeName.Trim();
         var baseUrl = JobsyPublicUrl.NormalizeOrigin(features.PublicWebBaseUrl).TrimEnd('/');
         var qrTarget = code is null
             ? $"{baseUrl}/register"
-            : $"{baseUrl}/register?ref={Uri.EscapeDataString(code)}";
-        var qrPng = RenderQrPng(qrTarget);
+            : $"{baseUrl}/p/{Uri.EscapeDataString(code)}?b=flyer";
+        var qrPng = SalesQr.Png(qrTarget);
         var packages = catalog.Packages.Take(4).ToList();
         var costs = catalog.VacancyTypeCosts.Take(3).ToList();
         var bonus = catalog.StartHighlightBonusTokens.ToString("0.##", culture);
@@ -98,11 +99,11 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
                         });
 
                         hero.Item().PaddingTop(8)
-                            .Text("Nodig werkgevers uit voor hyper-lokaal werven")
+                            .Text("Nodig werkgevers uit om personeel dichtbij te vinden")
                             .FontSize(20).Bold().FontColor(Colors.White);
                         hero.Item().Text(
-                                "Reistijd-matching in Westland & Den Haag — bereik kandidaten die écht in de buurt " +
-                                "wonen of studeren, zonder abonnement.")
+                                "Lobsy laat een vacature zien aan mensen in de buurt, op fiets-, OV- of autotijd. " +
+                                "Je betaalt alleen als je een vacature plaatst.")
                             .FontSize(9).FontColor(SoftSky);
                     });
 
@@ -116,8 +117,8 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
                         {
                             usp.Spacing(2);
                             usp.Item().Text("Waarom Lobsy?").Bold().FontColor(AccentTeal).FontSize(10);
-                            usp.Item().Text("• Match op fiets, OV of auto — geen landelijke spill").FontSize(8);
-                            usp.Item().Text("• Banenkaart + carrousel-highlight (Funda-model)").FontSize(8);
+                            usp.Item().Text("• Kandidaten uit de buurt, op fiets-, OV- of autotijd").FontSize(8);
+                            usp.Item().Text("• Je vacature op de banenkaart, met een highlight erbij").FontSize(8);
                             usp.Item().Text("• Tokens i.p.v. abonnementen — betaal alleen voor plaatsing").FontSize(8);
                             usp.Item().Text($"• Start-highlight t.w.v. {bonus} tokens bij aanmelding via salescode")
                                 .FontSize(8);
@@ -249,20 +250,12 @@ public sealed class PartnerFlyerPdfService : IPartnerFlyerPdfService
             : null;
     }
 
-    private static byte[] RenderQrPng(string payload)
-    {
-        using var generator = new QRCodeGenerator();
-        using var data = generator.CreateQrCode(payload, QRCodeGenerator.ECCLevel.Q);
-        var png = new PngByteQRCode(data);
-        return png.GetGraphic(8);
-    }
-
     private sealed class NullFeatures : IPlatformFeatureService
     {
         public static readonly NullFeatures Instance = new();
 
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(false, false, false, "https://lobsy.nl", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.nl", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

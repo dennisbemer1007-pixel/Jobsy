@@ -1,0 +1,95 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject CultureState Culture
+
+@if (VerifiedCompetences.Count > 0 || _confirmedWork.Count > 0)
+{
+    <section class="ref-verif-employer-preview detail-card" data-testid="passport-employer-preview">
+        <p class="ref-verif-employer-preview__eyebrow">@Culture["RefVerif.EmployerPreview.CompactTitle"]</p>
+
+        @if (VerifiedCompetences.Count > 0)
+        {
+            <div class="ref-verif-employer-preview__chips" role="list">
+                @for (var i = 0; i < VerifiedCompetences.Count; i++)
+                {
+                    var item = VerifiedCompetences[i];
+                    <span class="ref-verif-employer-preview__chip"
+                          role="listitem"
+                          style="--ref-verif-chip-i: @i"
+                          title="@Culture["RefVerif.VerifiedBadge"]"
+                          aria-label="@($"{item.Label} — {Culture["RefVerif.VerifiedBadge"]}")">
+                        <ReferenceVerificationDrawCheck Size="sm" Animate="false" CssClass="ref-verif-employer-preview__check" />
+                        <span class="ref-verif-employer-preview__chip-label">@item.Label</span>
+                    </span>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_recognitionLine))
+            {
+                <p class="ref-verif-employer-preview__line">@_recognitionLine</p>
+            }
+        }
+
+        @if (_confirmedWork.Count > 0)
+        {
+            <ul class="ref-verif-employer-preview__work">
+                @foreach (var entry in _confirmedWork)
+                {
+                    <li>
+                        <strong>@(string.IsNullOrWhiteSpace(entry.Role) ? entry.EmployerName : entry.Role)</strong>
+                        <span class="ref-verif-experience-badge">
+                            <span aria-hidden="true">✓</span> @Culture["RefVerif.VerifiedBadge"]
+                        </span>
+                        <span class="muted">@entry.EmployerName · @FormatRange(entry.StartMonth, entry.EndMonth)</span>
+                    </li>
+                }
+            </ul>
+        }
+
+        <p class="ref-verif-disclaimer">@Culture["RefVerif.VerifiedCompetences.Disclaimer"]</p>
+
+        @if (!string.IsNullOrWhiteSpace(AskAnotherHref))
+        {
+            <p class="ref-verif-employer-preview__footer-link">
+                <a href="@AskAnotherHref">@Culture["RefVerif.Tip.AskAnother"]</a>
+            </p>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<JobsyApiClient.VerifiedCompetenceItem> VerifiedCompetences { get; set; } = [];
+
+    [Parameter] public IReadOnlyList<CandidateEmployerHistory> Employers { get; set; } = [];
+
+    [Parameter] public IReadOnlyList<JobsyApiClient.ReferenceVerificationListItem> VerificationRows { get; set; } = [];
+
+    [Parameter] public string? AskAnotherHref { get; set; }
+
+    private IReadOnlyList<CandidateEmployerHistory> _confirmedWork = [];
+    private string? _recognitionLine;
+
+    protected override void OnParametersSet()
+    {
+        var confirmedIds = VerificationRows
+            .Where(r => string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase) && r.Active)
+            .Select(r => r.WorkExperienceEntryId)
+            .ToHashSet();
+        _confirmedWork = Employers
+            .Where(e => e.EntryId is Guid id && confirmedIds.Contains(id))
+            .Take(3)
+            .ToList();
+        _recognitionLine = VerifiedCompetences.FirstOrDefault()?.RecognitionLine;
+    }
+
+    private static string FormatRange(string? start, string? end)
+    {
+        static string Year(string? m)
+            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
+
+        var s = Year(start);
+        var e = string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
+        return string.IsNullOrEmpty(s) ? e : $"{s}-{e}";
+    }
+}

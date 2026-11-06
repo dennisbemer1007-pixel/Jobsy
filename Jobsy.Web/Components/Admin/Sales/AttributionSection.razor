@@ -1,0 +1,141 @@
+@* // moves to /admin/gebruikers/sales *@
+@namespace Jobsy.Web.Components.Admin.Sales
+@using Jobsy.Core.Sales
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<section class="panel-section">
+    <h3>@Culture["SalesAdmin.Attribution.Title"]</h3>
+    <p class="muted">@Culture["SalesAdmin.Attribution.Lead"]</p>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_info))
+    {
+        <p class="state-message">@_info</p>
+    }
+
+    <label>
+        @Culture["SalesAdmin.Attribution.CompanyId"]
+        <input @bind="_companyIdText" style="width:100%" placeholder="guid" />
+    </label>
+    <label>
+        @Culture["SalesAdmin.Attribution.ToUserId"]
+        <input @bind="_toUserIdText" style="width:100%" placeholder="@Culture["SalesAdmin.Attribution.ToUserIdNone"]" />
+    </label>
+    <label>
+        @Culture["SalesAdmin.Attribution.Reason"]
+        <textarea @bind="_reason" rows="3" style="width:100%"></textarea>
+    </label>
+    <div class="inline-actions" style="margin-top:.75rem">
+        <button type="button" class="provider-btn" disabled="@_busy" @onclick="LoadHistoryAsync">@Culture["SalesAdmin.Attribution.History"]</button>
+        <button type="button" class="login-submit" disabled="@_busy" @onclick="ReassignAsync">@Culture["SalesAdmin.Attribution.Save"]</button>
+    </div>
+
+    @if (_history.Count > 0)
+    {
+        <h4 style="margin-top:1rem">@Culture["SalesAdmin.Attribution.HistoryTitle"]</h4>
+        <div class="table-list">
+            @foreach (var h in _history)
+            {
+                <div class="table-row">
+                    <div>
+                        <strong>@(h.FromUserId?.ToString("N")[..8] ?? "—") → @(h.ToUserId?.ToString("N")[..8] ?? Culture["SalesAdmin.Attribution.None"])</strong>
+                        <div class="muted">@h.Reason</div>
+                    </div>
+                    <span class="muted">@h.ChangedAtUtc.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</span>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter] public Guid? PrefillCompanyId { get; set; }
+
+    private string _companyIdText = "";
+    private string _toUserIdText = "";
+    private string _reason = "";
+    private bool _busy;
+    private string? _error;
+    private string? _info;
+    private List<SalesAttributionHistoryItem> _history = [];
+
+    protected override void OnParametersSet()
+    {
+        if (PrefillCompanyId is Guid id && string.IsNullOrWhiteSpace(_companyIdText))
+        {
+            _companyIdText = id.ToString("D");
+        }
+    }
+
+    private async Task ReassignAsync()
+    {
+        if (!Guid.TryParse(_companyIdText.Trim(), out var companyId))
+        {
+            _error = Culture["SalesAdmin.Attribution.InvalidCompany"];
+            return;
+        }
+
+        Guid? toUser = null;
+        if (!string.IsNullOrWhiteSpace(_toUserIdText))
+        {
+            if (!Guid.TryParse(_toUserIdText.Trim(), out var parsed))
+            {
+                _error = Culture["SalesAdmin.Attribution.InvalidUser"];
+                return;
+            }
+
+            toUser = parsed;
+        }
+
+        _busy = true;
+        _error = null;
+        _info = null;
+        try
+        {
+            await Api.ReassignAdminSalesAttributionAsync(companyId, toUser, _reason);
+            _info = Culture["SalesAdmin.Attribution.Saved"];
+            await LoadHistoryFor(companyId);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        if (!Guid.TryParse(_companyIdText.Trim(), out var companyId))
+        {
+            _error = Culture["SalesAdmin.Attribution.InvalidCompany"];
+            return;
+        }
+
+        await LoadHistoryFor(companyId);
+    }
+
+    private async Task LoadHistoryFor(Guid companyId)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            _history = await Api.GetAdminSalesAttributionHistoryAsync(companyId);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

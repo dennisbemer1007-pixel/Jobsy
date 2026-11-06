@@ -16,8 +16,8 @@ public sealed class CursorCloudOptions
     /// <summary>GitHub/GitLab HTTPS clone URL the agent should work on.</summary>
     public string? Repository { get; set; }
 
-    /// <summary>Source ref for the agent / PR base (acceptatie: <c>acc</c>).</summary>
-    public string Ref { get; set; } = "main";
+    /// <summary>Source ref for the agent / PR base. Always <c>acceptatie</c> — never <c>main</c>.</summary>
+    public string Ref { get; set; } = "acceptatie";
 
     public string? Model { get; set; }
 

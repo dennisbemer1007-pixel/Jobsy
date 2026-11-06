@@ -1,0 +1,67 @@
+@namespace Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
+
+<div class="admin-filter-bar filter-bar">
+    @if (QueryChanged.HasDelegate)
+    {
+        <label class="admin-filter-bar__search">
+            <span class="visually-hidden">@Culture["AdminUi.FilterSearch"]</span>
+            <input type="search"
+                   @bind="_text"
+                   @bind:event="oninput"
+                   @bind:after="Publish"
+                   @onfocus="OnFocus"
+                   @onblur="OnBlur"
+                   placeholder="@(Placeholder ?? Culture["AdminUi.FilterSearch"])"
+                   autocomplete="off" />
+        </label>
+    }
+    @if (Chips is not null)
+    {
+        <div class="admin-filter-bar__chips">@Chips</div>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Query { get; set; } = "";
+    [Parameter] public EventCallback<string> QueryChanged { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public RenderFragment? Chips { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string _text = "";
+    private bool _focused;
+    private bool _dirty;
+
+    protected override void OnParametersSet()
+    {
+        var incoming = Query ?? "";
+        // The field owns its text while it has focus or a keystroke has not yet
+        // been echoed back by the parent. A debounce re-render must not write a
+        // stale query into the input.
+        if (_focused || _dirty)
+        {
+            if (string.Equals(_text, incoming, StringComparison.Ordinal))
+            {
+                _dirty = false;
+            }
+
+            return;
+        }
+
+        _text = incoming;
+    }
+
+    private void OnFocus() => _focused = true;
+
+    private void OnBlur() => _focused = false;
+
+    private void Publish()
+    {
+        _dirty = !string.Equals(_text, Query ?? "", StringComparison.Ordinal);
+        // Do not await. Parents debounce the search; awaiting that from oninput
+        // lets Blazor reset the input to the last rendered value between keys.
+        _ = QueryChanged.InvokeAsync(_text);
+    }
+}

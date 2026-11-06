@@ -16,6 +16,9 @@ public static class CandidateConsentRules
     public const string TalentPoolAdultOnlyMessage =
         "De talentpool is alleen beschikbaar vanaf 18 jaar.";
 
+    public static bool IsBelowMinimumAge(DateOnly? dateOfBirth, DateOnly? today = null)
+        => AgeYears(dateOfBirth, today) is int age && age < MinimumCandidateAge;
+
     public static bool RequiresParentalConsent(User user, DateOnly? today = null)
         => AgeYears(user.DateOfBirth, today) is int age && age < ParentalConsentAge;
 

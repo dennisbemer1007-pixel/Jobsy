@@ -1,0 +1,60 @@
+@page "/candidate/share-in"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Web.Auth
+@using Jobsy.Web.KandidaatBanen
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
+
+<PageTitle>Delen · Lobsy</PageTitle>
+<p class="visually-hidden" aria-live="polite">@_status</p>
+
+@code {
+    [SupplyParameterFromQuery(Name = "title")] public string? Title { get; set; }
+    [SupplyParameterFromQuery(Name = "text")] public string? Text { get; set; }
+    [SupplyParameterFromQuery(Name = "url")] public string? Url { get; set; }
+
+    private string _status = "Bezig…";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var link = ResolveUrl(Url, Text);
+        var target = string.IsNullOrWhiteSpace(link)
+            ? KbRoutes.ExternalVacancyAdd
+            : $"{KbRoutes.ExternalVacancyAdd}?url={Uri.EscapeDataString(link)}";
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.IsInRole("Candidate"))
+        {
+            _status = "Doorverwijzen…";
+            Navigation.NavigateTo(target, replace: true);
+            return;
+        }
+
+        var login = AuthRedirects.AppendReturnUrl("/login", target);
+        _status = "Inloggen…";
+        Navigation.NavigateTo(login, replace: true);
+    }
+
+    private static string? ResolveUrl(string? url, string? text)
+    {
+        if (!string.IsNullOrWhiteSpace(url) && Uri.TryCreate(url.Trim(), UriKind.Absolute, out _))
+        {
+            return url.Trim();
+        }
+
+        var haystack = $"{text} {url}".Trim();
+        if (string.IsNullOrWhiteSpace(haystack))
+        {
+            return null;
+        }
+
+        var match = System.Text.RegularExpressions.Regex.Match(
+            haystack,
+            @"https?://[^\s<>""']+",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return match.Success ? match.Value.TrimEnd('.', ',', ';') : null;
+    }
+}

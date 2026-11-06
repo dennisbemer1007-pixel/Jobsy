@@ -1,0 +1,111 @@
+@page "/banenkaart"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Banenkaart
+@using Jobsy.Web.Features
+@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Hosting
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Jobsy.Web.RegionHosting
+@using Jobsy.Web.Security
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.WebUtilities
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject RegionHostState RegionHost
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@using Microsoft.Extensions.Logging
+@inject ILogger<BanenkaartSsr> Logger
+
+<PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
+
+@if (!string.IsNullOrWhiteSpace(_fatalMessage))
+{
+    <p class="state-message error">@_fatalMessage</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private string? _fatalMessage;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http is null)
+        {
+            _fatalMessage = Culture["Common.Error.TryAgain"];
+            return;
+        }
+
+        http.Response.Headers.CacheControl = "no-store";
+
+        var flags = await FeatureFlags.GetAsync(http.RequestAborted);
+        if (!flags.EmployersEnabled)
+        {
+            http.Response.StatusCode = StatusCodes.Status302Found;
+            http.Response.Headers.Location = "/";
+            return;
+        }
+
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var isAuthenticated = auth.User.Identity?.IsAuthenticated == true;
+        var isCandidate = isAuthenticated && auth.User.IsInRole("Candidate");
+
+        var fromUrl = BanenkaartSsrQuery.Parse(http.Request.Query);
+        var query = BanenkaartFilterCookie.Merge(http, fromUrl, omitStoredOrigin: isCandidate);
+        var explicitRadiusKm = http.Request.Query.ContainsKey("radiusKm");
+        BanenkaartFilterCookie.Persist(http.Response, query);
+
+        var model = await BanenkaartSsrData.LoadAsync(
+            Api,
+            FeatureFlags,
+            Culture,
+            RegionHost,
+            query,
+            isAuthenticated,
+            isCandidate,
+            http.Request.Query.ContainsKey("sort"),
+            explicitRadiusKm,
+            http.RequestAborted);
+
+        if (model is null)
+        {
+            http.Response.StatusCode = StatusCodes.Status302Found;
+            http.Response.Headers.Location = "/";
+            return;
+        }
+
+        if (query.OriginLat is double oLat && query.OriginLng is double oLng)
+        {
+            Logger.LogInformation(
+                "Banenkaart discover SSR origin=({OriginLat},{OriginLng}) transport={Transport} maxMinutes={MaxMinutes} listRows={RowCount} total={Total} outsideTravelFallback={OutsideFallback}",
+                oLat,
+                oLng,
+                query.Transport,
+                query.MaxTravelMinutes,
+                model.Vacancies.Count,
+                model.ListTotalCount,
+                model.OutsideTravelFallback);
+        }
+
+        var tokens = Antiforgery.GetAndStoreTokens(http);
+        var scriptNonce = CspNonce.GetOrCreate(http);
+        var displayName = isAuthenticated
+            ? auth.User.Identity?.Name
+            : null;
+        _bodyHtml = BanenkaartSsrShells.BuildPage(Culture, tokens.RequestToken ?? "", model, scriptNonce, displayName);
+    }
+}

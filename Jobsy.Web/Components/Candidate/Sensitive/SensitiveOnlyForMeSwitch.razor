@@ -1,0 +1,31 @@
+@namespace Jobsy.Web.Components.Candidate.Sensitive
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<label class="gev-switch passport-data__switch @(PrivatePanel ? "gev-switch--panel" : null)">
+    <span class="passport-data__switch-copy">
+        <span class="passport-data__switch-title">@Culture["Sensitive.Work.OnlyForMe"]</span>
+        <span class="passport-data__switch-sub">
+            @(Checked ? Culture["Sensitive.Work.OnlyForMeOn"] : Culture["Sensitive.Work.OnlyForMeOff"])
+        </span>
+    </span>
+    <input class="passport-data__switch-input"
+           type="checkbox"
+           role="switch"
+           checked="@Checked"
+           disabled="@Disabled"
+           @onchange="OnToggle" />
+</label>
+
+@code {
+    [Parameter] public bool Checked { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool PrivatePanel { get; set; }
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+
+    private async Task OnToggle(ChangeEventArgs args)
+    {
+        var value = args.Value is true;
+        await CheckedChanged.InvokeAsync(value);
+    }
+}

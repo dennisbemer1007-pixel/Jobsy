@@ -16,11 +16,13 @@ public class ZapFindingsTests
         var root = FindRepoRoot();
         var company = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "CompanyPublicPage.razor"));
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
-        var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Services", "JobsyApiClient.cs"));
+        var clientDir = Path.Combine(root, "Jobsy.Web", "Services", "ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
 
         Assert.DoesNotContain("Format(\"Discovery.LoadFailed\", ex.Message)", company);
         Assert.DoesNotContain("Format(\"Discovery.LoadFailed\", ex.Message)", discovery);
-        Assert.Contains("Culture[\"Discovery.LoadFailed\"]", company);
+        // The company page no longer shows a load-failed message: any API failure is a plain 404 (Public-pages 09).
+        Assert.DoesNotContain("ex.Message", company);
         Assert.Contains("Culture[\"Discovery.LoadFailed\"]", discovery);
         Assert.Contains("StatusCodes.Status404NotFound", company);
         Assert.Contains("ReadPublicCompanyOrNullAsync", client);
@@ -45,10 +47,18 @@ public class ZapFindingsTests
     {
         var error = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Error.razor"));
         Assert.DoesNotContain("Internal Server Error", error);
-        Assert.DoesNotContain("Exception", error);
-        Assert.DoesNotContain("stack", error, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("TraceIdentifier", error);
-        Assert.Contains("Referentie:", error);
+        Assert.DoesNotContain("ex.Message", error);
+        Assert.DoesNotContain("StackTrace", error);
+        // Errors 01: the correlation id the visitor sees is the support code, never the trace id.
+        Assert.DoesNotContain("TraceIdentifier", error);
+        Assert.DoesNotContain("Referentie:", error);
+        Assert.Contains("SupportCode.GetOrCreate", error);
+        // Errors 04 moved the code card into the shared SupportCodeCard component (429 reuses it).
+        Assert.Contains("<SupportCodeCard", error);
+        var card = File.ReadAllText(Path.Combine(
+            FindRepoRoot(), "Jobsy.Web", "Components", "Errors", "SupportCodeCard.razor"));
+        Assert.Contains("Status.Common.CodeLabel", card);
+        Assert.DoesNotContain("ex.Message", card);
     }
 
     [Fact]
@@ -59,8 +69,8 @@ public class ZapFindingsTests
         Assert.DoesNotContain("connect-src 'self' wss: ws: https:", csp);
         Assert.Contains("https://tiles.openfreemap.org", csp);
         Assert.DoesNotContain("https://picsum.photos", csp);
-        Assert.Contains("https://i.ytimg.com", csp);
-        Assert.Contains("'unsafe-eval'", csp);
+        Assert.DoesNotContain("https://i.ytimg.com", csp);
+        Assert.DoesNotContain("'unsafe-eval'", csp);
     }
 
     [Fact]

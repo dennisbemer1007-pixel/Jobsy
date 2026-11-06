@@ -5,4 +5,6 @@ public sealed record PageSeoEntry(
     string TitleKey,
     string DescriptionKey,
     bool Indexable,
-    string OgType = "website");
+    string OgType = "website",
+    bool Hreflang = false,
+    string? CanonicalPath = null);

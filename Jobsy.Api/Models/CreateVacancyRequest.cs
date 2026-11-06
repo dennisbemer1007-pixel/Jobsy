@@ -1,4 +1,5 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Api.Models;
 
@@ -45,4 +46,9 @@ public record CreateVacancyRequest(
     string[]? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
     int? BarrierMinExperienceHours = null,
-    string[]? BarrierHardChecks = null);
+    string[]? BarrierHardChecks = null,
+    int? PublicMapRadiusKm = null,
+    VacancyWorkContextSnapshot? WorkContext = null,
+    VacancyCompetencyTargetsSnapshot? CompetencyTargets = null,
+    VacancyCultureDeltaSnapshot? CultureDelta = null,
+    bool? UseInferredCompetencies = null);

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
@@ -22,6 +23,7 @@ namespace Jobsy.Api.Controllers;
 [Route("api/external/vacancies")]
 [Authorize(Policy = JobsyPolicies.RequireApiKey)]
 [EnableRateLimiting("public-write")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class ExternalVacanciesController : ControllerBase
 {
     private readonly JobsyDbContext _db;

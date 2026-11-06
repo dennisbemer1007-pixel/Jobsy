@@ -1,5 +1,7 @@
 @using Jobsy.Web.Dashboard
+@using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@inject CultureState Culture
 
 @* Bento KPI board: equal hero grid + category tabs + optional Top/Flop tables. *@
 
@@ -263,7 +265,7 @@ else if (Metrics.Count > 0)
             ? (double)Math.Clamp(metric.Value, 0, 100)
             : null;
 
-    private static string? HintFor(MetricCount metric, double? ring)
+    private string? HintFor(MetricCount metric, double? ring)
     {
         if (metric.Key.Equals("applications_pending", StringComparison.OrdinalIgnoreCase))
         {
@@ -272,9 +274,14 @@ else if (Metrics.Count > 0)
 
         if (metric.Key.Equals("tokens_balance", StringComparison.OrdinalIgnoreCase))
         {
+            if (metric.Value <= 0)
+            {
+                return Culture["WgDash.Hint.TokensEmpty"];
+            }
+
             return MetricDashboardCatalog.IsWarning(metric.Key, metric.Value)
-                ? "Saldo bijna op"
-                : "Beschikbaar saldo";
+                ? Culture["WgDash.Hint.TokensLow"]
+                : Culture["WgDash.Hint.TokensOk"];
         }
 
         if (metric.Key.Equals("avg_travel_minutes", StringComparison.OrdinalIgnoreCase))

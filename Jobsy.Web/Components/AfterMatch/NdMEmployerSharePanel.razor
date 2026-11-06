@@ -1,0 +1,32 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="wc stack">
+    <h2 style="font-size:1.15rem">@Culture["AfterMatch.Employer.Share.Title"]</h2>
+    <div class="list" style="margin-top:10px">
+        <div>
+            <span class="ico navy">@((MarkupString)NdMIcons.User)</span>
+            <p class="small">@Culture["AfterMatch.Employer.Share.Passport"]</p>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Thread.CandidateEmail))
+        {
+            <div>
+                <span class="ico navy">@((MarkupString)NdMIcons.Mail)</span>
+                <p class="small">@Thread.CandidateEmail</p>
+            </div>
+        }
+        <div>
+            <span class="ico navy">@((MarkupString)NdMIcons.Phone)</span>
+            <p class="small">@Culture["AfterMatch.Employer.Share.Phone"]</p>
+        </div>
+        <div>
+            <span class="ico navy">@((MarkupString)NdMIcons.Bank)</span>
+            <p class="small">@Culture["AfterMatch.Employer.Share.Bank"]</p>
+        </div>
+    </div>
+</aside>
+
+@code {
+    [Parameter, EditorRequired] public AfterMatchThreadDto Thread { get; set; } = default!;
+}

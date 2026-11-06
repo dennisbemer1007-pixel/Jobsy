@@ -2,6 +2,7 @@ namespace Jobsy.Web.Components.Shared.Questionnaire;
 
 public enum QuestionnaireSaveStatus
 {
+    Idle,
     Saved,
     Saving,
     Failed

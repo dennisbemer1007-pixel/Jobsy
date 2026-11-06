@@ -20,7 +20,7 @@ public static class CandidateAvailabilityPresets
                 8,
                 40,
                 FlexibleTimes: true,
-                Availability: new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)),
+                Availability: WeekdayOfficeSlots()),
             "parttime" or "part-time" => new(
                 PartTime,
                 8,

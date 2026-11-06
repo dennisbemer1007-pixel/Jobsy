@@ -1,0 +1,35 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="card">
+    <div class="list">
+        <div>
+            <span class="ico">@((MarkupString)NdMIcons.Mail)</span>
+            <div class="sp">
+                <b class="small" style="color:var(--brand)">@Culture["AfterMatch.WhatNext.ReminderDay"]</b>
+                <div class="xs muted">@Culture["AfterMatch.WhatNext.ReminderDayBody"]</div>
+            </div>
+        </div>
+        <div>
+            <span class="ico">@((MarkupString)NdMIcons.Bell)</span>
+            <div class="sp">
+                <b class="small" style="color:var(--brand)">@Culture["AfterMatch.WhatNext.Reminder2h"]</b>
+                <div class="xs muted">@Culture["AfterMatch.WhatNext.Reminder2hBody"]</div>
+            </div>
+        </div>
+        <div>
+            <span class="ico">@((MarkupString)NdMIcons.Pin)</span>
+            <div class="sp">
+                <b class="small" style="color:var(--brand)">@Culture["AfterMatch.WhatNext.Interview"]</b>
+                <div class="xs muted">@Culture["AfterMatch.WhatNext.InterviewBody"]</div>
+            </div>
+        </div>
+        <div>
+            <span class="ico">@((MarkupString)NdMIcons.Flag)</span>
+            <div class="sp">
+                <b class="small" style="color:var(--brand)">@Culture["AfterMatch.WhatNext.Outcome"]</b>
+                <div class="xs muted">@Culture["AfterMatch.WhatNext.OutcomeBody"]</div>
+            </div>
+        </div>
+    </div>
+</div>

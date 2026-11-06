@@ -22,6 +22,35 @@ public class EfModelSnapshotTests
     }
 
     [Fact]
+    public void Model_snapshot_includes_pupil_mbo_hbo_progress_json()
+    {
+        var snapshot = File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Infrastructure",
+            "Data",
+            "Migrations",
+            "JobsyDbContextModelSnapshot.cs"));
+
+        Assert.Contains("\"MboHboProgressJson\"", snapshot, StringComparison.Ordinal);
+        Assert.Contains("Jobsy.Core.Entities.Scholen.PupilProgress", snapshot, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Mbo_hbo_progress_migration_is_registered_in_ef_chain()
+    {
+        var migration = Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Infrastructure",
+            "Data",
+            "Migrations",
+            "20261101120000_AddMboHboProgressJson.cs");
+        Assert.True(File.Exists(migration));
+        var text = File.ReadAllText(migration);
+        Assert.Contains("[Migration(\"20261101120000_AddMboHboProgressJson\")]", text, StringComparison.Ordinal);
+        Assert.Contains("MboHboProgressJson", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Web_push_migration_exists_for_subscriptions_table()
     {
         var migrationsDir = Path.Combine(

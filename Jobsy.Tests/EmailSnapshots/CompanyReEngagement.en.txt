@@ -1,0 +1,36 @@
+KEY: CompanyReEngagement
+SUBJECT: Post your next vacancy on Lobsy
+PREHEADER: Your account and your data are still ready.
+KIND: Optional
+--- TEXT ---
+Ready for your next vacancy?
+============================
+
+Hello team Bakkerij De Gouden Korrel,
+
+It has been quiet for you on Lobsy. Your account is still ready. You can
+post a new vacancy in a few minutes.
+
+1 Sign in. 2 Create a vacancy. 3 Publish it.
+
+Go to your dashboard: https://lobsy.nl/werkgever
+
+Team Lobsy
+
+You get this email because you manage Bakkerij De Gouden Korrel on Lobsy.
+No more reminder emails? Unsubscribe: https://lobsy.nl/mail/afmelden
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail settings: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Ready for your next vacancy?
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to your dashboard -> https://lobsy.nl/werkgever
+a: No more reminder emails? Unsubscribe -> https://lobsy.nl/mail/afmelden
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail settings -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

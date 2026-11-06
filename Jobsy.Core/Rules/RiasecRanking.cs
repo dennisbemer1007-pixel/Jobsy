@@ -70,15 +70,13 @@ public static class RiasecRanking
             return CareerCompassBuilder.TypeLabel(topCodes[0]);
         }
 
-        var letters = topCodes
-            .Select(c => CareerTestCatalog.HollandLetter.TryGetValue(c, out var letter) ? letter.ToString() : c)
-            .ToList();
-        if (letters.Count == 2)
+        var names = topCodes.Select(CareerCompassBuilder.TypeLabel).ToList();
+        if (names.Count == 2)
         {
-            return $"{letters[0]} en {letters[1]} even sterk";
+            return $"{names[0]} en {names[1]} even sterk";
         }
 
-        return string.Join(", ", letters.Take(letters.Count - 1)) + " en " + letters[^1] + " even sterk";
+        return string.Join(", ", names.Take(names.Count - 1)) + " en " + names[^1] + " even sterk";
     }
 
     public static string FormatCareerOutcomeLine(

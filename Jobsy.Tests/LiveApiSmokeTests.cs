@@ -24,10 +24,10 @@ public class LiveApiSmokeTests
 
         var response = await client.GetAsync("api/vacancies");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<List<VacancySmokeDto>>();
-        Assert.NotNull(body);
-        Assert.NotEmpty(body);
-        Assert.All(body!, v => Assert.False(string.IsNullOrWhiteSpace(v.Title)));
+        var page = await response.Content.ReadFromJsonAsync<VacancyListPageSmokeDto>();
+        Assert.NotNull(page);
+        Assert.NotEmpty(page!.Items);
+        Assert.All(page.Items, v => Assert.False(string.IsNullOrWhiteSpace(v.Title)));
     }
 
     [Fact]
@@ -109,6 +109,8 @@ public class LiveApiSmokeTests
             return false;
         }
     }
+
+    private sealed record VacancyListPageSmokeDto(IReadOnlyList<VacancySmokeDto> Items);
 
     private sealed record VacancySmokeDto(string Title);
     private sealed record MetricSmokeDto(string Key, string Label, string Period, decimal Value);

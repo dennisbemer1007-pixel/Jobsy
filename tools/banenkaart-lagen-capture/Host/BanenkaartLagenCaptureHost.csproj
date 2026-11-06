@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>BanenkaartLagenCaptureHost</AssemblyName>
+    <RootNamespace>Jobsy.Tools.BanenkaartLagenCaptureHost</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>$(DefineConstants);ILLUSTRATED_CAPTURE_HOST</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="Jobsy.Tests.TestSupport" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../Jobsy.Web/Jobsy.Web.csproj" />
+    <ProjectReference Include="../../../Jobsy.Infrastructure/Jobsy.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../../Jobsy.Tests/IllustratedPagesWebFactory.cs" Link="Illustrated/IllustratedPagesWebFactory.cs" />
+    <Compile Include="../../../Jobsy.Tests/IllustratedPagesApiStub.cs" Link="Illustrated/IllustratedPagesApiStub.cs" />
+    <Compile Include="../../../Jobsy.Tests/IllustratedPagesVacancyStub.cs" Link="Illustrated/IllustratedPagesVacancyStub.cs" />
+    <Compile Include="../../../Jobsy.Tests/LagenIsochroneFixtures.cs" Link="Illustrated/LagenIsochroneFixtures.cs" />
+  </ItemGroup>
+</Project>

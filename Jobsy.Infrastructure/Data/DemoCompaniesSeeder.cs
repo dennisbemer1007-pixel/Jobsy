@@ -26,7 +26,11 @@ internal static class DemoCompaniesSeeder
             Address = "'s-Gravenzandseweg 10, Honselersdijk",
             LogoUrl = "/images/logos/westland.svg",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(51.9812, 4.2235)
+            Location = new GeoPoint(51.9812, 4.2235),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         var cafe = new Company
@@ -38,7 +42,11 @@ internal static class DemoCompaniesSeeder
             Address = "Grote Markt 14, Den Haag Centrum",
             LogoUrl = "/images/logos/cafe.svg",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52.0735, 4.3120)
+            Location = new GeoPoint(52.0735, 4.3120),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         var supermarket = new Company
@@ -50,7 +58,11 @@ internal static class DemoCompaniesSeeder
             Address = "Frederik Hendriklaan 88, Den Haag (Statenkwartier)",
             LogoUrl = "/images/logos/fred.svg",
             Type = CompanyType.Employer,
-            Location = new GeoPoint(52.0910, 4.2815)
+            Location = new GeoPoint(52.0910, 4.2815),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         // Vestigingen under the Fred retail organisation (same demo group for EM flows).
@@ -69,7 +81,11 @@ internal static class DemoCompaniesSeeder
             Address = "Binckhorstlaan 36, Den Haag",
             LogoUrl = null,
             Type = CompanyType.Intermediary,
-            Location = new GeoPoint(52.0680, 4.3350)
+            Location = new GeoPoint(52.0680, 4.3350),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -96,7 +112,7 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(51.9812, 4.2235),
                 RequiredTransport = TransportMode.Bike | TransportMode.Car,
                 WorkTypes = WorkType.Logistiek | WorkType.Tuinbouw,
-                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), WorkType.Logistiek | WorkType.Tuinbouw),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(westlandId, 0, WorkType.Logistiek | WorkType.Tuinbouw),
                 VideoUrl = MockVacancyMedia.VideoUrl(0),
                 CategoryId = VacancyCategoryDefaults.RegulierId,
                 Kind = VacancyKind.Regular,
@@ -121,7 +137,7 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0735, 4.3120),
                 RequiredTransport = TransportMode.Walking | TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Horeca,
-                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), WorkType.Horeca),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(cafeId, 0, WorkType.Horeca),
                 VideoUrl = MockVacancyMedia.VideoUrl(1),
                 CategoryId = VacancyCategoryDefaults.InclusiefId,
                 Kind = VacancyKind.Regular
@@ -145,7 +161,7 @@ internal static class DemoCompaniesSeeder
                 Location = new GeoPoint(52.0910, 4.2815),
                 RequiredTransport = TransportMode.Bike | TransportMode.PublicTransport,
                 WorkTypes = WorkType.Winkel,
-                ImageUrl = MockVacancyMedia.ImageUrl(Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), WorkType.Winkel),
+                ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(supermarketId, 0, WorkType.Winkel),
                 VideoUrl = MockVacancyMedia.VideoUrl(2),
                 CategoryId = VacancyCategoryDefaults.InternshipId,
                 Kind = VacancyKind.Internship

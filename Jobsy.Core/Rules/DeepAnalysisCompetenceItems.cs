@@ -56,8 +56,8 @@ internal static class DeepAnalysisCompetenceItems
         (Openheid, true, "Ik voel me ongemakkelijk bij taken zonder duidelijk voorbeeld."),
 
         // Consciëntieusheid (C) — 30 unique
-        (Consciëntieusheid, false, "Ik maak af wat ik beloof, ook als de dag tegenzit."),
-        (Consciëntieusheid, false, "Ik plan mijn werk zodat deadlines haalbaar blijven."),
+        (Consciëntieusheid, false, "Ik kom afspraken op het werk na, ook wanneer het even tegenzit."),
+        (Consciëntieusheid, false, "Ik verdeel mijn taken over de dag zodat afspraken haalbaar blijven."),
         (Consciëntieusheid, false, "Ik controleer details voordat ik iets als klaar doorgeef."),
         (Consciëntieusheid, true, "Ik laat rommel of half afgemaakt werk makkelijk liggen."),
         (Consciëntieusheid, false, "Ik kom op tijd en geef het door als ik te laat dreig te zijn."),
@@ -154,12 +154,12 @@ internal static class DeepAnalysisCompetenceItems
         // Emotionele stabiliteit (lage neuroticisme) — 30 unique
         (EmotioneleStabiliteit, false, "Ik blijf kalm als het opeens druk wordt."),
         (EmotioneleStabiliteit, false, "Ik herstel snel na een tegenslag of een fout."),
-        (EmotioneleStabiliteit, false, "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken."),
+        (EmotioneleStabiliteit, false, "Ik houd overzicht als er tegelijk meerdere klussen lopen."),
         (EmotioneleStabiliteit, true, "Ik pieker lang na over kritiek, ook als die al is opgelost."),
         (EmotioneleStabiliteit, false, "Ik houd overzicht als de planning last-minute wijzigt."),
         (EmotioneleStabiliteit, false, "Ik blijf beleefd als een klant of collega scherp uit de hoek komt."),
         (EmotioneleStabiliteit, false, "Ik slaap een incident af en begin de volgende dienst schoon."),
-        (EmotioneleStabiliteit, true, "Ik raak snel van slag als er iets onverwachts gebeurt."),
+        (EmotioneleStabiliteit, true, "Onverwachte wijzigingen op het werk zetten me snel van mijn stuk."),
         (EmotioneleStabiliteit, false, "Ik adem even door voordat ik reageer in een spannend moment."),
         (EmotioneleStabiliteit, true, "Ik voel me snel persoonlijk aangevallen bij gewone werkfeedback."),
         (EmotioneleStabiliteit, false, "Ik blijf functioneren als er een storing, wachtrij of tekort is."),

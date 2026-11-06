@@ -64,7 +64,11 @@ public class HaaglandenVacanciesSeederTests
             KvkNumber = "22000001",
             Address = "Test",
             Type = CompanyType.Employer,
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.07, 4.3)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.07, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancyId = Guid.Parse("a2000000-0000-4000-8000-000000000099");
         db.Vacancies.Add(new Vacancy
@@ -128,7 +132,11 @@ public class MediaBackfillSeederTests
             KvkNumber = "12345678",
             Address = "Teststraat 1",
             Type = CompanyType.Employer,
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancyId = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy

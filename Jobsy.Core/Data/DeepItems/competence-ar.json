@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "أحب أن أجرب فحصاً جديداً عندما يعلق القديم",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "2": {
+  "prompt": "أنا أقرأ أو أراقب نفسي كيف تتغير مهنتنا",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "3": {
+  "prompt": "سأفكر في عدة حلول قبل أن أختار",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "4": {
+  "prompt": "أفضل التمسك بالأسلوب الذي استخدمناه دائماً",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "5": {
+  "prompt": "أحب تجربة نظام أو جهاز مجهول",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "6": {
+  "prompt": "أستطيع أن أرى بسرعة الصلات بين التفاصيل الفردية في مكان العمل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "7": {
+  "prompt": "أطرح أسئلة إن لم أفهم خلفية المهمة بعد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "8": {
+  "prompt": "وأرفض عادة الأفكار الجديدة من الزملاء.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "9": {
+  "prompt": "أفضل تجربة صغيرة على انتظار خطة مثالية",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "10": {
+  "prompt": "أتجنب المهام التي يجب أن أتعلم فيها شيئاً لم أفعله من قبل",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "11": {
+  "prompt": "أَحْصلُ على وقفاتِ إلهامِ مِنْ كَمْ فرقِ أخرى تَعمَلُ نفس العملِ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "12": {
+  "prompt": "التغيير في التخطيط يزعجني أكثر مما يجعلني حادة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "13": {
+  "prompt": "أجمع المعرفة من وظائف مختلفة إلى نهج أفضل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "14": {
+  "prompt": "وأجرؤ على تقديم اقتراح لم يرد بعد في الدليل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "15": {
+  "prompt": "أحب ذلك عندما يترك العمل أيضاً مجالاً للتفسير",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "16": {
+  "prompt": "أنا أتبع التعليمات حرفياً حتى عندما يكون الطريق الأذكى مرئياً",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "17": {
+  "prompt": "أشعر بالفضول عندما يعمل شيء تقني أو موضوعي بشكل مختلف عن المتوقع",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "18": {
+  "prompt": "أَبْحثُ عن عمد عن مجموعة من المهامِ لإبقائي في حالة تأهب.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "19": {
+  "prompt": "يمكنني أن أرتبط بمشكلة من وجهة نظر العميل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "20": {
+  "prompt": "والشرح الخلاصي دون اتخاذ خطوات ملموسة هو مضيعة للوقت.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "21": {
+  "prompt": "أضبط نهجي إذا كان الضغط الموسمي أو الذروة مختلفاً عن العام الماضي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "22": {
+  "prompt": "أنا لا أحب العقول فقط أخبرني ماذا أفعل",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "23": {
+  "prompt": "إنها مسألة لا أعرف متى أصبحت القضية مسألة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "24": {
+  "prompt": "أنا لا أثق بك حتى شخص آخر استخدمهم لفترة طويلة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "25": {
+  "prompt": "أحب التعلم من الأخطاء بالنظر لما سنفعله المرة القادمة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "26": {
+  "prompt": "أحب أن أعرض على زميل خدعة أذكى",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "27": {
+  "prompt": "أستمر بالتفكير كيف يمكننا أن نجمع بين الجودة والزمن",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "28": {
+  "prompt": "انا اغلق نفسي من اجل التغذية المرتدة التي تتحدى روتيني المعتاد",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "29": {
+  "prompt": "وأرى الفرص في منتجات أو محاصيل أو خدمات جديدة من المؤسسة.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "30": {
+  "prompt": "أشعر بعدم الراحة مع المهام بدون مثال واضح",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "31": {
+  "prompt": "أحتفظ بالتعيينات في العمل حتى عندما تكون الأمور غير صحيحة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "32": {
+  "prompt": "وأقسم مهامي حول اليوم حتى تظل الاتفاقات ممكنة.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "33": {
+  "prompt": "سأتفقد التفاصيل قبل أن أعبر أي شيء جاهز",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "34": {
+  "prompt": "أَتْركُ الفوضى أَو نِصْف العملِ السهلِ.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "35": {
+  "prompt": "أنا سَأكُونُ في الوقت المناسب وأَعْبرُه إذا أنا متأخر جداً.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "36": {
+  "prompt": "أتابع ما مازال مفتوحاً بدون أن يطلب أحد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "37": {
+  "prompt": "أنا أعمل جيداً وفقاً للنظافة أو السلامة أو الجودة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "38": {
+  "prompt": "سأؤجل الوظائف الصعبة حتى لا يكون هناك طريقة أخرى",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "39": {
+  "prompt": "سأنظف مكان عملي كما وصفه الفريق القادم",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "40": {
+  "prompt": "لا أعتقد أن الأخطاء الصغيرة في الأرقام أو العلامات مهمة جداً",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "41": {
+  "prompt": "سألتزم بالراحة والساعات كما اتفقنا",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "42": {
+  "prompt": "إذا لم يشاهد أحد، سأتخطى الشيكات أو الخطوات.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "43": {
+  "prompt": "أنا أستعد لنوبات حتى لا أضطر للارتجال على الأساسيات",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "44": {
+  "prompt": "سأكون صريحا معك إذا ارتكبت خطأ",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "45": {
+  "prompt": "أقسّم المهام الكبيرة إلى أجزاء يمكنني إنجازها",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "46": {
+  "prompt": "سأبدأ شيئاً جديداً عندما لا تنتهي آخر واحدة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "47": {
+  "prompt": "أحتفظ بنظرة عامة في الأوامر أو الأوامر أو قوائم المهام",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "48": {
+  "prompt": "سوف أعود إلى موعد، حتى لو تم إعداده قبل أسبوع.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "49": {
+  "prompt": "سأستمر بالعمل حتى يكون العمل آمناً ومكتملاً ليس قبل أن يتوقف الوقت بالصدفة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "50": {
+  "prompt": "الإدارة أو الإكمال بعد الوظيفة أفضّل أن أغادر إلى وظيفة أخرى.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "51": {
+  "prompt": "أأخذ في الحسبان لحظات الذروة وأبدأ بالتحضير في الوقت المناسب",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "52": {
+  "prompt": "سأفقد المسار إذا كان هناك أكثر من مهمة واحدة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "53": {
+  "prompt": "أَنا أَعْرفُ أَنْ أَعْرفَ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "54": {
+  "prompt": "أنا أقول نعم للعمل الإضافي بينما أعرف أنني لا أستطيع التعامل معها بشكل صحيح",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "55": {
+  "prompt": "سأتحقق إن كان العميل أو الزميل لديه ما وعد به",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "56": {
+  "prompt": "أحتفظ بالإمدادات أو الأدوات أو الإمدادات",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "57": {
+  "prompt": "سأوثق ما هو ضروري حتى يستطيع البديل أن يمضي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "58": {
+  "prompt": "أعتقد أنه أكثر من أن أتأكد من العمل الروتيني",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "59": {
+  "prompt": "أغلق نوبتي بفحص قصير ما حدث، ما تبقى.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "60": {
+  "prompt": "تركت الآخرين ينظفون الفوضى التي سببتها أثناء الحشد",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "61": {
+  "prompt": "سأحصل على الطاقة من العمل مع الزملاء على الأرض",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "62": {
+  "prompt": "من السهل التحدث مع الناس حتى لو لم أعرفهم بعد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "63": {
+  "prompt": "أشعر بالراحة في متجر مشغول، وحمامات أو غرفة الطعام.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "64": {
+  "prompt": "أفضل أن أتقاعد عندما يكون هناك الكثير من الناس حولي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "65": {
+  "prompt": "سأتناول الكلمة في جلسة إحاطة أو نقل قصيرة.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "66": {
+  "prompt": "أحب مساعدة الضيوف أو الزبائن بنبرة ودية مفتوحة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "67": {
+  "prompt": "سأعثر على طريقة للإنضمام إلى الفريق خلال العطلات",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "68": {
+  "prompt": "أتجنب المحادثات مع العملاء إذا كان بإمكان زميل القيام بذلك",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "69": {
+  "prompt": "يمكنني أخذ مجموعة على السحب إذا صمت الغلاف الجوي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "70": {
+  "prompt": "يجب أن أذهب إلى كمية غير متناسبة من لا يمكن إجراء مكالمة هاتفية أو عمل مكتبي.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "71": {
+  "prompt": "أنا أقول لكم بوضوح ما أحتاجه من الآخرين للمضي قدما.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "72": {
+  "prompt": "أفضّل العمل طوال المناوبة بدون مشاورة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "73": {
+  "prompt": "أتخيل زملاء جدد بدلاً من انتظارهم",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "74": {
+  "prompt": "أنا أتابع جذب الآخرين للعمل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "75": {
+  "prompt": "أنا أجرؤ على جعل نكتة أو علامة ضوء لكسر التوتر.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "76": {
+  "prompt": "في إجتماعات المجموعة، أفضّل البقاء هادئة حتى لو كنت أعرف شيئاً ذا صلة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "77": {
+  "prompt": "ألاحظ ذلك عندما يحتاج الزبون أو الزميل إلى الاهتمام ويسير هناك",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "78": {
+  "prompt": "يمكنني التبديل بين الشيك والطابق والتشاور دون إغلاق.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "79": {
+  "prompt": "أحب أن أكون مرئية في الفريق",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "80": {
+  "prompt": "أن يُدعى بشكل غير متوقع يأخذني من تركيزي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "81": {
+  "prompt": "وسرعان ما أقيم علاقة عمل مع العمال المؤقتين أو الموظفين الموسميين",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "82": {
+  "prompt": "أفضّل ترك بريد إلكتروني أو تطبيق على محادثة لمدة دقيقتين",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "83": {
+  "prompt": "يمكنني تسمية صراع على الأرض دون أن أختفي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "84": {
+  "prompt": "التواصل أو التعرف على فرع يشعر وكأنه مهمة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "85": {
+  "prompt": "أحب العمل حيث الإتصال بالناس جزء دائم",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "86": {
+  "prompt": "أعطي الطاقة للفريق إذا استمرت الخدمة طويلاً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "87": {
+  "prompt": "من السهل معرفة من يفعل ماذا بدلاً من الانتظار",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "88": {
+  "prompt": "أتجنب النقل مع الكثير من الناس",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "89": {
+  "prompt": "أشعر في البيت في بيئة بها الكثير من الحركات",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "90": {
+  "prompt": "أتظاهر بأنني مشغولة بتجنب مكالمة زبونة إضافية",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "91": {
+  "prompt": "أنا أيضاً أُساعدُ زميل إذا هو لَيسَ حرفياً شغلَي.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "92": {
+  "prompt": "سأستمع للآخر قبل أن أعطي رأيي",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "93": {
+  "prompt": "أَخذتُ في الحسبان كَمْ نبرتي تَبْدو إلى الزبائنِ أَو الضيوفِ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "94": {
+  "prompt": "إذا كان شخص ما بطيئاً، سأظهر أنني ليس لدي الكثير من الصبر لذلك.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "95": {
+  "prompt": "أَبْحثُ عن a حلّ الذي الفريق يُمْكِنُ أَنْ يَتحرّكَ، لَيسَ فقط ني.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "96": {
+  "prompt": "أنا أثني على شخص ما لفعله شيئاً صحيحاً",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "97": {
+  "prompt": "يمكنني أن أتعاطف مع زبون غاضب أو مجهد دون أن أعض",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "98": {
+  "prompt": "أنا أضع خصيتي الخاصة على الفريق عندما تكون مسننة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "99": {
+  "prompt": "وأشاطر المعرفة حتى يصبح الآخرون أكثر استقلالا.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "100": {
+  "prompt": "أدلي بملاحظات غير انتقاصية عندما يرتكب شخص خطأ",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "101": {
+  "prompt": "سأعدل سرعتي إذا كان على زميل جديد أن يعمل",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "102": {
+  "prompt": "أنا أحمل ضغينة إذا كان شخص ما قد تولى على عملي أو انتقده.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "103": {
+  "prompt": "سأقولها بهدوء إذا لم أوافق على شيء",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "104": {
+  "prompt": "أنا أحترم خلفيات مختلفة و أساليب عمل في الفريق",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "105": {
+  "prompt": "أنا أعرض المساعدة قبل أن يطلبها أحد",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "106": {
+  "prompt": "لا يهمني كيف يؤثر سلوكي على الغلاف الجوي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "107": {
+  "prompt": "وأفسح المجال لزملاء أكثر هدوءا بالتشاور.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "108": {
+  "prompt": "أستطيع أن أعترف إذا كان للآخر نقطة أفضل.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "109": {
+  "prompt": "أعامل العمال المؤقتين والموظفين الدائمين بنفس المجاملة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "110": {
+  "prompt": "أستخدم ملاحظات ساخرة لأدفع خطي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "111": {
+  "prompt": "أنا سَأَتأكّدُ لا أحد يَسْقطُ خارج المجموعةِ أثناء النوبةِ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "112": {
+  "prompt": "أنا عمدا وضع زميل في وضع يسمح له بالتنافس على نفس المهمة.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "113": {
+  "prompt": "أنا أعتبر حواجز الناس الجسدية أو اللغوية.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "114": {
+  "prompt": "أَجِدُه ضعيفَ عندما شخص ما يَسْألُ عن المساعدة في شيءِ الذي أَأْخذُ من أجله.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "115": {
+  "prompt": "وأبرم تعارضا مع اتفاق واضح ومحترم.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "116": {
+  "prompt": "أحمي خصوصية الزملاء في المحادثات مع أطراف ثالثة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "117": {
+  "prompt": "وأشكركم على العمل الذي لا يزال غير مرئي.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "118": {
+  "prompt": "غالباً أقاطع الآخرين لأن وجهة نظري أكثر إلحاحاً",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "119": {
+  "prompt": "أَبْحثُ عن الفائزِ إذا قوائمِ أَو المهامِ تَتصادمُ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "120": {
+  "prompt": "أَلْعبُ الناسَ ضد بعضهم البعض إذا 0،4 % يَجْعلُ شغلَي أسهل.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "121": {
+  "prompt": "سأبقى هادئاً عندما تزدحم الأمور",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "122": {
+  "prompt": "سأتعافى بعد نكسة أو خطأ",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "123": {
+  "prompt": "يمكنني التعامل مع أشياء متعددة في آن واحد بدون ذعر",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "124": {
+  "prompt": "كنت أفكر منذ وقت طويل في النقد حتى لو تم حله",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "125": {
+  "prompt": "أحتفظ بنظرة عامة عند التخطيط للتغييرات في اللحظة الأخيرة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "126": {
+  "prompt": "أظل مهذباً عندما يخرج زبون أو زميل من الزاوية",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "127": {
+  "prompt": "أنا سَأَنَامُ مِنْ حادثةِ ويَبْدأُ النوبةَ القادمةَ نظيفة.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "128": {
+  "prompt": "سأغضب حقاً عندما يحدث شيء غير متوقع",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "129": {
+  "prompt": "سأتنفّس قبل أن أتفاعل في لحظة مثيرة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "130": {
+  "prompt": "أشعر بالهجوم شخصياً من خلال تعليقات العمل العادية",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "131": {
+  "prompt": "سأستمر في العمل إذا كان هناك عطل أو نقص",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "132": {
+  "prompt": "أتجنب المحادثات الصعبة خوفاً من أن تخرج الأمور عن السيطرة",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "133": {
+  "prompt": "أستطيع أن أصلح خطأ بدون أن تنهار بقية الخدمة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "134": {
+  "prompt": "أحتفظ بصوتي و 68% لغة الجسم تحت ضغط الوقت",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "135": {
+  "prompt": "إن كان الضغط مرتفعاً جداً بدلاً من التحطم",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "136": {
+  "prompt": "أنا ستعمل تأخذ المنزل الحماس من العمل والتخلص من ذلك.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "137": {
+  "prompt": "لا أزال أُقرّر إن لم تكن المعلومات كاملة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "138": {
+  "prompt": "أقبل أن أيام الذروة جزء من هذه الوظيفة بدون أن أحجبها",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "139": {
+  "prompt": "يمكنني أن أترك صراعاً حتى اللحظة لأناقشه",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "140": {
+  "prompt": "النكسات الصغيرة قريباً تبدو ككارثة لي",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "141": {
+  "prompt": "سأواصل العمل بأمان حتى لو كنت في عجلة من أمري",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "142": {
+  "prompt": "أشعر بالارتياح إن لم أستطع السيطرة على الوضع في الحال",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "143": {
+  "prompt": "سأحول نكسة إلى خطوة قادمة",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "144": {
+  "prompt": "أتجنب المسؤولية عن الخوف من اللوم",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "145": {
+  "prompt": "أُبقي إنتباهي للمهمة، حتى عندما يكون هناك ضوضاء حولي.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "146": {
+  "prompt": "أستطيع أن أقول نعم ولا بدون استجواب لساعات",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "147": {
+  "prompt": "أَبْقى ودّيَة في الشّرطةِ أَو العدّادِ عندما الصفّ طويلُ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "148": {
+  "prompt": "لقد اغلقت او اتجمد عندما يأتي الضغط",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "149": {
+  "prompt": "أرى نوبة مشغولة كتحدي يمكنني التعامل معه",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "150": {
+  "prompt": "بعد نوبة صعبة، أنا قلق أو غاضب لفترة طويلة.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ }
+}

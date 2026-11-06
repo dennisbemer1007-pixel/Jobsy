@@ -3,7 +3,9 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Sales;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -381,6 +383,31 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
         var culture = CultureInfo.GetCultureInfo("nl-NL");
         var lines = invoice.Lines.OrderBy(l => l.Description).ToList();
         var platformAddress = platform.FormatAddressBlock();
+        var isKor = invoice.VatTreatment == SalesManagerVatTreatment.SmallBusinessScheme
+                    || invoice.VatRate == 0m;
+
+        string? consentLine = null;
+        if (invoice.SelfBillingConsentId is Guid consentId)
+        {
+            var consent = await _db.SalesSelfBillingConsents.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == consentId, cancellationToken);
+            if (consent is not null)
+            {
+                var consentDate = SalesClock.ToLocal(consent.AcceptedAtUtc).ToString("dd-MM-yyyy", culture);
+                consentLine = string.Format(
+                    CultureInfo.InvariantCulture,
+                    SalesPdfInvoiceCopy.SelfBillingAccordingTo,
+                    consentDate,
+                    consent.Version);
+            }
+        }
+
+        string? paidLine = null;
+        if (invoice.Status == SelfBillingInvoiceStatus.Paid)
+        {
+            var masked = await ResolveMaskedIbanForInvoiceAsync(invoice, cancellationToken);
+            paidLine = string.Format(CultureInfo.InvariantCulture, SalesPdfInvoiceCopy.PaidToAccount, masked);
+        }
 
         // Half A4 ≈ half page height on portrait A4 (~421pt). Keep logo square in the center.
         const float watermarkSize = 400f;
@@ -413,43 +440,57 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                         col.Item().PaddingTop(2).Text(platform.Slogan).FontSize(9)
                             .FontColor(Colors.Grey.Darken2).Italic();
                     });
-                    row.ConstantItem(140).AlignRight().AlignMiddle().Column(col =>
+                    row.ConstantItem(160).AlignRight().AlignMiddle().Column(col =>
                     {
-                        col.Item().AlignRight().Text("SELF-BILLING").FontSize(8)
-                            .FontColor(Colors.Grey.Medium);
-                        col.Item().AlignRight().Text(invoice.InvoiceNumber).FontSize(12).SemiBold();
+                        col.Item().AlignRight().Text(SalesPdfInvoiceCopy.InvoiceTitle).FontSize(14).SemiBold();
+                        col.Item().AlignRight().Text(invoice.InvoiceNumber).FontSize(11).SemiBold();
                     });
                 });
 
-                page.Content().PaddingTop(18).Column(col =>
+                page.Content().PaddingTop(14).Column(col =>
                 {
                     col.Spacing(0);
 
-                    col.Item().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingBottom(10).Row(row =>
+                    col.Item().Text(SalesPdfInvoiceCopy.IssuedByCustomer)
+                        .FontSize(11).SemiBold().FontColor(Color.FromHex("#0F766E"));
+                    if (!string.IsNullOrWhiteSpace(consentLine))
+                    {
+                        col.Item().PaddingTop(2).Text(consentLine!).FontSize(9)
+                            .FontColor(Colors.Grey.Darken2);
+                    }
+
+                    col.Item().PaddingTop(12).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).PaddingBottom(10).Row(row =>
                     {
                         row.RelativeItem().Column(left =>
                         {
-                            left.Item().Text("Leverancier").FontSize(8).FontColor(Colors.Grey.Medium);
+                            left.Item().Text(SalesPdfInvoiceCopy.Supplier).FontSize(8).FontColor(Colors.Grey.Medium);
                             left.Item().PaddingTop(4).Text(invoice.SalesManagerCompanyName).SemiBold().FontSize(11);
                             left.Item().PaddingTop(2).Text($"KvK {invoice.SalesManagerKvkNumber}");
-                            left.Item().Text($"BTW {invoice.SalesManagerVatNumber}");
+                            if (!string.IsNullOrWhiteSpace(invoice.SalesManagerVatNumber))
+                            {
+                                left.Item().Text($"Btw {invoice.SalesManagerVatNumber}");
+                            }
+
                             left.Item().PaddingTop(2).Text(invoice.SalesManagerAddress);
                         });
 
                         row.ConstantItem(18);
                         row.RelativeItem().Column(right =>
                         {
-                            right.Item().Text("Status").FontSize(8).FontColor(Colors.Grey.Medium);
-                            right.Item().PaddingTop(4).Text(invoice.Status.ToString()).SemiBold();
-                            if (invoice.IssuedAt is DateTime issued)
+                            right.Item().Text(SalesPdfInvoiceCopy.Customer).FontSize(8).FontColor(Colors.Grey.Medium);
+                            right.Item().PaddingTop(4).Text(platform.CompanyName).SemiBold().FontSize(11);
+                            if (!string.IsNullOrWhiteSpace(platformAddress))
                             {
-                                right.Item().PaddingTop(2)
-                                    .Text($"Uitgegeven {issued.ToLocalTime().ToString("g", culture)}");
+                                foreach (var line in platformAddress.Split('\n'))
+                                {
+                                    right.Item().Text(line).FontSize(9);
+                                }
                             }
 
-                            if (invoice.PaidAt is DateTime paid)
+                            if (invoice.IssuedAt is DateTime issued)
                             {
-                                right.Item().Text($"Betaald {paid.ToLocalTime().ToString("g", culture)}");
+                                right.Item().PaddingTop(6)
+                                    .Text(issued.ToLocalTime().ToString("dd-MM-yyyy", culture));
                             }
                         });
                     });
@@ -467,7 +508,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                         {
                             header.Cell().Element(HeaderCell).Text("#");
                             header.Cell().Element(HeaderCell).Text("Omschrijving");
-                            header.Cell().Element(HeaderCell).AlignRight().Text("Bedrag excl. BTW");
+                            header.Cell().Element(HeaderCell).AlignRight().Text("Bedrag excl. btw");
                         });
 
                         var i = 1;
@@ -477,34 +518,42 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                             table.Cell().Element(c => BodyCell(c, zebra)).Text(i.ToString(culture));
                             table.Cell().Element(c => BodyCell(c, zebra)).Text(line.Description);
                             table.Cell().Element(c => BodyCell(c, zebra)).AlignRight()
-                                .Text($"€ {line.AmountExVat.ToString("0.00", culture)}");
+                                .Text(SalesMoney.FormatPlain(line.AmountExVat));
                             i++;
                         }
                     });
 
-                    col.Item().PaddingTop(14).AlignRight().Width(220).Column(totals =>
+                    col.Item().PaddingTop(14).AlignRight().Width(240).Column(totals =>
                     {
                         totals.Item().Row(r =>
                         {
-                            r.RelativeItem().Text("Subtotaal excl. BTW");
+                            r.RelativeItem().Text(SalesPdfInvoiceCopy.Subtotal);
                             r.ConstantItem(90).AlignRight()
-                                .Text($"€ {invoice.SubtotalExVat.ToString("0.00", culture)}");
+                                .Text(SalesMoney.FormatPlain(invoice.SubtotalExVat));
                         });
                         totals.Item().PaddingTop(3).Row(r =>
                         {
-                            r.RelativeItem().Text($"BTW ({(invoice.VatRate * 100).ToString("0", culture)}%)");
+                            r.RelativeItem().Text(isKor
+                                ? SalesPdfInvoiceCopy.VatKor
+                                : SalesPdfInvoiceCopy.Vat21);
                             r.ConstantItem(90).AlignRight()
-                                .Text($"€ {invoice.VatAmount.ToString("0.00", culture)}");
+                                .Text(SalesMoney.FormatPlain(invoice.VatAmount));
                         });
                         totals.Item().PaddingTop(6).BorderTop(1).BorderColor(Colors.Grey.Lighten1)
                             .PaddingTop(6).Row(r =>
                             {
-                                r.RelativeItem().Text("Totaal incl. BTW").SemiBold().FontSize(11);
+                                r.RelativeItem().Text(SalesPdfInvoiceCopy.Total).SemiBold().FontSize(11);
                                 r.ConstantItem(90).AlignRight()
-                                    .Text($"€ {invoice.TotalInclVat.ToString("0.00", culture)}")
+                                    .Text(SalesMoney.FormatPlain(invoice.TotalInclVat))
                                     .SemiBold().FontSize(11);
                             });
                     });
+
+                    if (!string.IsNullOrWhiteSpace(paidLine))
+                    {
+                        col.Item().PaddingTop(12).Text(paidLine!).FontSize(9)
+                            .FontColor(Colors.Grey.Darken2);
+                    }
                 });
 
                 page.Footer().Column(footer =>
@@ -529,7 +578,7 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
 
                         if (!string.IsNullOrWhiteSpace(platform.VatNumber))
                         {
-                            meta.Add($"BTW {platform.VatNumber}");
+                            meta.Add($"Btw {platform.VatNumber}");
                         }
 
                         if (!string.IsNullOrWhiteSpace(platform.Phone))
@@ -548,10 +597,6 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                                 .FontSize(8).FontColor(Colors.Grey.Darken2);
                         }
                     });
-
-                    footer.Item().PaddingTop(6).AlignCenter()
-                        .Text("Self-billing factuur gegenereerd door Lobsy")
-                        .FontSize(8).FontColor(Colors.Grey.Medium);
                 });
             });
         }).GeneratePdf();
@@ -572,6 +617,29 @@ public sealed class SalesManagerPayoutService : ISalesManagerPayoutService
                 .BorderColor(Colors.Grey.Lighten3)
                 .PaddingVertical(5)
                 .PaddingHorizontal(4);
+    }
+
+    private async Task<string> ResolveMaskedIbanForInvoiceAsync(
+        SelfBillingInvoice invoice,
+        CancellationToken cancellationToken)
+    {
+        if (invoice.SalesPayoutRequestId is Guid rid)
+        {
+            var masked = await _db.SalesPayoutRequests.AsNoTracking()
+                .Where(r => r.Id == rid)
+                .Select(r => r.MaskedIban)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (!string.IsNullOrWhiteSpace(masked))
+            {
+                return masked;
+            }
+        }
+
+        var checkout = await _db.SalesManagerPayoutCheckouts.AsNoTracking()
+            .Where(c => c.SelfBillingInvoiceId == invoice.Id)
+            .Select(c => c.MaskedIban)
+            .FirstOrDefaultAsync(cancellationToken);
+        return string.IsNullOrWhiteSpace(checkout) ? "—" : checkout;
     }
 
     private async Task<PayoutProfile?> ResolvePayoutProfileAsync(

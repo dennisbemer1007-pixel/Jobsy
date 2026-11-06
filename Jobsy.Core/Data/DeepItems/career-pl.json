@@ -1,0 +1,1202 @@
+{
+ "1": {
+  "prompt": "Lubię pracować rękoma, narzędziami lub maszynami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "2": {
+  "prompt": "Lubię przebywać na zewnątrz albo w szklarni, magazynie lub warsztacie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "3": {
+  "prompt": "Chciałbym zobaczyć namacalny wynik pod koniec zmiany.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "4": {
+  "prompt": "Decydujące. Unikam pracy, gdzie mogę być brudny, mokry lub zakurzony.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "5": {
+  "prompt": "Mogę łatwo zrozumieć, jak urządzenie lub instalacja składa się razem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "6": {
+  "prompt": "Lubię podnosić, nosić lub fizycznie pracować, jeśli jest to bezpieczne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "7": {
+  "prompt": "Naprawianie lub przeskakiwanie coś, co zawiedzie daje mi satysfakcję.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "8": {
+  "prompt": "PrakZatrzymanie pracy wydaje się stratą czasu; chcę siedzieć za ekranem.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "9": {
+  "prompt": "Łatwo orientuję się w dużej przestrzeni, ogrodzie lub magazynie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "10": {
+  "prompt": "Wykonuję instrukcje techniczne i stosuję je bez wyjaśnień.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "11": {
+  "prompt": "Czuję się niepewnie z maszynami, ogrodzeniem lub ciężkim sprzętem.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "12": {
+  "prompt": "Hoduję, uprawiam, zbieram lub przetwarzam produkty zamiast o nich mówić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "13": {
+  "prompt": "Zwracam uwagę na bezpieczeństwo: chodniki, ostre krawędzie, mokre podłogi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "14": {
+  "prompt": "Mogę utrzymać całą zmianę bez rezygnacji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "15": {
+  "prompt": "Wybieram pracę, w której muszę wykonywać Rzutkę Fizyczną.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "16": {
+  "prompt": "Mierzę Wspaniale, ważę i liczę osobiście, a nie w arkuszu kalkulacyjnym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "17": {
+  "prompt": "Lubię pracować z sezonem, pogodą lub uprawą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "18": {
+  "prompt": "Wolę zostawić techniczne porażki komuś innemu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "19": {
+  "prompt": "Buduję Gotowi, montuję lub składam coś według rysunku lub przykładu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "20": {
+  "prompt": "Lubię rytm: powtarzaj, przyspiesz, odklejaj.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "21": {
+  "prompt": "Poza pracą lub środowiskiem produkcyjnym jestem wykończony psychicznie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "22": {
+  "prompt": "Sprawdzam jakość oczami i rękami, nie tylko na papierze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "23": {
+  "prompt": "Mogę nauczyć pojazd, ciężarówkę albo robotę jak widelce.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "24": {
+  "prompt": "Unikam warsztatów, szklarni i kuchni, kiedy mam wybór.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "25": {
+  "prompt": "Mam energię z robienia rzeczy, a nie z niekończących się dyskusji na temat robienia rzeczy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "26": {
+  "prompt": "Lubię badać, dlaczego coś nie działa tak, jak powinno.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "27": {
+  "prompt": "Dowiem się, jak działa proces, uprawa lub system.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "28": {
+  "prompt": "Porównam liczby lub pomiary zanim wyciągnę wnioski.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "29": {
+  "prompt": "Głębokie myślenie o przyczynach jest dla mnie nudne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "30": {
+  "prompt": "Zapytam \"dlaczego\", dopóki nie zrozumiem mechanizmu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "31": {
+  "prompt": "Wolę czytać instrukcje i specyfikacje.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "32": {
+  "prompt": "Testuję małe założenie, zanim je wszędzie puścimy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "33": {
+  "prompt": "Polegam na uczuciach i pomijam czeki lub dane.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "34": {
+  "prompt": "Lubię odkrywać wzór błędu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "35": {
+  "prompt": "Mogę się skupić na kwestii merytorycznej przez długi czas.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "36": {
+  "prompt": "Śledztwa mają ochotę na zwłokę, chcę to zrobić od razu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "37": {
+  "prompt": "Używam tabel, dzienników lub list kontrolnych do wysyłania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "38": {
+  "prompt": "Chcę znać przyczynę skarg, nie tylko symptomów.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "39": {
+  "prompt": "Lubię uczyć się, jak działa prawodawstwo, jakość i bezpieczeństwo żywności.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "40": {
+  "prompt": "Obawiam się technicznej lub merytorycznej głębi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "41": {
+  "prompt": "Rozdzielam niejasny problem na mierzalne części.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "42": {
+  "prompt": "Lubię pracę, gdzie mogę wybrać i poprawić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "43": {
+  "prompt": "Akceptuję, że zawsze robimy to bez pytania.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "44": {
+  "prompt": "Szukam źródeł lub kolegów ekspertów, jeśli czegoś nie wiem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "45": {
+  "prompt": "Lubię widzieć związek między pogodą, sezonem, popytem i zapasami. neglected",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "46": {
+  "prompt": "Wolę zostawić liczby i analizy komuś innemu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "47": {
+  "prompt": "Dokumentuję to, co znalazłem, żebyśmy mogli się z tego uczyć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "48": {
+  "prompt": "Pozostaję trzeźwy z hipem lub szybkim eanianem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "49": {
+  "prompt": "Jestem niecierpliwy pracą bez bezpośredniego działania.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "50": {
+  "prompt": "Dostaję energię z zagadek, dopóki się nie potwierdzi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "51": {
+  "prompt": "Są takie rzeczy, które mi się przytrafiają.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "52": {
+  "prompt": "Zwracam uwagę na kolor, zapach, prezentację lub atmosferę w pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "53": {
+  "prompt": "Zamieniam nudne zadanie w coś, co wygląda na załatwione. Czwarty.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "54": {
+  "prompt": "Nie obchodzi mnie wygląd i design.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "55": {
+  "prompt": "Wymyślę oryginalne rozwiązanie, Taak.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "56": {
+  "prompt": "Lubię pracę, w której smak, styl lub historia waży.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "57": {
+  "prompt": "Mogę zrobić okno, talerz, układ lub danie atrakcyjne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "58": {
+  "prompt": "Kreatywna wolność sprawia, że jestem niespokojny, daj mi stały szablon.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "59": {
+  "prompt": "Widzę możliwości w materiale resztkowym, produkcie sezonowym lub pozostałościach.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "60": {
+  "prompt": "Eksperymentuję z kombinacjami (smaki, oznaczające kolory, klasyfikacja).",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "61": {
+  "prompt": "Muszę zrobić coś, co zrobię lub zrobię.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "62": {
+  "prompt": "Tłumaczę niejasny pomysł klienta na coś konkretnego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "63": {
+  "prompt": "Lubię różnorodność w sposobie dostarczania produktu lub usługi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "64": {
+  "prompt": "Używam języka lub wizerunku, żeby coś było jasne i atrakcyjne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "65": {
+  "prompt": "Uważam, że kreatywny wkład od innych jest głównie kłopotliwy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "66": {
+  "prompt": "Zauważam dysharmonię w formacie, muzyce, świetle lub st. globalnie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "67": {
+  "prompt": "Chcę mieć miejsce na samodzielne wybory przy egzekucji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "68": {
+  "prompt": "Dokładnie tego szukam.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "69": {
+  "prompt": "Inspiruję kolegów nowym podejściem lub prezentacją.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "70": {
+  "prompt": "Mogę przynieść sezonowy temat lub działanie do życia wizualnie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "71": {
+  "prompt": "Opuszczę to, co wygląda zabawniej, gdy będzie wystarczająco funkcjonalnie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "72": {
+  "prompt": "Wolę pisać, rysować lub formułować siebie niż kopiować standardowy tekst.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "73": {
+  "prompt": "Dostaję satysfakcję z Pójścia z czymś wyjątkowym, nie tylko głośnym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "74": {
+  "prompt": "Sztuka czy stylizacja to hobby, nie praca.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "75": {
+  "prompt": "Widzę również pracę jako doświadczenie dla gościa lub klienta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "76": {
+  "prompt": "Lubię pomagać ludziom, nawet jeśli to trochę potrwa.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "77": {
+  "prompt": "Czuję się jak w domu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "78": {
+  "prompt": "Wiem, kiedy ktoś czuje się nieswojo i coś z tym robi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "79": {
+  "prompt": "Wolę zostawić problemy innych w pracy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "80": {
+  "prompt": "Wyjaśnię to cierpliwie, dopóki druga osoba tego nie dostanie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "81": {
+  "prompt": "Lubię pracować w zespole, w którym się wspieramy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "82": {
+  "prompt": "Mogę zająć się gośćmi lub klientami, którzy potrzebują dodatkowej uwagi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "83": {
+  "prompt": "Unikam pracy, w której muszę towarzyszyć lub przyjmować innych.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "84": {
+  "prompt": "Buduję zaufanie, pozostając niezawodnym i przyjaznym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "85": {
+  "prompt": "Dopilnuję, by nowi koledzy poczuli się komfortowo.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "86": {
+  "prompt": "Chcę mieć jak najmniej ニ s do czynienia z uczuciami innych.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "87": {
+  "prompt": "Mogę złagodzić konflikt między ludźmi bez zabierania stron.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "88": {
+  "prompt": "Czerpię energię z zadowolonego klienta, studenta lub kolegi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "89": {
+  "prompt": "Dopasowuję moje wyjaśnienie do wieku, języka lub doświadczenia drugiego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "90": {
+  "prompt": "Usługa z uśmiechem wydaje się grać; raczej czysta transakcja.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "91": {
+  "prompt": "Widzę, że praca to coś wspólnego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "92": {
+  "prompt": "Uwzględniam w praktyce dostępność i integrację.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "93": {
+  "prompt": "Wkurza mnie, gdy ludzie proszą o dodatkowe wyjaśnienia lub cierpliwość.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "94": {
+  "prompt": "Mogę przynieść wieści, złe wieści albo odmówić z szacunkiem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "95": {
+  "prompt": "Lubię pracować z publicznością: Goście, pacjenci, studenci, klienci.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "96": {
+  "prompt": "Wybieram zadania, w których muszę rozmawiać z ludźmi tak mało na szczęście, jak to możliwe.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "97": {
+  "prompt": "Wolę trenować nowego kolegę, niż go odkładać.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "98": {
+  "prompt": "Zauważyłem nacisk grupy i upewniam się, że nikogo nie pominięto.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "99": {
+  "prompt": "Pielęgnacja lub kontakt z klientem wyczerpuje mnie; chcę pracy produkcyjnej bez ludzi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "100": {
+  "prompt": "Mam znaczenie w pracy, które pomaga innym.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "101": {
+  "prompt": "Lubię podejmować inicjatywę, kiedy nikt inny jej nie chce usunął.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "102": {
+  "prompt": "Przekonałem innych o podejściu, produkcie lub ofercie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "103": {
+  "prompt": "Widzę możliwości poprawy sprzedaży, okupacji lub tempa.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "104": {
+  "prompt": "Prowadzenie lub sprzedaż czuje się niekomfortowo, niech ktoś inny to zrobi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "105": {
+  "prompt": "Ustawiłem cele i ściągnąłem tam drużynę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "106": {
+  "prompt": "Ośmielam się negocjować cenę, harmonogram lub obietnicę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "107": {
+  "prompt": "Ciągle proszę o działanie, Chwileczkę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "108": {
+  "prompt": "Czekam na rozkazy, zamiast zaczynać.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "109": {
+  "prompt": "Przedstawiam pomysł krótki i potężny.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "110": {
+  "prompt": "Lubię odpowiedzialność za wynik, a nie tylko za Zdarzenie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "111": {
+  "prompt": "Unikam rozmów, w których muszę coś sprzedać.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "112": {
+  "prompt": "Zamieniam akcję, sezonowy wzrost lub kampanię w konkretne kroki.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "113": {
+  "prompt": "Rozmawiam z ludźmi na umówionych spotkaniach, jeśli wynik zostanie pozostawiony.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "114": {
+  "prompt": "Konkurencja to zachęta, a nie groźba.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "115": {
+  "prompt": "Pozwolę, by szanse się poślizgnęły, gdy będzie ryzyko lub odrzucenie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "116": {
+  "prompt": "Buduję sieć stałych klientów, plantatorów lub dostawców.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "117": {
+  "prompt": "Mogę założyć zespół, kiedy trop zniknie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "118": {
+  "prompt": "Wystraszyłem się celów, Wiadomatów czy okupacji.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "119": {
+  "prompt": "Składam propozycję, która działa na obie strony.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "120": {
+  "prompt": "Lubię pracę, w której mogę sterować, rekrutować lub organizować.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "121": {
+  "prompt": "Nie chcę mieć widocznej roli w tle.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "122": {
+  "prompt": "Zamieniam rozczarowanie w kolejny rzut lub próbę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "123": {
+  "prompt": "Zobaczę, kogo będę potrzebował, żeby coś zrobić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "124": {
+  "prompt": "Przedsiębiorczość w małych (izm, dodatkowa runda, dodatkowa obsługa) nie jest dla mnie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "125": {
+  "prompt": "Dostaję energię z umowy, pełnego pokoju lub celu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "126": {
+  "prompt": "Lubię jasne procedury, listy i porządek.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "127": {
+  "prompt": "Pracuję dokładnie nad numerami, kodami, danymi lub etykietami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "128": {
+  "prompt": "Ustawiłem administrację lub akcje, żeby każdy mógł je znaleźć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "129": {
+  "prompt": "Zasady i stałe formaty mnie irytują; zawsze wolę improwizować.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "130": {
+  "prompt": "Sprawdzam, czy zamówienie, faktura lub planowanie są dokładne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "131": {
+  "prompt": "Lubię pracować z harmonogramami, szczelinami i przewidywalnymi usługami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "132": {
+  "prompt": "Archiwizuję lub zamykam, więc nie będzie żadnego chaosu później.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "133": {
+  "prompt": "Zostawiam papierkową robotę, skany i systemy tak długo, jak to możliwe.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "134": {
+  "prompt": "Podążam za listą kontrolną, jeśli robiłem to setki razy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "135": {
+  "prompt": "Lubię pracę, w której struktura jest ważniejsza niż improwizacja.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "136": {
+  "prompt": "Naprawione procedury sprawiają, że jestem niespokojny; Tętno ma być zupełnie inne każdego dnia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "137": {
+  "prompt": "Wprowadzę dane bez zarzutu i sprawdzę je jeszcze raz.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "138": {
+  "prompt": "Utrzymuję limit zapasów, daty przydatności do spożycia lub minimalne liczby.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "139": {
+  "prompt": "Zamieniam bałagan w czysty układ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "140": {
+  "prompt": "Nie ma potrzeby nagrywać tego samego w dwóch miejscach.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "141": {
+  "prompt": "Współpracuję z kasą, oprogramowaniem do planowania lub systemami do zbierania zamówień.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "142": {
+  "prompt": "Trzymam się uzgodnionych formatów, nawet jeśli sam wybrałem inny układ.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "143": {
+  "prompt": "Mieszam informacje, jeśli czujesz się szybciej.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "144": {
+  "prompt": "Kończę dzień z pulsującą liczbą lub przeniesieniem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "145": {
+  "prompt": "Uważam, że moim zadaniem jest zadbanie o to, by prawodawstwo i przepisy były w pełni zgodne z przepisami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "146": {
+  "prompt": "Zamówienie w folderach, pieczenie lub systemy jest po mojej stronie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "147": {
+  "prompt": "Planuję cofnąć się od terminu do teraz, zamiast zaczynać ad hoc. Trzeba to zrobić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "148": {
+  "prompt": "Wolę pracować z ustalonymi standardami jakości niż z \"patrz\".",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "149": {
+  "prompt": "Unikam zadań, w których muszę dokładnie nagrywać.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "150": {
+  "prompt": "Odpoczywam od procesu czyszczenia, że każda zmiana działa tak samo.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "151": {
+  "prompt": "Lubię pracować z uprawą, logistyką lub produkcją, gdzie robię Jeśli coś obecnie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "152": {
+  "prompt": "Unikam zadań, w których muszę radzić sobie z materiałami ciężkimi lub moChciał.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "153": {
+  "prompt": "Lubię jasne zadanie, które mogę wykonać fizycznie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "154": {
+  "prompt": "Szybko uczę się obsługiwać nową maszynę lub narzędzie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "155": {
+  "prompt": "Wolę sale konsultacyjne nad warsztatem, szklarnią lub kuchnią.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "156": {
+  "prompt": "Sprawdzę, czy ścieżki, stojaki i materiały są bezpieczne przed pracą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "157": {
+  "prompt": "Pracuję miło na zmiany lub sezonowe szczyty, kiedy rytm jest jasny.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "158": {
+  "prompt": "Sfrustrowały mnie powtarzające się prace produkcyjne, jakkolwiek użyteczne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "159": {
+  "prompt": "Systematycznie szukam przyczyny wady jakości.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "160": {
+  "prompt": "Uważam, że pomiar i sprawdzanie są zbędne, jeśli wygląda lepiej.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "161": {
+  "prompt": "Lubię pracę, gdzie mogę usprawnić procesy faktami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "162": {
+  "prompt": "Czytałam raporty z inspekcji lub kłody upraw, żeby wysyłać decyzje.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "163": {
+  "prompt": "Zaczynam się niecierpliwić analizami, które nie prowadzą od razu do działania.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "164": {
+  "prompt": "Przetestuję drobne, zanim się rozejrzymy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "165": {
+  "prompt": "Chcę zrozumieć, jak w praktyce działa prawodawstwo lub bezpieczeństwo żywności.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "166": {
+  "prompt": "Wolę zostawiać badania wyłącznie specjalistom bez zastanowienia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "167": {
+  "prompt": "Tworzę powiązania między liczbami, sezonem i tym, co dzieje się na podłodze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "168": {
+  "prompt": "Lubię dać produktowi lub usłudze rozpoznawalny, własny wygląd.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "169": {
+  "prompt": "Uważam, poderwać stylizację i prezentację tak długo, jak to działa.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "170": {
+  "prompt": "Szukam nowych sposobów na niejednoznaczne produkty sezonowe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "171": {
+  "prompt": "Zwracam uwagę na atmosferę: światło, zapach, układ i jak goście tego doświadczają.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "172": {
+  "prompt": "Unikam zadań, gdzie muszę zrobić coś wizualnego lub twórczego.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "173": {
+  "prompt": "Łączę smaki, kolory lub materiały z czymś, co się wyróżnia.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "174": {
+  "prompt": "Przekładam niejasny pomysł klienta na konkretny rezultat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "175": {
+  "prompt": "KreaDrugiej wolności sprawia, że czuję się niepewnie; chcę dokładnie określonych kroków.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "176": {
+  "prompt": "Pomagam nowym kolegom w drodze, dopóki nie poczują się bezpieczni.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "177": {
+  "prompt": "Unikam pracy, w której muszę przyjmować gości lub klientów.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "178": {
+  "prompt": "Wyczuwam napięcie w zespole i pomagam go konstruktywnie rozwiązać.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "179": {
+  "prompt": "Uważam, że ważne jest, aby wszyscy czuli się widziani i mile widziani.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "180": {
+  "prompt": "Zachowam dystans. Dobro innych ludzi nie jest moją odpowiedzialnością w pracy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "181": {
+  "prompt": "Cierpliwie tłumaczę procedury ludziom, którzy najpierw to robią.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "182": {
+  "prompt": "Dostaję energię od zadowolonego gościa, studenta lub kolegi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "183": {
+  "prompt": "Wybieram pracę, w której muszę się zamienić z ludźmi jak najmniej.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "184": {
+  "prompt": "Widzę możliwości sprzedaży lub zorganizowania czegoś ekstra.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "185": {
+  "prompt": "Unikam widocznych ról dla klientów, dostawców lub gości.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "186": {
+  "prompt": "Przejmę dowodzenie, jeśli będziemy potrzebować decyzji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "187": {
+  "prompt": "Lubię budować związki, które później prowadzą do współpracy lub obrotu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "188": {
+  "prompt": "Cele i wskaźniki okupacji mnie poniżają.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "189": {
+  "prompt": "Mogę przedstawić krótką propozycję, żeby inni mogli przyjść.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "190": {
+  "prompt": "Organizuję ludzi i środki, by dostać cel w służbie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "191": {
+  "prompt": "Wolę zostawić inicjatywę innym i poczekać i zobaczyć.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "192": {
+  "prompt": "Zmieniam niepowodzenie w kolejną próbę albo lepsze podejście.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "193": {
+  "prompt": "Mam napięty grafik, zamówienia i zapasy, żeby nikt nie patrzył.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "194": {
+  "prompt": "Uważam stałe formaty i listy kontrolne szczególnie obturacyjne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "195": {
+  "prompt": "Sprawdzę znaczniki, kody i numery, aż się wymeldują.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "196": {
+  "prompt": "Ustawiłem foldery, pojemniki lub systemy, żeby każdy je dostał.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "197": {
+  "prompt": "Opuszczę rejestrację, jeśli sobie przypomnę.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ },
+ "198": {
+  "prompt": "Przyjemnie pracuję z ustalonymi standardami jakości i listami kontrolnymi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "199": {
+  "prompt": "Zamykam serwis za pomocą pulsującego transferu lub liczyć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
+  "reverse": false,
+  "domain": ""
+ },
+ "200": {
+  "prompt": "Jestem niespokojny z powodu przewidywalnych procedur, nawet jeśli są skuteczne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
+  "reverse": true,
+  "domain": ""
+ }
+}

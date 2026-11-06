@@ -1,0 +1,62 @@
+{
+  "reference_tests": "Jobsy.Tests/CompetencyMatchingTests.cs Score_maps_likert_to_0_100_and_reverses_items",
+  "reference_code": [
+    "Jobsy.Core/Rules/CompetencyTestCatalog.cs:156 (reverse)",
+    "Jobsy.Core/Rules/LikertAnswerJson.cs:92-104 (ToPercent)"
+  ],
+  "checks": [
+    {
+      "name": "high_all_100",
+      "pass": true,
+      "detail": {
+        "Samenwerken": 100,
+        "Resultaatgerichtheid": 100,
+        "Stressbestendigheid": 100,
+        "Innovatie": 100,
+        "Extraversie": 100
+      }
+    },
+    {
+      "name": "low_samenwerken_0",
+      "pass": true,
+      "detail": {
+        "Samenwerken": 0,
+        "Resultaatgerichtheid": 0,
+        "Stressbestendigheid": 0,
+        "Innovatie": 0,
+        "Extraversie": 0
+      }
+    },
+    {
+      "name": "low_innovatie_0",
+      "pass": true,
+      "detail": {
+        "Samenwerken": 0,
+        "Resultaatgerichtheid": 0,
+        "Stressbestendigheid": 0,
+        "Innovatie": 0,
+        "Extraversie": 0
+      }
+    },
+    {
+      "name": "neutral_50",
+      "pass": true,
+      "detail": {
+        "Samenwerken": 50,
+        "Resultaatgerichtheid": 50,
+        "Stressbestendigheid": 50,
+        "Innovatie": 50,
+        "Extraversie": 50
+      }
+    }
+  ],
+  "reverse_formula": "6 - raw (Likert 1-5)",
+  "alpha_guard": [
+    {
+      "case": "keyed_constant",
+      "var_total": 0.0,
+      "alpha_computable": false
+    }
+  ],
+  "all_pass": true
+}

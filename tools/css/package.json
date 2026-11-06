@@ -1,0 +1,8 @@
+{
+  "name": "jobsy-css-tools",
+  "private": true,
+  "description": "Pinned CSS minifier for Jobsy.Web/wwwroot/css/app.min.css",
+  "dependencies": {
+    "lightningcss-cli": "1.33.0"
+  }
+}

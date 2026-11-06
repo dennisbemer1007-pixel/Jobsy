@@ -1,0 +1,149 @@
+@namespace Jobsy.Web.Components.Candidate.Training
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<article class="opl-card @(Selected ? "is-selected" : null)"
+         aria-labelledby="@_titleId">
+    <div class="opl-card__top">
+        <span class="@TypeClass">@TypeLabel</span>
+        @PriceMarkup
+        @if (Offer.IsPartnerLink)
+        {
+            <span class="opl-badge-partner">@Culture["Training.PartnerLink"]</span>
+        }
+        <button type="button"
+                class="opl-card__bookmark @(Offer.Saved ? "is-on" : null)"
+                aria-pressed="@Offer.Saved"
+                aria-label="@(Offer.Saved ? Culture["Training.Saved"] : Culture["Training.Save"])"
+                disabled="@Busy"
+                @onclick="ToggleSave">
+            @(Offer.Saved ? "★" : "☆")
+        </button>
+    </div>
+    <h3 id="@_titleId">@Offer.Title</h3>
+    @if (HasMeta)
+    {
+        <div class="opl-card__meta">
+            @if (!string.IsNullOrWhiteSpace(DurationText))
+            {
+                <span>@DurationText</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(FormatText))
+            {
+                <span>@FormatText</span>
+            }
+        </div>
+    }
+    @if (ShowWhyBlock)
+    {
+        <div class="opl-card__why">
+            <span aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+            <span>@WhyText</span>
+        </div>
+    }
+    <div class="opl-card__foot">
+        <button type="button" class="btn btn-ghost btn-sm opl-card__cta" disabled="@Busy" @onclick="Select">
+            @FootLabel
+        </button>
+        <small>@Offer.ProviderName</small>
+    </div>
+
+    @if (Selected && ShowInlinePanel)
+    {
+        <div class="opl-card__inline-panel opl-only-mobile">
+            <TrainingCourseDetailPanel Offer="Offer"
+                                       Campaign="@Campaign"
+                                       ShowClose="false"
+                                       OnSavedChanged="OnSavedChanged" />
+        </div>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public TrainingPartnerOfferModel Offer { get; set; } = new();
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public bool ShowInlinePanel { get; set; } = true;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool RequireWrittenReason { get; set; }
+    [Parameter] public string Campaign { get; set; } = TrainingTracking.CampaignCompetence;
+    [Parameter] public EventCallback<TrainingPartnerOfferModel> OnSelect { get; set; }
+    [Parameter] public EventCallback<TrainingPartnerOfferModel> OnToggleSave { get; set; }
+    [Parameter] public EventCallback<TrainingPartnerOfferModel> OnSavedChanged { get; set; }
+
+    private readonly string _titleId = "opl-card-" + Guid.NewGuid().ToString("N")[..8];
+
+    private string FootLabel => Selected
+        ? Culture["Training.CareerStep.DetailsHide"]
+        : (ShowDesktopHint ? Culture["Training.Open"] : Culture["Training.Open"]);
+
+    [Parameter] public bool ShowDesktopHint { get; set; }
+
+    private bool ShowWhyBlock => !string.IsNullOrWhiteSpace(WhyText)
+                                 && (!RequireWrittenReason || !IsFallbackReason);
+
+    private bool IsFallbackReason => string.IsNullOrWhiteSpace(WhyText);
+
+    private bool HasMeta => !string.IsNullOrWhiteSpace(DurationText) || !string.IsNullOrWhiteSpace(FormatText);
+
+    private string TypeClass => Offer.Type switch
+    {
+        "Workshop" => "opl-type opl-type--workshop",
+        "Opleiding" => "opl-type opl-type--opleiding",
+        _ => "opl-type opl-type--cursus"
+    };
+
+    private string TypeLabel => Offer.Type switch
+    {
+        "Workshop" => Culture["Training.Type.Workshop"],
+        "Opleiding" => Culture["Training.Type.Opleiding"],
+        _ => Culture["Training.Type.Cursus"]
+    };
+
+    private MarkupString PriceMarkup => Offer switch
+    {
+        { IsFree: true } => (MarkupString)$"""<span class="opl-badge-free">✓ {Culture["Training.Free"]}</span>""",
+        { PriceEuro: { } p } => (MarkupString)$"""<span class="opl-badge-price">€ {p:0.##}</span>""",
+        { PriceLabel: { } label } => (MarkupString)$"""<span class="opl-badge-price">{label}</span>""",
+        _ => (MarkupString)""
+    };
+
+    private string WhyText => Offer.Reason?.Trim() ?? "";
+
+    private string DurationText => FormatDuration();
+
+    private string FormatDuration()
+    {
+        if (Offer.DurationValue is not int dv
+            || !Enum.TryParse<TrainingDurationUnit>(Offer.DurationUnit, true, out var unit))
+        {
+            return "";
+        }
+
+        return unit switch
+        {
+            TrainingDurationUnit.Days when dv == 1 => Culture["Training.Duration.OneDay"],
+            TrainingDurationUnit.Weeks when dv == 1 => Culture["Training.Duration.OneWeek"],
+            TrainingDurationUnit.Months when dv == 1 => Culture["Training.Duration.OneMonth"],
+            TrainingDurationUnit.Hours when dv == 1 => Culture["Training.Duration.OneHour"],
+            _ => TrainingDurationFormat.UnitKey(unit) is { } unitKey ? Culture.Format(unitKey, dv) : ""
+        };
+    }
+
+    private string FormatText => Offer.Delivery switch
+    {
+        "OnSite" => string.IsNullOrWhiteSpace(Offer.Location)
+            ? Culture["Training.Delivery.OnSite"]
+            : Offer.Location!,
+        "Blended" => Culture["Training.Delivery.Blended"],
+        "Online" => Culture["Training.Delivery.Online"],
+        _ => ""
+    };
+
+    private Task Select() => OnSelect.InvokeAsync(Offer);
+
+    private Task ToggleSave() => OnToggleSave.InvokeAsync(Offer);
+}

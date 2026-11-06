@@ -24,19 +24,4 @@ public static class PushBomPricingRules
 
         return match?.CostTokens;
     }
-
-    public static string FormatTierLabel(PushBomPricingTier tier)
-    {
-        if (tier.MaxCandidates is null)
-        {
-            return $"{tier.MinCandidates}+ kandidaten";
-        }
-
-        if (tier.MinCandidates == tier.MaxCandidates)
-        {
-            return $"{tier.MinCandidates} kandidaat{(tier.MinCandidates == 1 ? "" : "en")}";
-        }
-
-        return $"{tier.MinCandidates}–{tier.MaxCandidates} kandidaten";
-    }
 }

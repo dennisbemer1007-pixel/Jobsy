@@ -1,0 +1,1361 @@
+using System.Net;
+using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
+using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.MboHbo;
+using Jobsy.Core.Scholen.PupilPassport;
+using Jobsy.Core.Scholen.QuestionSets;
+using Jobsy.Web.Localization;
+using Jobsy.Web.Scholen;
+using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
+
+namespace Jobsy.Web.Hosting;
+
+/// <summary>SSR GET/POST for pupil journey pages (no Blazor under /leerling/* except login).</summary>
+public static class PupilLeerlingJourneyEndpoints
+{
+    public const string WereldSavePath = "/leerling/wereld/save";
+    public const string ReisAnswerPath = "/leerling/reis/answer";
+    public const string EilandSavePath = "/leerling/eiland/save";
+    public const string VakkenSavePath = "/leerling/vakken/save";
+    public const string VoPaspoortSavePath = "/leerling/vo-paspoort/save";
+    public const string MboIntroPath = "/leerling/mbo-hbo/uitleg/start";
+
+    public static IEndpointRouteBuilder MapPupilLeerlingJourneyEndpoints(this IEndpointRouteBuilder app)
+    {
+        var pupil = new AuthorizeAttribute { Policy = JobsyPolicies.PupilSession };
+
+        app.MapGet("/leerling/verder", GetVerderAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/start", GetStartAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/stop", GetStopAsync).AllowAnonymous();
+        app.MapGet("/leerling/wereld", GetWereldAsync).RequireAuthorization(pupil);
+        app.MapPost(WereldSavePath, PostWereldAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/reis", GetReisAsync).RequireAuthorization(pupil);
+        app.MapPost(ReisAnswerPath, PostReisAnswerAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/eiland", GetEilandAsync).RequireAuthorization(pupil);
+        app.MapPost(EilandSavePath, PostEilandAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/vakken", GetVakkenAsync).RequireAuthorization(pupil);
+        app.MapPost(VakkenSavePath, PostVakkenAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/puzzel/{key}", GetPuzzelAsync).RequireAuthorization(pupil);
+        app.MapPost("/leerling/puzzel/{key}/save", PostPuzzelAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/dit-ben-jij", GetDitBenJijAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/paspoort", GetPaspoortAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/vo-paspoort", GetVoPaspoortAsync).RequireAuthorization(pupil);
+        app.MapPost(VoPaspoortSavePath, PostVoPaspoortAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/mbo-hbo/uitleg", GetMboUitlegAsync).RequireAuthorization(pupil);
+        app.MapPost(MboIntroPath, PostMboIntroAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/mbo-hbo/overzicht", GetMboOverzichtAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/mbo-hbo/test/{blockKey}", GetMboTestAsync).RequireAuthorization(pupil);
+        app.MapPost("/leerling/mbo-hbo/test/{blockKey}/answer", PostMboTestAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/mbo-hbo/uitkomst/{blockKey}", GetMboUitkomstAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/mbo-hbo/paspoort", GetMboPaspoortAsync).RequireAuthorization(pupil);
+        return app;
+    }
+
+    private static async Task<IResult> GetVerderAsync(HttpContext http, JobsyApiClient api, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
+        if (progress is null)
+        {
+            return Results.Redirect("/leerling?error=expired");
+        }
+
+        return Results.Redirect(PupilGroep78EntryPaths.AfterLogin(progress, progress.Completed));
+    }
+
+    private static async Task<IResult> GetStartAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
+        if (outcome.SessionLost)
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/start", useG78: true, null, af, out var startFail))
+        {
+            return startFail!;
+        }
+
+        var progress = outcome.Value!;
+
+        if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
+        {
+            return Results.Redirect(themeRedir);
+        }
+
+        if (PupilLeerlingProgressRouting.RedirectForStart(progress) is { } redir)
+        {
+            return Results.Redirect(redir);
+        }
+
+        var def = registry.Get(progress.QuestionSet);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilStartSsrHtml.BuildBody(def, culture, groep78, progress.JourneyThemeKey, registry);
+        var title = groep78 ? culture["Leerling.G78.Route.Title"] : culture["Leerling.Start.Title"];
+        return Html(http, title, body, "/leerling/start", groep78, progress.JourneyThemeKey, afHtml, progress: progress);
+    }
+
+    private static async Task<IResult> GetStopAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        IPupilQuestionSetRegistry registry,
+        IAntiforgery af,
+        CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var done = http.Request.Query["done"].ToString();
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
+        var themeFromQuery = http.Request.Query["theme"].ToString();
+        var g78FromQuery = string.Equals(http.Request.Query["g78"], "1", StringComparison.Ordinal);
+        var useG78 = g78FromQuery
+                     || (progress?.QuestionSet == PupilQuestionSet.Groep78
+                         && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress));
+        var themeKey = PupilJourneyTheme.IsValid(progress?.JourneyThemeKey)
+            ? progress!.JourneyThemeKey
+            : PupilJourneyTheme.IsValid(themeFromQuery) ? themeFromQuery : null;
+        var journey = progress is not null
+            ? PupilGroep78JourneySnapshot.FromProgress(progress, culture, registry, themeKey)
+            : PupilGroep78JourneySnapshot.FromPauseQuery(http.Request.Query, culture, registry, themeKey);
+        var body = PupilStopSsrHtml.BuildBody(culture, done, afHtml, useG78, themeKey, registry, journey);
+        var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
+        {
+            PageTitle = string.IsNullOrEmpty(done) ? culture["Leerling.Stop.AskTitle"] : culture["Leerling.Stop.Title"],
+            BodyHtml = body,
+            Pupil = http.User,
+            RoutePath = "/leerling/stop",
+            UseGroep78Shell = useG78,
+            JourneyThemeKey = themeKey,
+            ShowPause = false,
+        });
+        return Results.Content(doc, "text/html; charset=utf-8");
+    }
+
+    private static async Task<IResult> GetWereldAsync(HttpContext http, JobsyApiClient api, CultureState culture, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
+        if (progress is null)
+        {
+            return Results.Redirect("/leerling?error=expired");
+        }
+
+        if (PupilLeerlingProgressRouting.RedirectForWereld(progress) is { } redir)
+        {
+            return Results.Redirect(redir);
+        }
+
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var savedTheme = PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress)
+            ? progress.JourneyThemeKey
+            : null;
+        var body = PupilWereldSsrHtml.BuildBody(culture, afHtml, savedTheme, WereldSavePath);
+        return Html(http, culture["Leerling.Wereld.Title"], body, "/leerling/wereld", useG78: true, savedTheme, afHtml, showPause: false);
+    }
+
+    private static async Task<IResult> PostWereldAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        IAntiforgery af,
+        CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
+        {
+            return Results.Redirect("/leerling/wereld?error=retry");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var key = form["ThemeKey"].ToString();
+        var saved = await api.SavePupilJourneyThemeAsync(key, ct);
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.Invalidate(codeId);
+        }
+
+        return Results.Redirect(saved?.RedirectPath ?? "/leerling/start");
+    }
+
+    private static async Task<IResult> GetReisAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
+        if (outcome.SessionLost)
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/reis", useG78: true, null, af, out var reisFail))
+        {
+            return reisFail!;
+        }
+
+        var progress = outcome.Value!;
+
+        if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
+        {
+            return Results.Redirect(themeRedir);
+        }
+
+        if (PupilLeerlingProgressRouting.RedirectForReis(progress) is { } redir)
+        {
+            return Results.Redirect(redir);
+        }
+
+        var def = registry.Get(progress.QuestionSet);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        if (!progress.WindowOpen && !progress.Completed)
+        {
+            var closedAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            var closed = PupilReisSsrHtml.WindowClosed(culture, progress.QuestionSet);
+            return Html(http, culture["Leerling.Reis.Title"], closed, "/leerling/reis", groep78, progress.JourneyThemeKey, closedAf, progress: progress);
+        }
+
+        if (progress.Completed)
+        {
+            var doneAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            string doneBody;
+            try
+            {
+                doneBody = PupilReisSsrHtml.DoneCard(culture, groep78, progress.JourneyThemeKey, registry);
+            }
+            catch
+            {
+                doneBody = PupilReisSsrHtml.DoneCard(culture, groep78: false);
+            }
+
+            return Html(
+                http,
+                culture["Leerling.Reis.Title"],
+                doneBody,
+                "/leerling/reis",
+                groep78,
+                progress.JourneyThemeKey,
+                doneAf,
+                progress: progress);
+        }
+
+        var error = http.Request.Query["error"].ToString() switch
+        {
+            "save" => culture["Leerling.Reis.SaveFailed"],
+            "wait" => culture["Leerling.Reis.RateLimited"],
+            _ => null,
+        };
+        var display = progress;
+        if (string.Equals(http.Request.Query["prev"], "1", StringComparison.Ordinal))
+        {
+            display = PupilReisReview.WithPreviousQuestion(progress, def) ?? progress;
+        }
+
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        string body;
+        try
+        {
+            body = PupilReisSsrHtml.BuildBody(display, def, culture, registry, afHtml, ReisAnswerPath, error, groep78, progress.JourneyThemeKey);
+        }
+        catch
+        {
+            body = groep78
+                ? $"""<section class="ll-card"><p class="ll-error" role="alert">{PupilLeerlingSsrParts.E(culture["Leerling.Reis.SaveFailed"])}</p><a class="btn-primary" href="/leerling/reis">Opnieuw</a></section>"""
+                : PupilReisSsrHtml.WindowClosed(culture, progress.QuestionSet);
+        }
+
+        return Html(http, culture["Leerling.Reis.Title"], body, "/leerling/reis", groep78, progress.JourneyThemeKey, afHtml, progress: display);
+    }
+
+    private static async Task<IResult> PostReisAnswerAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CultureState culture,
+        IAntiforgery af,
+        CancellationToken ct)
+    {
+        var wantsJson = PupilLeerlingClientJson.WantsJson(http);
+        if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
+        {
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status400BadRequest);
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var itemId = form["ItemId"].ToString();
+        if (!int.TryParse(form["Value"].ToString(), out var value))
+        {
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status400BadRequest);
+        }
+
+        try
+        {
+            var (result, apiStatus, errorBody) = await api.SavePupilAnswerAsync(itemId, value, ct);
+            if (result is null)
+            {
+                var status = MapReisAnswerApiFailureStatus(apiStatus);
+                var recoveryRedirect = ReisAnswerRecoveryRedirect(errorBody);
+                return ReisAnswerSaveFailed(culture, wantsJson, status, recoveryRedirect);
+            }
+
+            var redirect = PupilLeerlingProgressRouting.RedirectAfterAnswer(result) ?? "/leerling/reis";
+            if (PupilCodeId(http) is { } codeId
+                && progressCache.TryGetSnapshot(codeId, out var snapshot)
+                && snapshot is not null)
+            {
+                progressCache.StageAfterAnswer(
+                    codeId,
+                    PupilProgressStatePatch.AfterAnswer(snapshot, itemId, value, result));
+            }
+
+            if (wantsJson)
+            {
+                return ReisAnswerSaveJsonOk(http, af, redirect);
+            }
+
+            return Results.Redirect(redirect);
+        }
+        catch
+        {
+            return ReisAnswerSaveFailed(culture, wantsJson, StatusCodes.Status502BadGateway);
+        }
+    }
+
+    /// <summary>Never surface HTTP 500 on answer save — map API/server faults to 502 or the API's 4xx.</summary>
+    private static int MapReisAnswerApiFailureStatus(int apiStatus)
+    {
+        if (apiStatus is >= 400 and < 500)
+        {
+            return apiStatus;
+        }
+
+        return StatusCodes.Status502BadGateway;
+    }
+
+    private static IResult ReisAnswerSaveJsonOk(HttpContext http, IAntiforgery af, string redirectPath)
+    {
+        var tokens = af.GetAndStoreTokens(http);
+        return Results.Json(new PupilReisAnswerSaveJson(
+            Ok: true,
+            RedirectPath: redirectPath,
+            Error: null,
+            Status: StatusCodes.Status200OK,
+            AntiforgeryField: tokens.FormFieldName,
+            AntiforgeryToken: tokens.RequestToken));
+    }
+
+    private static IResult ReisAnswerSaveFailed(
+        CultureState culture,
+        bool wantsJson,
+        int status,
+        string? recoveryRedirect = null)
+    {
+        var errorMessage = ReisAnswerErrorMessage(culture, status);
+        if (wantsJson)
+        {
+            return Results.Json(
+                new PupilReisAnswerSaveJson(
+                    Ok: false,
+                    RedirectPath: recoveryRedirect,
+                    Error: errorMessage,
+                    Status: status),
+                statusCode: status);
+        }
+
+        if (status == StatusCodes.Status429TooManyRequests)
+        {
+            return Results.Redirect("/leerling/reis?error=wait");
+        }
+
+        return Results.Redirect(string.IsNullOrEmpty(recoveryRedirect)
+            ? "/leerling/reis?error=save"
+            : recoveryRedirect);
+    }
+
+    private static string ReisAnswerErrorMessage(CultureState culture, int status)
+        => status == StatusCodes.Status429TooManyRequests
+            ? culture["Leerling.Reis.RateLimited"]
+            : culture["Leerling.Reis.SaveFailed"];
+
+    private static string? ReisAnswerRecoveryRedirect(string? errorBody)
+    {
+        if (string.IsNullOrWhiteSpace(errorBody))
+        {
+            return null;
+        }
+
+        try
+        {
+            var err = System.Text.Json.JsonSerializer.Deserialize<PupilErrorDto>(errorBody, JobsyApiClient.ApiJson);
+            if (err is null)
+            {
+                return null;
+            }
+
+            return err.NextStep switch
+            {
+                "puzzle" when PupilPuzzleRoutes.IsBuilt(err.NextPuzzleKey)
+                    => $"/leerling/puzzel/{Uri.EscapeDataString(err.NextPuzzleKey!)}",
+                "island" => "/leerling/eiland",
+                "vakken" => "/leerling/vakken",
+                _ => "/leerling/reis",
+            };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task<IResult> GetEilandAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        if (string.Equals(http.Request.Query["part"], "1", StringComparison.Ordinal))
+        {
+            var partAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["Leerling.Vo.PartBreak.DocumentTitle"], PupilEilandSsrHtml.PartBreak(culture, partAf), "/leerling/eiland", false, null, partAf);
+        }
+
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
+        if (outcome.SessionLost)
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/eiland", useG78: true, null, af, out var eilandFail))
+        {
+            return eilandFail!;
+        }
+
+        var progress = outcome.Value!;
+
+        if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
+        {
+            return Results.Redirect(themeRedir);
+        }
+
+        if (PupilLeerlingProgressRouting.RedirectForEiland(progress) is { } redir)
+        {
+            return Results.Redirect(redir);
+        }
+
+        var def = registry.Get(progress.QuestionSet);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        var error = http.Request.Query["error"].ToString() == "save" ? culture["Leerling.Reis.SaveFailed"] : null;
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilEilandSsrHtml.BuildBody(progress, def, culture, registry, afHtml, EilandSavePath, error, groep78, progress.JourneyThemeKey);
+        return Html(http, culture["Leerling.Island.Title"], body, "/leerling/eiland", groep78, progress.JourneyThemeKey, afHtml, progress: progress);
+    }
+
+    private static async Task<IResult> PostEilandAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CultureState culture,
+        IPupilQuestionSetRegistry registry,
+        IAntiforgery af,
+        CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
+        {
+            return Results.Redirect("/leerling/eiland?error=save");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var likes = form["Likes"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        var dislikes = form["Dislikes"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        foreach (var key in likes)
+        {
+            dislikes.RemoveAll(d => string.Equals(d, key, StringComparison.OrdinalIgnoreCase));
+        }
+        var likeOther = form["LikeOther"].ToString();
+        var dislikeOther = form["DislikeOther"].ToString();
+        try
+        {
+            var result = await api.SavePupilChipsAsync(new PupilChipsRequest(
+                likes, dislikes,
+                string.IsNullOrWhiteSpace(likeOther) ? null : likeOther.Trim(),
+                string.IsNullOrWhiteSpace(dislikeOther) ? null : dislikeOther.Trim()), ct);
+            if (result is null)
+            {
+                return Results.Redirect("/leerling/eiland?error=save");
+            }
+
+            if (PupilCodeId(http) is { } codeId)
+            {
+                progressCache.Invalidate(codeId);
+            }
+
+            var progress = await LoadProgressAsync(http, api, progressCache, ct);
+            var def = progress is null ? null : registry.Get(progress.QuestionSet);
+            if (def?.PartBreakAfterIsland == true)
+            {
+                return Results.Redirect("/leerling/eiland?part=1");
+            }
+
+            return Results.Redirect("/leerling/reis");
+        }
+        catch
+        {
+            return Results.Redirect("/leerling/eiland?error=save");
+        }
+    }
+
+    private static async Task<IResult> GetVakkenAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        IAntiforgery af,
+        IPupilQuestionSetRegistry registry,
+        CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
+        if (outcome.SessionLost)
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
+        if (TryProgressLoadFailure(outcome, http, culture, "/leerling/vakken", useG78: true, null, af, out var vakkenFail))
+        {
+            return vakkenFail!;
+        }
+
+        var progress = outcome.Value!;
+
+        if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
+        {
+            return Results.Redirect(themeRedir);
+        }
+
+        if (PupilLeerlingProgressRouting.RedirectForVakken(progress) is { } redir)
+        {
+            return Results.Redirect(redir);
+        }
+
+        var page = http.Request.Query["page"].ToString() == "2" ? 2 : 1;
+        var scores = BuildVakScores(progress, page);
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        var themeKey = groep78 ? PupilJourneyTheme.NormalizeOrDefault(progress.JourneyThemeKey) : null;
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilVakkenSsrHtml.BuildBody(progress, culture, page, scores, afHtml, VakkenSavePath, null, groep78, themeKey, registry);
+        return Html(http, culture["Leerling.Vakken.Title"], body, "/leerling/vakken", groep78, themeKey, afHtml, progress: progress);
+    }
+
+    private static async Task<IResult> PostVakkenAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CultureState culture,
+        CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.Redirect("/leerling/vakken");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var page = form["Page"].ToString() == "2" ? 2 : 1;
+        var keys = PupilVakScores.KeysForPage(page);
+        var inputs = new List<PupilVakScoreInput>();
+        foreach (var key in keys)
+        {
+            if (!int.TryParse(form[$"Leuk.{key}"].ToString(), out var leuk) || !int.TryParse(form[$"Goed.{key}"].ToString(), out var goed))
+            {
+                return Results.Redirect($"/leerling/vakken?page={page}&error=save");
+            }
+
+            inputs.Add(new PupilVakScoreInput(key, leuk, goed));
+        }
+
+        var result = await api.PutPupilVakScoresAsync(inputs, ct);
+        if (result is null)
+        {
+            return Results.Redirect($"/leerling/vakken?page={page}&error=save");
+        }
+
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.Invalidate(codeId);
+        }
+
+        if (page == 1)
+        {
+            return Results.Redirect("/leerling/vakken?page=2");
+        }
+
+        if (result.JourneyCompleted || string.Equals(result.NextStep, "done", StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.Redirect("/leerling/dit-ben-jij");
+        }
+
+        return Results.Redirect("/leerling/reis");
+    }
+
+    private static async Task<IResult> GetPuzzelAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IAntiforgery af, string key, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        if (!PupilPuzzleRoutes.IsBuilt(key))
+        {
+            var missingAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["Leerling.Puzzle.Title"], """<section class="ll-card"><a class="btn-primary" href="/leerling/reis">Terug</a></section>""", $"/leerling/puzzel/{key}", false, null, missingAf);
+        }
+
+        var outcome = await FetchProgressAsync(http, api, http.RequestServices.GetRequiredService<PupilWebProgressCache>(), ct);
+        if (outcome.SessionLost)
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
+        var puzzleRoute = $"/leerling/puzzel/{key}";
+        if (TryProgressLoadFailure(outcome, http, culture, puzzleRoute, useG78: true, null, af, out var puzzelFail))
+        {
+            return puzzelFail!;
+        }
+
+        var progress = outcome.Value!;
+
+        if (PupilGroep78Navigation.ThemeRedirectPath(progress) is { } themeRedir)
+        {
+            return Results.Redirect(themeRedir);
+        }
+
+        if (PupilLeerlingProgressRouting.RedirectForPuzzle(progress, key) is { } redir)
+        {
+            return Results.Redirect(redir);
+        }
+
+        var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        var savePath = $"/leerling/puzzel/{Uri.EscapeDataString(key)}/save";
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilPuzzelSsrHtml.BuildBody(key, culture, afHtml, savePath, groep78, progress.JourneyThemeKey, registry, null);
+        return Html(http, culture["Leerling.Puzzle.Title"], body, $"/leerling/puzzel/{key}", groep78, progress.JourneyThemeKey, afHtml, progress: progress);
+    }
+
+    private static async Task<IResult> PostPuzzelAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        string key,
+        CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.Redirect($"/leerling/puzzel/{Uri.EscapeDataString(key)}");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var outcome = form["Outcome"].ToString();
+        if (string.IsNullOrWhiteSpace(outcome))
+        {
+            outcome = "skipped";
+        }
+
+        var result = await api.SavePupilPuzzleAsync(key, new PupilPuzzleRequest(outcome), ct);
+        if (result is null)
+        {
+            return Results.Redirect($"/leerling/puzzel/{Uri.EscapeDataString(key)}?error=save");
+        }
+
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.Invalidate(codeId);
+        }
+
+        return Results.Redirect(PupilLeerlingProgressRouting.RedirectAfterPuzzle(result)!);
+    }
+
+    private static async Task<IResult> GetDitBenJijAsync(HttpContext http, JobsyApiClient api, CultureState culture, IPupilQuestionSetRegistry registry, IFeatureFlags features, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        using var response = await api.GetPupilResultResponseAsync(ct);
+        if (PupilLoadRetry.IsSessionLost(response.StatusCode))
+        {
+            return Results.Redirect("/leerling?error=expired");
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var pending = """<section class="ll-card"><p class="ll-error" role="alert">""" + culture["Leerling.Reis.ResultPending"] + """</p><a class="btn-primary" href="/leerling/dit-ben-jij">Opnieuw</a></section>""";
+            var pendingAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["LeerlingStory.Title"], pending, "/leerling/dit-ben-jij", false, null, pendingAf);
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson, ct);
+        if (result is null)
+        {
+            var pendingAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            var pendingBody = """<section class="ll-card"><p class="ll-error" role="alert">"""
+                + PupilLeerlingSsrParts.E(culture["Leerling.Reis.ResultPending"])
+                + """</p><a class="btn-primary" href="/leerling/dit-ben-jij">Opnieuw</a></section>""";
+            return Html(http, culture["LeerlingStory.Title"], pendingBody, "/leerling/dit-ben-jij", false, null, pendingAf);
+        }
+
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
+        var groep78 = progress?.QuestionSet == PupilQuestionSet.Groep78 && progress is not null && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
+        var flag = await features.GetAsync(ct);
+        var passportV2 = flag.PupilPassportV2Enabled && result.QuestionSet == PupilQuestionSet.Groep78;
+        var pdfHref = PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
+        var body = PupilDitBenJijSsrHtml.BuildBody(result, culture, groep78, progress?.JourneyThemeKey, registry, passportV2, pdfHref);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        return Html(http, culture["LeerlingStory.Title"], body, "/leerling/dit-ben-jij", groep78, progress?.JourneyThemeKey, afHtml, progress: progress);
+    }
+
+    private static async Task<IResult> GetPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IFeatureFlags features, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+        var progress = await LoadProgressAsync(http, api, progressCache, ct);
+        var flag = await features.GetAsync(ct);
+        if (!flag.PupilPassportV2Enabled)
+        {
+            var (disabledShell, disabledTheme) = ResolvePaspoortG78Shell(progress, g78PassportContent: false);
+            var disabled = """<div class="ll-reis" data-testid="leerling-paspoort-disabled"><section class="ll-card"><a class="btn-primary" href="/leerling/dit-ben-jij">Terug</a></section></div>""";
+            var disabledAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["LeerlingPassport.Page.Title"], disabled, "/leerling/paspoort", disabledShell, disabledTheme, disabledAf);
+        }
+
+        var lang = PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language;
+        var naam = http.Request.Query["naam"].ToString();
+        PupilG78PassportWebDto? model;
+        try
+        {
+            model = await api.GetPupilG78PassportAsync(string.IsNullOrWhiteSpace(naam) ? null : naam, lang, ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
+        {
+            var (incompleteShell, incompleteTheme) = ResolvePaspoortG78Shell(progress, g78PassportContent: false);
+            var incompleteAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            var incompleteBody =
+                """<section class="ll-card" data-testid="leerling-paspoort-incomplete"><p class="ll-muted">"""
+                + PupilLeerlingSsrParts.E(culture["LeerlingPassport.NotReady"])
+                + """</p><a class="btn-primary" href="/leerling/reis">"""
+                + PupilLeerlingSsrParts.E(culture["LeerlingPassport.ContinueJourney"])
+                + "</a></section>";
+            return Html(http, culture["LeerlingPassport.Page.Title"], incompleteBody, "/leerling/paspoort", incompleteShell, incompleteTheme, incompleteAf);
+        }
+        catch
+        {
+            return ProgressLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.Offline"],
+                "/leerling/paspoort",
+                ResolvePaspoortG78Shell(progress, g78PassportContent: false).UseGroep78Shell,
+                ResolvePaspoortG78Shell(progress, g78PassportContent: false).JourneyThemeKey,
+                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+        }
+
+        if (model is null || !model.Enabled)
+        {
+            var (emptyShell, emptyTheme) = ResolvePaspoortG78Shell(progress, g78PassportContent: false);
+            var emptyAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+            return Html(http, culture["LeerlingPassport.Page.Title"], """<section class="ll-card"><a href="/leerling/dit-ben-jij">Terug</a></section>""", "/leerling/paspoort", emptyShell, emptyTheme, emptyAf);
+        }
+
+        var (useG78Shell, themeKey) = ResolvePaspoortG78Shell(progress, g78PassportContent: true);
+        var pdfHref = PupilStoryPdfLink.Href(naam, lang);
+        var body = PupilPaspoortSsrHtml.BuildPage(culture, model, naam, pdfHref);
+        var pasAf = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        return Html(http, culture["LeerlingPassport.Page.Title"], body, "/leerling/paspoort", useG78Shell, themeKey, pasAf);
+    }
+
+    /// <summary>G78 passport SSR always uses the journey shell; theme defaults when unset (e.g. legacy progress rows).</summary>
+    private static (bool UseGroep78Shell, string? JourneyThemeKey) ResolvePaspoortG78Shell(
+        PupilProgressStateDto? progress,
+        bool g78PassportContent)
+    {
+        var groep78Pupil = progress?.QuestionSet == PupilQuestionSet.Groep78;
+        if (!groep78Pupil && !g78PassportContent)
+        {
+            return (false, null);
+        }
+
+        return (true, PupilJourneyTheme.NormalizeOrDefault(progress?.JourneyThemeKey));
+    }
+
+    private static async Task<IResult> GetVoPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IAntiforgery af, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var dto = await api.GetPupilVoPassportAsync(ct);
+        if (dto?.Enabled != true)
+        {
+            return Results.Redirect("/leerling/droombaan");
+        }
+
+        var model = new PupilVoPaspoortFormModel(
+            string.Join(", ", dto.FavoriteSubjects),
+            dto.ProfileKey ?? "",
+            string.Join(", ", dto.SideJobAvailability),
+            dto.TravelModeKey ?? "",
+            string.Join("\n", dto.LearningGoals),
+            dto.OwnWords ?? "");
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        var body = PupilVoPaspoortSsrHtml.BuildBody(culture, afHtml, VoPaspoortSavePath, model, null);
+        return Html(http, culture["LeerlingPassport.Vo.Form.Title"], body, "/leerling/vo-paspoort", false, null, afHtml);
+    }
+
+    private static async Task<IResult> PostVoPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.Redirect("/leerling/vo-paspoort");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var req = new PupilVoPassportSaveRequest(
+            SplitCsv(form["Subjects"].ToString()),
+            string.IsNullOrWhiteSpace(form["ProfileKey"].ToString()) ? null : form["ProfileKey"].ToString(),
+            SplitCsv(form["SideJob"].ToString()),
+            string.IsNullOrWhiteSpace(form["TravelKey"].ToString()) ? null : form["TravelKey"].ToString(),
+            string.IsNullOrWhiteSpace(form["OwnWords"].ToString()) ? null : form["OwnWords"].ToString(),
+            SplitLines(form["LearningGoals"].ToString()));
+        var ok = await api.SavePupilVoPassportAsync(req, ct);
+        return Results.Redirect(ok is null ? "/leerling/vo-paspoort?error=save" : "/leerling/droombaan");
+    }
+
+    private static async Task<IResult> GetMboUitlegAsync(HttpContext http, CultureState culture, IAntiforgery af)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var body = PupilMboHboSsrHtml.Uitleg(PupilLeerlingSsrParts.AntiforgeryField(af, http), MboIntroPath);
+        return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg");
+    }
+
+    private static async Task<IResult> PostMboIntroAsync(HttpContext http, JobsyApiClient api, IAntiforgery af, CancellationToken ct)
+    {
+        if (!await af.IsRequestValidAsync(http))
+        {
+            return Results.Redirect("/leerling/mbo-hbo/uitleg");
+        }
+
+        var res = await api.MarkMboHboIntroSeenAsync(ct);
+        return Results.Redirect(res?.RedirectPath ?? PupilMboHboEntryPaths.Overzicht);
+    }
+
+    private static async Task<IResult> GetMboOverzichtAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var model = await api.GetMboHboOverviewAsync(ct);
+        var body = model is null ? "<div class=\"mhbo-wrap\"><p>Kon niet laden.</p></div>" : PupilMboHboSsrHtml.Overzicht(model);
+        return MboHtml(http, "Jouw testen", body, "/leerling/mbo-hbo/overzicht");
+    }
+
+    private static async Task<IResult> GetMboTestAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache progressCache,
+        CultureState culture,
+        string blockKey,
+        IAntiforgery af,
+        CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var route = $"/leerling/mbo-hbo/test/{blockKey}";
+        var itemId = http.Request.Query["itemId"].ToString();
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            itemId = null;
+        }
+
+        var error = http.Request.Query["error"].ToString() switch
+        {
+            "save" => culture["Leerling.Reis.SaveFailed"],
+            "wait" => culture["Leerling.Reis.RateLimited"],
+            _ => null,
+        };
+
+        PupilMboHboQuestionDto q;
+        if (PupilCodeId(http) is { } codeId
+            && progressCache.TryConsumeSkipFetch(codeId, blockKey, out var cached)
+            && cached is not null
+            && (itemId is null || string.Equals(cached.ItemId, itemId, StringComparison.Ordinal)))
+        {
+            q = cached;
+        }
+        else
+        {
+            var outcome = await LoadMboQuestionAsync(http, api, progressCache, blockKey, itemId, ct);
+            if (outcome.IsRateLimited)
+            {
+                return MboLoadFailed(http, culture, culture["Leerling.Reis.RateLimited"], route, rateLimited: true);
+            }
+
+            if (outcome.IsOffline || outcome.Value is null)
+            {
+                return MboLoadFailed(http, culture, culture["Leerling.Reis.Offline"], route);
+            }
+
+            q = outcome.Value;
+        }
+
+        if (PupilCodeId(http) is { } rememberId)
+        {
+            progressCache.RememberQuestion(rememberId, blockKey, q);
+        }
+
+        if (PupilCodeId(http) is { } pendingId
+            && progressCache.TryGetPendingAnswer(pendingId, blockKey, q.ItemId, out var pending))
+        {
+            q = ApplyPendingAnswer(q, pending);
+        }
+
+        var body = PupilMboHboSsrHtml.TestQuestion(
+            q,
+            blockKey,
+            culture,
+            PupilLeerlingSsrParts.AntiforgeryField(af, http),
+            $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}/answer",
+            error);
+        return MboHtml(http, "Test", body, route);
+    }
+
+    private static async Task<IResult> PostMboTestAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache progressCache,
+        CultureState culture,
+        IAntiforgery af,
+        string blockKey,
+        CancellationToken ct)
+    {
+        culture.InitializeFromRequest(http);
+        var testRoute = $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}";
+        if (!http.Request.HasFormContentType || !await af.IsRequestValidAsync(http))
+        {
+            return Results.Redirect($"{testRoute}?error=save");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var itemId = form["ItemId"].ToString();
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return Results.Redirect($"{testRoute}?error=save");
+        }
+
+        (PupilMboHboAnswerResponse? Ok, int StatusCode, string? ErrorBody) result;
+        if (form.ContainsKey("Leuk") && form.ContainsKey("Goed"))
+        {
+            _ = int.TryParse(form["Leuk"].ToString(), out var leuk);
+            _ = int.TryParse(form["Goed"].ToString(), out var goed);
+            result = await api.SaveMboHboVakAnswerAsync(itemId, leuk, goed, ct);
+        }
+        else
+        {
+            _ = int.TryParse(form["Value"].ToString(), out var val);
+            result = await api.SaveMboHboAnswerAsync(blockKey, itemId, val, ct);
+        }
+
+        if (result.Ok is null)
+        {
+            if (result.StatusCode == StatusCodes.Status429TooManyRequests
+                && PupilCodeId(http) is { } rateCodeId)
+            {
+                if (form.ContainsKey("Leuk") && form.ContainsKey("Goed"))
+                {
+                    _ = int.TryParse(form["Leuk"].ToString(), out var leuk);
+                    _ = int.TryParse(form["Goed"].ToString(), out var goed);
+                    progressCache.StagePendingAnswer(rateCodeId, blockKey, itemId, null, leuk, goed);
+                }
+                else
+                {
+                    _ = int.TryParse(form["Value"].ToString(), out var val);
+                    progressCache.StagePendingAnswer(rateCodeId, blockKey, itemId, val, null, null);
+                }
+
+                return Results.Redirect($"{testRoute}?itemId={Uri.EscapeDataString(itemId)}&error=wait");
+            }
+
+            return Results.Redirect($"{testRoute}?itemId={Uri.EscapeDataString(itemId)}&error=save");
+        }
+
+        if (PupilCodeId(http) is { } codeId)
+        {
+            progressCache.ClearPendingAnswer(codeId, blockKey);
+        }
+
+        var res = result.Ok;
+        if (res.BlockComplete)
+        {
+            return Results.Redirect(PupilMboHboEntryPaths.Uitkomst(PupilMboHboEntryPaths.TryParseBlockRoute(blockKey, out var b) ? b : PupilMboHboBlock.Interesse));
+        }
+
+        var nextItemId = res.NextItemId;
+        if (string.IsNullOrEmpty(nextItemId))
+        {
+            return Results.Redirect(PupilMboHboEntryPaths.Overzicht);
+        }
+
+        if (PupilCodeId(http) is { } stageId)
+        {
+            var nextQuestion = await api.GetMboHboQuestionAsync(blockKey, nextItemId, ct);
+            if (nextQuestion is not null)
+            {
+                progressCache.StageAfterAnswer(stageId, blockKey, nextQuestion);
+            }
+        }
+
+        return Results.Redirect($"{testRoute}?itemId={Uri.EscapeDataString(nextItemId)}");
+    }
+
+    private static async Task<IResult> GetMboPaspoortAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        PupilMboHboPassportDto? model;
+        try
+        {
+            model = await api.GetMboHboPassportAsync(ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
+        var pdfHref = PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
+        var pdfNotice = http.Request.Query["pdf"].ToString() switch
+        {
+            "locked" => "Je paspoort is nog niet klaar. Rond eerst al je testen af.",
+            "error" => "De PDF lukt nu even niet. Probeer het zo opnieuw.",
+            _ => null,
+        };
+        if (model is null)
+        {
+            return MboLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.Offline"],
+                "/leerling/mbo-hbo/paspoort");
+        }
+
+        var body = PupilMboHboSsrHtml.Paspoort(model, culture, pdfHref, pdfNotice);
+        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort");
+    }
+
+    private static Task<PupilLoadOutcome<PupilMboHboQuestionDto>> LoadMboQuestionAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache progressCache,
+        string blockKey,
+        string? itemId,
+        CancellationToken ct)
+        => PupilLoadRetry.RunAsync(
+            () => LoadMboQuestionOnceAsync(http, api, progressCache, blockKey, itemId, ct),
+            http.RequestServices,
+            "mbo-hbo-question",
+            ct);
+
+    private static async Task<PupilMboHboQuestionDto?> LoadMboQuestionOnceAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilMboHboWebProgressCache _,
+        string blockKey,
+        string? itemId,
+        CancellationToken ct)
+    {
+        try
+        {
+            var (question, status) = await api.GetMboHboQuestionResponseAsync(blockKey, itemId, ct);
+            if (question is not null)
+            {
+                return question;
+            }
+
+            if (status is StatusCodes.Status401Unauthorized or StatusCodes.Status403Forbidden)
+            {
+                throw new HttpRequestException("session", null, HttpStatusCode.Unauthorized);
+            }
+
+            if (status == StatusCodes.Status429TooManyRequests)
+            {
+                throw new HttpRequestException("rate_limited", null, HttpStatusCode.TooManyRequests);
+            }
+
+            return null;
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            throw;
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsRateLimited(ex.StatusCode))
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            LeerlingLoadLog.Failed(
+                http.RequestServices,
+                "mbo-hbo-question",
+                ex,
+                ex is HttpRequestException httpEx ? httpEx.StatusCode : null,
+                giveUp: false);
+            return null;
+        }
+    }
+
+    private static PupilMboHboQuestionDto ApplyPendingAnswer(
+        PupilMboHboQuestionDto q,
+        PupilMboHboWebProgressCache.PendingAnswer pending)
+        => q with
+        {
+            CurrentValue = pending.Value ?? q.CurrentValue,
+            CurrentLeuk = pending.Leuk ?? q.CurrentLeuk,
+            CurrentGoed = pending.Goed ?? q.CurrentGoed,
+        };
+
+    private static IResult MboLoadFailed(
+        HttpContext http,
+        CultureState culture,
+        string message,
+        string route,
+        bool rateLimited = false)
+    {
+        var button = rateLimited
+            ? culture["Leerling.Reis.Retry"]
+            : culture["Common.Error.TryAgain"];
+        var body = $"""
+            <div class="mhbo-wrap" data-testid="mhbo-load-retry">
+            <p class="mhbo-error" role="alert">{PupilLeerlingSsrParts.E(message)}</p>
+            <a class="mhbo-btn" href="{PupilLeerlingSsrParts.E(route)}">{PupilLeerlingSsrParts.E(button)}</a>
+            </div>
+            """;
+        return MboHtml(http, "Test", body, route);
+    }
+
+    private static async Task<IResult> GetMboUitkomstAsync(HttpContext http, JobsyApiClient api, string blockKey, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var model = await api.GetMboHboOutcomeAsync(blockKey, ct);
+        var body = model is null ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>" : PupilMboHboSsrHtml.Uitkomst(model);
+        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}");
+    }
+
+    private static Task<PupilLoadOutcome<PupilProgressStateDto>> FetchProgressAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CancellationToken ct)
+        => PupilLoadRetry.RunAsync(
+            () => LoadProgressOnceAsync(http, api, progressCache, ct),
+            http.RequestServices,
+            "progress",
+            ct);
+
+    private static async Task<PupilProgressStateDto?> LoadProgressOnceAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CancellationToken ct)
+    {
+        if (PupilCodeId(http) is { } codeId
+            && progressCache.TryConsumeSkipFetch(codeId, out var cached)
+            && cached is not null)
+        {
+            return cached;
+        }
+
+        try
+        {
+            var progress = await api.GetPupilProgressAsync(ct);
+            if (progress is not null && PupilCodeId(http) is { } rememberId)
+            {
+                progressCache.RememberSnapshot(rememberId, progress);
+            }
+
+            return progress;
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            throw;
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsRateLimited(ex.StatusCode))
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            LeerlingLoadLog.Failed(
+                http.RequestServices,
+                "progress",
+                ex,
+                ex is HttpRequestException httpEx ? httpEx.StatusCode : null,
+                giveUp: false);
+            return null;
+        }
+    }
+
+    private static Task<PupilProgressStateDto?> LoadProgressAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        PupilWebProgressCache progressCache,
+        CancellationToken ct)
+        => LoadProgressOnceAsync(http, api, progressCache, ct);
+
+    private static Dictionary<string, (int Leuk, int Goed)> BuildVakScores(PupilProgressStateDto _, int page)
+    {
+        var dict = new Dictionary<string, (int, int)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in PupilVakScores.KeysForPage(page))
+        {
+            dict[key] = (0, 0);
+        }
+
+        return dict;
+    }
+
+    private static IResult Html(
+        HttpContext http,
+        string title,
+        string body,
+        string route,
+        bool useG78,
+        string? themeKey,
+        string pauseAntiforgeryHtml,
+        bool showPause = true,
+        PupilProgressStateDto? progress = null)
+    {
+        string pauseHtml = "";
+        if (showPause)
+        {
+            var pauseFields = PupilGroep78JourneySnapshot.PauseFormFields(progress);
+            pauseHtml = PupilLeerlingSsrFrame.PauseForm(
+                pauseAntiforgeryHtml,
+                "Pauze",
+                groep78: useG78,
+                journeyThemeKey: themeKey,
+                journeyNodeKey: pauseFields?.NodeKey,
+                answeredCount: pauseFields?.Answered,
+                totalItems: pauseFields?.Total,
+                journeyCompleted: pauseFields?.Completed ?? false);
+        }
+
+        var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
+        {
+            PageTitle = title,
+            BodyHtml = body,
+            Pupil = http.User,
+            RoutePath = route,
+            UseGroep78Shell = useG78,
+            JourneyThemeKey = themeKey,
+            ShowPause = showPause,
+            PauseFormHtml = pauseHtml,
+        });
+        return Results.Content(doc, "text/html; charset=utf-8");
+    }
+
+    private static IResult MboHtml(HttpContext http, string title, string body, string route)
+    {
+        var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
+        {
+            PageTitle = title,
+            BodyHtml = body,
+            Pupil = http.User,
+            RoutePath = route,
+            UseMboHboShell = true,
+            ShowPause = false,
+        });
+        return Results.Content(doc, "text/html; charset=utf-8");
+    }
+
+    private static bool TryProgressLoadFailure(
+        PupilLoadOutcome<PupilProgressStateDto> outcome,
+        HttpContext http,
+        CultureState culture,
+        string route,
+        bool useG78,
+        string? themeKey,
+        IAntiforgery af,
+        out IResult? failure)
+    {
+        failure = null;
+        if (outcome.IsRateLimited)
+        {
+            failure = ProgressLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.RateLimited"],
+                route,
+                useG78,
+                themeKey,
+                PupilLeerlingSsrParts.AntiforgeryField(af, http),
+                rateLimited: true);
+            return true;
+        }
+
+        if (outcome.IsOffline || outcome.Value is null)
+        {
+            failure = ProgressLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.Offline"],
+                route,
+                useG78,
+                themeKey,
+                PupilLeerlingSsrParts.AntiforgeryField(af, http));
+            return true;
+        }
+
+        return false;
+    }
+
+    private static IResult ProgressLoadFailed(
+        HttpContext http,
+        CultureState culture,
+        string message,
+        string route,
+        bool useG78,
+        string? themeKey,
+        string pauseAntiforgeryHtml,
+        bool rateLimited = false)
+    {
+        var button = rateLimited
+            ? culture["Leerling.Reis.Retry"]
+            : culture["Common.Error.TryAgain"];
+        var body = $"""
+            <section class="ll-card" data-testid="leerling-load-retry">
+            <p class="ll-error" role="alert">{PupilLeerlingSsrParts.E(message)}</p>
+            <a class="btn-primary" href="{PupilLeerlingSsrParts.E(route)}">{PupilLeerlingSsrParts.E(button)}</a>
+            </section>
+            """;
+        return Html(http, culture["Leerling.Reis.Title"], body, route, useG78, themeKey, pauseAntiforgeryHtml, progress: null);
+    }
+
+    private static Guid? PupilCodeId(HttpContext http)
+    {
+        var raw = http.User.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+        return Guid.TryParse(raw, out var id) ? id : null;
+    }
+
+    private static IReadOnlyList<string> SplitCsv(string raw)
+        => raw.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private static IReadOnlyList<string> SplitLines(string raw)
+        => raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+}

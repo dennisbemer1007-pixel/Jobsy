@@ -235,7 +235,4 @@ public static class GuldenMiddenwegRules
 {
     public static bool RequiresSafetyNetConfirmation(MatchScoreBreakdown breakdown)
         => breakdown.LegalEligible && breakdown.TotalPercent < MatchScoreWeights.GuldenMiddenwegThreshold;
-
-    public static bool CanProceedWithoutSafetyNet(MatchScoreBreakdown breakdown)
-        => breakdown.LegalEligible && breakdown.TotalPercent >= MatchScoreWeights.GuldenMiddenwegThreshold;
 }

@@ -1,0 +1,211 @@
+@page "/werkgever/open-voor-initiatief"
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Models
+@using Jobsy.Web.Werkgever
+@using Jobsy.Web.Components.Bedrijvenkaart
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject EmployerScopeState Scope
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["WgNav.OpenForInitiative"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.OpenForInitiative"]">
+    @if (_loading)
+    {
+        <p class="bk-wg-muted">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="bk-wg-page">
+            <article class="bk-wg-card">
+                <div class="bk-wg-switch">
+                    <div class="bk-wg-switch__copy">
+                        <h2 class="bk-wg-card__title">@Culture["WgNav.OpenForInitiative"]</h2>
+                        <p class="bk-wg-card__lead">@Culture["Initiative.Settings.Lead"]</p>
+                    </div>
+                    <label class="bk-wg-toggle">
+                        <span class="bk-wg-toggle__label visually-hidden">@Culture["WgNav.OpenForInitiative"]</span>
+                        <input type="checkbox" class="bk-wg-toggle__input" @bind="_editor.IsEnabled" />
+                        <span class="bk-wg-toggle__track" aria-hidden="true"></span>
+                    </label>
+                </div>
+            </article>
+
+            <article class="bk-wg-card">
+                <h2 class="bk-wg-card__title">@Culture["Initiative.Settings.GeneralEntry"]</h2>
+                <div class="bk-wg-form">
+                    <div class="bk-wg-field">
+                        <label class="bk-wg-label" for="init-contact-email">@Culture["Initiative.Settings.ContactEmail"]</label>
+                        <input id="init-contact-email" type="email" class="bk-wg-input" @bind="_editor.ContactEmail" required />
+                        @if (!_editor.ContactEmailConfirmed)
+                        {
+                            <p class="bk-wg-hint">@Culture["Initiative.Settings.ContactEmailHint"]</p>
+                        }
+                    </div>
+                    <div class="bk-wg-field bk-wg-field--narrow">
+                        <label class="bk-wg-label" for="init-max-week">@Culture["Initiative.Settings.MaxPerWeek"]</label>
+                        <input id="init-max-week" type="number" min="1" max="50" class="bk-wg-input" @bind="_editor.MaxPerWeek" />
+                    </div>
+                </div>
+            </article>
+
+            <section class="bk-wg-teams">
+                <div class="bk-wg-teams__head">
+                    <h2 class="bk-wg-card__title">@Culture["Initiative.Settings.Teams"]</h2>
+                    <button type="button" class="btn--secondary bk-wg-btn" @onclick="() => _teamDialogOpen = true">
+                        @Culture["Initiative.Settings.TeamAdd"]
+                    </button>
+                </div>
+                @if (_editor.Teams.Count == 0)
+                {
+                    <p class="bk-wg-muted">@Culture["Initiative.Settings.TeamsEmpty"]</p>
+                }
+                else
+                {
+                    <div class="bk-wg-teams__list">
+                        @foreach (var team in _editor.Teams)
+                        {
+                            <article class="bk-wg-team-card">
+                                <div class="bk-wg-team-card__main">
+                                    <h3 class="bk-wg-team-card__name">@team.Name</h3>
+                                    @if (!string.IsNullOrWhiteSpace(team.Description))
+                                    {
+                                        <p class="bk-wg-team-card__desc">@team.Description</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(team.ContactEmail))
+                                    {
+                                        <p class="bk-wg-team-card__email">@team.ContactEmail</p>
+                                    }
+                                </div>
+                                <label class="bk-wg-toggle bk-wg-toggle--compact">
+                                    <span class="bk-wg-toggle__label">@Culture["Initiative.Settings.TeamOpen"]</span>
+                                    <input type="checkbox" class="bk-wg-toggle__input" @bind="team.IsOpen" disabled="@(!team.EmailConfirmed)" />
+                                    <span class="bk-wg-toggle__track" aria-hidden="true"></span>
+                                </label>
+                                @if (!team.EmailConfirmed)
+                                {
+                                    <p class="bk-wg-hint bk-wg-hint--warn">@Culture["Initiative.Settings.TeamEmailConfirm"]</p>
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+
+            <div class="bk-wg-page__actions">
+                <button type="button" class="btn--primary bk-wg-btn" @onclick="Save">@Culture["Initiative.Settings.Save"]</button>
+            </div>
+        </div>
+    }
+
+    <InitiativeTeamAddDialog IsOpen="_teamDialogOpen" IsOpenChanged="v => _teamDialogOpen = v" OnSave="OnTeamDraft" />
+    <InitiativeEmailMissingDialog IsOpen="_emailMissingOpen" IsOpenChanged="v => _emailMissingOpen = v" />
+</WgPageShell>
+
+@code {
+    private bool _loading = true;
+    private bool _teamDialogOpen;
+    private bool _emailMissingOpen;
+    private InitiativeSettingsEditorModel _editor = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.ContainsKey("demoTeamAdd"))
+        {
+            _teamDialogOpen = true;
+        }
+
+        if (q.ContainsKey("demoEmailMissing"))
+        {
+            _emailMissingOpen = true;
+        }
+
+        var root = Scope.CompanyIds.FirstOrDefault();
+        if (root != Guid.Empty)
+        {
+            var dto = await Api.GetInitiativeSettingsAsync(root);
+            if (dto is not null)
+            {
+                _editor = FromDto(dto);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task Save()
+    {
+        var root = Scope.CompanyIds.FirstOrDefault();
+        if (root != Guid.Empty)
+        {
+            var saved = await Api.SaveInitiativeSettingsAsync(root, ToDto(_editor));
+            if (saved is not null)
+            {
+                _editor = FromDto(saved);
+            }
+        }
+    }
+
+    private Task OnTeamDraft((string Name, string Description, string Email) draft)
+    {
+        if (string.IsNullOrWhiteSpace(draft.Email))
+        {
+            _emailMissingOpen = true;
+            return Task.CompletedTask;
+        }
+
+        _editor.Teams.Add(new InitiativeTeamEditorModel
+        {
+            Name = draft.Name,
+            Description = draft.Description,
+            ContactEmail = draft.Email
+        });
+        return Task.CompletedTask;
+    }
+
+    private static InitiativeSettingsEditorModel FromDto(CompanyInitiativeSettingsDto dto)
+        => new()
+        {
+            IsEnabled = dto.IsEnabled,
+            ContactEmail = dto.ContactEmail,
+            ContactEmailConfirmed = dto.ContactEmailConfirmed,
+            MaxPerWeek = dto.MaxPerWeek,
+            Teams = dto.Teams.Select(t => new InitiativeTeamEditorModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                BranchCompanyId = t.BranchCompanyId,
+                ContactEmail = t.ContactEmail,
+                EmailConfirmed = t.EmailConfirmed,
+                MaxPerWeek = t.MaxPerWeek,
+                IsOpen = t.IsOpen
+            }).ToList()
+        };
+
+    private static CompanyInitiativeSettingsDto ToDto(InitiativeSettingsEditorModel m)
+        => new(
+            m.IsEnabled,
+            m.ContactEmail,
+            m.ContactEmailConfirmed,
+            m.MaxPerWeek,
+            m.Teams.Select(t => new InitiativeTeamDto(
+                t.Id,
+                t.Name,
+                t.Description,
+                t.BranchCompanyId,
+                null,
+                t.ContactEmail,
+                t.EmailConfirmed,
+                t.MaxPerWeek,
+                t.IsOpen)).ToList());
+}

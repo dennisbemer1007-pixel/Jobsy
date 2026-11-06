@@ -1,7 +1,9 @@
 using System.Net.Http.Json;
 using Jobsy.Core;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Web.Security;
 
@@ -22,17 +24,20 @@ public sealed class SessionTimeoutProvider : ISessionTimeoutProvider
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _cache;
     private readonly ILogger<SessionTimeoutProvider> _logger;
+    private readonly SessionAuthOptions _sessionOptions;
 
     public SessionTimeoutProvider(
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
         IMemoryCache cache,
-        ILogger<SessionTimeoutProvider> logger)
+        ILogger<SessionTimeoutProvider> logger,
+        IOptions<SessionAuthOptions> sessionOptions)
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
         _cache = cache;
         _logger = logger;
+        _sessionOptions = sessionOptions.Value;
     }
 
     public async Task<int> GetInactivityTimeoutMinutesAsync(CancellationToken cancellationToken = default)
@@ -55,9 +60,9 @@ public sealed class SessionTimeoutProvider : ISessionTimeoutProvider
             var dto = await client.GetFromJsonAsync<SessionSecurityResponse>(
                 "api/settings/session-security",
                 cancellationToken);
-            var minutes = SessionSecurityRules.ClampTimeoutMinutes(
-                dto?.InactivityTimeoutMinutes
-                ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes);
+            var minutes = SessionTimeoutResolver.ResolveInactivityMinutes(
+                _sessionOptions,
+                dto?.InactivityTimeoutMinutes ?? 0);
             _cache.Set(CacheKey, minutes, CacheTtl);
             return minutes;
         }
@@ -65,7 +70,7 @@ public sealed class SessionTimeoutProvider : ISessionTimeoutProvider
         {
             _logger.LogWarning(ex, "Failed to load session inactivity timeout; using default {Minutes}m.",
                 SessionSecurityRules.DefaultInactivityTimeoutMinutes);
-            var fallback = SessionSecurityRules.DefaultInactivityTimeoutMinutes;
+            var fallback = SessionTimeoutResolver.ResolveInactivityMinutes(_sessionOptions, 0);
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;
         }

@@ -1,0 +1,36 @@
+KEY: KandidatenkaartMissedOut
+SUBJECT: Vacancy filled: Weekendhulp verkoop
+PREHEADER: Three similar vacancies
+KIND: Optional
+--- TEXT ---
+Hi Alex,
+
+Vacancy filled
+==============
+
+Weekendhulp verkoop at Bakkerij De Gouden Korrel has been filled. Here are
+three similar vacancies:
+
+- Weekendhulp verkoop (Bakkerij De Gouden Korrel)
+
+Open job map: https://lobsy.nl/
+
+Team Lobsy
+
+You get this email because you want nearby vacancies.
+No more reminder emails? Unsubscribe: https://lobsy.nl/mail/afmelden
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail settings: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Vacancy filled
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open job map -> https://lobsy.nl/
+a: No more reminder emails? Unsubscribe -> https://lobsy.nl/mail/afmelden
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail settings -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

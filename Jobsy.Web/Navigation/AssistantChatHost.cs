@@ -4,7 +4,7 @@ using Jobsy.Core.Authorization;
 namespace Jobsy.Web.Navigation;
 
 /// <summary>
-/// Opens the Lobsy assistant from chrome (right-edge tab) without a floating FAB.
+/// Opens the Lobsy assistant from the candidate coach (or the employer edge tab).
 /// </summary>
 public sealed class AssistantChatHost
 {

@@ -1,0 +1,100 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Components
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+
+@if (_visible && Eligible && HasConfirmedReference && !HideConfirmedFollowUp)
+{
+    <p class="ref-verif-tip-followup" data-testid="ref-verification-tip-followup" data-screen="@ScreenKey">
+        <a class="ref-verif-tip-followup__link" href="@_askHref">@Culture["RefVerif.Tip.AskAnother"]</a>
+    </p>
+}
+else if (_visible && Eligible && !(HasConfirmedReference && HideConfirmedFollowUp))
+{
+    <aside class="ref-verif-tip"
+           data-testid="ref-verification-tip"
+           data-screen="@ScreenKey"
+           role="note">
+        <LobsyCoachAvatar Class="ref-verif-tip__mascot" Language="@Culture.Language" Alt="" />
+        <div class="ref-verif-tip__body">
+            <p class="ref-verif-tip__title">@Culture["RefVerif.Tip.Title"]</p>
+            <p class="ref-verif-tip__text">@Culture["RefVerif.Tip.Body"]</p>
+            <div class="ref-verif-tip__actions">
+                <a class="btn btn-primary" href="@_askHref">@Culture["RefVerif.Tip.Ask"]</a>
+                <button type="button" class="ref-verif-tip__notnow" @onclick="DismissAsync">
+                    @Culture["RefVerif.Tip.NotNow"]
+                </button>
+            </div>
+        </div>
+    </aside>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string ScreenKey { get; set; } = "";
+
+    [Parameter]
+    public bool Eligible { get; set; }
+
+    [Parameter]
+    public string? UserId { get; set; }
+
+    [Parameter]
+    public Guid? FirstEntryId { get; set; }
+
+    /// <summary>When true, show a quiet follow-up link instead of the full tip card.</summary>
+    [Parameter]
+    public bool HasConfirmedReference { get; set; }
+
+    /// <summary>When true with a confirmed reference, hide the floating follow-up (e.g. link lives in employer preview).</summary>
+    [Parameter]
+    public bool HideConfirmedFollowUp { get; set; }
+
+    private bool _visible = true;
+    private bool _checked;
+    private string _askHref = "/candidate/paspoort?tab=references";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _askHref = FirstEntryId is Guid id
+            ? $"/candidate/paspoort/referentie/vraag/{id:D}"
+            : "/candidate/paspoort?tab=references";
+
+        if (_checked)
+        {
+            return;
+        }
+
+        _checked = true;
+        try
+        {
+            var dismissed = await Js.InvokeAsync<bool>("jobsyRefVerificationTip.isDismissed", StorageKey());
+            _visible = !dismissed;
+        }
+        catch
+        {
+            _visible = true;
+        }
+    }
+
+    private string StorageKey()
+    {
+        var user = string.IsNullOrWhiteSpace(UserId) ? "user" : UserId.Trim();
+        return $"{user}:ref-verification-tip";
+    }
+
+    private async Task DismissAsync()
+    {
+        _visible = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyRefVerificationTip.dismiss", StorageKey());
+        }
+        catch
+        {
+            // UI already hidden.
+        }
+    }
+}

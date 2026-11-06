@@ -1,0 +1,12 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Media
+
+<div class="ref-verif-illustrated-band @CssClass" style="@Style" aria-hidden="true"></div>
+
+@code {
+    [Parameter, EditorRequired] public string ImageUrl { get; set; } = "";
+
+    [Parameter] public string? CssClass { get; set; }
+
+    private string Style => $"--ref-verif-band-image: url('{ImageUrl}');";
+}

@@ -1,0 +1,1 @@
+OK: no securitypolicyviolation events on https://acceptatie.lobsy.nl (/, /banenkaart, /login, /wachtwoord-vergeten, /hoe-werkt-lobsy); script-src without 'unsafe-eval'.

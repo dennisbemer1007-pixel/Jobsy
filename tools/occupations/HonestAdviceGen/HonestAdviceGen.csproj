@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Jobsy.Tools.HonestAdviceGen</RootNamespace>
+    <Description>One-shot honest career advice per ESCO occupation. Not used at runtime.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Jobsy.Core\Jobsy.Core.csproj" />
+  </ItemGroup>
+</Project>

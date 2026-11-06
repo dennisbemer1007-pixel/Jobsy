@@ -1,0 +1,59 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<section class="ref-verif-gev-hero ref-verif-cand-hero @CssClass" style="@ArtStyle" aria-label="@Title">
+    <div class="ref-verif-gev-hero__wrap">
+        <div class="ref-verif-gev-hero__copy">
+            @if (!string.IsNullOrWhiteSpace(Eyebrow))
+            {
+                <span class="ref-verif-gev-hero__eyebrow @(CoralEyebrow ? "ref-verif-gev-hero__eyebrow--coral" : null)">@Eyebrow</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <h1 id="@TitleId">@Title</h1>
+            }
+            @if (!string.IsNullOrWhiteSpace(Lead))
+            {
+                <p class="ref-verif-gev-hero__lead @(string.IsNullOrWhiteSpace(LeadMobile) ? null : "ref-verif-gev-hero__lead--desktop") @(LeadDesktopOnly ? "ref-verif-gev-hero__lead--desktop" : null)">@Lead</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(LeadMobile))
+            {
+                <p class="ref-verif-gev-hero__lead ref-verif-gev-hero__lead--mobile">@LeadMobile</p>
+            }
+            @ChildContent
+        </div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    {
+        <figure class="ref-verif-gev-hero__art" aria-hidden="true"></figure>
+    }
+</section>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool CoralEyebrow { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? LeadMobile { get; set; }
+    [Parameter] public bool LeadDesktopOnly { get; set; }
+    [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string? MobileArtUrl { get; set; }
+    [Parameter] public string ArtPosition { get; set; } = "right bottom";
+    [Parameter] public string? MobileArtPosition { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? ArtStyle
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ArtUrl))
+            {
+                return null;
+            }
+
+            var mobileArt = string.IsNullOrWhiteSpace(MobileArtUrl) ? ArtUrl : MobileArtUrl;
+            return $"--ref-verif-hero-art:url('{ArtUrl}');--ref-verif-hero-art-mobile:url('{mobileArt}');";
+        }
+    }
+}

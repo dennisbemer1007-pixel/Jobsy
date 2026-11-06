@@ -1,0 +1,1845 @@
+{
+  "version": 1,
+  "jobs": {
+    "dierenarts": {
+      "uri": "http://data.europa.eu/esco/occupation/32ef07df-1b0a-439a-916e-8289eb9f4895",
+      "escoTitle": "paardentandarts",
+      "iscedCodes": [
+        "0421",
+        "0841"
+      ],
+      "searchTerm": "dierenarts",
+      "isced": {
+        "0841": {
+          "name": "diergeneeskunde",
+          "items": [
+            "omgevingsverrijking voor dieren",
+            "diergeneeskundige terminologie"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving op het gebied van dierenwelzijn"
+          ]
+        }
+      }
+    },
+    "piloot": {
+      "uri": "http://data.europa.eu/esco/occupation/9a4ba556-e72b-49c2-834c-d6a03a2fc906",
+      "escoTitle": "piloot",
+      "iscedCodes": [
+        "0421",
+        "0532",
+        "1041"
+      ],
+      "searchTerm": "piloot",
+      "isced": {
+        "1041": {
+          "name": "vervoersdiensten",
+          "items": [
+            "regelgeving voor burgerluchtvaart",
+            "taken van luchtverkeersleiding",
+            "besturingssystemen van vliegtuigen",
+            "zichtvliegvoorschriften"
+          ]
+        },
+        "0532": {
+          "name": "aardwetenschappen",
+          "items": [
+            "geografische gebieden"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake luchtvervoer",
+            "veelvoorkomende veiligheidsvoorschriften in de luchtvaart"
+          ]
+        }
+      }
+    },
+    "advocaat": {
+      "uri": "http://data.europa.eu/esco/occupation/974d4eab-fbee-4c52-b16e-73bdd8c25b53",
+      "escoTitle": "advocaat",
+      "iscedCodes": [
+        "0421"
+      ],
+      "searchTerm": "advocaat",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "gerechtelijke procedures",
+            "beheer van rechtszaken"
+          ]
+        }
+      }
+    },
+    "leraar": {
+      "uri": "http://data.europa.eu/esco/occupation/03d79393-7b30-4159-945b-01963eddd302",
+      "escoTitle": "leraar basisonderwijs",
+      "iscedCodes": [
+        "0031",
+        "0111",
+        "0113"
+      ],
+      "searchTerm": "leraar basisonderwijs",
+      "isced": {
+        "0111": {
+          "name": "onderwijskunde",
+          "items": [
+            "curriculumdoelstellingen",
+            "beoordelingsprocessen"
+          ]
+        },
+        "0031": {
+          "name": "persoonlijke vaardigheden en ontwikkeling",
+          "items": [
+            "principes van teamwerk"
+          ]
+        },
+        "0113": {
+          "name": "opleiding voor leerkrachten zonder vakspecialisatie",
+          "items": [
+            "procedures in het lager onderwijs",
+            "leerproblemen"
+          ]
+        }
+      }
+    },
+    "arts": {
+      "uri": "http://data.europa.eu/esco/occupation/71f09c8b-a172-408c-b9e7-32e580e39ff6",
+      "escoTitle": "huisarts",
+      "iscedCodes": [],
+      "searchTerm": "huisarts",
+      "isced": {}
+    },
+    "architect": {
+      "uri": "http://data.europa.eu/esco/occupation/8c3f536e-ba66-4321-ba40-363dc39f129b",
+      "escoTitle": "architect",
+      "iscedCodes": [
+        "0421",
+        "0731",
+        "0732"
+      ],
+      "searchTerm": "architect",
+      "isced": {
+        "0731": {
+          "name": "architectuur en stadsplanning",
+          "items": [
+            "architectonische theorie",
+            "relatie tussen gebouwen, mensen en het milieu",
+            "architectonisch ontwerp",
+            "stedelijke planning",
+            "zone-indelingscodes"
+          ]
+        },
+        "0732": {
+          "name": "bouw en weg- en waterbouw",
+          "items": [
+            "bouwverordeningen"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "regelgeving voor architectuur"
+          ]
+        }
+      }
+    },
+    "kok": {
+      "uri": "http://data.europa.eu/esco/occupation/90f75f67-495d-49fa-ab57-2f320e251d7e",
+      "escoTitle": "kok",
+      "iscedCodes": [],
+      "searchTerm": "kok",
+      "isced": {}
+    },
+    "brandweer": {
+      "uri": "http://data.europa.eu/esco/occupation/a05d0a6d-7b60-445a-8dcb-282c7d5a6852",
+      "escoTitle": "brandmeester",
+      "iscedCodes": [
+        "0421",
+        "0913",
+        "1032"
+      ],
+      "searchTerm": "brandweer",
+      "isced": {
+        "1032": {
+          "name": "bescherming van personen en eigendom",
+          "items": [
+            "procedures inzake brandpreventie",
+            "regelgeving inzake brandveiligheid",
+            "brandbestrijdingssystemen"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "eerste hulp"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake pyrotechnische artikelen"
+          ]
+        }
+      }
+    },
+    "game-developer": {
+      "uri": "http://data.europa.eu/esco/occupation/18552245-3c36-4a52-b4c6-295cabb5c93b",
+      "escoTitle": "ontwikkelaar wed-, loterij- en kansspelen",
+      "iscedCodes": [
+        "0211",
+        "0314",
+        "0421"
+      ],
+      "searchTerm": "game developer",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "spelregels",
+            "juridische normen bij kansspelen"
+          ]
+        },
+        "0211": {
+          "name": "audiovisuele technieken en mediaproductie",
+          "items": [
+            "CryEngine",
+            "Unity (systemen voor het maken van digitale games)",
+            "systemen voor het maken van digitale games",
+            "Frostbite (systemen voor het maken van digitale games)",
+            "Unreal Engine",
+            "Source (systemen voor het maken van digitale games)",
+            "id Tech"
+          ]
+        },
+        "0314": {
+          "name": "sociologie en culturele studies",
+          "items": [
+            "logica van spelers"
+          ]
+        }
+      }
+    },
+    "astronaut": {
+      "uri": "http://data.europa.eu/esco/occupation/d4edb527-2e5d-440c-9f8c-cd5caa9cc4d6",
+      "escoTitle": "astronaut",
+      "iscedCodes": [
+        "0532",
+        "0533"
+      ],
+      "searchTerm": "astronaut",
+      "isced": {
+        "0533": {
+          "name": "fysica",
+          "items": [
+            "natuurkunde",
+            "lancering van satellieten in een baan rond de aarde",
+            "soorten satellieten"
+          ]
+        },
+        "0532": {
+          "name": "aardwetenschappen",
+          "items": [
+            "geografische informatiesystemen",
+            "prestatieparameters van het mondiaal satellietnavigatiesysteem",
+            "geostationaire satellieten"
+          ]
+        }
+      }
+    },
+    "politie": {
+      "uri": "http://data.europa.eu/esco/occupation/5793c124-c037-47b2-85b6-dd4a705968dc",
+      "escoTitle": "politieagent",
+      "iscedCodes": [
+        "0421",
+        "0913",
+        "1032"
+      ],
+      "searchTerm": "politieagent",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wettelijk gebruik van geweld",
+            "verkeerswetgeving"
+          ]
+        },
+        "1032": {
+          "name": "bescherming van personen en eigendom",
+          "items": [
+            "ordehandhaving"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "eerste hulp"
+          ]
+        }
+      }
+    },
+    "verpleegkundige": {
+      "uri": "http://data.europa.eu/esco/occupation/18e14e61-495b-44cc-a7c6-df4c625934ba",
+      "escoTitle": "gespecialiseerd verpleegkundige",
+      "iscedCodes": [
+        "0913",
+        "0923"
+      ],
+      "searchTerm": "verpleegkundige",
+      "isced": {
+        "0923": {
+          "name": "maatschappelijk werk en counseling",
+          "items": [
+            "invloed van de sociale context op de gezondheid"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "gespecialiseerde verpleging"
+          ]
+        }
+      }
+    },
+    "ondernemer": {
+      "uri": "http://data.europa.eu/esco/occupation/2afdf635-3cdb-4914-ab61-5dd7d7d46792",
+      "escoTitle": "bedrijfsleider bakkerswinkel",
+      "iscedCodes": [
+        "0416",
+        "0421",
+        "0721"
+      ],
+      "searchTerm": "ondernemer",
+      "isced": {
+        "0416": {
+          "name": "groot- en detailhandel",
+          "items": [
+            "verkoopactiviteiten"
+          ]
+        },
+        "0721": {
+          "name": "levensmiddelenverwerking",
+          "items": [
+            "bakkerijproducten",
+            "samenstelling van bakproducten"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "arbeidswet"
+          ]
+        }
+      }
+    },
+    "journalist": {
+      "uri": "http://data.europa.eu/esco/occupation/a47f82d3-4cf7-4abf-bb36-2c8cbad28234",
+      "escoTitle": "journalist",
+      "iscedCodes": [
+        "0232",
+        "0321",
+        "0421"
+      ],
+      "searchTerm": "journalist",
+      "isced": {
+        "0232": {
+          "name": "literatuur en linguïstiek",
+          "items": [
+            "spelling",
+            "grammatica",
+            "schrijftechnieken"
+          ]
+        },
+        "0321": {
+          "name": "journalistiek en verslaggeving",
+          "items": [
+            "redactionele normen",
+            "gesprekstechnieken"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake auteursrecht"
+          ]
+        }
+      }
+    },
+    "fotograaf": {
+      "uri": "http://data.europa.eu/esco/occupation/66542dd6-05a6-4d9e-97ff-3f4858c31ff9",
+      "escoTitle": "fotograaf",
+      "iscedCodes": [],
+      "searchTerm": "fotograaf",
+      "isced": {}
+    },
+    "kapper": {
+      "uri": "http://data.europa.eu/esco/occupation/099c6bb0-22d3-4c5d-8bf5-70910af381ef",
+      "escoTitle": "kapper",
+      "iscedCodes": [
+        "1012"
+      ],
+      "searchTerm": "kapper",
+      "isced": {
+        "1012": {
+          "name": "haar- en schoonheidsverzorging",
+          "items": [
+            "haar",
+            "haarkleuring",
+            "haarproducten"
+          ]
+        }
+      }
+    },
+    "programmeur": {
+      "uri": "http://data.europa.eu/esco/occupation/f2b15a0e-e65a-438a-affb-29b9d50b77d1",
+      "escoTitle": "software ontwikkelaar",
+      "iscedCodes": [
+        "0413",
+        "0612",
+        "0613",
+        "0710",
+        "0715",
+        "0732"
+      ],
+      "searchTerm": "softwareontwikkelaar",
+      "isced": {
+        "0613": {
+          "name": "ontwikkeling en analyse van software en toepassingen",
+          "items": [
+            "hulpmiddelen voor het beheer van softwareconfiguratie",
+            "ICT-foutopsporing",
+            "computerprogrammering"
+          ]
+        },
+        "0710": {
+          "name": "ingenieursopleiding, niet nader gedefinieerd",
+          "items": [
+            "technische beginselen"
+          ]
+        },
+        "0715": {
+          "name": "mechanica en metaal",
+          "items": [
+            "engineeringprocessen"
+          ]
+        },
+        "0732": {
+          "name": "bouw en weg- en waterbouw",
+          "items": [
+            "technische tekeningen"
+          ]
+        },
+        "0612": {
+          "name": "ontwerp en beheer van databanken en netwerken",
+          "items": [
+            "software voor geïntegreerde ontwikkelomgevingen"
+          ]
+        },
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "projectbeheer"
+          ]
+        }
+      }
+    },
+    "bouwkundige": {
+      "uri": "http://data.europa.eu/esco/occupation/d7d986e1-7333-431b-9719-0c5c6939e360",
+      "escoTitle": "ingenieur civiele bouwkunde",
+      "iscedCodes": [],
+      "searchTerm": "bouwkundige",
+      "isced": {}
+    },
+    "tandarts": {
+      "uri": "http://data.europa.eu/esco/occupation/e52b5707-7097-4dbc-ac61-054e917da241",
+      "escoTitle": "tandarts",
+      "iscedCodes": [
+        "0911",
+        "0912"
+      ],
+      "searchTerm": "tandarts",
+      "isced": {
+        "0911": {
+          "name": "tandheelkunde",
+          "items": [
+            "medico-biologische en medische wetenschappen in verband met tandheelkunde",
+            "cosmetische tandheelkundige procedures",
+            "anatomie van de mond",
+            "klinische disciplines in tandheelkunde",
+            "tandheelkunde"
+          ]
+        },
+        "0912": {
+          "name": "geneeskunde",
+          "items": [
+            "chirurgie",
+            "anesthesiologie"
+          ]
+        }
+      }
+    },
+    "psycholoog": {
+      "uri": "http://data.europa.eu/esco/occupation/52ded7d7-11df-42e3-b90a-d7f4b70fb4b9",
+      "escoTitle": "psycholoog",
+      "iscedCodes": [
+        "0313",
+        "0413",
+        "0913",
+        "0923"
+      ],
+      "searchTerm": "psycholoog",
+      "isced": {
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "consultatie"
+          ]
+        },
+        "0923": {
+          "name": "maatschappelijk werk en counseling",
+          "items": [
+            "begeleidingsmethodes",
+            "cliëntgerichte begeleiding"
+          ]
+        },
+        "0313": {
+          "name": "psychologie",
+          "items": [
+            "psychologische diagnostiek",
+            "gedragsstoornissen",
+            "psychologie",
+            "psychologische begeleidingsmethoden",
+            "psychologische interventies"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "ethiek specifiek voor beroepen in de gezondheidszorg"
+          ]
+        }
+      }
+    },
+    "fysiotherapeut": {
+      "uri": "http://data.europa.eu/esco/occupation/006cc1f9-2841-41c3-991a-dc3f2f3bd533",
+      "escoTitle": "fysiotherapeut",
+      "iscedCodes": [
+        "0313",
+        "0314",
+        "0413",
+        "0511",
+        "0512",
+        "0533",
+        "0912",
+        "0913",
+        "0914",
+        "0915"
+      ],
+      "searchTerm": "fysiotherapeut",
+      "isced": {
+        "0915": {
+          "name": "therapie en revalidatie",
+          "items": [
+            "ademhalingstherapie",
+            "therapeutische massage",
+            "orthopedische manuele fysiotherapie",
+            "kinetiek",
+            "revalidatie"
+          ]
+        },
+        "0533": {
+          "name": "fysica",
+          "items": [
+            "natuurkunde"
+          ]
+        },
+        "0912": {
+          "name": "geneeskunde",
+          "items": [
+            "kindergeneeskunde",
+            "spoedoperatie",
+            "menselijke fysiologie",
+            "klinische geriatrie",
+            "anatomie van de mens",
+            "chirurgie",
+            "psychiatrie",
+            "interne geneeskunde",
+            "medische terminologie",
+            "intensieve zorg",
+            "obstetrie en gynaecologie",
+            "neurologie",
+            "orthopedie"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "EHBO"
+          ]
+        },
+        "0313": {
+          "name": "psychologie",
+          "items": [
+            "psychologie"
+          ]
+        },
+        "0511": {
+          "name": "biologie",
+          "items": [
+            "biomechanica"
+          ]
+        },
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "leiding geven aan medisch personeel"
+          ]
+        },
+        "0512": {
+          "name": "biochemie",
+          "items": [
+            "farmacologie"
+          ]
+        },
+        "0914": {
+          "name": "medische diagnose en behandelingstechnologie",
+          "items": [
+            "medische informatica"
+          ]
+        },
+        "0314": {
+          "name": "sociologie en culturele studies",
+          "items": [
+            "sociologie"
+          ]
+        }
+      }
+    },
+    "verloskundige": {
+      "uri": "http://data.europa.eu/esco/occupation/95cda6a9-a70a-4a93-9442-11d573cb4a02",
+      "escoTitle": "verloskundige",
+      "iscedCodes": [
+        "0111",
+        "0114",
+        "0313",
+        "0421",
+        "0511",
+        "0512",
+        "0912",
+        "0913",
+        "0914",
+        "0915",
+        "0916",
+        "1022"
+      ],
+      "searchTerm": "verloskundige",
+      "isced": {
+        "0114": {
+          "name": "opleiding voor leerkrachten met vakspecialisatie",
+          "items": [
+            "gezondheidsvoorlichting"
+          ]
+        },
+        "0915": {
+          "name": "therapie en revalidatie",
+          "items": [
+            "diëtetiek"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "voorbereiding op het ouderschap",
+            "bevalling",
+            "voorbereiding op de bevalling",
+            "reanimatie",
+            "ethiek specifiek voor beroepen in de gezondheidszorg",
+            "zwangerschap",
+            "kraamtijd",
+            "lactatie"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake gezondheidszorg",
+            "wettelijke bescherming na de bevalling"
+          ]
+        },
+        "0914": {
+          "name": "medische diagnose en behandelingstechnologie",
+          "items": [
+            "verloskundige echografie",
+            "radiologische procedures"
+          ]
+        },
+        "1022": {
+          "name": "gezondheid en veiligheid op het werk",
+          "items": [
+            "hygiëne in de gezondheidszorg",
+            "ontspanningstechnieken"
+          ]
+        },
+        "0912": {
+          "name": "geneeskunde",
+          "items": [
+            "anatomie van de mens",
+            "pathologie van het vrouwelijke voortplantingssysteem",
+            "neonatologie",
+            "pathologie",
+            "epidemiologie",
+            "anesthesiologie"
+          ]
+        },
+        "0511": {
+          "name": "biologie",
+          "items": [
+            "medische microbiologie",
+            "embryologie"
+          ]
+        },
+        "0916": {
+          "name": "farmacie",
+          "items": [
+            "pijnstillende middelen"
+          ]
+        },
+        "0111": {
+          "name": "onderwijskunde",
+          "items": [
+            "seksuele voorlichting"
+          ]
+        },
+        "0313": {
+          "name": "psychologie",
+          "items": [
+            "psychologie"
+          ]
+        },
+        "0512": {
+          "name": "biochemie",
+          "items": [
+            "farmacologie"
+          ]
+        }
+      }
+    },
+    "apotheker": {
+      "uri": "http://data.europa.eu/esco/occupation/aa9c6416-6a17-4e2f-a7c4-6d47c205d480",
+      "escoTitle": "verkoopspecialist zorgartikelen en -hulpmiddelen",
+      "iscedCodes": [
+        "0416",
+        "0611",
+        "0722"
+      ],
+      "searchTerm": "apotheker",
+      "isced": {
+        "0416": {
+          "name": "groot- en detailhandel",
+          "items": [
+            "kenmerken van diensten",
+            "verkoopargumenten",
+            "productkennis"
+          ]
+        },
+        "0611": {
+          "name": "computergebruik",
+          "items": [
+            "elektronische handelssystemen"
+          ]
+        },
+        "0722": {
+          "name": "materialen (glas, papier, plastic en hout)",
+          "items": [
+            "eigenschappen van producten"
+          ]
+        }
+      }
+    },
+    "rechter": {
+      "uri": "http://data.europa.eu/esco/occupation/07bd65d7-c13f-443a-bdf6-88903f3822be",
+      "escoTitle": "rechter",
+      "iscedCodes": [
+        "0421"
+      ],
+      "searchTerm": "rechter",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "burgerlijk recht",
+            "juridische terminologie",
+            "burgerlijk procesrecht",
+            "gerechtelijke procedures"
+          ]
+        }
+      }
+    },
+    "notaris": {
+      "uri": "http://data.europa.eu/esco/occupation/d21890a3-cbe9-49df-9a19-a4120d866548",
+      "escoTitle": "notaris",
+      "iscedCodes": [
+        "0421"
+      ],
+      "searchTerm": "notaris",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "contractenrecht",
+            "eigendomsrecht",
+            "burgerlijk recht",
+            "publiekrecht",
+            "constitutioneel recht"
+          ]
+        }
+      }
+    },
+    "ingenieur": {
+      "uri": "http://data.europa.eu/esco/occupation/d7d986e1-7333-431b-9719-0c5c6939e360",
+      "escoTitle": "ingenieur civiele bouwkunde",
+      "iscedCodes": [],
+      "searchTerm": "ingenieur civiele bouwkunde",
+      "isced": {}
+    },
+    "elektricien": {
+      "uri": "http://data.europa.eu/esco/occupation/4910419f-b4af-4f59-b544-9dbebc8a74f0",
+      "escoTitle": "monteur elektrische installaties",
+      "iscedCodes": [
+        "0713",
+        "0714"
+      ],
+      "searchTerm": "monteur elektrische installaties",
+      "isced": {
+        "0713": {
+          "name": "elektriciteit en energie",
+          "items": [
+            "elektriciteit",
+            "elektrische aansluitschema’s",
+            "elektrische testmethoden"
+          ]
+        },
+        "0714": {
+          "name": "elektronica en automatisering",
+          "items": [
+            "controletechnologie voor gebouwinstallaties"
+          ]
+        }
+      }
+    },
+    "automonteur": {
+      "uri": "http://data.europa.eu/esco/occupation/444c9aa9-578d-4a9a-9949-99ef1bacb20e",
+      "escoTitle": "technisch ingenieur motorvoertuigen",
+      "iscedCodes": [
+        "0211",
+        "0533",
+        "0541",
+        "0613",
+        "0710",
+        "0715",
+        "0716"
+      ],
+      "searchTerm": "automonteur",
+      "isced": {
+        "0211": {
+          "name": "audiovisuele technieken en mediaproductie",
+          "items": [
+            "multimediasystemen"
+          ]
+        },
+        "0715": {
+          "name": "mechanica en metaal",
+          "items": [
+            "engineeringprocessen",
+            "mechanica",
+            "materiaalmechanica"
+          ]
+        },
+        "0541": {
+          "name": "wiskunde",
+          "items": [
+            "wiskunde"
+          ]
+        },
+        "0710": {
+          "name": "ingenieursopleiding, niet nader gedefinieerd",
+          "items": [
+            "technische beginselen"
+          ]
+        },
+        "0716": {
+          "name": "motorvoertuigen, schepen en vliegtuigen",
+          "items": [
+            "mechanica van motorvoertuigen",
+            "productieproces voor voertuigen"
+          ]
+        },
+        "0533": {
+          "name": "fysica",
+          "items": [
+            "natuurkunde"
+          ]
+        },
+        "0613": {
+          "name": "ontwikkeling en analyse van software en toepassingen",
+          "items": [
+            "ICT-softwarespecificaties",
+            "CAE-software"
+          ]
+        }
+      }
+    },
+    "timmerman": {
+      "uri": "http://data.europa.eu/esco/occupation/2a22ff9e-de3b-408d-b312-5034896cc4f4",
+      "escoTitle": "timmerman",
+      "iscedCodes": [
+        "0722"
+      ],
+      "searchTerm": "timmerman",
+      "isced": {
+        "0722": {
+          "name": "materialen (glas, papier, plastic en hout)",
+          "items": [
+            "houtsnijden",
+            "houtbewerkingsgereedschappen"
+          ]
+        }
+      }
+    },
+    "hovenier": {
+      "uri": "http://data.europa.eu/esco/occupation/e7970c7a-7769-4002-87d3-0a8ea94fdd6f",
+      "escoTitle": "hovenier",
+      "iscedCodes": [
+        "0212",
+        "0421",
+        "0511",
+        "0521",
+        "0732",
+        "0811",
+        "0812"
+      ],
+      "searchTerm": "hovenier",
+      "isced": {
+        "0812": {
+          "name": "tuinbouw",
+          "items": [
+            "tuinbouwbeginselen",
+            "materialen voor tuininrichting",
+            "snoeiwijzen",
+            "snoeitechnieken"
+          ]
+        },
+        "0511": {
+          "name": "biologie",
+          "items": [
+            "plantensoorten"
+          ]
+        },
+        "0521": {
+          "name": "milieuwetenschappen",
+          "items": [
+            "ecologie"
+          ]
+        },
+        "0811": {
+          "name": "landbouw en veeteelt",
+          "items": [
+            "ongediertebestrijding bij planten",
+            "bestrijding van plantenziekten"
+          ]
+        },
+        "0732": {
+          "name": "bouw en weg- en waterbouw",
+          "items": [
+            "beginselen van tuinaanleg"
+          ]
+        },
+        "0212": {
+          "name": "mode-, interieur- en industrieel ontwerp",
+          "items": [
+            "ontwerpbeginselen"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "milieuwetgeving inzake landbouw en bosbouw"
+          ]
+        }
+      }
+    },
+    "bioloog": {
+      "uri": "http://data.europa.eu/esco/occupation/eee68e13-8248-43bb-a9fb-959832a6c217",
+      "escoTitle": "bioloog",
+      "iscedCodes": [
+        "0111",
+        "0511",
+        "0912"
+      ],
+      "searchTerm": "bioloog",
+      "isced": {
+        "0511": {
+          "name": "biologie",
+          "items": [
+            "medische microbiologie",
+            "laboratoriumtechnieken",
+            "moleculaire biologie",
+            "biologie",
+            "plantkunde"
+          ]
+        },
+        "0912": {
+          "name": "geneeskunde",
+          "items": [
+            "virologie"
+          ]
+        },
+        "0111": {
+          "name": "onderwijskunde",
+          "items": [
+            "wetenschappelijke onderzoeksmethodologie"
+          ]
+        }
+      }
+    },
+    "wetenschapper": {
+      "uri": "http://data.europa.eu/esco/occupation/b7b17a85-ccd0-4d2f-92f2-7e99839731b0",
+      "escoTitle": "gespecialiseerd biomedisch wetenschapper",
+      "iscedCodes": [
+        "0111",
+        "0512",
+        "0541",
+        "0913"
+      ],
+      "searchTerm": "wetenschapper",
+      "isced": {
+        "0512": {
+          "name": "biochemie",
+          "items": [
+            "biomedische wetenschappen",
+            "bioveiligheid in biomedische laboratoria",
+            "biomedische technieken"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "ethiek specifiek voor beroepen in de gezondheidszorg",
+            "rol van biomedische wetenschappers in de gezondheidszorg"
+          ]
+        },
+        "0111": {
+          "name": "onderwijskunde",
+          "items": [
+            "pedagogie"
+          ]
+        },
+        "0541": {
+          "name": "wiskunde",
+          "items": [
+            "analytische methoden in biomedische wetenschappen"
+          ]
+        }
+      }
+    },
+    "grafisch-ontwerper": {
+      "uri": "http://data.europa.eu/esco/occupation/69bcbb0a-8d80-4ecd-b0a4-9adea2a40de2",
+      "escoTitle": "grafisch ontwerper",
+      "iscedCodes": [
+        "0211",
+        "0421",
+        "0611"
+      ],
+      "searchTerm": "grafisch ontwerper",
+      "isced": {
+        "0611": {
+          "name": "computergebruik",
+          "items": [
+            "desktoppublishing"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake auteursrecht"
+          ]
+        },
+        "0211": {
+          "name": "audiovisuele technieken en mediaproductie",
+          "items": [
+            "grafisch ontwerp"
+          ]
+        }
+      }
+    },
+    "muzikant": {
+      "uri": "http://data.europa.eu/esco/occupation/f6803a58-91d9-4251-9a07-09fc387cec16",
+      "escoTitle": "muzikant",
+      "iscedCodes": [
+        "0421"
+      ],
+      "searchTerm": "muzikant",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "juridische omgeving in muziek"
+          ]
+        }
+      }
+    },
+    "acteur": {
+      "uri": "http://data.europa.eu/esco/occupation/26171f39-e85a-448f-bd28-a73a5a99927f",
+      "escoTitle": "acteur/actrice",
+      "iscedCodes": [
+        "0915"
+      ],
+      "searchTerm": "acteur",
+      "isced": {
+        "0915": {
+          "name": "therapie en revalidatie",
+          "items": [
+            "in contact staan met het eigen lichaam"
+          ]
+        }
+      }
+    },
+    "profsporter": {
+      "uri": "http://data.europa.eu/esco/occupation/082c234c-0dda-490a-b5af-757c3e48da90",
+      "escoTitle": "beroepssporter",
+      "iscedCodes": [],
+      "searchTerm": "professioneel sporter",
+      "isced": {}
+    },
+    "personal-trainer": {
+      "uri": "http://data.europa.eu/esco/occupation/f7177f79-63e7-4944-8896-044056b62523",
+      "escoTitle": "personal trainer",
+      "iscedCodes": [],
+      "searchTerm": "personal trainer",
+      "isced": {}
+    },
+    "contentmaker": {
+      "uri": "http://data.europa.eu/esco/occupation/a74f6c51-37e5-423e-aa5b-044e98663027",
+      "escoTitle": "web content manager",
+      "iscedCodes": [
+        "0211",
+        "0421",
+        "0611",
+        "0612",
+        "0613"
+      ],
+      "searchTerm": "content creator",
+      "isced": {
+        "0611": {
+          "name": "computergebruik",
+          "items": [
+            "sleutelwoorden in digitale inhoud",
+            "schrijf- en presentatiehulpsoftware"
+          ]
+        },
+        "0612": {
+          "name": "ontwerp en beheer van databanken en netwerken",
+          "items": [
+            "informatiestructuur",
+            "stijlbladtalen"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wettelijke vereisten voor ict-producten"
+          ]
+        },
+        "0211": {
+          "name": "audiovisuele technieken en mediaproductie",
+          "items": [
+            "ontwikkelingsprocessen voor inhoud",
+            "publicatiestrategie"
+          ]
+        },
+        "0613": {
+          "name": "ontwikkeling en analyse van software en toepassingen",
+          "items": [
+            "webprogrammering"
+          ]
+        }
+      }
+    },
+    "marketeer": {
+      "uri": "http://data.europa.eu/esco/occupation/47e81c7f-2d04-4a60-a8ff-9913c36d8344",
+      "escoTitle": "marketingmedewerker",
+      "iscedCodes": [
+        "0413",
+        "0414"
+      ],
+      "searchTerm": "marketing medewerker",
+      "isced": {
+        "0414": {
+          "name": "marketing en reclame",
+          "items": [
+            "marketingmanagement",
+            "marktonderzoek",
+            "processen van de marketingafdeling"
+          ]
+        },
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "beheer van klantrelaties"
+          ]
+        }
+      }
+    },
+    "accountant": {
+      "uri": "http://data.europa.eu/esco/occupation/eda0d957-3c3c-4139-b89a-a18bc9e18897",
+      "escoTitle": "accountant",
+      "iscedCodes": [
+        "0411",
+        "0412",
+        "0421",
+        "0542",
+        "1032"
+      ],
+      "searchTerm": "accountant",
+      "isced": {
+        "0542": {
+          "name": "statistiek",
+          "items": [
+            "statistiek"
+          ]
+        },
+        "0411": {
+          "name": "boekhouding en belastingen",
+          "items": [
+            "boekhoudkundige technieken",
+            "processen van de boekhoudafdeling",
+            "boekingen",
+            "afschrijving",
+            "boekhoudregelgeving"
+          ]
+        },
+        "0412": {
+          "name": "financiën, banken en verzekeringen",
+          "items": [
+            "processen van de financiële afdeling",
+            "financiële jaarrekeningen"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "belastingwetgeving",
+            "commercieel recht"
+          ]
+        },
+        "1032": {
+          "name": "bescherming van personen en eigendom",
+          "items": [
+            "fraudedetectie"
+          ]
+        }
+      }
+    },
+    "makelaar": {
+      "uri": "http://data.europa.eu/esco/occupation/2af80b12-a73a-4cc2-8af1-d26a1e60738d",
+      "escoTitle": "makelaar",
+      "iscedCodes": [
+        "0311",
+        "0412",
+        "0416",
+        "0421"
+      ],
+      "searchTerm": "makelaar",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "commercieel recht"
+          ]
+        },
+        "0412": {
+          "name": "financiën, banken en verzekeringen",
+          "items": [
+            "financiële markten"
+          ]
+        },
+        "0416": {
+          "name": "groot- en detailhandel",
+          "items": [
+            "internationale handel"
+          ]
+        },
+        "0311": {
+          "name": "economie",
+          "items": [
+            "economie"
+          ]
+        }
+      }
+    },
+    "cabinepersoneel": {
+      "uri": "http://data.europa.eu/esco/occupation/f20d3ae6-baeb-482c-b68d-c2fb115e5dde",
+      "escoTitle": "cabinemedewerker",
+      "iscedCodes": [
+        "0421",
+        "0716"
+      ],
+      "searchTerm": "cabinepersoneel",
+      "isced": {
+        "0716": {
+          "name": "motorvoertuigen, schepen en vliegtuigen",
+          "items": [
+            "planning voor luchthavens"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake luchtvervoer",
+            "veelvoorkomende veiligheidsvoorschriften in de luchtvaart"
+          ]
+        }
+      }
+    },
+    "militair": {
+      "uri": "http://data.europa.eu/esco/occupation/555235ce-8c45-409b-a6c9-83e69c2d2bce",
+      "escoTitle": "ingenieur defensie",
+      "iscedCodes": [
+        "0416",
+        "0710",
+        "0715",
+        "1031"
+      ],
+      "searchTerm": "militair",
+      "isced": {
+        "0416": {
+          "name": "groot- en detailhandel",
+          "items": [
+            "kwaliteitsstandaarden"
+          ]
+        },
+        "0715": {
+          "name": "mechanica en metaal",
+          "items": [
+            "mechanische werktuigen",
+            "engineeringprocessen"
+          ]
+        },
+        "1031": {
+          "name": "leger en defensie",
+          "items": [
+            "militaire wapens"
+          ]
+        },
+        "0710": {
+          "name": "ingenieursopleiding, niet nader gedefinieerd",
+          "items": [
+            "technische beginselen"
+          ]
+        }
+      }
+    },
+    "pedagogisch-medewerker": {
+      "uri": "http://data.europa.eu/esco/occupation/3f74aad8-2d60-4be2-b059-8dba5568d530",
+      "escoTitle": "medewerker kinderdagverblijf",
+      "iscedCodes": [
+        "0312",
+        "0313",
+        "0314",
+        "0417",
+        "0421",
+        "0922",
+        "1032"
+      ],
+      "searchTerm": "pedagogisch medewerker",
+      "isced": {
+        "1032": {
+          "name": "bescherming van personen en eigendom",
+          "items": [
+            "kinderbescherming"
+          ]
+        },
+        "0314": {
+          "name": "sociologie en culturele studies",
+          "items": [
+            "sociale wetenschappen"
+          ]
+        },
+        "0312": {
+          "name": "politieke wetenschappen en maatschappijleer",
+          "items": [
+            "sociale rechtvaardigheid"
+          ]
+        },
+        "0313": {
+          "name": "psychologie",
+          "items": [
+            "psychologische ontwikkeling van jongeren"
+          ]
+        },
+        "0417": {
+          "name": "beroepsvaardigheden",
+          "items": [
+            "klantendiensten",
+            "ondernemingsbeleid"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wettelijke vereisten in de sociale sector"
+          ]
+        },
+        "0922": {
+          "name": "kinderverzorging en jeugdzorg",
+          "items": [
+            "lichamelijke ontwikkeling van kinderen"
+          ]
+        }
+      }
+    },
+    "dierenverzorger": {
+      "uri": "http://data.europa.eu/esco/occupation/1ee1b792-4d5f-4555-be4e-ce7e4c05d1a9",
+      "escoTitle": "dierenverzorger",
+      "iscedCodes": [
+        "0421",
+        "0511",
+        "0841",
+        "1022"
+      ],
+      "searchTerm": "dierenverzorger",
+      "isced": {
+        "0841": {
+          "name": "diergeneeskunde",
+          "items": [
+            "omgevingsverrijking voor dieren",
+            "tekenen van ziekte bij dieren",
+            "gedrag van dieren",
+            "fysiologie van dieren",
+            "dierenwelzijn",
+            "bioveiligheid met betrekking tot dieren"
+          ]
+        },
+        "0511": {
+          "name": "biologie",
+          "items": [
+            "anatomie van dieren"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving op het gebied van dierenwelzijn"
+          ]
+        },
+        "1022": {
+          "name": "gezondheid en veiligheid op het werk",
+          "items": [
+            "veilige werkmethoden in veterinaire omgeving"
+          ]
+        }
+      }
+    },
+    "evenementenorganisator": {
+      "uri": "http://data.europa.eu/esco/occupation/21ae429f-a152-46a6-a73c-9ec65c7803f0",
+      "escoTitle": "evenementenorganisator",
+      "iscedCodes": [
+        "0215"
+      ],
+      "searchTerm": "evenementenorganisator",
+      "isced": {
+        "0215": {
+          "name": "muziek en uitvoerende kunsten",
+          "items": [
+            "muziekgenres"
+          ]
+        }
+      }
+    },
+    "data-scientist": {
+      "uri": "http://data.europa.eu/esco/occupation/d3edb8f8-3a06-47a0-8fb9-9b212c006aa2",
+      "escoTitle": "data-analist",
+      "iscedCodes": [
+        "0211",
+        "0322",
+        "0413",
+        "0417",
+        "0542",
+        "0612",
+        "0613"
+      ],
+      "searchTerm": "data-analist",
+      "isced": {
+        "0322": {
+          "name": "bibliotheekwetenschappen, informatiewetenschappen en archivistiek",
+          "items": [
+            "documentatietypen",
+            "informatie-indeling"
+          ]
+        },
+        "0211": {
+          "name": "audiovisuele technieken en mediaproductie",
+          "items": [
+            "technieken voor visuele presentatie"
+          ]
+        },
+        "0612": {
+          "name": "ontwerp en beheer van databanken en netwerken",
+          "items": [
+            "vertrouwelijkheid van informatie",
+            "ongestructureerde gegevens",
+            "datamining",
+            "gegevensextractie",
+            "gegevensmodellen",
+            "informatiestructuur"
+          ]
+        },
+        "0613": {
+          "name": "ontwikkeling en analyse van software en toepassingen",
+          "items": [
+            "querytalen",
+            "querytaal voor resource description framework"
+          ]
+        },
+        "0542": {
+          "name": "statistiek",
+          "items": [
+            "statistiek"
+          ]
+        },
+        "0417": {
+          "name": "beroepsvaardigheden",
+          "items": [
+            "beoordeling van kwaliteit van gegevens"
+          ]
+        },
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "business intelligence"
+          ]
+        }
+      }
+    },
+    "bakker": {
+      "uri": "http://data.europa.eu/esco/occupation/1aadb308-432a-4d01-b54b-b4f7f76dd419",
+      "escoTitle": "bakker",
+      "iscedCodes": [
+        "0214",
+        "0412",
+        "0721",
+        "1022"
+      ],
+      "searchTerm": "bakker",
+      "isced": {
+        "1022": {
+          "name": "gezondheid en veiligheid op het werk",
+          "items": [
+            "beginselen van voedselveiligheid"
+          ]
+        },
+        "0721": {
+          "name": "levensmiddelenverwerking",
+          "items": [
+            "productiemethoden bakkerij",
+            "voedsel- en drankenindustrie",
+            "bakkerij-ingrediënten"
+          ]
+        },
+        "0412": {
+          "name": "financiën, banken en verzekeringen",
+          "items": [
+            "financiële draagkracht"
+          ]
+        },
+        "0214": {
+          "name": "handvaardigheid",
+          "items": [
+            "handvaardigheid"
+          ]
+        }
+      }
+    },
+    "logistiek-medewerker": {
+      "uri": "http://data.europa.eu/esco/occupation/c8b296be-54ae-48cf-be21-031fa8457937",
+      "escoTitle": "logistiek medewerker",
+      "iscedCodes": [
+        "0413",
+        "0611"
+      ],
+      "searchTerm": "logistiek medewerker",
+      "isced": {
+        "0611": {
+          "name": "computergebruik",
+          "items": [
+            "kantoorsoftware"
+          ]
+        },
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "beginselen van de leveringsketen"
+          ]
+        }
+      }
+    },
+    "verkoper": {
+      "uri": "http://data.europa.eu/esco/occupation/6a163fef-dee8-4583-82b0-13b76d8a27b2",
+      "escoTitle": "verkoopspecialist motorvoertuigen",
+      "iscedCodes": [
+        "0416",
+        "0421",
+        "0611",
+        "0716",
+        "0722",
+        "1041"
+      ],
+      "searchTerm": "verkoper",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wettelijke vereisten om te opereren in de autohandel"
+          ]
+        },
+        "0611": {
+          "name": "computergebruik",
+          "items": [
+            "elektronische handelssystemen"
+          ]
+        },
+        "0716": {
+          "name": "motorvoertuigen, schepen en vliegtuigen",
+          "items": [
+            "soorten voertuigen",
+            "nieuwe voertuigen op de markt"
+          ]
+        },
+        "1041": {
+          "name": "vervoersdiensten",
+          "items": [
+            "autobediening"
+          ]
+        },
+        "0416": {
+          "name": "groot- en detailhandel",
+          "items": [
+            "productkennis",
+            "kenmerken van diensten",
+            "verkoopargumenten"
+          ]
+        },
+        "0722": {
+          "name": "materialen (glas, papier, plastic en hout)",
+          "items": [
+            "eigenschappen van producten"
+          ]
+        }
+      }
+    },
+    "beveiliger": {
+      "uri": "http://data.europa.eu/esco/occupation/31808988-fc0a-4bc3-9e47-27216d6759f5",
+      "escoTitle": "beveiliger",
+      "iscedCodes": [
+        "1032"
+      ],
+      "searchTerm": "beveiliger",
+      "isced": {
+        "1032": {
+          "name": "bescherming van personen en eigendom",
+          "items": [
+            "veiligheidsrisico’s"
+          ]
+        }
+      }
+    },
+    "installateur": {
+      "uri": "http://data.europa.eu/esco/occupation/75b63949-1b93-4bf2-a777-ccf978dc3e8a",
+      "escoTitle": "monteur zonnepanelen",
+      "iscedCodes": [
+        "0713",
+        "0715"
+      ],
+      "searchTerm": "installateur zonne-energie",
+      "isced": {
+        "0713": {
+          "name": "elektriciteit en energie",
+          "items": [
+            "elektriciteit",
+            "zonne-energie",
+            "elektrische aansluitschema’s"
+          ]
+        },
+        "0715": {
+          "name": "mechanica en metaal",
+          "items": [
+            "mechanica"
+          ]
+        }
+      }
+    },
+    "verzorgende-ig": {
+      "uri": "http://data.europa.eu/esco/occupation/d38c2107-98f2-47b7-8bb4-f69750d51082",
+      "escoTitle": "zorghulp",
+      "iscedCodes": [],
+      "searchTerm": "verzorgende",
+      "isced": {}
+    },
+    "schilder": {
+      "uri": "http://data.europa.eu/esco/occupation/374d925a-107b-4c99-bc8b-75483441f062",
+      "escoTitle": "kunstschilder",
+      "iscedCodes": [
+        "0213",
+        "0421"
+      ],
+      "searchTerm": "schilder",
+      "isced": {
+        "0421": {
+          "name": "recht",
+          "items": [
+            "arbeidswetgeving",
+            "intellectueeleigendomsrecht"
+          ]
+        },
+        "0213": {
+          "name": "schone kunsten",
+          "items": [
+            "kunstgeschiedenis"
+          ]
+        }
+      }
+    },
+    "loodgieter": {
+      "uri": "http://data.europa.eu/esco/occupation/ed3cf43d-c2c1-4c46-82fc-1375e27e0290",
+      "escoTitle": "loodgieter",
+      "iscedCodes": [
+        "0722",
+        "0732"
+      ],
+      "searchTerm": "loodgieter",
+      "isced": {
+        "0722": {
+          "name": "materialen (glas, papier, plastic en hout)",
+          "items": [
+            "soorten leidingen"
+          ]
+        },
+        "0732": {
+          "name": "bouw en weg- en waterbouw",
+          "items": [
+            "gereedschap voor loodgieterij"
+          ]
+        }
+      }
+    },
+    "doktersassistent": {
+      "uri": "http://data.europa.eu/esco/occupation/0c041d1e-1841-4acb-b0a1-2c387a61bf65",
+      "escoTitle": "doktersassistent",
+      "iscedCodes": [
+        "0415",
+        "0421",
+        "0912",
+        "0913",
+        "0914",
+        "1022"
+      ],
+      "searchTerm": "doktersassistent",
+      "isced": {
+        "0415": {
+          "name": "secretariaats- en kantoorwerk",
+          "items": [
+            "beheer van gezondheidsgegevens",
+            "administratieve taken in een medische omgeving"
+          ]
+        },
+        "0421": {
+          "name": "recht",
+          "items": [
+            "wetgeving inzake gezondheidszorg"
+          ]
+        },
+        "1022": {
+          "name": "gezondheid en veiligheid op het werk",
+          "items": [
+            "gezondheidszorg"
+          ]
+        },
+        "0913": {
+          "name": "verpleegkunde en verloskunde",
+          "items": [
+            "multiprofessionele samenwerking in de gezondheidszorg",
+            "technieken voor bloedafnames",
+            "professionele documentatie in de gezondheidszorg"
+          ]
+        },
+        "0914": {
+          "name": "medische diagnose en behandelingstechnologie",
+          "items": [
+            "medische informatica"
+          ]
+        },
+        "0912": {
+          "name": "geneeskunde",
+          "items": [
+            "chirurgische asepsis",
+            "anesthesiologie",
+            "medische terminologie"
+          ]
+        }
+      }
+    },
+    "ict-medewerker": {
+      "uri": "http://data.europa.eu/esco/occupation/9e2e6e1e-363b-4e1b-a673-7bc0f7343300",
+      "escoTitle": "ict systeembeheerder",
+      "iscedCodes": [
+        "0413",
+        "0417",
+        "0613",
+        "0714"
+      ],
+      "searchTerm": "ict systeembeheerder",
+      "isced": {
+        "0613": {
+          "name": "ontwikkeling en analyse van software en toepassingen",
+          "items": [
+            "ICT-systeemprogrammering",
+            "gebruikersvereisten voor ict-systemen",
+            "hardwarecomponenten",
+            "softwareonderdeelbibliotheken"
+          ]
+        },
+        "0714": {
+          "name": "elektronica en automatisering",
+          "items": [
+            "ICT-infrastructuur"
+          ]
+        },
+        "0413": {
+          "name": "management en bestuur",
+          "items": [
+            "organisatorisch beleid"
+          ]
+        },
+        "0417": {
+          "name": "beroepsvaardigheden",
+          "items": [
+            "methoden voor kwaliteitsgarantie"
+          ]
+        }
+      }
+    },
+    "horecamedewerker": {
+      "uri": "http://data.europa.eu/esco/occupation/bf7d8b16-4e2c-48ef-b44e-dc25b2d0ab61",
+      "escoTitle": "barista",
+      "iscedCodes": [],
+      "searchTerm": "horeca medewerker",
+      "isced": {}
+    }
+  },
+  "unmatched": []
+}

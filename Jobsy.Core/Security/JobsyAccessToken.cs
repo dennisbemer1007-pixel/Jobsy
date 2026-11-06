@@ -25,7 +25,9 @@ public static class JobsyAccessToken
         string? issuer = null,
         string? audience = null,
         TimeSpan? lifetime = null,
-        string? clientIp = null)
+        string? clientIp = null,
+        bool mfaVerified = false,
+        string? authMethod = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(privateKeyPem);
         var ecdsa = ECDsa.Create();
@@ -46,6 +48,16 @@ public static class JobsyAccessToken
             if (!string.IsNullOrWhiteSpace(clientIp))
             {
                 claims.Add(new Claim(ClientIpClaim, clientIp.Trim()));
+            }
+
+            if (mfaVerified)
+            {
+                claims.Add(new Claim(Jobsy.Core.Authorization.JobsyClaimTypes.MfaVerified, "1"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(authMethod))
+            {
+                claims.Add(new Claim("auth_method", authMethod.Trim()));
             }
 
             var now = DateTime.UtcNow;
@@ -106,43 +118,6 @@ public static class JobsyAccessToken
             NameClaimType = JwtRegisteredClaimNames.Sub,
             RoleClaimType = ClaimTypes.Role
         };
-    }
-
-    public static bool TryReadClaims(
-        string? token,
-        TokenValidationParameters parameters,
-        out Guid userId,
-        out int sessionVersion,
-        out string? clientIp)
-    {
-        userId = default;
-        sessionVersion = 0;
-        clientIp = null;
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return false;
-        }
-
-        try
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var principal = handler.ValidateToken(token, parameters, out _);
-            var sub = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                      ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var sv = principal.FindFirst(SessionVersionClaim)?.Value;
-            if (!Guid.TryParse(sub, out userId)
-                || !int.TryParse(sv, NumberStyles.Integer, CultureInfo.InvariantCulture, out sessionVersion))
-            {
-                return false;
-            }
-
-            clientIp = principal.FindFirst(ClientIpClaim)?.Value;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     /// <summary>Generates a Development/test ES256 key pair (PEM).</summary>

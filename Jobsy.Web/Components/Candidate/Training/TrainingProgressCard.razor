@@ -1,0 +1,85 @@
+@namespace Jobsy.Web.Components.Candidate.Training
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Summary is null)
+{
+    return;
+}
+
+<section class="opl-progress-card" aria-labelledby="@_titleId">
+    <h3 id="@_titleId">@Culture["Training.Progress.Title"]</h3>
+    <div class="opl-progress-card__counts">
+        <div>
+            <b>@Summary.InProgress</b>
+            <small>@Culture["Training.Progress.InProgress"]</small>
+        </div>
+        <div>
+            <b>@Summary.Completed</b>
+            <small>@Culture["Training.Progress.Completed"]</small>
+        </div>
+        <div>
+            <b>@Summary.Saved</b>
+            <small>@Culture["Training.Progress.Saved"]</small>
+        </div>
+    </div>
+
+    @foreach (var item in _activeItems)
+    {
+        <div class="opl-progress-item">
+            <span class="opl-progress-item__icon @(item.Status is TrainingEnrollmentStatus.Completed or TrainingEnrollmentStatus.Verified ? "opl-progress-item__icon--ok" : "opl-progress-item__icon--go")"
+                  aria-hidden="true">
+                @(item.Status is TrainingEnrollmentStatus.Completed or TrainingEnrollmentStatus.Verified ? "✓" : "▶")
+            </span>
+            <div>
+                <b>@item.Title</b>
+                @if (item.Status == TrainingEnrollmentStatus.InProgress && item.ProgressTotal > 0)
+                {
+                    <small>@Culture.Format("Training.Progress.WeekOf", item.ProgressCurrent, item.ProgressTotal)</small>
+                    <div class="opl-weeks" aria-hidden="true">
+                        @for (var w = 1; w <= item.ProgressTotal; w++)
+                        {
+                            <i class="@(w <= item.ProgressCurrent ? "is-on" : null)"></i>
+                        }
+                    </div>
+                }
+                else if (item.Status is TrainingEnrollmentStatus.Completed or TrainingEnrollmentStatus.Verified)
+                {
+                    <small class="is-done">@Culture["Training.Progress.CompletedProof"]</small>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Summary.Saved > 0 && _savedItems.Count > 0)
+    {
+        <h4 class="career-card__block-title">@Culture["Training.Progress.SavedSection"]</h4>
+        @foreach (var item in _savedItems)
+        {
+            <div class="opl-progress-item">
+                <span class="opl-progress-item__icon opl-progress-item__icon--go" aria-hidden="true">☆</span>
+                <div>
+                    <b>@item.Title</b>
+                    <small>@Culture["Training.Saved"]</small>
+                </div>
+            </div>
+        }
+    }
+</section>
+
+@code {
+    [Parameter] public TrainingProgressSummaryModel? Summary { get; set; }
+
+    private readonly string _titleId = "opl-progress-" + Guid.NewGuid().ToString("N")[..8];
+
+    private List<TrainingProgressItemModel> _activeItems = [];
+    private List<TrainingProgressItemModel> _savedItems = [];
+
+    protected override void OnParametersSet()
+    {
+        _activeItems = Summary?.Items.Where(i => i.Status != TrainingEnrollmentStatus.Saved).Take(4).ToList() ?? [];
+        _savedItems = Summary?.Items.Where(i => i.Status == TrainingEnrollmentStatus.Saved).Take(4).ToList() ?? [];
+    }
+}

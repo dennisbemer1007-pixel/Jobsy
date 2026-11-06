@@ -1,0 +1,50 @@
+@page "/candidate/kandidatenkaart-instellingen"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Kandidatenkaart)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["Kk.Settings.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page">
+    <header class="panel-header">
+        <h1>@Culture["Kk.Settings.Title"]</h1>
+        <p class="login-lead">@Culture["Kk.Settings.Lead"]</p>
+    </header>
+
+    @if (_settings is null)
+    {
+        <p class="state-message">…</p>
+    }
+    else
+    {
+        <div class="kk-seg kk-seg--wrap" role="radiogroup" aria-label="@Culture["Kk.Settings.Title"]">
+            <button type="button" class="@(_pref == KandidatenkaartInvitePreferenceView.Off ? "is-on" : null)"
+                    @onclick="() => Save(KandidatenkaartInvitePreferenceView.Off)">@Culture["Kk.Settings.Off"]</button>
+            <button type="button" class="@(_pref == KandidatenkaartInvitePreferenceView.Normal ? "is-on" : null)"
+                    @onclick="() => Save(KandidatenkaartInvitePreferenceView.Normal)">@Culture["Kk.Settings.Normal"]</button>
+            <button type="button" class="@(_pref == KandidatenkaartInvitePreferenceView.Max ? "is-on" : null)"
+                    @onclick="() => Save(KandidatenkaartInvitePreferenceView.Max)">@Culture["Kk.Settings.Max"]</button>
+        </div>
+    }
+</div>
+
+@code {
+    private CandidateKandidatenkaartSettingsDto? _settings;
+    private KandidatenkaartInvitePreferenceView _pref;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _settings = await Api.GetCandidateKandidatenkaartSettingsAsync();
+        _pref = _settings?.InvitePreference ?? KandidatenkaartInvitePreferenceView.Normal;
+    }
+
+    private async Task Save(KandidatenkaartInvitePreferenceView pref)
+    {
+        _pref = pref;
+        _settings = await Api.UpdateCandidateKandidatenkaartSettingsAsync(new CandidateKandidatenkaartSettingsUpdate(pref));
+    }
+}

@@ -1,0 +1,36 @@
+KEY: RegistrationActivation
+SUBJECT: Je code voor Lobsy: 123456
+PREHEADER: Vul deze code in om je bedrijf aan te melden.
+KIND: Security
+--- TEXT ---
+Hallo Alex,
+
+Je code
+=======
+
+Vul deze code in om Bakkerij De Gouden Korrel aan te melden op Lobsy.
+
+
+123456
+
+De code werkt 10 minuten.
+
+Heb je dit niet zelf gedaan? Dan kun je deze mail negeren.
+
+Team Lobsy
+
+Je krijgt deze mail omdat je een bedrijf aanmeldt op Lobsy.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Je code
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
+a: Lobsy -> https://lobsy.nl
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

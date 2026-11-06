@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
@@ -11,6 +12,7 @@ using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Infrastructure.Services.CandidateExternalVacancies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -23,35 +25,44 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         TimeSpan.FromMinutes(PrivacyConstants.UnconfirmedRegistrationRetentionMinutes);
 
     /// <summary>Ledger note for the one-time registration welcome grant (1 token).</summary>
-    public const string WelcomeTokenNote = "Welkomsttoken toegekend bij accountactivatie";
+    public const string WelcomeTokenNote = "Welkomsttoken toegekend bij bedrijfsverificatie";
 
     public const decimal WelcomeTokenAmount = 1m;
 
     private readonly JobsyDbContext _db;
     private readonly IKvkService _kvk;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly ITokenLedgerService _ledger;
     private readonly IPlatformFeatureService _features;
     private readonly IPartnerAffiliateService _partnerAffiliates;
+    private readonly IRegistrationReferralResolver _referralResolver;
+    private readonly IGeocodingService? _geocoder;
+    private readonly ILenderRegistrationCheck? _lenderRegistration;
+    private readonly IOneTimeLinkService _links;
+    private readonly IExternalVacancyOutboundMetricsService? _externalVacancyMetrics;
+    private readonly IExternalVacancyEmployerOnboardingService? _externalOnboarding;
     private readonly ILogger<CompanyRegistrationService> _logger;
 
     public CompanyRegistrationService(
         JobsyDbContext db,
         IKvkService kvk,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         ILogger<CompanyRegistrationService> logger)
         : this(
             db,
             kvk,
-            email,
+            mailer,
             ledger,
             features,
             new PartnerAffiliateService(
                 db,
                 ledger,
                 features),
+            null,
+            null,
+            null,
             logger)
     {
     }
@@ -59,18 +70,56 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
     public CompanyRegistrationService(
         JobsyDbContext db,
         IKvkService kvk,
-        IEmailService email,
+        ITransactionalMailer mailer,
         ITokenLedgerService ledger,
         IPlatformFeatureService features,
         IPartnerAffiliateService partnerAffiliates,
         ILogger<CompanyRegistrationService> logger)
+        : this(db, kvk, mailer, ledger, features, partnerAffiliates, null, null, null, logger)
+    {
+    }
+
+    public CompanyRegistrationService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        ITransactionalMailer mailer,
+        ITokenLedgerService ledger,
+        IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
+        IRegistrationReferralResolver? referralResolver,
+        IGeocodingService? geocoder,
+        ILogger<CompanyRegistrationService> logger)
+        : this(db, kvk, mailer, ledger, features, partnerAffiliates, referralResolver, geocoder, null, logger)
+    {
+    }
+
+    public CompanyRegistrationService(
+        JobsyDbContext db,
+        IKvkService kvk,
+        ITransactionalMailer mailer,
+        ITokenLedgerService ledger,
+        IPlatformFeatureService features,
+        IPartnerAffiliateService partnerAffiliates,
+        IRegistrationReferralResolver? referralResolver,
+        IGeocodingService? geocoder,
+        ILenderRegistrationCheck? lenderRegistration,
+        ILogger<CompanyRegistrationService> logger,
+        IExternalVacancyOutboundMetricsService? externalVacancyMetrics = null,
+        IExternalVacancyEmployerOnboardingService? externalOnboarding = null)
     {
         _db = db;
         _kvk = kvk;
-        _email = email;
+        _mailer = mailer;
         _ledger = ledger;
         _features = features;
         _partnerAffiliates = partnerAffiliates;
+        _referralResolver = referralResolver
+            ?? new DefaultRegistrationReferralResolver(db, partnerAffiliates);
+        _geocoder = geocoder;
+        _lenderRegistration = lenderRegistration;
+        _links = new OneTimeLinkService(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<OneTimeLinkService>.Instance);
+        _externalVacancyMetrics = externalVacancyMetrics;
+        _externalOnboarding = externalOnboarding;
         _logger = logger;
     }
 
@@ -82,6 +131,25 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         var establishmentId = request.KvkEstablishmentId.Trim();
         var email = request.ContactEmail.Trim().ToLowerInvariant();
         var name = request.ContactName.Trim();
+
+        Guid? externalVacancyOutboundId = null;
+        if (!string.IsNullOrWhiteSpace(request.ExternalVacancyInviteToken))
+        {
+            if (_externalOnboarding is null)
+            {
+                throw new ArgumentException("Externe sollicitatie-registratie is niet beschikbaar.");
+            }
+
+            externalVacancyOutboundId = await _externalOnboarding.TryResolveOutboundIdAsync(
+                request.ExternalVacancyInviteToken,
+                email,
+                cancellationToken);
+            if (externalVacancyOutboundId is null)
+            {
+                throw new ArgumentException(
+                    "Deze uitnodigingslink is ongeldig of hoort niet bij dit e-mailadres.");
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(kvkNumber)
             || string.IsNullOrWhiteSpace(establishmentId)
@@ -96,41 +164,40 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             throw new ArgumentException("Je moet akkoord gaan met de voorwaarden en privacyverklaring.");
         }
 
-        RegistrationPasswordRules.Validate(request.Password);
+        var externalLogin = RegistrationPasswordRules.IsExternalLoginProvider(request.PreferredLoginProvider);
+        RegistrationPasswordRules.Validate(request.Password, required: !externalLogin);
 
         string? trackingCode = null;
         string? partnerTrackingCode = null;
-        if (!string.IsNullOrWhiteSpace(request.SalesManagerTrackingCode))
+        Guid? salesManagerUserId = request.SalesManagerUserId;
+
+        // Soft referral: unknown codes never block submit (UI shows inline message).
+        SalesAttributionSource? attributionSource = null;
+        var referral = await _referralResolver.ResolveAsync(
+            request.SalesManagerTrackingCode ?? request.PartnerTrackingCode,
+            linkCode: request.CookieTrackingCode,
+            cancellationToken);
+        if (referral.IsKnown && !string.IsNullOrWhiteSpace(referral.Code))
         {
-            trackingCode = request.SalesManagerTrackingCode.Trim().ToUpperInvariant();
-            if (PartnerAffiliateService.IsPartnerTrackingCode(trackingCode))
+            if (referral.IsPartnerCode)
             {
-                partnerTrackingCode = trackingCode;
-                trackingCode = null;
+                partnerTrackingCode = referral.Code;
+            }
+            else
+            {
+                trackingCode = referral.Code;
+                salesManagerUserId ??= referral.SalesManagerUserId;
+                attributionSource = referral.Source switch
+                {
+                    RegistrationReferralSource.TypedCode => SalesAttributionSource.TypedCode,
+                    RegistrationReferralSource.LinkCode => SalesAttributionSource.LinkCookie,
+                    RegistrationReferralSource.Cookie => SalesAttributionSource.LinkCookie,
+                    _ => null
+                };
             }
         }
-
-        if (!string.IsNullOrWhiteSpace(request.PartnerTrackingCode))
-        {
-            if (partnerTrackingCode is not null || trackingCode is not null)
-            {
-                throw new ArgumentException("Vul maximaal één trackingcode in.");
-            }
-
-            partnerTrackingCode = request.PartnerTrackingCode.Trim().ToUpperInvariant();
-        }
-
-        if (trackingCode is not null)
-        {
-            await ValidateSalesOrAmbassadeurTrackingCodeAsync(trackingCode, cancellationToken);
-        }
-
-        if (partnerTrackingCode is not null
-            && await _partnerAffiliates.ResolveByTrackingCodeAsync(partnerTrackingCode, cancellationToken) is null)
-        {
-            throw new ArgumentException(
-                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
-        }
+        // Unknown codes are ignored (never block submit; never store unverified text).
+        _ = request.PartnerTrackingCode;
 
         var lookup = await _kvk.LookupEstablishmentsAsync(kvkNumber, cancellationToken);
         KvkEstablishmentResult match;
@@ -148,6 +215,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
             // Never trust client-declared SBI/intermediary during an outage — always Employer
             // until the retry job confirms SBI 78* from KVK.
+            request = await GeocodeManualRequestAsync(request, cancellationToken);
             match = BuildPendingEstablishmentSnapshot(request, kvkNumber);
             kvkVerificationStatus = KvkVerificationStatus.Pending;
             sbiCodes = [];
@@ -172,7 +240,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 : match.EffectiveSbiCodes;
         }
 
-        var isIntermediarySbi = KvkSbiClassification.IsIntermediary(sbiCodes);
+        var isIntermediarySbi = ResolveIsIntermediarySbi(sbiCodes, request.ManualIsIntermediarySbi);
         var primarySbi = KvkSbiClassification.PrimarySbiCode(sbiCodes);
 
         // Soft enumeration: never show a red conflict for known e-mails.
@@ -238,33 +306,50 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 ? null
                 : request.ContactPhone.Trim(),
             ActivationToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
-            PasswordHash = JobsyPasswordHasher.Hash(request.Password!),
+            PasswordHash = externalLogin
+                ? JobsyPasswordHasher.Hash(Convert.ToHexString(RandomNumberGenerator.GetBytes(32)))
+                : JobsyPasswordHasher.Hash(request.Password!),
             PrimarySbiCode = primarySbi,
             IsIntermediarySbi = isIntermediarySbi,
             KvkVerificationStatus = kvkVerificationStatus,
             ConsentAcceptedAt = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             SalesManagerTrackingCode = trackingCode,
+            SalesManagerUserId = salesManagerUserId,
             PartnerTrackingCode = partnerTrackingCode,
+            SalesAttributionSource = attributionSource,
+            SelectedEstablishmentIdsJson = SerializeSelectedIds(request.SelectedEstablishmentIds),
+            RepresentationConsentAtUtc = request.RepresentationConsentAtUtc,
+            RepresentationConsentVersion = string.IsNullOrWhiteSpace(request.RepresentationConsentVersion)
+                ? null
+                : request.RepresentationConsentVersion.Trim(),
+            PreferredLoginProvider = string.IsNullOrWhiteSpace(request.PreferredLoginProvider)
+                ? null
+                : request.PreferredLoginProvider.Trim().ToLowerInvariant(),
+            LocationUnknown = request.LocationUnknown
+                || (kvkVerificationStatus == KvkVerificationStatus.Pending
+                    && request.ManualLatitude is null
+                    && request.ManualLongitude is null),
+            ExternalVacancyOutboundId = externalVacancyOutboundId,
             CreatedAt = DateTime.UtcNow
         };
 
         var plaintextCode = AssignConfirmationCode(registration);
 
-        if (existing is not null || match.IsInUse)
-        {
-            if (existing is null)
-            {
-                throw new InvalidOperationException("Vestiging staat als in-gebruik gemarkeerd maar is niet gevonden.");
-            }
+        var isManaged = existing is not null
+            && await CompanyOccupancy.HasActiveManagingEmployersAsync(_db, existing.Id, cancellationToken);
 
+        if (isManaged)
+        {
+            // Ownership transfer (07.5): letter + admin — not a peer takeover the BM can approve alone.
             registration.Status = CompanyRegistrationStatus.TakeoverPending;
             var takeover = new EstablishmentTakeoverRequest
             {
                 Id = Guid.NewGuid(),
                 RegistrationId = registration.Id,
-                TargetCompanyId = existing.Id,
+                TargetCompanyId = existing!.Id,
                 Status = TakeoverRequestStatus.Pending,
+                Kind = TakeoverRequestKind.OwnershipTransfer,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -279,22 +364,28 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 await DeleteRegistrationCascadeAsync(registration.Id, cancellationToken);
-                _logger.LogError(ex, "Takeover confirmation e-mail failed for {Id}", registration.Id);
+                _logger.LogError(ex, "Ownership-transfer confirmation e-mail failed for {Id}", registration.Id);
                 throw new InvalidOperationException(
                     "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
             }
-
-            var featuresTakeover = await _features.GetAsync(cancellationToken);
-            var verifyUrl = BuildActivationUrl(registration.ActivationToken, featuresTakeover.PublicWebBaseUrl);
 
             return new RegistrationSubmitResult(
                 registration.Id,
                 registration.Status,
                 RequiresTakeover: true,
                 Message:
-                "Deze vestiging is al geregistreerd. Vul de bevestigingscode uit je e-mail in (geldig 10 minuten); daarna sturen we het overnameverzoek naar de huidige eigenaar. Lobsy-support kan meekijken.",
-                ActivationUrl: featuresTakeover.ExposeRegistrationActivationLinks ? verifyUrl : null,
+                "Deze vestiging heeft al een beheerder. Bevestig je e-mail; daarna sturen we een brief met code naar het KvK-adres. Lobsy-support keurt de eigendomsoverdracht goed.",
+                ActivationUrl: null,
                 VerificationExpiresAt: registration.EmailVerificationExpiresAt);
+        }
+
+        // Claim (07.6): company row exists (e.g. intermediair client) but no active managing employers —
+        // treat as free; activation attaches the new owner without cutting the intermediary.
+        if (existing is not null && match.IsInUse)
+        {
+            // Defensive: IsInUse should already be false when unmanaged; never invent a second shell.
+            throw new InvalidOperationException(
+                "Vestiging staat als in-gebruik gemarkeerd maar heeft geen actieve beheerder. Vernieuw de pagina.");
         }
 
         registration.Status = CompanyRegistrationStatus.PendingActivation;
@@ -313,9 +404,6 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Kon de bevestigingsmail niet versturen. Controleer de e-mailinstellingen of probeer later opnieuw.");
         }
 
-        var features = await _features.GetAsync(cancellationToken);
-        var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
-
         var roleHint = isIntermediarySbi
             ? "Na bevestiging krijg je de rol Intermediair (SBI 78) en kun je direct aan de slag."
             : scope == RegistrationScope.Organization
@@ -331,7 +419,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.Status,
             RequiresTakeover: false,
             Message: $"We hebben een bevestigingscode naar je e-mail gestuurd. Vul die hieronder in (geldig 10 minuten). {roleHint}{kvkHint}",
-            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null,
+            ActivationUrl: null,
             VerificationExpiresAt: registration.EmailVerificationExpiresAt);
     }
 
@@ -472,15 +560,21 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 $"Registratie kan niet worden geactiveerd (status: {registration.Status}).");
         }
 
-        if (await _db.Companies.AnyAsync(
-                c => c.KvkEstablishmentId == registration.KvkEstablishmentId, cancellationToken))
+        var existingCompany = await _db.Companies
+            .FirstOrDefaultAsync(c => c.KvkEstablishmentId == registration.KvkEstablishmentId, cancellationToken);
+        if (existingCompany is not null)
         {
-            throw new InvalidOperationException(
-                "Deze vestiging is ondertussen al geregistreerd. Dien opnieuw een overnameverzoek in.");
+            if (await CompanyOccupancy.HasActiveManagingEmployersAsync(_db, existingCompany.Id, cancellationToken))
+            {
+                throw new InvalidOperationException(
+                    "Deze vestiging is ondertussen al geregistreerd. Vraag toegang aan of start een eigendomsoverdracht.");
+            }
+
+            return await CompleteClaimAsync(registration, existingCompany, cancellationToken);
         }
 
-        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
-        var usedChosenPassword = temporaryPassword is null;
+        var passwordHash = ResolvePasswordHash(registration, out var needsSetPassword);
+        var usedChosenPassword = !needsSetPassword;
         var (user, orgId, branchId) = await ProvisionCompaniesAndUserAsync(
             registration, passwordHash, cancellationToken);
 
@@ -516,9 +610,38 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
 
-        var welcomeGranted = await GrantWelcomeTokenAsync(branchId, user.Id, cancellationToken);
+        // Welcome token is granted on verification (CompanyVerificationService), not at activation.
+        const bool welcomeGranted = false;
 
-        await SendActivatedCredentialsEmailAsync(registration, temporaryPassword, cancellationToken);
+        if (registration.IsIntermediarySbi && _lenderRegistration is not null)
+        {
+            var bureauId = branchId;
+            await _lenderRegistration.StartForNewBureauAsync(
+                bureauId,
+                registration.KvkNumber,
+                cancellationToken);
+        }
+
+        await SendActivatedCredentialsEmailAsync(registration, user.Id, needsSetPassword, cancellationToken);
+
+        if (_externalVacancyMetrics is not null)
+        {
+            await _externalVacancyMetrics.MarkEmployerAccountCreatedAsync(
+                registration.ContactEmail,
+                registration.ExternalVacancyOutboundId,
+                cancellationToken);
+        }
+
+        string? postActivationWebPath = null;
+        if (_externalOnboarding is not null && registration.ExternalVacancyOutboundId is Guid outboundId)
+        {
+            var onboard = await _externalOnboarding.CompleteRegistrationAsync(
+                outboundId,
+                branchId,
+                user.Id,
+                cancellationToken);
+            postActivationWebPath = onboard.PostActivationWebPath;
+        }
 
         _logger.LogInformation(
             "Activated registration {Id} for {Email}",
@@ -526,22 +649,35 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             EmailServiceStub.RedactEmail(registration.ContactEmail));
 
         return await BuildActivationResultAsync(
-            registration, temporaryPassword ?? string.Empty, usedChosenPassword, welcomeGranted, cancellationToken);
+            registration, usedChosenPassword, welcomeGranted, postActivationWebPath, cancellationToken);
     }
 
     /// <summary>
     /// Credits 1 welcome token on the registered vestiging so the first publish is free.
     /// Skipped during the free-publish promo (publish is already free until that date).
     /// Idempotent via <see cref="Company.HasReceivedWelcomeToken"/>.
+    /// Called from <see cref="CompanyVerificationService"/> after verification — not at activation.
     /// Returns whether a ledger credit was granted.
     /// </summary>
-    private async Task<bool> GrantWelcomeTokenAsync(
+    internal async Task<bool> GrantWelcomeTokenAsync(
         Guid branchCompanyId,
         Guid actorUserId,
         CancellationToken cancellationToken)
     {
         var company = await _db.Companies.FirstAsync(c => c.Id == branchCompanyId, cancellationToken);
         if (company.HasReceivedWelcomeToken)
+        {
+            return false;
+        }
+
+        // Welcome only after the root organisation is verified.
+        var rootStatus = company.ParentCompanyId is Guid parentId
+            ? await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken)
+            : company.VerificationStatus;
+        if (!CompanyVerificationRules.CanUseWelcomeToken(rootStatus))
         {
             return false;
         }
@@ -591,11 +727,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         bool isAdmin,
         CancellationToken cancellationToken = default)
     {
+        // Only legacy colleague takeovers appear in the employer inbox.
+        // Ownership transfers are admin-only (tab Toegang).
         var query = _db.EstablishmentTakeoverRequests
             .AsNoTracking()
             .Include(t => t.Registration)
             .Include(t => t.TargetCompany)
-            .Where(t => t.Status == TakeoverRequestStatus.Pending);
+            .Where(t => t.Status == TakeoverRequestStatus.Pending
+                        && t.Kind == TakeoverRequestKind.Colleague);
 
         if (!isAdmin)
         {
@@ -651,9 +790,23 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "De aanvrager heeft het e-mailadres nog niet bevestigd; goedkeuren is niet mogelijk.");
         }
 
-        if (registration.Scope == RegistrationScope.Organization
-            && !isAdmin
-            && actorRole != UserRole.EnterpriseManager)
+        if (takeover.Kind == TakeoverRequestKind.OwnershipTransfer)
+        {
+            if (!isAdmin)
+            {
+                throw new UnauthorizedAccessException(
+                    "Eigendomsoverdracht kan alleen door Lobsy-support worden goedgekeurd.");
+            }
+
+            if (takeover.LetterVerifiedAtUtc is null)
+            {
+                throw new InvalidOperationException(
+                    "Eerst moet de briefcode zijn bevestigd voordat eigendomsoverdracht kan worden goedgekeurd.");
+            }
+        }
+        else if (!isAdmin
+                 && registration.Scope == RegistrationScope.Organization
+                 && actorRole != UserRole.EnterpriseManager)
         {
             throw new UnauthorizedAccessException(
                 "Alleen een bedrijfsmanager of admin mag een organisatie-overname goedkeuren.");
@@ -678,7 +831,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
 
         var target = takeover.TargetCompany;
-        var passwordHash = ResolvePasswordHash(registration, out var temporaryPassword);
+        var passwordHash = ResolvePasswordHash(registration, out var needsSetPassword);
 
         Guid? orgId;
         Guid branchId = target.Id;
@@ -714,7 +867,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                     KvkEstablishmentId = null,
                     Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                     Location = target.Location,
-                    Type = CompanyType.Employer
+                    Type = CompanyType.Employer,
+                    VerificationStatus = target.VerificationStatus,
+                    VerificationMethod = target.VerificationMethod,
+                    VerifiedAtUtc = target.VerifiedAtUtc,
+                    VerificationUpdatedAtUtc = DateTime.UtcNow
                 };
                 _db.Companies.Add(org);
                 target.ParentCompanyId = org.Id;
@@ -722,7 +879,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
             }
 
-            await ClaimSiblingEstablishmentsAsync(registration.KvkNumber, orgId.Value, target.Id, cancellationToken);
+            await ClaimSiblingEstablishmentsAsync(registration.KvkNumber, orgId.Value, target.Id, registration, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
             var balance = await _ledger.GetBalanceAsync(target.Id, cancellationToken);
@@ -769,12 +926,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             user.CompanyId = branchId;
         }
 
-        // Transfer: prior employers lose access to the acquired vestiging.
+        // Transfer: prior employers lose access to the acquired vestiging — intermediaries keep their link (07.7).
         // Parent-org memberships stay intact when reusing an existing organization shell.
         await RevokePriorEmployerAccessAsync(
             companyIds: [branchId],
             exceptUserId: user.Id,
             cancellationToken);
+        await NotifyIntermediariesOfSelfManagedAsync(branchId, target.Name, cancellationToken);
 
         // Cancel other pending takeovers for the same target.
         var otherPending = await _db.EstablishmentTakeoverRequests
@@ -824,19 +982,26 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         await _db.SaveChangesAsync(cancellationToken);
         await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
 
+        if (registration.IsIntermediarySbi && _lenderRegistration is not null)
+        {
+            await _lenderRegistration.StartForNewBureauAsync(
+                branchId,
+                registration.KvkNumber,
+                cancellationToken);
+        }
+
         var features = await _features.GetAsync(cancellationToken);
+        string? setPasswordUrl = needsSetPassword
+            ? await CreateSetPasswordUrlAsync(user.Id, registration.ContactEmail, cancellationToken)
+            : null;
         var approved = TransactionalEmails.TakeoverApproved(
             features.PublicWebBaseUrl,
             registration.ContactName,
             target.Name,
             registration.ContactEmail,
-            temporaryPassword,
+            setPasswordUrl,
             orgId is not null);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            approved.Subject,
-            approved.Html,
-            approved.Category), cancellationToken);
+        await _mailer.SendAsync(approved, registration.ContactEmail, cancellationToken: cancellationToken);
 
         return new TakeoverDecisionResult(
             takeover.Id,
@@ -881,15 +1046,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var features = await _features.GetAsync(cancellationToken);
         var rejected = TransactionalEmails.TakeoverRejected(
-            baseUrl: null,
+            features.PublicWebBaseUrl,
             takeover.Registration.ContactName,
             takeover.TargetCompany.Name);
-        await _email.SendAsync(new EmailMessage(
-            takeover.Registration.ContactEmail,
-            rejected.Subject,
-            rejected.Html,
-            rejected.Category), cancellationToken);
+        await _mailer.SendAsync(rejected, takeover.Registration.ContactEmail, cancellationToken: cancellationToken);
 
         return new TakeoverDecisionResult(
             takeover.Id,
@@ -901,7 +1063,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task<(User User, Guid? OrgId, Guid BranchId)> ProvisionCompaniesAndUserAsync(
         CompanyRegistration registration,
-        string passwordHash,
+        string? passwordHash,
         CancellationToken cancellationToken)
     {
         Guid? orgId = null;
@@ -920,7 +1082,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Intermediary
+                LocationSource = ResolveLocationSource(registration),
+                Type = CompanyType.Intermediary,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -937,9 +1103,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = null,
                 Address = kvkCompany?.Address ?? registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Employer
+                LocationSource = ResolveLocationSource(registration),
+                Type = CompanyType.Employer,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(org, registration);
+            await PrefillWorkTypesFromSbiAsync(org, registration, kvkCompany?.EffectiveSbiCodes, cancellationToken);
             _db.Companies.Add(org);
             orgId = org.Id;
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, org.Id, cancellationToken);
@@ -952,8 +1123,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
+                LocationSource = ResolveLocationSource(registration),
                 Type = CompanyType.Employer,
-                ParentCompanyId = org.Id
+                ParentCompanyId = org.Id,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
             _db.Companies.Add(branch);
@@ -963,7 +1138,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             if (registration.KvkVerificationStatus == KvkVerificationStatus.Verified)
             {
                 await ClaimSiblingEstablishmentsAsync(
-                    registration.KvkNumber, org.Id, branch.Id, cancellationToken);
+                    registration.KvkNumber, org.Id, branch.Id, registration, cancellationToken);
             }
         }
         else
@@ -976,9 +1151,14 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = registration.KvkEstablishmentId,
                 Address = registration.EstablishmentAddress,
                 Location = new GeoPoint(registration.Latitude, registration.Longitude),
-                Type = CompanyType.Employer
+                LocationSource = ResolveLocationSource(registration),
+                Type = CompanyType.Employer,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             ApplyKvkVerificationState(branch, registration);
+            await PrefillWorkTypesFromSbiAsync(branch, registration, sbiCodes: null, cancellationToken);
             _db.Companies.Add(branch);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, branch.Id, cancellationToken);
         }
@@ -1023,9 +1203,11 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string kvkNumber,
         Guid orgId,
         Guid excludeBranchId,
+        CompanyRegistration registration,
         CancellationToken cancellationToken)
     {
         var establishments = await _kvk.GetEstablishmentsAsync(kvkNumber, cancellationToken);
+        var selected = ParseSelectedIds(registration.SelectedEstablishmentIdsJson);
         var usedIds = await _db.Companies
             .Where(c => c.KvkNumber == kvkNumber && c.KvkEstablishmentId != null)
             .Select(c => c.KvkEstablishmentId!)
@@ -1042,6 +1224,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             .Select(r => r.KvkEstablishmentId)
             .ToListAsync(cancellationToken);
 
+        var excludeEstId = _db.Companies.Local.FirstOrDefault(c => c.Id == excludeBranchId)?.KvkEstablishmentId
+            ?? (await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == excludeBranchId)
+                .Select(c => c.KvkEstablishmentId)
+                .FirstOrDefaultAsync(cancellationToken));
+
         foreach (var est in establishments)
         {
             if (usedIds.Contains(est.KvkEstablishmentId, StringComparer.OrdinalIgnoreCase))
@@ -1049,8 +1237,21 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 continue;
             }
 
-            // Do not steal vestigingen that another registrant already started.
+            // Do not steal vestigingen that another registrant already started / owned.
             if (pendingEstablishmentIds.Contains(est.KvkEstablishmentId, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(excludeEstId)
+                && est.KvkEstablishmentId.Equals(excludeEstId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // D7: only claim exactly the ticked set when the wizard sent one.
+            if (selected is { Count: > 0 }
+                && !selected.Contains(est.KvkEstablishmentId, StringComparer.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -1063,24 +1264,26 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 KvkEstablishmentId = est.KvkEstablishmentId,
                 Address = est.Address,
                 Location = new GeoPoint(est.Latitude, est.Longitude),
+                LocationSource = CompanyLocationSource.Kvk,
                 Type = CompanyType.Employer,
                 ParentCompanyId = orgId,
                 KvkVerificationStatus = KvkVerificationStatus.Verified,
-                KvkVerifiedAtUtc = DateTime.UtcNow
+                KvkVerifiedAtUtc = DateTime.UtcNow,
+                VerificationStatus = CompanyVerificationStatus.Unverified,
+                VerificationMethod = CompanyVerificationMethod.None,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             };
             _db.Companies.Add(sibling);
             await WmlSalaryTableService.EnsureForCompanyAsync(_db, sibling.Id, cancellationToken);
             usedIds.Add(est.KvkEstablishmentId);
         }
-
-        _ = excludeBranchId;
     }
 
     private async Task<User> CreateRegistrationUserAsync(
         CompanyRegistration registration,
         UserRole role,
         Guid primaryCompanyId,
-        string passwordHash,
+        string? passwordHash,
         CancellationToken cancellationToken)
     {
         var email = registration.ContactEmail.Trim().ToLowerInvariant();
@@ -1103,13 +1306,16 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         };
         _db.Users.Add(user);
 
-        _db.LocalAuthCredentials.Add(new LocalAuthCredential
+        if (!string.IsNullOrWhiteSpace(passwordHash))
         {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Email = email,
-            PasswordHash = passwordHash
-        });
+            _db.LocalAuthCredentials.Add(new LocalAuthCredential
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Email = email,
+                PasswordHash = passwordHash
+            });
+        }
 
         return user;
     }
@@ -1120,9 +1326,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         CancellationToken cancellationToken)
     {
         var idSet = companyIds.ToHashSet();
+        // Intermediaries keep their client link on takeover/claim (07.7 / Dependencies G Absent).
         var affected = await _db.Users
             .Include(u => u.CompanyMemberships)
-            .Where(u => u.Id != exceptUserId && u.IsActive && JobsyRoles.IsEmployer(u.Role))
+            .Where(u => u.Id != exceptUserId && u.IsActive && CompanyOccupancy.IsRevocableOnTakeover(u.Role))
             .Where(u =>
                 (u.CompanyId != null && idSet.Contains(u.CompanyId.Value))
                 || u.CompanyMemberships.Any(m => idSet.Contains(m.CompanyId)))
@@ -1154,6 +1361,33 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         }
     }
 
+    private async Task NotifyIntermediariesOfSelfManagedAsync(
+        Guid companyId,
+        string companyName,
+        CancellationToken cancellationToken)
+    {
+        var intermediaries = await _db.Users.AsNoTracking()
+            .Where(u => u.IsActive && u.Role == UserRole.Intermediary)
+            .Where(u =>
+                (u.CompanyId != null && u.CompanyId == companyId)
+                || u.CompanyMemberships.Any(m => m.CompanyId == companyId))
+            .Select(u => u.Email)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        if (intermediaries.Count == 0)
+        {
+            return;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        var mail = TransactionalEmails.IntermediaryClientSelfManaged(features.PublicWebBaseUrl, companyName);
+        foreach (var email in intermediaries)
+        {
+            await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
+        }
+    }
+
     private async Task EnsureMembershipAsync(Guid userId, Guid companyId, CancellationToken cancellationToken)
     {
         var exists = await _db.UserCompanies.AnyAsync(
@@ -1173,9 +1407,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
     private async Task<RegistrationActivationResult> BuildActivationResultAsync(
         CompanyRegistration registration,
-        string temporaryPassword,
         bool usedChosenPassword,
         bool welcomeTokenGranted,
+        string? postActivationWebPath,
         CancellationToken cancellationToken)
     {
         var user = registration.CreatedUserId is Guid uid
@@ -1206,12 +1440,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             user.Role.ToString(),
             user.CompanyId,
             companyIds,
-            temporaryPassword,
             registration.CreatedOrganizationCompanyId,
             registration.CreatedBranchCompanyId,
             usedChosenPassword,
             WelcomeTokenGranted: welcomeTokenGranted,
-            FreePublishUntil: freeUntil);
+            FreePublishUntil: freeUntil,
+            PostActivationWebPath: postActivationWebPath);
     }
 
     private async Task<RegistrationActivationResult> CompleteTakeoverEmailVerificationAsync(
@@ -1221,7 +1455,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         if (registration.ContactEmailVerifiedAt is not null)
         {
             throw new InvalidOperationException(
-                "Dit e-mailadres is al bevestigd. Het overnameverzoek wacht op de huidige eigenaar.");
+                takeoverAlreadyMessage(registration));
         }
 
         var takeover = await _db.EstablishmentTakeoverRequests
@@ -1238,13 +1472,28 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         registration.EmailVerificationExpiresAt = null;
         registration.EmailVerificationFailedAttempts = 0;
 
-        await _db.SaveChangesAsync(cancellationToken);
-        await NotifyTakeoverRequestedAsync(registration, takeover.TargetCompany, cancellationToken);
+        if (takeover.Kind == TakeoverRequestKind.OwnershipTransfer)
+        {
+            var plain = LetterVerificationCodes.Create();
+            takeover.LetterCodeHash = VerificationCodes.Hash(plain);
+            takeover.LetterExpiresAtUtc = DateTime.UtcNow.AddDays(30);
+            takeover.LetterSentAtUtc = DateTime.UtcNow;
+            takeover.LetterFailedAttempts = 0;
+            await _db.SaveChangesAsync(cancellationToken);
+            await NotifyOwnershipTransferManagersAsync(takeover.TargetCompany, cancellationToken);
+            // Stub/dev: plaintext is only in the physical letter PDF (not persisted). Tests overwrite the hash.
+        }
+        else
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+            await NotifyTakeoverRequestedAsync(registration, takeover.TargetCompany, cancellationToken);
+        }
 
         _logger.LogInformation(
-            "Takeover e-mail verified for registration {Id} ({Email})",
+            "Takeover e-mail verified for registration {Id} ({Email}) kind={Kind}",
             registration.Id,
-            EmailServiceStub.RedactEmail(registration.ContactEmail));
+            EmailServiceStub.RedactEmail(registration.ContactEmail),
+            takeover.Kind);
 
         return new RegistrationActivationResult(
             registration.Id,
@@ -1254,12 +1503,186 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             Role: string.Empty,
             CompanyId: null,
             CompanyIds: Array.Empty<Guid>(),
-            TemporaryPassword: string.Empty,
             OrganizationCompanyId: null,
             BranchCompanyId: null,
             UsedChosenPassword: true,
             EmailVerifiedAwaitingTakeover: true);
+
+        static string takeoverAlreadyMessage(CompanyRegistration _) =>
+            "Dit e-mailadres is al bevestigd. Het overnameverzoek wacht op goedkeuring.";
     }
+
+    private async Task NotifyOwnershipTransferManagersAsync(
+        Company company,
+        CancellationToken cancellationToken)
+    {
+        var tree = await CompanyOccupancy.ExpandCompanyTreeAsync(_db, company.Id, cancellationToken);
+        var managers = await _db.Users.AsNoTracking()
+            .Where(u => u.IsActive && CompanyOccupancy.ManagingEmployerRoles.Contains(u.Role))
+            .Where(u =>
+                (u.CompanyId != null && tree.Contains(u.CompanyId.Value))
+                || u.CompanyMemberships.Any(m => tree.Contains(m.CompanyId)))
+            .Select(u => u.Email)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var features = await _features.GetAsync(cancellationToken);
+        var mail = TransactionalEmails.OwnershipTransferManagersNotify(features.PublicWebBaseUrl, company.Name);
+        foreach (var email in managers)
+        {
+            await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
+        }
+
+        var takeover = await _db.EstablishmentTakeoverRequests
+            .FirstOrDefaultAsync(
+                t => t.TargetCompanyId == company.Id
+                     && t.Kind == TakeoverRequestKind.OwnershipTransfer
+                     && t.Status == TakeoverRequestStatus.Pending
+                     && t.ManagersNotifiedAtUtc == null,
+                cancellationToken);
+        if (takeover is not null)
+        {
+            takeover.ManagersNotifiedAtUtc = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task<RegistrationActivationResult> CompleteClaimAsync(
+        CompanyRegistration registration,
+        Company existingCompany,
+        CancellationToken cancellationToken)
+    {
+        var passwordHash = ResolvePasswordHash(registration, out var needsSetPassword);
+        var usedChosenPassword = !needsSetPassword;
+        var role = ResolveRegistrationRole(registration);
+        var orgId = existingCompany.ParentCompanyId;
+        var branchId = existingCompany.Id;
+        var primaryCompanyId = registration.IsIntermediarySbi
+            ? branchId
+            : (orgId ?? branchId);
+
+        var user = await CreateRegistrationUserAsync(
+            registration, role, primaryCompanyId, passwordHash, cancellationToken);
+        await EnsureMembershipAsync(user.Id, branchId, cancellationToken);
+        if (!registration.IsIntermediarySbi && orgId is Guid oid)
+        {
+            await EnsureMembershipAsync(user.Id, oid, cancellationToken);
+            if (role == UserRole.EnterpriseManager)
+            {
+                user.CompanyId = oid;
+                var children = await _db.Companies
+                    .Where(c => c.ParentCompanyId == oid)
+                    .Select(c => c.Id)
+                    .ToListAsync(cancellationToken);
+                foreach (var childId in children)
+                {
+                    await EnsureMembershipAsync(user.Id, childId, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            user.CompanyId = branchId;
+        }
+
+        // Do NOT revoke intermediaries (07.7). Public verification state stays until the new owner verifies.
+        registration.Status = CompanyRegistrationStatus.Activated;
+        registration.ActivatedAt = DateTime.UtcNow;
+        registration.ContactEmailVerifiedAt = DateTime.UtcNow;
+        registration.CreatedUserId = user.Id;
+        registration.CreatedOrganizationCompanyId = orgId;
+        registration.CreatedBranchCompanyId = branchId;
+        ClearPendingSecrets(registration);
+
+        await ApplySalesManagerReferralAsync(registration, existingCompany, orgId, cancellationToken);
+        await ApplyPartnerReferralAsync(registration, existingCompany, orgId, cancellationToken);
+
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "Registration",
+            Message =
+                $"Claimed unmanaged company {existingCompany.Id} ({existingCompany.KvkEstablishmentId}) by {EmailServiceStub.RedactEmail(registration.ContactEmail)}",
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync(cancellationToken);
+        await NotifyIntermediariesOfSelfManagedAsync(branchId, existingCompany.Name, cancellationToken);
+        await _partnerAffiliates.EnsureProfileAsync(user.Id, cancellationToken);
+
+        if (registration.IsIntermediarySbi && _lenderRegistration is not null)
+        {
+            await _lenderRegistration.StartForNewBureauAsync(
+                branchId,
+                registration.KvkNumber,
+                cancellationToken);
+        }
+
+        await SendActivatedCredentialsEmailAsync(registration, user.Id, needsSetPassword, cancellationToken);
+
+        return await BuildActivationResultAsync(
+            registration, usedChosenPassword, welcomeTokenGranted: false, postActivationWebPath: null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirms the ownership-transfer letter code (07.5). Does not approve the transfer —
+    /// admin still must call <see cref="ApproveTakeoverAsync"/>.
+    /// </summary>
+    public async Task ConfirmOwnershipTransferLetterAsync(
+        Guid takeoverId,
+        string code,
+        CancellationToken cancellationToken = default)
+    {
+        var takeover = await _db.EstablishmentTakeoverRequests
+            .FirstOrDefaultAsync(t => t.Id == takeoverId, cancellationToken)
+            ?? throw new KeyNotFoundException("Eigendomsoverdracht niet gevonden.");
+
+        if (takeover.Kind != TakeoverRequestKind.OwnershipTransfer)
+        {
+            throw new InvalidOperationException("Dit verzoek is geen eigendomsoverdracht.");
+        }
+
+        if (takeover.Status != TakeoverRequestStatus.Pending)
+        {
+            throw new InvalidOperationException("Dit verzoek is al afgehandeld.");
+        }
+
+        if (takeover.LetterVerifiedAtUtc is not null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(takeover.LetterCodeHash)
+            || takeover.LetterExpiresAtUtc is null
+            || takeover.LetterExpiresAtUtc < DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Briefcode ontbreekt of is verlopen.");
+        }
+
+        var normalized = LetterVerificationCodes.Normalize(code);
+        if (!LetterVerificationCodes.IsWellFormed(normalized)
+            || !VerificationCodes.MatchesHash(takeover.LetterCodeHash, normalized))
+        {
+            var attempts = takeover.LetterFailedAttempts;
+            var dead = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            takeover.LetterFailedAttempts = attempts;
+            if (dead)
+            {
+                takeover.LetterCodeHash = null;
+                takeover.DecisionNote = "Brief geblokkeerd na 5 pogingen.";
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            throw new InvalidOperationException(
+                dead ? "Brief geblokkeerd na 5 pogingen." : "Onjuiste briefcode.");
+        }
+
+        takeover.LetterVerifiedAtUtc = DateTime.UtcNow;
+        takeover.LetterCodeHash = null;
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
 
     private async Task SendTakeoverEmailVerificationAsync(
         CompanyRegistration registration,
@@ -1267,13 +1690,10 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string plaintextCode,
         CancellationToken cancellationToken)
     {
+        var features = await _features.GetAsync(cancellationToken);
         var verify = TransactionalEmails.TakeoverEmailVerification(
-            baseUrl: null, registration.ContactName, existing.Name, plaintextCode);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            verify.Subject,
-            verify.Html,
-            verify.Category), cancellationToken);
+            features.PublicWebBaseUrl, registration.ContactName, existing.Name, plaintextCode);
+        await _mailer.SendAsync(verify, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task NotifyTakeoverRequestedAsync(
@@ -1303,20 +1723,12 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             registration.ContactEmail);
         foreach (var ownerEmail in owners)
         {
-            await _email.SendAsync(new EmailMessage(
-                ownerEmail,
-                requestMail.Subject,
-                requestMail.Html,
-                requestMail.Category), cancellationToken);
+            await _mailer.SendAsync(requestMail, ownerEmail, cancellationToken: cancellationToken);
         }
 
         var submitted = TransactionalEmails.TakeoverSubmitted(
             features.PublicWebBaseUrl, registration.ContactName, existing.Name);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            submitted.Subject,
-            submitted.Html,
-            submitted.Category), cancellationToken);
+        await _mailer.SendAsync(submitted, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task SendActivationEmailAsync(
@@ -1324,58 +1736,83 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         string plaintextCode,
         CancellationToken cancellationToken)
     {
-        var roleLabel = registration.IsIntermediarySbi
-            ? "Intermediair"
-            : registration.Scope == RegistrationScope.Organization
-                ? "Bedrijfsmanager"
-                : "Filiaalmanager";
+        var features = await _features.GetAsync(cancellationToken);
         var activation = TransactionalEmails.RegistrationActivation(
-            baseUrl: null,
+            features.PublicWebBaseUrl,
             registration.ContactName,
             registration.EstablishmentName,
-            roleLabel,
-            registration.PrimarySbiCode,
             plaintextCode);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            activation.Subject,
-            activation.Html,
-            activation.Category), cancellationToken);
+        await _mailer.SendAsync(activation, registration.ContactEmail, cancellationToken: cancellationToken);
     }
 
     private async Task SendActivatedCredentialsEmailAsync(
         CompanyRegistration registration,
-        string? temporaryPassword,
+        Guid userId,
+        bool needsSetPassword,
         CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
+        string? setPasswordUrl = null;
+        if (needsSetPassword)
+        {
+            var created = await _links.CreateAsync(
+                OneTimeLinkPurpose.SetPassword,
+                userId,
+                companyId: null,
+                registration.ContactEmail.Trim().ToLowerInvariant(),
+                OneTimeLinkRules.SetPasswordLifetime,
+                createdByUserId: null,
+                cancellationToken);
+            setPasswordUrl = EmailLayout.Absolute(
+                features.PublicWebBaseUrl,
+                $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
+        }
+
         var credentials = TransactionalEmails.RegistrationCredentials(
             features.PublicWebBaseUrl,
             registration.ContactName,
             registration.EstablishmentName,
             registration.ContactEmail,
-            temporaryPassword);
-        await _email.SendAsync(new EmailMessage(
-            registration.ContactEmail,
-            credentials.Subject,
-            credentials.Html,
-            credentials.Category), cancellationToken);
+            setPasswordUrl);
+        await _mailer.SendAsync(credentials, registration.ContactEmail, cancellationToken: cancellationToken);
+    }
+
+    private async Task<string?> CreateSetPasswordUrlAsync(
+        Guid userId,
+        string email,
+        CancellationToken cancellationToken)
+    {
+        var created = await _links.CreateAsync(
+            OneTimeLinkPurpose.SetPassword,
+            userId,
+            companyId: null,
+            email.Trim().ToLowerInvariant(),
+            OneTimeLinkRules.SetPasswordLifetime,
+            createdByUserId: null,
+            cancellationToken);
+        var features = await _features.GetAsync(cancellationToken);
+        return EmailLayout.Absolute(
+            features.PublicWebBaseUrl,
+            $"/account/wachtwoord-instellen?t={Uri.EscapeDataString(created.Token)}");
     }
 
     /// <summary>
     /// Uses the password hash stored at submit when present; otherwise generates a temporary password
     /// (legacy / takeover edge cases). Returns the hash and optional plaintext for e-mail only.
     /// </summary>
-    private static string ResolvePasswordHash(CompanyRegistration registration, out string? temporaryPassword)
+    /// <summary>
+    /// Returns the password hash chosen at submit, or null when the user must set a password via link.
+    /// </summary>
+    private static string? ResolvePasswordHash(CompanyRegistration registration, out bool needsSetPassword)
     {
         if (!string.IsNullOrWhiteSpace(registration.PasswordHash))
         {
-            temporaryPassword = null;
+            needsSetPassword = false;
             return registration.PasswordHash;
         }
 
-        temporaryPassword = GenerateTemporaryPassword();
-        return JobsyPasswordHasher.Hash(temporaryPassword);
+        needsSetPassword = true;
+        return null;
     }
 
     /// <summary>
@@ -1448,15 +1885,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
                 "Kon de bevestigingsmail niet versturen. Probeer later opnieuw.");
         }
 
-        var features = await _features.GetAsync(cancellationToken);
-        var activationUrl = BuildActivationUrl(registration.ActivationToken, features.PublicWebBaseUrl);
         return new RegistrationSubmitResult(
             registration.Id,
             registration.Status,
             RequiresTakeover: registration.Status == CompanyRegistrationStatus.TakeoverPending,
             Message:
             "We hebben een nieuwe bevestigingscode naar je e-mail gestuurd. Vul die hieronder in (geldig 10 minuten).",
-            ActivationUrl: features.ExposeRegistrationActivationLinks ? activationUrl : null,
+            ActivationUrl: null,
             VerificationExpiresAt: registration.EmailVerificationExpiresAt);
     }
 
@@ -1481,41 +1916,26 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         _logger.LogInformation("Deleted unconfirmed registration {Id}", registrationId);
     }
 
-    private static string GenerateTemporaryPassword()
-        => "J!" + Convert.ToHexString(RandomNumberGenerator.GetBytes(8));
-
-    private static string BuildActivationUrl(string token, string publicWebBaseUrl)
-        => $"{publicWebBaseUrl.TrimEnd('/')}/register/activate?token={Uri.EscapeDataString(token)}";
-
-    private async Task ValidateSalesOrAmbassadeurTrackingCodeAsync(
-        string trackingCode,
-        CancellationToken cancellationToken)
-    {
-        var validSm = await _db.SalesManagerProfiles.AsNoTracking().AnyAsync(
-            p => p.TrackingCode != null
-                 && p.TrackingCode.ToUpper() == trackingCode
-                 && p.OnboardingCompletedAt != null
-                 && p.AgreementSignedAt != null,
-            cancellationToken);
-        var validAm = !validSm && await _db.AmbassadeurProfiles.AsNoTracking().AnyAsync(
-            p => p.TrackingCode != null
-                 && p.TrackingCode.ToUpper() == trackingCode
-                 && p.OnboardingCompletedAt != null
-                 && p.AgreementSignedAt != null,
-            cancellationToken);
-        if (!validSm && !validAm)
-        {
-            throw new ArgumentException(
-                "Deze trackingcode is onbekend of nog niet actief. Laat het veld leeg of vul een geldige code in.");
-        }
-    }
-
     private async Task ApplySalesManagerReferralAsync(
         CompanyRegistration registration,
         Company branch,
         Guid? orgId,
         CancellationToken cancellationToken)
     {
+        SalesManagerProfile? profile = null;
+        if (registration.SalesManagerUserId is Guid smUserId)
+        {
+            profile = await _db.SalesManagerProfiles
+                .FirstOrDefaultAsync(
+                    p => p.UserId == smUserId && p.OnboardingCompletedAt != null,
+                    cancellationToken);
+            if (profile is not null)
+            {
+                await ApplyResolvedSalesManagerAsync(profile, branch, orgId, cancellationToken);
+                return;
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(registration.SalesManagerTrackingCode))
         {
             return;
@@ -1529,7 +1949,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return;
         }
 
-        var profile = await _db.SalesManagerProfiles
+        profile = await _db.SalesManagerProfiles
             .FirstOrDefaultAsync(
                 p => p.TrackingCode != null
                      && p.TrackingCode.ToUpper() == code
@@ -1550,8 +1970,18 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             return;
         }
 
+        await ApplyResolvedSalesManagerAsync(profile, branch, orgId, cancellationToken);
+    }
+
+    private async Task ApplyResolvedSalesManagerAsync(
+        SalesManagerProfile profile,
+        Company branch,
+        Guid? orgId,
+        CancellationToken cancellationToken)
+    {
         branch.ReferredBySalesManagerUserId = profile.UserId;
         branch.FirstYearStartedAt = DateTime.UtcNow;
+        branch.SalesAttributedAtUtc ??= DateTime.UtcNow;
         // Only the publishing vestiging gets the one-time start-highlight (not the org pot).
         branch.PendingStartHighlightBonus = true;
         await SnapshotCommissionTermsAsync(branch, profile.UserId, cancellationToken);
@@ -1564,6 +1994,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 org.ReferredBySalesManagerUserId = profile.UserId;
                 org.FirstYearStartedAt ??= DateTime.UtcNow;
+                org.SalesAttributedAtUtc ??= DateTime.UtcNow;
                 await SnapshotCommissionTermsAsync(org, profile.UserId, cancellationToken);
             }
         }
@@ -1623,6 +2054,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
 
         branch.ReferredByAmbassadeurUserId = profile.UserId;
         branch.FirstYearStartedAt ??= DateTime.UtcNow;
+        branch.SalesAttributedAtUtc ??= DateTime.UtcNow;
         branch.PendingStartHighlightBonus = true;
         branch.CommissionAmbassadeurRateSnapshot = rate;
         branch.CommissionDurationDaysSnapshot ??= SalesCommissionRules.DefaultCommissionDurationDays;
@@ -1636,6 +2068,7 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             {
                 org.ReferredByAmbassadeurUserId = profile.UserId;
                 org.FirstYearStartedAt ??= DateTime.UtcNow;
+                org.SalesAttributedAtUtc ??= DateTime.UtcNow;
                 org.CommissionAmbassadeurRateSnapshot ??= rate;
                 org.CommissionDurationDaysSnapshot ??= SalesCommissionRules.DefaultCommissionDurationDays;
                 org.CommissionTermsSnapshottedAtUtc ??= DateTime.UtcNow;
@@ -1731,6 +2164,62 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             company.KvkLastVerificationAttemptAtUtc = DateTime.UtcNow;
             company.KvkVerificationAttempts = 0;
         }
+
+        company.LocationSource = ResolveLocationSource(registration);
+    }
+
+    /// <summary>
+    /// Prefills company branches from KVK SBI codes when empty (D12). Stored on the root organisation.
+    /// </summary>
+    private async Task PrefillWorkTypesFromSbiAsync(
+        Company root,
+        CompanyRegistration registration,
+        IReadOnlyList<string>? sbiCodes,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(root.WorkTypeLabels))
+        {
+            return;
+        }
+
+        var codes = sbiCodes;
+        if (codes is null || codes.Count == 0)
+        {
+            try
+            {
+                var kvk = await _kvk.GetByKvkNumberAsync(registration.KvkNumber, cancellationToken);
+                codes = kvk?.EffectiveSbiCodes;
+            }
+            catch
+            {
+                codes = null;
+            }
+        }
+
+        if ((codes is null || codes.Count == 0) && !string.IsNullOrWhiteSpace(registration.PrimarySbiCode))
+        {
+            codes = [registration.PrimarySbiCode!];
+        }
+
+        var labels = SbiWorkTypeMap.Map(codes);
+        if (labels.Count > 0)
+        {
+            root.WorkTypeLabels = WorkTypeLabels.CombineStoredForCompany(labels);
+        }
+    }
+
+    private static CompanyLocationSource ResolveLocationSource(CompanyRegistration registration)
+    {
+        if (registration.LocationUnknown
+            || (registration.Latitude == 0d && registration.Longitude == 0d
+                && registration.KvkVerificationStatus == KvkVerificationStatus.Pending))
+        {
+            return CompanyLocationSource.Unknown;
+        }
+
+        return registration.KvkVerificationStatus == KvkVerificationStatus.Pending
+            ? CompanyLocationSource.Pdok
+            : CompanyLocationSource.Kvk;
     }
 
     private static KvkEstablishmentResult BuildPendingEstablishmentSnapshot(
@@ -1766,9 +2255,9 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         // that could squat on another vestiging during an outage.
         var composedId = $"{normalizedKvk}_{establishmentNumber}";
 
-        // Default NL centroid when the user cannot geocode during an outage.
-        var lat = request.ManualLatitude ?? 52.1326;
-        var lng = request.ManualLongitude ?? 5.2913;
+        // Never pin at the NL centre. Missing coordinates → 0,0 + LocationUnknown on the company.
+        var lat = request.ManualLatitude ?? 0d;
+        var lng = request.ManualLongitude ?? 0d;
 
         return new KvkEstablishmentResult(
             normalizedKvk,
@@ -1782,6 +2271,121 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
             SbiCodes: null);
     }
 
+
+    /// <summary>D15: whether the confirmed contact e-mail matches a KVK website domain.</summary>
+    public async Task<bool> MatchesBusinessEmailDomainAsync(
+        string kvkNumber,
+        string contactEmail,
+        CancellationToken cancellationToken = default)
+    {
+        if (FreeMailDomains.IsFreeMail(contactEmail))
+        {
+            return false;
+        }
+
+        var profile = await _kvk.GetProfileAsync(kvkNumber, cancellationToken);
+        if (profile.Status != KvkLookupStatus.Ok || profile.Websites.Count == 0)
+        {
+            return false;
+        }
+
+        return DomainMatch.EmailMatchesAnyWebsite(contactEmail, profile.Websites);
+    }
+
+    private async Task<RegistrationSubmitRequest> GeocodeManualRequestAsync(
+        RegistrationSubmitRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.ManualLatitude is not null && request.ManualLongitude is not null)
+        {
+            return request with { LocationUnknown = false };
+        }
+
+        var query = string.Join(" ", new[]
+        {
+            request.ManualEstablishmentAddress,
+            request.ManualEstablishmentName
+        }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        if (_geocoder is null || string.IsNullOrWhiteSpace(query))
+        {
+            return request with { ManualLatitude = null, ManualLongitude = null, LocationUnknown = true };
+        }
+
+        var geo = await _geocoder.GeocodeAsync(query, cancellationToken);
+        if (geo is null)
+        {
+            return request with { ManualLatitude = null, ManualLongitude = null, LocationUnknown = true };
+        }
+
+        return request with
+        {
+            ManualLatitude = geo.Latitude,
+            ManualLongitude = geo.Longitude,
+            LocationUnknown = false
+        };
+    }
+
+    private static bool ResolveIsIntermediarySbi(
+        IReadOnlyList<string> sbiCodes,
+        bool? manualChoice)
+    {
+        var has78 = KvkSbiClassification.IsIntermediary(sbiCodes);
+        if (!has78)
+        {
+            return false;
+        }
+
+        if (!KvkSbiClassification.HasNonIntermediary(sbiCodes))
+        {
+            // Only SBI 78* → always intermediair.
+            return true;
+        }
+
+        // Mixed: honour wizard choice; default to main activity when absent.
+        if (manualChoice is bool chosen)
+        {
+            return chosen;
+        }
+
+        return KvkSbiClassification.IsMainActivityIntermediary(sbiCodes);
+    }
+
+    private static string? SerializeSelectedIds(IReadOnlyList<string>? ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return null;
+        }
+
+        var cleaned = ids
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => id.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return cleaned.Count == 0 ? null : JsonSerializer.Serialize(cleaned);
+    }
+
+    private static HashSet<string>? ParseSelectedIds(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            var list = JsonSerializer.Deserialize<List<string>>(json) ?? [];
+            return new HashSet<string>(
+                list.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// After a deferred KVK verification succeeds for an organisation branch,
     /// claim free sibling vestigingen under the parent (same as verified activation).
@@ -1791,5 +2395,13 @@ public sealed class CompanyRegistrationService : ICompanyRegistrationService
         Guid orgId,
         Guid excludeBranchId,
         CancellationToken cancellationToken)
-        => await ClaimSiblingEstablishmentsAsync(kvkNumber, orgId, excludeBranchId, cancellationToken);
+    {
+        // Retry path has no registration selection — claim all free siblings (legacy).
+        var synthetic = new CompanyRegistration
+        {
+            KvkNumber = kvkNumber,
+            SelectedEstablishmentIdsJson = null
+        };
+        await ClaimSiblingEstablishmentsAsync(kvkNumber, orgId, excludeBranchId, synthetic, cancellationToken);
+    }
 }

@@ -1,0 +1,35 @@
+KEY: AccountLockout
+SUBJECT: Your Lobsy account is paused for a bit
+PREHEADER: You cannot sign in with your password until 2 October 2026, 13:05.
+KIND: Essential
+--- TEXT ---
+A short pause
+=============
+
+A wrong password was entered 5 times. That is why you cannot sign in with
+your password for 15 minutes, until 2 October 2026, 13:05.
+
+Paused until: 2 October 2026, 13:05
+
+Was this you? Then you can try again afterwards. Was this not you? Please
+contact support.
+
+Forgot your password?: https://lobsy.nl/wachtwoord-vergeten
+
+Team Lobsy
+
+You get this email to protect your account.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: A short pause
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Forgot your password? -> https://lobsy.nl/wachtwoord-vergeten
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

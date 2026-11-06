@@ -24,7 +24,11 @@ public class TokenPurchaseFulfillmentIdempotencyTests
             Name = "Co",
             KvkNumber = "1",
             Address = "a",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.PlatformCompanySettings.Add(new PlatformCompanySettings
         {
@@ -80,7 +84,7 @@ public class TokenPurchaseFulfillmentIdempotencyTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             new FakeRevenueShare(),
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             new FakePendingActions(),
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
@@ -97,7 +101,7 @@ public class TokenPurchaseFulfillmentIdempotencyTests
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, false, false, "http://localhost:5201", DateTime.UtcNow, 120));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, false, "http://localhost:5201", DateTime.UtcNow, 120));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);

@@ -1,0 +1,50 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="ndm-week">
+    <div class="ndm-week__head">
+        <button type="button" class="btn line sm" @onclick="PrevWeek">‹</button>
+        <b>@WeekLabel</b>
+        <button type="button" class="btn line sm" @onclick="NextWeek">›</button>
+    </div>
+    <div class="ndm-week__grid">
+        @foreach (var day in WeekDays)
+        {
+            <div class="ndm-week__col">
+                <span class="lbl">@day.ToLocalTime().ToString("ddd d MMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))</span>
+                @foreach (var slot in SlotsForDay(day))
+                {
+                    var on = SelectedStarts.Contains(slot);
+                    <button type="button" class="chip @(on ? "on" : "")" @onclick="() => OnToggle.InvokeAsync(slot)">
+                        @slot.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+                    </button>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public HashSet<DateTime> SelectedStarts { get; set; } = [];
+    [Parameter] public EventCallback<DateTime> OnToggle { get; set; }
+
+    private DateTime _weekStart = new(2026, 10, 20, 0, 0, 0, DateTimeKind.Utc);
+
+    private IEnumerable<DateTime> WeekDays =>
+        Enumerable.Range(0, 5).Select(i => _weekStart.AddDays(i));
+
+    private string WeekLabel =>
+        $"{_weekStart.ToLocalTime():d MMM} – {_weekStart.AddDays(4).ToLocalTime():d MMM yyyy}";
+
+    private static IEnumerable<DateTime> SlotsForDay(DateTime dayUtc)
+    {
+        var local = dayUtc.ToLocalTime().Date;
+        foreach (var hour in new[] { 9, 10, 11, 14, 15 })
+        {
+            yield return DateTime.SpecifyKind(local.AddHours(hour), DateTimeKind.Local).ToUniversalTime();
+        }
+    }
+
+    private void PrevWeek() => _weekStart = _weekStart.AddDays(-7);
+    private void NextWeek() => _weekStart = _weekStart.AddDays(7);
+}

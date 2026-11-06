@@ -1,3 +1,5 @@
+> **Warnings:** deliver a Release build with 0 new warnings vs the base branch (0 warnings after code-health step 11). Run `dotnet format` and `.github/scripts/count-build-warnings.sh` before opening the PR. No blanket `<NoWarn>`.
+
 # Cursor prompt: Acc 27-09 fixes (popup photo, floating Kompas tabs, Top 10 on mobile, reconnect toast)
 
 > Paste everything below the line into Cursor (repo `dennisbemer1007-pixel/Jobsy`).

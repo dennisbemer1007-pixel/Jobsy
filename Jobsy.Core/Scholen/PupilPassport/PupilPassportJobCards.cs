@@ -1,0 +1,105 @@
+using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
+
+namespace Jobsy.Core.Scholen.PupilPassport;
+
+public static class PupilPassportJobCards
+{
+    public static IReadOnlyList<PupilPassportOccupationCard> Build(
+        IReadOnlyList<string> jobKeys,
+        IReadOnlyList<string> likeLabels,
+        PupilQuestionSet set,
+        string language = "nl")
+    {
+        var cards = new List<PupilPassportOccupationCard>();
+        var rank = 1;
+        foreach (var key in jobKeys.Take(set == PupilQuestionSet.Groep78 ? 5 : 3))
+        {
+            var title = PupilPassportLocalizedCopy.JobTitle(key, language);
+            var domain = set == PupilQuestionSet.Vo
+                ? rank switch
+                {
+                    1 => "Past goed bij je",
+                    2 => "Ook interessant",
+                    _ => "Wil je verkennen"
+                }
+                : PupilPassportLocalizedCopy.JobDomain(key, language);
+            var blurb = PupilPassportLocalizedCopy.JobBlurb(key, set, language);
+            var tags = FitTags(likeLabels);
+            cards.Add(new PupilPassportOccupationCard(
+                rank,
+                domain,
+                title,
+                blurb,
+                tags,
+                IconFor(key)));
+            rank++;
+        }
+
+        return cards;
+    }
+
+    public static IReadOnlyList<PupilPassportOccupationCard> BuildGroep78(
+        IReadOnlyList<PupilG78JobMatch> matches,
+        string language = "nl")
+    {
+        var english = PupilVerhaalLocalized.IsEnglish(language);
+        var cards = new List<PupilPassportOccupationCard>();
+        var rank = 1;
+        foreach (var match in matches)
+        {
+            var key = match.JobKey;
+            var beroepKey = PupilG78CareerScoring.PrimaryBeroepssoortKey(key);
+            var domain = beroepKey is null
+                ? ""
+                : PupilG78BeroepssoortCatalog.Title(beroepKey, english);
+            var title = PupilPassportLocalizedCopy.JobTitle(key, language);
+            var blurb = PupilPassportLocalizedCopy.JobBlurb(key, PupilQuestionSet.Groep78, language);
+            var tags = string.IsNullOrWhiteSpace(domain)
+                ? Array.Empty<string>()
+                : new[] { domain };
+            var matchPercent = PupilG78CareerScoring.MatchPercentInt(match.MatchScore);
+            cards.Add(new PupilPassportOccupationCard(
+                rank,
+                domain,
+                title,
+                blurb,
+                tags,
+                IconFor(key),
+                matchPercent));
+            rank++;
+        }
+
+        return cards;
+    }
+
+    private static IReadOnlyList<string> FitTags(IReadOnlyList<string> likes)
+    {
+        var tags = new List<string>(3);
+        foreach (var like in likes.Take(2))
+        {
+            tags.Add(like.ToLowerInvariant());
+        }
+
+        if (tags.Count == 0)
+        {
+            tags.Add(PupilPassportCopy.Get("LeerlingPassport.Card.Fit.Curious"));
+        }
+
+        return tags;
+    }
+
+    private static string IconFor(string key) => key switch
+    {
+        "dierenverzorger" or "dierenarts" => "giraffe",
+        "bioloog" or "wetenschapper" => "microscope",
+        "hovenier" => "flower",
+        "kok" or "bakker" => "brief",
+        "programmeur" or "ict-medewerker" => "microscope",
+        "leraar" => "cap",
+        "verpleegkundige" => "heart",
+        "brandweer" => "shield",
+        "politie" => "shield",
+        _ => "spark"
+    };
+}

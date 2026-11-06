@@ -1,0 +1,269 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.Ui
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.DependencyInjection
+@inherits CultureAwareComponentBase
+@inject IJSRuntime Js
+@inject IServiceProvider Services
+
+@if (_show)
+{
+    <button type="button"
+            class="read-aloud read-aloud--icon @(_speaking ? "is-speaking" : null)"
+            data-read-aloud
+            data-read-aloud-state="@(_speaking ? "stop" : "play")"
+            aria-pressed="@(_speaking ? "true" : "false")"
+            aria-label="@AriaLabel"
+            title="@TooltipText"
+            @onclick="ToggleAsync"
+            @onclick:stopPropagation="true">
+        <span class="read-aloud__icon" aria-hidden="true">@((MarkupString)(_speaking ? LineIcons.SquareStop : LineIcons.Volume))</span>
+    </button>
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="read-aloud__error" role="status">@_error</p>
+    }
+}
+
+@code {
+    [Parameter] public string Text { get; set; } = "";
+
+    [Parameter] public string SpeechKey { get; set; } = "";
+
+    /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
+    [Parameter] public string? PlayAria { get; set; }
+
+    private bool _show;
+    private bool _speaking;
+    private bool _pending;
+    private string? _error;
+    private string _spoken = "";
+    private DotNetObjectReference<ReadAloudButton>? _self;
+    private ReadAloudCoordinator? _coordinator;
+
+    private string EffectiveKey => string.IsNullOrWhiteSpace(SpeechKey) ? "text-" + StableHash(Text) : SpeechKey;
+
+    private string TooltipText => _pending
+        ? Culture["ReadAloud.Loading"]
+        : _speaking
+            ? Culture["ReadAloud.Stop"]
+            : Culture["ReadAloud.Play"];
+
+    private string AriaLabel => _pending
+        ? Culture["ReadAloud.Loading"]
+        : _speaking
+            ? Culture["ReadAloud.StopAria"]
+            : string.IsNullOrWhiteSpace(PlayAria) ? Culture["ReadAloud.PlayAria"] : PlayAria;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _coordinator = Services.GetService<ReadAloudCoordinator>();
+        if (_coordinator is not null)
+        {
+            _coordinator.ActiveChanged += OnActiveChanged;
+            _coordinator.PreferenceChanged += OnPreferenceChanged;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Yield();
+            await ProbeAsync();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_speaking && !string.Equals(_spoken, Text, StringComparison.Ordinal))
+        {
+            await StopQuietlyAsync();
+        }
+    }
+
+    protected override async Task OnCultureChanged()
+    {
+        if (_speaking)
+        {
+            await StopQuietlyAsync();
+        }
+
+        await ProbeAsync();
+        await base.OnCultureChanged();
+    }
+
+    private async Task ProbeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            _show = false;
+            StateHasChanged();
+            return;
+        }
+
+        _show = true;
+        StateHasChanged();
+        try
+        {
+            var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
+            _show = probe is { Supported: true, Enabled: true };
+        }
+        catch (Exception)
+        {
+            _show = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ToggleAsync()
+    {
+        if (_speaking)
+        {
+            await StopQuietlyAsync();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            return;
+        }
+
+        _error = null;
+        _pending = true;
+        StateHasChanged();
+        try
+        {
+            _self ??= DotNetObjectReference.Create(this);
+            var started = await Js.InvokeAsync<bool>("lobsyReadAloud.speak", Text, Culture.Language, _self);
+            if (!started)
+            {
+                _pending = false;
+                _error = Culture["ReadAloud.Error"];
+                return;
+            }
+
+            _spoken = Text;
+            _speaking = true;
+            _pending = false;
+            _coordinator?.SetActive(EffectiveKey);
+        }
+        catch (Exception)
+        {
+            _pending = false;
+            _speaking = false;
+            _error = Culture["ReadAloud.Error"];
+        }
+    }
+
+    [JSInvokable]
+    public void OnSpeechEnded()
+    {
+        _pending = false;
+        _speaking = false;
+        if (_coordinator?.ActiveKey == EffectiveKey)
+        {
+            _coordinator.SetActive(null);
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnSpeechError(string? reason)
+    {
+        _pending = false;
+        _speaking = false;
+        _error = Culture["ReadAloud.Error"];
+        if (_coordinator?.ActiveKey == EffectiveKey)
+        {
+            _coordinator.SetActive(null);
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private async Task StopQuietlyAsync()
+    {
+        _pending = false;
+        _speaking = false;
+        if (_coordinator?.ActiveKey == EffectiveKey)
+        {
+            _coordinator.SetActive(null);
+        }
+
+        try
+        {
+            if (_self is not null)
+            {
+                await Js.InvokeVoidAsync("lobsyReadAloud.stop", _self);
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("lobsyReadAloud.stop");
+            }
+        }
+        catch (Exception)
+        {
+            /* Circuit is going away, or speech is already stopped. */
+        }
+    }
+
+    private void OnActiveChanged()
+        => _ = InvokeAsync(() =>
+        {
+            var speaking = _coordinator?.ActiveKey == EffectiveKey;
+            if (_speaking == speaking)
+            {
+                return;
+            }
+
+            _speaking = speaking;
+            StateHasChanged();
+        });
+
+    private void OnPreferenceChanged()
+        => _ = InvokeAsync(async () =>
+        {
+            if (_speaking)
+            {
+                await StopQuietlyAsync();
+            }
+
+            await ProbeAsync();
+        });
+
+    public override void Dispose()
+    {
+        if (_coordinator is not null)
+        {
+            _coordinator.ActiveChanged -= OnActiveChanged;
+            _coordinator.PreferenceChanged -= OnPreferenceChanged;
+        }
+
+        if (_speaking)
+        {
+            _ = StopQuietlyAsync();
+        }
+
+        _self?.Dispose();
+        base.Dispose();
+    }
+
+    private static string StableHash(string value)
+    {
+        unchecked
+        {
+            var hash = 17;
+            foreach (var ch in value)
+            {
+                hash = (hash * 31) + ch;
+            }
+
+            return hash.ToString("x", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+}

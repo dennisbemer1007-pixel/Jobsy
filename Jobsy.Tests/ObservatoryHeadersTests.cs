@@ -59,14 +59,11 @@ public class ObservatoryHeadersTests
     [Fact]
     public void Consent_and_culture_js_set_secure_on_https()
     {
-        var consent = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "cookieConsent.js"));
-        Assert.Contains("location.protocol === \"https:\" ? \"; Secure\"", consent);
-
-        var culture = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "culture.js"));
-        Assert.Contains("location.protocol === \"https:\" ? \"; Secure\"", culture);
-
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("location.protocol === \"https:\" ? \"; Secure\"", bundle);
+        // culture + cookieConsent both live in app-core (served bundle).
+        Assert.Contains("window.jobsyCulture", bundle);
+        Assert.Contains("Jobsy.CookieConsent", bundle);
     }
 
     private static string FindRepoRoot()

@@ -1,0 +1,13 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="ref-verif-request-aside detail-card" aria-labelledby="ref-verif-request-aside-title">
+    <h2 id="ref-verif-request-aside-title" class="ref-verif-request-aside__title">@Culture["RefVerif.Request.NextTitle"]</h2>
+    <ul class="ref-verif-request-aside__list">
+        <li>@Culture["RefVerif.Request.NextStep1"]</li>
+        <li>@Culture["RefVerif.Request.NextStep2"]</li>
+        <li>@Culture["RefVerif.Request.NextStep3"]</li>
+        <li>@Culture["RefVerif.Request.NextStep4"]</li>
+    </ul>
+</aside>

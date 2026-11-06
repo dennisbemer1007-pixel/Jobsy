@@ -1,0 +1,34 @@
+KEY: ApplicationVerificationCode
+SUBJECT: رمزك للطلب: 123456
+PREHEADER: أدخل هذا الرمز لإرسال طلبك.
+KIND: Security
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+رمزك
+
+أدخل هذا الرمز على Lobsy لإرسال طلبك على ⁨Weekendhulp verkoop⁩.
+
+
+123456
+
+الرمز يعمل لمدة 10 دقائق.
+
+ألم تفعل هذا بنفسك؟ يمكنك تجاهل هذه الرسالة.
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأن شخصًا بهذا البريد يريد التقدّم عبر Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: رمزك
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
+a: Lobsy -> https://lobsy.nl
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

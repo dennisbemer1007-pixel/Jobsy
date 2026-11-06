@@ -1,8 +1,9 @@
+@inherits CultureAwareComponentBase
+@using Jobsy.Web.Features
 @inject NavigationManager Navigation
 @inject PageSeoContext Seo
-@inject CultureState Culture
 @inject IConfiguration Config
-@implements IDisposable
+@inject LandingVariantResolver VariantResolver
 
 <PageTitle>@Model.Title</PageTitle>
 <HeadContent>
@@ -22,7 +23,7 @@
     <meta name="twitter:image" content="@Model.ImageUrl" />
     @if (Model.Indexable && IsHome)
     {
-        <script type="application/ld+json">@((MarkupString)StructuredData.WebsiteAndOrganization(Origin))</script>
+        <script type="application/ld+json">@((MarkupString)StructuredData.WebsiteAndOrganization(Origin, includeSearchAction: _includeSearchAction))</script>
     }
     @if (Model.Indexable && BreadcrumbJsonLd is not null)
     {
@@ -32,12 +33,29 @@
     {
         <script type="application/ld+json">@((MarkupString)Model.JsonLd)</script>
     }
+    @if (Model.Indexable && PageSeoCatalog.Resolve(new Uri(Navigation.Uri).AbsolutePath).Hreflang)
+    {
+        @foreach (var link in HreflangLinks.ForPath(Origin, new Uri(Navigation.Uri).AbsolutePath))
+        {
+            <link rel="alternate" hreflang="@link.Hreflang" href="@link.Href" />
+        }
+    }
 </HeadContent>
 
 @code {
+    private bool _includeSearchAction = true;
+
     private PageSeoModel Model => PageSeoResolver.Resolve(Navigation.Uri, Culture, Config, Seo.Current);
 
-    private bool IsHome => PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath) == "/";
+    private bool IsHome
+    {
+        get
+        {
+            var path = PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath);
+            // Website+Organization JSON-LD on the marketing home ("/") and the banenkaart (ON only).
+            return path == "/" || (path == "/banenkaart" && _includeSearchAction);
+        }
+    }
 
     private string Origin => PageSeoResolver.Origin(Navigation.Uri, Config);
 
@@ -55,7 +73,7 @@
         get
         {
             var path = PageSeoCatalog.Normalize(new Uri(Navigation.Uri).AbsolutePath);
-            if (path == "/" || !Model.Indexable)
+            if (path is "/" || !Model.Indexable)
             {
                 return null;
             }
@@ -78,22 +96,28 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Seo.Changed += OnChanged;
-        Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnChanged;
+        var variant = await VariantResolver.GetAsync();
+        _includeSearchAction = variant == LandingVariant.On;
     }
 
-    private void OnChanged() => InvokeAsync(StateHasChanged);
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Seo.Changed += OnSeoChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnSeoChanged() => InvokeAsync(StateHasChanged);
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
+    public override void Dispose()
     {
-        Seo.Changed -= OnChanged;
+        Seo.Changed -= OnSeoChanged;
         Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnChanged;
+        base.Dispose();
     }
 }

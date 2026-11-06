@@ -10,6 +10,10 @@ public class CandidateReference
     public string ContactName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    /// <summary>ReferenceTypeCatalog code. Employer sees neutral role label only.</summary>
+    public string? ReferenceType { get; set; }
+    /// <summary>Private: where the candidate knows this person from. Never employer-facing.</summary>
+    public string? RelationshipContext { get; set; }
     public int SortOrder { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 }

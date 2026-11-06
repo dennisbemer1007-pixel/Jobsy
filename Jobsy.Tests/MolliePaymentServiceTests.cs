@@ -177,12 +177,16 @@ public class MolliePaymentServiceTests
         var http = new NamedHttpClientFactory(handler ?? new StubMollieHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.InternalServerError)));
 
-        return new MolliePaymentService(
-            db,
+        var mollie = new MollieApiClient(
             credentials,
-            features,
             http,
             config,
+            new FakeHostEnvironment(isDevelopment),
+            NullLogger<MollieApiClient>.Instance);
+        return new MolliePaymentService(
+            db,
+            features,
+            mollie,
             new FakeHostEnvironment(isDevelopment),
             stub,
             NullLogger<MolliePaymentService>.Instance);
@@ -206,7 +210,11 @@ public class MolliePaymentServiceTests
             KvkNumber = "12345678",
             Address = "Test",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenPricings.Add(new TokenPricing
         {

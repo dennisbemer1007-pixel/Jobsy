@@ -20,9 +20,9 @@ public class SalesCommercialServiceTests
 
         var catalog = await sut.GetPublicCatalogAsync();
 
-        Assert.Equal(25m, catalog.BaseTokenValueEuro);
+        Assert.Equal(3m, catalog.BaseTokenValueEuro);
         Assert.Equal(2m, catalog.HighlightCarouselTokens);
-        Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Regular" && c.CostTokens == 1m);
+        Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Regular" && c.CostTokens == 1m && c.PriceEuro == 3m);
         Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Internship" && c.CostTokens == 0m);
         Assert.Contains(catalog.VacancyTypeCosts, c => c.Kind == "Volunteer" && c.CostTokens == 0m);
         Assert.Contains(catalog.Packages, p => p.Name == "Gold");
@@ -54,7 +54,11 @@ public class SalesCommercialServiceTests
             KvkNumber = "12345678",
             Address = "Teststraat 1",
             Location = new GeoPoint(52.0, 4.3),
-            PendingStartHighlightBonus = true
+            PendingStartHighlightBonus = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         var vacancy = new Vacancy
         {
@@ -124,9 +128,9 @@ public class SalesCommercialServiceTests
         var refreshed = await db.Companies.AsNoTracking().SingleAsync(c => c.Id == company.Id);
         Assert.False(refreshed.PendingStartHighlightBonus);
 
-        // Only publish cost charged (1 token); highlight was free.
+        // Publish is free; highlight was free via start bonus.
         var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
-        Assert.Equal(4m, balance);
+        Assert.Equal(5m, balance);
     }
 
     [Fact]
@@ -164,16 +168,24 @@ public class SalesCommercialServiceTests
         Assert.Equal((byte)'D', bytes[2]);
         Assert.Equal((byte)'F', bytes[3]);
         Assert.Equal(1, PdfPageCounter.Count(bytes));
+        Assert.DoesNotContain(
+            System.Text.Encoding.Latin1.GetString(bytes),
+            "lobsy.nl/register",
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            System.Text.Encoding.Latin1.GetString(bytes),
+            "/register?ref=",
+            StringComparison.OrdinalIgnoreCase);
 
-        var text = System.Text.Encoding.Latin1.GetString(bytes);
-        Assert.DoesNotContain("lobsy.nl/register", text, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("/register?ref=", text, StringComparison.OrdinalIgnoreCase);
+        var generic = await flyer.RenderAsync(null);
+        Assert.True(generic.Length > 500);
+        Assert.False(bytes.SequenceEqual(generic));
     }
 
     private sealed class FlyerFakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(false, false, false, "https://lobsy.nl", null));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, "https://lobsy.nl", null));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,
@@ -209,7 +221,11 @@ public class SalesCommercialServiceTests
             KvkNumber = "12345678",
             Address = "Teststraat 1",
             Location = new GeoPoint(52.0, 4.3),
-            PendingStartHighlightBonus = true
+            PendingStartHighlightBonus = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         db.Companies.Add(company);
         db.TokenTransactions.Add(new TokenTransaction
@@ -278,8 +294,8 @@ public class SalesCommercialServiceTests
         Assert.True(second.Vacancy!.IsHighlighted);
 
         var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
-        // First: publish 1 + free highlight. Second: publish 1 + paid highlight 2 → spent 4, balance 6.
-        Assert.Equal(6m, balance);
+        // First: free publish + free highlight. Second: free publish + paid highlight 2 → spent 2, balance 8.
+        Assert.Equal(8m, balance);
         Assert.False((await db.Companies.AsNoTracking().SingleAsync(c => c.Id == company.Id)).PendingStartHighlightBonus);
     }
 
@@ -318,6 +334,13 @@ public class SalesCommercialServiceTests
             IsActive = true,
             SortOrder = 20
         });
+        db.TokenPricings.AddRange(
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 1, PriceEuro = 5.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 5, PriceEuro = 22.50m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 10, PriceEuro = 40.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 50, PriceEuro = 175.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 100, PriceEuro = 300.00m, IsActive = true },
+            new TokenPricing { Id = Guid.NewGuid(), PackSize = 999, PriceEuro = 1.00m, IsActive = false });
         db.PlatformCompanySettings.Add(new PlatformCompanySettings
         {
             Id = PlatformCompanySettingsService.SingletonId,

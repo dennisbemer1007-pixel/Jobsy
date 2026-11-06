@@ -1,10 +1,17 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Localization;
+using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
+using Jobsy.Web.Discovery;
 using Jobsy.Web.Hosting;
+using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Middleware;
 using Jobsy.Web.Security;
 using Jobsy.Web.Seo;
 using Jobsy.Web.Services;
@@ -12,6 +19,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJobsyAcceptatieAppSettings();
 
 var sentryDsn = builder.Configuration["Sentry:Dsn"];
 if (!string.IsNullOrWhiteSpace(sentryDsn))
@@ -25,19 +33,55 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
     });
 }
 
+builder.Services.AddOptions<Jobsy.Core.Options.AiOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.AiOptions.SectionName));
+builder.Services.AddOptions<Jobsy.Core.Options.MistralOptions>()
+    .Bind(builder.Configuration.GetSection(Jobsy.Core.Options.MistralOptions.SectionName))
+    .PostConfigure(options => Jobsy.Core.Options.MistralOptions.ApplyKeyAlias(options, key => builder.Configuration[key]));
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
     // Cloudflare → Render is two hops; default KnownProxies (loopback-only) ignores both.
     // Clear so X-Forwarded-Proto reaches Kestrel (Secure cookies / no redirect loops).
     // Client IP still comes from CF-Connecting-IP only after CloudflareOriginMiddleware
     // validates the origin secret — do not treat X-Forwarded-For as authoritative alone.
     options.ForwardLimit = 2;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
+builder.Services.Configure<Jobsy.Core.Options.SessionAuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.SessionAuthOptions.SectionName));
+builder.Services.Configure<Jobsy.Core.Options.AuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.AuthOptions.SectionName));
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
+
+builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>
+{
+    var cfg = builder.Configuration;
+    var enabled = string.Equals(cfg["TestAccounts:Enabled"], "true", StringComparison.OrdinalIgnoreCase)
+                  || cfg.GetValue("TestAccounts:Enabled", false);
+    var input = TestAccountGuardInputBuilder.Create(
+        deploymentEnvironment: cfg["Lobsy:DeploymentEnvironment"],
+        testAccountsEnabled: enabled,
+        renderServiceName: cfg["RENDER_SERVICE_NAME"],
+        publicWebBaseUrl: null,
+        apiBaseUrl: cfg["ApiBaseUrl"],
+        connectionString: cfg.GetConnectionString("JobsyDb") ?? cfg["DATABASE_URL"],
+        allowStubPayments: true,
+        hasLiveMollieKey: false,
+        hostEnvironmentName: builder.Environment.EnvironmentName,
+        allowedPublicHosts: cfg.GetSection("TestAccounts:AllowedPublicHosts").Get<string[]>(),
+        expectedDatabaseName: cfg["TestAccounts:ExpectedDatabaseName"],
+        isWebRuntime: true);
+    var runtime = TestAccountsRuntimeState.FromInput(input);
+    Console.WriteLine(
+        $"Test accounts runtime: {(runtime.IsActive ? "active" : "inactive")} ({runtime.StatusCodes})");
+    return runtime;
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -47,7 +91,9 @@ builder.Services.AddRazorComponents()
         options.MaximumReceiveMessageSize = 2 * 1024 * 1024;
         // Mobile networks / brief background pauses: keep the circuit warmer than defaults.
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-        options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+        // Android/iOS can suspend the tab >60s without killing the auth cookie; allow longer silence
+        // before the server drops the circuit (retained disconnects still reconnect for 15 min).
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(90);
     });
 
 var circuitDetailedErrors = builder.Environment.IsDevelopment()
@@ -56,33 +102,219 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
 {
     // DetailedErrors only in Development and Acceptatie (Circuit__DetailedErrors=true).
     options.DetailedErrors = circuitDetailedErrors;
-    // Acc 27-09 §4: keep backgrounded mobile tabs longer; cap retained circuits on Starter RAM.
+    // Keep backgrounded mobile tabs reconnectable (min ~3 min is far below this cap).
+    // Requires a single web instance or sticky sessions: circuits live in process memory only.
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(15);
     options.DisconnectedCircuitMaxRetained = 100;
 });
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.CircuitExceptionLogger>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, Jobsy.Web.Hosting.RequestCultureCircuitHandler>();
 
+builder.Services.AddTransient<Jobsy.Web.Auth.TrustedClientIpHandler>();
+builder.Services.AddTransient<CloudflareOriginHeaderHandler>();
+builder.Services.AddTransient<JobsyApiRedirectHandler>();
+var cloudflareOriginSecret = CloudflareOriginSecret.Normalize(
+    builder.Configuration[CloudflareOriginMiddleware.ConfigKey]
+    ?? builder.Configuration[CloudflareOriginMiddleware.ConfigKeyAlt]);
+builder.Services.ConfigureHttpClientDefaults(http =>
+{
+    // Named API clients (auth, SEO, branding, session, …). While the secret is unset this
+    // handler is a no-op and redirects stay on the default HttpClientHandler.
+    // Once it is set, follow redirects here so a third-party hop never sees the secret.
+    if (cloudflareOriginSecret is not null)
+    {
+        http.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        http.AddHttpMessageHandler<JobsyApiRedirectHandler>();
+    }
+
+    http.AddHttpMessageHandler<CloudflareOriginHeaderHandler>();
+});
 builder.Services.AddJobsyAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<JobsyAccessTokenIssuer>();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<Jobsy.Web.Scholen.PupilWebProgressCache>();
+builder.Services.AddSingleton<Jobsy.Web.Scholen.PupilMboHboWebProgressCache>();
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
 builder.Services.AddHttpClient("JobsySessionSecurity");
+builder.Services.AddHttpClient(Jobsy.Web.Auth.AuthApiClient.HttpClientName, client =>
+{
+    client.BaseAddress = new Uri(Jobsy.Core.JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/"));
+    client.Timeout = TimeSpan.FromSeconds(8);
+}).AddHttpMessageHandler<Jobsy.Web.Auth.TrustedClientIpHandler>();
+builder.Services.AddSingleton<Jobsy.Web.Auth.AuthApiClient>();
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
+builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IReferenceVerificationFeatureGate, Jobsy.Web.Features.ReferenceVerificationFeatureGate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.ITestJourneyIllustrationGate, Jobsy.Web.Features.TestJourneyIllustrationGate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IChatContextGreetingGate, Jobsy.Web.Features.ChatContextGreetingGate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IOnboardingFinaleV2Gate, Jobsy.Web.Features.OnboardingFinaleV2Gate>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IOnboardingRustigGate, Jobsy.Web.Features.OnboardingRustigGate>();
+builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
+builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
+    Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
+builder.Services.AddScoped<Jobsy.Web.Features.ICandidateHeroCompactPreviewGate, Jobsy.Web.Features.CandidateHeroCompactPreviewGate>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Pwa.PwaInstallSheetState>();
+builder.Services.AddScoped<Jobsy.Web.Services.ReadAloudCoordinator>();
+// E7: the only place that turns an exception into text a visitor may read.
+builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
+builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeState>();
+builder.Services.AddScoped<Jobsy.Web.Werkgever.EmployerScopeBootstrap>();
+builder.Services.AddScoped<Jobsy.Web.Werkgever.WerkgeverCountsState>();
+builder.Services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
+    Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance); // KB-FALLBACK(D)
 builder.Services.AddScoped<PageSeoContext>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IEmployersSwitch, Jobsy.Web.Features.FeatureFlagEmployersSwitch>();
+builder.Services.AddScoped<Jobsy.Web.UwvFeatures.IUwvFeaturesGate, Jobsy.Web.UwvFeatures.UwvFeaturesGate>();
+builder.Services.AddSingleton<Jobsy.Web.UwvFeatures.IUwvKansberoepenCatalog, Jobsy.Web.UwvFeatures.UwvKansberoepenCatalog>();
+builder.Services.AddSingleton<Jobsy.Web.Hosting.IErrorChromeProvider, Jobsy.Web.Hosting.ErrorChromeProvider>();
+builder.Services.AddScoped<Jobsy.Web.Features.LandingVariantResolver>();
+builder.Services.AddSingleton<Jobsy.Web.Services.LandingStatsClient>();
+builder.Services.AddSingleton<Jobsy.Web.Services.LandingPriceClient>();
+builder.Services.AddSingleton<Jobsy.Web.Services.LegalIdentityProvider>();
+builder.Services.AddHttpClient(Jobsy.Web.Services.LegalIdentityProvider.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(3);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient(Jobsy.Web.Services.LandingStatsClient.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMilliseconds(400);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyLanding/1.0");
+});
+builder.Services.AddHttpClient(Jobsy.Web.Services.LandingPriceClient.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMilliseconds(400);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyLanding/1.0");
+});
+builder.Services.AddSingleton<Jobsy.Web.Services.ICookieConsentTokenService, Jobsy.Web.Services.CookieConsentTokenService>();
 builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.MeGetCache>();
+builder.Services.AddScoped<Jobsy.Web.Services.DiscoveryOverviewCache>();
+builder.Services.AddScoped<Jobsy.Web.Discovery.DiscoverySsrDepthStore>();
 builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
+builder.Services.AddScoped<Jobsy.Web.Services.RoleNavItemsState>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
+builder.Services.AddScoped<Jobsy.Web.Navigation.CoachTipBus>();
+builder.Services.AddScoped<Jobsy.Web.Services.LeerlingCoachHint>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.FeedbackHost>();
+builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminSidebarState>();
+builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoCountsStore>();
+builder.Services.AddScoped<Jobsy.Web.Components.Admin.Shell.AdminTodoChanged>();
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var deploymentLabel = config["Deployment:Label"];
+    if (string.IsNullOrWhiteSpace(deploymentLabel))
+    {
+        // Render sets Lobsy__DeploymentEnvironment (Acceptatie / Production). The web
+        // service does not always have PublicWebBaseUrl, which otherwise stays Lokaal.
+        deploymentLabel = config["Lobsy:DeploymentEnvironment"];
+    }
+
+    return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
+        Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
+            config["PublicWebBaseUrl"],
+            deploymentLabel));
+});
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateMatchProfileService>();
 builder.Services.AddScoped<Jobsy.Web.Services.MatchVacancyService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CareerPathService>();
+builder.Services.AddScoped<
+    Jobsy.Web.Services.Careers.ICareerStepVacancyFit,
+    Jobsy.Web.Services.Careers.CareerStepVacancyFitService>();
 builder.Services.AddScoped<Jobsy.Web.Services.CandidateProfileService>();
+builder.Services.AddScoped<Jobsy.Web.Components.Candidate.ProfileSections.CandidateProfileEditor>();
+builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaStorage>();
+builder.Services.AddScoped<Jobsy.Web.Services.GratisDnaMergeService>();
+// Anonymous POST relay for the static /melden form; forwards the visitor IP so the
+// API partitions the "report" rate limit per visitor instead of per Web instance.
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.ContentReportEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(8);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+}).AddHttpMessageHandler<Jobsy.Web.Auth.TrustedClientIpHandler>();
+// GET /privacy/data/export forwards to the API with a minted bearer token (07) — this is a
+// plain HttpClient, not the circuit-scoped JobsyApiClient, so the download works outside Blazor.
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.PrivacyDataExportEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateProfileResetEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient("JobsyWebSelf", client =>
+{
+    var publicBase = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["PublicBaseUrl"] ?? builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5100/");
+    client.BaseAddress = new Uri(publicBase);
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<Jobsy.Web.Security.ForwardCircuitCookiesHandler>();
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMinutes(2);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.PupilPdfEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromMinutes(2);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+}).AddHttpMessageHandler<Jobsy.Web.Auth.TrustedClientIpHandler>();
+// GET /partner/flyer.pdf forwards the anonymous API flyer so the share link needs no JavaScript (09).
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.PartnerFlyerEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(20);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
 builder.Services.AddHttpClient("JobsySeo", client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -104,22 +336,47 @@ builder.Services.AddHttpClient(Jobsy.Web.Branding.PlatformBrandingState.HttpClie
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
 
-builder.Services.AddHttpClient<IGeocodingClient, NominatimGeocodingClient>(client =>
+// Maintenance switch (errors 05): one polled singleton, so no request ever waits on the API.
+builder.Services.AddSingleton<MaintenanceState>();
+builder.Services.AddHostedService<MaintenancePoller>();
+
+builder.Services.AddSingleton<Jobsy.Core.Geo.NominatimPace>();
+builder.Services.AddSingleton<Jobsy.Core.Geo.GeoLookupCache>();
+var nominatimAgent = Jobsy.Core.Options.GeoOptions.UserAgent(builder.Configuration["Geo:ContactEmail"]);
+builder.Services.AddHttpClient<NominatimGeocodingClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(8);
-    client.DefaultRequestHeaders.TryAddWithoutValidation(
-        "User-Agent",
-        "Lobsy/1.0 (demo; contact@jobsy.local)");
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", nominatimAgent);
     client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
 });
+builder.Services.AddHttpClient<PdokGeocodingClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(8);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", nominatimAgent);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "nl");
+});
+builder.Services.AddScoped<IGeocodingClient, CompositeGeocodingClient>();
 
 // Scoped (circuit) registration — do not use IHttpClientFactory + message handler here.
 // That resolves AuthenticationStateProvider outside the Razor component scope.
 // JobsyApiClient is IAsyncDisposable so the circuit scope disposes the HttpClient.
-builder.Services.AddScoped(sp =>
-    new JobsyApiClient(
-        JobsyApiClientFactory.Create(sp, builder.Configuration),
-        sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+if (CaptureModeExtensions.IsEnabled(builder.Configuration))
+{
+    builder.Services.AddCaptureModeStubs(builder.Configuration);
+    builder.Services.AddScoped(sp =>
+        new JobsyApiClient(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient("capture"),
+            sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+}
+else
+{
+    builder.Services.AddScoped(sp =>
+        new JobsyApiClient(
+            JobsyApiClientFactory.Create(sp, builder.Configuration),
+            sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+}
+builder.Services.AddScoped<Jobsy.Web.Services.KvkSearchClient>();
+builder.Services.AddScoped<Jobsy.Web.Components.Registration.RegistrationWizardState>();
 builder.Services.AddScoped<IVacancyMapApiForwarder, VacancyMapApiForwarder>();
 
 builder.Services.AddJobsyWebPerformance();
@@ -134,22 +391,191 @@ builder.Services.AddHsts(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        var http = context.HttpContext;
+        var path = http.Request.Path.Value ?? string.Empty;
+        var isAuthForm = HttpMethods.IsPost(http.Request.Method)
+            && (path.Equals("/account/login", StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
+                || path.Equals("/account/mfa/herstelcodes-vernieuwen", StringComparison.OrdinalIgnoreCase));
+        var retryAfterSeconds = Jobsy.Web.Security.RateLimitRejection.RetryAfterSeconds(context.Lease);
+        if (isAuthForm)
+        {
+            var until = DateTimeOffset.UtcNow.AddSeconds(retryAfterSeconds).ToUnixTimeSeconds();
+            var target = path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
+                ? $"/account/mfa?error=too-many&until={until}"
+                : path.Equals("/account/mfa/herstelcodes-vernieuwen", StringComparison.OrdinalIgnoreCase)
+                    ? $"/account/mfa/herstelcodes-vernieuwen?error=too-many&until={until}"
+                    : $"/login?error=too-many&until={until}";
+            http.Response.StatusCode = StatusCodes.Status303SeeOther;
+            http.Response.Headers.Location = target;
+            return;
+        }
+
+        // The /melden form works without JS, so keep the visitor on the page.
+        if (HttpMethods.IsPost(http.Request.Method)
+            && path.Equals("/melden", StringComparison.OrdinalIgnoreCase))
+        {
+            var form = await http.Request.ReadFormAsync(token);
+            var target = ContentReportEndpoints.BuildFormUrl(
+                ContentReportEndpoints.NormalizeType(form["type"].ToString()),
+                form["id"].ToString().Trim());
+            http.Response.StatusCode = StatusCodes.Status303SeeOther;
+            http.Response.Headers.Location = target
+                + "&fout=teveel"
+                + ContentReportEndpoints.AppendReasonQuery(form["reason"].ToString());
+            return;
+        }
+
+        // HTML visitors get the friendly /status/429 page; everything else ProblemDetails (04.2).
+        await Jobsy.Web.Security.RateLimitRejection.WriteAsync(http, retryAfterSeconds, token);
+    };
     options.AddPolicy("auth", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    options.AddPolicy("pupil-login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 200,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("parent-passport", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // Short referral redirects (/p/{code}) — same envelope as API public-write.
+    options.AddPolicy("public-redirect", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // RFC 8058 one-click unsubscribe (30/min per IP).
+    options.AddPolicy("mail-unsubscribe", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // Static /melden form POST; the API applies the stricter per-visitor "report" limit.
+    options.AddPolicy("reference-form", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("report-form", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // GET /partner/flyer.pdf (09): PDF rendering is costly, so keep it tighter than public-read.
+    options.AddPolicy("partner-flyer", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // Browser-direct passport PDF (same budget as API public-pdf).
+    options.AddPolicy("public-pdf", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 12,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // GET /privacy/data/export (07): per signed-in user, not per IP (shared Web→API hop).
+    options.AddPolicy("export", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
+JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
+Jobsy.Core.Careers.OccupationCatalog.Configure(
+    app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
+    app.Environment.IsProduction());
+Jobsy.Core.Reports.DeepReportCatalog.Logger =
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Jobsy.DeepReportCatalog");
+
+if (string.IsNullOrWhiteSpace(builder.Configuration[Jobsy.Core.Security.InternalClientIpHeaders.ConfigKey])
+    && !app.Environment.IsDevelopment())
+{
+    app.Logger.LogWarning(
+        "JobsyAuth:InternalClientIpSecret is empty; auth rate limits fall back to the Web→API hop");
+}
+
 
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
+app.UseMiddleware<Jobsy.Web.Seo.SeoNoIndexMiddleware>();
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
+// Render probes the web service directly (not via Cloudflare). Answer before origin enforcement.
+app.Use(async (context, next) =>
+{
+    if ((HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
+        && CloudflareOriginMiddleware.IsHealthProbe(context.Request.Path))
+    {
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        if (HttpMethods.IsGet(context.Request.Method))
+        {
+            await context.Response.WriteAsync("ok", context.RequestAborted);
+        }
+
+        return;
+    }
+
+    await next();
+});
 app.UseMiddleware<CloudflareOriginMiddleware>();
 app.UseWebSockets(new WebSocketOptions
 {
@@ -157,20 +583,46 @@ app.UseWebSockets(new WebSocketOptions
     KeepAliveInterval = TimeSpan.FromSeconds(15)
 });
 app.UseMiddleware<WwwCanonicalMiddleware>();
+app.UseAdminLegacyRedirects();
+app.UseCandidateLegacyRedirects();
+app.UseBedrijvenkaartSsrPreviewRedirect();
+app.UseAfterMatchPickSlotRouteRewrite();
 app.UseResponseCompression();
+
+// Development keeps the developer exception page; tests opt in with Errors:ForceHandler.
+var useErrorPageHandler = !app.Environment.IsDevelopment()
+    || app.Configuration.GetValue<bool>(ErrorPagesExtensions.ForceHandlerConfigKey);
+if (useErrorPageHandler)
+{
+    app.UseErrorPageFallback();
+    app.UseExceptionHandler(ErrorPagesExtensions.ErrorPath, createScopeForErrors: true);
+    app.UseErrorPageMethodReset();
+}
+
+// Development-only, opt-in: lets the browser suite request a genuine 500 page.
+app.UseTestThrowPath();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
 
+// Unknown HTML pages answer with the real status code and the friendly /status/{code} page.
+app.UseHtmlStatusCodePages();
+
+// Explicit so it sits *after* the re-executing handlers above: both /Error and /status/{code}
+// need routing to run again on the rewritten path. WebApplication would otherwise add it first.
+app.UseRouting();
+app.UseCaptureMode();
+
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
-if (app.Environment.IsDevelopment())
+var skipHttpsRedirect = app.Configuration.GetValue("E2E:SkipHttpsRedirect", false);
+if (app.Environment.IsDevelopment() && !skipHttpsRedirect)
 {
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<PrecompressedStaticFileMiddleware>();
 app.UseStaticFiles(WebPerformanceExtensions.JobsyStaticFiles());
 app.UseMiddleware<VersionedAssetCacheMiddleware>();
 
@@ -182,18 +634,100 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseCandidateGuestRedirect();
 app.UseRateLimiter();
+app.UseLegacyAuthRouteRedirects();
 app.UseLoginProtection();
 app.UseDeviceSessionRefresh();
 app.UseSessionInactivity();
+app.UseAdminProviderGuard();
+// Before authorization: with schools off, teacher (/school) and school admin (/leraar)
+// both get the friendly page instead of 403 vs raw JSON.
+app.UseMiddleware<SchoolsFeatureMiddleware>();
+// Before authorization so pupil cookie challenges (302) still get Cache-Control: no-store.
+// Authentication has already run, so the pupil principal is available.
+app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<PupilGroep78ThemeGuardMiddleware>();
+app.UseDiscoverySsrRedirect();
+// After auth so the admin bypass reads the cookie principal (errors 05).
+app.UseMiddleware<MaintenanceMiddleware>();
+app.UseMiddleware<SalesLegacyRoutesMiddleware>();
+app.UseMiddleware<AmbassadorsFeatureMiddleware>();
 app.UseMfaEnforcement();
 app.UseAntiforgery();
+// After staff auth middleware. /_blazor otherwise only knows Jobsy.Auth, so the
+// circuit treats a pupil as anonymous and Routes sends them to /login.
+app.UseMiddleware<PupilCircuitAuthenticationMiddleware>();
+app.UseRegisterOntdekRedirect();
+app.UseBanenRedirect();
+app.UseBewaardRedirect();
+app.UseBanenkaartGate();
+app.UseLandingRedirect();
+
+// Legacy /employer|/branch|/regional → /werkgever (GET/HEAD 301). Needs auth for /home.
+app.UseMiddleware<Jobsy.Web.Middleware.WerkgeverLegacyRedirectMiddleware>();
 
 app.MapJobsyAuthEndpoints();
+app.MapPublicTokenEndpoints();
+app.MapMailUnsubscribeEndpoints();
+app.MapReferenceConfirmationEndpoints();
+app.MapContentReportEndpoints();
+app.MapPrivacyDataExportEndpoints();
+app.MapCandidateProfileResetEndpoints();
+app.MapCandidatePassportPdfEndpoints();
+app.MapMeCandidateProxyEndpoints();
+app.MapPartnerFlyerEndpoints();
+app.MapMailSettingsEndpoints();
+app.MapPupilAuthEndpoints();
+app.MapPupilLoginPageEndpoints();
+app.MapTeacherPortalEntryEndpoints();
+app.MapTeacherPortalReadOnlyEndpoints();
+app.MapTeacherPortalOverviewEndpoints();
+app.MapTeacherPortalCodesEndpoints();
+app.MapTeacherPortalTestWindowEndpoints();
+app.MapTeacherCodeListFileEndpoints();
+app.MapTeacherPupilReportPdfEndpoints();
+app.MapSchoolPortalEndpoints();
+app.MapSchoolPortalFormEndpoints();
+app.MapSchoolCodeListFileEndpoints();
+app.MapParentPortalEndpoints();
+app.MapParentPassportAuthEndpoints();
+app.MapPupilDroombaanFormEndpoints();
+app.MapPupilLeerlingJourneyEndpoints();
+app.MapPupilPdfEndpoints();
+app.MapParentPassportPdfEndpoints();
+app.MapAdminFrameEndpoints();
+app.MapLanguageEndpoints();
+app.MapCookieConsentEndpoints();
+app.MapOnboardingClientEndpoints();
+app.MapPassportClientEndpoints();
+app.MapCareerClientEndpoints();
+app.MapSavedClientEndpoints();
+app.MapKbExtClientEndpoints();
+app.MapSollicitatiesClientEndpoints();
+app.MapUwvClientEndpoints();
+app.MapAfterMatchMessagesClientEndpoints();
+app.MapAfterMatchPickSlotClientEndpoints();
+app.MapAfterMatchEmployerProposeClientEndpoints();
+app.MapAfterMatchConfirmedClientEndpoints();
+app.MapAfterMatchRescheduleClientEndpoints();
+app.MapAfterMatchEmployerRescheduleClientEndpoints();
+app.MapAfterMatchEmployerCancelClientEndpoints();
+app.MapWerkgeverClientEndpoints();
+app.MapAfterMatchEmployerOutcomeClientEndpoints();
+app.MapBanenkaartClientEndpoints();
+app.MapBedrijvenkaartClientEndpoints();
+app.MapAssistantClientEndpoints();
+app.MapMapBasemapEndpoints();
+app.MapOnboardingStartFormEndpoints();
+app.MapDiscoveryClientFormEndpoints();
 app.MapSeoEndpoints();
+app.MapSalesReferralEndpoints();
 // Lightweight probe for Render — no auth, no prerender, no API client.
 app.MapGet("/healthz", () => Results.Text("ok"));
+app.MapGet("/vacancies", () => Results.Redirect(KbRoutes.Map, permanent: false));
+app.UseE2eDevPaths();
 // Banenkaart same-origin API proxies — must be before MapRazorComponents.
 app.MapVacancyMapProxyEndpoints();
 
@@ -203,6 +737,9 @@ app.MapRazorComponents<App>()
         // CSP is issued once by SecurityHeadersMiddleware (frame-ancestors 'none').
         // A second Blazor CSP header makes Observatory treat script-src as unrestricted.
         o.ContentSecurityFrameAncestorsPolicy = null;
+        // Cloudflare in front of Render corrupts permessage-deflate frames, so the
+        // circuit looks connected and then ignores clicks. Long polling still works.
+        o.DisableWebSocketCompression = true;
     });
 
 app.Run();

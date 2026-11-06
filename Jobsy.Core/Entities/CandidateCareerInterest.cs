@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -33,6 +35,10 @@ public class CandidateCareerInterest
 
     /// <summary>Persisted OpenAI (or local fallback) compass JSON for Mijn Beroepen-kompas.</summary>
     public string CompassJson { get; set; } = "";
+
+    public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
+
+    public int QuickScanHighestAnswered { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

@@ -29,7 +29,11 @@ public class StubServicesTests
             KvkNumber = "12345678",
             Address = "Test",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenPricings.Add(new TokenPricing
         {
@@ -81,6 +85,7 @@ public class StubServicesTests
             credentials,
             http,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures(),
             Options.Create(new OpenAiOptions()),
             NullLogger<IntegrationHealthStub>.Instance);
 
@@ -111,6 +116,32 @@ public class StubServicesTests
     }
 
     [Fact]
+    public async Task OpenAi_small_model_can_be_saved_and_cleared()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var sut = new IntegrationCredentialService(db, new PassthroughSecretProtector());
+
+        var saved = await sut.UpsertAsync(
+            IntegrationKey.OpenAI,
+            new IntegrationCredentialUpdate(Model: "mistral-medium-latest", SmallModel: " mistral-small-latest "));
+
+        Assert.Equal("mistral-medium-latest", saved.Model);
+        Assert.Equal("mistral-small-latest", saved.SmallModel);
+        Assert.Equal("mistral-small-latest", await sut.GetSmallModelAsync(IntegrationKey.OpenAI));
+
+        var cleared = await sut.UpsertAsync(
+            IntegrationKey.OpenAI,
+            new IntegrationCredentialUpdate(SmallModel: "  "));
+
+        Assert.Null(cleared.SmallModel);
+        Assert.Null(await sut.GetSmallModelAsync(IntegrationKey.OpenAI));
+        Assert.Equal("mistral-medium-latest", await sut.GetModelAsync(IntegrationKey.OpenAI));
+    }
+
+    [Fact]
     public async Task Platform_features_can_disable_moderation()
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
@@ -126,7 +157,6 @@ public class StubServicesTests
         var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: false,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201"));
 
         Assert.False(updated.VacancyContentModerationEnabled);

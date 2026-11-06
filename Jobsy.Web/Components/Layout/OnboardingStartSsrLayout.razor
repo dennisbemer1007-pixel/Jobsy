@@ -1,0 +1,52 @@
+@inherits LayoutComponentBase
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Security
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@inject IFeatureFlags FeatureFlags
+
+<div class="app-shell app-shell--candidate has-bottom-nav app-shell--onboarding-ssr" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <AppShellHeader HomeHref="@_homeHref"
+                    HeaderTagline="@Culture["Brand.Tagline"]"
+                    ShowCandidatePwaInstall="false" />
+    <main class="app-main">
+        <div class="app-main__content">
+            @Body
+        </div>
+    </main>
+    <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Bottom" />
+    @if (_ssrCoachAvailable)
+    {
+        <LobsyCoachSsr HasBottomNav="true" AskLabel="@Culture["Coach.Ask"]" />
+    }
+</div>
+
+@code {
+    private string _homeHref = FeatureRoutes.CandidateProfilePath;
+    private bool _ssrCoachAvailable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        var user = http?.User;
+        if (user?.Identity?.IsAuthenticated == true && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            _homeHref = FeatureRoutes.CandidateProfilePath;
+            _ssrCoachAvailable = AssistantChatHost.IsAvailableFor(user);
+        }
+
+        _ = AuthState;
+        _ = FeatureFlags;
+        await Task.CompletedTask;
+    }
+}

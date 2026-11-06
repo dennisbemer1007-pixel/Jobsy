@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Contracts;
@@ -16,9 +17,23 @@ public sealed class ProfileVacancyMatchContext
     public bool CareerDeepCompleted { get; init; }
     public IReadOnlyList<CareerOccupationMatch> CareerOccupations { get; init; } = [];
     public CulturePersonalityScores? CultureScores { get; init; }
-    public CulturePersonalityScores? CompanyCultureScores { get; init; }
     public SchwartzValuesScores? ValuesScores { get; init; }
 
     /// <summary>True when any assessment score came from wizard/draft answers rather than a completed test.</summary>
     public bool IsProvisional { get; init; }
+
+    public AssessmentMatchEvidence CompetencyMatchEvidence { get; init; } = AssessmentMatchEvidence.None;
+
+    public AssessmentMatchEvidence CareerMatchEvidence { get; init; } = AssessmentMatchEvidence.None;
+
+    /// <summary>
+    /// Candidate ticked "Beschikbaar voor werk". Matching and applying stay off until this is true.
+    /// Defaults to true so hand-built test contexts still score.
+    /// </summary>
+    public bool OpenForWork { get; init; } = true;
+
+    public CandidateWorkContextSnapshot? CandidateWorkContext { get; init; }
+
+    /// <summary>Changes when preferences or assessments change — invalidates match caches.</summary>
+    public string ProfileRevision { get; init; } = "";
 }

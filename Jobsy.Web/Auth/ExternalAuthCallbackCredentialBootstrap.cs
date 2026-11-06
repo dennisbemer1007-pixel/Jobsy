@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
 using AspNetGoogleOptions = Microsoft.AspNetCore.Authentication.Google.GoogleOptions;
-
 namespace Jobsy.Web.Auth;
 
 /// <summary>
@@ -14,7 +13,15 @@ public static class ExternalAuthCallbackCredentialBootstrap
         => app.Use(async (context, next) =>
         {
             var path = context.Request.Path;
-            if (path.Equals("/signin-entra", StringComparison.OrdinalIgnoreCase))
+            var entraCallback = context.RequestServices
+                .GetRequiredService<IOptions<AuthOptions>>()
+                .Value.Entra.CallbackPath;
+            if (string.IsNullOrWhiteSpace(entraCallback))
+            {
+                entraCallback = "/signin-entra";
+            }
+
+            if (path.Equals(entraCallback, StringComparison.OrdinalIgnoreCase))
             {
                 var source = context.RequestServices.GetRequiredService<IExternalAuthCredentialSource>();
                 var entra = await source.GetEntraAsync(context.RequestAborted);

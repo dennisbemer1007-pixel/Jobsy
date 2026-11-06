@@ -1,0 +1,159 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Training
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+@if (Step is { } step)
+{
+    <aside class="career-ill-panel card" aria-labelledby="career-ill-panel-title">
+        <p class="career-ill-panel__kicker">@Culture["Career.Overview.NowEyebrow"]</p>
+        <h2 id="career-ill-panel-title" class="career-ill-panel__title">@step.ShortTitle</h2>
+        @if (!string.IsNullOrWhiteSpace(step.Lead))
+        {
+            <p class="career-ill-panel__lead">@step.Lead</p>
+        }
+
+        @if (step.Missing.Count > 0)
+        {
+            <div class="career-ill-panel__chips" aria-label="@Culture["CareerStep.Gaps.Title"]">
+                @foreach (var gap in step.Missing.Take(6))
+                {
+                    <span class="career-ill-panel__chip">@gap.Text</span>
+                }
+            </div>
+        }
+
+        @if (TrainingPartnersOn && PartnerOffers.Count > 0)
+        {
+            <div class="career-ill-panel__training" data-testid="career-step-learning">
+                <h3 class="career-ill-panel__training-title">@Culture["Training.CareerStep.Title"]</h3>
+                <div class="career-ill-panel__training-list">
+                    @foreach (var offer in PartnerOffers.Take(3))
+                    {
+                        <TrainingCourseCard Offer="offer"
+                                            Selected="_selected?.OfferId == offer.OfferId"
+                                            ShowInlinePanel="false"
+                                            RequireWrittenReason="true"
+                                            Busy="_busy"
+                                            Campaign="@TrainingTracking.CampaignCompass"
+                                            OnSelect="SelectAsync"
+                                            OnToggleSave="ToggleSaveAsync"
+                                            OnSavedChanged="OnSavedChanged" />
+                    }
+                </div>
+                @if (_selected is not null)
+                {
+                    <TrainingCourseDetailPanel Offer="_selected"
+                                               Campaign="@TrainingTracking.CampaignCompass"
+                                               OnClose="ClearSelection"
+                                               OnSavedChanged="OnSavedChanged" />
+                }
+                <a class="btn btn-ghost btn-sm" href="/carriere/leren">@Culture["Training.CareerStep.AllLink"]</a>
+            </div>
+        }
+        else if (CourseCards.Count > 0)
+        {
+            <div class="career-ill-panel__courses">
+                @foreach (var course in CourseCards.Take(3))
+                {
+                    <div class="career-ill-panel__course">
+                        <b>@course.Title</b>
+                        <span>@course.Meta</span>
+                    </div>
+                }
+            </div>
+        }
+        else if (step.CourseNames.Count > 0)
+        {
+            <div class="career-ill-panel__courses">
+                @foreach (var name in step.CourseNames.Take(3))
+                {
+                    <div class="career-ill-panel__course">
+                        <b>@name</b>
+                        <span>@Culture["Career.Illustrated.CourseMetaFallback"]</span>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="career-ill-panel__actions">
+            @if (EmployersOn)
+            {
+                <a class="btn btn-primary btn-block" href="@step.VacanciesHref">@Culture["Career.Illustrated.Vacancies"]</a>
+            }
+        </div>
+
+        @if (OnClearDream.HasDelegate)
+        {
+            <p class="career-ill-panel__foot">
+                <button type="button" class="career-ill-panel__clear" disabled="@Busy" @onclick="OnClearDream">
+                    @Culture["Career.ClearDream"]
+                </button>
+            </p>
+        }
+    </aside>
+}
+
+@code {
+    [Parameter] public CareerStepDetailView? Step { get; set; }
+    [Parameter] public IReadOnlyList<PassportCourseCard> CourseSlots { get; set; } = [];
+    [Parameter] public IReadOnlyList<TrainingPartnerOfferModel> PartnerOffers { get; set; } = [];
+    [Parameter] public bool TrainingPartnersOn { get; set; }
+    [Parameter] public bool EmployersOn { get; set; } = true;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnClearDream { get; set; }
+
+    private TrainingPartnerOfferModel? _selected;
+    private bool _busy;
+
+    private IReadOnlyList<(string Title, string Meta)> CourseCards =>
+        CourseSlots.Count > 0
+            ? CourseSlots.Select(c => (c.Title, CourseMeta(c))).ToList()
+            : [];
+
+    private string CourseMeta(PassportCourseCard card)
+    {
+        var parts = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(card.Delivery))
+        {
+            parts.Add(card.Delivery);
+        }
+
+        if (card.DurationValue is > 0 && !string.IsNullOrWhiteSpace(card.DurationUnit))
+        {
+            parts.Add($"{card.DurationValue} {card.DurationUnit}");
+        }
+
+        return parts.Count > 0
+            ? string.Join(" · ", parts)
+            : Culture["Career.Illustrated.CourseMetaFallback"];
+    }
+
+    private Task SelectAsync(TrainingPartnerOfferModel offer)
+    {
+        _selected = _selected?.OfferId == offer.OfferId ? null : offer;
+        return Task.CompletedTask;
+    }
+
+    private void ClearSelection() => _selected = null;
+
+    private async Task ToggleSaveAsync(TrainingPartnerOfferModel offer)
+    {
+        _busy = true;
+        try
+        {
+            await Api.ToggleTrainingPartnerOfferSavedAsync(offer.OfferId);
+            offer.Saved = !offer.Saved;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task OnSavedChanged(TrainingPartnerOfferModel offer) => Task.CompletedTask;
+}

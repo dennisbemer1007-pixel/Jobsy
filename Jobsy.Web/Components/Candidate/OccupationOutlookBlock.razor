@@ -1,0 +1,37 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Core.Careers
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Result is { DemandLine: not null } || Result is { AiLine: not null })
+{
+    <section class="outlook-block" aria-labelledby="@_headingId">
+        @if (!HideTitle)
+        {
+            <h5 id="@_headingId">@Culture["Outlook.Title"]</h5>
+        }
+        else
+        {
+            <h5 id="@_headingId" class="visually-hidden">@Culture["Outlook.Title"]</h5>
+        }
+        @if (!string.IsNullOrWhiteSpace(Result!.DemandLine))
+        {
+            <p>@Result.DemandLine</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Result.AiLine))
+        {
+            <p>@Result.AiLine</p>
+        }
+        @foreach (var source in Result.Sources)
+        {
+            <p class="outlook-block__source">@source</p>
+        }
+    </section>
+}
+
+@code {
+    private readonly string _headingId = "outlook-" + Guid.NewGuid().ToString("N");
+
+    [Parameter] public OccupationOutlookResult? Result { get; set; }
+    [Parameter] public bool HideTitle { get; set; }
+}

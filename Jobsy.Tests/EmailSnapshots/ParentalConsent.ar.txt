@@ -1,0 +1,38 @@
+KEY: ParentalConsent
+SUBJECT: ⁨Sanne⁩ يطلب موافقتك لـ Lobsy
+PREHEADER: اطلع على ما يطلب ⁨Sanne⁩ موافقتك من أجله.
+KIND: Essential
+--- TEXT ---
+⁨Sanne⁩ يطلب موافقتك
+
+مرحبًا،
+
+⁨Sanne⁩ أصغر من 16 سنة ويريد استخدام Lobsy للتقدّم. نحتاج موافقتك لذلك.
+
+Sanne :الاسم
+7 أكتوبر 2026 :الرابط صالح حتى
+
+في الصفحة تقرأ ما يفعله Lobsy وتمنح الموافقة بزر واحد.
+
+لا تعرف ما الموضوع؟ لا داعي لأي إجراء. بدون موافقة لا يستطيع ⁨Sanne⁩
+التقدّم.
+
+عرض الموافقة: https://lobsy.nl/toestemming?t=voorbeeld
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأن ⁨Sanne⁩ أعطى بريدك كولي أمر.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: ⁨Sanne⁩ يطلب موافقتك
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: عرض الموافقة -> https://lobsy.nl/toestemming?t=voorbeeld
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

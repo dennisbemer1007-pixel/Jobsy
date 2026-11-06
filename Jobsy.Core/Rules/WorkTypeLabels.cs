@@ -5,6 +5,7 @@ namespace Jobsy.Core.Rules;
 public static class WorkTypeLabels
 {
     public const int MaxPerVacancy = 2;
+    public const int MaxPerCompany = 4;
 
     public const string Horeca = "Horeca";
     public const string Winkel = "Winkel";
@@ -81,6 +82,42 @@ public static class WorkTypeLabels
 
     public static bool IsValidSelection(WorkType types)
         => types != WorkType.None && CountFlags(types) <= MaxPerVacancy;
+
+    public static bool IsValidCompanySelection(IEnumerable<string>? labels)
+    {
+        if (labels is null)
+        {
+            return true;
+        }
+
+        var raw = labels
+            .Select(x => x?.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x!)
+            .ToList();
+        if (raw.Count > MaxPerCompany)
+        {
+            return false;
+        }
+
+        return raw.All(l => NormalizeKnownLabel(l) is not null);
+    }
+
+    public static string[] NormalizeCompanyLabels(IEnumerable<string>? labels)
+    {
+        if (labels is null)
+        {
+            return [];
+        }
+
+        return labels
+            .Select(NormalizeKnownLabel)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Select(l => l!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(MaxPerCompany)
+            .ToArray();
+    }
 
     public static bool MatchesFilter(WorkType vacancyTypes, string? selectedLabel)
         => MatchesFilter(vacancyTypes, storedLabels: null, selectedLabels: WrapLabel(selectedLabel));
@@ -164,7 +201,7 @@ public static class WorkTypeLabels
         return Expand(vacancyTypes);
     }
 
-    public static string? CombineStored(IEnumerable<string>? labels)
+    public static string? CombineStored(IEnumerable<string>? labels, int max = MaxPerVacancy)
     {
         if (labels is null)
         {
@@ -175,11 +212,14 @@ public static class WorkTypeLabels
             .Select(x => x?.Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(MaxPerVacancy)
+            .Take(max)
             .ToArray();
 
         return selected.Length == 0 ? null : string.Join(", ", selected!);
     }
+
+    public static string? CombineStoredForCompany(IEnumerable<string>? labels)
+        => CombineStored(labels, MaxPerCompany);
 
     public static string[] SplitStored(string? stored)
     {

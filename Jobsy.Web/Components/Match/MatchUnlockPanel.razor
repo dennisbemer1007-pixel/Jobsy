@@ -1,16 +1,33 @@
 @namespace Jobsy.Web.Components.Match
+@using Jobsy.Core.Features
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Localization
 @inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
-<div class="match-gate" aria-label="Match ontgrendelen">
-    @if (!Gate.IsAuthenticated)
+<div class="match-gate" aria-label="@Culture["Kb.Fit.Gate"]">
+    @if (FitGateOnly)
+    {
+        <h2 class="match-gate__title">@Culture["Kb.Fit.Gate"]</h2>
+        <p class="match-gate__lead">@Culture["Kb.Fit.GateMatch"]</p>
+        <div class="match-gate__actions">
+            <a class="match-page__cta" href="@KbRoutes.CultureTest">@Culture["Kb.Dna.Culture"]</a>
+            <a class="match-page__cta match-page__cta--ghost" href="@KbRoutes.ValuesTest">@Culture["Kb.Dna.Values"]</a>
+        </div>
+        <p class="match-gate__hint">
+            <a href="@KbRoutes.Map">@Culture["Discovery.BackToSearch"]</a>
+        </p>
+    }
+    else if (!Gate.IsAuthenticated)
     {
         <h2 class="match-gate__title">Ontgrendel Match</h2>
         <p class="match-gate__lead">Log in als kandidaat en rond je startprofiel af om relevante vacatures te swipen.</p>
         <div class="match-gate__actions">
             <a class="match-page__cta" href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/match")}")">Inloggen</a>
-            <a class="match-page__cta match-page__cta--ghost" href="/">Naar de banenkaart</a>
+            <a class="match-page__cta match-page__cta--ghost" href="@KbRoutes.Map">Naar de banenkaart</a>
         </div>
         <p class="match-gate__hint">
             Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.
@@ -33,7 +50,7 @@
                     <p>Naam, beschikbaarheid en reistijd/vervoer</p>
                     @if (!Gate.ProfileBasicsFilled)
                     {
-                        <a class="engagement-btn" href="/candidate/start">Verder met starten</a>
+                        <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.ContinueStart"]</a>
                     }
                 </div>
             </li>
@@ -44,7 +61,7 @@
                     <p>Kies je niveau of <em>Geen</em></p>
                     @if (!Gate.HasEducationLevel)
                     {
-                        <a class="engagement-btn" href="/candidate/start">Verder met starten</a>
+                        <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.ContinueStart"]</a>
                     }
                 </div>
             </li>
@@ -55,7 +72,7 @@
                     <p>Korte wizard met mini-tests voor je eerste indruk</p>
                     @if (!Gate.WizardCompleted)
                     {
-                        <a class="engagement-btn" href="/candidate/start">Start of hervat</a>
+                        <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.StartOrResume"]</a>
                     }
                 </div>
             </li>
@@ -63,7 +80,7 @@
 
         <p class="match-gate__hint">
             Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de
-            <a href="/">banenkaart</a>.
+            <a href="@KbRoutes.Map">banenkaart</a>.
         </p>
     }
 </div>
@@ -71,4 +88,23 @@
 @code {
     [Parameter, EditorRequired]
     public MatchProfileGateViewModel Gate { get; set; } = new();
+
+    /// <summary>When true, only the culture/values fit gate is shown (D2).</summary>
+    [Parameter]
+    public bool FitGateOnly { get; set; }
+
+    private string _startPath = OnboardingRoutes.ClassicStartPath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _startPath = OnboardingRoutes.StartPath(flags);
+        }
+        catch
+        {
+            _startPath = OnboardingRoutes.ClassicStartPath;
+        }
+    }
 }

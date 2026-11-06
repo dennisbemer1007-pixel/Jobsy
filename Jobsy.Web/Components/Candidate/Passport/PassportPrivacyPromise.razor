@@ -1,0 +1,9 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+
+<p class="profile-address__hint" data-testid="passport-privacy-promise">
+    <span class="passport-data__icon" aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+    @Culture["Passport.PrivacyPromise"]
+</p>

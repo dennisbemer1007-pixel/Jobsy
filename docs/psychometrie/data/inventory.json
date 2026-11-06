@@ -1,0 +1,2030 @@
+{
+  "source": "Jobsy repo (code + UiStringsCompetencies)",
+  "response_format": {
+    "likert_min": 1,
+    "likert_max": 5,
+    "labels_key_prefix": "Competency.Likert."
+  },
+  "scoring": {
+    "scale_percent": "mean of reverse-scored Likert items, mapped to 0-100 via LikertAnswerJson.ToPercent",
+    "tag_cutoff_percent": 70,
+    "dna_high_mid_low": {
+      "high_min": 70,
+      "mid_min": 45
+    },
+    "culture_dna_threshold": 60,
+    "provisional_neutral_fill": 55
+  },
+  "tests": {
+    "competence_quickscan": {
+      "model_claim": "Big Five / OCEAN workplace (Mini-IPIP inspired)",
+      "item_count": 25,
+      "items_per_scale": 5,
+      "matching_scales": [
+        "Samenwerken",
+        "Resultaatgerichtheid",
+        "Stressbestendigheid",
+        "Innovatie"
+      ],
+      "items": [
+        {
+          "id": 1,
+          "scale": "Samenwerken",
+          "reverse": false,
+          "text_key": "Competency.Q01",
+          "text_nl": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "text_en": "I like working with others to finish a task.",
+          "text_pl": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "text_ro": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "text_ar": "Ik werk graag samen met anderen om een klus af te ronden."
+        },
+        {
+          "id": 2,
+          "scale": "Samenwerken",
+          "reverse": false,
+          "text_key": "Competency.Q02",
+          "text_nl": "Ik help collegaâs ook als het niet letterlijk bij mijn taak hoort.",
+          "text_en": "I help colleagues even when it is not strictly my job.",
+          "text_pl": "Ik help collegaâs ook als het niet letterlijk bij mijn taak hoort.",
+          "text_ro": "Ik help collegaâs ook als het niet letterlijk bij mijn taak hoort.",
+          "text_ar": "Ik help collegaâs ook als het niet letterlijk bij mijn taak hoort."
+        },
+        {
+          "id": 3,
+          "scale": "Samenwerken",
+          "reverse": false,
+          "text_key": "Competency.Q03",
+          "text_nl": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "text_en": "I listen to others before I give my own opinion.",
+          "text_pl": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "text_ro": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "text_ar": "Ik luister eerst naar anderen voordat ik mijn mening geef."
+        },
+        {
+          "id": 4,
+          "scale": "Samenwerken",
+          "reverse": true,
+          "text_key": "Competency.Q04",
+          "text_nl": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "text_en": "I prefer to stay on the sidelines when the team needs to discuss.",
+          "text_pl": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "text_ro": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "text_ar": "Ik houd me liever afzijdig als het team moet overleggen."
+        },
+        {
+          "id": 5,
+          "scale": "Samenwerken",
+          "reverse": true,
+          "text_key": "Competency.Q05",
+          "text_nl": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "text_en": "I find it hard to take other peopleâs feelings into account.",
+          "text_pl": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "text_ro": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "text_ar": "Ik vind het lastig om rekening te houden met andermans gevoelens."
+        },
+        {
+          "id": 6,
+          "scale": "Resultaatgerichtheid",
+          "reverse": false,
+          "text_key": "Competency.Q06",
+          "text_nl": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "text_en": "I finish what I promise, even when it is tough.",
+          "text_pl": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "text_ro": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "text_ar": "Ik maak af wat ik beloof, ook als het tegenzit."
+        },
+        {
+          "id": 7,
+          "scale": "Resultaatgerichtheid",
+          "reverse": false,
+          "text_key": "Competency.Q07",
+          "text_nl": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "text_en": "I plan my work so deadlines stay realistic.",
+          "text_pl": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "text_ro": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "text_ar": "Ik plan mijn werk zodat deadlines haalbaar blijven."
+        },
+        {
+          "id": 8,
+          "scale": "Resultaatgerichtheid",
+          "reverse": false,
+          "text_key": "Competency.Q08",
+          "text_nl": "Ik let op details zodat het werk in Ã©Ã©n keer goed is.",
+          "text_en": "I pay attention to details so the work is right first time.",
+          "text_pl": "Ik let op details zodat het werk in Ã©Ã©n keer goed is.",
+          "text_ro": "Ik let op details zodat het werk in Ã©Ã©n keer goed is.",
+          "text_ar": "Ik let op details zodat het werk in Ã©Ã©n keer goed is."
+        },
+        {
+          "id": 9,
+          "scale": "Resultaatgerichtheid",
+          "reverse": true,
+          "text_key": "Competency.Q09",
+          "text_nl": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "text_en": "I often put jobs off until the last moment.",
+          "text_pl": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "text_ro": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "text_ar": "Ik stel klusjes vaak uit tot het laatste moment."
+        },
+        {
+          "id": 10,
+          "scale": "Resultaatgerichtheid",
+          "reverse": true,
+          "text_key": "Competency.Q10",
+          "text_nl": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "text_en": "I easily leave mess or unfinished work lying around.",
+          "text_pl": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "text_ro": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "text_ar": "Ik laat rommel of onafgemaakt werk makkelijk liggen."
+        },
+        {
+          "id": 11,
+          "scale": "Stressbestendigheid",
+          "reverse": false,
+          "text_key": "Competency.Q11",
+          "text_nl": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "text_en": "I stay calm when it is busy or something goes wrong.",
+          "text_pl": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "text_ro": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "text_ar": "Ik blijf kalm als het druk is of er iets misgaat."
+        },
+        {
+          "id": 12,
+          "scale": "Stressbestendigheid",
+          "reverse": false,
+          "text_key": "Competency.Q12",
+          "text_nl": "Ik herstel snel na een tegenslag op het werk.",
+          "text_en": "I bounce back quickly after a setback at work.",
+          "text_pl": "Ik herstel snel na een tegenslag op het werk.",
+          "text_ro": "Ik herstel snel na een tegenslag op het werk.",
+          "text_ar": "Ik herstel snel na een tegenslag op het werk."
+        },
+        {
+          "id": 13,
+          "scale": "Stressbestendigheid",
+          "reverse": false,
+          "text_key": "Competency.Q13",
+          "text_nl": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "text_en": "I can handle several things at once without panicking.",
+          "text_pl": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "text_ro": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "text_ar": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken."
+        },
+        {
+          "id": 14,
+          "scale": "Stressbestendigheid",
+          "reverse": true,
+          "text_key": "Competency.Q14",
+          "text_nl": "Ik pieker lang na over fouten of kritiek.",
+          "text_en": "I dwell on mistakes or criticism for a long time.",
+          "text_pl": "Ik pieker lang na over fouten of kritiek.",
+          "text_ro": "Ik pieker lang na over fouten of kritiek.",
+          "text_ar": "Ik pieker lang na over fouten of kritiek."
+        },
+        {
+          "id": 15,
+          "scale": "Stressbestendigheid",
+          "reverse": true,
+          "text_key": "Competency.Q15",
+          "text_nl": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "text_en": "I get upset quickly when something unexpected happens.",
+          "text_pl": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "text_ro": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "text_ar": "Ik raak snel van slag als er iets onverwachts gebeurt."
+        },
+        {
+          "id": 16,
+          "scale": "Innovatie",
+          "reverse": false,
+          "text_key": "Competency.Q16",
+          "text_nl": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "text_en": "I like thinking of new ways to solve a problem.",
+          "text_pl": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "text_ro": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "text_ar": "Ik bedenk graag nieuwe manieren om een probleem op te lossen."
+        },
+        {
+          "id": 17,
+          "scale": "Innovatie",
+          "reverse": false,
+          "text_key": "Competency.Q17",
+          "text_nl": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "text_en": "I enjoy learning new tasks or systems.",
+          "text_pl": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "text_ro": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "text_ar": "Ik vind het leuk om nieuwe taken of systemen te leren."
+        },
+        {
+          "id": 18,
+          "scale": "Innovatie",
+          "reverse": false,
+          "text_key": "Competency.Q18",
+          "text_nl": "Ik zie snel verbanden die anderen misschien missen.",
+          "text_en": "I quickly see connections that others might miss.",
+          "text_pl": "Ik zie snel verbanden die anderen misschien missen.",
+          "text_ro": "Ik zie snel verbanden die anderen misschien missen.",
+          "text_ar": "Ik zie snel verbanden die anderen misschien missen."
+        },
+        {
+          "id": 19,
+          "scale": "Innovatie",
+          "reverse": true,
+          "text_key": "Competency.Q19",
+          "text_nl": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "text_en": "I prefer to stick to how we have always done things.",
+          "text_pl": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "text_ro": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "text_ar": "Ik hou het liefst vast aan hoe we het altijd al deden."
+        },
+        {
+          "id": 20,
+          "scale": "Innovatie",
+          "reverse": true,
+          "text_key": "Competency.Q20",
+          "text_nl": "Ik vind nieuwe ideeÃ«n of veranderingen vooral lastig.",
+          "text_en": "I mostly find new ideas or changes difficult.",
+          "text_pl": "Ik vind nieuwe ideeÃ«n of veranderingen vooral lastig.",
+          "text_ro": "Ik vind nieuwe ideeÃ«n of veranderingen vooral lastig.",
+          "text_ar": "Ik vind nieuwe ideeÃ«n of veranderingen vooral lastig."
+        },
+        {
+          "id": 21,
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_key": "Competency.Q21",
+          "text_nl": "Ik krijg energie van contact met collegaâs of klanten.",
+          "text_en": "I get energy from contact with colleagues or customers.",
+          "text_pl": "Ik krijg energie van contact met collegaâs of klanten.",
+          "text_ro": "Ik krijg energie van contact met collegaâs of klanten.",
+          "text_ar": "Ik krijg energie van contact met collegaâs of klanten."
+        },
+        {
+          "id": 22,
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_key": "Competency.Q22",
+          "text_nl": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "text_en": "I feel at ease in a busy, social workplace.",
+          "text_pl": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "text_ro": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "text_ar": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving."
+        },
+        {
+          "id": 23,
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_key": "Competency.Q23",
+          "text_nl": "Ik neem graag het woord in een teamoverleg.",
+          "text_en": "I am happy to speak up in a team meeting.",
+          "text_pl": "Ik neem graag het woord in een teamoverleg.",
+          "text_ro": "Ik neem graag het woord in een teamoverleg.",
+          "text_ar": "Ik neem graag het woord in een teamoverleg."
+        },
+        {
+          "id": 24,
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_key": "Competency.Q24",
+          "text_nl": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "text_en": "I prefer working alone, without much discussion.",
+          "text_pl": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "text_ro": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "text_ar": "Ik werk het liefst in mijn eentje, zonder veel overleg."
+        },
+        {
+          "id": 25,
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_key": "Competency.Q25",
+          "text_nl": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "text_en": "I mostly find groups or busyness at work tiring.",
+          "text_pl": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "text_ro": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "text_ar": "Ik vind groepen of drukte op het werk vooral vermoeiend."
+        }
+      ]
+    },
+    "career_quickscan": {
+      "model_claim": "Holland RIASEC",
+      "item_count": 25,
+      "items": [
+        {
+          "id": 1,
+          "scale": "Realistic",
+          "reverse": false,
+          "text_key": "Career.Q01",
+          "text_nl": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "text_en": "I like working with machines, tools, or outdoors.",
+          "text_pl": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "text_ro": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "text_ar": "Ik werk graag met machines, gereedschap of buiten in de praktijk."
+        },
+        {
+          "id": 2,
+          "scale": "Realistic",
+          "reverse": false,
+          "text_key": "Career.Q02",
+          "text_nl": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "text_en": "I like making or repairing something tangible with my hands.",
+          "text_pl": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "text_ro": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "text_ar": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren."
+        },
+        {
+          "id": 3,
+          "scale": "Realistic",
+          "reverse": false,
+          "text_key": "Career.Q03",
+          "text_nl": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "text_en": "I feel at home in a greenhouse, warehouse, workshop or on a building site.",
+          "text_pl": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "text_ro": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "text_ar": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw."
+        },
+        {
+          "id": 4,
+          "scale": "Realistic",
+          "reverse": false,
+          "text_key": "Career.Q04",
+          "text_nl": "Ik kies liever een praktische klus dan een lang overleg.",
+          "text_en": "I would rather do a practical job than sit in a long meeting.",
+          "text_pl": "Ik kies liever een praktische klus dan een lang overleg.",
+          "text_ro": "Ik kies liever een praktische klus dan een lang overleg.",
+          "text_ar": "Ik kies liever een praktische klus dan een lang overleg."
+        },
+        {
+          "id": 5,
+          "scale": "Realistic",
+          "reverse": true,
+          "text_key": "Career.Q05",
+          "text_nl": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "text_en": "I avoid work that is dirty, heavy or outdoors.",
+          "text_pl": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "text_ro": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "text_ar": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet."
+        },
+        {
+          "id": 6,
+          "scale": "Investigative",
+          "reverse": false,
+          "text_key": "Career.Q06",
+          "text_nl": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "text_en": "I like investigating how things work or why they are that way.",
+          "text_pl": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "text_ro": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "text_ar": "Ik onderzoek graag hoe iets werkt of waarom iets zo is."
+        },
+        {
+          "id": 7,
+          "scale": "Investigative",
+          "reverse": false,
+          "text_key": "Career.Q07",
+          "text_nl": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "text_en": "I like diving into figures, causes or technical explanations.",
+          "text_pl": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "text_ro": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "text_ar": "Ik duik graag in cijfers, oorzaken of technische uitleg."
+        },
+        {
+          "id": 8,
+          "scale": "Investigative",
+          "reverse": false,
+          "text_key": "Career.Q08",
+          "text_nl": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "text_en": "I want to understand why before I carry something out.",
+          "text_pl": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "text_ro": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "text_ar": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer."
+        },
+        {
+          "id": 9,
+          "scale": "Investigative",
+          "reverse": true,
+          "text_key": "Career.Q09",
+          "text_nl": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "text_en": "I have little patience for research or analysis.",
+          "text_pl": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "text_ro": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "text_ar": "Ik heb weinig geduld voor uitzoekwerk of analyses."
+        },
+        {
+          "id": 10,
+          "scale": "Artistic",
+          "reverse": false,
+          "text_key": "Career.Q10",
+          "text_nl": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "text_en": "I like inventing creative or visual solutions.",
+          "text_pl": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "text_ro": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "text_ar": "Ik bedenk graag creatieve of visuele oplossingen."
+        },
+        {
+          "id": 11,
+          "scale": "Artistic",
+          "reverse": false,
+          "text_key": "Career.Q11",
+          "text_nl": "Ik vind het leuk om iets moois of origineels te maken.",
+          "text_en": "I enjoy making something beautiful or original.",
+          "text_pl": "Ik vind het leuk om iets moois of origineels te maken.",
+          "text_ro": "Ik vind het leuk om iets moois of origineels te maken.",
+          "text_ar": "Ik vind het leuk om iets moois of origineels te maken."
+        },
+        {
+          "id": 12,
+          "scale": "Artistic",
+          "reverse": false,
+          "text_key": "Career.Q12",
+          "text_nl": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "text_en": "I quickly see a fresh approach when something gets dull.",
+          "text_pl": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "text_ro": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "text_ar": "Ik zie snel een andere, frisse aanpak als iets saai wordt."
+        },
+        {
+          "id": 13,
+          "scale": "Artistic",
+          "reverse": true,
+          "text_key": "Career.Q13",
+          "text_nl": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "text_en": "I prefer sticking to existing ways of working.",
+          "text_pl": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "text_ro": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "text_ar": "Ik houd het liefst vast aan vaste, bestaande werkwijzen."
+        },
+        {
+          "id": 14,
+          "scale": "Social",
+          "reverse": false,
+          "text_key": "Career.Q14",
+          "text_nl": "Ik help graag mensen of werk graag in een team met klanten.",
+          "text_en": "I like helping people or working with customers in a team.",
+          "text_pl": "Ik help graag mensen of werk graag in een team met klanten.",
+          "text_ro": "Ik help graag mensen of werk graag in een team met klanten.",
+          "text_ar": "Ik help graag mensen of werk graag in een team met klanten."
+        },
+        {
+          "id": 15,
+          "scale": "Social",
+          "reverse": false,
+          "text_key": "Career.Q15",
+          "text_nl": "Ik krijg energie van gasten, patiÃ«nten of collegaâs helpen.",
+          "text_en": "I get energy from helping guests, patients or colleagues.",
+          "text_pl": "Ik krijg energie van gasten, patiÃ«nten of collegaâs helpen.",
+          "text_ro": "Ik krijg energie van gasten, patiÃ«nten of collegaâs helpen.",
+          "text_ar": "Ik krijg energie van gasten, patiÃ«nten of collegaâs helpen."
+        },
+        {
+          "id": 16,
+          "scale": "Social",
+          "reverse": false,
+          "text_key": "Career.Q16",
+          "text_nl": "Ik luister graag en zet me in voor iemand anders zân dag.",
+          "text_en": "I like listening and making someone elseâs day better.",
+          "text_pl": "Ik luister graag en zet me in voor iemand anders zân dag.",
+          "text_ro": "Ik luister graag en zet me in voor iemand anders zân dag.",
+          "text_ar": "Ik luister graag en zet me in voor iemand anders zân dag."
+        },
+        {
+          "id": 17,
+          "scale": "Social",
+          "reverse": true,
+          "text_key": "Career.Q17",
+          "text_nl": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "text_en": "I prefer work without customer contact or caring for others.",
+          "text_pl": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "text_ro": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "text_ar": "Ik werk liever zonder klantcontact of zorg voor anderen."
+        },
+        {
+          "id": 18,
+          "scale": "Enterprising",
+          "reverse": false,
+          "text_key": "Career.Q18",
+          "text_nl": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "text_en": "I like taking initiative and persuading others of a plan.",
+          "text_pl": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "text_ro": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "text_ar": "Ik neem graag initiatief en overtuig anderen van een plan."
+        },
+        {
+          "id": 19,
+          "scale": "Enterprising",
+          "reverse": false,
+          "text_key": "Career.Q19",
+          "text_nl": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "text_en": "I enjoy selling, organising or taking the lead.",
+          "text_pl": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "text_ro": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "text_ar": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen."
+        },
+        {
+          "id": 20,
+          "scale": "Enterprising",
+          "reverse": false,
+          "text_key": "Career.Q20",
+          "text_nl": "Ik zie kansen en wil die omzetten in resultaat.",
+          "text_en": "I see opportunities and want to turn them into results.",
+          "text_pl": "Ik zie kansen en wil die omzetten in resultaat.",
+          "text_ro": "Ik zie kansen en wil die omzetten in resultaat.",
+          "text_ar": "Ik zie kansen en wil die omzetten in resultaat."
+        },
+        {
+          "id": 21,
+          "scale": "Enterprising",
+          "reverse": true,
+          "text_key": "Career.Q21",
+          "text_nl": "Ik laat liever anderen het voortouw nemen.",
+          "text_en": "I prefer to let others take the lead.",
+          "text_pl": "Ik laat liever anderen het voortouw nemen.",
+          "text_ro": "Ik laat liever anderen het voortouw nemen.",
+          "text_ar": "Ik laat liever anderen het voortouw nemen."
+        },
+        {
+          "id": 22,
+          "scale": "Conventional",
+          "reverse": false,
+          "text_key": "Career.Q22",
+          "text_nl": "Ik houd van orde, administratie en vaste procedures.",
+          "text_en": "I like order, administration and fixed procedures.",
+          "text_pl": "Ik houd van orde, administratie en vaste procedures.",
+          "text_ro": "Ik houd van orde, administratie en vaste procedures.",
+          "text_ar": "Ik houd van orde, administratie en vaste procedures."
+        },
+        {
+          "id": 23,
+          "scale": "Conventional",
+          "reverse": false,
+          "text_key": "Career.Q23",
+          "text_nl": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "text_en": "I work accurately with lists, schedules or systems.",
+          "text_pl": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "text_ro": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "text_ar": "Ik werk nauwkeurig met lijsten, planningen of systemen."
+        },
+        {
+          "id": 24,
+          "scale": "Conventional",
+          "reverse": false,
+          "text_key": "Career.Q24",
+          "text_nl": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "text_en": "I like it when the rules and steps are clear.",
+          "text_pl": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "text_ro": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "text_ar": "Ik vind het fijn als de regels en stappen duidelijk zijn."
+        },
+        {
+          "id": 25,
+          "scale": "Conventional",
+          "reverse": true,
+          "text_key": "Career.Q25",
+          "text_nl": "Ik heb een hekel aan administratie en vaste formats.",
+          "text_en": "I dislike administration and fixed templates.",
+          "text_pl": "Ik heb een hekel aan administratie en vaste formats.",
+          "text_ro": "Ik heb een hekel aan administratie en vaste formats.",
+          "text_ar": "Ik heb een hekel aan administratie en vaste formats."
+        }
+      ]
+    },
+    "culture_quickscan": {
+      "model_claim": "OCP culture dims + abbreviated Big Five facets",
+      "item_count": 18,
+      "items": [
+        {
+          "id": 1,
+          "scale": "Autonomy",
+          "reverse": false,
+          "text_key": "CultureScan.Q01",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 2,
+          "scale": "Autonomy",
+          "reverse": true,
+          "text_key": "CultureScan.Q02",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 3,
+          "scale": "Informal",
+          "reverse": false,
+          "text_key": "CultureScan.Q03",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 4,
+          "scale": "Informal",
+          "reverse": true,
+          "text_key": "CultureScan.Q04",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 5,
+          "scale": "Collaboration",
+          "reverse": false,
+          "text_key": "CultureScan.Q05",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 6,
+          "scale": "Collaboration",
+          "reverse": true,
+          "text_key": "CultureScan.Q06",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 7,
+          "scale": "Flexibility",
+          "reverse": false,
+          "text_key": "CultureScan.Q07",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 8,
+          "scale": "Flexibility",
+          "reverse": true,
+          "text_key": "CultureScan.Q08",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 9,
+          "scale": "Innovation",
+          "reverse": false,
+          "text_key": "CultureScan.Q09",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 10,
+          "scale": "Innovation",
+          "reverse": true,
+          "text_key": "CultureScan.Q10",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 11,
+          "scale": "PeopleFirst",
+          "reverse": false,
+          "text_key": "CultureScan.Q11",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 12,
+          "scale": "PeopleFirst",
+          "reverse": true,
+          "text_key": "CultureScan.Q12",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 13,
+          "scale": "Openness",
+          "reverse": false,
+          "text_key": "CultureScan.Q13",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 14,
+          "scale": "Conscientiousness",
+          "reverse": false,
+          "text_key": "CultureScan.Q14",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 15,
+          "scale": "Extraversion",
+          "reverse": false,
+          "text_key": "CultureScan.Q15",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 16,
+          "scale": "Agreeableness",
+          "reverse": false,
+          "text_key": "CultureScan.Q16",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 17,
+          "scale": "EmotionalStability",
+          "reverse": false,
+          "text_key": "CultureScan.Q17",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 18,
+          "scale": "Openness",
+          "reverse": true,
+          "text_key": "CultureScan.Q18",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        }
+      ]
+    },
+    "values_quickscan": {
+      "model_claim": "Schwartz workplace drivers (5 facets)",
+      "item_count": 25,
+      "items": [
+        {
+          "id": 1,
+          "scale": "Autonomy",
+          "reverse": false,
+          "text_key": "ValuesScan.Q01",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 2,
+          "scale": "Autonomy",
+          "reverse": false,
+          "text_key": "ValuesScan.Q02",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 3,
+          "scale": "Autonomy",
+          "reverse": true,
+          "text_key": "ValuesScan.Q03",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 4,
+          "scale": "Autonomy",
+          "reverse": false,
+          "text_key": "ValuesScan.Q04",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 5,
+          "scale": "Autonomy",
+          "reverse": true,
+          "text_key": "ValuesScan.Q05",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 6,
+          "scale": "Connection",
+          "reverse": false,
+          "text_key": "ValuesScan.Q06",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 7,
+          "scale": "Connection",
+          "reverse": false,
+          "text_key": "ValuesScan.Q07",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 8,
+          "scale": "Connection",
+          "reverse": true,
+          "text_key": "ValuesScan.Q08",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 9,
+          "scale": "Connection",
+          "reverse": false,
+          "text_key": "ValuesScan.Q09",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 10,
+          "scale": "Connection",
+          "reverse": true,
+          "text_key": "ValuesScan.Q10",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 11,
+          "scale": "Achievement",
+          "reverse": false,
+          "text_key": "ValuesScan.Q11",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 12,
+          "scale": "Achievement",
+          "reverse": false,
+          "text_key": "ValuesScan.Q12",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 13,
+          "scale": "Achievement",
+          "reverse": true,
+          "text_key": "ValuesScan.Q13",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 14,
+          "scale": "Achievement",
+          "reverse": false,
+          "text_key": "ValuesScan.Q14",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 15,
+          "scale": "Achievement",
+          "reverse": true,
+          "text_key": "ValuesScan.Q15",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 16,
+          "scale": "Stability",
+          "reverse": false,
+          "text_key": "ValuesScan.Q16",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 17,
+          "scale": "Stability",
+          "reverse": false,
+          "text_key": "ValuesScan.Q17",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 18,
+          "scale": "Stability",
+          "reverse": true,
+          "text_key": "ValuesScan.Q18",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 19,
+          "scale": "Stability",
+          "reverse": false,
+          "text_key": "ValuesScan.Q19",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 20,
+          "scale": "Stability",
+          "reverse": true,
+          "text_key": "ValuesScan.Q20",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 21,
+          "scale": "Impact",
+          "reverse": false,
+          "text_key": "ValuesScan.Q21",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 22,
+          "scale": "Impact",
+          "reverse": false,
+          "text_key": "ValuesScan.Q22",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 23,
+          "scale": "Impact",
+          "reverse": true,
+          "text_key": "ValuesScan.Q23",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 24,
+          "scale": "Impact",
+          "reverse": false,
+          "text_key": "ValuesScan.Q24",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        },
+        {
+          "id": 25,
+          "scale": "Impact",
+          "reverse": true,
+          "text_key": "ValuesScan.Q25",
+          "text_nl": "",
+          "text_en": "",
+          "text_pl": "",
+          "text_ro": "",
+          "text_ar": ""
+        }
+      ]
+    },
+    "deep_competence": {
+      "items": [
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik probeer graag een nieuwe werkwijze als de oude vastloopt.",
+          "id": 1
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik lees of kijk uit mezelf bij over hoe ons vak verandert.",
+          "id": 2
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik bedenk meerdere oplossingen voordat ik een keuze maak.",
+          "id": 3
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik blijf het liefst bij de methode die we altijd al gebruiken.",
+          "id": 4
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik vind het leuk om een onbekend systeem of apparaat uit te proberen.",
+          "id": 5
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik zie snel verbanden tussen losse details op de werkvloer.",
+          "id": 6
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik stel vragen als ik de achtergrond van een taak nog niet snap.",
+          "id": 7
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Nieuwe ideeën van collega’s wijs ik meestal meteen af.",
+          "id": 8
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik experimenteer liever klein dan dat ik wacht op een perfect plan.",
+          "id": 9
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik vermijd taken waarbij ik iets moet leren dat ik nog nooit deed.",
+          "id": 10
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik haal inspiratie uit hoe andere teams hetzelfde werk aanpakken.",
+          "id": 11
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Verandering in de planning irriteert me meer dan dat het me scherp maakt.",
+          "id": 12
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik combineer kennis uit verschillende klussen tot een betere aanpak.",
+          "id": 13
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik durf een voorstel te doen dat nog niet in het handboek staat.",
+          "id": 14
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik vind het prettig als werk ook ruimte laat voor eigen invulling.",
+          "id": 15
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik volg instructies letterlijk, ook als een slimmere weg zichtbaar is.",
+          "id": 16
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik raak nieuwsgierig als iets technisch of inhoudelijk anders werkt dan verwacht.",
+          "id": 17
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik zoek bewust afwisseling in taken zodat ik alert blijf.",
+          "id": 18
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik kan me inleven in een probleem vanuit het perspectief van de klant.",
+          "id": 19
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Abstracte uitleg zonder concrete stappen vind ik tijdverspilling.",
+          "id": 20
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik pas mijn aanpak aan als de seizoensdruk of de piek anders is dan vorig jaar.",
+          "id": 21
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik houd niet van brainstormen; zeg me gewoon wat ik moet doen.",
+          "id": 22
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik merk het snel als een proces onnodig omslachtig is geworden.",
+          "id": 23
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik wantrouw verbeteringen totdat iemand anders ze lang heeft gebruikt.",
+          "id": 24
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik leer graag van fouten door te kijken wat we volgende keer anders doen.",
+          "id": 25
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik vind het leuk om een collega een slimmere truc te laten zien.",
+          "id": 26
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik blijf nadenken over hoe we kwaliteit en tempo beter kunnen combineren.",
+          "id": 27
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik sluit me af voor feedback die mijn vaste routine ter discussie stelt.",
+          "id": 28
+        },
+        {
+          "scale": "Openheid",
+          "reverse": false,
+          "text_nl": "Ik zie kansen in nieuwe producten, teelten of diensten van de vestiging.",
+          "id": 29
+        },
+        {
+          "scale": "Openheid",
+          "reverse": true,
+          "text_nl": "Ik voel me ongemakkelijk bij taken zonder duidelijk voorbeeld.",
+          "id": 30
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik maak af wat ik beloof, ook als de dag tegenzit.",
+          "id": 31
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "id": 32
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik controleer details voordat ik iets als klaar doorgeef.",
+          "id": 33
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik laat rommel of half afgemaakt werk makkelijk liggen.",
+          "id": 34
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik kom op tijd en geef het door als ik te laat dreig te zijn.",
+          "id": 35
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik houd bij wat er nog openstaat, zonder dat iemand erom hoeft te vragen.",
+          "id": 36
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik werk netjes volgens afgesproken hygiëne, veiligheid of kwaliteit.",
+          "id": 37
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik stel lastige klussen uit tot het niet anders meer kan.",
+          "id": 38
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik ruim mijn werkplek op zodat de volgende ploeg er meteen mee verder kan.",
+          "id": 39
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Kleine foutjes in cijfers of labels vind ik niet zo belangrijk.",
+          "id": 40
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik houd me aan pauze- en werktijden zoals we die hebben afgesproken.",
+          "id": 41
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Als niemand kijkt, sla ik controles of stappen over.",
+          "id": 42
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik bereid me voor op een dienst, zodat ik niet hoef te improviseren op basisdingen.",
+          "id": 43
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik geef het eerlijk aan als ik een fout heb gemaakt.",
+          "id": 44
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik verdeel grote taken in stukken die ik écht afkrijg.",
+          "id": 45
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik begin aan iets nieuws terwijl het vorige nog niet af is.",
+          "id": 46
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik bewaar overzicht in bestellingen, orders of takenlijsten.",
+          "id": 47
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik kom terug op een afspraak, ook als die een week eerder is gemaakt.",
+          "id": 48
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik werk door tot de klus veilig en volledig is, niet tot de klok toevallig stopt.",
+          "id": 49
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Administratie of afronden na de klus laat ik het liefst aan een ander.",
+          "id": 50
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik houd rekening met piekmomenten en start op tijd met voorbereiden.",
+          "id": 51
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik raak het spoor kwijt als er meerdere openstaande taken zijn.",
+          "id": 52
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik volg procedures ook als ze saai zijn, omdat ze schade voorkomen.",
+          "id": 53
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik zeg ja tegen extra werk terwijl ik weet dat ik het niet netjes aankan.",
+          "id": 54
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik check of de klant of collega écht heeft wat er is beloofd.",
+          "id": 55
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik houd materialen, gereedschap of voorraad op peil.",
+          "id": 56
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik documenteer wat nodig is zodat een vervanger verder kan.",
+          "id": 57
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik vind het overdreven om dubbel te controleren bij routinewerk.",
+          "id": 58
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": false,
+          "text_nl": "Ik sluit mijn dienst af met een korte check: wat is klaar, wat moet over.",
+          "id": 59
+        },
+        {
+          "scale": "Consciëntieusheid",
+          "reverse": true,
+          "text_nl": "Ik laat anderen de rommel opruimen die ik tijdens de drukte heb veroorzaakt.",
+          "id": 60
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik krijg energie van samenwerken met collega’s op de vloer.",
+          "id": 61
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik spreek makkelijk mensen aan, ook als ik ze nog niet ken.",
+          "id": 62
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik voel me op mijn gemak in een drukke winkel, kas of horecaruimte.",
+          "id": 63
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Ik trek me het liefst terug als er veel mensen om me heen zijn.",
+          "id": 64
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik neem het woord in een korte briefing of overdracht.",
+          "id": 65
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik help gasten of klanten graag met een open, vriendelijke toon.",
+          "id": 66
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik zoek aansluiting bij het team tijdens pauzes.",
+          "id": 67
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Ik vermijd gesprekken met klanten als een collega het ook kan doen.",
+          "id": 68
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik kan een groep op sleeptouw nemen als de sfeer stil valt.",
+          "id": 69
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Telefoneren of baliewerk kost me onevenredig veel moeite.",
+          "id": 70
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik vertel duidelijk wat ik nodig heb van anderen om verder te kunnen.",
+          "id": 71
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Ik werk het liefst de hele dienst zonder overleg.",
+          "id": 72
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik stel me voor aan nieuwe collega’s in plaats van te wachten tot zij komen.",
+          "id": 73
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik houd het tempo erin door anderen mee te nemen in de actie.",
+          "id": 74
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik durf een grap of luchtige opmerking te maken om de spanning te breken.",
+          "id": 75
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "In groepsoverleg blijf ik liever stil, ook als ik iets relevants weet.",
+          "id": 76
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik merk het als een klant of collega aandacht nodig heeft en loop ernaartoe.",
+          "id": 77
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik kan schakelen tussen kassa, vloer en overleg zonder dat ik dichtklap.",
+          "id": 78
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik vind het prettig om zichtbaar te zijn in het team.",
+          "id": 79
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Onverwacht aangesproken worden haalt me uit mijn concentratie.",
+          "id": 80
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik bouw snel een werkrelatie op met uitzendkrachten of seizoenscollega’s.",
+          "id": 81
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Ik laat liever een e-mail of appje gaan dan een gesprek van twee minuten.",
+          "id": 82
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik kan een conflict op de vloer benoemen zonder te verdwijnen.",
+          "id": 83
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Netwerken of kennismaken op een vestiging voelt als een opgave.",
+          "id": 84
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik houd van werk waarin contact met mensen een vast onderdeel is.",
+          "id": 85
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik geef energie aan het team als de dienst lang duurt.",
+          "id": 86
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik spreek makkelijk af wie wat doet, in plaats van te wachten.",
+          "id": 87
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Ik vermijd overdrachten met veel mensen erbij.",
+          "id": 88
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": false,
+          "text_nl": "Ik voel me thuis in een omgeving met veel prikkels en beweging.",
+          "id": 89
+        },
+        {
+          "scale": "Extraversie",
+          "reverse": true,
+          "text_nl": "Ik doe alsof ik druk ben om een extra klantgesprek te ontwijken.",
+          "id": 90
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik help een collega ook als het niet letterlijk mijn taak is.",
+          "id": 91
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik luister eerst naar de ander voordat ik mijn mening geef.",
+          "id": 92
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik houd rekening met hoe mijn toon overkomt bij klanten of gasten.",
+          "id": 93
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Als iemand traag is, laat ik merken dat ik daar weinig geduld voor heb.",
+          "id": 94
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik zoek een oplossing waar het team verder mee kan, niet alleen ik.",
+          "id": 95
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik geef complimenten als iemand iets goed heeft gedaan.",
+          "id": 96
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik kan me inleven in een boze of gestreste klant zonder terug te bijten.",
+          "id": 97
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik zet mijn eigen belang boven dat van het team als het schuurt.",
+          "id": 98
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik deel kennis zodat anderen zelfstandiger worden.",
+          "id": 99
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik maak denigrerende opmerkingen als iemand een fout maakt.",
+          "id": 100
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik pas mijn tempo aan als een nieuwe collega nog moet inwerken.",
+          "id": 101
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik houd wrok als iemand mijn werk heeft overgenomen of bekritiseerd.",
+          "id": 102
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik zeg het rustig als ik het ergens niet mee eens ben.",
+          "id": 103
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik respecteer verschillende achtergronden en werkstijlen in het team.",
+          "id": 104
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik bied hulp aan voordat iemand erom hoeft te vragen.",
+          "id": 105
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik trek me weinig aan van hoe mijn gedrag de sfeer beïnvloedt.",
+          "id": 106
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik geef ruimte aan stillere collega’s in overleg.",
+          "id": 107
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik kan toegeven als de ander een beter punt heeft.",
+          "id": 108
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik behandel uitzendkrachten en vast personeel met dezelfde beleefdheid.",
+          "id": 109
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik gebruik sarcastische opmerkingen om mijn zin door te drijven.",
+          "id": 110
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik let erop dat niemand buiten de groep valt tijdens de dienst.",
+          "id": 111
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik laat een collega bewust klem lopen als we om dezelfde taak concurreren.",
+          "id": 112
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik houd rekening met fysieke of taalbarrières van anderen.",
+          "id": 113
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik vind het zwak als iemand om hulp vraagt bij iets dat ik vanzelfsprekend vind.",
+          "id": 114
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik sluit een conflict af met een duidelijke, respectvolle afspraak.",
+          "id": 115
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik bescherm de privacy van collega’s in gesprekken met derden.",
+          "id": 116
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik zeg dankjewel voor werk dat anders onzichtbaar blijft.",
+          "id": 117
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik onderbreek anderen vaak omdat mijn punt urgenter voelt.",
+          "id": 118
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": false,
+          "text_nl": "Ik zoek win-win als roosters of taken botsen.",
+          "id": 119
+        },
+        {
+          "scale": "Vriendelijkheid",
+          "reverse": true,
+          "text_nl": "Ik speel mensen tegen elkaar uit als dat mijn werk makkelijker maakt.",
+          "id": 120
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik blijf kalm als het opeens druk wordt.",
+          "id": 121
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik herstel snel na een tegenslag of een fout.",
+          "id": 122
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "id": 123
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik pieker lang na over kritiek, ook als die al is opgelost.",
+          "id": 124
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik houd overzicht als de planning last-minute wijzigt.",
+          "id": 125
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik blijf beleefd als een klant of collega scherp uit de hoek komt.",
+          "id": 126
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik slaap een incident af en begin de volgende dienst schoon.",
+          "id": 127
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "id": 128
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik adem even door voordat ik reageer in een spannend moment.",
+          "id": 129
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik voel me snel persoonlijk aangevallen bij gewone werkfeedback.",
+          "id": 130
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik blijf functioneren als er een storing, wachtrij of tekort is.",
+          "id": 131
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik vermijd lastige gesprekken uit angst dat het uit de hand loopt.",
+          "id": 132
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik kan een fout herstellen zonder dat de rest van de dienst instort.",
+          "id": 133
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik houd mijn stem en lichaamstaal rustig onder tijdsdruk.",
+          "id": 134
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik vraag om hulp als de druk te hoog wordt, in plaats van vast te lopen.",
+          "id": 135
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik neem spanning van werk mee naar huis en kom er moeilijk vanaf.",
+          "id": 136
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik blijf beslissen als niet alle informatie perfect is.",
+          "id": 137
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik accepteer dat piekdagen horen bij dit werk, zonder te blokkeren.",
+          "id": 138
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik kan een conflict laten liggen tot het moment om het te bespreken.",
+          "id": 139
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Kleine tegenvallers voelen bij mij al snel als een ramp.",
+          "id": 140
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik blijf veilig werken ook als ik gehaast ben.",
+          "id": 141
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik word prikkelbaar als ik niet meteen controle over de situatie heb.",
+          "id": 142
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik zet een tegenslag om in een concrete volgende stap.",
+          "id": 143
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik vermijd verantwoordelijkheid uit angst om de schuld te krijgen.",
+          "id": 144
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik houd mijn aandacht bij de taak, ook als er om me heen rumoer is.",
+          "id": 145
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik kan ja en nee zeggen zonder daar uren over te twijfelen.",
+          "id": 146
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik blijf vriendelijk aan de kassa of balie als de rij lang is.",
+          "id": 147
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik sluit me af of bevries als de druk oploopt.",
+          "id": 148
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": false,
+          "text_nl": "Ik zie een drukke dienst als een uitdaging die ik aankan.",
+          "id": 149
+        },
+        {
+          "scale": "EmotioneleStabiliteit",
+          "reverse": true,
+          "text_nl": "Ik heb na een lastige dienst lang last van piekeren of boosheid.",
+          "id": 150
+        }
+      ],
+      "item_count": 150,
+      "items_per_domain": 30,
+      "domains": [
+        "Consciëntieusheid",
+        "EmotioneleStabiliteit",
+        "Extraversie",
+        "Openheid",
+        "Vriendelijkheid"
+      ]
+    }
+  },
+  "onboarding_mini": {
+    "competence_item_ids": [
+      1,
+      6,
+      11,
+      16,
+      21
+    ],
+    "career_item_ids": [
+      1,
+      6,
+      10,
+      14,
+      18,
+      22
+    ],
+    "culture_item_ids": [
+      1,
+      3,
+      5,
+      7,
+      11
+    ],
+    "values_item_ids": [
+      1,
+      6,
+      11,
+      16,
+      21
+    ],
+    "total_mini_questions": 21
+  },
+  "deep_lengths": {
+    "competence": 150,
+    "career": 200,
+    "culture": 150,
+    "values": 150
+  },
+  "translation_note": {
+    "nl": "primary",
+    "en": "full test item translations in UiStringsCompetencies.En",
+    "pl_ro_ar": "test items fall back to Dutch (UiStringsCompetencies.MergeAll)"
+  }
+}

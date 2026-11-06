@@ -1,0 +1,3920 @@
+{
+  "summary": {
+    "evidence_type": "code_verified_a",
+    "quick_scan_items_reviewed": 93,
+    "deep_competence_nl_only": "DeepAnalysisCompetenceItems.cs (150 NL strings, no UiStrings keys)",
+    "translation_gaps": {
+      "culture_q_en": "CultureScan.Q01-Q18 remain Dutch in En()",
+      "values_q_en": "ValuesScan.Q01-Q25 remain Dutch in En()",
+      "pl_ro_ar_all_quickscan": "MergeAll copies Nl for competencies, culture, values"
+    }
+  },
+  "items": [
+    {
+      "test": "competence",
+      "key": "Competency.Q01",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like working with others to finish a task.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk graag samen met anderen om een klus af te ronden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q02",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik help collega’s ook als het niet letterlijk bij mijn taak hoort.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I help colleagues even when it is not strictly my job.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik help collega’s ook als het niet letterlijk bij mijn taak hoort.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik help collega’s ook als het niet letterlijk bij mijn taak hoort.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik help collega’s ook als het niet letterlijk bij mijn taak hoort.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q03",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I listen to others before I give my own opinion.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik luister eerst naar anderen voordat ik mijn mening geef.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q04",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I prefer to stay on the sidelines when the team needs to discuss.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik houd me liever afzijdig als het team moet overleggen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q05",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I find it hard to take other people’s feelings into account.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het lastig om rekening te houden met andermans gevoelens.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q06",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I finish what I promise, even when it is tough.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik maak af wat ik beloof, ook als het tegenzit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q07",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I plan my work so deadlines stay realistic.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik plan mijn werk zodat deadlines haalbaar blijven.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q08",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik let op details zodat het werk in één keer goed is.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I pay attention to details so the work is right first time.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik let op details zodat het werk in één keer goed is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik let op details zodat het werk in één keer goed is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik let op details zodat het werk in één keer goed is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q09",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I often put jobs off until the last moment.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik stel klusjes vaak uit tot het laatste moment.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q10",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I easily leave mess or unfinished work lying around.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik laat rommel of onafgemaakt werk makkelijk liggen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q11",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I stay calm when it is busy or something goes wrong.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik blijf kalm als het druk is of er iets misgaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q12",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik herstel snel na een tegenslag op het werk.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I bounce back quickly after a setback at work.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik herstel snel na een tegenslag op het werk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik herstel snel na een tegenslag op het werk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik herstel snel na een tegenslag op het werk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q13",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I can handle several things at once without panicking.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik kan meerdere dingen tegelijk aan zonder in paniek te raken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q14",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik pieker lang na over fouten of kritiek.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I dwell on mistakes or criticism for a long time.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik pieker lang na over fouten of kritiek.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik pieker lang na over fouten of kritiek.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik pieker lang na over fouten of kritiek.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q15",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I get upset quickly when something unexpected happens.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik raak snel van slag als er iets onverwachts gebeurt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q16",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like thinking of new ways to solve a problem.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik bedenk graag nieuwe manieren om een probleem op te lossen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q17",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I enjoy learning new tasks or systems.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het leuk om nieuwe taken of systemen te leren.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q18",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zie snel verbanden die anderen misschien missen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I quickly see connections that others might miss.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zie snel verbanden die anderen misschien missen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zie snel verbanden die anderen misschien missen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zie snel verbanden die anderen misschien missen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q19",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "absoluut_taal"
+          ]
+        },
+        "en": {
+          "text": "I prefer to stick to how we have always done things.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik hou het liefst vast aan hoe we het altijd al deden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q20",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind nieuwe ideeën of veranderingen vooral lastig.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I mostly find new ideas or changes difficult.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind nieuwe ideeën of veranderingen vooral lastig.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind nieuwe ideeën of veranderingen vooral lastig.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind nieuwe ideeën of veranderingen vooral lastig.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q21",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik krijg energie van contact met collega’s of klanten.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I get energy from contact with colleagues or customers.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik krijg energie van contact met collega’s of klanten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik krijg energie van contact met collega’s of klanten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik krijg energie van contact met collega’s of klanten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q22",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I feel at ease in a busy, social workplace.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik voel me op mijn gemak in een drukke, sociale werkomgeving.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q23",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik neem graag het woord in een teamoverleg.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I am happy to speak up in a team meeting.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik neem graag het woord in een teamoverleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik neem graag het woord in een teamoverleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik neem graag het woord in een teamoverleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q24",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I prefer working alone, without much discussion.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk het liefst in mijn eentje, zonder veel overleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "competence",
+      "key": "Competency.Q25",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I mostly find groups or busyness at work tiring.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind groepen of drukte op het werk vooral vermoeiend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q01",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like working with machines, tools, or outdoors.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk graag met machines, gereedschap of buiten in de praktijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q02",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like making or repairing something tangible with my hands.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het fijn om met mijn handen iets tastbaars te maken of te repareren.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q03",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I feel at home in a greenhouse, warehouse, workshop or on a building site.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik voel me thuis in een kas, magazijn, werkplaats of op de bouw.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q04",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik kies liever een praktische klus dan een lang overleg.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I would rather do a practical job than sit in a long meeting.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik kies liever een praktische klus dan een lang overleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik kies liever een praktische klus dan een lang overleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik kies liever een praktische klus dan een lang overleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q05",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I avoid work that is dirty, heavy or outdoors.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vermijd werk waarbij ik vies, zwaar of buiten aan de slag moet.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q06",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like investigating how things work or why they are that way.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik onderzoek graag hoe iets werkt of waarom iets zo is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q07",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like diving into figures, causes or technical explanations.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik duik graag in cijfers, oorzaken of technische uitleg.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q08",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I want to understand why before I carry something out.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik wil eerst begrijpen waarom, voordat ik iets uitvoer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q09",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I have little patience for research or analysis.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik heb weinig geduld voor uitzoekwerk of analyses.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q10",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like inventing creative or visual solutions.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik bedenk graag creatieve of visuele oplossingen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q11",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het leuk om iets moois of origineels te maken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I enjoy making something beautiful or original.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het leuk om iets moois of origineels te maken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het leuk om iets moois of origineels te maken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het leuk om iets moois of origineels te maken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q12",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I quickly see a fresh approach when something gets dull.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zie snel een andere, frisse aanpak als iets saai wordt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q13",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I prefer sticking to existing ways of working.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik houd het liefst vast aan vaste, bestaande werkwijzen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q14",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik help graag mensen of werk graag in een team met klanten.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like helping people or working with customers in a team.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik help graag mensen of werk graag in een team met klanten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik help graag mensen of werk graag in een team met klanten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik help graag mensen of werk graag in een team met klanten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q15",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik krijg energie van gasten, patiënten of collega’s helpen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I get energy from helping guests, patients or colleagues.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik krijg energie van gasten, patiënten of collega’s helpen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik krijg energie van gasten, patiënten of collega’s helpen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik krijg energie van gasten, patiënten of collega’s helpen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q16",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik luister graag en zet me in voor iemand anders z’n dag.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like listening and making someone else’s day better.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik luister graag en zet me in voor iemand anders z’n dag.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik luister graag en zet me in voor iemand anders z’n dag.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik luister graag en zet me in voor iemand anders z’n dag.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q17",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I prefer work without customer contact or caring for others.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk liever zonder klantcontact of zorg voor anderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q18",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like taking initiative and persuading others of a plan.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik neem graag initiatief en overtuig anderen van een plan.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q19",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I enjoy selling, organising or taking the lead.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het leuk om te verkopen, te organiseren of leiding te nemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q20",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zie kansen en wil die omzetten in resultaat.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I see opportunities and want to turn them into results.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zie kansen en wil die omzetten in resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zie kansen en wil die omzetten in resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zie kansen en wil die omzetten in resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q21",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik laat liever anderen het voortouw nemen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I prefer to let others take the lead.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik laat liever anderen het voortouw nemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik laat liever anderen het voortouw nemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik laat liever anderen het voortouw nemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q22",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik houd van orde, administratie en vaste procedures.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like order, administration and fixed procedures.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik houd van orde, administratie en vaste procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik houd van orde, administratie en vaste procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik houd van orde, administratie en vaste procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q23",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I work accurately with lists, schedules or systems.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk nauwkeurig met lijsten, planningen of systemen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q24",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I like it when the rules and steps are clear.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het fijn als de regels en stappen duidelijk zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "career",
+      "key": "Career.Q25",
+      "source_file": "UiStringsCompetencies.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik heb een hekel aan administratie en vaste formats.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "I dislike administration and fixed templates.",
+          "same_as_nl": false,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik heb een hekel aan administratie en vaste formats.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik heb een hekel aan administratie en vaste formats.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik heb een hekel aan administratie en vaste formats.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q01",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk het liefst zelfstandig, zonder dat iemand steeds meekijkt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q02",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik wil duidelijke instructies en vaste kaders voordat ik begin.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "mogelijk_dubbel_concept"
+          ]
+        },
+        "en": {
+          "text": "Ik wil duidelijke instructies en vaste kaders voordat ik begin.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik wil duidelijke instructies en vaste kaders voordat ik begin.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik wil duidelijke instructies en vaste kaders voordat ik begin.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik wil duidelijke instructies en vaste kaders voordat ik begin.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q03",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Op het werk mag het luchtig en informeel zijn.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Op het werk mag het luchtig en informeel zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Op het werk mag het luchtig en informeel zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Op het werk mag het luchtig en informeel zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Op het werk mag het luchtig en informeel zijn.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q04",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik houd van een formelere toon en duidelijke hiërarchie.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik houd van een formelere toon en duidelijke hiërarchie.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik houd van een formelere toon en duidelijke hiërarchie.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik houd van een formelere toon en duidelijke hiërarchie.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik houd van een formelere toon en duidelijke hiërarchie.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q05",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk het liefst samen met collega’s aan één doel.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik werk het liefst samen met collega’s aan één doel.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk het liefst samen met collega’s aan één doel.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk het liefst samen met collega’s aan één doel.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk het liefst samen met collega’s aan één doel.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q06",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik presteer beter als ik mijn eigen stuk alleen kan afmaken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik presteer beter als ik mijn eigen stuk alleen kan afmaken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik presteer beter als ik mijn eigen stuk alleen kan afmaken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik presteer beter als ik mijn eigen stuk alleen kan afmaken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik presteer beter als ik mijn eigen stuk alleen kan afmaken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q07",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het prima als de planning tussendoor verandert.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik vind het prima als de planning tussendoor verandert.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het prima als de planning tussendoor verandert.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het prima als de planning tussendoor verandert.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het prima als de planning tussendoor verandert.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q08",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk het best met een vaste, voorspelbare planning.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik werk het best met een vaste, voorspelbare planning.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk het best met een vaste, voorspelbare planning.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk het best met een vaste, voorspelbare planning.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk het best met een vaste, voorspelbare planning.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q09",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zoek graag nieuwe manieren om het werk beter te doen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik zoek graag nieuwe manieren om het werk beter te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zoek graag nieuwe manieren om het werk beter te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zoek graag nieuwe manieren om het werk beter te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zoek graag nieuwe manieren om het werk beter te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q10",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk het liefst met bewezen methodes die al werken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik werk het liefst met bewezen methodes die al werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk het liefst met bewezen methodes die al werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk het liefst met bewezen methodes die al werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk het liefst met bewezen methodes die al werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q11",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Als het schuurt, kies ik eerder voor de mens dan voor het harde resultaat.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Als het schuurt, kies ik eerder voor de mens dan voor het harde resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Als het schuurt, kies ik eerder voor de mens dan voor het harde resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Als het schuurt, kies ik eerder voor de mens dan voor het harde resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Als het schuurt, kies ik eerder voor de mens dan voor het harde resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q12",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Resultaat komt eerst — ook als dat even lastig is voor de sfeer.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Resultaat komt eerst — ook als dat even lastig is voor de sfeer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "em_dash"
+          ]
+        },
+        "pl": {
+          "text": "Resultaat komt eerst — ook als dat even lastig is voor de sfeer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Resultaat komt eerst — ook als dat even lastig is voor de sfeer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Resultaat komt eerst — ook als dat even lastig is voor de sfeer.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q13",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik leer graag iets nieuws, ook als het even onwennig voelt.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik leer graag iets nieuws, ook als het even onwennig voelt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik leer graag iets nieuws, ook als het even onwennig voelt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik leer graag iets nieuws, ook als het even onwennig voelt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik leer graag iets nieuws, ook als het even onwennig voelt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q14",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik rond taken netjes af en check of alles klopt.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik rond taken netjes af en check of alles klopt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik rond taken netjes af en check of alles klopt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik rond taken netjes af en check of alles klopt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik rond taken netjes af en check of alles klopt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q15",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik krijg energie van contact met klanten of collega’s.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik krijg energie van contact met klanten of collega’s.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik krijg energie van contact met klanten of collega’s.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik krijg energie van contact met klanten of collega’s.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik krijg energie van contact met klanten of collega’s.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q16",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik help graag mee zodat iedereen prettig kan werken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "absoluut_taal"
+          ]
+        },
+        "en": {
+          "text": "Ik help graag mee zodat iedereen prettig kan werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik help graag mee zodat iedereen prettig kan werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik help graag mee zodat iedereen prettig kan werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik help graag mee zodat iedereen prettig kan werken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q17",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Als het hectisch wordt, blijf ik redelijk kalm.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Als het hectisch wordt, blijf ik redelijk kalm.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Als het hectisch wordt, blijf ik redelijk kalm.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Als het hectisch wordt, blijf ik redelijk kalm.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Als het hectisch wordt, blijf ik redelijk kalm.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "culture",
+      "key": "CultureScan.Q18",
+      "source_file": "UiStringsCulture.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik blijf liever bij bekende werkwijzen dan iets nieuws uitproberen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik blijf liever bij bekende werkwijzen dan iets nieuws uitproberen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik blijf liever bij bekende werkwijzen dan iets nieuws uitproberen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik blijf liever bij bekende werkwijzen dan iets nieuws uitproberen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik blijf liever bij bekende werkwijzen dan iets nieuws uitproberen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q01",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik wil zelf kunnen bepalen hoe ik mijn werk aanpak.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q02",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Nieuwe uitdagingen op het werk motiveren mij.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Nieuwe uitdagingen op het werk motiveren mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Nieuwe uitdagingen op het werk motiveren mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Nieuwe uitdagingen op het werk motiveren mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Nieuwe uitdagingen op het werk motiveren mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q03",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk het best als iemand precies zegt wat ik moet doen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik werk het best als iemand precies zegt wat ik moet doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk het best als iemand precies zegt wat ik moet doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk het best als iemand precies zegt wat ik moet doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk het best als iemand precies zegt wat ik moet doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q04",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zoek graag nieuwe manieren om mijn werk te doen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik zoek graag nieuwe manieren om mijn werk te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zoek graag nieuwe manieren om mijn werk te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zoek graag nieuwe manieren om mijn werk te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zoek graag nieuwe manieren om mijn werk te doen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q05",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik voel me prettiger bij vaste routines dan bij veel wisseling.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik voel me prettiger bij vaste routines dan bij veel wisseling.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik voel me prettiger bij vaste routines dan bij veel wisseling.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik voel me prettiger bij vaste routines dan bij veel wisseling.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik voel me prettiger bij vaste routines dan bij veel wisseling.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q06",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik help collega's graag, ook buiten mijn eigen taken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik help collega's graag, ook buiten mijn eigen taken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik help collega's graag, ook buiten mijn eigen taken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik help collega's graag, ook buiten mijn eigen taken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik help collega's graag, ook buiten mijn eigen taken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q07",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Een warme, behulpzame sfeer op het werk is belangrijk voor mij.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Een warme, behulpzame sfeer op het werk is belangrijk voor mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Een warme, behulpzame sfeer op het werk is belangrijk voor mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Een warme, behulpzame sfeer op het werk is belangrijk voor mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Een warme, behulpzame sfeer op het werk is belangrijk voor mij.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q08",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik houd me liever afzijdig van persoonlijke gesprekken met collega's.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik houd me liever afzijdig van persoonlijke gesprekken met collega's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik houd me liever afzijdig van persoonlijke gesprekken met collega's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik houd me liever afzijdig van persoonlijke gesprekken met collega's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik houd me liever afzijdig van persoonlijke gesprekken met collega's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q09",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik let op hoe het met mensen om me heen gaat.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik let op hoe het met mensen om me heen gaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik let op hoe het met mensen om me heen gaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik let op hoe het met mensen om me heen gaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik let op hoe het met mensen om me heen gaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q10",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Teamgevoel vind ik minder belangrijk dan mijn eigen resultaat.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Teamgevoel vind ik minder belangrijk dan mijn eigen resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Teamgevoel vind ik minder belangrijk dan mijn eigen resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Teamgevoel vind ik minder belangrijk dan mijn eigen resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Teamgevoel vind ik minder belangrijk dan mijn eigen resultaat.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q11",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik wil zien dat mijn inzet meetbaar verschil maakt.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik wil zien dat mijn inzet meetbaar verschil maakt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik wil zien dat mijn inzet meetbaar verschil maakt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik wil zien dat mijn inzet meetbaar verschil maakt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik wil zien dat mijn inzet meetbaar verschil maakt.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q12",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik stel mezelf doelen en werk er actief naar toe.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik stel mezelf doelen en werk er actief naar toe.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik stel mezelf doelen en werk er actief naar toe.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik stel mezelf doelen en werk er actief naar toe.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik stel mezelf doelen en werk er actief naar toe.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q13",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik vind het prima om gemiddeld te presteren zolang het werk af is.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik vind het prima om gemiddeld te presteren zolang het werk af is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik vind het prima om gemiddeld te presteren zolang het werk af is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik vind het prima om gemiddeld te presteren zolang het werk af is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik vind het prima om gemiddeld te presteren zolang het werk af is.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q14",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik ben trots als ik normen of targets overtreff.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik ben trots als ik normen of targets overtreff.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik ben trots als ik normen of targets overtreff.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik ben trots als ik normen of targets overtreff.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik ben trots als ik normen of targets overtreff.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q15",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zoek geen extra verantwoordelijkheid voor belangrijke resultaten.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik zoek geen extra verantwoordelijkheid voor belangrijke resultaten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zoek geen extra verantwoordelijkheid voor belangrijke resultaten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zoek geen extra verantwoordelijkheid voor belangrijke resultaten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zoek geen extra verantwoordelijkheid voor belangrijke resultaten.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q16",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Duidelijke afspraken over uren en taken geven mij rust.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Duidelijke afspraken over uren en taken geven mij rust.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Duidelijke afspraken over uren en taken geven mij rust.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Duidelijke afspraken over uren en taken geven mij rust.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Duidelijke afspraken over uren en taken geven mij rust.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q17",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik werk graag volgens vaste, bewezen procedures.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik werk graag volgens vaste, bewezen procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik werk graag volgens vaste, bewezen procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik werk graag volgens vaste, bewezen procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik werk graag volgens vaste, bewezen procedures.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q18",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Regels en protocollen voelen voor mij vooral belemmerend.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Regels en protocollen voelen voor mij vooral belemmerend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Regels en protocollen voelen voor mij vooral belemmerend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Regels en protocollen voelen voor mij vooral belemmerend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Regels en protocollen voelen voor mij vooral belemmerend.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q19",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik zoek werk met langdurige zekerheid en stabiliteit.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik zoek werk met langdurige zekerheid en stabiliteit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik zoek werk met langdurige zekerheid en stabiliteit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik zoek werk met langdurige zekerheid en stabiliteit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik zoek werk met langdurige zekerheid en stabiliteit.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q20",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik raak onrustig als mijn taken te voorspelbaar worden.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik raak onrustig als mijn taken te voorspelbaar worden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik raak onrustig als mijn taken te voorspelbaar worden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik raak onrustig als mijn taken te voorspelbaar worden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik raak onrustig als mijn taken te voorspelbaar worden.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q21",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik wil dat mijn werk iets goeds doet voor mens of milieu.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik wil dat mijn werk iets goeds doet voor mens of milieu.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik wil dat mijn werk iets goeds doet voor mens of milieu.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik wil dat mijn werk iets goeds doet voor mens of milieu.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik wil dat mijn werk iets goeds doet voor mens of milieu.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q22",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik kies liever voor een organisatie met eerlijke, duurzame praktijken.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik kies liever voor een organisatie met eerlijke, duurzame praktijken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik kies liever voor een organisatie met eerlijke, duurzame praktijken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik kies liever voor een organisatie met eerlijke, duurzame praktijken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik kies liever voor een organisatie met eerlijke, duurzame praktijken.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q23",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Het maatschappelijke doel van mijn werk is mij niet zo belangrijk.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Het maatschappelijke doel van mijn werk is mij niet zo belangrijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Het maatschappelijke doel van mijn werk is mij niet zo belangrijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Het maatschappelijke doel van mijn werk is mij niet zo belangrijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Het maatschappelijke doel van mijn werk is mij niet zo belangrijk.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q24",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik let op verspilling en probeer die op het werk te verminderen.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik let op verspilling en probeer die op het werk te verminderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik let op verspilling en probeer die op het werk te verminderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik let op verspilling en probeer die op het werk te verminderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik let op verspilling en probeer die op het werk te verminderen.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    },
+    {
+      "test": "values",
+      "key": "ValuesScan.Q25",
+      "source_file": "UiStringsValues.cs",
+      "languages": {
+        "nl": {
+          "text": "Ik focus op mijn eigen taken, niet op bredere maatschappelijke thema's.",
+          "same_as_nl": false,
+          "flags_nl_review": [
+            "b1_ok"
+          ]
+        },
+        "en": {
+          "text": "Ik focus op mijn eigen taken, niet op bredere maatschappelijke thema's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "plain_ok"
+          ]
+        },
+        "pl": {
+          "text": "Ik focus op mijn eigen taken, niet op bredere maatschappelijke thema's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ro": {
+          "text": "Ik focus op mijn eigen taken, niet op bredere maatschappelijke thema's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        },
+        "ar": {
+          "text": "Ik focus op mijn eigen taken, niet op bredere maatschappelijke thema's.",
+          "same_as_nl": true,
+          "flags_en_review": [
+            "not_translated_uses_nl"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+
+<section class="pub-landing__flow-wrap" id="flow" aria-label="@LandingText.For("Landing.Flow.Aria", Variant)">
+    <div class="pub-landing__wrap">
+        <div class="pub-landing__flow pub-landing__lift pub-landing__card-calm">
+            <div class="pub-landing__flow-step">
+                <span class="pub-landing__flow-ico" aria-hidden="true">💬</span>
+                <div>
+                    <b>@LandingText.For("Landing.Flow.S1Title", Variant)</b>
+                    <small>@LandingText.For("Landing.Flow.S1Sub", Variant)</small>
+                </div>
+            </div>
+            <span class="pub-landing__flow-ar" aria-hidden="true"></span>
+            <div class="pub-landing__flow-step">
+                <span class="pub-landing__flow-ico" aria-hidden="true">🧬</span>
+                <div>
+                    <b>@LandingText.For("Landing.Flow.S2Title", Variant)</b>
+                    <small>@LandingText.For("Landing.Flow.S2Sub", Variant)</small>
+                </div>
+            </div>
+            <span class="pub-landing__flow-ar" aria-hidden="true"></span>
+            <div class="pub-landing__flow-step pub-landing__flow-step--hi">
+                <span class="pub-landing__flow-ico" aria-hidden="true">📍</span>
+                <div>
+                    <b>@LandingText.For("Landing.Flow.S3Title", Variant)</b>
+                    <small>@LandingText.For("Landing.Flow.S3Sub", Variant)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+}

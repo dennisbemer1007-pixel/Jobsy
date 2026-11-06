@@ -5,7 +5,7 @@ namespace Jobsy.Tests;
 public class DimensionLabelsAndRiasecRankingTests
 {
     [Theory]
-    [InlineData(SchwartzValuesCatalog.Stability, "Zekerheid & traditie")]
+    [InlineData(SchwartzValuesCatalog.Stability, "Zekerheid & duidelijkheid")]
     [InlineData(SchwartzValuesCatalog.Impact, "Impact & rechtvaardigheid")]
     [InlineData(CompetencyTestCatalog.Stressbestendigheid, "Kalm blijven")]
     [InlineData(CompetencyTestCatalog.Innovatie, "Nieuwe dingen proberen")]
@@ -24,7 +24,8 @@ public class DimensionLabelsAndRiasecRankingTests
     }
 
     [Theory]
-    [InlineData("zekerheid en voorspelbaarheid", "Zekerheid & traditie")]
+    [InlineData("zekerheid en voorspelbaarheid", "Zekerheid & duidelijkheid")]
+    [InlineData("Zekerheid & traditie", "Zekerheid & duidelijkheid")]
     [InlineData("Stressbestendigheid", "Kalm blijven")]
     [InlineData("Innovatie", "Nieuwe dingen proberen")]
     public void MapStored_rewrites_legacy_outcome_phrases(string stored, string expected)
@@ -38,7 +39,12 @@ public class DimensionLabelsAndRiasecRankingTests
         Assert.Equal(2, top.Count);
         Assert.Equal(CareerTestCatalog.Artistic, top[0]);
         Assert.Equal(CareerTestCatalog.Social, top[1]);
-        Assert.Equal("A en S even sterk", RiasecRanking.FormatTopEqualOrLabel(top));
+        Assert.Equal(
+            CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic)
+            + " en "
+            + CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social)
+            + " even sterk",
+            RiasecRanking.FormatTopEqualOrLabel(top));
     }
 
     [Fact]

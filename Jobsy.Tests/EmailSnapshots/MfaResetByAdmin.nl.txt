@@ -1,0 +1,33 @@
+KEY: MfaResetByAdmin
+SUBJECT: Je tweestapsverificatie is gereset
+PREHEADER: Stel hem opnieuw in als je inlogt.
+KIND: Essential
+--- TEXT ---
+Hallo Alex,
+
+Je tweestapsverificatie is gereset
+==================================
+
+Een beheerder heeft je tweestapsverificatie gereset. Je stelt hem opnieuw in
+als je inlogt.
+
+Was dit niet de bedoeling? Neem contact met ons op.
+
+Inloggen: https://lobsy.nl/login
+
+Team Lobsy
+
+Je krijgt deze mail om je account te beschermen.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Je tweestapsverificatie is gereset
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Inloggen -> https://lobsy.nl/login
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

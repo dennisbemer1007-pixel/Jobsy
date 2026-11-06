@@ -1,6 +1,5 @@
 @using Jobsy.Web.Localization
-@inject CultureState Culture
-@implements IDisposable
+@inherits CultureAwareComponentBase
 
 <footer class="app-footer">
     <nav class="app-footer__links" aria-label="@Culture["Footer.Legal"]">
@@ -8,18 +7,8 @@
         <a href="/algemene-voorwaarden">@Culture["Footer.Terms"]</a>
         <a href="/gebruiksvoorwaarden">@Culture["Footer.Usage"]</a>
         <a href="/wie-zijn-wij">@Culture["Footer.About"]</a>
-        <a href="/westland">@Culture["Footer.Westland"]</a>
+        <a href="/toegankelijkheid">@Culture["PublicFooter.Accessibility"]</a>
+        <a href="/bronnen">@Culture["Footer.Sources"]</a>
     </nav>
     <p class="app-footer__copy">© @DateTime.UtcNow.Year Lobsy</p>
 </footer>
-
-@code {
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
-}

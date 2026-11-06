@@ -29,6 +29,23 @@ public class CommissionLedgerEntry
     public Guid? SelfBillingInvoiceId { get; set; }
     public SelfBillingInvoice? SelfBillingInvoice { get; set; }
 
+    /// <summary>When a hold ends and the amount becomes available (Europe/Amsterdam day boundary as UTC).</summary>
+    public DateTime AvailableFromUtc { get; set; }
+
+    public Guid? SalesPayoutRequestId { get; set; }
+    public SalesPayoutRequest? SalesPayoutRequest { get; set; }
+
+    /// <summary>Self-FK to the ledger line this correction reverses.</summary>
+    public Guid? CorrectsEntryId { get; set; }
+    public CommissionLedgerEntry? CorrectsEntry { get; set; }
+
+    /// <summary>Idempotency key for Mollie refund/chargeback corrections (≤ 80).</summary>
+    public string? SourceRefundKey { get; set; }
+
+    public string? Reason { get; set; }
+
+    public Guid? CreatedByUserId { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }
 
@@ -39,5 +56,7 @@ public enum CommissionEntryKind
     Payout = 2,
     Adjustment = 3,
     /// <summary>Passive referral bonus for the SM who referred the primary salesmanager.</summary>
-    IndirectTokenCommission = 4
+    IndirectTokenCommission = 4,
+    RefundCorrection = 5,
+    ChargebackCorrection = 6
 }

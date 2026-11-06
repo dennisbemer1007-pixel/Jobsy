@@ -1,9 +1,9 @@
+@using Jobsy.Core.Rules
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
-@implements IDisposable
 
 <LobsyFriendlyDialog IsOpen="@(IsOpen && Vacancy is not null)"
-                     Title="@Culture["Employer.Publish"]"
+                     Title="@Culture["Employer.PublishOptionsTitle"]"
                      TitleId="publish-modal-title"
                      Lead="@(Vacancy is null ? null : $"{Vacancy.Title} · {Vacancy.CompanyName}")"
                      Class="publish-modal"
@@ -14,7 +14,7 @@
             <input type="checkbox" checked disabled />
             <span>
                 @Culture["Employer.PublishBase"]
-                <em>@PublishCost.ToString("0.##") token</em>
+                <em>@Culture["Employer.PublishBaseFree"]</em>
             </span>
         </label>
         @if (HighlightAvailable)
@@ -22,8 +22,7 @@
             <label class="publish-option">
                 <input type="checkbox" @bind="_highlight" />
                 <span>
-                    @Culture["Employer.Highlight"]
-                    <em>+@HighlightCost.ToString("0.##") token</em>
+                    @string.Format(Culture["WgVac.Cost.Highlight"], CountPhrase.Tokens(Culture, HighlightCost))
                 </span>
             </label>
         }
@@ -40,8 +39,7 @@
         <label class="publish-option">
             <input type="checkbox" @bind="_extend" />
             <span>
-                @Culture["Employer.Extend"]
-                <em>+@_costs.GetValueOrDefault("Extend", 1m).ToString("0.##") token</em>
+                @Culture["WgVac.Cost.ExtendFree"]
             </span>
         </label>
     </div>
@@ -69,7 +67,7 @@
                 </p>
                 @if (_preview.CandidateCount == 0)
                 {
-                    <p class="state-message error">Geen bereik — PushBom kan niet worden geactiveerd.</p>
+                    <p class="state-message error">Geen bereik — pushbericht kan niet worden geactiveerd.</p>
                 }
                 else if (!_preview.HasPricing)
                 {
@@ -78,7 +76,7 @@
                 else
                 {
                     <p class="pushbom-preview__cost">
-                        Kost <strong>@_preview.CostTokens.ToString("0.##")</strong> token(s)
+                        @string.Format(Culture["WgVac.Cost.Push"], CountPhrase.Tokens(Culture, _preview.CostTokens))
                         · saldo @_preview.TokenBalance.ToString("0.##")
                     </p>
                 }
@@ -86,18 +84,18 @@
         </div>
     }
 
-    <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> token(s)</p>
+    <p class="muted">Totaal: <strong>@TotalCost.ToString("0.##")</strong> tokens</p>
 
     @if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
     }
-<div class="inline-actions">
-            <button type="button" class="btn-compact btn-compact--primary" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
-                @(_busy ? Culture["Common.Busy"] : Culture["Employer.Publish"])
-            </button>
-            <button type="button" class="btn-compact" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
-        </div>
+    <div class="inline-actions">
+        <button type="button" class="btn-compact" data-testid="publish-cancel" disabled="@_busy" @onclick="Close">@Culture["Common.Cancel"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" data-testid="publish-confirm" disabled="@ConfirmDisabled" @onclick="ConfirmAsync">
+            @(_busy ? Culture["Common.Busy"] : Culture["Employer.Publish"])
+        </button>
+    </div>
 </LobsyFriendlyDialog>
 
 <TokenTopUpDialog IsOpen="_topUpOpen" Info="_topUpInfo" OnClose="CloseTopUp" />
@@ -121,10 +119,6 @@
     private bool _topUpOpen;
     private InsufficientTokensInfo? _topUpInfo;
 
-    private decimal PublishCost =>
-        Vacancy?.CategoryPublishCostTokens
-        ?? _costs.GetValueOrDefault("Publish", 1m);
-
     private decimal HighlightCost =>
         Vacancy?.CategoryHighlightCostTokens
         ?? _costs.GetValueOrDefault("Highlight", 1m);
@@ -141,10 +135,8 @@
             : 0;
 
     private decimal TotalCost =>
-        PublishCost
-        + (_highlight && HighlightAvailable ? HighlightCost : 0)
-        + (PushBomAvailable ? PushBomCost : 0)
-        + (_extend ? _costs.GetValueOrDefault("Extend", 1m) : 0);
+        (_highlight && HighlightAvailable ? HighlightCost : 0)
+        + (PushBomAvailable ? PushBomCost : 0);
 
     private bool ConfirmDisabled =>
         _busy
@@ -152,15 +144,6 @@
             || _preview is null
             || _preview.CandidateCount == 0
             || !_preview.HasPricing));
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 
     protected override async Task OnParametersSetAsync()
     {

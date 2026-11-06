@@ -1,0 +1,32 @@
+KEY: MfaResetByAdmin
+SUBJECT: Your two-step verification was reset
+PREHEADER: Set it up again when you sign in.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+Your two-step verification was reset
+
+An administrator reset your two-step verification. You set it up again when
+you sign in.
+
+Was this not intended? Contact us.
+
+Sign in: https://lobsy.nl/login
+
+فريق Lobsy
+
+You get this email to protect your account.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Your two-step verification was reset
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Sign in -> https://lobsy.nl/login
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

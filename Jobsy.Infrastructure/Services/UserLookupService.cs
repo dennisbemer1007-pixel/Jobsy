@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
@@ -17,9 +18,28 @@ public sealed class UserLookupService : IUserLookupService
 
     public async Task<User?> FindByPrincipalAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
+        var idRaw = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (Guid.TryParse(idRaw, out var userId))
+        {
+            var byId = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken);
+            if (byId is not null)
+            {
+                return byId;
+            }
+        }
+
         var email = principal.FindFirst(ClaimTypes.Email)?.Value
-                    ?? principal.FindFirst("preferred_username")?.Value
-                    ?? principal.Identity?.Name;
+                    ?? principal.FindFirst("preferred_username")?.Value;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            email = principal.Identity?.Name;
+            if (!string.IsNullOrWhiteSpace(email) && Guid.TryParse(email, out _))
+            {
+                email = null;
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(email))
         {
