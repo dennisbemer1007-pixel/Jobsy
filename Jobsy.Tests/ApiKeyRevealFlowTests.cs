@@ -9,14 +9,25 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Jobsy.Core.Email;
+using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
 
 public class ApiKeyRevealFlowTests
 {
+    private static readonly object VerificationPepperSync = new();
+
     [Fact]
     public async Task Reveal_rotates_once_and_mail_has_no_key()
     {
+        // OneTimeLink tokens are HMAC'd with VerificationCodes — parallel tests or Web API startup can call
+        // ConfigurePepper and race static EffectivePepper; sync and align with CI/env before hashing.
+        lock (VerificationPepperSync)
+        {
+            var pepper = Environment.GetEnvironmentVariable("VerificationCodes__Pepper");
+            VerificationCodes.ConfigurePepper(string.IsNullOrWhiteSpace(pepper) ? null : pepper.Trim());
+        }
+
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
         var email = new RecordingEmail();
