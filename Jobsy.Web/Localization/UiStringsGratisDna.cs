@@ -104,7 +104,7 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.Title"] = en["GratisDna.Landing.Title"];
         ar["GratisDna.Landing.Title"] = en["GratisDna.Landing.Title"];
 
-        nl["GratisDna.Landing.Lead"] = "20 korte vragen over jou. Er is geen goed of fout: kies gewoon wat je voelt. Na 3 minuutjes zie je: dit ben jij.";
+        nl["GratisDna.Landing.Lead"] = "20 korte vragen. Zo'n 3 minuten. Daarna zie je meteen: dit ben jij.";
         en["GratisDna.Landing.Lead"] = "20 short questions about you. There is no right or wrong: just choose what you feel. After about 3 minutes you see: this is you.";
         pl["GratisDna.Landing.Lead"] = en["GratisDna.Landing.Lead"];
         ro["GratisDna.Landing.Lead"] = en["GratisDna.Landing.Lead"];
@@ -134,25 +134,25 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.MetaDevice"] = en["GratisDna.Landing.MetaDevice"];
         ar["GratisDna.Landing.MetaDevice"] = en["GratisDna.Landing.MetaDevice"];
 
-        nl["GratisDna.Landing.Block.Strength"] = "Samenwerken, doorzetten, rust als het druk is · 5 vragen";
+        nl["GratisDna.Landing.Block.Strength"] = "Hoe jij met anderen omgaat";
         en["GratisDna.Landing.Block.Strength"] = "Working together, finishing, calm when it is busy · 5 questions";
         pl["GratisDna.Landing.Block.Strength"] = en["GratisDna.Landing.Block.Strength"];
         ro["GratisDna.Landing.Block.Strength"] = en["GratisDna.Landing.Block.Strength"];
         ar["GratisDna.Landing.Block.Strength"] = en["GratisDna.Landing.Block.Strength"];
 
-        nl["GratisDna.Landing.Block.Riasec"] = "Waar je energie van krijgt · 5 vragen";
+        nl["GratisDna.Landing.Block.Riasec"] = "Wat je energie geeft";
         en["GratisDna.Landing.Block.Riasec"] = "What gives you energy · 5 questions";
         pl["GratisDna.Landing.Block.Riasec"] = en["GratisDna.Landing.Block.Riasec"];
         ro["GratisDna.Landing.Block.Riasec"] = en["GratisDna.Landing.Block.Riasec"];
         ar["GratisDna.Landing.Block.Riasec"] = en["GratisDna.Landing.Block.Riasec"];
 
-        nl["GratisDna.Landing.Block.Culture"] = "Wat voor team en plek bij je past · 5 vragen";
+        nl["GratisDna.Landing.Block.Culture"] = "In welke sfeer jij groeit";
         en["GratisDna.Landing.Block.Culture"] = "What kind of team and place fits you · 5 questions";
         pl["GratisDna.Landing.Block.Culture"] = en["GratisDna.Landing.Block.Culture"];
         ro["GratisDna.Landing.Block.Culture"] = en["GratisDna.Landing.Block.Culture"];
         ar["GratisDna.Landing.Block.Culture"] = en["GratisDna.Landing.Block.Culture"];
 
-        nl["GratisDna.Landing.Block.Value"] = "Wat jou drijft · 5 vragen";
+        nl["GratisDna.Landing.Block.Value"] = "Jouw drijfveren op werk";
         en["GratisDna.Landing.Block.Value"] = "What drives you · 5 questions";
         pl["GratisDna.Landing.Block.Value"] = en["GratisDna.Landing.Block.Value"];
         ro["GratisDna.Landing.Block.Value"] = en["GratisDna.Landing.Block.Value"];
@@ -170,7 +170,7 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.AfterTitle"] = en["GratisDna.Landing.AfterTitle"];
         ar["GratisDna.Landing.AfterTitle"] = en["GratisDna.Landing.AfterTitle"];
 
-        nl["GratisDna.Landing.AfterLead"] = "Een eerste “Dit ben jij”: hoe je werkt, wat je leuk vindt, waar je je thuis voelt en wat je belangrijk vindt.";
+        nl["GratisDna.Landing.AfterLead"] = "Een korte “Dit ben jij”-samenvatting van je werk-DNA. Geen account nodig.";
         en["GratisDna.Landing.AfterLead"] = "A first “This is you”: how you work, what you enjoy, where you feel at home and what matters to you.";
         pl["GratisDna.Landing.AfterLead"] = en["GratisDna.Landing.AfterLead"];
         ro["GratisDna.Landing.AfterLead"] = en["GratisDna.Landing.AfterLead"];
@@ -206,7 +206,7 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.Step3"] = en["GratisDna.Landing.Step3"];
         ar["GratisDna.Landing.Step3"] = en["GratisDna.Landing.Step3"];
 
-        nl["GratisDna.Landing.Age16"] = "Ik ben 16 jaar of ouder en mag zelf starten. Vanaf 13 jaar kan het ook, met toestemming van je ouder of voogd.";
+        nl["GratisDna.Landing.Age16"] = "Ik ben 16 jaar of ouder, of ik heb toestemming van een ouder of voogd (13+).";
         en["GratisDna.Landing.Age16"] = "I am 16 or older and can start myself. From age 13 it is also possible, with consent from your parent or guardian.";
         pl["GratisDna.Landing.Age16"] = "Mam 16 lat lub więcej i mogę zacząć sam. Od 13 lat też można, za zgodą rodzica lub opiekuna.";
         ro["GratisDna.Landing.Age16"] = "Am 16 ani sau mai mult și pot începe singur. De la 13 ani se poate și cu acordul părintelui sau tutorelui.";
@@ -218,7 +218,7 @@ public static class UiStringsGratisDna
         ro["GratisDna.Landing.AgeUnder16"] = "Am 13, 14 sau 15 ani";
         ar["GratisDna.Landing.AgeUnder16"] = "عمري 13 أو 14 أو 15 سنة";
 
-        nl["GratisDna.Landing.Consent"] = "Ik snap dat mijn antwoorden 7 dagen op dit apparaat blijven. Werkgevers zien ze nooit.";
+        nl["GratisDna.Landing.Consent"] = "Je antwoorden blijven 7 dagen op dit apparaat. Werkgevers zien ze nooit.";
         en["GratisDna.Landing.Consent"] = "I understand my answers stay on this device for 7 days. Employers never see them.";
         pl["GratisDna.Landing.Consent"] = en["GratisDna.Landing.Consent"];
         ro["GratisDna.Landing.Consent"] = en["GratisDna.Landing.Consent"];
@@ -542,19 +542,19 @@ public static class UiStringsGratisDna
         ro["GratisDna.Tile.Title.Strength"] = en["GratisDna.Tile.Title.Strength"];
         ar["GratisDna.Tile.Title.Strength"] = en["GratisDna.Tile.Title.Strength"];
 
-        nl["GratisDna.Tile.Title.Riasec"] = "Dit vind je leuk";
+        nl["GratisDna.Tile.Title.Riasec"] = "Wat je leuk vindt";
         en["GratisDna.Tile.Title.Riasec"] = "What you enjoy";
         pl["GratisDna.Tile.Title.Riasec"] = en["GratisDna.Tile.Title.Riasec"];
         ro["GratisDna.Tile.Title.Riasec"] = en["GratisDna.Tile.Title.Riasec"];
         ar["GratisDna.Tile.Title.Riasec"] = en["GratisDna.Tile.Title.Riasec"];
 
-        nl["GratisDna.Tile.Title.Culture"] = "Hier voel je je thuis";
+        nl["GratisDna.Tile.Title.Culture"] = "Waar je je thuis voelt";
         en["GratisDna.Tile.Title.Culture"] = "Where you feel at home";
         pl["GratisDna.Tile.Title.Culture"] = en["GratisDna.Tile.Title.Culture"];
         ro["GratisDna.Tile.Title.Culture"] = en["GratisDna.Tile.Title.Culture"];
         ar["GratisDna.Tile.Title.Culture"] = en["GratisDna.Tile.Title.Culture"];
 
-        nl["GratisDna.Tile.Title.Value"] = "Dit vind je belangrijk";
+        nl["GratisDna.Tile.Title.Value"] = "Wat jij belangrijk vindt";
         en["GratisDna.Tile.Title.Value"] = "What matters to you";
         pl["GratisDna.Tile.Title.Value"] = en["GratisDna.Tile.Title.Value"];
         ro["GratisDna.Tile.Title.Value"] = en["GratisDna.Tile.Title.Value"];
