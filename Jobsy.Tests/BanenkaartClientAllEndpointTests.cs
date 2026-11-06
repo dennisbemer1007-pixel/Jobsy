@@ -8,9 +8,7 @@ public sealed class BanenkaartClientAllEndpointTests
     public async Task Banenkaart_client_all_returns_200_with_catalog_body()
     {
         await using var factory = new IllustratedPagesWebFactory();
-        // This factory runs a real Kestrel sidecar (see IllustratedPagesWebFactory.CreateHost); use that
-        // for HTTP calls — TestServer-backed CreateClient() is not guaranteed to have an app here.
-        using var client = factory.CreateKestrelClient();
+        using var client = factory.CreateClient();
         var response = await client.GetAsync("/api/banenkaart-client/all");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadAsByteArrayAsync();

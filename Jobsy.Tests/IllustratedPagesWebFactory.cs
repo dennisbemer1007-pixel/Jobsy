@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -131,6 +132,28 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
 
     public HttpClient CreateKestrelClient()
         => new() { BaseAddress = new Uri(EnsureServerAddress()) };
+
+    /// <summary>
+    /// The default <see cref="WebApplicationFactory{TEntryPoint}.CreateClient()"/> uses TestServer; this factory
+    /// customizes <see cref="CreateHost"/> with a Kestrel sidecar and leaves TestServer without a runnable app.
+    /// Hide the base helpers so HTTP goes to the real Kestrel listener (same as <see cref="CreateKestrelClient"/>).
+    /// </summary>
+    public new HttpClient CreateClient()
+        => CreateClient(new WebApplicationFactoryClientOptions());
+
+    public new HttpClient CreateClient(WebApplicationFactoryClientOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = options.AllowAutoRedirect,
+            UseCookies = options.HandleCookies,
+        };
+        return new HttpClient(handler, disposeHandler: true)
+        {
+            BaseAddress = new Uri(EnsureServerAddress()),
+        };
+    }
 
     /// <summary>Default ON; set <c>JOBSY_UWV_FEATURES=0</c> or <c>JOBSY_UWV_FEATURES_MOCKUP=0</c> to disable in illustrated e2e.</summary>
     private static bool ResolveUwvFeaturesForIllustratedTests()
