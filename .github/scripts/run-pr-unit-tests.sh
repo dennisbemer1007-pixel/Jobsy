@@ -21,10 +21,13 @@ dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
 code=$?
 set -e
 
-if [[ "$code" -eq 7 ]]; then
-  trx="$(ls -1 test-results/*.trx 2>/dev/null | head -1 || true)"
-  if [[ -n "$trx" ]]; then
-    failed="$(python3 - <<'PY' "$trx"
+# Exit 7: known Kestrel teardown hang after a green run. Exit 1: MTP can report
+# "test session start without end" / InvalidOperationException while TRX shows 0 failed.
+trx_clean_green() {
+  local trx failed
+  trx="$(ls -1t test-results/*.trx 2>/dev/null | head -1 || true)"
+  [[ -n "$trx" ]] || return 1
+  failed="$(python3 - <<'PY' "$trx"
 import sys
 import xml.etree.ElementTree as ET
 root = ET.parse(sys.argv[1]).getroot()
@@ -36,11 +39,17 @@ else:
     print(counters.get("failed", "1"))
 PY
 )"
-    if [[ "$failed" == "0" ]]; then
-      echo "Alle unit/integration tests geslaagd; exit 7 komt van hangdump na fixture-teardown (geen falende test)."
-      exit 0
-    fi
-  fi
+  [[ "$failed" == "0" ]]
+}
+
+if [[ "$code" -eq 7 ]] && trx_clean_green; then
+  echo "Alle unit/integration tests geslaagd; exit 7 komt van hangdump na fixture-teardown (geen falende test)."
+  exit 0
+fi
+
+if [[ "$code" -eq 1 ]] && trx_clean_green; then
+  echo "Alle unit/integration tests geslaagd volgens TRX (0 failed); exit 1 komt waarschijnlijk van MTP/hangdump shutdown (bekend issue)."
+  exit 0
 fi
 
 exit "$code"

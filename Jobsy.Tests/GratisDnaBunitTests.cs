@@ -42,17 +42,18 @@ public class GratisDnaBunitTests : JobsyBunitContext
         });
 
         var markup = cut.Markup;
-        Assert.Contains("Eerste indruk · op basis van 20 vragen", markup, StringComparison.Ordinal);
+        Assert.Contains("Eerste indruk · 20 vragen", markup, StringComparison.Ordinal);
         Assert.Contains("Zo werk jij", markup, StringComparison.Ordinal);
         Assert.Contains("Dit vind je leuk", markup, StringComparison.Ordinal);
         Assert.Contains("Hier voel je je thuis", markup, StringComparison.Ordinal);
         Assert.Contains("Dit vind je belangrijk", markup, StringComparison.Ordinal);
         Assert.Contains("Dit ben jij", markup, StringComparison.Ordinal);
-        Assert.Contains("Meld je aan om te zien welke banen bij je passen", markup, StringComparison.Ordinal);
+        Assert.Contains("Bewaar je DNA · Maak gratis account", markup, StringComparison.Ordinal);
         Assert.Contains("WhatsApp", markup, StringComparison.Ordinal);
         Assert.Contains("Instagram", markup, StringComparison.Ordinal);
-        Assert.Contains("Wis mijn antwoorden", markup, StringComparison.Ordinal);
-        Assert.Contains("Bewaar je DNA · Maak gratis account", markup, StringComparison.Ordinal);
+        Assert.Contains("Wis antwoorden", markup, StringComparison.Ordinal);
+        Assert.Contains("Bewaar je DNA", markup, StringComparison.Ordinal);
+        Assert.Contains("Maak gratis account", markup, StringComparison.Ordinal);
         Assert.Contains("/account-maken?van=ontdek", markup, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"gd-passport-teaser\"", markup, StringComparison.Ordinal);
         Assert.Contains("aria-hidden=\"true\"", markup, StringComparison.Ordinal);

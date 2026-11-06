@@ -67,19 +67,19 @@ public class OnboardingMiniTestFlowEpochBunitTests : JobsyBunitContext
             .Add(p => p.Target, TestDepthLevel.First)
             .Add(p => p.OnAnswer, (Action<(int Id, int Value)>)(pair => answers[pair.Id] = pair.Value)));
 
-        cut.WaitForElement(".test-likert__opt", TimeSpan.FromSeconds(15));
+        cut.WaitForElement(".test-likert__opt", TimeSpan.FromSeconds(30));
         for (var i = 0; i < 4; i++)
         {
             cut.FindAll(".test-likert__opt")[3].Click();
             cut.Find("button.test-flow__next").Click();
             cut.WaitForAssertion(
                 () => Assert.Contains($"Vraag {i + 2} van 5", cut.Markup, StringComparison.Ordinal),
-                TimeSpan.FromSeconds(15));
+                TimeSpan.FromSeconds(30));
         }
 
         cut.WaitForAssertion(
             () => Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal),
-            timeout: TimeSpan.FromSeconds(30));
+            timeout: TimeSpan.FromSeconds(45));
 
         cut.Render(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Career)

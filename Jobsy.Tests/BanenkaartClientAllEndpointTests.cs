@@ -8,6 +8,9 @@ public sealed class BanenkaartClientAllEndpointTests
     public async Task Banenkaart_client_all_returns_200_with_catalog_body()
     {
         await using var factory = new IllustratedPagesWebFactory();
+        // IllustratedPagesWebFactory starts a Kestrel sidecar in CreateHost; touch Server so the host is built
+        // before HttpClient calls (avoids races where the first request runs before startup completes).
+        _ = factory.Server;
         using var client = factory.CreateClient();
         var response = await client.GetAsync("/api/banenkaart-client/all");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
