@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Shared.Questionnaire
 @using System.Text.RegularExpressions
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Features
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Localization
@@ -15,8 +16,8 @@
     var answered = question is not null && FlowAnswers.ContainsKey(question.Id);
     var isLast = Ordered.Count > 0 && index >= targetCount - 1;
     var answeredCount = AnsweredInTargetCount();
-    var reached = TestDepthRules.Reached(Kind, answeredCount);
-    var nextLevel = TestDepthRules.Next(Kind, answeredCount);
+    var reached = TestDepthRules.Reached(Kind, answeredCount, QuickScanVersion);
+    var nextLevel = TestDepthRules.Next(Kind, answeredCount, QuickScanVersion);
     var blocks = targetCount > 50 ? 25 : targetCount;
 }
 
@@ -69,7 +70,7 @@
             }
             @if (!flowCompact)
             {
-                @foreach (var band in TestDepthRules.Levels(Kind))
+                @foreach (var band in TestDepthRules.Levels(Kind, QuickScanVersion))
                 {
                     if (band.Count < targetCount)
                     {
@@ -208,6 +209,8 @@
     public sealed record FlowQuestion(int Id, string Text, string? Example = null);
 
     [Parameter] public AssessmentKind Kind { get; set; }
+    /// <summary>Must match the parent quick-scan item bank (V1/V2/V3) so depth counts and level milestones align with <see cref="Questions"/>.</summary>
+    [Parameter] public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
     [Parameter] public IReadOnlyList<FlowQuestion> Questions { get; set; } = [];
     [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
     [Parameter] public int StartAt { get; set; }
@@ -257,7 +260,7 @@
     private IReadOnlyList<FlowQuestion> Ordered => Questions;
     private string? _orderedSignature;
 
-    private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
+    private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target, QuickScanVersion));
 
     private IReadOnlyList<int> OrderedQuestionIds { get; set; } = [];
 
@@ -321,7 +324,7 @@
             _ => 0
         };
 
-    private int CountForLevel(TestDepthLevel level) => TestDepthRules.CountFor(Kind, level);
+    private int CountForLevel(TestDepthLevel level) => TestDepthRules.CountFor(Kind, level, QuickScanVersion);
 
     public static string StripIdPrefix(string text)
         => Regex.Replace(text ?? "", @"^\d+\.\s*", "");
@@ -488,7 +491,7 @@
     }
 
     private string BuildOrderedSignature()
-        => $"{(int)Kind}:{Target}:{string.Join(',', Ordered.Take(TargetCount).Select(q => q.Id))}";
+        => $"{QuickScanVersion}:{(int)Kind}:{Target}:{string.Join(',', Ordered.Take(TargetCount).Select(q => q.Id))}";
 
     private void ApplyFirstUnansweredIndex()
     {
@@ -590,7 +593,7 @@
     private async Task FireLevelsAsync()
     {
         var count = AnsweredInTargetCount();
-        foreach (var band in TestDepthRules.Levels(Kind))
+        foreach (var band in TestDepthRules.Levels(Kind, QuickScanVersion))
         {
             if (count >= band.Count && _firedLevels.Add(band.Level) && OnLevelReached.HasDelegate)
             {

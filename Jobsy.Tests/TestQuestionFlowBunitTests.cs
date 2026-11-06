@@ -1,6 +1,7 @@
 using Bunit;
 using Microsoft.AspNetCore.Components;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Tests;
 using Jobsy.Web.Components.Shared.Questionnaire;
@@ -63,6 +64,32 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
 
         Assert.DoesNotContain("Later verder", cut.Markup);
         Assert.DoesNotContain("Eerdere antwoorden", cut.Markup);
+    }
+
+    [Fact]
+    public void Quick_scan_v2_after_25_answers_still_shows_radios_at_question_26()
+    {
+        const int version = AssessmentTestVersions.V2;
+        var fullCount = TestDepthRules.CountFor(AssessmentKind.Career, TestDepthLevel.Full, version);
+        var ids = TestDepthRules.QuestionIdsFor(AssessmentKind.Career, TestDepthLevel.Full, version);
+        Assert.True(fullCount > 25, "This regression guards v2 banks with more than 25 items.");
+        Assert.Equal(fullCount, ids.Count);
+
+        var questions = ids.Select(id => new TestQuestionFlow.FlowQuestion(id, $"{id}. Stem")).ToList();
+        var answers = ids.Take(25).ToDictionary(id => id, _ => 3);
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Career)
+            .Add(p => p.QuickScanVersion, version)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, answers)
+            .Add(p => p.Target, TestDepthLevel.Full));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("Vraag 26 van", cut.Markup, StringComparison.Ordinal);
+            Assert.Contains(fullCount.ToString(System.Globalization.CultureInfo.InvariantCulture), cut.Markup, StringComparison.Ordinal);
+        });
+        Assert.Single(cut.FindAll("[role=radiogroup]"));
     }
 
     [Theory]
