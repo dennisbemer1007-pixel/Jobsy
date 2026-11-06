@@ -128,7 +128,7 @@
     "v": "20261018-16"
   },
   "css/features/gratis-dna.css": {
-    "sha256": "aa943c1f29e2cf27b9da96b9334c61672321f07227c3125bd1ff5eef60e7023f",
+    "sha256": "9dfb0d735b0372c2544dbe4cc2c68420a1f6e6d1cff0a941122dc99be43e1974",
     "v": "20261004-10"
   },
   "css/features/honest-advice.css": {
@@ -312,7 +312,7 @@
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "e805ca3d37517a14354bd768ecfe6465775fd84939a1d70f71a247705c2e48de",
+    "sha256": "b004ae144ab43d9159b4ae54240dda697cd6e50fecde543bb4262a849a661583",
     "v": "20261030-01"
   },
   "css/features/signup-static.css": {
@@ -376,7 +376,7 @@
     "v": "20261025-87"
   },
   "js/app-core.js": {
-    "sha256": "6a5b9c6d93df1475b14cac8f2af70b556c21eb44060c1f3c87627b616aa9807a",
+    "sha256": "44d22120494d15559ef3ef33029e9a8e5d181caae0f1e2a389d5f5ee7725a26c",
     "v": "20261026-87"
   },
   "js/app-extras.js": {
@@ -464,7 +464,7 @@
     "v": "20261002-ch10"
   },
   "js/gratis-dna.js": {
-    "sha256": "2cc0b16f3618167ffb562906e1e46ff66eea2a5a815a07e40a5ca916ada64d70",
+    "sha256": "0be9ba58597ae020853db909019b10e9eaf2f0616e2c2ae7277d081e5efa31f2",
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
@@ -496,7 +496,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "a75c2335ea519acd6a338ec6d3d06c088a251b7a49e7cb550b2bc15047e6f4aa",
+    "sha256": "cb9dc1e9ac69c4f3188ae598e9d548fad578c75732c857112d5ce868c5e9b299",
     "v": "20261103-01"
   },
   "js/leerling-login.js": {

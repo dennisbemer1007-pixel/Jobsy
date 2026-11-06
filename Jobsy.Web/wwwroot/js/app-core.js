@@ -1382,6 +1382,28 @@ window.jobsyEnsureInsightsMap = function () {
     return window.__jobsyInsightsMapReady;
 };
 
+window.jobsyEnsureGratisDna = function () {
+    if (window.jobsyGratisDna && typeof window.jobsyGratisDna.ensureLoaded === "function") {
+        return window.jobsyGratisDna.ensureLoaded();
+    }
+    window.__jobsyGratisDnaReady = window.__jobsyGratisDnaReady || new Promise(function (resolve, reject) {
+        var existing = document.querySelector("script[data-gratis-dna]");
+        if (existing) {
+            existing.addEventListener("load", function () { resolve(); });
+            existing.addEventListener("error", reject);
+            return;
+        }
+        var s = document.createElement("script");
+        s.src = "/js/gratis-dna.js?v=20261004-13";
+        s.defer = true;
+        s.dataset.gratisDna = "true";
+        s.onload = function () { resolve(); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+    return window.__jobsyGratisDnaReady;
+};
+
 window.jobsyQuestionnaire = {
     scrollToQuestion: function (id, smooth) {
         if (!id) {
