@@ -523,14 +523,47 @@ public sealed partial class JobsyApiClient
     {
         try
         {
-            return await _http.GetFromJsonAsync<DeepAnalysisState>(
-                $"api/me/deep-analysis?kind={Uri.EscapeDataString(kind)}",
-                ct);
+            return await ReadDeepAnalysisCoreAsync(kind, ct);
         }
         catch (HttpRequestException)
         {
             return null;
         }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Player load. Throws when the call fails so the page can leave the skeleton
+    /// and show retry. Drops a legacy question bank if the API still sends one.
+    /// </summary>
+    public async Task<DeepAnalysisState> GetDeepAnalysisForPlayAsync(string kind, CancellationToken ct = default)
+    {
+        var state = await ReadDeepAnalysisCoreAsync(kind, ct);
+        if (state is null)
+        {
+            throw new InvalidOperationException("deep_analysis_unavailable");
+        }
+
+        return state;
+    }
+
+    private async Task<DeepAnalysisState?> ReadDeepAnalysisCoreAsync(string kind, CancellationToken ct)
+    {
+        using var response = await _http.GetAsync(
+            $"api/me/deep-analysis?kind={Uri.EscapeDataString(kind)}",
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        return await DeepAnalysisWireReader.ReadAsync(stream, ct);
     }
 
     public async Task<TestReflectionState?> GetTestReflectionAsync(string kind, string? lang, CancellationToken ct = default)
@@ -756,8 +789,8 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(ExtractMessage(body) ?? "Diepte-analyse opslaan mislukt.");
         }
 
-        return await response.Content.ReadFromJsonAsync<DeepAnalysisState>(cancellationToken: ct)
-               ?? new DeepAnalysisState();
+        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        return await DeepAnalysisWireReader.ReadAsync(stream, ct) ?? new DeepAnalysisState();
     }
 
     public async Task<MockInterviewReply> ContinueMockInterviewAsync(

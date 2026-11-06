@@ -33,7 +33,7 @@ else if (!_kindOk)
 }
 else if (_loadFailed)
 {
-    <div class="test-page"><p>@Culture["Common.Error"]</p><a href="@($"/candidate/deep-analysis/{_slug}")">@Culture["Common.Retry"]</a></div>
+    <TestLoadError OnRetry="LoadAsync" />
 }
 else
 {
@@ -225,6 +225,7 @@ else
 
     private bool _loading = true;
     private bool _loadFailed;
+    private int _loadGeneration;
     private bool _kindOk;
     private bool _gateOpen;
     private bool _saving;
@@ -330,25 +331,40 @@ else
             },
             onChanged: () => InvokeAsync(StateHasChanged));
 
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var generation = Interlocked.Increment(ref _loadGeneration);
+        _loading = true;
+        _loadFailed = false;
+        using var timeout = new CancellationTokenSource(TestPlayerLoad.Timeout);
+        var ct = timeout.Token;
         try
         {
             try
             {
-                _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+                _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers, ct);
             }
-            catch
+            catch (Exception) when (generation == _loadGeneration && !ct.IsCancellationRequested)
             {
                 _employersOn = true;
             }
 
-            _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
-            _state = await Api.GetDeepAnalysisAsync(_slug);
-            _priceEuro = _state?.PriceEuro > 0 ? _state.PriceEuro : _priceEuro;
+            _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync(ct);
+            _state = await Api.GetDeepAnalysisForPlayAsync(_slug, ct);
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
+            _priceEuro = _state.PriceEuro > 0 ? _state.PriceEuro : _priceEuro;
             _priceLabel = _priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
-            _questionCount = _state?.QuestionCount > 0 ? _state.QuestionCount : _questionCount;
+            _questionCount = _state.QuestionCount > 0 ? _state.QuestionCount : _questionCount;
 
             var answers = new Dictionary<int, int>();
-            if (_state?.Answers is not null)
+            if (_state.Answers is not null)
             {
                 foreach (var (key, value) in _state.Answers)
                 {
@@ -359,28 +375,33 @@ else
                 }
             }
 
-            _autosave.ReplaceAll(answers);
+            _autosave?.ReplaceAll(answers);
             _answered = answers.Count;
 
-            var ordered = DeepAnalysisScreenOrder.For(_kind);
-            // Prefer Parts order for question ids.
-            var partOrder = _parts.SelectMany(p => p.QuestionIds).ToList();
-            var byId = ordered.ToDictionary(q => q.Id);
-            _flowQuestions = partOrder
-                .Where(byId.ContainsKey)
-                .Select(id =>
-                {
-                    var q = byId[id];
-                    var lang = Culture.Language;
-                    _deepDomainById[id] = q.Domain;
-                    return new TestQuestionFlow.FlowQuestion(
-                        q.Id,
-                        q.Prompt(lang),
-                        q.Example(lang));
-                })
-                .ToList();
+            var kind = _kind;
+            var lang = Culture.Language;
+            var built = await Task.Run(() => BuildFlow(kind, lang), ct);
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
 
-            _showProgressInsight = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestProgressInsight);
+            _deepDomainById.Clear();
+            foreach (var (id, domain) in built.Domains)
+            {
+                _deepDomainById[id] = domain;
+            }
+
+            _flowQuestions = built.Questions;
+
+            try
+            {
+                _showProgressInsight = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestProgressInsight, ct);
+            }
+            catch (Exception) when (generation == _loadGeneration && !ct.IsCancellationRequested)
+            {
+                _showProgressInsight = false;
+            }
 
             if (_state is { IsCompleted: true })
             {
@@ -395,14 +416,39 @@ else
                 _view = View.Question;
             }
         }
-        catch (Exception)
+        catch (Exception) when (generation == _loadGeneration)
         {
             _loadFailed = true;
         }
         finally
         {
-            _loading = false;
+            if (generation == _loadGeneration)
+            {
+                _loading = false;
+            }
         }
+    }
+
+    private static (List<TestQuestionFlow.FlowQuestion> Questions, Dictionary<int, string> Domains) BuildFlow(
+        AssessmentKind kind,
+        string? lang)
+    {
+        var ordered = DeepAnalysisScreenOrder.For(kind);
+        var byId = ordered.ToDictionary(q => q.Id);
+        var domains = new Dictionary<int, string>();
+        var questions = new List<TestQuestionFlow.FlowQuestion>();
+        foreach (var id in TestDepthRules.Parts(kind).SelectMany(p => p.QuestionIds))
+        {
+            if (!byId.TryGetValue(id, out var q))
+            {
+                continue;
+            }
+
+            domains[id] = q.Domain;
+            questions.Add(new TestQuestionFlow.FlowQuestion(q.Id, q.Prompt(lang ?? "nl"), q.Example(lang ?? "nl")));
+        }
+
+        return (questions, domains);
     }
 
     private void OnGateChanged(bool open) => _gateOpen = open;

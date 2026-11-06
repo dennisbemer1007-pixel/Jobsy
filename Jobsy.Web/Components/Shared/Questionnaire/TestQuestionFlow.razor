@@ -267,6 +267,8 @@
 
     private int _previousInsightLineCount;
 
+    private string _insightFingerprint = "\u0000";
+
     protected override void OnInitialized()
     {
         _orderedSignature = BuildOrderedSignature();
@@ -712,13 +714,7 @@
     {
         if (!ShowProgressInsight || DomainForQuestionId is null)
         {
-            _insightLines = [];
-            _insightNewCount = 0;
-            if (ProgressInsightChanged.HasDelegate)
-            {
-                _ = NotifyProgressInsightAsync();
-            }
-
+            PublishInsight([], 0);
             return;
         }
 
@@ -729,12 +725,30 @@
             _flowAnswers,
             DomainForQuestionId);
         var prefix = Culture[TestProgressInsight.PrefixKey(Kind)];
-        _insightLines = labels
+        var lines = labels
             .Select(label => Culture.Format("TestFlow.ProgressInsight.Line", prefix, label))
             .ToList();
-        _insightNewCount = Math.Max(0, _insightLines.Count - _previousInsightLineCount);
-        _previousInsightLineCount = _insightLines.Count;
-        _ = NotifyProgressInsightAsync();
+        var newCount = Math.Max(0, lines.Count - _previousInsightLineCount);
+        PublishInsight(lines, newCount);
+    }
+
+    /// <summary>Notifies the parent only when the lines change, so a render does not schedule itself again.</summary>
+    private void PublishInsight(IReadOnlyList<string> lines, int newCount)
+    {
+        var fingerprint = string.Join('\u001f', lines);
+        if (fingerprint == _insightFingerprint)
+        {
+            return;
+        }
+
+        _insightFingerprint = fingerprint;
+        _previousInsightLineCount = lines.Count;
+        _insightLines = lines;
+        _insightNewCount = newCount;
+        if (ProgressInsightChanged.HasDelegate)
+        {
+            _ = NotifyProgressInsightAsync();
+        }
     }
 
     private async Task NotifyProgressInsightAsync()

@@ -45,6 +45,43 @@ public class DeepAnalysisPrivacySecurityTests
         var deep = CreateDeep(db);
         var state = await deep.GetStateAsync(userId, AssessmentKind.Competence);
         Assert.True(state.IsUnlocked);
+        Assert.Empty(state.Questions);
+    }
+
+    [Theory]
+    [InlineData(AssessmentKind.Career)]
+    [InlineData(AssessmentKind.Competence)]
+    [InlineData(AssessmentKind.Values)]
+    public async Task Unlocked_state_omits_the_question_bank(AssessmentKind kind)
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        db.CandidateDeepAnalyses.Add(new CandidateDeepAnalysis
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Kind = kind,
+            Status = CandidateDeepAnalysisStatuses.Draft,
+            AnswersJson = "{}",
+            TagsJson = "[]",
+            UnlockedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var state = await CreateDeep(db).GetStateAsync(userId, kind);
+        Assert.True(state.IsUnlocked);
+        Assert.False(state.IsCompleted);
+        Assert.Empty(state.Questions);
+        Assert.Equal(DeepAnalysisCatalog.QuestionCountFor(kind), state.QuestionCount);
+
+        var json = System.Text.Json.JsonSerializer.Serialize(
+            state,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        Assert.DoesNotContain(
+            DeepAnalysisCatalog.QuestionsFor(kind)[0].PromptNl,
+            json,
+            StringComparison.Ordinal);
     }
 
     [Fact]

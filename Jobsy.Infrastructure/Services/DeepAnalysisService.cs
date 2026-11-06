@@ -548,18 +548,11 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             row?.CompletedAtUtc,
             row?.ReportGeneratedAtUtc,
             answers,
-            unlocked
-                ? DeepAnalysisCatalog.QuestionsFor(kind)
-                    .Select(q => new DeepAnalysisQuestionDto(
-                        q.Id,
-                        q.Family,
-                        q.Domain,
-                        q.Reverse,
-                        q.PromptNl,
-                        DeepAnalysisQuestionHelp.ExampleFor(q),
-                        DeepAnalysisQuestionHelp.DomainLabel(q.Domain)))
-                    .ToList()
-                : [],
+            // The player already has the bank in-process (DeepAnalysisScreenOrder).
+            // Embedding 150–200 prompts after unlock stalls the Blazor circuit on
+            // test-skeleton: the page waits on this body before it can render question 1.
+            // QuestionCount is the length clients need.
+            [],
             DeepAnalysisUpsellRules.CopyNl(kind, expected),
             completed && kind == AssessmentKind.Competence ? competenceReport : null,
             completed && kind == AssessmentKind.Career ? careerReport : null,
