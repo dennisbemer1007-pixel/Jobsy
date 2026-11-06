@@ -19,10 +19,15 @@ public class GratisDnaBunitTests : JobsyBunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider());
         Services.AddSingleton<IExternalAuthCredentialSource, FakeExternalAuth>();
-        Services.AddSingleton(sp => new CultureState(
-            sp.GetRequiredService<IJSRuntime>(),
-            sp,
-            sp.GetRequiredService<AuthenticationStateProvider>()));
+        Services.AddSingleton(sp =>
+        {
+            var culture = new CultureState(
+                sp.GetRequiredService<IJSRuntime>(),
+                sp,
+                sp.GetRequiredService<AuthenticationStateProvider>());
+            culture.InitializeFromLanguage("nl");
+            return culture;
+        });
     }
 
     [Fact]
