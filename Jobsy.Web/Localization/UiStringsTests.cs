@@ -17,6 +17,9 @@ public static class UiStringsTests
             ar[key] = arText;
         }
 
+        Add("TestFlow.LoadErrorTitle", "Dit lukt even niet", "This did not load", "To się teraz nie udało", "Nu a mers acum", "لم ينجح هذا الآن");
+        Add("TestFlow.LoadError", "De vragen zijn niet geladen. Probeer het nog eens.", "The questions did not load. Try again.", "Pytania się nie wczytały. Spróbuj jeszcze raz.", "Întrebările nu s-au încărcat. Încearcă din nou.", "لم تُحمَّل الأسئلة. حاول مرة أخرى.");
+        Add("TestFlow.LoadRetry", "Opnieuw proberen", "Try again", "Spróbuj ponownie", "Încearcă din nou", "حاول مرة أخرى");
         Add("DeepPay.Title", "Uitgebreide test", "Extended test", "Rozszerzony test", "Test extins", "اختبار موسّع");
         Add("DeepPay.What", "Uitgebreide {0}", "Extended {0}", "Rozszerzony {0}", "Extins {0}", "موسّع {0}");
         Add("DeepPay.Questions", "{0} vragen", "{0} questions", "{0} pytania", "{0} întrebări", "{0} أسئلة");

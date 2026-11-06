@@ -1,0 +1,15 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="test-page journey-page">
+    <div class="test-shell__card" role="alert" data-testid="test-load-error">
+        <h1 tabindex="-1">@Culture["TestFlow.LoadErrorTitle"]</h1>
+        <p>@Culture["TestFlow.LoadError"]</p>
+        <button type="button" class="btn btn-primary" @onclick="OnRetry">@Culture["TestFlow.LoadRetry"]</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnRetry { get; set; }
+}

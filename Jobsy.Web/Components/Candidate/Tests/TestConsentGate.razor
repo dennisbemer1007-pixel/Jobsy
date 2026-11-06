@@ -24,6 +24,10 @@ else if (_parentalMissing)
         </div>
     </div>
 }
+else if (_loadFailed)
+{
+    <TestLoadError OnRetry="RefreshAsync" />
+}
 else if (_testConsentMissing)
 {
     <div class="test-page journey-page">
@@ -55,11 +59,13 @@ else
     [Parameter] public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
 
     private bool _loading = true;
+    private bool _loadFailed;
     private bool _parentalMissing;
     private bool _testConsentMissing;
     private bool _busy;
     private string? _error;
-    public bool IsOpen => !_loading && !_parentalMissing && !_testConsentMissing;
+    private int _loadGeneration;
+    public bool IsOpen => !_loading && !_loadFailed && !_parentalMissing && !_testConsentMissing;
 
     protected override async Task OnInitializedAsync()
     {
@@ -68,30 +74,49 @@ else
 
     public async Task RefreshAsync()
     {
+        var generation = Interlocked.Increment(ref _loadGeneration);
         _loading = true;
+        _loadFailed = false;
         _error = null;
+        using var timeout = new CancellationTokenSource(TestPlayerLoad.Timeout);
         try
         {
-            var me = await Api.GetMyProfileAsync();
-            if (me is null)
+            var result = await Api.GetMyProfileResultAsync(timeout.Token);
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
+            if (result.TemporarilyUnavailable)
+            {
+                _loadFailed = true;
+                _parentalMissing = false;
+                _testConsentMissing = false;
+            }
+            else if (result.Value is null)
             {
                 _parentalMissing = false;
                 _testConsentMissing = true;
             }
             else
             {
-                _parentalMissing = !GratisDnaMergeProfileRules.CanUseCandidateFeatures(me);
-                _testConsentMissing = !_parentalMissing && !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(me);
+                _parentalMissing = !GratisDnaMergeProfileRules.CanUseCandidateFeatures(result.Value);
+                _testConsentMissing = !_parentalMissing && !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(result.Value);
             }
         }
-        catch
+        catch (Exception) when (generation == _loadGeneration)
         {
-            _testConsentMissing = true;
+            _loadFailed = true;
+            _parentalMissing = false;
+            _testConsentMissing = false;
         }
         finally
         {
-            _loading = false;
-            await GateChanged.InvokeAsync(IsOpen);
+            if (generation == _loadGeneration)
+            {
+                _loading = false;
+                await GateChanged.InvokeAsync(IsOpen);
+            }
         }
     }
 
