@@ -59,9 +59,9 @@
                         </p>
                     }
                     <div class="gd-meta">
-                        <span><PubEmoji Glyph="📝" /> @Culture.Format("GratisDna.Landing.MetaQuestions", _totalQuestions)</span>
+                        <span><PubEmoji Glyph="📋" /> @Culture.Format("GratisDna.Landing.MetaQuestions", _totalQuestions)</span>
                         <span><PubEmoji Glyph="⏱️" /> @Culture["GratisDna.Landing.MetaMinutes"]</span>
-                        <span><PubEmoji Glyph="📱" /> @Culture["GratisDna.Landing.MetaDevice"]</span>
+                        <span><PubEmoji Glyph="🔒" /> @Culture["GratisDna.Landing.MetaDevice"]</span>
                     </div>
                     @if (_employerView)
                     {
@@ -90,7 +90,7 @@
                                @onchange="OnAgeCheckbox" />
                         <span>@Culture["GratisDna.Landing.Age16"]</span>
                     </label>
-                    <p class="gd-note" data-testid="gd-storage-note">
+                    <p class="gd-note gd-note--privacy" data-testid="gd-storage-note">
                         @LandingText.For("GratisDna.Landing.Consent", _variant)
                         <a href="@PublicRoutes.Privacy">@Culture["GratisDna.Landing.PrivacyLink"]</a>
                     </p>
@@ -102,6 +102,13 @@
                             </button>
                         </p>
                     }
+                    <div class="gd-after" aria-labelledby="gd-landing-after-title">
+                        <span class="gd-after__ico" aria-hidden="true"><PubEmoji Glyph="🎁" /></span>
+                        <div class="gd-after__body">
+                            <strong id="gd-landing-after-title">@Culture["GratisDna.Landing.AfterTitle"]</strong>
+                            <span class="gd-after__lead">@Culture["GratisDna.Landing.AfterLead"]</span>
+                        </div>
+                    </div>
                     @if (_resumeAvailable)
                     {
                         <button type="button" class="gd-cta gd-cta--ghost" @onclick="ResumeAsync">@Culture["GratisDna.Landing.Resume"]</button>
@@ -119,17 +126,6 @@
                         }
                     </div>
                 </section>
-
-                <aside class="gd-side-scene" aria-hidden="true">
-                    <div class="gd-bubble">@Culture["GratisDna.Landing.Bubble"]</div>
-                    <div class="gd-side-scene__art" aria-hidden="true">
-                        <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Large" Alt="" />
-                    </div>
-                    <div class="gd-after">
-                        <h2><PubEmoji Glyph="🎁" /> @Culture["GratisDna.Landing.AfterTitle"]</h2>
-                        <p>@Culture["GratisDna.Landing.AfterLead"]</p>
-                    </div>
-                </aside>
             </div>
         }
         else if (_state == FlowState.Questions && _payload is not null && CurrentQuestion is not null)
