@@ -67,6 +67,10 @@
   padding: 32px 40px;
 }
 
+.mhbo-wrap[data-testid="mhbo-test-question"] {
+  padding-bottom: 120px;
+}
+
 .mhbo-wrap h1 {
   font-size: 28px;
   color: #0f2747;
@@ -319,6 +323,11 @@
   align-items: flex-start;
   gap: 12px;
   margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.mhbo-speak-row .read-aloud.speak {
+  flex-shrink: 0;
 }
 
 .mhbo-speak-row .speak-label {
@@ -342,8 +351,14 @@
   gap: 12px;
   align-items: center;
   margin-top: 28px;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 16px 0 max(16px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgb(244 246 249 / 0) 0%, #f4f6f9 28%);
 }
 
+.mhbo-qfoot .mhbo-btn[disabled],
 .mhbo-qfoot .mhbo-btn--ghost[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
