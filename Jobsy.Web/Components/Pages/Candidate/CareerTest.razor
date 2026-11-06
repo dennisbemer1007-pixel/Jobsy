@@ -155,7 +155,6 @@ else
     private bool _showProgressInsight;
     private IReadOnlyList<string> _progressInsightLines = [];
     private int _progressInsightNew;
-    private IDisposable? _navigationRegistration;
     private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Career.V2", _fullCount)
         : Culture["TestFlow.Lead.Career"];
@@ -224,8 +223,7 @@ else
             _loading = false;
             if (!_loadFailed)
             {
-                _navigationRegistration?.Dispose();
-                _navigationRegistration = Navigation.RegisterLocationChangedHandler(OnNavigationLocationChanged);
+                Navigation.LocationChanged += OnNavigationLocationChanged;
             }
         }
     }
@@ -341,8 +339,7 @@ else
     }
     public async ValueTask DisposeAsync()
     {
-        _navigationRegistration?.Dispose();
-        _navigationRegistration = null;
+        Navigation.LocationChanged -= OnNavigationLocationChanged;
         if (_autosave is not null) await _autosave.DisposeAsync();
     }
 }
