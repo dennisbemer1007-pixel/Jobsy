@@ -9,6 +9,7 @@
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Components.Routing
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -87,6 +88,7 @@ else
                     </SidePanel>
                     <ChildContent>
                         <TestQuestionFlow Kind="AssessmentKind.Career"
+                                          QuickScanVersion="_quickScanVersion"
                                           Questions="_flowQuestions"
                                           Answers="_autosave.Answers"
                                           Target="_target"
@@ -172,25 +174,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-        _fromReis = q.TryGetValue("from", out var f) && f == "reis";
-        if (q.TryGetValue("stap", out var stap) && stap == "klaar")
-        {
-            _mode = TestPageShell.ShellMode.Done;
-        }
-        else if (!q.ContainsKey("stap") || stap == "intro")
-        {
-            _mode = TestPageShell.ShellMode.Intro;
-            if (!uri.Query.Contains("stap=", StringComparison.Ordinal))
-            {
-                Navigation.NavigateTo("/candidate/career?stap=intro", replace: true);
-            }
-        }
-        else
-        {
-            _mode = TestPageShell.ShellMode.Question;
-        }
+        ApplyShellModeFromUri(Navigation.Uri);
 
         _autosave = new QuestionnaireAutosave(
             persist: async (answers, ct) => await Api.SaveMyCareerInterestsAsync(answers, complete: false, ct),
@@ -234,9 +218,44 @@ else
             }
         }
         catch { _loadFailed = true; }
-        finally { _loading = false; }
+        finally
+        {
+            _loading = false;
+            if (!_loadFailed)
+            {
+                Navigation.LocationChanged += OnNavigationLocationChanged;
+            }
+        }
     }
 
+    private void OnNavigationLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        ApplyShellModeFromUri(e.Location);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyShellModeFromUri(string uriString)
+    {
+        var uri = Navigation.ToAbsoluteUri(uriString);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _fromReis = q.TryGetValue("from", out var f) && f == "reis";
+        if (q.TryGetValue("stap", out var stap) && stap == "klaar")
+        {
+            _mode = TestPageShell.ShellMode.Done;
+        }
+        else if (!q.ContainsKey("stap") || stap == "intro")
+        {
+            _mode = TestPageShell.ShellMode.Intro;
+            if (!uri.Query.Contains("stap=", StringComparison.Ordinal))
+            {
+                Navigation.NavigateTo("/candidate/career?stap=intro", replace: true);
+            }
+        }
+        else
+        {
+            _mode = TestPageShell.ShellMode.Question;
+        }
+    }
 
     private Task SelectDepthAsync(TestDepthLevel level)
     {
@@ -244,13 +263,7 @@ else
         return Task.CompletedTask;
     }
 
-    private void SelectDepth(TestDepthLevel level)
-    {
-        if (_answered < TestDepthRules.CountFor(AssessmentKind.Career, level, _quickScanVersion))
-        {
-            _target = level;
-        }
-    }
+    private void SelectDepth(TestDepthLevel level) => _target = level;
 
     private Task OnProgressInsightAsync(TestQuestionFlow.ProgressInsightSnapshot snapshot)
     {
@@ -324,5 +337,9 @@ else
         if (_autosave is not null) await _autosave.FlushAsync();
         Navigation.NavigateTo("/profiel/tests/career");
     }
-    public async ValueTask DisposeAsync() { if (_autosave is not null) await _autosave.DisposeAsync(); }
+    public async ValueTask DisposeAsync()
+    {
+        Navigation.LocationChanged -= OnNavigationLocationChanged;
+        if (_autosave is not null) await _autosave.DisposeAsync();
+    }
 }
