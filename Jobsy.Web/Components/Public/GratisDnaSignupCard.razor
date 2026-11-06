@@ -8,30 +8,29 @@
 @inject IExternalAuthCredentialSource ExternalAuth
 
 <aside class="gd-signup @CssClass" id="@DomId" data-testid="gd-signup" aria-labelledby="@($"{DomId}-title")">
-    <h2 id="@($"{DomId}-title")" class="gd-signup__title">
-        @Culture["GratisDna.Signup.Title"]
-        <PubEmoji Glyph="🎁" />
-    </h2>
+    <h2 id="@($"{DomId}-title")" class="gd-signup__title">@Culture["GratisDna.Signup.Title"]</h2>
     <p class="gd-signup__sub">@Culture["GratisDna.Signup.Sub"]</p>
 
     <ul class="gd-signup__unlock">
-        @if (Variant == LandingVariant.Zw)
-        {
-            <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock.Passport"]</li>
-            <li><PubEmoji Glyph="✅" /> @LandingText.For("GratisDna.Signup.Unlock.Fit", Variant)</li>
-            <li><PubEmoji Glyph="🪜" /> @LandingText.For("GratisDna.Signup.Unlock.Dream", Variant)</li>
-            <li><PubEmoji Glyph="🧭" /> @LandingText.For("GratisDna.Signup.Unlock.Journey", Variant)</li>
-        }
-        else
-        {
-            <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock.Passport"]</li>
-            <li><PubEmoji Glyph="✅" /> @Culture["GratisDna.Signup.Unlock.Fit"]</li>
-            <li><PubEmoji Glyph="🗺️" /> @Culture["GratisDna.Signup.Unlock.Map"]</li>
-            <li><PubEmoji Glyph="⭐" /> @Culture["GratisDna.Signup.Unlock.Match"]</li>
-        }
+        <li><PubEmoji Glyph="🧬" /> @Culture["GratisDna.Signup.Unlock2.Passport"]</li>
+        <li><PubEmoji Glyph="✅" /> @LandingText.For("GratisDna.Signup.Unlock2.Jobs", Variant)</li>
     </ul>
 
     <div class="gd-signup__providers">
+        @if (_entraEnabled)
+        {
+            <ExternalProviderLink Class="gd-signup__btn"
+                                  Href="@MicrosoftHref"
+                                  data-kpi="ResultCtaSignup"
+                                  data-kpi-target="microsoft"
+                                  data-testid="gd-signup-microsoft">
+                <span class="gd-signup__icon" aria-hidden="true">
+                    <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+                </span>
+                @Culture["Signup.Microsoft"]
+            </ExternalProviderLink>
+        }
+
         @if (_googleEnabled)
         {
             <ExternalProviderLink Class="gd-signup__btn"
@@ -51,21 +50,7 @@
             </ExternalProviderLink>
         }
 
-        @if (_entraEnabled)
-        {
-            <ExternalProviderLink Class="gd-signup__btn"
-                                  Href="@MicrosoftHref"
-                                  data-kpi="ResultCtaSignup"
-                                  data-kpi-target="microsoft"
-                                  data-testid="gd-signup-microsoft">
-                <span class="gd-signup__icon" aria-hidden="true">
-                    <svg viewBox="0 0 23 23" width="16" height="16"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
-                </span>
-                @Culture["Signup.Microsoft"]
-            </ExternalProviderLink>
-        }
-
-        <a class="gd-signup__btn"
+        <a class="gd-signup__btn gd-signup__btn--primary"
            href="@EmailHref"
            data-kpi="ResultCtaSignup"
            data-kpi-target="email"
