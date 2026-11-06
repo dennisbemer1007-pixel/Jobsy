@@ -8,12 +8,9 @@ namespace Jobsy.Web.Bedrijvenkaart;
 
 internal static class BedrijvenkaartMapOrigin
 {
-    internal const double FallbackLat = 52.15;
-    internal const double FallbackLng = 5.2913;
-
     internal sealed record Resolved(double Lat, double Lng, bool FromProfile);
 
-    internal static async Task<Resolved> ResolveAsync(
+    internal static async Task<Resolved?> TryResolveAsync(
         HttpContext? http,
         JobsyApiClient api,
         CancellationToken ct)
@@ -71,7 +68,7 @@ internal static class BedrijvenkaartMapOrigin
             }
         }
 
-        return new Resolved(FallbackLat, FallbackLng, false);
+        return null;
     }
 
     internal static bool TryParseQueryOrigin(HttpRequest request, out double lat, out double lng)
