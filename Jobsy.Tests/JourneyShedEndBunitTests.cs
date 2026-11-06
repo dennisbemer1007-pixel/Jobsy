@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -24,7 +25,7 @@ namespace Jobsy.Tests;
 /// A finished journey opens the shed with no answers in memory. "Naar het licht" must reach
 /// the end screen instead of re-posting an empty test save.
 /// </summary>
-public sealed class JourneyShedEndBunitTests : BunitContext
+public class JourneyShedEndBunitTests : JobsyBunitContext
 {
     private readonly RecordingHandler _handler = new();
 

@@ -2,11 +2,16 @@ using Bunit;
 using Jobsy.Web.Components.Brand;
 using Jobsy.Web.Media;
 using Microsoft.AspNetCore.Components;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class LobsyMascotBunitTests : BunitContext
+public class LobsyMascotBunitTests : JobsyBunitContext
+
 {
+
+    public LobsyMascotBunitTests() => EnableInteractiveServerRenderer();
+
     [Fact]
     public void Fallback_waving_priority_renders_todays_mascot_with_fb_class()
     {

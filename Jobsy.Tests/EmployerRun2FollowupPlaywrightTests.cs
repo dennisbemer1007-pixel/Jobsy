@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -17,7 +18,7 @@ namespace Jobsy.Tests;
 /// Real Chromium check for the employer-run-2 confirm dialogs and the OpenForWork prompt.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class EmployerRun2FollowupPlaywrightTests : BunitContext
+public class EmployerRun2FollowupPlaywrightTests : JobsyBunitContext
 {
     public EmployerRun2FollowupPlaywrightTests()
     {

@@ -9,13 +9,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>
 /// Kandidaat polish 05: Bewaard SSR markup (rows + desktop cards).
 /// </summary>
-public class KbSavedListBunitTests : BunitContext
+public class KbSavedListBunitTests : JobsyBunitContext
 {
     public KbSavedListBunitTests()
     {

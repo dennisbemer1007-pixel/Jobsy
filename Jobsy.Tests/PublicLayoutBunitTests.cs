@@ -16,11 +16,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 [Collection("JobsyLanguagesState")]
-public class PublicLayoutBunitTests : BunitContext
+public class PublicLayoutBunitTests : JobsyBunitContext
 {
     public PublicLayoutBunitTests()
     {

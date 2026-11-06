@@ -31,6 +31,7 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("MeController", "UpdateProfile", "Own profile fields"),
         ("MeController", "UpdateDateOfBirth", "Own date of birth"),
         ("MeController", "CompleteCandidateHowTo", "Own how-to completion"),
+        ("MeController", "EnsureAcceptatieAfterMatchDemo", "Acceptatie demo seed on own account"),
         ("MeController", "UploadMyCv", "Own CV upload"),
         ("MeController", "DeleteMyCv", "Own CV delete"),
         ("MeController", "AcceptConsent", "Own consent"),

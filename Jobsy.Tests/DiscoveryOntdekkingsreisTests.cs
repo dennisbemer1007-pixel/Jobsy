@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -298,7 +299,8 @@ public class DiscoveryDislikeGuardTests
     }
 }
 
-public class DiscoveryPassportBunitTests : BunitContext
+public class DiscoveryPassportBunitTests : JobsyBunitContext
+
 {
     public DiscoveryPassportBunitTests()
     {

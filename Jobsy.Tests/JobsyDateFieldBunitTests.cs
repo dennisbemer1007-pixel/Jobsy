@@ -7,10 +7,12 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class JobsyDateFieldBunitTests : BunitContext
+public class JobsyDateFieldBunitTests : JobsyBunitContext
+
 {
     public JobsyDateFieldBunitTests()
     {

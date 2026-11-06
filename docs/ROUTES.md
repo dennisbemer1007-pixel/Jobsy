@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (321 routes)
+## Table (292 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -232,31 +232,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/intermediary/team` | `Pages/Intermediary/Team.razor` | Intermediary |
 | `/koppeling/sleutel` | `Pages/Public/ApiKeyReveal.razor` | anonymous |
 | `/lancering` | `Pages/WestlandTeaser.razor` | anonymous |
-| `/leerling` | `Pages/Leerling/LeerlingLogin.razor` | anonymous |
-| `/leerling/dit-ben-jij` | `Pages/Leerling/LeerlingDitBenJij.razor` | authenticated |
-| `/leerling/eiland` | `Pages/Leerling/LeerlingEiland.razor` | authenticated |
-| `/leerling/paspoort` | `Pages/Leerling/LeerlingPaspoort.razor` | authenticated |
-| `/leerling/puzzel/{Key}` | `Pages/Leerling/LeerlingPuzzel.razor` | authenticated |
-| `/leerling/reis` | `Pages/Leerling/LeerlingReis.razor` | authenticated |
-| `/leerling/start` | `Pages/Leerling/LeerlingStart.razor` | authenticated |
-| `/leerling/stop` | `Pages/Leerling/LeerlingStop.razor` | anonymous |
-| `/leerling/vakken` | `Pages/Leerling/LeerlingVakken.razor` | authenticated |
-| `/leerling/vo-paspoort` | `Pages/Leerling/LeerlingVoPaspoort.razor` | authenticated |
-| `/leerling/wereld` | `Pages/Leerling/LeerlingWereld.razor` | authenticated |
-| `/leraar` | `Pages/Leraar/LeraarDashboard.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}` | `Pages/Leraar/LeraarKlasOverview.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/code/{CodeId:guid}` | `Pages/Leraar/LeraarCodeDetail.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/codes` | SSR `TeacherPortalCodesEndpoints` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/droombanen` | `Pages/Leraar/LeraarDreamJobs.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/groep` | `Pages/Leraar/LeraarGroup.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/materiaal` | `Pages/Leraar/LeraarMaterials.razor` | Teacher, SchoolAdmin |
-| `/leraar/klas/{ClassId:guid}/testvenster` | SSR `TeacherPortalTestWindowEndpoints` | Teacher, SchoolAdmin |
 | `/login` | `Pages/Login.razor` | anonymous |
 | `/mail/afmelden` | `Pages/Public/MailUnsubscribe.razor` | anonymous |
 | `/melden` | `Pages/Public/Melden.razor` | anonymous |
 | `/notifications` | `Pages/Notifications.razor` | authenticated |
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
-| `/ouder` | `Pages/Public/Ouder.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
@@ -298,15 +278,6 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/salesmanager/referrals` | `Pages/Sales/LegacyReferralsRedirect.razor` | SalesManager |
 | `/salesmanager/toolkit` | `Pages/Sales/LegacyToolkitRedirect.razor` | SalesManager |
 | `/scholen` | `Pages/ScholenPublic.razor` | anonymous |
-| `/school` | `Pages/School/SchoolDashboard.razor` | SchoolAdmin |
-| `/school/gegevens` | `Pages/School/SchoolDetails.razor` | SchoolAdmin |
-| `/school/klassen` | `Pages/School/SchoolClasses.razor` | SchoolAdmin |
-| `/school/klassen/{ClassId:guid}` | `Pages/School/SchoolClassDetail.razor` | SchoolAdmin |
-| `/school/leraren` | `Pages/School/SchoolTeachers.razor` | SchoolAdmin |
-| `/school/materiaal` | `Pages/School/SchoolMaterials.razor` | SchoolAdmin |
-| `/school/privacy` | `Pages/School/SchoolPrivacy.razor` | SchoolAdmin |
-| `/school/resultaten` | `Pages/School/SchoolResults.razor` | SchoolAdmin |
-| `/school/te-doen` | `Pages/School/SchoolTodos.razor` | SchoolAdmin |
 | `/status/{Code:int}` | `Pages/Status/StatusPage.razor` | anonymous |
 | `/toegankelijkheid` | `Pages/Legal/Toegankelijkheid.razor` | anonymous |
 | `/toestemming` | `Pages/Public/ParentalConsent.razor` | anonymous |

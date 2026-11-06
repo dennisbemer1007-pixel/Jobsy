@@ -614,10 +614,10 @@ internal static class DiscoverySsrShells
 
         sb.Append("<div class=\"journey-step__foot\"><span class=\"journey-step__sp\"></span>");
         sb.Append("<a class=\"journey-later\" href=\"");
-            sb.Append(DiscoverySsrUrls.Overview());
-            sb.Append("\" data-enhance-nav=\"false\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Back"]));
-            sb.Append("</a>");
+        sb.Append(DiscoverySsrUrls.Overview());
+        sb.Append("\" data-enhance-nav=\"false\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Discovery.Overview.Back"]));
+        sb.Append("</a>");
         if (model.ShowDiveDeeper)
         {
             sb.Append("<form method=\"post\" action=\"");

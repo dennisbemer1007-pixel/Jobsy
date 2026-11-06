@@ -8,11 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>Renders PersonalStep geolocation states and captures PNGs when JOBSY_CAPTURE_GEO=1.</summary>
-public sealed class OnboardingGeolocationScreenshotTests : BunitContext
+public class OnboardingGeolocationScreenshotTests : JobsyBunitContext
 {
     public OnboardingGeolocationScreenshotTests()
     {

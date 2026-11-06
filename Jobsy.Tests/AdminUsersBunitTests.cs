@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class AdminUsersBunitTests : BunitContext
+public class AdminUsersBunitTests : JobsyBunitContext
+
 {
     public AdminUsersBunitTests()
     {

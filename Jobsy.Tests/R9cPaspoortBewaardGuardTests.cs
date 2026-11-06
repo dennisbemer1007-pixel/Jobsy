@@ -69,7 +69,7 @@ public sealed class R9cPaspoortBewaardGuardTests
         var root = TestRepo.FindRoot();
         var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Applications/ApplicationsSsrData.cs"));
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
-        Assert.Contains("FormatListCardTimelineSummary", data, StringComparison.Ordinal);
+        Assert.Contains("BuildCardHint", data, StringComparison.Ordinal);
         Assert.Contains("row.CardHint", shells, StringComparison.Ordinal);
         Assert.DoesNotContain("AfterMatch is null && !string.IsNullOrWhiteSpace(row.CardHint)", shells, StringComparison.Ordinal);
     }

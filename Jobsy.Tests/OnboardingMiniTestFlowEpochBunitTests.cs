@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -17,7 +18,7 @@ namespace Jobsy.Tests;
 /// Regression: onboarding mini steps 7–10 must remount <see cref="TestQuestionFlow"/>
 /// (via <see cref="OnboardingMiniTest.FlowEpoch"/>) so the counter resets to Vraag 1.
 /// </summary>
-public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
+public class OnboardingMiniTestFlowEpochBunitTests : JobsyBunitContext
 {
     public OnboardingMiniTestFlowEpochBunitTests()
     {

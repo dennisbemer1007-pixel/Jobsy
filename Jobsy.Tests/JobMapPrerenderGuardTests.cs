@@ -115,7 +115,9 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("fitMapToVacancies", js[originStart..originEnd]);
         Assert.Contains("fitToOriginRings", js[originStart..originEnd]);
         Assert.Contains("container.isConnected", js);
-        Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
+        var exportStart = js.LastIndexOf("\n    return {", StringComparison.Ordinal);
+        Assert.True(exportStart > 0);
+        Assert.Contains("isAlive", js[exportStart..], StringComparison.Ordinal);
         Assert.Contains("maplibregl", js);
         Assert.Contains("Bekijk deze baan", js);
         Assert.Contains("map-popup--calm", js);
@@ -194,12 +196,12 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("maplibregl-ctrl-attrib", hideFn);
 
         var createStart = helper.IndexOf("function createMap(container, options)", StringComparison.Ordinal);
-        var createEnd = helper.IndexOf("return {", createStart, StringComparison.Ordinal);
+        var createEnd = helper.IndexOf("\n    return {", createStart, StringComparison.Ordinal);
         Assert.True(createStart > 0 && createEnd > createStart);
         var createFn = helper[createStart..createEnd];
         Assert.Contains("center: options.center", createFn);
         Assert.Contains("zoom: options.zoom", createFn);
-        Assert.Contains("controlsPosition", createFn);
+        Assert.Contains("options.controlsPosition", createFn);
         Assert.Contains("options.controls !== false", createFn);
         Assert.Contains("options.touchZoomRotate !== false", createFn);
         Assert.DoesNotContain("applyCameraForStyle", createFn);
@@ -258,7 +260,10 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
+        Assert.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", app, StringComparison.Ordinal);
+        Assert.Equal(
+            AssetVersions.Version("js/app-core.js"),
+            Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("js/app-core.js"));
         Assert.Contains("css/app.min.css", app);
         Assert.Contains("css/critical.css", app);
         Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
@@ -276,7 +281,8 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);
-        Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", app);
+        Assert.DoesNotContain("rel=\"stylesheet\" href=\"/lib/maplibre/maplibre-gl.css", app, StringComparison.Ordinal);
+        Assert.Contains("rel=\"prefetch\" href=\"/lib/maplibre/maplibre-gl.css", app, StringComparison.Ordinal);
         Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
 
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));

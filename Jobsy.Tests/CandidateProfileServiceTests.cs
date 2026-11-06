@@ -68,8 +68,9 @@ public class CandidateProfileServiceTests
         Assert.Contains("@page \"/profiel\"", page);
         Assert.Contains("@page \"/candidate/profile\"", page);
         Assert.DoesNotContain("profile-hub-kompas", page);
-        var editor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
+        var editor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateProfileBewerkenSsr.razor"));
         Assert.Contains("@page \"/candidate/profile/bewerken\"", editor);
+        Assert.Contains("/candidate/profile/bewerken/legacy", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor")));
 
         var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("Kompas.TabTests", kompas);

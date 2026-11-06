@@ -40,6 +40,8 @@ public class PublicVisibilityEndpointTests : IClassFixture<RoleFunctionalWebAppF
         ("VacanciesController", "GetCards", "filtered"),
         ("VacanciesController", "Discover", "filtered"),
         ("VacanciesController", "GetPublicImage", "filtered"),
+        ("VacanciesController", "GetBanenkaartCatalog", "filtered"),
+        ("VacanciesController", "GetMapPopupPhoto", "filtered"),
         ("VacanciesController", "GetById", "filtered"),
         ("VacanciesController", "GetTravel", "filtered"),
         ("VacanciesController", "GetCultureFit", "filtered"),

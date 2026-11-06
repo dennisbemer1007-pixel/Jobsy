@@ -5,8 +5,11 @@ using JobsyLanguages = Jobsy.Core.Localization.JobsyLanguages;
 
 namespace Jobsy.Tests.Errors;
 
+[Collection("JobsyLanguagesState")]
 public class ErrorCultureTests
 {
+    public ErrorCultureTests() => JobsyLanguages.ResetEnabledForTests();
+
     [Theory]
     [InlineData("en", "en")]
     [InlineData("pl", "nl")]

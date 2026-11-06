@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -22,7 +23,7 @@ namespace Jobsy.Tests.Scholen;
 /// Pupil cookie renewal registers OnStarting. Doing that from the interactive layout
 /// throws "OnStarting cannot be set because the response has already started" and kills the circuit.
 /// </summary>
-public class LeerlingCircuitAuthTests : BunitContext
+public class LeerlingCircuitAuthTests : JobsyBunitContext
 {
     public LeerlingCircuitAuthTests()
     {

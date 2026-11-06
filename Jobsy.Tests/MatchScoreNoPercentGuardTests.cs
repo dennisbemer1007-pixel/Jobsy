@@ -10,13 +10,14 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>
 /// Blocks match/score percentages in rendered candidate and employer UI (words only).
 /// </summary>
-public sealed class MatchScoreNoPercentGuardTests : BunitContext
+public class MatchScoreNoPercentGuardTests : JobsyBunitContext
 {
     private static readonly Regex MatchScorePercent = new(
         @"(\d{1,3}(?:[.,]\d+)?)\s*%\s*(match|past|fit|score|dopasow|potrivir)",

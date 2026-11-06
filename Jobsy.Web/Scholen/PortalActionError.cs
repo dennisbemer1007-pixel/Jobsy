@@ -27,4 +27,6 @@ public static class PortalActionError
 
         return text;
     }
+
+    public static string FromException(Exception ex) => From(ex.Message);
 }

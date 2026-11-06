@@ -21,7 +21,7 @@ public sealed class AssistantClientEndpointsGuardTests
         var root = TestRepo.FindRoot();
         var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "lobsy-coach-ssr.js"));
         Assert.Contains("if (!state.started) startChat()", js, StringComparison.Ordinal);
-        Assert.Contains("warm: true", js, StringComparison.Ordinal);
+        Assert.Contains("warm: warmBootEnabled()", js, StringComparison.Ordinal);
         Assert.Contains("pageContextLine", js, StringComparison.Ordinal);
         Assert.Contains("renderChips", js, StringComparison.Ordinal);
         Assert.Contains("renderActionLinks", js, StringComparison.Ordinal);

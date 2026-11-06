@@ -208,10 +208,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.TestsV2Enabled = testsV2Enabled;
         }
 
-        if (update.TestItemExamplesEnabled is bool testItemExamplesEnabled)
-        {
-            row.TestItemExamplesEnabled = testItemExamplesEnabled;
-        }
+        ApplyAdminBoolUpdate(row, "TestItemExamplesEnabled", update.TestItemExamplesEnabled, v => row.TestItemExamplesEnabled = v);
 
         if (update.TestProgressInsightEnabled is bool testProgressInsightEnabled)
         {

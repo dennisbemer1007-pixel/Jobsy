@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -84,7 +85,7 @@ public class TalentPoolRiasecApiTests
 
     private static void AssertCardMarkupHidesCareerTest(TalentCardJson card)
     {
-        using var bunit = new BunitContext();
+        using var bunit = new JobsyBunitContext();
         var leaked = new AnonymousTalentCard
         {
             RegionLabel = "Westland",

@@ -15,10 +15,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class OnboardingPrefillNameBunitTests : BunitContext
+public class OnboardingPrefillNameBunitTests : JobsyBunitContext
+
 {
     public OnboardingPrefillNameBunitTests()
     {
@@ -46,6 +48,8 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        BunitAntiforgery.Register(Services);
+        EnableInteractiveServerRenderer();
     }
 
     [Fact]
@@ -64,7 +68,7 @@ public sealed class OnboardingPrefillNameBunitTests : BunitContext
             """;
         _handler.CurrentStep = 1;
         var nav = Services.GetRequiredService<NavigationManager>();
-        nav.NavigateTo("/candidate/start");
+        nav.NavigateTo("/candidate/start/wizard");
 
         var cut = Render<OnboardingWizard>();
         cut.WaitForAssertion(() => cut.Find("#onboarding-field-firstname input"));

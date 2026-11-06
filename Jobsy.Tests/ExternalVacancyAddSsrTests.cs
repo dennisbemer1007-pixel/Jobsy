@@ -5,10 +5,12 @@ using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class ExternalVacancyAddSsrTests : BunitContext
+public class ExternalVacancyAddSsrTests : JobsyBunitContext
+
 {
     public ExternalVacancyAddSsrTests()
     {

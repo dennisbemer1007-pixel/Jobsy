@@ -19,6 +19,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 
 <HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/reconnect.css")" data-reconnect-css />
     @if (_variant == LandingVariant.On)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/candidate-header-strip.css")" />
@@ -47,6 +48,12 @@
         <LandingFaq Variant="_variant" PriceEuro="_priceEuro" />
         <LandingClosing Variant="_variant" />
     }
+</div>
+<div id="components-reconnect-modal" class="reconnect-toast" hidden aria-hidden="true">
+    <div class="reconnect-toast__panel" role="status" aria-live="polite">
+        <p class="reconnect-toast__msg reconnect-toast__msg--rejected">@Culture["Status.Reconnect.Rejected"]</p>
+        <p class="reconnect-toast__msg reconnect-toast__msg--session-expired">@Culture["Status.Reconnect.SessionExpired"]</p>
+    </div>
 </div>
 
 @code {

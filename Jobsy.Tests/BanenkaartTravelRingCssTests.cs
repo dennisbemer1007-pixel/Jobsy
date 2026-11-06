@@ -21,7 +21,8 @@ public class BanenkaartTravelRingCssTests
         Assert.Contains("0.09", fn, StringComparison.Ordinal);
         Assert.Contains("0.06", fn, StringComparison.Ordinal);
         Assert.Contains("0.05", fn, StringComparison.Ordinal);
-        Assert.Contains("[\"literal\", [2, 2]]", fn, StringComparison.Ordinal);
+        Assert.Contains("travelRingLineDashPaint()", fn, StringComparison.Ordinal);
+        Assert.Contains("[\"literal\", [2, 2]]", js, StringComparison.Ordinal);
         Assert.DoesNotContain("5.5", fn, StringComparison.Ordinal);
         Assert.DoesNotContain("3.5", fn, StringComparison.Ordinal);
         Assert.DoesNotContain("0.22", fn, StringComparison.Ordinal);
