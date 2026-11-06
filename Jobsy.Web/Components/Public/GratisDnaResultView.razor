@@ -11,20 +11,14 @@
     <div class="gd-result__grid">
         <div class="gd-result__main">
             <p class="gd-result__badge" data-testid="gd-result-badge">@Culture["GratisDna.Result.Badge"]</p>
-            <div class="gd-result__head">
-                <LobsyMascot Pose="MascotPose.Celebrating" Size="MascotSize.Medium" Alt="" Class="gd-result__mascot" />
-                <h1 id="gd-result-title">
-                    @Culture["GratisDna.Result.Title"]
-                    <PubEmoji Glyph="🎉" />
-                </h1>
-            </div>
+            <h1 id="gd-result-title" class="gd-result__title">@Culture["GratisDna.Result.Title"]</h1>
             <p class="gd-result__lead">@Culture["GratisDna.Result.Lead"]</p>
 
             <div class="gd-tiles" data-testid="gd-tiles">
                 @if (!string.IsNullOrWhiteSpace(StrengthSentence))
                 {
                     <article class="gd-tile gd-tile--peach" data-testid="gd-tile-strength">
-                        <div class="gd-tile__top t-peach"><PubEmoji Glyph="🤝" /><small>@Culture["GratisDna.Tile.Title.Strength"]</small></div>
+                        <div class="gd-tile__top t-peach"><small>@Culture["GratisDna.Tile.Title.Strength"]</small></div>
                         <div class="gd-tile__body">
                             <h3>@(StrengthLabel ?? Culture["GratisDna.Tile.Title.Strength"])</h3>
                             <p>@StrengthSentence</p>
@@ -35,7 +29,7 @@
                 @if (!string.IsNullOrWhiteSpace(RiasecSentence))
                 {
                     <article class="gd-tile gd-tile--sun" data-testid="gd-tile-riasec">
-                        <div class="gd-tile__top t-sun"><PubEmoji Glyph="💛" /><small>@Culture["GratisDna.Tile.Title.Riasec"]</small></div>
+                        <div class="gd-tile__top t-sun"><small>@Culture["GratisDna.Tile.Title.Riasec"]</small></div>
                         <div class="gd-tile__body">
                             <h3>@(RiasecLabel ?? Culture["GratisDna.Tile.Title.Riasec"])</h3>
                             <p>@RiasecSentence</p>
@@ -46,7 +40,7 @@
                 @if (!string.IsNullOrWhiteSpace(CultureSentence))
                 {
                     <article class="gd-tile gd-tile--mint" data-testid="gd-tile-culture">
-                        <div class="gd-tile__top t-mint"><PubEmoji Glyph="🏡" /><small>@Culture["GratisDna.Tile.Title.Culture"]</small></div>
+                        <div class="gd-tile__top t-mint"><small>@Culture["GratisDna.Tile.Title.Culture"]</small></div>
                         <div class="gd-tile__body">
                             <h3>@(CultureLabel ?? Culture["GratisDna.Tile.Title.Culture"])</h3>
                             <p>@CultureSentence</p>
@@ -57,7 +51,7 @@
                 @if (!string.IsNullOrWhiteSpace(ValueSentence))
                 {
                     <article class="gd-tile gd-tile--sky" data-testid="gd-tile-value">
-                        <div class="gd-tile__top t-sky"><PubEmoji Glyph="🧭" /><small>@Culture["GratisDna.Tile.Title.Value"]</small></div>
+                        <div class="gd-tile__top t-sky"><small>@Culture["GratisDna.Tile.Title.Value"]</small></div>
                         <div class="gd-tile__body">
                             <h3>@(ValueLabel ?? Culture["GratisDna.Tile.Title.Value"])</h3>
                             <p>@ValueSentence</p>
@@ -74,12 +68,10 @@
                         <span>@Culture["GratisDna.Passport.TabTests"]</span>
                         <span>@LandingText.For("GratisDna.Locked.TabFit", Variant)</span>
                         <span>@Culture["GratisDna.Passport.TabCareer"]</span>
-                        <span>@Culture["GratisDna.Passport.TabProof"]</span>
                     </div>
                     <div class="gd-lockd__bars">
                         <div class="gd-lockd__bar"><span>Samenwerken</span><b class="gd-lockd__fill" data-fill="86"></b></div>
                         <div class="gd-lockd__bar t2"><span>Doorzetten</span><b class="gd-lockd__fill" data-fill="74"></b></div>
-                        <div class="gd-lockd__bar t3"><span>Rust onder druk</span><b class="gd-lockd__fill" data-fill="61"></b></div>
                     </div>
                 </div>
                 <p class="gd-lockd__pill">
@@ -88,23 +80,10 @@
                 </p>
             </div>
 
-            @if (Variant == LandingVariant.On)
-            {
-                <a class="gd-jobs-teaser" href="@RegisterHref" data-testid="gd-jobs-teaser">
-                    <h3>@Culture["GratisDna.JobsTeaser.Title"]</h3>
-                    <p>@Culture["GratisDna.JobsTeaser.Lead"]</p>
-                    <div class="gd-jobs-teaser__rows" aria-hidden="true">
-                        <div>🔒 @Culture["GratisDna.JobsTeaser.Title"]</div>
-                        <div>🔒 ——— ———</div>
-                        <div>🔒 ——— ———</div>
-                    </div>
-                </a>
-            }
-
             <div class="gd-rfoot">
                 <div class="gd-share" data-testid="gd-share">
                     <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("whatsapp")'>
-                        <PubEmoji Glyph="💬" /> @Culture["GratisDna.Share.WhatsApp"]
+                        @Culture["GratisDna.Share.WhatsApp"]
                     </button>
                     <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("instagram")'>@Culture["GratisDna.Share.Instagram"]</button>
                     <button type="button" class="gd-share__btn" @onclick='() => OnShare.InvokeAsync("generic")'>@Culture["GratisDna.Share.Generic"]</button>
@@ -113,10 +92,6 @@
                 {
                     <p class="gd-footnote">@ShareMessage</p>
                 }
-
-                <a class="gd-quiet-link" href="@RegisterHref" data-kpi="ResultCtaSignup" data-kpi-target="email">
-                    @Culture["GratisDna.SharperLink"]
-                </a>
 
                 <div class="gd-wipe" data-testid="gd-wipe">
                     @if (WipeConfirm)
@@ -128,7 +103,7 @@
                     else
                     {
                         <button type="button" data-testid="gd-wipe-link" @onclick="OnWipeRequest">
-                            <PubEmoji Glyph="🧹" /> @Culture["GratisDna.Wipe.Link"]
+                            @Culture["GratisDna.Wipe.Link"]
                         </button>
                     }
                 </div>
