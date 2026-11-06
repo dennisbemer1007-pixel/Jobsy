@@ -34,13 +34,13 @@ jobs:
       ConnectionStrings__JobsyDb: Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres
       VerificationCodes__Pepper: ci-verification-otp-pepper-32chars!!
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Python brotli (wwwroot precompress)
         run: pip install brotli
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: "**/test-results/*.trx"
@@ -126,7 +126,7 @@ jobs:
 
       - name: Upload unit hang dumps
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-hang-dumps
           path: |
@@ -138,7 +138,7 @@ jobs:
 
       - name: Upload Playwright screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-screenshots
           path: |
@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload stack logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-stack-logs
           path: /tmp/jobsy-ci-logs/**
