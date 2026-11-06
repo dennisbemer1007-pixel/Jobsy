@@ -446,10 +446,10 @@ def _slug(title):
     s=re.sub(r'[^a-z0-9]+','-',(title or '').lower().strip())
     return s.strip('-') or 'beroep'
 
-def load_trial_manifest():
+def load_trial_manifest(export_path=None):
     root=os.path.dirname(os.path.abspath(__file__))
     mp=os.path.join(root,'data','trial-20-manifest.json')
-    ep=os.path.join(root,'data','occupation-day-in-life.nl.json')
+    ep=export_path or os.environ.get('OCCUPATION_DAY_EXPORT') or os.path.join(root,'data','occupation-day-in-life.nl.json')
     manifest=json.load(open(mp,encoding='utf-8'))
     export=json.load(open(ep,encoding='utf-8'))
     by_id={}
@@ -527,12 +527,13 @@ def job_day(name,k,d):
 <div class="m-only"><div class="guide"><div class="ring"></div>{bubble(coach,'l')}</div></div></div></div>{FOOT}'''
     page(name,body,w['cls'])
 
-keuze('00-kies-je-wereld')
-for i,k in enumerate(['zee','tuin','ster']):
-    b=1+i*3; nm={'zee':'zee','tuin':'eilandtuin','ster':'sterrenkust'}[k]
-    route(f'{b:02d}-{nm}-route',k); question(f'{b+1:02d}-{nm}-vraag',k); intro(f'{b+2:02d}-{nm}-puzzel-intro',k)
-    island_page(f'11a-{nm}-pauze-leuk',k,1); island_page(f'11b-{nm}-pauze-niet-leuk',k,2)
-    result(f'10-{nm}-result',k); job_pick(f'12-{nm}-beroep-kiezen',k,none_selected=True)
-    for day in TRIAL_DAYS:
-        job_day(f'13-{nm}-beroep-dag-{day["slug"]}', k, day)
-print('ok', len(TRIAL_DAYS), 'trial days')
+if __name__ == '__main__':
+    keuze('00-kies-je-wereld')
+    for i,k in enumerate(['zee','tuin','ster']):
+        b=1+i*3; nm={'zee':'zee','tuin':'eilandtuin','ster':'sterrenkust'}[k]
+        route(f'{b:02d}-{nm}-route',k); question(f'{b+1:02d}-{nm}-vraag',k); intro(f'{b+2:02d}-{nm}-puzzel-intro',k)
+        island_page(f'11a-{nm}-pauze-leuk',k,1); island_page(f'11b-{nm}-pauze-niet-leuk',k,2)
+        result(f'10-{nm}-result',k); job_pick(f'12-{nm}-beroep-kiezen',k,none_selected=True)
+        for day in TRIAL_DAYS:
+            job_day(f'13-{nm}-beroep-dag-{day["slug"]}', k, day)
+    print('ok', len(TRIAL_DAYS), 'trial days')

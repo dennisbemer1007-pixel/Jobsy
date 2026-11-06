@@ -20,6 +20,10 @@ public static class OccupationDayBatchPlan
     public const decimal Gpt4oInputUsdPerMillion = 2.50m;
     public const decimal Gpt4oOutputUsdPerMillion = 10.00m;
 
+    /// <summary>gpt-4o-mini list prices (USD per 1M tokens), March 2026 reference.</summary>
+    public const decimal Gpt4oMiniInputUsdPerMillion = 0.15m;
+    public const decimal Gpt4oMiniOutputUsdPerMillion = 0.60m;
+
     public static int CatalogTotal => OccupationCatalog.Shared.All.Count;
 
     public static OccupationDayStoredCounts CountStored(IEnumerable<OccupationDayStoredRow> rows)
@@ -63,8 +67,9 @@ public static class OccupationDayBatchPlan
         var calls = (int)Math.Ceiling(occupationsToFill * TypicalCallsPerOccupation);
         var inputTokens = calls * TypicalInputTokensPerCall;
         var outputTokens = calls * TypicalOutputTokensPerCall;
-        var inputUsd = inputTokens / 1_000_000m * Gpt4oInputUsdPerMillion;
-        var outputUsd = outputTokens / 1_000_000m * Gpt4oOutputUsdPerMillion;
+        var (inputRate, outputRate) = PricePerMillion(options.Model ?? DefaultModel);
+        var inputUsd = inputTokens / 1_000_000m * inputRate;
+        var outputUsd = outputTokens / 1_000_000m * outputRate;
         var delayMs = Math.Max(0, options.DelayMilliseconds);
         var delaySeconds = occupationsToFill * TypicalCallsPerOccupation * delayMs / 1000.0;
         const double secondsPerCall = 4.5;
@@ -83,13 +88,26 @@ public static class OccupationDayBatchPlan
     public static OccupationDayBatchEstimate EstimateRemaining(OccupationDayStoredCounts counts, OccupationDayInLifeOptions? options = null)
         => Estimate(counts.RemainingComplete, options);
 
-    public static decimal EstimateFromUsage(int promptTokens, int completionTokens, string model = DefaultModel)
+    public static decimal EstimateFromUsage(int promptTokens, int completionTokens, string? model = null)
     {
-        _ = model;
-        var inputUsd = promptTokens / 1_000_000m * Gpt4oInputUsdPerMillion;
-        var outputUsd = completionTokens / 1_000_000m * Gpt4oOutputUsdPerMillion;
+        var (inputRate, outputRate) = PricePerMillion(model ?? DefaultModel);
+        var inputUsd = promptTokens / 1_000_000m * inputRate;
+        var outputUsd = completionTokens / 1_000_000m * outputRate;
         return inputUsd + outputUsd;
     }
+
+    public static (decimal InputUsdPerMillion, decimal OutputUsdPerMillion) PricePerMillion(string model)
+    {
+        if (model.Contains("mini", StringComparison.OrdinalIgnoreCase))
+        {
+            return (Gpt4oMiniInputUsdPerMillion, Gpt4oMiniOutputUsdPerMillion);
+        }
+
+        return (Gpt4oInputUsdPerMillion, Gpt4oOutputUsdPerMillion);
+    }
+
+    public static OccupationDayBatchEstimate EstimateCatalog(string? model = null)
+        => Estimate(CatalogTotal, new OccupationDayInLifeOptions { Model = model ?? DefaultModel });
 
     private static bool HasDutch(OccupationDayStoredRow row)
         => !string.IsNullOrWhiteSpace(row.Morning)
