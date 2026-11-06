@@ -1,3 +1,4 @@
+using System.Net;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Scholen.MboHbo;
 
@@ -94,7 +95,20 @@ public sealed partial class JobsyApiClient
             ct);
 
     public async Task<PupilMboHboPassportDto?> GetMboHboPassportAsync(CancellationToken ct = default)
-        => await GetApiJsonAsync<PupilMboHboPassportDto>("api/pupil/mbo-hbo/passport", ct);
+    {
+        using var response = await _http.GetAsync("api/pupil/mbo-hbo/passport", ct);
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new HttpRequestException("pupil session lost", null, response.StatusCode);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilMboHboPassportDto>(response.Content, ct);
+    }
 
     public async Task<TeacherMboHboClassProgressDto?> GetTeacherMboHboProgressAsync(
         Guid classId,

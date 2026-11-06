@@ -9,6 +9,7 @@ using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Scholen;
 
@@ -64,18 +65,21 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
     private readonly IPupilCodeService _codes;
     private readonly IPupilMboHboResultBuilder _results;
     private readonly TimeProvider _clock;
+    private readonly ILogger<PupilMboHboPortalService> _logger;
 
     public PupilMboHboPortalService(
         JobsyDbContext db,
         ISchoolScopeService scope,
         IPupilCodeService codes,
         IPupilMboHboResultBuilder results,
+        ILogger<PupilMboHboPortalService> logger,
         TimeProvider? clock = null)
     {
         _db = db;
         _scope = scope;
         _codes = codes;
         _results = results;
+        _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -330,38 +334,76 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
 
         var (code, schoolClass) = (ctx.Code!, ctx.Class!);
         var state = LoadState(code);
-        if (!state.AllBlocksComplete())
+        var unlocked = state.AllBlocksComplete();
+        if (unlocked)
         {
-            return (null, new PupilErrorDto("locked", "Je paspoort komt vrij als alle 5 testen af zijn."), 409);
+            await _results.BuildAsync(code.Id, ct);
         }
 
-        await _results.BuildAsync(code.Id, ct);
         var schoolName = await _db.Schools.AsNoTracking()
             .Where(s => s.Id == schoolClass.SchoolId)
             .Select(s => s.Name)
             .FirstOrDefaultAsync(ct) ?? "";
 
         var sections = new List<PupilMboHboPassportSectionDto>();
+        var missing = new List<string>();
         foreach (var block in PupilMboHboCatalog.AllBlocks)
         {
-            var o = PupilMboHboScoring.BuildOutcome(block, state, schoolClass.Level);
             var meta = PupilMboHboCopy.BlockMeta(block);
-            var body = $"<p>{System.Net.WebUtility.HtmlEncode(o.Summary)}</p>";
-            if (o.Highlights.Count > 0)
+            if (!state.IsBlockComplete(block))
             {
-                body += "<p>" + string.Join(" · ", o.Highlights.Select(System.Net.WebUtility.HtmlEncode)) + "</p>";
+                missing.Add(meta.Title);
+                continue;
             }
 
-            sections.Add(new PupilMboHboPassportSectionDto(meta.Title, body));
+            try
+            {
+                var o = PupilMboHboScoring.BuildOutcome(block, state, schoolClass.Level);
+                var body = $"<p>{System.Net.WebUtility.HtmlEncode(o.Summary)}</p>";
+                if (o.Highlights.Count > 0)
+                {
+                    body += "<p>" + string.Join(" · ", o.Highlights.Select(System.Net.WebUtility.HtmlEncode)) + "</p>";
+                }
+
+                sections.Add(new PupilMboHboPassportSectionDto(meta.Title, body));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "MBO/HBO passport section failed for block {Block} on pupil code {PupilCodeId}",
+                    block,
+                    code.Id);
+                sections.Add(new PupilMboHboPassportSectionDto(
+                    meta.Title,
+                    "<p>Deze uitslag kon nu niet worden geladen. Probeer het later opnieuw of maak de test opnieuw af.</p>"));
+            }
         }
+
+        string? incompleteHint = null;
+        if (!unlocked)
+        {
+            incompleteHint = missing.Count switch
+            {
+                0 => "Je paspoort is nog niet klaar. Rond eerst al je testen af.",
+                1 => "Hier zie je wat er al klaar is. Rond nog 1 test af om je volledige paspoort en PDF te krijgen.",
+                _ => "Hier zie je wat er al klaar is. Rond de rest van je testen af om je volledige paspoort en PDF te krijgen."
+            };
+        }
+
+        var footerNote = unlocked
+            ? "Dit paspoort laat zien wat nu mogelijk bij je past. Het is geen advies en geen eindoordeel."
+            : "Dit is een tussentijds beeld. Het is geen advies en geen eindoordeel.";
 
         return (new PupilMboHboPassportDto(
             schoolClass.Name,
             pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "",
             schoolName,
-            true,
+            unlocked,
             sections,
-            "Dit paspoort laat zien wat nu mogelijk bij je past. Het is geen advies en geen eindoordeel."), null, 200);
+            footerNote,
+            incompleteHint,
+            missing), null, 200);
     }
 
     public async Task<TeacherMboHboClassProgressDto?> GetTeacherClassProgressAsync(

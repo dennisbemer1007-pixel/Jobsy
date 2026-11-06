@@ -1030,7 +1030,16 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var model = await api.GetMboHboPassportAsync(ct);
+        PupilMboHboPassportDto? model;
+        try
+        {
+            model = await api.GetMboHboPassportAsync(ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+        }
+
         var pdfHref = PupilStoryPdfLink.Href(null, PupilStoryPdfLink.NormalizeLanguageCode(culture.Language) ?? culture.Language);
         var pdfNotice = http.Request.Query["pdf"].ToString() switch
         {
@@ -1038,9 +1047,16 @@ public static class PupilLeerlingJourneyEndpoints
             "error" => "De PDF lukt nu even niet. Probeer het zo opnieuw.",
             _ => null,
         };
-        var body = model is null
-            ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>"
-            : PupilMboHboSsrHtml.Paspoort(model, culture, pdfHref, pdfNotice);
+        if (model is null)
+        {
+            return MboLoadFailed(
+                http,
+                culture,
+                culture["Leerling.Reis.Offline"],
+                "/leerling/mbo-hbo/paspoort");
+        }
+
+        var body = PupilMboHboSsrHtml.Paspoort(model, culture, pdfHref, pdfNotice);
         return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort");
     }
 

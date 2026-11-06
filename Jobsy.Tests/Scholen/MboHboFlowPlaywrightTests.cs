@@ -534,7 +534,11 @@ public sealed class MboHboFlowPlaywrightTests
                 await PickScaleValueAsync(page, s, v);
             }
 
-            var next = page.GetByRole(AriaRole.Button, new() { Name = "Volgende →" });
+            var next = page.GetByTestId("mhbo-next");
+            if (await next.CountAsync() == 0)
+            {
+                next = page.GetByRole(AriaRole.Button, new() { Name = "Volgende →" });
+            }
             if (await next.CountAsync() == 0)
             {
                 next = page.GetByRole(AriaRole.Button, new() { Name = "Afronden →" });
@@ -557,6 +561,7 @@ public sealed class MboHboFlowPlaywrightTests
             }
 
             await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 60_000 });
+            await next.ScrollIntoViewIfNeededAsync();
             await next.ClickAsync();
             await page.WaitForTimeoutAsync(250);
             steps++;

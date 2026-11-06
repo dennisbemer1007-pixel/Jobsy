@@ -27,7 +27,11 @@ public static class PupilMboHboSsrHtml
         }
         if (model.PassportUnlocked)
         {
-            sb.Append("""<div class="mhbo-tile mhbo-tile--passport"><a class="mhbo-btn" href="/leerling/mbo-hbo/paspoort">Paspoort</a></div>""");
+            sb.Append("""<div class="mhbo-tile mhbo-tile--passport"><a class="mhbo-btn" href="/leerling/mbo-hbo/paspoort">Open je paspoort</a></div>""");
+        }
+        else if (model.CompletedBlocks > 0)
+        {
+            sb.Append("""<div class="mhbo-tile mhbo-tile--passport"><a class="mhbo-btn mhbo-btn--ghost" href="/leerling/mbo-hbo/paspoort">Bekijk voortgang</a></div>""");
         }
         sb.Append("</div></div>");
         return sb.ToString();
@@ -80,7 +84,8 @@ public static class PupilMboHboSsrHtml
 
         sb.Append("<div class=\"mhbo-qfoot\" data-testid=\"mhbo-test-nav\">");
         sb.Append(PrevControl(blockKey, q, culture));
-        sb.Append("<button type=\"submit\" class=\"mhbo-btn\">Volgende →</button></div></form></div>");
+        var nextLabel = q.Index >= q.Total ? "Afronden →" : "Volgende →";
+        sb.Append("<button type=\"submit\" class=\"mhbo-btn\" data-testid=\"mhbo-next\" disabled>").Append(nextLabel).Append("</button></div></form></div>");
         return sb.ToString();
     }
 
@@ -99,17 +104,50 @@ public static class PupilMboHboSsrHtml
             sb.Append("<p class=\"mhbo-error\" role=\"alert\">").Append(PupilLeerlingSsrParts.E(pdfNotice)).Append("</p>");
         }
 
+        if (!model.Unlocked && !string.IsNullOrEmpty(model.IncompleteHint))
+        {
+            sb.Append("<p class=\"mhbo-sub\" data-testid=\"mhbo-paspoort-incomplete\" role=\"status\">");
+            sb.Append(PupilLeerlingSsrParts.E(model.IncompleteHint)).Append("</p>");
+        }
+
+        if (model.MissingBlockTitles is { Count: > 0 })
+        {
+            sb.Append("<p class=\"mhbo-meta\" data-testid=\"mhbo-paspoort-missing\">Nog niet af: ");
+            sb.Append(PupilLeerlingSsrParts.E(string.Join(" · ", model.MissingBlockTitles))).Append("</p>");
+            sb.Append("<p><a class=\"mhbo-btn mhbo-btn--ghost\" href=\"/leerling/mbo-hbo/overzicht\">Ga verder met je testen</a></p>");
+        }
+
         sb.Append("""<nav class="mhbo-paspoort-actions" data-testid="mhbo-paspoort-actions">""");
         sb.Append("<a class=\"mhbo-btn mhbo-btn--ghost\" href=\"/leerling/mbo-hbo/overzicht\">Terug naar overzicht</a>");
-        sb.Append("<a class=\"mhbo-btn\" href=\"").Append(PupilLeerlingSsrParts.E(pdfHref)).Append("\" data-enhance-nav=\"false\" data-testid=\"mhbo-download-pdf\">");
-        sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingPassport.Page.Pdf"])).Append("</a></nav>");
-        sb.Append("<div class=\"mhbo-grid\">");
-        foreach (var sec in model.Sections)
+        if (model.Unlocked)
         {
-            sb.Append("<div class=\"mhbo-card\"><h2>").Append(PupilLeerlingSsrParts.E(sec.Title)).Append("</h2>");
-            sb.Append(sec.BodyHtml).Append("</div>");
+            sb.Append("<a class=\"mhbo-btn\" href=\"").Append(PupilLeerlingSsrParts.E(pdfHref)).Append("\" data-enhance-nav=\"false\" data-testid=\"mhbo-download-pdf\">");
+            sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingPassport.Page.Pdf"])).Append("</a>");
         }
-        sb.Append("</div></div>");
+
+        sb.Append("</nav>");
+        if (model.Sections.Count == 0)
+        {
+            sb.Append("<div class=\"mhbo-card\"><p>Je hebt nog geen test afgerond. Start bij je overzicht.</p></div>");
+        }
+        else
+        {
+            sb.Append("<div class=\"mhbo-grid\">");
+            foreach (var sec in model.Sections)
+            {
+                sb.Append("<div class=\"mhbo-card\"><h2>").Append(PupilLeerlingSsrParts.E(sec.Title)).Append("</h2>");
+                sb.Append(sec.BodyHtml).Append("</div>");
+            }
+
+            sb.Append("</div>");
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.FooterNote))
+        {
+            sb.Append("<p class=\"mhbo-foot\">").Append(PupilLeerlingSsrParts.E(model.FooterNote)).Append("</p>");
+        }
+
+        sb.Append("</div>");
         return sb.ToString();
     }
 

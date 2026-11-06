@@ -73,7 +73,9 @@ public sealed record PupilMboHboPassportDto(
     string SchoolName,
     bool Unlocked,
     IReadOnlyList<PupilMboHboPassportSectionDto> Sections,
-    string FooterNote);
+    string FooterNote,
+    string? IncompleteHint = null,
+    IReadOnlyList<string>? MissingBlockTitles = null);
 
 public sealed record PupilMboHboPassportSectionDto(string Title, string BodyHtml);
 

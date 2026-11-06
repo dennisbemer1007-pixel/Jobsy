@@ -2775,6 +2775,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                      ("/leerling/mbo-hbo/uitleg", ".mhbo-wrap", (Func<IPage, Task>)InteractNoOpAsync),
                      ("/leerling/mbo-hbo/overzicht", ".mhbo-overview-grid, .mhbo-wrap h1", (Func<IPage, Task>)InteractNoOpAsync),
                      ("/leerling/mbo-hbo/test/interesse", "[data-testid=mhbo-test-question]", (Func<IPage, Task>)InteractMboQuestionAsync),
+                     ("/leerling/mbo-hbo/test/beroepen", "[data-testid=mhbo-test-question]", (Func<IPage, Task>)InteractMboQuestionAsync),
                      ("/leerling/mbo-hbo/paspoort", "[data-testid=mhbo-paspoort], .mhbo-wrap", (Func<IPage, Task>)InteractNoOpAsync),
                  })
         {
@@ -2891,8 +2892,16 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         var scale = page.Locator("[data-mhbo-scale-value]").Nth(2);
         if (await scale.CountAsync() > 0)
         {
+            await scale.ScrollIntoViewIfNeededAsync();
             await scale.ClickAsync(new() { Timeout = 5_000 });
             await page.WaitForTimeoutAsync(300);
+        }
+
+        var next = page.GetByTestId("mhbo-next");
+        if (await next.CountAsync() > 0)
+        {
+            await next.ScrollIntoViewIfNeededAsync();
+            await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 10_000 });
         }
     }
 

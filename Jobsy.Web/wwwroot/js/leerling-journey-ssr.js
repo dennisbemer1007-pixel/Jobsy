@@ -955,6 +955,27 @@
     });
   }
 
+  function mhboScoreOk(val) {
+    var n = parseInt(val, 10);
+    return n >= 1 && n <= 5;
+  }
+
+  function syncMhboForm(form) {
+    if (!form) return;
+    var next = form.querySelector('[data-testid="mhbo-next"], button[type="submit"].mhbo-btn');
+    if (!next) return;
+    var leuk = form.querySelector('input[name="Leuk"]');
+    var goed = form.querySelector('input[name="Goed"]');
+    var value = form.querySelector('input[name="Value"]');
+    var ok = false;
+    if (leuk && goed) {
+      ok = mhboScoreOk(leuk.value) && mhboScoreOk(goed.value);
+    } else if (value) {
+      ok = mhboScoreOk(value.value);
+    }
+    next.disabled = !ok;
+  }
+
   function bindMhboScale(root) {
     root.querySelectorAll("form[data-mhbo-scale-form]").forEach(function (form) {
       if (form.getAttribute("data-ll-bound") === "1") return;
@@ -970,10 +991,22 @@
           if (group) {
             group.querySelectorAll("[data-mhbo-scale-value]").forEach(function (b) {
               clToggle(b, "is-on", b === btn);
+              if (b && b.setAttribute) {
+                b.setAttribute("aria-checked", b === btn ? "true" : "false");
+              }
             });
           }
+          syncMhboForm(form);
         });
       });
+      form.addEventListener("submit", function (e) {
+        syncMhboForm(form);
+        var next = form.querySelector('[data-testid="mhbo-next"], button[type="submit"].mhbo-btn');
+        if (next && next.disabled) {
+          e.preventDefault();
+        }
+      });
+      syncMhboForm(form);
     });
   }
 
