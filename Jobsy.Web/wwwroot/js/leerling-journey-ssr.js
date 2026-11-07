@@ -642,55 +642,70 @@
     });
   }
 
-  function bindSchelpenPatternPick(root) {
-    if (!root || !root.getAttribute) return;
-    if (root.getAttribute("data-ll-schelp-pattern-bound") === "1") return;
-    root.setAttribute("data-ll-schelp-pattern-bound", "1");
-    root.addEventListener("click", function (evt) {
-      var btn = evt.target.closest("[data-ll-schelp-choice]");
-      if (!btn) return;
-      var card = btn.closest('.ll-puzzle-g78[data-ll-puzzle-mode="pattern"]');
-      if (!card || card.getAttribute("data-ll-schelp-solved") === "1") return;
-      var form = btn.closest("form[data-ll-puzzle-form]");
-      if (!form) return;
-      var playSection = btn.closest("[data-ll-puzzle-play-section]") || card;
-      var answer = parseInt(card.getAttribute("data-ll-puzzle-answer") || "0", 10);
-      var choice = parseInt(btn.getAttribute("data-ll-schelp-choice") || "0", 10);
-      playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (b) {
-        clRemove(b, "sel");
-        if (b && b.setAttribute) {
-          b.setAttribute("aria-pressed", "false");
-        }
+  function handleSchelpPatternChoice(btn) {
+    if (!btn) return;
+    var card = btn.closest('.ll-puzzle-g78[data-ll-puzzle-mode="pattern"]');
+    if (!card || card.getAttribute("data-ll-schelp-solved") === "1") return;
+    var form = btn.closest("form[data-ll-puzzle-form]");
+    if (!form) return;
+    var playSection = btn.closest("[data-ll-puzzle-play-section]") || card;
+    var answer = parseInt(card.getAttribute("data-ll-puzzle-answer") || "0", 10);
+    var choice = parseInt(btn.getAttribute("data-ll-schelp-choice") || "0", 10);
+    playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (b) {
+      clRemove(b, "sel");
+      if (b && b.setAttribute) {
+        b.setAttribute("aria-pressed", "false");
+      }
+    });
+    clAdd(btn, "sel");
+    if (btn && btn.setAttribute) {
+      btn.setAttribute("aria-pressed", "true");
+    }
+    if (choice !== answer) {
+      clAdd(btn, "is-wrong");
+      setTimeout(function () {
+        clRemove(btn, "is-wrong");
+      }, 450);
+      return;
+    }
+    card.setAttribute("data-ll-schelp-solved", "1");
+    var outcome = form.querySelector('input[name="Outcome"]');
+    if (outcome) outcome.value = "done";
+    var qSlot = playSection.querySelector("[data-ll-puzzle-slot-q]");
+    if (qSlot) {
+      clRemove(qSlot, "q");
+      qSlot.innerHTML =
+        '<img src="/leerling/werelden/img/schelp-' +
+        choice +
+        '.png" alt="" width="56" height="56" loading="lazy" decoding="async" />';
+    }
+    var success = playSection.querySelector("[data-ll-puzzle-success]");
+    if (success) {
+      success.hidden = false;
+      success.removeAttribute("hidden");
+    }
+    var continueBtn = playSection.querySelector("[data-ll-puzzle-continue]");
+    if (continueBtn) {
+      continueBtn.disabled = false;
+      continueBtn.removeAttribute("aria-disabled");
+    }
+  }
+
+  function bindSchelpPatternChoices(playSection, card) {
+    if (!playSection || !card) return;
+    if (playSection.getAttribute("data-ll-schelp-pattern-bound") === "1") return;
+    playSection.setAttribute("data-ll-schelp-pattern-bound", "1");
+    playSection.querySelectorAll("[data-ll-schelp-choice]").forEach(function (btn) {
+      if (btn.getAttribute("data-ll-schelp-bound") === "1") return;
+      btn.setAttribute("data-ll-schelp-bound", "1");
+      btn.addEventListener("click", function () {
+        handleSchelpPatternChoice(btn);
       });
-      clAdd(btn, "sel");
-      if (btn && btn.setAttribute) {
-        btn.setAttribute("aria-pressed", "true");
-      }
-      if (choice !== answer) {
-        clAdd(btn, "is-wrong");
-        setTimeout(function () {
-          clRemove(btn, "is-wrong");
-        }, 450);
-        return;
-      }
-      card.setAttribute("data-ll-schelp-solved", "1");
-      var outcome = form.querySelector('input[name="Outcome"]');
-      if (outcome) outcome.value = "done";
-      var qSlot = playSection.querySelector("[data-ll-puzzle-slot-q]");
-      if (qSlot) {
-        clRemove(qSlot, "q");
-        qSlot.innerHTML =
-          '<img src="/leerling/werelden/img/schelp-' +
-          choice +
-          '.png" alt="" width="56" height="56" loading="lazy" decoding="async" />';
-      }
-      var success = playSection.querySelector("[data-ll-puzzle-success]");
-      if (success) success.hidden = false;
-      var continueBtn = playSection.querySelector("[data-ll-puzzle-continue]");
-      if (continueBtn) {
-        continueBtn.disabled = false;
-        continueBtn.removeAttribute("aria-disabled");
-      }
+      btn.addEventListener("keydown", function (evt) {
+        if (evt.key !== "Enter" && evt.key !== " ") return;
+        evt.preventDefault();
+        handleSchelpPatternChoice(btn);
+      });
     });
   }
 
@@ -766,7 +781,7 @@
       syncContinue();
 
       if (kind === "schelpenrij" && section.getAttribute("data-ll-puzzle-mode") === "pattern") {
-        /* Pattern picks handled by bindSchelpenPatternPick on document. */
+        bindSchelpPatternChoices(playSection, section);
       } else if (kind === "schelpenrij") {
         var order = [1, 3, 2, 4];
         var pick = null;
@@ -1077,7 +1092,6 @@
     bindVakkenScale(root);
     bindWereld(root);
     bindPuzzleIntro(root);
-    bindSchelpenPatternPick(document);
     bindPuzzle(root);
     bindIslandSteps(root);
     bindJobPicks(root);
