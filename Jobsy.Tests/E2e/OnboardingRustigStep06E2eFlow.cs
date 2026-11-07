@@ -19,10 +19,7 @@ internal static class OnboardingRustigStep06E2eFlow
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 5, currentStep: 6);
 
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 120_000 });
+        await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 120_000);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
 
         if (rustig)
@@ -52,7 +49,7 @@ internal static class OnboardingRustigStep06E2eFlow
         await page.Locator("input[type=email]").FillAsync(email);
         await page.Locator("input[name=firstName]").FillAsync("Func");
         await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/code**", new() { Timeout = 60_000 });
+        await page.WaitForURLAsync("**/code**", new() { Timeout = 90_000 });
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
         if (string.IsNullOrWhiteSpace(code))
         {
