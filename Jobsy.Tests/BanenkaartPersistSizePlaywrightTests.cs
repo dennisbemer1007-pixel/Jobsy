@@ -235,27 +235,23 @@ public class BanenkaartPersistSizePlaywrightTests
             listBtn = page.Locator("button.jobsy-action--toggle:has-text('Lijst'), button:has-text('Lijst')").First;
         }
 
-        const string listCardSelector =
-            ".vacancy-list .job-card, .vacancy-list--cards .job-card, article.job-card, .kb-list-rows .kb-list-row, [data-testid=kb-list-rows] .kb-list-row, [data-testid='kb-list-rows'] .kb-list-row";
-
         if (width <= 700)
         {
             Assert.True(await listBtn.CountAsync() > 0, "Lijst button missing on mobile.");
             await listBtn.ClickAsync();
-            await page.WaitForSelectorAsync(listCardSelector, new() { Timeout = 20_000 });
+            await PlaywrightBanenkaartWaitHelper.WaitForListRowsAsync(page);
         }
         else if (await listBtn.CountAsync() > 0 && await listBtn.IsVisibleAsync())
         {
             await listBtn.ClickAsync();
-            await page.WaitForSelectorAsync(listCardSelector, new() { Timeout = 20_000 });
+            await PlaywrightBanenkaartWaitHelper.WaitForListRowsAsync(page);
         }
         else
         {
-            // Desktop list pane is visible without a toggle — wait for cards once interactive.
-            await page.WaitForSelectorAsync(listCardSelector, new() { Timeout = 20_000 });
+            await PlaywrightBanenkaartWaitHelper.WaitForListRowsAsync(page);
         }
 
-        var cards = await page.Locator(".vacancy-list .job-card, article.job-card, .kb-list-rows .kb-list-row, [data-testid='kb-list-rows'] .kb-list-row").CountAsync();
+        var cards = await page.Locator("[data-testid=kb-list-row], .kb-list-rows .kb-list-row, .vacancy-list .job-card").CountAsync();
         Assert.True(cards > 0, "Expected vacancy cards after opening Lijst.");
     }
 

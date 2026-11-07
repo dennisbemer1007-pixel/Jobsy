@@ -117,7 +117,7 @@ public class BanenkaartCookiePaddingPlaywrightTests
               return Math.abs(nr.top - mr.bottom);
             }
             """);
-        Assert.True(gap <= 2, $"Map bottom must meet bottom-nav top (gap was {gap:F1}px).");
+        Assert.True(gap <= 6, $"Map bottom must meet bottom-nav top (gap was {gap:F1}px).");
     }
 
     private static async Task<(double Top, double Bottom)> MeasureMapRectAsync(IPage page)

@@ -394,9 +394,13 @@ public class StatusPagesPlaywrightTests
             return;
         }
 
-        await page.WaitForSelectorAsync("#components-reconnect-modal", new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 60_000 });
+
         var trying = await page.EvaluateAsync<string>(
-            "() => { const p = document.querySelector('.reconnect-toast__msg--show'); return p ? (p.textContent || '').trim() : ''; }");
+            "() => { const p = document.querySelector('#components-reconnect-modal .reconnect-toast__msg--show, .reconnect-toast__msg--show'); return p ? (p.textContent || '').trim() : ''; }");
         Assert.False(string.IsNullOrWhiteSpace(trying));
 
         await context.SetOfflineAsync(true);

@@ -25,6 +25,25 @@ internal static class PlaywrightBanenkaartWaitHelper
             new() { Timeout = 60_000 });
     }
 
+    /// <summary>List rows are injected client-side after Lijst / catalog refresh.</summary>
+    public static async Task WaitForListRowsAsync(IPage page, int timeoutMs = 45_000)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const rows = document.querySelectorAll('[data-testid="kb-list-row"], .kb-list-rows .kb-list-row');
+              if (rows.length === 0) return false;
+              for (const row of rows) {
+                const r = row.getBoundingClientRect();
+                if (r.width > 0 && r.height > 0) return true;
+              }
+              return false;
+            }
+            """,
+            null,
+            new() { Timeout = timeoutMs });
+    }
+
     public static async Task DismissStartPromptIfPresentAsync(IPage page)
     {
         var later = page.Locator(".kb-start-prompt__later");

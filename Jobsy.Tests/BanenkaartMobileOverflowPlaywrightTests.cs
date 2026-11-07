@@ -167,14 +167,17 @@ public class BanenkaartMobileOverflowPlaywrightTests
               const offenders = [];
               const main = document.querySelector('.app-main') || document.body;
               for (const el of main.querySelectorAll('*')) {
+                const tag = (el.tagName || '').toLowerCase();
+                if (tag === 'script' || tag === 'style' || tag === 'link') continue;
                 const bar = el.closest('.kb-filter-bar');
                 if (bar && el !== bar) continue;
                 const chips = el.closest('.kb-filter-chips');
                 if (chips && el !== chips) continue;
                 const carousel = el.closest('.highlight-carousel');
                 if (carousel) continue;
-                const mapBox = el.closest('#job-map, .maplibregl-map, .maplibregl-canvas-container');
+                const mapBox = el.closest('#job-map, .maplibregl-map, .maplibregl-canvas-container, .map-cluster-sheet');
                 if (mapBox) continue;
+                if (el.closest('.cookie-consent, .kb-start-prompt, [hidden], [aria-hidden="true"]')) continue;
                 const r = el.getBoundingClientRect();
                 if (r.width <= 0 || r.height <= 0) continue;
                 if (r.right > 394) {

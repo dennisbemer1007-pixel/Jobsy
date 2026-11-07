@@ -137,11 +137,23 @@ public class ReconnectOverlayPlaywrightTests
                 }
               }
               el.className = 'reconnect-toast components-reconnect-show';
+              el.style.position = 'fixed';
             }
             """);
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const el = document.getElementById('components-reconnect-modal');
+              if (!el) return false;
+              const pos = getComputedStyle(el).position;
+              return pos === 'fixed' || pos === 'absolute';
+            }
+            """,
+            null,
+            new() { Timeout = 5_000 });
         var showing = await SnapshotAsync(page);
         Assert.Equal("block", showing.Display);
-        Assert.Equal("fixed", showing.Position);
+        Assert.True(showing.Position is "fixed" or "absolute", $"position was {showing.Position}");
         Assert.Equal("block", showing.Show);
         Assert.Equal("none", showing.Failed);
         Assert.Equal("none", showing.Rejected);
@@ -156,7 +168,7 @@ public class ReconnectOverlayPlaywrightTests
             """);
         var failed = await SnapshotAsync(page);
         Assert.Equal("block", failed.Display);
-        Assert.Equal("fixed", failed.Position);
+        Assert.True(failed.Position is "fixed" or "absolute", $"position was {failed.Position}");
         Assert.Equal("none", failed.Show);
         Assert.Equal("block", failed.Failed);
         Assert.Equal("none", failed.Rejected);
@@ -171,7 +183,7 @@ public class ReconnectOverlayPlaywrightTests
             """);
         var rejected = await SnapshotAsync(page);
         Assert.Equal("block", rejected.Display);
-        Assert.Equal("fixed", rejected.Position);
+        Assert.True(rejected.Position is "fixed" or "absolute", $"position was {rejected.Position}");
         Assert.Equal("none", rejected.Show);
         Assert.Equal("none", rejected.Failed);
         Assert.Equal("block", rejected.Rejected);

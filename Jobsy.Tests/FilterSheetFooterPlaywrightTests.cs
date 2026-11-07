@@ -51,6 +51,7 @@ public class FilterSheetFooterPlaywrightTests
 
         var apply = page.Locator(".filter-sheet__apply").First;
         await apply.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        await apply.ScrollIntoViewIfNeededAsync();
 
         // Footer must sit inside the viewport (visualViewport + safe-area tolerance).
         var inViewport = await apply.EvaluateAsync<bool>("""
