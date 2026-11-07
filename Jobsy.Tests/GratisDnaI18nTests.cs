@@ -1,4 +1,5 @@
 using Jobsy.Core.Rules;
+using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 
 namespace Jobsy.Tests;
@@ -24,6 +25,34 @@ public class GratisDnaI18nTests
             Assert.True(ar.ContainsKey(key), $"Missing AR: {key}");
             Assert.False(string.IsNullOrWhiteSpace(nl[key]), $"Empty NL: {key}");
         }
+    }
+
+    [Fact]
+    public void Landing_consent_privacy_block_is_not_dutch_in_non_nl_languages()
+    {
+        var keys = new[] { "GratisDna.Landing.Consent", "GratisDna.Questions.Privacy" };
+        foreach (var lang in new[] { "en", "pl", "ro", "ar" })
+        {
+            foreach (var key in keys)
+            {
+                var text = LandingText.For(key, LandingVariant.On, lang);
+                Assert.DoesNotContain("Je antwoorden blijven", text, StringComparison.Ordinal);
+                Assert.DoesNotContain("Werkgevers zien ze nooit", text, StringComparison.Ordinal);
+            }
+        }
+
+        Assert.Contains(
+            "device",
+            LandingText.For("GratisDna.Landing.Consent", LandingVariant.On, "en"),
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Gratis_css_reserves_space_for_cookie_banner_on_landing()
+    {
+        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "gratis-dna.css"));
+        Assert.Contains("html:not(.cookie-consent-known) .pub-theme .gd-page--warm .gd-page__inner", css, StringComparison.Ordinal);
+        Assert.Contains("--pub-cookie-banner-height", css, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -79,5 +108,21 @@ public class GratisDnaI18nTests
         {
             AssertValue(code);
         }
+    }
+
+    private static string FindRepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Jobsy.sln")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        return Directory.GetCurrentDirectory();
     }
 }

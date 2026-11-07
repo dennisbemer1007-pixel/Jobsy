@@ -81,11 +81,14 @@ public class GratisDnaBunitTests : BunitContext
         var cut = Render<GratisDnaUnder16View>();
 
         Assert.Contains("Leuk dat je mee wilt doen!", cut.Markup, StringComparison.Ordinal);
+        cut.Find("[data-testid=gd-under16-back]");
         var cta = cut.Find("[data-testid=gd-under16-cta]");
         Assert.Equal("/account-maken?van=onder16", cta.GetAttribute("href"));
 
         // ChooseAge(false) on the page only flips FlowState — no Storage.Create/Save/Clear.
         var page = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Public", "GratisDna.razor"));
+        Assert.Contains("BackFromUnder16Async", page, StringComparison.Ordinal);
+        Assert.Contains("Culture.Language)", page, StringComparison.Ordinal);
         var chooseAgeIdx = page.IndexOf("private void ChooseAge(bool is16Plus)", StringComparison.Ordinal);
         Assert.True(chooseAgeIdx > 0);
         var chooseAgeEnd = page.IndexOf("private async Task StartAsync()", chooseAgeIdx, StringComparison.Ordinal);
