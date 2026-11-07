@@ -39,8 +39,14 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("<span class=\"pill-done\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.DonePill"])).Append("</span>");
         sb.Append("<h1 class=\"island-lead rs-h serif\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1></header>");
         sb.Append("""<div class="qrow">""");
-        sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(result.Story.Body, "ll-story", culture, "Leerling.G78.Result.ReadStory"));
-        sb.Append("</div><p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(result.Story.Body)).Append("</p></div>");
+        sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(
+            PupilStoryNarrative.ForSpeakAloud(result.Story.Body),
+            "ll-story",
+            culture,
+            "Leerling.G78.Result.ReadStory"));
+        sb.Append("</div>");
+        AppendG78StoryParagraphs(sb, result.Story.Body);
+        sb.Append("</div>");
         sb.Append("<div class=\"rtiles\">");
         for (var i = 0; i < result.Story.Tiles.Count && i < tileStems.Count; i++)
         {
@@ -125,6 +131,14 @@ public static class PupilDitBenJijSsrHtml
         }
 
         return labels.Take(5);
+    }
+
+    private static void AppendG78StoryParagraphs(StringBuilder sb, string body)
+    {
+        foreach (var para in PupilStoryNarrative.SplitParagraphs(body))
+        {
+            sb.Append("<p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(para)).Append("</p>");
+        }
     }
 
     private static string BuildLegacy(PupilResultPageDto result, CultureState culture, bool passportV2, string pdfHref)

@@ -194,6 +194,8 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Riasec.ER"] = "Je pakt dingen aan en neemt graag het voortouw.";
         d["LeerlingStory.Riasec.ES"] = "Je helpt graag en neemt het voortouw in de groep.";
         d["LeerlingStory.Val.Autonomy"] = "Belangrijk voor jou: zelf kiezen wat je doet.";
+        d["LeerlingStory.ValCult.Autonomy"] =
+            "Belangrijk voor jou is zelf kiezen wat je doet. Je voelt je op je best op een plek waar je die ruimte krijgt.";
         d["LeerlingStory.Val.Connection"] = "Belangrijk voor jou: samen met anderen.";
         d["LeerlingStory.Val.Achievement"] = "Belangrijk voor jou: iets goed afmaken.";
         d["LeerlingStory.Val.Stability"] = "Belangrijk voor jou: rust en duidelijkheid.";
@@ -204,8 +206,8 @@ public static class PupilVerhaalCopy
         d["LeerlingStory.Cult.Flexibility"] = "Je voelt je thuis op een plek waar plannen mogen veranderen.";
         d["LeerlingStory.Cult.Innovation"] = "Je voelt je thuis op een plek waar nieuwe ideeën welkom zijn.";
         d["LeerlingStory.Cult.PeopleFirst"] = "Je voelt je thuis op een plek waar mensen voorop staan.";
-        d["LeerlingStory.Likes.Two"] = "Je houdt van {0} en {1}.";
-        d["LeerlingStory.Likes.One"] = "Je houdt van {0}.";
+        d["LeerlingStory.Likes.Two"] = "In je vrije tijd doe je graag iets met {0} en {1}.";
+        d["LeerlingStory.Likes.One"] = "In je vrije tijd doe je graag iets met {0}.";
         d["LeerlingStory.Tile.Bf.Samenwerken"] = "Zorgzaam en precies";
         d["LeerlingStory.Tile.Bf.Samenwerken.Explain"] = "Zo kom jij over in de groep.";
         d["LeerlingStory.Tile.Bf.Resultaatgerichtheid"] = "Afmaker";

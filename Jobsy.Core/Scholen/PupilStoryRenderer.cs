@@ -43,7 +43,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
         }
 
         MergeDuplicateBedenkt(sentences, language);
-        var body = string.Join(" ", sentences);
+        var body = PupilStoryNarrative.ComposeBody(sentences, keys, language);
         var tiles = new List<PupilStoryTileDto>
         {
             new("competence",

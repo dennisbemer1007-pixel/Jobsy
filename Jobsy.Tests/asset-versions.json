@@ -128,7 +128,7 @@
     "v": "20261018-16"
   },
   "css/features/gratis-dna.css": {
-    "sha256": "9dfb0d735b0372c2544dbe4cc2c68420a1f6e6d1cff0a941122dc99be43e1974",
+    "sha256": "deea26b0e1133b6c0fba5700ace1772a4e040015ff9663a323cd0fba76267d65",
     "v": "20261004-10"
   },
   "css/features/honest-advice.css": {
@@ -496,7 +496,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "cb9dc1e9ac69c4f3188ae598e9d548fad578c75732c857112d5ce868c5e9b299",
+    "sha256": "33a96a05b0ffd9c8579c596a641063a7c6a96f058f33a2cb9a1a54ba0288840b",
     "v": "20261103-01"
   },
   "js/leerling-login.js": {
