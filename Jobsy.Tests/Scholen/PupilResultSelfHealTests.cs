@@ -43,7 +43,6 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         using var client = await LoginPupilAsync(factory, seed);
 
         var bank = new PupilQuestionBank();
-        PupilAnswerResponse? lastBody = null;
         for (var i = 0; i < 30; i++)
         {
             await CompletePendingPuzzleAsync(client);
@@ -68,15 +67,11 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
                 new PupilAnswerRequest(3));
             Assert.Equal(HttpStatusCode.OK, r.StatusCode);
-            if (i == 59)
-            {
-                lastBody = await r.Content.ReadFromJsonAsync<PupilAnswerResponse>(Json);
-            }
         }
 
-        Assert.NotNull(lastBody);
-        Assert.False(lastBody!.Completed);
-        Assert.True(lastBody.ResultPending);
+        var vakkenBody = await CompleteVakkenOnApiAsync(client);
+        Assert.False(vakkenBody.JourneyCompleted);
+        Assert.True(vakkenBody.ResultPending);
 
         var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
         Assert.NotNull(progress);
@@ -131,23 +126,17 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
             null,
             null))).StatusCode);
 
-        PupilAnswerResponse? lastBody = null;
         for (var i = 30; i < 60; i++)
         {
             await CompletePendingPuzzleAsync(client);
-            var r = await client.PutAsJsonAsync(
+            Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync(
                 $"api/pupil/progress/answers/{bank.AllItems[i].Id}",
-                new PupilAnswerRequest(3));
-            Assert.Equal(HttpStatusCode.OK, r.StatusCode);
-            if (i == 59)
-            {
-                lastBody = await r.Content.ReadFromJsonAsync<PupilAnswerResponse>(Json);
-            }
+                new PupilAnswerRequest(3))).StatusCode);
         }
 
-        Assert.NotNull(lastBody);
-        Assert.False(lastBody!.Completed);
-        Assert.True(lastBody.ResultPending);
+        var vakkenBody = await CompleteVakkenOnApiAsync(client);
+        Assert.False(vakkenBody.JourneyCompleted);
+        Assert.True(vakkenBody.ResultPending);
 
         var progress = await client.GetFromJsonAsync<PupilProgressStateDto>("api/pupil/progress", Json);
         Assert.NotNull(progress);
@@ -293,6 +282,19 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         return new SeedInfo(school.Id, cls.Id, generated[0].Id, plain, teacherId);
     }
 
+    private static async Task<PupilVakScoresResponse> CompleteVakkenOnApiAsync(HttpClient client)
+    {
+        var inputs = PupilVakScores.AllSubjectKeys
+            .Select(k => new PupilVakScoreInput(k, 4, 4))
+            .ToList();
+        var vakken = await client.PutAsJsonAsync(
+            "api/pupil/progress/vakscores",
+            new PupilVakScoresRequest(inputs));
+        Assert.Equal(HttpStatusCode.OK, vakken.StatusCode);
+        var body = await vakken.Content.ReadFromJsonAsync<PupilVakScoresResponse>(Json);
+        return body ?? throw new InvalidOperationException("Empty vakken response.");
+    }
+
     private static async Task<HttpClient> LoginPupilAsync(
         WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker> factory,
         SeedInfo seed)
@@ -301,6 +303,10 @@ public class PupilResultSelfHealTests : IClassFixture<RoleFunctionalWebAppFactor
         var login = await client.PostAsJsonAsync("api/pupil/login", new PupilLoginRequest(
             seed.SchoolId, seed.ClassId, seed.PlainCode));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var theme = await client.PutAsJsonAsync(
+            "api/pupil/progress/journey-theme",
+            new PupilJourneyThemeRequest(PupilJourneyTheme.ZeeExpeditie));
+        Assert.Equal(HttpStatusCode.OK, theme.StatusCode);
         return client;
     }
 

@@ -1,6 +1,7 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -8,18 +9,29 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Jobsy.Core.Email;
+using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
 
 public class ApiKeyRevealFlowTests
 {
+    private static readonly object VerificationPepperSync = new();
+
     [Fact]
     public async Task Reveal_rotates_once_and_mail_has_no_key()
     {
+        // OneTimeLink tokens are HMAC'd with VerificationCodes — parallel tests or Web API startup can call
+        // ConfigurePepper and race static EffectivePepper; sync and align with CI/env before hashing.
+        lock (VerificationPepperSync)
+        {
+            var pepper = Environment.GetEnvironmentVariable("VerificationCodes__Pepper");
+            VerificationCodes.ConfigurePepper(string.IsNullOrWhiteSpace(pepper) ? null : pepper.Trim());
+        }
+
         await using var db = CreateDb();
         var companyId = await SeedCompanyAsync(db);
         var email = new RecordingEmail();
-        var links = new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance);
+        var links = new TokenCapturingLinks(db);
         var sut = new CompanyApiKeyService(
             db,
             email,
@@ -34,23 +46,14 @@ public class ApiKeyRevealFlowTests
         Assert.Contains("/koppeling/sleutel?t=", email.LastHtml!);
         Assert.NotNull(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
 
-        var token = ExtractToken(email.LastHtml!);
-        var revealed = await sut.RevealFromTokenAsync(token);
+        var token = links.LastCreatedToken;
+        Assert.False(string.IsNullOrWhiteSpace(token));
+        var revealed = await sut.RevealFromTokenAsync(token!);
         Assert.NotNull(revealed);
         Assert.Null(await sut.FindActiveByPlaintextAsync(first.PlaintextKey));
         Assert.NotNull(await sut.FindActiveByPlaintextAsync(revealed!.PlaintextKey));
 
-        Assert.Null(await sut.RevealFromTokenAsync(token));
-    }
-
-    private static string ExtractToken(string html)
-    {
-        const string marker = "/koppeling/sleutel?t=";
-        var idx = html.IndexOf(marker, StringComparison.Ordinal);
-        Assert.True(idx >= 0);
-        var start = idx + marker.Length;
-        var end = html.IndexOf('"', start);
-        return Uri.UnescapeDataString(html[start..end]);
+        Assert.Null(await sut.RevealFromTokenAsync(token!));
     }
 
     private static async Task<Guid> SeedCompanyAsync(JobsyDbContext db)
@@ -76,6 +79,43 @@ public class ApiKeyRevealFlowTests
         => new(new DbContextOptionsBuilder<JobsyDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options);
+
+    private sealed class TokenCapturingLinks(JobsyDbContext db) : IOneTimeLinkService
+    {
+        private readonly OneTimeLinkService _inner = new(db, NullLogger<OneTimeLinkService>.Instance);
+
+        public string? LastCreatedToken { get; private set; }
+
+        public async Task<OneTimeLinkCreateResult> CreateAsync(
+            OneTimeLinkPurpose purpose,
+            Guid? userId,
+            Guid? companyId,
+            string email,
+            TimeSpan lifetime,
+            Guid? createdByUserId = null,
+            CancellationToken cancellationToken = default)
+        {
+            var created = await _inner.CreateAsync(
+                purpose, userId, companyId, email, lifetime, createdByUserId, cancellationToken);
+            LastCreatedToken = created.Token;
+            return created;
+        }
+
+        public Task<OneTimeLinkPeekResult> PeekAsync(
+            OneTimeLinkPurpose purpose,
+            string token,
+            CancellationToken cancellationToken = default)
+            => _inner.PeekAsync(purpose, token, cancellationToken);
+
+        public Task<OneTimeLink?> ConsumeAsync(
+            OneTimeLinkPurpose purpose,
+            string token,
+            CancellationToken cancellationToken = default)
+            => _inner.ConsumeAsync(purpose, token, cancellationToken);
+
+        public Task<int> PurgeExpiredAsync(CancellationToken cancellationToken = default)
+            => _inner.PurgeExpiredAsync(cancellationToken);
+    }
 
     private sealed class RecordingEmail : IEmailService, ITransactionalMailer
     {

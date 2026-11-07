@@ -168,7 +168,7 @@ public static class SchoolClassFormSsrHtml
         sb.Append(antiforgery);
 
         sb.Append("<label>");
-            sb.Append(E(culture["School.Class.Field.Name"]));
+        sb.Append(E(culture["School.Class.Field.Name"]));
         sb.Append(" <input class=\"sch-field\" type=\"text\" name=\"className\" maxlength=\"12\" value=\"");
         sb.Append(E(model.ClassName));
         sb.Append("\" /></label>");

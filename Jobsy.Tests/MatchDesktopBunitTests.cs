@@ -16,10 +16,12 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class MatchDesktopBunitTests : BunitContext
+public class MatchDesktopBunitTests : JobsyBunitContext
+
 {
     private readonly CountingLikeHandler _likeHandler = new();
 

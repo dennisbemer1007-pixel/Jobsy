@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Errors;
 
@@ -15,7 +16,7 @@ namespace Jobsy.Tests.Errors;
 /// Errors 02 (bUnit): the account card comes from claims only — no API client is even
 /// registered, so a bug that tried to call one would throw instead of silently rendering.
 /// </summary>
-public class ForbiddenViewTests : BunitContext
+public class ForbiddenViewTests : JobsyBunitContext
 {
     public ForbiddenViewTests()
     {

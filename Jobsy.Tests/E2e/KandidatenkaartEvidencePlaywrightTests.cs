@@ -205,7 +205,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 await db.SaveChangesAsync();
             }
 
-            await page.GotoAsync($"{baseUrl.TrimEnd('/')}/candidate/dashboard", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.GotoAsync($"{baseUrl.TrimEnd('/')}/home", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForTimeoutAsync(1500);
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-reavail-banner-1440.png"), FullPage = false });
             await page.SetViewportSizeAsync(390, 844);

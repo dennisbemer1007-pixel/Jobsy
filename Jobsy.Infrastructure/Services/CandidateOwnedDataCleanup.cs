@@ -130,6 +130,7 @@ internal static class CandidateOwnedDataCleanup
         await RemoveRangeAsync(db, db.VacancySearchImpressions.Where(i => i.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.SiteVisits.Where(v => v.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.UserNotifications.Where(n => n.UserId == user.Id), cancellationToken);
+        await RemoveRangeAsync(db, db.NotificationPreferences.Where(n => n.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateActionTokens.Where(t => t.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.OneTimeLinks.Where(l => l.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.PhoneVerificationChallenges.Where(c => c.UserId == user.Id), cancellationToken);
@@ -272,6 +273,19 @@ internal static class CandidateOwnedDataCleanup
         await RemoveRangeAsync(
             db,
             db.WorkInitiativeDrafts.Where(d => d.CandidateUserId == user.Id),
+            cancellationToken);
+
+        await RemoveRangeAsync(
+            db,
+            db.JobSearchActivityAttachments.Where(a => a.CandidateUserId == user.Id),
+            cancellationToken);
+        await RemoveRangeAsync(
+            db,
+            db.JobSearchActivities.Where(a => a.CandidateUserId == user.Id),
+            cancellationToken);
+        await RemoveRangeAsync(
+            db,
+            db.ActivityAgreements.Where(a => a.CandidateUserId == user.Id),
             cancellationToken);
 
         var consumerInvoices = await db.ConsumerPurchaseInvoices

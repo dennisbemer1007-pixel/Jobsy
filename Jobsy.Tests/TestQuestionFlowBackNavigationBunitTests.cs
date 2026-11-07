@@ -10,11 +10,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 [Collection("JobsyLanguagesState")]
-public sealed class TestQuestionFlowBackNavigationBunitTests : BunitContext
+public class TestQuestionFlowBackNavigationBunitTests : JobsyBunitContext
 {
     public TestQuestionFlowBackNavigationBunitTests()
     {

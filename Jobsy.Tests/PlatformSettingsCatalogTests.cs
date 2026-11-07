@@ -24,6 +24,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -193,7 +194,8 @@ public class PlatformFeaturesEnvLockApiTests
     }
 }
 
-public class PlatformSettingsEditorBunitTests : BunitContext
+public class PlatformSettingsEditorBunitTests : JobsyBunitContext
+
 {
     private readonly CapturingHandler _handler = new();
 
@@ -415,7 +417,7 @@ public class PlatformSettingsEditorBunitTests : BunitContext
     [Fact]
     public void Policy_row_has_lock_and_activation_disabled_in_productie()
     {
-        using var ctx = new BunitContext();
+        using var ctx = new JobsyBunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddSingleton(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),

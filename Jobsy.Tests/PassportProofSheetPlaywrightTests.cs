@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +21,7 @@ namespace Jobsy.Tests;
 /// and Opslaan must be tappable at 390×844, above the bottom nav.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class PassportProofSheetPlaywrightTests : BunitContext
+public class PassportProofSheetPlaywrightTests : JobsyBunitContext
 {
     public PassportProofSheetPlaywrightTests()
     {

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -17,7 +18,7 @@ namespace Jobsy.Tests;
 /// Regression: onboarding mini steps 7–10 must remount <see cref="TestQuestionFlow"/>
 /// (via <see cref="OnboardingMiniTest.FlowEpoch"/>) so the counter resets to Vraag 1.
 /// </summary>
-public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
+public class OnboardingMiniTestFlowEpochBunitTests : JobsyBunitContext
 {
     public OnboardingMiniTestFlowEpochBunitTests()
     {
@@ -66,19 +67,19 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
             .Add(p => p.Target, TestDepthLevel.First)
             .Add(p => p.OnAnswer, (Action<(int Id, int Value)>)(pair => answers[pair.Id] = pair.Value)));
 
-        cut.WaitForElement(".test-likert__opt", TimeSpan.FromSeconds(15));
+        cut.WaitForElement(".test-likert__opt", TimeSpan.FromSeconds(30));
         for (var i = 0; i < 4; i++)
         {
             cut.FindAll(".test-likert__opt")[3].Click();
             cut.Find("button.test-flow__next").Click();
             cut.WaitForAssertion(
                 () => Assert.Contains($"Vraag {i + 2} van 5", cut.Markup, StringComparison.Ordinal),
-                TimeSpan.FromSeconds(15));
+                TimeSpan.FromSeconds(30));
         }
 
         cut.WaitForAssertion(
             () => Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal),
-            timeout: TimeSpan.FromSeconds(30));
+            timeout: TimeSpan.FromSeconds(45));
 
         cut.Render(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Career)

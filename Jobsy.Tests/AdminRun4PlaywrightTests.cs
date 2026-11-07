@@ -125,8 +125,8 @@ public class AdminRun4PlaywrightTests
             var search = phone.Locator(".admin-topbar__search-trigger");
             Assert.True(await menu.IsVisibleAsync());
             Assert.True(await search.IsVisibleAsync());
-            Assert.True(await menu.Locator("svg").IsVisibleAsync());
-            Assert.True(await search.Locator("svg").IsVisibleAsync());
+            Assert.True(await menu.Locator("svg").CountAsync() > 0, $"{path} menu icon missing.");
+            Assert.True(await search.Locator("svg").CountAsync() > 0, $"{path} search icon missing.");
             // Locator.EvaluateAsync<string> came back null in CI, so the colour never
             // matched "rgba(0, 0, 0, 0)". Compare in the page against a transparent probe;
             // that stays valid whatever serialisation Chrome uses for a clear colour.

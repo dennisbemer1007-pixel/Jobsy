@@ -28,6 +28,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -587,7 +588,8 @@ public class UsersActiveCandidatesMetricTests
     }
 }
 
-public class AdminDashboardBunitTests : BunitContext
+public class AdminDashboardBunitTests : JobsyBunitContext
+
 {
     public AdminDashboardBunitTests()
     {

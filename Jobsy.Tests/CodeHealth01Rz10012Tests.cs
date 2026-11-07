@@ -8,11 +8,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>Code-health 01 §1: RZ10012 components must render, not as raw HTML tags.</summary>
-public class CodeHealth01Rz10012Tests : BunitContext
+public class CodeHealth01Rz10012Tests : JobsyBunitContext
 {
     public CodeHealth01Rz10012Tests()
     {

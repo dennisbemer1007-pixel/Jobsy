@@ -1,5 +1,6 @@
 using System.Net;
 using Jobsy.Web.Localization;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests.Errors;
@@ -50,10 +51,9 @@ public class ReconnectSessionVerificationTests
     [Fact]
     public async Task App_shell_html_contains_both_reconnect_messages_in_dutch()
     {
-        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
-        using var client = factory.CreateHtmlClient();
-        var html = WebUtility.HtmlDecode(
-            await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync());
+        await using var factory = new PublicPagesWebFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
 
         Assert.Contains(UiStrings.Get("Status.Reconnect.Rejected", "nl"), html, StringComparison.Ordinal);
         Assert.Contains(UiStrings.Get("Status.Reconnect.SessionExpired", "nl"), html, StringComparison.Ordinal);

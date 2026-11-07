@@ -22,6 +22,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -52,7 +53,8 @@ public class AdminOpenLinkTests
     }
 }
 
-public class AdminFilterFastTypeTests : BunitContext
+public class AdminFilterFastTypeTests : JobsyBunitContext
+
 {
     public AdminFilterFastTypeTests()
     {

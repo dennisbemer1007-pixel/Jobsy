@@ -7,10 +7,12 @@ using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class AfterMatchEmployerWatNuSsrTests : BunitContext
+public class AfterMatchEmployerWatNuSsrTests : JobsyBunitContext
+
 {
     public AfterMatchEmployerWatNuSsrTests()
     {

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -19,7 +20,7 @@ namespace Jobsy.Tests;
 /// configured public base URL, the address carries the city only, and no <c>JobPosting</c> is
 /// duplicated here.
 /// </summary>
-public class CompanyJsonLdTests : BunitContext
+public class CompanyJsonLdTests : JobsyBunitContext
 {
     private const string Kvk = "12345678";
 

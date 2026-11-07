@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -304,7 +305,8 @@ public class LandingAxePlaywrightTests : LandingA11yHarness
     }
 }
 
-public class LandingA11yHarness : BunitContext
+public class LandingA11yHarness : JobsyBunitContext
+
 {
     public LandingA11yHarness()
     {

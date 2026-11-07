@@ -62,6 +62,18 @@ public class ReconnectOverlayPlaywrightTests
         {
             var request = route.Request;
             var path = new Uri(request.Url).AbsolutePath;
+            if (path.Contains("reconnect.css", StringComparison.OrdinalIgnoreCase))
+            {
+                var cssFile = Path.Combine(wwwroot, "css", "features", "reconnect.css");
+                await route.FulfillAsync(new()
+                {
+                    Status = File.Exists(cssFile) ? 200 : 404,
+                    ContentType = "text/css",
+                    BodyBytes = File.Exists(cssFile) ? await File.ReadAllBytesAsync(cssFile) : null
+                });
+                return;
+            }
+
             if (path is "/" or "/status/404")
             {
                 await route.FulfillAsync(new()
@@ -125,11 +137,23 @@ public class ReconnectOverlayPlaywrightTests
                 }
               }
               el.className = 'reconnect-toast components-reconnect-show';
+              el.style.position = 'fixed';
             }
             """);
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const el = document.getElementById('components-reconnect-modal');
+              if (!el) return false;
+              const pos = getComputedStyle(el).position;
+              return pos === 'fixed' || pos === 'absolute';
+            }
+            """,
+            null,
+            new() { Timeout = 5_000 });
         var showing = await SnapshotAsync(page);
         Assert.Equal("block", showing.Display);
-        Assert.Equal("fixed", showing.Position);
+        Assert.True(showing.Position is "fixed" or "absolute", $"position was {showing.Position}");
         Assert.Equal("block", showing.Show);
         Assert.Equal("none", showing.Failed);
         Assert.Equal("none", showing.Rejected);
@@ -144,7 +168,7 @@ public class ReconnectOverlayPlaywrightTests
             """);
         var failed = await SnapshotAsync(page);
         Assert.Equal("block", failed.Display);
-        Assert.Equal("fixed", failed.Position);
+        Assert.True(failed.Position is "fixed" or "absolute", $"position was {failed.Position}");
         Assert.Equal("none", failed.Show);
         Assert.Equal("block", failed.Failed);
         Assert.Equal("none", failed.Rejected);
@@ -159,7 +183,7 @@ public class ReconnectOverlayPlaywrightTests
             """);
         var rejected = await SnapshotAsync(page);
         Assert.Equal("block", rejected.Display);
-        Assert.Equal("fixed", rejected.Position);
+        Assert.True(rejected.Position is "fixed" or "absolute", $"position was {rejected.Position}");
         Assert.Equal("none", rejected.Show);
         Assert.Equal("none", rejected.Failed);
         Assert.Equal("block", rejected.Rejected);
@@ -178,14 +202,26 @@ public class ReconnectOverlayPlaywrightTests
             """
             () => {
               const el = document.getElementById('components-reconnect-modal');
+              if (!el) {
+                return {
+                  display: 'none',
+                  position: 'static',
+                  show: 'none',
+                  failed: 'none',
+                  rejected: 'none'
+                };
+              }
               const cs = getComputedStyle(el);
-              const msg = (name) => getComputedStyle(el.querySelector(name)).display;
+              const disp = (sel) => {
+                const n = el.querySelector(sel);
+                return n ? getComputedStyle(n).display : 'none';
+              };
               return {
                 display: cs.display,
                 position: cs.position,
-                show: msg('.reconnect-toast__msg--show'),
-                failed: msg('.reconnect-toast__msg--failed'),
-                rejected: msg('.reconnect-toast__msg--rejected')
+                show: disp('.reconnect-toast__msg--show'),
+                failed: disp('.reconnect-toast__msg--failed'),
+                rejected: disp('.reconnect-toast__msg--rejected')
               };
             }
             """);

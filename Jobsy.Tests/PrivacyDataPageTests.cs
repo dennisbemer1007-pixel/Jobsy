@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -18,7 +19,7 @@ namespace Jobsy.Tests;
 /// support-access card shows Europe/Amsterdam date/time, the empty state has no raw audit copy,
 /// and the markup carries no inline <c>style=</c> (design-system rule).
 /// </summary>
-public class PrivacyDataPageTests : BunitContext
+public class PrivacyDataPageTests : JobsyBunitContext
 {
     public PrivacyDataPageTests()
     {

@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -22,7 +23,7 @@ namespace Jobsy.Tests;
 /// Deep (25/18) answers autosave as Draft. Leaving the shed must still POST complete=true
 /// so paspoort/Kompas treat the free scan as afgerond.
 /// </summary>
-public sealed class JourneyShedFinalizeTests : BunitContext
+public class JourneyShedFinalizeTests : JobsyBunitContext
 {
     private readonly FinalizeHandler _handler = new();
 

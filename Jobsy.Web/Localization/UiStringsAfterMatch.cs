@@ -353,6 +353,7 @@ public static class UiStringsAfterMatch
             "The employer wants to hire you. Read what they share with you below.");
         Add("AfterMatch.Screen13.Similar", "Banen die erop lijken", "Jobs that look similar");
         Add("AfterMatch.Screen13.FeedbackTitleFmt", "Wat {0} zegt", "What {0} says");
+        Add("AfterMatch.Screen13.FeedbackTitle", "Wat ze zeggen", "What they say");
         Add("AfterMatch.Screen13.Next", "Volgende stap", "Next step");
         Add("AfterMatch.Screen13.WhatNow", "Wat nu?", "What now?");
         Add("AfterMatch.Screen13.WhatNowLead", "Deze banen lijken erop en zijn dichtbij.", "These jobs look similar and are nearby.");

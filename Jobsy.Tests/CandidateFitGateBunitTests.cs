@@ -10,10 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
 using Bunit;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class CandidateFitGateBunitTests : BunitContext
+public class CandidateFitGateBunitTests : JobsyBunitContext
+
 {
     public CandidateFitGateBunitTests()
     {

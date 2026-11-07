@@ -22,8 +22,9 @@ public class CandidateIllustratedAppMarkupTests
     public void Match_page_has_desktop_side_panel()
     {
         var match = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Match/MatchSsrShells.cs"));
+        var side = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Match/MatchSsrSideHtml.cs"));
         Assert.Contains("match-page--illustrated", match, StringComparison.Ordinal);
-        Assert.Contains("match-page__side", match, StringComparison.Ordinal);
+        Assert.Contains("match-page__side", side, StringComparison.Ordinal);
         Assert.Contains("match-page__grid", match, StringComparison.Ordinal);
     }
 
@@ -31,8 +32,9 @@ public class CandidateIllustratedAppMarkupTests
     public void Applications_has_desktop_detail_rail()
     {
         var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
+        var hero = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Media/KreeftHeaderStripHtml.cs"));
         Assert.Contains("sollicitaties-page", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.Contains("sollicitaties-hero-strip", hero, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-intro", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("AppendDetailPanel", shells, StringComparison.Ordinal);
@@ -82,7 +84,7 @@ public class CandidateIllustratedAppMarkupTests
         var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Career/CareerSsrShells.cs"));
         var css = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/wwwroot/css/features/candidate-illustrated-app.css"));
         Assert.Contains("career-page--illustrated", shells, StringComparison.Ordinal);
-        Assert.Contains("DroombaanProfessionWide", shells, StringComparison.Ordinal);
+        Assert.Contains("opl-wrap", shells, StringComparison.Ordinal);
         Assert.Contains(".career-page--illustrated .career-scene--desktop", css, StringComparison.Ordinal);
     }
 }
