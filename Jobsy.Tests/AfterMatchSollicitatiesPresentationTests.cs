@@ -4,10 +4,12 @@ using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class AfterMatchSollicitatiesPresentationTests : BunitContext
+public class AfterMatchSollicitatiesPresentationTests : JobsyBunitContext
+
 {
     public AfterMatchSollicitatiesPresentationTests()
     {

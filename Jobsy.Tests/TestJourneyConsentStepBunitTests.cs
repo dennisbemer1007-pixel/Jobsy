@@ -7,10 +7,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class TestJourneyConsentStepBunitTests : BunitContext
+public class TestJourneyConsentStepBunitTests : JobsyBunitContext
+
 {
     public TestJourneyConsentStepBunitTests()
     {

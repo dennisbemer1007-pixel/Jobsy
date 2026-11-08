@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +21,7 @@ namespace Jobsy.Tests;
 /// The static <c>/partner</c> page (public-pages 09.2): B1 copy, amounts excl. btw with the incl.
 /// amount next to them (D5), "Gratis" for free vacancy types and no jargon.
 /// </summary>
-public class PartnerPageTests : BunitContext
+public class PartnerPageTests : JobsyBunitContext
 {
     /// <summary>1 token = € 12,50 incl. btw → € 10,33 excl. Vrijwilligerswerk is free.</summary>
     private const string CatalogJson =

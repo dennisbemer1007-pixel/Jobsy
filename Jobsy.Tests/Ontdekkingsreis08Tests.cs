@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Bunit;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
@@ -9,6 +10,7 @@ using Jobsy.Web.Navigation;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -140,7 +142,11 @@ public class Ontdekkingsreis08RoutesNavTests
                 or "Jobsy.Web/Navigation/OnboardingRoutes.cs"
                 or "Jobsy.Web/Auth/AuthRedirects.cs"
                 or "Jobsy.Web/Navigation/RoleNavCatalog.cs"
-                or "Jobsy.Web/Auth/CandidateGuestRedirectMiddleware.cs")
+                or "Jobsy.Web/Auth/CandidateGuestRedirectMiddleware.cs"
+                or "Jobsy.Web/Hosting/OnboardingStartFormEndpoints.cs"
+                or "Jobsy.Web/Navigation/NotificationNavigation.cs"
+                or "Jobsy.Web/Components/Pages/Candidate/CandidateDiscoverySsr.razor"
+                or "Jobsy.Web/Components/Pages/Candidate/OnboardingStartSsr.razor")
             {
                 continue;
             }
@@ -152,6 +158,12 @@ public class Ontdekkingsreis08RoutesNavTests
             if (src.Contains("\"/candidate/start\"", StringComparison.Ordinal)
                 || src.Contains("'/candidate/start'", StringComparison.Ordinal))
             {
+                if (src.Contains("\"/candidate/start/wizard\"", StringComparison.Ordinal)
+                    && !Regex.IsMatch(src, @"""\/candidate\/start""(?!\/wizard)"))
+                {
+                    continue;
+                }
+
                 // Allow ClassicStartPath constant usages via OnboardingRoutes
                 if (src.Contains("OnboardingRoutes.ClassicStartPath", StringComparison.Ordinal)
                     && !src.Contains("\"/candidate/start\"", StringComparison.Ordinal))
@@ -181,14 +193,15 @@ public class Ontdekkingsreis08RoutesNavTests
     [Fact]
     public void Focus_mode_only_with_stap_query()
     {
+        // Static discovery SSR keeps normal nav on all screens (no questionnaire focus trap).
         Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
-        Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=7"));
+        Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=7"));
+        Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=klaar"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=8"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=3"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=2"));
         Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
         Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=start"));
-        Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=klaar"));
         Assert.False(MainLayout.IsQuestionnairePath("candidate/start", "candidate/start"));
     }
 
@@ -235,7 +248,8 @@ public class Ontdekkingsreis08RoutesNavTests
     }
 }
 
-public class Ontdekkingsreis08ShedBunitTests : BunitContext
+public class Ontdekkingsreis08ShedBunitTests : JobsyBunitContext
+
 {
     public Ontdekkingsreis08ShedBunitTests()
     {

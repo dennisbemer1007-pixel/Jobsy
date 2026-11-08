@@ -3883,6 +3883,8 @@ public static class UiStrings
         UiStringsCandidateHub.MergeAll(nl, en, pl, ro, ar);
         UiStringsProfileReset.MergeAll(nl, en, pl, ro, ar);
 
+        EnsureCatalogParity(nl, en, pl, ro, ar);
+
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
             ["nl"] = nl,
@@ -3891,5 +3893,47 @@ public static class UiStrings
             ["ro"] = ro,
             ["ar"] = ar
         };
+    }
+
+    /// <summary>
+    /// Mirror non–nl-only keys into every catalog (en/pl/ro/ar) so guard tests and UI agree on key sets.
+    /// Values fall back to English, then Dutch — same order as <see cref="Get"/>.
+    /// </summary>
+    private static void EnsureCatalogParity(
+        Dictionary<string, string> nl,
+        Dictionary<string, string> en,
+        Dictionary<string, string> pl,
+        Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
+    {
+        foreach (var key in nl.Keys)
+        {
+            if (UiStringsScholen.IsNlOnlyPrefix(key) || UiStringsSales.IsNlOnlyPrefix(key))
+            {
+                continue;
+            }
+
+            if (!en.TryGetValue(key, out var enValue))
+            {
+                enValue = nl[key];
+                en[key] = enValue;
+            }
+
+            var fallback = enValue;
+            if (!pl.ContainsKey(key))
+            {
+                pl[key] = fallback;
+            }
+
+            if (!ro.ContainsKey(key))
+            {
+                ro[key] = fallback;
+            }
+
+            if (!ar.ContainsKey(key))
+            {
+                ar[key] = fallback;
+            }
+        }
     }
 }

@@ -9,11 +9,12 @@ using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>Smoke: PlatformSettingsEditor renders switches (styled captures: AdminFlagsPlaywrightTests r2).</summary>
-public sealed class AdminFlagsEvidenceBunitTests : BunitContext
+public class AdminFlagsEvidenceBunitTests : JobsyBunitContext
 {
     [Fact]
     public void Renders_admin_switches_without_raw_resource_keys()
@@ -35,6 +36,7 @@ public sealed class AdminFlagsEvidenceBunitTests : BunitContext
         Services.AddSingleton(new Jobsy.Web.Navigation.BottomNavRefreshService());
         Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags>(new AlwaysOffFlags());
         AdminEditorBunitServices.AddUserFacingError(Services);
+        EnableInteractiveServerRenderer();
 
         var cut = Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));

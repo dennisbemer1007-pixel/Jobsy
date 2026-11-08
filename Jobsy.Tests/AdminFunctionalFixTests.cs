@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -34,7 +35,8 @@ public class AdminDebouncedSearchTests
     }
 }
 
-public class AdminTabAndPagerBunitTests : BunitContext
+public class AdminTabAndPagerBunitTests : JobsyBunitContext
+
 {
     public AdminTabAndPagerBunitTests()
     {

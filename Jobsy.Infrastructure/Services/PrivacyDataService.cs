@@ -1421,6 +1421,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.UserNotifications.RemoveRange(notifications);
         }
 
+        var notificationPreferences = await _db.NotificationPreferences
+            .Where(n => n.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (notificationPreferences.Count > 0)
+        {
+            _db.NotificationPreferences.RemoveRange(notificationPreferences);
+        }
+
         var actionTokens = await _db.CandidateActionTokens
             .Where(t => t.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1861,6 +1869,29 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (initiativeDrafts.Count > 0)
         {
             _db.WorkInitiativeDrafts.RemoveRange(initiativeDrafts);
+        }
+
+        var jobSearchAttachments = await _db.JobSearchActivityAttachments
+            .Where(a => a.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (jobSearchAttachments.Count > 0)
+        {
+            _db.JobSearchActivityAttachments.RemoveRange(jobSearchAttachments);
+        }
+
+        var jobSearchActivities = await _db.JobSearchActivities
+            .Where(a => a.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (jobSearchActivities.Count > 0)
+        {
+            _db.JobSearchActivities.RemoveRange(jobSearchActivities);
+        }
+
+        var activityAgreement = await _db.ActivityAgreements
+            .FirstOrDefaultAsync(a => a.CandidateUserId == user.Id, cancellationToken);
+        if (activityAgreement is not null)
+        {
+            _db.ActivityAgreements.Remove(activityAgreement);
         }
 
         var deepAnalyses = await _db.CandidateDeepAnalyses

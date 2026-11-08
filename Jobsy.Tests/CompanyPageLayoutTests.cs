@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -20,7 +21,7 @@ namespace Jobsy.Tests;
 /// and the KvK chip, vestiging tabs only for branches with a public vacancy, and a real 404 with the
 /// shared status page for every not-found case.
 /// </summary>
-public class CompanyPageLayoutTests : BunitContext
+public class CompanyPageLayoutTests : JobsyBunitContext
 {
     private const string Kvk = "12345678";
 

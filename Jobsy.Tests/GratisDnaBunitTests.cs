@@ -7,25 +7,34 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class GratisDnaBunitTests : BunitContext
+public class GratisDnaBunitTests : JobsyBunitContext
+
 {
     public GratisDnaBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuthStateProvider());
         Services.AddSingleton<IExternalAuthCredentialSource, FakeExternalAuth>();
-        Services.AddSingleton(sp => new CultureState(
-            sp.GetRequiredService<IJSRuntime>(),
-            sp,
-            sp.GetRequiredService<AuthenticationStateProvider>()));
+        Services.AddSingleton(sp =>
+        {
+            var culture = new CultureState(
+                sp.GetRequiredService<IJSRuntime>(),
+                sp,
+                sp.GetRequiredService<AuthenticationStateProvider>());
+            culture.InitializeFromLanguage("nl");
+            return culture;
+        });
     }
 
     [Fact]
     public void Result_view_renders_four_tiles_teaser_share_cta_wipe_without_percent()
     {
+        var culture = Services.GetRequiredService<CultureState>();
+        using var _nl = culture.PushDisplayLanguage("nl");
         var cut = Render(builder =>
         {
             builder.OpenComponent<GratisDnaResultView>(0);
@@ -40,17 +49,18 @@ public class GratisDnaBunitTests : BunitContext
         });
 
         var markup = cut.Markup;
-        Assert.Contains("Eerste indruk · op basis van 20 vragen", markup, StringComparison.Ordinal);
+        Assert.Contains("Eerste indruk · 20 vragen", markup, StringComparison.Ordinal);
         Assert.Contains("Zo werk jij", markup, StringComparison.Ordinal);
-        Assert.Contains("Dit vind je leuk", markup, StringComparison.Ordinal);
-        Assert.Contains("Hier voel je je thuis", markup, StringComparison.Ordinal);
-        Assert.Contains("Dit vind je belangrijk", markup, StringComparison.Ordinal);
+        Assert.Contains("Wat je leuk vindt", markup, StringComparison.Ordinal);
+        Assert.Contains("Waar je je thuis voelt", markup, StringComparison.Ordinal);
+        Assert.Contains("Wat jij belangrijk vindt", markup, StringComparison.Ordinal);
         Assert.Contains("Dit ben jij", markup, StringComparison.Ordinal);
-        Assert.Contains("Meld je aan om te zien welke banen bij je passen", markup, StringComparison.Ordinal);
+        Assert.Contains("Bewaar je DNA · Maak gratis account", markup, StringComparison.Ordinal);
         Assert.Contains("WhatsApp", markup, StringComparison.Ordinal);
         Assert.Contains("Instagram", markup, StringComparison.Ordinal);
-        Assert.Contains("Wis mijn antwoorden", markup, StringComparison.Ordinal);
-        Assert.Contains("Bewaar je DNA · Maak gratis account", markup, StringComparison.Ordinal);
+        Assert.Contains("Wis antwoorden", markup, StringComparison.Ordinal);
+        Assert.Contains("Bewaar je DNA", markup, StringComparison.Ordinal);
+        Assert.Contains("Doorgaan met e-mail", markup, StringComparison.Ordinal);
         Assert.Contains("/account-maken?van=ontdek", markup, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"gd-passport-teaser\"", markup, StringComparison.Ordinal);
         Assert.Contains("aria-hidden=\"true\"", markup, StringComparison.Ordinal);

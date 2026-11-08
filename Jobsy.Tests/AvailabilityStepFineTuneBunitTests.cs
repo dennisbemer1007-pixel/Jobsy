@@ -6,10 +6,12 @@ using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class AvailabilityStepFineTuneBunitTests : BunitContext
+public class AvailabilityStepFineTuneBunitTests : JobsyBunitContext
+
 {
     private static readonly AvailabilityStep.Preset[] AllPresets =
     [

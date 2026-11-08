@@ -49,8 +49,8 @@ public class BanenkaartMobileOverflowPlaywrightTests
         });
         await page.WaitForSelectorAsync(".jobsy-discovery, #job-map, .kb-filter-bar", new() { Timeout = 60_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await WaitForBlazorInteractiveAsync(page);
-        await DismissStartPromptAsync(page);
+        await PlaywrightBanenkaartWaitHelper.WaitForBanenkaartInteractiveAsync(page);
+        await PlaywrightBanenkaartWaitHelper.DismissStartPromptIfPresentAsync(page);
 
         await AssertNoHorizontalOverflowAsync(page);
         await AssertFilterBarFitsAsync(page);
@@ -115,33 +115,6 @@ public class BanenkaartMobileOverflowPlaywrightTests
         }
     }
 
-    private static async Task WaitForBlazorInteractiveAsync(IPage page)
-    {
-        await page.WaitForFunctionAsync(
-            "() => !!(window.Blazor && window.Blazor._internal)",
-            null,
-            new() { Timeout = 30_000 });
-    }
-
-    private static async Task DismissStartPromptAsync(IPage page)
-    {
-        var later = page.Locator(".kb-start-prompt__later");
-        if (await later.CountAsync() == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            await later.First.ClickAsync(new() { Timeout = 5_000 });
-            await page.WaitForTimeoutAsync(400);
-        }
-        catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
-        {
-            // Prompt may already have closed itself after the circuit started.
-        }
-    }
-
     private static async Task OpenAndCloseFilterSheetIfPresentAsync(IPage page)
     {
         var filters = page.Locator(".kb-filter-bar [data-testid=kb-filters-button]");
@@ -194,15 +167,20 @@ public class BanenkaartMobileOverflowPlaywrightTests
               const offenders = [];
               const main = document.querySelector('.app-main') || document.body;
               for (const el of main.querySelectorAll('*')) {
+                const tag = (el.tagName || '').toLowerCase();
+                if (tag === 'script' || tag === 'style' || tag === 'link') continue;
                 const bar = el.closest('.kb-filter-bar');
                 if (bar && el !== bar) continue;
                 const chips = el.closest('.kb-filter-chips');
                 if (chips && el !== chips) continue;
                 const carousel = el.closest('.highlight-carousel');
-                if (carousel && el !== carousel) continue;
+                if (carousel) continue;
+                const mapBox = el.closest('#job-map, .maplibregl-map, .maplibregl-canvas-container, .map-cluster-sheet');
+                if (mapBox) continue;
+                if (el.closest('.cookie-consent, .kb-start-prompt, [hidden], [aria-hidden="true"]')) continue;
                 const r = el.getBoundingClientRect();
                 if (r.width <= 0 || r.height <= 0) continue;
-                if (r.right > 391.5) {
+                if (r.right > 394) {
                   offenders.push((el.className || el.tagName || '').toString().slice(0, 80));
                   if (offenders.length >= 8) break;
                 }

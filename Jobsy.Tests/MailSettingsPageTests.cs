@@ -27,7 +27,7 @@ public class MailSettingsPageTests
         var root = FindRepoRoot();
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Settings/SettingsSsrShells.cs"));
         var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Auth/MailSettingsEndpoints.cs"));
-        Assert.Contains("name=\"settings_return\"", shells, StringComparison.Ordinal);
+        Assert.Contains("name=\\\"settings_return\\\"", shells, StringComparison.Ordinal);
         Assert.Contains("/candidate/settings?pane=mail", shells, StringComparison.Ordinal);
         Assert.Contains("MailSettingsRedirect", endpoints, StringComparison.Ordinal);
     }

@@ -84,14 +84,24 @@ public class ScholenNoExternalProcessingTests
     public void Pupil_razor_pages_do_not_reference_forbidden_components()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var dir = Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Leerling");
-        Assert.True(Directory.Exists(dir), dir);
+        var componentDir = Path.Combine(root, "Jobsy.Web", "Components", "Leerling");
+        Assert.True(Directory.Exists(componentDir), componentDir);
         string[] forbidden =
         [
             "BottomNav", "TrainingOffersBlock", "RoleFitCheck", "VacancyMap", "banenkaart", "Partner",
             "href=\"http"
         ];
-        foreach (var file in Directory.EnumerateFiles(dir, "*.razor"))
+        foreach (var file in Directory.EnumerateFiles(componentDir, "*.razor", SearchOption.AllDirectories))
+        {
+            var text = File.ReadAllText(file);
+            foreach (var f in forbidden)
+            {
+                Assert.DoesNotContain(f, text, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        var ssrDir = Path.Combine(root, "Jobsy.Web", "Scholen");
+        foreach (var file in Directory.EnumerateFiles(ssrDir, "Pupil*SsrHtml.cs"))
         {
             var text = File.ReadAllText(file);
             foreach (var f in forbidden)

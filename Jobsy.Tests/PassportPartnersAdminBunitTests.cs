@@ -11,10 +11,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class PassportPartnersAdminBunitTests : BunitContext
+public class PassportPartnersAdminBunitTests : JobsyBunitContext
+
 {
     public PassportPartnersAdminBunitTests()
     {

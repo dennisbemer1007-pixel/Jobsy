@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Scholen;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
@@ -42,7 +43,7 @@ public static class KbExtClientEndpoints
         }
         catch (Exception ex)
         {
-            return Results.Json(new { error = ex.Message });
+            return Results.Json(new { error = PortalActionError.FromException(ex) });
         }
     }
 }

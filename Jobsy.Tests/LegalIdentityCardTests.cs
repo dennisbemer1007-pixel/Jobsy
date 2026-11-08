@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -17,7 +18,7 @@ namespace Jobsy.Tests;
 /// The identity card only renders rows whose value is configured: an empty <c>Legal:*</c> value
 /// hides its line, never a placeholder (D1 / 02.6).
 /// </summary>
-public class LegalIdentityCardTests : BunitContext
+public class LegalIdentityCardTests : JobsyBunitContext
 {
     private readonly AmbientCultureScope _culture = new();
     private string _legalJson = "{}";

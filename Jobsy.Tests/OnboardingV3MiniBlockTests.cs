@@ -10,13 +10,14 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
 /// <summary>
 /// Quick-Scan v3 onboarding mini blocks (steps 7–10) must each expose five catalog items and open at vraag 1/5.
 /// </summary>
-public sealed class OnboardingV3MiniBlockTests : BunitContext
+public class OnboardingV3MiniBlockTests : JobsyBunitContext
 {
     private const int Version = AssessmentTestVersions.V3;
 

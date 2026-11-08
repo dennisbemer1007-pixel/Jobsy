@@ -48,8 +48,8 @@ public static class FunctionalE2eAuth
 
             await WarmupStackAsync(baseUrl);
             var path = Path.Combine(Path.GetTempPath(), "jobsy-functional-e2e-candidate.json");
-            var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
-            var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+            var email = KbE2e.ResolveCandidateEmail();
+            var password = KbE2e.ResolveCandidatePassword(baseUrl);
 
             await using var ctx = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
             await PlaywrightCookieConsent.AcceptAsync(ctx);
@@ -92,7 +92,28 @@ public static class FunctionalE2eAuth
         return ctx;
     }
 
-    private static async Task<bool> TryDemoLoginAsync(IPage page, string baseUrl, string email)
+    /// <summary>Seeded Development candidate on the CI stack (demo-login or form login).</summary>
+    public static async Task SignInSeededCandidateAsync(IPage page, string baseUrl, string returnPath)
+    {
+        var email = KbE2e.ResolveCandidateEmail();
+        var password = KbE2e.ResolveCandidatePassword(baseUrl);
+        if (!await TryDemoLoginAsync(page, baseUrl, email, returnPath)
+            && !await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+        {
+            throw new InvalidOperationException($"Functional E2E: could not authenticate {email} at {baseUrl}.");
+        }
+
+        if (!returnPath.StartsWith('/'))
+        {
+            returnPath = "/" + returnPath;
+        }
+
+        await page.GotoAsync(
+            baseUrl.TrimEnd('/') + returnPath,
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+    }
+
+    private static async Task<bool> TryDemoLoginAsync(IPage page, string baseUrl, string email, string returnUrl = "/banenkaart")
     {
         if (!FunctionalE2eGate.IsRequired
             && !baseUrl.Contains("127.0.0.1", StringComparison.Ordinal)
@@ -104,6 +125,7 @@ public static class FunctionalE2eAuth
         try
         {
             await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
             var tokenInput = page.Locator("form.au-form input[type=hidden]").First;
             await tokenInput.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
             var tokenName = await tokenInput.GetAttributeAsync("name") ?? "";
@@ -116,7 +138,7 @@ public static class FunctionalE2eAuth
             var form = page.Context.APIRequest.CreateFormData();
             form.Set(tokenName, tokenValue);
             form.Set("email", email);
-            form.Set("returnUrl", "/banenkaart");
+            form.Set("returnUrl", returnUrl.StartsWith('/') ? returnUrl : "/" + returnUrl);
             var response = await page.Context.APIRequest.PostAsync(
                 baseUrl + "/account/demo-login",
                 new() { Form = form });
@@ -126,8 +148,9 @@ public static class FunctionalE2eAuth
                 return false;
             }
 
-            await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            await KbE2e.WaitForStyledAppAsync(page);
+            await page.GotoAsync(
+                baseUrl.TrimEnd('/') + (returnUrl.StartsWith('/') ? returnUrl : "/" + returnUrl),
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             return !page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase);
         }
         catch

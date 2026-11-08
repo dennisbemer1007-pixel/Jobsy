@@ -18,10 +18,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
 using System.Security.Claims;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class LandingVariantTests : BunitContext
+public class LandingVariantTests : JobsyBunitContext
+
 {
     public LandingVariantTests()
     {

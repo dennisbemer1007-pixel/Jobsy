@@ -23,6 +23,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.JSInterop;
 using Microsoft.Playwright;
 using UglyToad.PdfPig;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -31,7 +32,7 @@ namespace Jobsy.Tests;
 /// The flag is restored before the test returns.
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public class PassportPdfV2PlaywrightTests : BunitContext, IClassFixture<PassportPdfV2ApiFactory>
+public class PassportPdfV2PlaywrightTests : JobsyBunitContext, IClassFixture<PassportPdfV2ApiFactory>
 {
     private readonly PassportPdfV2ApiFactory _factory;
 

@@ -9,10 +9,12 @@ using Jobsy.Web.Werkgever;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class WerkgeverDashboardBunitTests : BunitContext
+public class WerkgeverDashboardBunitTests : JobsyBunitContext
+
 {
     public WerkgeverDashboardBunitTests()
     {

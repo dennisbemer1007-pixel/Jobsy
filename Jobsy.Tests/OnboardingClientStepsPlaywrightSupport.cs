@@ -244,14 +244,31 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
         public string ServerAddress { get; private set; } = "";
 
+        private readonly object _serverAddressLock = new();
+
         public string EnsureServerAddress()
         {
-            if (string.IsNullOrWhiteSpace(ServerAddress))
+            if (!string.IsNullOrWhiteSpace(ServerAddress))
             {
-                _ = CreateClient();
+                return ServerAddress;
             }
 
-            return ServerAddress;
+            lock (_serverAddressLock)
+            {
+                if (!string.IsNullOrWhiteSpace(ServerAddress))
+                {
+                    return ServerAddress;
+                }
+
+                _ = Server;
+                if (string.IsNullOrWhiteSpace(ServerAddress) && _kestrel is not null)
+                {
+                    var addresses = _kestrel.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
+                    ServerAddress = addresses!.Addresses.First(a => a.StartsWith("http://", StringComparison.Ordinal));
+                }
+
+                return ServerAddress;
+            }
         }
 
         internal JobsyApiClient CreateStubApiClient()
@@ -479,6 +496,12 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 }
 
                 return JsonResponse(BuildStubOnboardingPayload(factory));
+            }
+
+            if (path.Contains("/api/me/applications", StringComparison.OrdinalIgnoreCase)
+                && request.Method == HttpMethod.Get)
+            {
+                return JsonResponse(Array.Empty<object>());
             }
 
             if (path.Contains("/career-path", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Get)

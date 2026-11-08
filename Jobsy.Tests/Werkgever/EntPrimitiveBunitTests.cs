@@ -1,10 +1,15 @@
 using Bunit;
 using Jobsy.Web.Components.Ui.Enterprise;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.Werkgever;
 
-public class EntPrimitiveBunitTests : BunitContext
+public class EntPrimitiveBunitTests : JobsyBunitContext
+
 {
+
+    public EntPrimitiveBunitTests() => EnableInteractiveServerRenderer();
+
     [Fact]
     public void EntTabs_marks_active_tab()
     {

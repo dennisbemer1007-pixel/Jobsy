@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public class AdminDataTableHeaderTests : BunitContext
+public class AdminDataTableHeaderTests : JobsyBunitContext
+
 {
     public AdminDataTableHeaderTests()
     {

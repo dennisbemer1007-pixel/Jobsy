@@ -474,6 +474,8 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
         var bank = registry.Get(PupilQuestionSet.Groep78).Bank;
         var answers = bank.AllItems.ToDictionary(i => i.Id, _ => 4);
         var answersJson = JsonSerializer.Serialize(answers);
+        var vakJson = PupilVakScores.Serialize(
+            PupilVakScores.AllSubjectKeys.ToDictionary(k => k, _ => (4, 4)));
         var now = DateTime.UtcNow;
         foreach (var code in generated)
         {
@@ -484,10 +486,14 @@ public class TeacherPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
                 CurrentIndex = bank.AllItems.Count,
                 LikesJson = """["dieren","sport"]""",
                 DislikesJson = """["lang-stilzitten"]""",
+                JourneyThemeKey = PupilJourneyTheme.ZeeExpeditie,
+                JourneyThemeChosenAtUtc = now,
+                VakScoresJson = vakJson,
                 StartedAtUtc = now.AddMinutes(-25),
                 UpdatedAtUtc = now,
                 CompletedAtUtc = now
             });
+            code.Status = PupilCodeStatus.Completed;
         }
 
         await db.SaveChangesAsync();

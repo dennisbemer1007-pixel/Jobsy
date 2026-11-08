@@ -65,6 +65,7 @@ public class NoPupilNameFieldsTests
         "PupilSchoolOptionDto.SchoolName",
         "PupilClassOptionDto.ClassName",
         "PupilResultPageDto.SchoolName",
+        "PupilMboHboPassportDto.SchoolName",
         // Admin reporting / retention — school labels only (never pupil names).
         "SchoolReportViewDto.SchoolName",
         "SchoolRetentionDryRunSchoolDto.SchoolName",

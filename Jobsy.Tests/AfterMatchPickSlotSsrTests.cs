@@ -8,10 +8,12 @@ using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-public sealed class AfterMatchPickSlotSsrTests : BunitContext
+public class AfterMatchPickSlotSsrTests : JobsyBunitContext
+
 {
     public AfterMatchPickSlotSsrTests()
     {

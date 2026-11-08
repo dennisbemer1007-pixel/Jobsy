@@ -14,7 +14,8 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-public class PassportSharedSectionBunitTests : BunitContext
+public class PassportSharedSectionBunitTests : JobsyBunitContext
+
 {
     private readonly MutableFlags _flags = new();
     private readonly ApiStub _api = new();
@@ -33,6 +34,7 @@ public class PassportSharedSectionBunitTests : BunitContext
         Services.AddSingleton<CandidateProfileEditor>();
         Services.AddSingleton<IFeatureFlags>(_flags);
         BunitAntiforgery.Register(Services);
+        EnableInteractiveServerRenderer();
     }
 
     [Fact]
