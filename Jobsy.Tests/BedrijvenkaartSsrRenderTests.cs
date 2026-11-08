@@ -27,6 +27,19 @@ public sealed class BedrijvenkaartSsrRenderTests
     }
 
     [Fact]
+    public async Task Preview_ssr_without_origin_has_start_prompt_not_nl_center_fallback()
+    {
+        await using var web = new IllustratedPagesWebFactory(companyMapInitiativeEnabled: false);
+        using var http = new HttpClient { BaseAddress = new Uri(web.ServerAddress) };
+        var response = await http.GetAsync("/bedrijvenkaart/ssr");
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("data-testid=\"kb-start-locate\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-bk-origin-lat=\"52.15", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("5.2913", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Preview_ssr_ok_when_company_map_initiative_off()
     {
         await using var web = new IllustratedPagesWebFactory(companyMapInitiativeEnabled: false);

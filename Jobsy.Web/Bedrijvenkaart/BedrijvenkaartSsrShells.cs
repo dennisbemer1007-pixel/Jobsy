@@ -13,14 +13,25 @@ internal static class BedrijvenkaartSsrShells
     internal static string BuildBody(CultureState culture, BedrijvenkaartSsrData.PageModel model)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"bk-page panel-page--cand-ill\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-bk-radius-km=\"")
+        sb.Append("<div class=\"bk-page panel-page--cand-ill")
+            .Append(model.ShowStartPrompt ? " kb-start-prompt-open" : "")
+            .Append("\" data-bedrijvenkaart-ssr=\"1\" data-bk-mobile-view=\"map\" data-bk-radius-km=\"")
             .Append(model.RadiusKm)
-            .Append("\" data-bk-origin-lat=\"")
-            .Append(model.OriginLat.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .Append("\" data-bk-origin-lng=\"")
-            .Append(model.OriginLng.ToString(System.Globalization.CultureInfo.InvariantCulture))
-            .Append(model.OriginFromProfile ? "\" data-bk-origin-profile=\"1\"" : "\"")
-            .Append(" data-testid=\"bedrijvenkaart-ssr-root\">");
+            .Append('"');
+        if (model.HasOrigin && model.OriginLat is double oLat && model.OriginLng is double oLng)
+        {
+            sb.Append(" data-bk-origin-lat=\"")
+                .Append(oLat.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .Append("\" data-bk-origin-lng=\"")
+                .Append(oLng.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                .Append('"');
+            if (model.OriginFromProfile)
+            {
+                sb.Append(" data-bk-origin-profile=\"1\"");
+            }
+        }
+
+        sb.Append(" data-testid=\"bedrijvenkaart-ssr-root\">");
         sb.Append("<div class=\"bk-page__hero-stack\">");
         sb.Append("<div class=\"bk-map-toggle\" role=\"tablist\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.MapToggle.Jobs"]))
@@ -59,11 +70,13 @@ internal static class BedrijvenkaartSsrShells
             .Append(model.Pins.Count == 0 ? "" : " hidden")
             .Append("><p class=\"bk-empty-state__lead\">")
             .Append(WebUtility.HtmlEncode(culture["Bk.Empty.Lead"]))
-            .Append("</p><button type=\"button\" class=\"jobsy-action\" data-bk-expand-radius=\"1\">")
+            .Append("</p><button type=\"button\" class=\"btn btn-secondary\" data-bk-expand-radius=\"1\">")
             .Append(WebUtility.HtmlEncode(culture["Bk.Empty.ExpandRadius"]))
             .Append("</button></div>");
 
-        sb.Append("<div class=\"bk-shell bk-shell--desktop-split\">");
+        sb.Append("<div class=\"bk-shell bk-shell--desktop-split\"")
+            .Append(model.Pins.Count == 0 ? " data-bk-list-empty=\"1\"" : "")
+            .Append('>');
         sb.Append("<div class=\"bk-list\" role=\"list\">");
         foreach (var pin in model.Pins)
         {
@@ -71,6 +84,21 @@ internal static class BedrijvenkaartSsrShells
         }
 
         sb.Append("</div><div class=\"bk-map-pane\">");
+        if (model.ShowStartPrompt)
+        {
+            sb.Append("<div class=\"kb-start-prompt\" role=\"dialog\" aria-labelledby=\"bk-start-title\">")
+                .Append("<h2 id=\"bk-start-title\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.Title"]))
+                .Append("</h2><p class=\"kb-start-prompt__hint\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.Hint"]))
+                .Append("</p><div class=\"kb-start-prompt__actions\">")
+                .Append("<button type=\"button\" class=\"kb-start-prompt__primary\" data-testid=\"kb-start-locate\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.UseMyLocation"]))
+                .Append("</button><button type=\"button\" class=\"kb-start-prompt__later\" data-testid=\"kb-start-later\">")
+                .Append(WebUtility.HtmlEncode(culture["Kb.Start.Later"]))
+                .Append("</button></div></div>");
+        }
+
         sb.Append("<div id=\"bedrijvenkaart-map\" class=\"job-map\" aria-label=\"Kaart\"></div>");
         sb.Append("<div class=\"bk-map-legend\">");
         sb.Append("<div><span class=\"bk-chip bk-chip--open\">")
@@ -93,16 +121,8 @@ internal static class BedrijvenkaartSsrShells
         sb.Append("<div class=\"bk-filters\" data-bk-filter-form=\"1\">");
         sb.Append("<div class=\"bk-filters__track\">");
         sb.Append("<div class=\"bk-filters__row\">");
-        sb.Append("<div class=\"bk-filters__group\" role=\"group\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllSectors"]))
-            .Append("\"><button type=\"button\" class=\"jobsy-action is-active\" aria-pressed=\"true\">")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllSectors"]))
-            .Append("</button></div>");
-        sb.Append("<div class=\"bk-filters__group\" role=\"group\" aria-label=\"")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllFields"]))
-            .Append("\"><button type=\"button\" class=\"jobsy-action is-active\" aria-pressed=\"true\">")
-            .Append(WebUtility.HtmlEncode(culture["Bk.Filter.AllFields"]))
-            .Append("</button></div>");
+        AppendFilterMenu(sb, "sector", culture["Bk.Filter.AllSectors"]);
+        AppendFilterMenu(sb, "field", culture["Bk.Filter.AllFields"]);
         sb.Append("<div class=\"bk-filters__group\" role=\"group\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Bk.Filter.Distance"]))
             .Append("\">");
@@ -132,6 +152,21 @@ internal static class BedrijvenkaartSsrShells
             .Append(WebUtility.HtmlEncode(culture["Bk.Filter.RespondsFast"]))
             .Append("</button>");
         sb.Append("</div></div></div>");
+    }
+
+    private static void AppendFilterMenu(StringBuilder sb, string kind, string allLabel)
+    {
+        sb.Append("<div class=\"bk-filters__group bk-filters__group--menu\" role=\"group\" aria-label=\"")
+            .Append(WebUtility.HtmlEncode(allLabel))
+            .Append("\"><button type=\"button\" class=\"jobsy-action is-active\" aria-pressed=\"true\" aria-haspopup=\"listbox\" aria-expanded=\"false\" data-bk-filter-menu=\"")
+            .Append(WebUtility.HtmlEncode(kind))
+            .Append("\" data-bk-filter-all-label=\"")
+            .Append(WebUtility.HtmlEncode(allLabel))
+            .Append("\">")
+            .Append(WebUtility.HtmlEncode(allLabel))
+            .Append("</button><div class=\"bk-filter-menu\" role=\"listbox\" hidden data-bk-filter-menu-panel=\"")
+            .Append(WebUtility.HtmlEncode(kind))
+            .Append("\"></div></div>");
     }
 
     private static void AppendCard(StringBuilder sb, CultureState culture, CompanyMapPinDto pin)
