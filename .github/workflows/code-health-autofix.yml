@@ -25,7 +25,7 @@ jobs:
             echo "::notice::CODE_HEALTH_BOT_TOKEN not configured; auto-fix skipped (Dennis creates this secret)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.token.outputs.skip != 'true'
         with:
           ref: ${{ github.head_ref }}
@@ -41,7 +41,7 @@ jobs:
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
         with: { dotnet-version: "10.0.x" }
       - name: dotnet format (safe fixers only)
