@@ -7,6 +7,7 @@ using Jobsy.Web.Components.Candidate.Passport;
 using Jobsy.Web.Components.Candidate.ProfileSections;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,7 @@ public class PassportProofSheetPlaywrightTests : BunitContext
         Services.AddSingleton(sp => new JobsyApiClient(sp.GetRequiredService<HttpClient>()));
         Services.AddSingleton<CandidateProfileEditor>();
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
+        SetRendererInfo(new RendererInfo("Server", true));
     }
 
     [Fact]

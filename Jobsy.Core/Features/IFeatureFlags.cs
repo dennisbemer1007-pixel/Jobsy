@@ -43,7 +43,8 @@ public sealed record FeatureFlagSnapshot(
     bool SamplePdfEnabled = false,
     bool TestDepthValueMockupEnabled = true,
     bool UwvFeaturesEnabled = true,
-    bool ActivityLogEnabled = false)
+    bool ActivityLogEnabled = false,
+    bool CandidateCoachTonePreferencesEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(
         EmployersEnabled: false,
@@ -82,6 +83,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.TestDepthValueMockup => TestDepthValueMockupEnabled,
         PlatformFeature.UwvFeatures => UwvFeaturesEnabled,
         PlatformFeature.ActivityLog => ActivityLogEnabled,
+        PlatformFeature.CandidateCoachTonePreferences => CandidateCoachTonePreferencesEnabled,
         _ => false
     };
 }

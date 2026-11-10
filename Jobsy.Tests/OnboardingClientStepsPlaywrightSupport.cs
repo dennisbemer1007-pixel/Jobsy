@@ -422,6 +422,11 @@ internal static class OnboardingClientStepsPlaywrightSupport
                 return JsonResponse(Array.Empty<object>());
             }
 
+            if (path.Contains("/me/applications", StringComparison.OrdinalIgnoreCase) && request.Method == HttpMethod.Get)
+            {
+                return JsonResponse(Array.Empty<object>());
+            }
+
             const string vacancyLikePrefix = "/api/vacancies/";
             if (path.StartsWith(vacancyLikePrefix, StringComparison.OrdinalIgnoreCase)
                 && path.EndsWith("/like", StringComparison.OrdinalIgnoreCase))

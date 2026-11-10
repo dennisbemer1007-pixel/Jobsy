@@ -511,6 +511,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     TrainingPartnersEnabled: request.TrainingPartnersEnabled,
                     UwvFeaturesEnabled: request.UwvFeaturesEnabled,
                     ActivityLogEnabled: request.ActivityLogEnabled,
+                    CandidateCoachTonePreferencesEnabled: request.CandidateCoachTonePreferencesEnabled,
                     ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
                     TestJourneyIllustrationEnabled: request.TestJourneyIllustrationEnabled,
                     OnboardingFinaleV2Enabled: request.OnboardingFinaleV2Enabled,
@@ -629,6 +630,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
         Add("UwvFeaturesEnabled", before.UwvFeaturesEnabled.ToString(), after.UwvFeaturesEnabled.ToString());
         Add("ActivityLogEnabled", before.ActivityLogEnabled.ToString(), after.ActivityLogEnabled.ToString());
+        Add(
+            "CandidateCoachTonePreferencesEnabled",
+            before.CandidateCoachTonePreferencesEnabled.ToString(),
+            after.CandidateCoachTonePreferencesEnabled.ToString());
         Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
         Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
         Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
@@ -684,6 +689,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             trainingPartnersEnabled = snap.TrainingPartnersEnabled,
             uwvFeaturesEnabled = snap.UwvFeaturesEnabled,
             activityLogEnabled = snap.ActivityLogEnabled,
+            candidateCoachTonePreferencesEnabled = snap.CandidateCoachTonePreferencesEnabled,
             pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
             studentPassportEnabled = snap.StudentPassportEnabled,
             testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,
@@ -1020,6 +1026,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.TrainingPartnersEnabled,
             snap.UwvFeaturesEnabled,
             snap.ActivityLogEnabled,
+            snap.CandidateCoachTonePreferencesEnabled,
             snap.ReferenceVerificationEnabled,
             snap.TestJourneyIllustrationEnabled,
             snap.OnboardingFinaleV2Enabled,

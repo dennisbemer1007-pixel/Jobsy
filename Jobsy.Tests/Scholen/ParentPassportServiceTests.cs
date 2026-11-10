@@ -64,7 +64,10 @@ public sealed class ParentPassportServiceTests
     {
         var nl = new Dictionary<string, string>(StringComparer.Ordinal);
         var en = new Dictionary<string, string>(StringComparer.Ordinal);
-        UiStringsOuder.MergeNlEn(nl, en);
+        var pl = new Dictionary<string, string>(StringComparer.Ordinal);
+        var ro = new Dictionary<string, string>(StringComparer.Ordinal);
+        var ar = new Dictionary<string, string>(StringComparer.Ordinal);
+        UiStringsOuder.MergeAll(nl, en, pl, ro, ar);
         foreach (var value in nl.Values.Concat(en.Values))
         {
             Assert.DoesNotContain('—', value);

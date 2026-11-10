@@ -815,5 +815,126 @@ public static class UiStringsPassport
             "Trwale usuń swoje dane",
             "Șterge definitiv datele tale",
             "احذف بياناتك نهائياً");
+
+        Add("CoachTone.Card.Title",
+            "Hoe wil je tips van mij?",
+            "How should I give you tips?",
+            "Jak chcesz otrzymywać wskazówki?",
+            "Cum vrei să-ți dau sfaturi?",
+            "كيف تريد النصائح مني؟");
+        Add("CoachTone.Card.Sub.Quiz",
+            "Kies wat voor jou belangrijk is. Zo pas ik mijn uitleg aan.",
+            "Pick what matters to you. Then I match how I explain.",
+            "Wybierz, co jest dla Ciebie ważne. Dopasuję sposób tłumaczenia.",
+            "Alege ce contează pentru tine. Apoi adaptez explicația.",
+            "اختر ما يهمك. بعدها أضبط أسلوب الشرح.");
+        Add("CoachTone.Card.Sub.Summary",
+            "Zo pas ik mijn uitleg aan. Je kunt dit altijd wijzigen.",
+            "This is how I adjust my tips. You can change it anytime.",
+            "Tak dopasowuję wskazówki. Możesz to zmienić.",
+            "Așa îți adaptez sfaturile. Poți schimba oricând.",
+            "هكذا أضبط النصائح. يمكنك تغييرها في أي وقت.");
+        Add("CoachTone.Privacy.Quiz",
+            "Alleen voor jouw tips. Niemand anders ziet dit. Het staat niet bij werkgevers en telt niet mee bij matching.",
+            "Only for your tips. No one else sees this. Employers and matching never use it.",
+            "Tylko dla Twoich wskazówek. Nikt inny tego nie widzi. Nie trafia do pracodawców ani do dopasowania.",
+            "Doar pentru sfaturile tale. Nimeni altcineva nu vede asta. Nu ajunge la angajatori sau la potrivire.",
+            "لنصائحك فقط. لا يراها أحد غيرك. لا تظهر لأصحاب العمل ولا في المطابقة.");
+        Add("CoachTone.Privacy.Summary",
+            "Alleen jij en de kreeft zien dit. Geen score, geen label voor werkgevers.",
+            "Only you and Lobsy see this. No score, no label for employers.",
+            "Tylko Ty i Lobsy to widzicie. Bez wyniku, bez etykiety dla pracodawców.",
+            "Doar tu și Lobsy vedeți asta. Fără scor, fără etichetă pentru angajatori.",
+            "أنت وLobsy فقط. بدون درجة ولا تصنيف لأصحاب العمل.");
+        Add("CoachTone.Progress",
+            "Vraag {0} van {1}",
+            "Question {0} of {1}",
+            "Pytanie {0} z {1}",
+            "Întrebarea {0} din {1}",
+            "السؤال {0} من {1}");
+        Add("CoachTone.Multi.Hint",
+            "Je mag meer kiezen.",
+            "You may pick more than one.",
+            "Możesz wybrać więcej.",
+            "Poți alege mai multe.",
+            "يمكنك اختيار أكثر من واحد.");
+        Add("CoachTone.Single.Hint",
+            "Kies wat het beste past. Eén antwoord is genoeg.",
+            "Pick what fits best. One answer is enough.",
+            "Wybierz, co pasuje. Wystarczy jedna odpowiedź.",
+            "Alege ce se potrivește. O singură variantă e suficientă.",
+            "اختر ما يناسبك. إجابة واحدة تكفي.");
+        Add("CoachTone.Section.Thinking", "Hoe denk jij?", "How do you think?", "Jak myślisz?", "Cum gândești?", "كيف تفكر؟");
+        Add("CoachTone.Summary.Title", "Jouw gekozen voorkeuren", "Your chosen preferences", "Twoje wybrane preferencje", "Preferințele tale", "اختياراتك");
+        Add("CoachTone.Action.Skip", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
+        Add("CoachTone.Action.Later", "Later", "Not now", "Później", "Mai târziu", "لاحقاً");
+        Add("CoachTone.Action.Next", "Volgende", "Next", "Dalej", "Următorul", "التالي");
+        Add("CoachTone.Action.Edit", "Aanpassen", "Edit", "Zmień", "Ajustează", "تعديل");
+        Add("CoachTone.Action.Wipe", "Wissen", "Clear all", "Wyczyść", "Șterge tot", "مسح الكل");
+
+        Add("CoachTone.Summary.CertaintyWorries", "Onzeker bij ander werk", "Uncertain about other work", "Niepewność przy nowej pracy", "Nesiguranță la alt job", "قلق عند التفكير بعمل آخر");
+        Add("CoachTone.Summary.CertaintyHelps", "Helpt je zekerheid", "Helps you feel sure", "Daje Ci pewność", "Te ajută să te simți sigur", "يساعدك على الشعور بالطمأنينة");
+        Add("CoachTone.Summary.AutonomyChoose", "Zelf beslissen", "You decide", "Decydujesz sam", "Alegi singur", "أنت تقرر");
+        Add("CoachTone.Summary.AutonomyTooMuch", "Te veel sturing", "Too much steering", "Za dużo sterowania", "Prea multă îndrumare", "توجيه زائد");
+        Add("CoachTone.Summary.Status", "Fijn dat anderen zien", "Good when others see", "Ważne, co inni widzą", "E bine ce văd alții", "ما يهم أن يراه الآخرون");
+        Add("CoachTone.Summary.Relatedness", "Steun van", "Support from", "Wsparcie od", "Sprijin de la", "الدعم من");
+        Add("CoachTone.Summary.Fairness", "Eerlijk en duidelijk", "Fair and clear", "Uczciwie i jasno", "Corect și clar", "عادل وواضح");
+        Add("CoachTone.Summary.Thinking", "Zo denk je", "How you think", "Jak myślisz", "Cum gândești", "طريقة تفكيرك");
+
+        Add("CoachTone.Q1.Title", "Wat maakt je onzeker als je aan ander werk denkt?", "What makes you unsure about other work?", "Co sprawia, że niepewnie myślisz o nowej pracy?", "Ce te face nesigur când te gândești la alt job?", "ما الذي يجعلك غير متأكد من عمل آخر؟");
+        Add("CoachTone.Q1.O1", "Ik weet niet wat er daarna komt", "I don't know what comes next", "Nie wiem, co będzie dalej", "Nu știu ce urmează", "لا أعرف ما التالي");
+        Add("CoachTone.Q1.O2", "Ik ben bang iets verkeerd te doen", "I'm afraid to do something wrong", "Boję się zrobić coś źle", "Mi-e teamă să greșesc", "أخاف أن أخطئ");
+        Add("CoachTone.Q1.O3", "Ik mis vaste uren of loon", "I miss fixed hours or pay", "Brakuje mi stałych godzin lub pensji", "Îmi lipsește program sau salariu fix", "أفتقد ساعات أو راتب ثابت");
+        Add("CoachTone.Q1.O4", "Ik ken de mensen nog niet", "I don't know the people yet", "Jeszcze nie znam ludzi", "Nu cunosc încă oamenii", "لا أعرف الناس بعد");
+        Add("CoachTone.Q1.O5", "Niks, dat hoeft niet", "Nothing, that's fine", "Nic, to niepotrzebne", "Nimic, e în regulă", "لا شيء، لا بأس");
+
+        Add("CoachTone.Q2.Title", "Wat helpt jou om je zeker te voelen?", "What helps you feel sure?", "Co pomaga Ci czuć się pewnie?", "Ce te ajută să te simți sigur?", "ما الذي يساعدك على الشعور بالاطمئنان؟");
+        Add("CoachTone.Q2.O1", "Duidelijke volgende stap", "A clear next step", "Jasny następny krok", "Pas clar următor", "خطوة تالية واضحة");
+        Add("CoachTone.Q2.O2", "Vaste afspraken", "Fixed agreements", "Ustalone ustalenia", "Acorduri clare", "مواعيد ثابتة");
+        Add("CoachTone.Q2.O3", "Iemand die me uitlegt", "Someone who explains", "Ktoś, kto tłumaczy", "Cineva care explică", "شخص يشرح لي");
+        Add("CoachTone.Q2.O4", "Rustig tempo", "Calm pace", "Spokojne tempo", "Ritm calm", "إيقاع هادئ");
+        Add("CoachTone.Q2.O5", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
+
+        Add("CoachTone.Q3.Title", "Waar wil je zelf over beslissen?", "What do you want to decide yourself?", "O czym chcesz decydować sam?", "Ce vrei să decizi singur?", "ماذا تريد أن تقرر بنفسك؟");
+        Add("CoachTone.Q3.O1", "Welke banen ik bekijk", "Which jobs I look at", "Które oferty oglądam", "Ce joburi urmăresc", "أي وظائف أتصفح");
+        Add("CoachTone.Q3.O2", "Wanneer ik solliciteer", "When I apply", "Kiedy aplikuję", "Când aplic", "متى أقدّم");
+        Add("CoachTone.Q3.O3", "Hoe ik me voorbereid", "How I prepare", "Jak się przygotowuję", "Cum mă pregătesc", "كيف أستعد");
+        Add("CoachTone.Q3.O4", "Met wie ik praat", "Who I talk to", "Z kim rozmawiam", "Cu cine vorbesc", "مع من أتحدث");
+        Add("CoachTone.Q3.O5", "Alles mag rustig vanuit Lobsy", "Lobsy can guide me calmly", "Niech Lobsy prowadzi spokojnie", "Lobsy poate ghida calm", "Lobsy يوجّهني بهدوء");
+
+        Add("CoachTone.Q4.Title", "Wat voelt als te veel sturing?", "What feels like too much steering?", "Co to za dużo sterowania?", "Ce simți prea controlator?", "ما الذي يشعرك بتوجيه زائد؟");
+        Add("CoachTone.Q4.O1", "Te veel stappen in één keer", "Too many steps at once", "Za dużo kroków naraz", "Prea mulți pași dintr-odată", "خطوات كثيرة دفعة واحدة");
+        Add("CoachTone.Q4.O2", "Veel regels", "Many rules", "Dużo zasad", "Multe reguli", "قواعد كثيرة");
+        Add("CoachTone.Q4.O3", "Iemand die voor me kiest", "Someone chooses for me", "Ktoś wybiera za mnie", "Cineva alege pentru mine", "أحد يختار عني");
+        Add("CoachTone.Q4.O4", "Te snelle beslissing", "Decisions too fast", "Zbyt szybkie decyzje", "Decizii prea rapide", "قرارات سريعة جداً");
+        Add("CoachTone.Q4.O5", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
+
+        Add("CoachTone.Q5.Title", "Wat is fijn dat anderen van je zien als je een stap zet?", "What do you like others to see when you take a step?", "Co chcesz, by inni widzieli, gdy robisz krok?", "Ce vrei să vadă alții când faci un pas?", "ماذا يعجبك أن يراه الآخرون عندما تخطو خطوة؟");
+        Add("CoachTone.Q5.O1", "Dat ik mijn best doe", "That I do my best", "Że się staram", "Că mă străduiesc", "أنني أبذل جهدي");
+        Add("CoachTone.Q5.O2", "Dat ik leer", "That I learn", "Że się uczę", "Că învăț", "أنني أتعلم");
+        Add("CoachTone.Q5.O3", "Dat ik betrouwbaar ben", "That I'm reliable", "Że jestem rzetelny", "Că sunt de încredere", "أنني موثوق");
+        Add("CoachTone.Q5.O4", "Dat ik eerlijk ben over wat ik kan", "That I'm honest about what I can do", "Że jestem szczery co umiem", "Că sunt sincer despre ce pot", "أنني صريح بقدراتي");
+        Add("CoachTone.Q5.O5", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
+
+        Add("CoachTone.Q6.Title", "Met wie werk je het liefst of krijg je steun?", "Who do you prefer to work with or get support from?", "Z kim lubisz pracować lub od kogo masz wsparcie?", "Cu cine lucrezi sau de la cine primești sprijin?", "مع من تفضل العمل أو من أين تحصل على الدعم؟");
+        Add("CoachTone.Q6.O1", "Alleen, met duidelijke uitleg", "Alone, with clear explanation", "Sam, z jasnym wyjaśnieniem", "Singur, cu explicații clare", "وحدي مع شرح واضح");
+        Add("CoachTone.Q6.O2", "Met een collega of team", "With a colleague or team", "Z kolegą lub zespołem", "Cu un coleg sau echipă", "مع زميل أو فريق");
+        Add("CoachTone.Q6.O3", "Met een begeleider", "With a coach", "Z opiekunem", "Cu un mentor", "مع مرشد");
+        Add("CoachTone.Q6.O4", "Met familie of vrienden", "With family or friends", "Z rodziną lub przyjaciółmi", "Cu familie sau prieteni", "مع العائلة أو الأصدقاء");
+        Add("CoachTone.Q6.O5", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
+
+        Add("CoachTone.Q7.Title", "Wat moet eerlijk aanvoelen voor jou?", "What must feel fair to you?", "Co musi być dla Ciebie uczciwe?", "Ce trebuie să fie corect pentru tine?", "ما الذي يجب أن يبدو عادلاً لك؟");
+        Add("CoachTone.Q7.O1", "Eerlijke uitleg over kansen", "Honest explanation of chances", "Uczciwe wyjaśnienie szans", "Explicații oneste despre șanse", "شرح صادق للفرص");
+        Add("CoachTone.Q7.O2", "Geen beloftes die niet kloppen", "No promises that aren't true", "Bez obietnic, które nie są prawdziwe", "Fără promisiuni neadevărate", "بدون وعود غير صحيحة");
+        Add("CoachTone.Q7.O3", "Gelijke kans", "Equal chance", "Równe szanse", "Șanse egale", "فرصة متساوية");
+        Add("CoachTone.Q7.O4", "Duidelijk wat ik moet doen", "Clear what I need to do", "Jasne, co mam zrobić", "Clar ce trebuie să fac", "واضح ما يجب أن أفعله");
+        Add("CoachTone.Q7.O5", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
+
+        Add("CoachTone.Q8.Title", "Hoe leer jij iets nieuws het liefst?", "How do you prefer to learn something new?", "Jak najchętniej uczysz się nowego?", "Cum înveți ceva nou cel mai bine?", "كيف تفضل أن تتعلم شيئاً جديداً؟");
+        Add("CoachTone.Q9.Title", "Wat doe je eerst bij een nieuwe taak?", "What do you do first with a new task?", "Co robisz najpierw przy nowym zadaniu?", "Ce faci primul la o sarcină nouă?", "ماذا تفعل أولاً في مهمة جديدة؟");
+        Add("CoachTone.Thinking.Feiten", "Eerst feiten en cijfers", "Facts and numbers first", "Najpierw fakty i liczby", "Întâi fapte și cifre", "أولاً الحقائق والأرقام");
+        Add("CoachTone.Thinking.Stappen", "Stap voor stap", "Step by step", "Krok po kroku", "Pas cu pas", "خطوة بخطوة");
+        Add("CoachTone.Thinking.Mensen", "Via mensen en gevoel", "Through people and feeling", "Przez ludzi i uczucia", "Prin oameni și emoții", "عبر الناس والشعور");
+        Add("CoachTone.Thinking.Plaatje", "Eerst het grote plaatje", "Big picture first", "Najpierw całość", "Imaginea de ansamblu", "الصورة الكبيرة أولاً");
     }
 }

@@ -51,7 +51,9 @@ public record CandidatePreferencesDto(
     /// <summary>Optional work-status chips (WorkStatusCatalog). Not used in match scoring.</summary>
     IReadOnlyList<string>? WorkStatuses = null,
     /// <summary>Candidate-only gap annotations between jobs (SensitiveExperience).</summary>
-    IReadOnlyList<CandidateTimelineGapDto>? TimelineGaps = null);
+    IReadOnlyList<CandidateTimelineGapDto>? TimelineGaps = null,
+    /// <summary>Coach tone preferences (candidate-only, never employer-facing).</summary>
+    CoachTonePreferencesDto? CoachTonePreferences = null);
 
 /// <summary>Positive, shareable work preferences. Not private dislikes.</summary>
 public record SharedWorkPreferences(

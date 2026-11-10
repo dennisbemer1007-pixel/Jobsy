@@ -302,6 +302,25 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<CandidatePrivatePreferences>(cancellationToken: ct);
     }
 
+    public async Task<CoachTonePreferences?> UpdateMyCoachTonePreferencesAsync(
+        IReadOnlyDictionary<string, string[]>? answers = null,
+        bool wipe = false,
+        bool skipped = false,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            "api/me/coach-tone-preferences",
+            new { answers, wipe, skipped },
+            ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CoachTonePreferences>(cancellationToken: ct);
+    }
+
     public async Task<OnboardingNearbySignal?> GetOnboardingNearbySignalAsync(CancellationToken ct = default)
     {
         try

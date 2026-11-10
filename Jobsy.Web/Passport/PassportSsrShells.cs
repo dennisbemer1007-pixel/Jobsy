@@ -20,7 +20,8 @@ internal static class PassportSsrShells
         string antiforgeryToken,
         string? openDataSection = null,
         string? returnUrl = null,
-        string? openProofItem = null)
+        string? openProofItem = null,
+        bool coachForceEdit = false)
     {
         var sb = new StringBuilder();
         sb.Append("<div class=\"passport-page-wrap\">");
@@ -39,7 +40,7 @@ internal static class PassportSsrShells
         }
 
         AppendTabs(sb, culture, data);
-        AppendAllPanels(sb, culture, data, antiforgeryToken, openDataSection, returnUrl, openProofItem);
+        AppendAllPanels(sb, culture, data, antiforgeryToken, openDataSection, returnUrl, openProofItem, coachForceEdit);
         AppendFooterNav(sb, culture);
         sb.Append("</div></div></div></div></div>");
         sb.Append("<script src=\"");
@@ -47,6 +48,15 @@ internal static class PassportSsrShells
         sb.Append("\" defer></script><script src=\"");
         sb.Append(WwwrootAssetCatalog.Url("js/passport-ssr-extras.js"));
         sb.Append("\" defer></script>");
+        if (data.Flags.CandidateCoachTonePreferencesEnabled)
+        {
+            sb.Append("<link rel=\"stylesheet\" href=\"");
+            sb.Append(WwwrootAssetCatalog.Url("css/features/passport-coach-tone.css"));
+            sb.Append("\" /><script src=\"");
+            sb.Append(WwwrootAssetCatalog.Url("js/passport-coach-tone.js"));
+            sb.Append("\" defer></script>");
+        }
+
         AppendBanenkaartPrefetchBoot(sb, data);
         return sb.ToString();
     }
@@ -250,7 +260,8 @@ internal static class PassportSsrShells
         string antiforgeryToken,
         string? openDataSection,
         string? returnUrl,
-        string? openProofItem)
+        string? openProofItem,
+        bool coachForceEdit)
     {
         sb.Append("<div class=\"passport-panels\">");
         if (!string.IsNullOrWhiteSpace(data.ErrorMessage))
@@ -279,7 +290,7 @@ internal static class PassportSsrShells
         }
 
         AppendPanelShell(sb, PassportTabs.Data, data.ActiveTab, () =>
-            AppendDataPanel(sb, culture, data, antiforgeryToken, openDataSection, returnUrl));
+            AppendDataPanel(sb, culture, data, antiforgeryToken, openDataSection, returnUrl, coachForceEdit));
         sb.Append("</div>");
     }
 
@@ -372,12 +383,14 @@ internal static class PassportSsrShells
         PassportSsrData.PageData data,
         string antiforgeryToken,
         string? openDataSection,
-        string? returnUrl)
+        string? returnUrl,
+        bool coachForceEdit)
     {
         var profile = data.Profile;
         var prefs = profile.Preferences ?? new Jobsy.Web.Models.CandidatePreferences();
         var openAvailability = string.Equals(openDataSection, "availability", StringComparison.OrdinalIgnoreCase);
         var openWorkStatus = string.Equals(openDataSection, "work-status", StringComparison.OrdinalIgnoreCase);
+        var openCoach = string.Equals(openDataSection, "coach-voorkeuren", StringComparison.OrdinalIgnoreCase);
         var safeReturn = AuthRedirects.TrySafeLocalUrl(returnUrl);
         sb.Append("<div class=\"passport-data\"><p class=\"passport-data__intro\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Bubble.Data"]));
@@ -494,6 +507,17 @@ internal static class PassportSsrShells
         sb.Append("\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Common.Continue"]));
         sb.Append("</a></p></div>");
+
+        if (data.Flags.CandidateCoachTonePreferencesEnabled)
+        {
+            PassportCoachToneSsrHtml.Append(
+                sb,
+                culture,
+                prefs,
+                antiforgeryToken,
+                openCoach,
+                coachForceEdit);
+        }
 
         sb.Append("<p class=\"passport-ssr-nav-links\"><a href=\"");
         sb.Append(PassportRedirects.BuildPassportUrl(PassportTabs.Proof, safeReturn));

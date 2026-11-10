@@ -1976,6 +1976,14 @@ public static class UiStrings
             ["Assistant.Page.JobMap"] = "mapę ofert",
             ["Assistant.Page.Passport"] = "twój paszport",
             ["Assistant.Page.MyVacancies"] = "twoje oferty",
+            ["Assistant.Page.Career"] = "Kariera",
+            ["Assistant.Page.Kompas"] = "Kompas",
+            ["Assistant.Chip.JobMapHelp"] = "Jak działa mapa ofert?",
+            ["Assistant.Chip.JobMapHelpMessage"] = "Jak najlepiej korzystać z mapy ofert?",
+            ["Assistant.Chip.CareerRoute"] = "Pomóż mi wybrać trasę",
+            ["Assistant.Chip.CareerRouteMessage"] = "Jak wybrać trasę w Karierze?",
+            ["Assistant.Chip.KompasExplain"] = "Wyjaśnij mój Kompas",
+            ["Assistant.Chip.KompasExplainMessage"] = "Co mówi mój Kompas o mnie?",
             ["Assistant.Chip.PrepareInterview"] = "Tak, pomóż mi się przygotować",
             ["Assistant.Chip.PrepareInterviewMessage"] = "Pomóż mi przygotować się do rozmowy",
             ["Assistant.Chip.SeenMeaning"] = "Co oznacza „Wyświetlono”?",
@@ -2729,6 +2737,14 @@ public static class UiStrings
             ["Assistant.Page.JobMap"] = "harta joburilor",
             ["Assistant.Page.Passport"] = "pașaportul tău",
             ["Assistant.Page.MyVacancies"] = "joburile tale",
+            ["Assistant.Page.Career"] = "Carieră",
+            ["Assistant.Page.Kompas"] = "Busolă",
+            ["Assistant.Chip.JobMapHelp"] = "Cum funcționează harta joburilor?",
+            ["Assistant.Chip.JobMapHelpMessage"] = "Cum folosesc cel mai bine harta joburilor?",
+            ["Assistant.Chip.CareerRoute"] = "Ajută-mă să aleg o rută",
+            ["Assistant.Chip.CareerRouteMessage"] = "Cum aleg o rută în Carieră?",
+            ["Assistant.Chip.KompasExplain"] = "Explică-mi Busola",
+            ["Assistant.Chip.KompasExplainMessage"] = "Ce spune Busola despre mine?",
             ["Assistant.Chip.PrepareInterview"] = "Da, ajută-mă să mă pregătesc",
             ["Assistant.Chip.PrepareInterviewMessage"] = "Ajută-mă să mă pregătesc pentru interviu",
             ["Assistant.Chip.SeenMeaning"] = "Ce înseamnă „Văzut”?",
@@ -3482,6 +3498,14 @@ public static class UiStrings
             ["Assistant.Page.JobMap"] = "خريطة الوظائف",
             ["Assistant.Page.Passport"] = "جوازك",
             ["Assistant.Page.MyVacancies"] = "وظائفك",
+            ["Assistant.Page.Career"] = "المسار المهني",
+            ["Assistant.Page.Kompas"] = "البوصلة",
+            ["Assistant.Chip.JobMapHelp"] = "كيف تعمل خريطة الوظائف؟",
+            ["Assistant.Chip.JobMapHelpMessage"] = "كيف أستفيد من خريطة الوظائف؟",
+            ["Assistant.Chip.CareerRoute"] = "ساعدني في اختيار مسار",
+            ["Assistant.Chip.CareerRouteMessage"] = "كيف أختار مساراً في المسار المهني؟",
+            ["Assistant.Chip.KompasExplain"] = "اشرح بوصلتي",
+            ["Assistant.Chip.KompasExplainMessage"] = "ماذا تقول بوصلتي عني؟",
             ["Assistant.Chip.PrepareInterview"] = "نعم، ساعدني على التحضير",
             ["Assistant.Chip.PrepareInterviewMessage"] = "ساعدني على التحضير للمقابلة",
             ["Assistant.Chip.SeenMeaning"] = "ماذا يعني «تمت المشاهدة»؟",
@@ -3836,7 +3860,7 @@ public static class UiStrings
         UiStringsEnterprise.MergeAll(nl, en, pl, ro, ar);
         // D12: Scholen strings are nl-only; other languages fall back via UiStrings.Get.
         UiStringsScholen.MergeNl(nl);
-        UiStringsOuder.MergeNlEn(nl, en);
+        UiStringsOuder.MergeAll(nl, en, pl, ro, ar);
         UiStringsScholen.MergeDimensions(nl, en, pl, ro, ar);
         UiStringsLeerlingVragen.MergeNl(nl);
         UiStringsLeerlingVragenVo.MergeNl(nl);

@@ -8,6 +8,7 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
@@ -335,7 +336,9 @@ public partial class MeController : ControllerBase
                 ShareablePreferenceNormalizer.NormalizeRegion(request.Preferences.WorkRegion, existing.WorkRegion),
                 request.Preferences.HasOwnCar ?? existing.HasOwnCar,
                 ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences),
-                request.Preferences.WorkStatuses ?? existing.WorkStatuses);
+                request.Preferences.WorkStatuses ?? existing.WorkStatuses,
+                request.Preferences.TimelineGaps ?? existing.TimelineGaps,
+                request.Preferences.CoachTonePreferences ?? existing.CoachTonePreferences);
 
             user.PreferencesJson = SerializePreferences(merged);
         }
@@ -374,6 +377,38 @@ public partial class MeController : ControllerBase
         _insightsQueue.TryEnqueue(user.Id);
         var features = await _features.GetAsync(cancellationToken);
         return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
+    }
+
+    [HttpPut("coach-tone-preferences")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [RequiresFeature(PlatformFeature.CandidateCoachTonePreferences)]
+    [EnableRateLimiting("public-write")]
+    public async Task<ActionResult<CoachTonePreferencesDto>> UpdateCoachTonePreferences(
+        [FromBody] UpdateCoachTonePreferencesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await ResolveActiveCandidateAsync(cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var existing = ParsePreferences(user.PreferencesJson);
+        var mergedTone = CoachTonePreferenceRules.MergeAnswers(
+            existing.CoachTonePreferences,
+            request.Answers,
+            request.Wipe);
+        if (request.Skipped)
+        {
+            mergedTone = mergedTone with { Skipped = true };
+        }
+
+        var normalized = CoachTonePreferenceRules.Normalize(mergedTone) ?? CoachTonePreferenceRules.Wipe();
+        var updated = existing with { CoachTonePreferences = normalized };
+        user.PreferencesJson = SerializePreferences(updated);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(normalized);
     }
 
     [HttpPut("date-of-birth")]
@@ -2143,6 +2178,8 @@ public partial class MeController : ControllerBase
                 workStatuses = ReadStringArray(workStatusEl);
             }
 
+            var coachTonePreferences = ParseCoachTonePreferences(root);
+
             var parsed = new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -2176,7 +2213,8 @@ public partial class MeController : ControllerBase
                 hasOwnCar,
                 ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null),
                 workStatuses,
-                timelineGaps);
+                timelineGaps,
+                coachTonePreferences);
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -2433,8 +2471,79 @@ public partial class MeController : ControllerBase
             workRegion = sanitized.WorkRegion,
             hasOwnCar = sanitized.HasOwnCar,
             contractPreferences = sanitized.ContractPreferences,
-            workStatuses = sanitized.WorkStatuses
+            workStatuses = sanitized.WorkStatuses,
+            coachTonePreferences = sanitized.CoachTonePreferences is null
+                ? null
+                : new
+                {
+                    version = sanitized.CoachTonePreferences.Version,
+                    updatedAtUtc = sanitized.CoachTonePreferences.UpdatedAtUtc,
+                    skipped = sanitized.CoachTonePreferences.Skipped,
+                    answers = sanitized.CoachTonePreferences.Answers
+                }
         }, JsonOptions);
+    }
+
+    private static CoachTonePreferencesDto? ParseCoachTonePreferences(JsonElement root)
+    {
+        if (!root.TryGetProperty("coachTonePreferences", out var coachEl)
+            || coachEl.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        if (coachEl.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        var version = 1;
+        if (coachEl.TryGetProperty("version", out var versionEl)
+            && versionEl.ValueKind == JsonValueKind.Number
+            && versionEl.TryGetInt32(out var versionVal)
+            && versionVal > 0)
+        {
+            version = versionVal;
+        }
+
+        DateTime? updatedAtUtc = null;
+        if (coachEl.TryGetProperty("updatedAtUtc", out var updatedEl))
+        {
+            if (updatedEl.ValueKind == JsonValueKind.String
+                && DateTime.TryParse(updatedEl.GetString(), out var parsed))
+            {
+                updatedAtUtc = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
+            }
+            else if (updatedEl.TryGetDateTime(out var dt))
+            {
+                updatedAtUtc = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+            }
+        }
+
+        var skipped = coachEl.TryGetProperty("skipped", out var skippedEl)
+                      && skippedEl.ValueKind == JsonValueKind.True;
+
+        Dictionary<string, string[]>? answers = null;
+        if (coachEl.TryGetProperty("answers", out var answersEl) && answersEl.ValueKind == JsonValueKind.Object)
+        {
+            answers = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            foreach (var prop in answersEl.EnumerateObject())
+            {
+                if (prop.Value.ValueKind != JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                var codes = ReadStringArray(prop.Value).ToArray();
+                if (codes.Length > 0)
+                {
+                    answers[prop.Name] = codes;
+                }
+            }
+        }
+
+        return CoachTonePreferenceRules.Normalize(
+            new CoachTonePreferencesDto(version, updatedAtUtc, skipped, answers));
     }
 
     public static string SerializePreferences(

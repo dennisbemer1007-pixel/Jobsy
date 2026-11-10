@@ -23,6 +23,7 @@ public static class AcceptatiePlatformFeatureEnsurer
     {
         await EnsureEmployersEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureActivityLogEnabledAsync(db, configuration, logger, cancellationToken);
+        await EnsureCandidateCoachTonePreferencesEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureSchoolsEnabledAsync(db, configuration, logger, cancellationToken);
         await EnsurePupilPassportV2EnabledAsync(db, configuration, logger, cancellationToken);
         await EnsureTestItemExamplesEnabledAsync(db, configuration, logger, cancellationToken);
@@ -106,6 +107,50 @@ public static class AcceptatiePlatformFeatureEnsurer
             await db.SaveChangesAsync(cancellationToken);
             logger.LogInformation(
                 "Acceptatie: synced ActivityLogEnabled=true (removed admin override lock when present).");
+        }
+    }
+
+    internal static async Task EnsureCandidateCoachTonePreferencesEnabledAsync(
+        JobsyDbContext db,
+        IConfiguration configuration,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AcceptatieConfigurationExtensions.IsAcceptatieDeployment(configuration))
+        {
+            return;
+        }
+
+        if (!configuration.GetValue("JobsyFeatures:CandidateCoachTonePreferencesEnabled", false))
+        {
+            return;
+        }
+
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings { Id = PlatformSettingsId };
+            row.CandidateCoachTonePreferencesEnabled = true;
+            db.PlatformFeatureSettings.Add(row);
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Acceptatie: created platform settings with CandidateCoachTonePreferencesEnabled=true.");
+            return;
+        }
+
+        var overrides = PlatformFeatureFlagOverrides.Parse(row.AdminFlagOverridesJson);
+        var lockedOff = overrides.Contains("CandidateCoachTonePreferencesEnabled")
+                        && !row.CandidateCoachTonePreferencesEnabled;
+        if (!row.CandidateCoachTonePreferencesEnabled || lockedOff)
+        {
+            row.CandidateCoachTonePreferencesEnabled = true;
+            row.AdminFlagOverridesJson =
+                PlatformFeatureFlagOverrides.RemoveKey(
+                    row.AdminFlagOverridesJson,
+                    "CandidateCoachTonePreferencesEnabled");
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Acceptatie: synced CandidateCoachTonePreferencesEnabled=true (removed admin override lock when present).");
         }
     }
 

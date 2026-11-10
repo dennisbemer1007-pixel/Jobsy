@@ -304,6 +304,18 @@ public static class UiStringsFeatureFlags
             "Wł. = zakładka Moje aktywności na Aplikacjach. Wył. = wyłączona treść.",
             "Pornit = fila Activități pe Candidaturi. Oprit = conținut oprit.",
             "تشغيل = تبويب النشاطات في الطلبات. إيقاف = المحتوى معطّل.");
+        Add("AdminSettings.CoachTonePreferences.Enabled.Title",
+            "Coach-toon voorkeuren",
+            "Coach tone preferences",
+            "Preferencje tonu coacha",
+            "Preferințe ton coach",
+            "تفضيلات نبرة المدرب");
+        Add("AdminSettings.CoachTonePreferences.Enabled.Desc",
+            "Aan = kandidaten kunnen coach-vragen invullen en de coach past toon en begeleiding aan. Uit = vragen en API verborgen.",
+            "On = candidates can answer coach tone questions and the coach adapts guidance. Off = questions and API hidden.",
+            "Wł. = kandydaci wypełniają pytania tonu coacha. Wył. = ukryte.",
+            "Pornit = candidații completează întrebările de ton. Oprit = ascuns.",
+            "تشغيل = يملأ المرشحون أسئلة النبرة. إيقاف = مخفي.");
         Add("AdminSettings.CompactTestPdf.Enabled.Desc",
             "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
             "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",

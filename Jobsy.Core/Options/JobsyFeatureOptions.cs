@@ -43,6 +43,9 @@ public sealed class JobsyFeatureOptions
     /// <summary>Mijn activiteiten (UWV werkmap). Acceptatie config turns this on.</summary>
     public bool ActivityLogEnabled { get; set; }
 
+    /// <summary>Coach-voorkeuren op paspoort Gegevens. Acceptatie config turns this on.</summary>
+    public bool CandidateCoachTonePreferencesEnabled { get; set; }
+
     /// <summary>When true, Quick-Scan questions show per-item practice examples. Overridden by platform settings.</summary>
     public bool TestItemExamplesEnabled { get; set; }
 

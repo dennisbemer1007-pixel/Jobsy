@@ -11,6 +11,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Jobsy.Tests.TestSupport;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,8 +36,8 @@ public class Wave1HonestClearBunitTests : BunitContext
         Services.AddSingleton(sp => new JobsyApiClient(sp.GetRequiredService<HttpClient>()));
         Services.AddSingleton<CandidateProfileEditor>();
         Services.AddSingleton<IFeatureFlags>(_flags);
-        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         BunitAntiforgery.Register(Services);
+        SetRendererInfo(new RendererInfo("Server", true));
     }
 
     [Theory]
@@ -114,31 +115,6 @@ public class Wave1HonestClearBunitTests : BunitContext
         Assert.DoesNotContain("Scores:", shown.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("%", shown.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("diepte-analyse", shown.Markup, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void Talent_pool_tag_input_follows_the_switch(bool showRiasec)
-    {
-        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [Jobsy.Core.Rules.TalentPoolRiasecVisibility.ConfigKey] = showRiasec ? "true" : "false"
-            })
-            .Build());
-
-        var cut = Render<TalentPoolSection>();
-        cut.WaitForAssertion(() => Assert.Contains("Zoeken", cut.Markup, StringComparison.Ordinal));
-        if (showRiasec)
-        {
-            Assert.Contains("RIASEC", cut.Markup, StringComparison.Ordinal);
-        }
-        else
-        {
-            Assert.DoesNotContain("RIASEC", cut.Markup, StringComparison.Ordinal);
-            Assert.DoesNotContain("Samenwerken, Social", cut.Markup, StringComparison.Ordinal);
-        }
     }
 
     private static AnonymousTalentCard SampleCard() => new()

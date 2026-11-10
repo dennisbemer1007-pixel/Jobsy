@@ -257,6 +257,16 @@ public sealed class CandidatePreferences
     public List<string> ContractPreferences { get; set; } = [];
     public List<string> WorkStatuses { get; set; } = [];
     public List<CandidateTimelineGapItem> TimelineGaps { get; set; } = [];
+    public CoachTonePreferences? CoachTonePreferences { get; set; }
+}
+
+public sealed class CoachTonePreferences
+{
+    public int Version { get; set; } = 1;
+    public DateTime? UpdatedAtUtc { get; set; }
+    public bool Skipped { get; set; }
+    public Dictionary<string, List<string>> Answers { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
 }
 
 public sealed class SharedWorkPreferenceChoices

@@ -6111,6 +6111,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("CandidateApplyPerMinuteLimit")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("CandidateCoachTonePreferencesEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("CandidateExternalVacanciesEnabled")
                         .HasColumnType("boolean");
 
@@ -7659,12 +7662,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<DateTime?>("JourneyThemeChosenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("JourneyThemeKey")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
-
-                    b.Property<DateTime?>("JourneyThemeChosenAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LikeOtherWord")
                         .HasMaxLength(24)
@@ -7672,6 +7675,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<string>("LikesJson")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MboHboProgressJson")
                         .HasColumnType("text");
 
                     b.Property<string>("PuzzlesJson")
@@ -7683,6 +7689,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VakScoresJson")
+                        .HasColumnType("text");
 
                     b.Property<string>("VoFavoriteSubjectsJson")
                         .HasColumnType("text");
@@ -7704,12 +7713,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("VoTravelModeKey")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
-
-                    b.Property<string>("VakScoresJson")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MboHboProgressJson")
-                        .HasColumnType("text");
 
                     b.HasKey("PupilCodeId");
 

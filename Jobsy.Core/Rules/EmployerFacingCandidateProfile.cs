@@ -6,7 +6,7 @@ namespace Jobsy.Core.Rules;
 public static class EmployerFacingCandidateProfile
 {
     public static CandidatePreferencesDto FilterPreferences(CandidatePreferencesDto preferences)
-        => SensitiveExperienceRules.ForEmployerView(preferences);
+        => CoachTonePreferenceRules.WithoutCoachTone(SensitiveExperienceRules.ForEmployerView(preferences));
 
     public static IReadOnlyList<string> VisibleSkillLabels(CandidatePreferencesDto preferences)
     {
