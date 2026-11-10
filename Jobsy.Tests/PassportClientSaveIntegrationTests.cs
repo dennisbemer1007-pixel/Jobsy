@@ -4,6 +4,7 @@ using Jobsy.Web.Services;
 
 namespace Jobsy.Tests;
 
+[Collection("PlaywrightSmoke")]
 public sealed class PassportClientSaveIntegrationTests
 {
     [Fact]
@@ -28,7 +29,13 @@ public sealed class PassportClientSaveIntegrationTests
         factory.CandidatePassportEnabled = true;
         factory.StoredProfile.FirstName = "Paspoort";
         factory.StoredProfile.LastName = "Tester";
-        var client = factory.CreateClient(new() { AllowAutoRedirect = false, HandleCookies = true });
+        _ = factory.EnsureServerAddress();
+        var client = factory.CreateClient(new()
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = true,
+            BaseAddress = new Uri(factory.ServerAddress),
+        });
 
         _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/paspoort?tab=data"));
         var page = await client.GetAsync("/candidate/paspoort?tab=data");
