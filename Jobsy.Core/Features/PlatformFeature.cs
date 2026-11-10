@@ -101,5 +101,8 @@ public enum PlatformFeature
     UwvFeatures,
 
     /// <summary>Mijn activiteiten (UWV werkmap). Default off; on on acceptatie via config.</summary>
-    ActivityLog
+    ActivityLog,
+
+    /// <summary>Hoe wil je tips van mij? coach-voorkeuren op paspoort Gegevens. Default off.</summary>
+    CandidateCoachTonePreferences
 }

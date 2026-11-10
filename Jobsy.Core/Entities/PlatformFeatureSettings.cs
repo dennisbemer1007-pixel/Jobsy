@@ -196,6 +196,9 @@ public class PlatformFeatureSettings
     /// <summary>Mijn activiteiten (UWV). Default false.</summary>
     public bool ActivityLogEnabled { get; set; }
 
+    /// <summary>Coach-voorkeuren op paspoort Gegevens. Default false.</summary>
+    public bool CandidateCoachTonePreferencesEnabled { get; set; }
+
     /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
     public bool TestJourneyIllustrationEnabled { get; set; }
 

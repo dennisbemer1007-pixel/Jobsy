@@ -372,6 +372,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("CandidateCoachTonePreferencesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateCoachTonePreferencesEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.CoachTonePreferences.Enabled.Title",
+                DescriptionKey: "AdminSettings.CoachTonePreferences.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.CandidateCoachTonePreferencesEnabled,
+                Write: v => new PlatformFeatureUpdate(CandidateCoachTonePreferencesEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("FutureJobsForYouEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -933,6 +946,7 @@ public static class PlatformSettingsCatalog
         bool? trainingPartnersEnabled = null;
         bool? uwvFeaturesEnabled = null;
         bool? activityLogEnabled = null;
+        bool? candidateCoachTonePreferencesEnabled = null;
         bool? testJourneyIllustrationEnabled = null;
         bool? onboardingFinaleV2Enabled = null;
         bool? occupationDayInLifeEnabled = null;
@@ -1038,6 +1052,11 @@ public static class PlatformSettingsCatalog
             if (p.ActivityLogEnabled is not null)
             {
                 activityLogEnabled = p.ActivityLogEnabled;
+            }
+
+            if (p.CandidateCoachTonePreferencesEnabled is not null)
+            {
+                candidateCoachTonePreferencesEnabled = p.CandidateCoachTonePreferencesEnabled;
             }
 
             if (p.SensitiveExperienceEnabled is not null)
@@ -1146,6 +1165,7 @@ public static class PlatformSettingsCatalog
             TrainingPartnersEnabled: trainingPartnersEnabled,
             UwvFeaturesEnabled: uwvFeaturesEnabled,
             ActivityLogEnabled: activityLogEnabled,
+            CandidateCoachTonePreferencesEnabled: candidateCoachTonePreferencesEnabled,
             TestJourneyIllustrationEnabled: testJourneyIllustrationEnabled,
             OnboardingFinaleV2Enabled: onboardingFinaleV2Enabled,
             OccupationDayInLifeEnabled: occupationDayInLifeEnabled,

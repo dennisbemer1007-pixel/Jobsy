@@ -88,7 +88,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.SamplePdfEnabled ?? false,
                 dto?.TestDepthValueMockupEnabled ?? true,
                 dto?.UwvFeaturesEnabled ?? true,
-                dto?.ActivityLogEnabled ?? false);
+                dto?.ActivityLogEnabled ?? false,
+                dto?.CandidateCoachTonePreferencesEnabled ?? false);
             flags = ApplyAcceptatieConfigOverrides(flags);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
@@ -237,5 +238,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("activityLogEnabled")]
         public bool ActivityLogEnabled { get; set; }
+
+        [JsonPropertyName("candidateCoachTonePreferencesEnabled")]
+        public bool CandidateCoachTonePreferencesEnabled { get; set; }
     }
 }

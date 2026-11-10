@@ -191,8 +191,9 @@ public static class MatchingProfileMapper
 
         try
         {
-            return JsonSerializer.Deserialize<CandidatePreferencesDto>(json, JsonOptions)
-                   ?? new CandidatePreferencesDto([], null, null);
+            var prefs = JsonSerializer.Deserialize<CandidatePreferencesDto>(json, JsonOptions)
+                        ?? new CandidatePreferencesDto([], null, null);
+            return CoachTonePreferenceRules.WithoutCoachTone(prefs);
         }
         catch (JsonException)
         {

@@ -240,6 +240,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
         ApplyAdminBoolUpdate(row, "UwvFeaturesEnabled", update.UwvFeaturesEnabled, v => row.UwvFeaturesEnabled = v);
         ApplyAdminBoolUpdate(row, "ActivityLogEnabled", update.ActivityLogEnabled, v => row.ActivityLogEnabled = v);
+        ApplyAdminBoolUpdate(row, "CandidateCoachTonePreferencesEnabled", update.CandidateCoachTonePreferencesEnabled, v => row.CandidateCoachTonePreferencesEnabled = v);
         ApplyAdminBoolUpdate(row, "TestJourneyIllustrationEnabled", update.TestJourneyIllustrationEnabled, v => row.TestJourneyIllustrationEnabled = v);
         ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
         ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
@@ -378,6 +379,14 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
     private bool ResolveActivityLogEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "ActivityLogEnabled", row?.ActivityLogEnabled ?? _options.ActivityLogEnabled, false, "JobsyFeatures:ActivityLogEnabled");
+
+    private bool ResolveCandidateCoachTonePreferencesEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(
+            row,
+            "CandidateCoachTonePreferencesEnabled",
+            row?.CandidateCoachTonePreferencesEnabled ?? _options.CandidateCoachTonePreferencesEnabled,
+            false,
+            "JobsyFeatures:CandidateCoachTonePreferencesEnabled");
 
     private bool ResolveTestItemExamplesEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(
@@ -588,6 +597,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveTrainingPartnersEnabled(row),
             ResolveUwvFeaturesEnabled(row),
             ResolveActivityLogEnabled(row),
+            ResolveCandidateCoachTonePreferencesEnabled(row),
             ResolveTestJourneyIllustrationEnabled(row),
             ResolveOnboardingFinaleV2Enabled(row),
             ResolveOccupationDayInLifeEnabled(row),

@@ -1212,8 +1212,12 @@ Verbetervoorstellen:
         CancellationToken cancellationToken)
     {
         var lang = MockInterviewLabels.For(context.Language);
-        var (facts, sheet) = await BuildScopedFactsAsync(context, cancellationToken);
+        var (facts, sheet, coachToneAddendum) = await BuildScopedFactsAsync(context, cancellationToken);
         var system = BuildSystemPrompt(context, lang.LanguageName, facts);
+        if (!string.IsNullOrWhiteSpace(coachToneAddendum))
+        {
+            system += "\n\n" + coachToneAddendum;
+        }
         var prompts = sheet is null
             ? new[] { system }
             : new[] { system, system + "\n" + CandidateFactGuard.StrictAddendum };
@@ -1294,7 +1298,7 @@ Verbetervoorstellen:
         return completion?.Choices?.FirstOrDefault()?.Message?.Content;
     }
 
-    private async Task<(string Facts, CandidateFactSheet? Sheet)> BuildScopedFactsAsync(
+    private async Task<(string Facts, CandidateFactSheet? Sheet, string CoachToneAddendum)> BuildScopedFactsAsync(
         AssistantChatContext context,
         CancellationToken cancellationToken)
     {
@@ -1365,7 +1369,21 @@ Verbetervoorstellen:
                 sheet.RememberHonestAdvice(adviceLines);
                 sb.AppendLine();
                 sb.Append(sheet.ToPrompt());
-                return (sb.ToString(), sheet);
+
+                var coachToneAddendum = string.Empty;
+                if (await _featureFlags.IsEnabledAsync(PlatformFeature.CandidateCoachTonePreferences, cancellationToken))
+                {
+                    var factLines = CoachTonePreferenceRules.BuildAllowedFactLines(prefs?.CoachTonePreferences);
+                    if (!string.IsNullOrWhiteSpace(factLines))
+                    {
+                        sb.AppendLine();
+                        sb.Append(factLines);
+                    }
+
+                    coachToneAddendum = CoachTonePreferenceRules.BuildToneAddendum(prefs?.CoachTonePreferences);
+                }
+
+                return (sb.ToString(), sheet, coachToneAddendum);
             }
 
             if (string.Equals(context.Role, JobsyRoles.SalesManager, StringComparison.Ordinal))
@@ -1373,10 +1391,13 @@ Verbetervoorstellen:
                 var dash = await _salesDashboard.GetDashboardAsync(context.UserId, cancellationToken);
                 if (dash is null)
                 {
-                    return ("Salesmanager facts: onboarding incomplete / no dashboard.", null);
+                    return ("Salesmanager facts: onboarding incomplete / no dashboard.", null, string.Empty);
                 }
 
-                return ($"Salesmanager facts (own account only): tracking={dash.TrackingCode}; uninvoicedExVat={dash.UninvoicedExVat}; outstandingIssuedExVat={dash.OutstandingIssuedExVat}; suppliers={dash.Suppliers.Count}", null);
+                return (
+                    $"Salesmanager facts (own account only): tracking={dash.TrackingCode}; uninvoicedExVat={dash.UninvoicedExVat}; outstandingIssuedExVat={dash.OutstandingIssuedExVat}; suppliers={dash.Suppliers.Count}",
+                    null,
+                    string.Empty);
             }
 
             if (string.Equals(context.Role, JobsyRoles.Admin, StringComparison.Ordinal)
@@ -1397,7 +1418,7 @@ Verbetervoorstellen:
                     }
                 }
 
-                return (sb.ToString(), null);
+                return (sb.ToString(), null, string.Empty);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -1405,7 +1426,7 @@ Verbetervoorstellen:
             _logger.LogDebug(ex, "Failed to build assistant scoped facts.");
         }
 
-        return ("No extra facts.", null);
+        return ("No extra facts.", null, string.Empty);
     }
 
     private static List<string> WorkEntries(CandidatePreferencesDto? prefs)
