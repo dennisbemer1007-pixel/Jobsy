@@ -867,7 +867,7 @@ public static class UiStringsPassport
         Add("CoachTone.Section.Thinking", "Hoe denk jij?", "How do you think?", "Jak myślisz?", "Cum gândești?", "كيف تفكر؟");
         Add("CoachTone.Summary.Title", "Jouw gekozen voorkeuren", "Your chosen preferences", "Twoje wybrane preferencje", "Preferințele tale", "اختياراتك");
         Add("CoachTone.Action.Skip", "Overslaan", "Skip", "Pomiń", "Omite", "تخطي");
-        Add("CoachTone.Action.Later", "Later", "Later", "Później", "Mai târziu", "لاحقاً");
+        Add("CoachTone.Action.Later", "Later", "Not now", "Później", "Mai târziu", "لاحقاً");
         Add("CoachTone.Action.Next", "Volgende", "Next", "Dalej", "Următorul", "التالي");
         Add("CoachTone.Action.Edit", "Aanpassen", "Edit", "Zmień", "Ajustează", "تعديل");
         Add("CoachTone.Action.Wipe", "Wissen", "Clear all", "Wyczyść", "Șterge tot", "مسح الكل");

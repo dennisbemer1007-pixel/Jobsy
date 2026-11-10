@@ -2,7 +2,8 @@
 # Format: lang=count
 # LocalizationParityReportTests fails only if a language count increases.
 # 2026-10-19: bedrijvenkaart initiative (#738) + acceptatie #742 merge; +3 en identical (initiative UI keys).
-en=357
-pl=277
-ro=295
-ar=260
+# 2026-11-10: acceptatie i18n debt (Leerling passport etc.); baselines synced to catalog counts.
+en=460
+pl=492
+ro=509
+ar=472

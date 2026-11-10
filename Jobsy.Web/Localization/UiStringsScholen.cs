@@ -890,6 +890,24 @@ public static class UiStringsScholen
         Add("Leerling.Wereld.Tuin.Desc", "Bloemen, koraal en warme baaien. Kleurrijk en zonnig.", "Flowers, coral and warm bays. Colourful and sunny.", "Kwiaty, koral i ciepłe zatoki. Kolorowo i słonecznie.", "Flori, corali și golfuri calde. Colorat și însorit.", "زهور ومرجان وخلجان دافئة. ملون ومشمس.");
         Add("Leerling.Wereld.Ster.Title", "Sterrenkust", "Star coast", "Gwiezdna wybrzeże", "Coastă stelară", "ساحل النجوم");
         Add("Leerling.Wereld.Ster.Desc", "Een rustige kust in de nacht. Je route is een sterrenbeeld.", "A calm coast at night. Your route is a constellation.", "Spokojne wybrzeże w nocy. Trasa to gwiazdozbiór.", "O coastă liniștită noaptea. Ruta ta e o constelație.", "ساحل هادئ في الليل. مسارك كوكبة.");
+        Add("LeerlingPassport.FeatureDisabled",
+            "Het DNA-paspoort is nog niet ingeschakeld op dit platform.",
+            "The DNA passport is not enabled on this platform yet.",
+            "Paszport DNA nie jest jeszcze włączony na tej platformie.",
+            "Pașaportul DNA nu este încă activ pe această platformă.",
+            "جواز الحمض النووي غير مفعّل على هذه المنصة بعد.");
+        Add("LeerlingPassport.NotReady",
+            "Je DNA-paspoort is er pas als je hele reis klaar is.",
+            "Your DNA passport is ready when your whole journey is complete.",
+            "Paszport DNA jest gotowy, gdy cała twoja podróż jest ukończona.",
+            "Pașaportul DNA e gata când întreaga ta călătorie e completă.",
+            "جواز الحمض النووي يصبح جاهزاً عندما تكتمل رحلتك بالكامل.");
+        Add("LeerlingPassport.ContinueJourney",
+            "Verder met je reis",
+            "Continue your journey",
+            "Kontynuuj podróż",
+            "Continuă călătoria",
+            "تابع رحلتك");
         Add("Leerling.Coach.Start", "Klaar voor de reis?", "Ready for the trip?", "Gotowy na podróż?", "Gata de drum?", "هل أنت مستعد للرحلة؟");
         Add("Leerling.Coach.Reis", "Kies wat bij je past.", "Choose what fits you.", "Wybierz to, co do ciebie pasuje.", "Alege ce ți se potrivește.", "اختر ما يناسبك.");
         Add("Leerling.Coach.Part", "Goed gedaan!", "Well done!", "Dobra robota!", "Bravo!", "أحسنت!");
