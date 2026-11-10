@@ -157,9 +157,11 @@ Mockup-screenshots in deze PR: visuele review door Dennis (geen geautomatiseerde
 
 | Bestand | Inhoud |
 |---------|--------|
-| `scarf-mockup-questions.html` | Vragenstap in paspoort Gegevens |
-| `scarf-mockup-coach-zekerheid.html` | Kreeft-panel — zekerheidsprofiel |
-| `scarf-mockup-coach-autonomie.html` | Kreeft-panel — autonomieprofiel |
-| `tools/screenshots/capture-scarf-coach-mockup.mjs` | PNG’s 1440 + 390 → artifacts |
+| `screenshots/01-*` | Vragenstap Gegevens (volle kaart, voortgang, icoon-tegels) |
+| `screenshots/02-*` | Overzicht na invullen (samenvatting, aanpassen, wissen) |
+| `screenshots/03-*` / `04-*` | Past bij? gevuld + kreeft-chat (zekerheid / autonomie) |
+| `screenshots/05-kreeft-vergelijking-1440.png` | Beide antwoordstijlen naast elkaar |
+| `previews/*.html` | Zelfde schermen als HTML |
+| `tools/screenshots/capture-scarf-coach-mockup.mjs` | Generator |
 
-Screenshots: `/opt/cursor/artifacts/scarf-coach-mockup/`.
+PNG’s in repo: `docs/design/scarf-coach-mockup/screenshots/`.
