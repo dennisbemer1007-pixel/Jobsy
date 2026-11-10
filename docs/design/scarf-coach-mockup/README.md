@@ -4,26 +4,27 @@ Alleen ontwerp en statische mockups — geen productiecode.
 
 ## Documentatie
 
-- [ONTWERPPLAN.md](./ONTWERPPLAN.md) — vragen, datamodel, coach, privacy, feature flag, testen, bouw-inschatting.
+- [ONTWERPPLAN.md](./ONTWERPPLAN.md)
 
-## Screenshots ( gegenereerd )
+## Screenshots (in repo)
 
-Run vanuit `tools/screenshots`:
+PNG’s staan in [`screenshots/`](./screenshots/) (ook via PR leesbaar).
+
+| Bestand | Inhoud |
+|---------|--------|
+| `01-vragenstap-paspoort-gegevens-{1440,390}.png` | Gegevens-tab: strakke grid, volle coach-kaart, voortgang 2/7, tegels met icoon |
+| `02-overzicht-na-invullen-{1440,390}.png` | Samenvatting + Aanpassen / Wissen |
+| `03-kreeft-past-bij-zekerheid-{1440,390}.png` | Tab Past bij? gevuld + chat (stappen) |
+| `04-kreeft-past-bij-autonomie-{1440,390}.png` | Zelfde pagina + chat (keuzes) |
+| `05-kreeft-vergelijking-1440.png` | Zekerheid vs autonomie naast elkaar |
+
+HTML-previews: [`previews/`](./previews/) (zelfde namen, `.html`).
+
+## Opnieuw genereren
 
 ```bash
 cd tools/screenshots && npm install && npx playwright install chromium
 node capture-scarf-coach-mockup.mjs
 ```
 
-Output: `/opt/cursor/artifacts/scarf-coach-mockup/`
-
-| Bestand | Inhoud |
-|---------|--------|
-| `01-vragenstap-paspoort-gegevens-1440.png` | Gegevens-tab met bestaande velden + nieuwe vragen |
-| `01-vragenstap-paspoort-gegevens-390.png` | Zelfde, mobiel 390px |
-| `02-kreeft-bericht-zekerheid-1440.png` | Kreeft-panel: meer stappen (zekerheid) |
-| `02-kreeft-bericht-zekerheid-390.png` | Mobiel |
-| `03-kreeft-bericht-autonomie-1440.png` | Kreeft-panel: meer keuzes (autonomie) |
-| `03-kreeft-bericht-autonomie-390.png` | Mobiel |
-
-HTML-previews (zelfde build): `previews/*.html`
+Schrijft naar `docs/design/scarf-coach-mockup/screenshots/` en `/opt/cursor/artifacts/scarf-coach-mockup/`.
