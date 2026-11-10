@@ -39,7 +39,23 @@ const ICONS = {
   ok: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
   step: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
   hand: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V7a2 2 0 0 1 4 0v4M11 9V5a2 2 0 0 1 4 0v6M15 11V8a2 2 0 0 1 4 0v8a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-3"/></svg>',
+  chart: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 17V9M12 17V6M16 17v-4"/></svg>',
+  globe: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>',
+  heart: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.5-7 10-7 10z"/></svg>',
 };
+
+const THINKING_STYLES = [
+  { text: 'Eerst feiten en cijfers', icon: ICONS.chart, key: 'feiten' },
+  { text: 'Stap voor stap', icon: ICONS.step, key: 'stappen' },
+  { text: 'Via mensen en gevoel', icon: ICONS.heart, key: 'mensen' },
+  { text: 'Eerst het grote plaatje', icon: ICONS.globe, key: 'plaatje' },
+];
+
+function thinkingTiles(selectedKeys) {
+  return `<div class="lobsy-choice-grid" role="group">
+    ${THINKING_STYLES.map((s) => tile(s.text, s.icon, selectedKeys.includes(s.key))).join('')}
+  </div>`;
+}
 
 function head(title, vp) {
   return `<!DOCTYPE html><html lang="nl"><head>
@@ -56,7 +72,7 @@ ${styles}
 }
 @media (min-width: 1024px) {
   .passport-layout { display: grid; grid-template-columns: minmax(280px, 330px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-  .passport-layout__card--desktop { display: block !important; position: sticky; top: calc(var(--app-header-height) + 0.5rem); }
+  .passport-layout__card--desktop { display: block !important; }
   .passport-layout__card--mobile { display: none !important; }
 }
 ${vp === 'mobile' ? `.passport-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }` : ''}
@@ -144,21 +160,17 @@ function coachPrefsActive() {
       <p style="margin:0"><strong>Alleen voor jouw tips.</strong> Niemand anders ziet dit. Het staat niet bij werkgevers en telt niet mee bij matching.</p>
     </div>
     <div class="coach-prefs__progress-row">
-      <p class="coach-prefs__progress-label">Vraag 2 van 7</p>
-      <p class="coach-prefs__progress-pct" aria-hidden="true">29%</p>
+      <p class="coach-prefs__progress-label">Vraag 8 van 9</p>
+      <p class="coach-prefs__progress-pct" aria-hidden="true">89%</p>
     </div>
-    <div class="coach-prefs__progress-track" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="7" aria-label="Vraag 2 van 7">
-      <div class="coach-prefs__progress-fill" style="width:28.5%"></div>
+    <div class="coach-prefs__progress-track" role="progressbar" aria-valuenow="8" aria-valuemin="0" aria-valuemax="9" aria-label="Vraag 8 van 9">
+      <div class="coach-prefs__progress-fill" style="width:88.8%"></div>
     </div>
-    <h4 class="coach-prefs__question">Wat maakt je onzeker als je aan ander werk denkt?</h4>
-    <p class="coach-prefs__hint">Je mag meer antwoorden kiezen.</p>
-    <div class="lobsy-choice-grid" role="group">
-      ${tile('Ik weet niet wat er daarna komt', ICONS.future, true)}
-      ${tile('Ik ben bang iets verkeerd te doen', ICONS.warn, false)}
-      ${tile('Ik mis vaste uren of loon', ICONS.clock, true)}
-      ${tile('Ik ken de mensen nog niet', ICONS.people, false)}
-      ${tile('Niks, dat hoeft niet', ICONS.ok, false)}
-    </div>
+    <p class="coach-prefs__hint" style="margin-top:0;font-weight:600;color:var(--brand)">Hoe denk jij?</p>
+    <h4 class="coach-prefs__question">Hoe leer jij iets nieuws het liefst?</h4>
+    <p class="coach-prefs__hint">Kies wat het beste past. Eén antwoord is genoeg.</p>
+    ${thinkingTiles(['stappen'])}
+    <p class="coach-prefs__hint" style="margin-top:0.75rem;font-size:0.8rem">Vraag 9 daarna: &quot;Wat doe je eerst bij een nieuwe taak?&quot; — zelfde keuzes.</p>
     <p class="coach-prefs__hint" style="margin-top:1rem;margin-bottom:0.5rem">Volgende vraag verschijnt na &quot;Volgende&quot;.</p>
     <div class="coach-prefs__actions">
       <button type="button" class="btn btn-ghost">Overslaan</button>
@@ -184,6 +196,7 @@ function coachPrefsOverview() {
       <div><dt>Helpt je zekerheid</dt><dd>Duidelijke volgende stap · Rustig tempo</dd></div>
       <div><dt>Zelf beslissen</dt><dd>Welke banen ik bekijk · Wanneer ik solliciteer</dd></div>
       <div><dt>Eerlijk en duidelijk</dt><dd>Geen beloftes die niet kloppen</dd></div>
+      <div><dt>Zo denk je</dt><dd>Stap voor stap · Via mensen en gevoel</dd></div>
     </dl>
     <div class="coach-prefs__actions">
       <button type="button" class="btn btn-secondary">Aanpassen</button>
@@ -341,7 +354,7 @@ ${bodyClass?.includes('mockup-coach-page') ? `${coachDockFab()}` : coachDockFab(
 function htmlQuestions(vp) {
   const mobile = vp === 'mobile';
   return `${head('Vragenstap Gegevens', mobile ? 'mobile' : 'desktop')}
-<body class="app-shell app-shell--candidate has-bottom-nav" data-lobsy-coach style="--bottom-nav-h:64px">
+<body class="app-shell app-shell--candidate has-bottom-nav mockup-static-chrome" data-lobsy-coach style="--bottom-nav-h:64px">
 ${pageChrome('Mockup — vragenstap in tab Gegevens')}
 <main class="app-main mockup-main">${passportLayout('data', dataStack(coachPrefsActive()))}</main>
 <nav class="mockup-bottom-nav" aria-hidden="true"></nav>
@@ -351,7 +364,7 @@ ${coachDockFab()}
 
 function htmlOverview(vp) {
   return `${head('Overzicht na invullen', vp === 'mobile' ? 'mobile' : 'desktop')}
-<body class="app-shell app-shell--candidate has-bottom-nav" data-lobsy-coach style="--bottom-nav-h:64px">
+<body class="app-shell app-shell--candidate has-bottom-nav mockup-static-chrome" data-lobsy-coach style="--bottom-nav-h:64px">
 ${pageChrome('Mockup — overzicht coach-voorkeuren')}
 <main class="app-main mockup-main">${passportLayout('data', dataStack(coachPrefsOverview()))}</main>
 <nav class="mockup-bottom-nav" aria-hidden="true"></nav>
@@ -362,7 +375,7 @@ ${coachDockFab()}
 function htmlCoach(vp, variant) {
   const title = variant === 'zekerheid' ? 'Mockup — Past bij? + kreeft (zekerheid)' : 'Mockup — Past bij? + kreeft (autonomie)';
   return `${head(title, vp === 'mobile' ? 'mobile' : 'desktop')}
-<body class="app-shell app-shell--candidate has-bottom-nav mockup-coach-page" data-lobsy-coach style="--bottom-nav-h:64px">
+<body class="app-shell app-shell--candidate has-bottom-nav mockup-coach-page mockup-static-chrome" data-lobsy-coach style="--bottom-nav-h:64px">
 ${pageChrome(title)}
 <main class="app-main mockup-main">${passportLayout('fit', fitPanel())}</main>
 <nav class="mockup-bottom-nav" aria-hidden="true"></nav>

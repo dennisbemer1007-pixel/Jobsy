@@ -27785,6 +27785,96 @@ input.filter-bar__search {
 
 .passport-data.mockup-data-stack .competency-profile-card {
   padding: var(--space-4, 1rem);
+  inline-size: 100%;
+  max-inline-size: none;
+  align-self: stretch;
+}
+
+.passport-data.mockup-data-stack .competency-profile-card .profile-form {
+  max-width: none;
+  width: 100%;
+  margin-top: 0;
+  align-self: stretch;
+}
+
+/* fullPage-screenshot: geen sticky/fixed banden over content */
+body.mockup-static-chrome .mockup-header,
+body.mockup-static-chrome .mockup-only-banner,
+body.mockup-static-chrome .passport-page--illustrated .passport-tabs-shell,
+body.mockup-static-chrome .passport-tabs,
+body.mockup-static-chrome .passport-layout__card--desktop,
+body.mockup-static-chrome .mockup-bottom-nav,
+body.mockup-static-chrome .lobsy-coach-dock {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+}
+
+body.mockup-static-chrome .passport-page--illustrated .passport-tabs-shell::before,
+body.mockup-static-chrome .passport-page--illustrated .passport-tabs-shell::after {
+  display: none !important;
+  content: none !important;
+}
+
+body.mockup-static-chrome .passport-page--illustrated .passport-tabs-shell {
+  margin-inline: 0;
+  padding-inline: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+body.mockup-static-chrome .app-main.mockup-main {
+  padding-block-start: 0;
+  padding-block-end: 0.75rem;
+}
+
+body.mockup-static-chrome .panel-page.passport-page {
+  padding-block-end: 0;
+}
+
+body.mockup-static-chrome .mockup-bottom-nav {
+  display: none;
+}
+
+body.mockup-static-chrome.mockup-coach-page .app-main.mockup-main {
+  position: relative;
+  padding-block-end: min(34rem, 58vh);
+}
+
+body.mockup-static-chrome.mockup-coach-page .lobsy-assistant {
+  position: absolute !important;
+  inset-inline-end: 1rem;
+  inset-block-end: 0.5rem;
+  inset-block-start: auto;
+  inset-inline-start: auto;
+  pointer-events: none;
+  max-width: min(440px, calc(100% - 2rem));
+}
+
+body.mockup-static-chrome .lobsy-coach-dock {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem 0;
+  margin-block-end: 0;
+  pointer-events: none;
+}
+
+body.mockup-static-chrome.app-shell.has-bottom-nav .profile-save-bar,
+body.mockup-static-chrome .profile-save-bar {
+  position: static !important;
+  inset: auto !important;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  width: 100%;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.passport-data.mockup-data-stack .competency-profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .passport-data.mockup-data-stack .passport-data__body {
@@ -28115,12 +28205,12 @@ input.filter-bar__search {
 }
 @media (min-width: 1024px) {
   .passport-layout { display: grid; grid-template-columns: minmax(280px, 330px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-  .passport-layout__card--desktop { display: block !important; position: sticky; top: calc(var(--app-header-height) + 0.5rem); }
+  .passport-layout__card--desktop { display: block !important; }
   .passport-layout__card--mobile { display: none !important; }
 }
 .passport-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 </style></head>
-<body class="app-shell app-shell--candidate has-bottom-nav" data-lobsy-coach style="--bottom-nav-h:64px">
+<body class="app-shell app-shell--candidate has-bottom-nav mockup-static-chrome" data-lobsy-coach style="--bottom-nav-h:64px">
 <header class="mockup-header" aria-label="Pagina"><p class="mockup-header__title">Mijn paspoort</p></header>
 <div class="mockup-only-banner">Mockup — overzicht coach-voorkeuren</div>
 <main class="app-main mockup-main"><div class="panel-page passport-page passport-page--illustrated">
@@ -28228,6 +28318,7 @@ input.filter-bar__search {
       <div><dt>Helpt je zekerheid</dt><dd>Duidelijke volgende stap · Rustig tempo</dd></div>
       <div><dt>Zelf beslissen</dt><dd>Welke banen ik bekijk · Wanneer ik solliciteer</dd></div>
       <div><dt>Eerlijk en duidelijk</dt><dd>Geen beloftes die niet kloppen</dd></div>
+      <div><dt>Zo denk je</dt><dd>Stap voor stap · Via mensen en gevoel</dd></div>
     </dl>
     <div class="coach-prefs__actions">
       <button type="button" class="btn btn-secondary">Aanpassen</button>

@@ -22,7 +22,7 @@
 
 ---
 
-## 2. Vragen (B1, max. 7, geen jargon)
+## 2. Vragen (B1, 9 stuks, geen jargon)
 
 Gebruikers zien **niet** de term SCARF. Intern mappen we naar domeinen voor de coach-prompt.
 
@@ -35,11 +35,21 @@ Gebruikers zien **niet** de term SCARF. Intern mappen we naar domeinen voor de c
 | 5 | Status | Wat is fijn dat anderen **van je zien** als je een stap zet? | Dat ik mijn best doe · Dat ik leer · Dat ik betrouwbaar ben · Dat ik eerlijk ben over wat ik kan · Overslaan |
 | 6 | Verbondenheid | **Met wie** werk je het liefst of krijg je steun? | Alleen, met duidelijke uitleg · Met een collega of team · Met een begeleider · Met familie of vrienden · Overslaan |
 | 7 | Eerlijkheid | Wat moet **eerlijk** aanvoelen voor jou? | Eerlijke uitleg over kansen · Geen beloftes die niet kloppen · Gelijke kans · Duidelijk wat ik moet doen · Overslaan |
+| 8 | **Hoe denk jij?** | **Hoe leer jij iets nieuws het liefst?** | Eerst feiten en cijfers · Stap voor stap · Via mensen en gevoel · Eerst het grote plaatje |
+| 9 | **Hoe denk jij?** | **Wat doe je eerst bij een nieuwe taak?** | Zelfde vier keuzes als vraag 8 |
+
+### Hoe denk jij? — afbakening (geen test)
+
+Twee korte vragen in **eigen B1-woordkeuze**; geen kopie van HCX, Herrmann/HBDI of andere denkstijl-producten.
+
+- **Wel:** de coach past **uitlegvorm** aan (feiten, stappen, menselijk, overzicht) op basis van gekozen woorden; in overzicht onder **Zo denk je** alleen tekst, geen score.
+- **Niet:** quadrant, type, percentiel, matchfactor; niets in paspoort voor werkgevers of matching; **geen validiteitsclaim** — dit is geen persoonlijkheidstest.
+- **Opslag:** `thinking_learn`, `thinking_new_task` in `CoachTonePreferences.answers`.
 
 **Interactie**
 
 - Per vraag: `lobsy-choice-grid` / `lobsy-choice-tile` (bestaand patroon).
-- Voortgang: “Vraag 2 van 7” (optioneel compact; mag weg als te druk).
+- Voortgang: “Vraag X van 9”.
 - Knoppen: **Opslaan**, **Later**, **Alles overslaan**, **Mijn antwoorden wissen** (in bewerkmodus).
 - Opgeslagen antwoorden zijn altijd zichtbaar en wijzigbaar in de accordeon.
 
@@ -62,7 +72,9 @@ Gebruikers zien **niet** de term SCARF. Intern mappen we naar domeinen voor de c
     "autonomy_too_much": [],
     "status_seen_as": ["mijn_best_doen"],
     "relatedness_support": ["begeleider"],
-    "fairness_important": ["eerlijke_kansen"]
+    "fairness_important": ["eerlijke_kansen"],
+    "thinking_learn": ["stap_voor_stap"],
+    "thinking_new_task": ["via_mensen_gevoel"]
   }
 }
 ```
