@@ -1,0 +1,67 @@
+/* Mockup-only: coach-voorkeuren sectie — gebruikt bestaande Lobsy tokens/classes */
+
+.mockup-badge {
+  display: inline-block;
+  margin: 0 0 0.5rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold-ink, #5c4a0f);
+  background: var(--gold-soft, #faf6e8);
+  border: 1px solid color-mix(in srgb, var(--gold, #c9a227) 35%, var(--border));
+  border-radius: var(--radius-pill, 999px);
+}
+
+.coach-prefs__progress {
+  margin: 0 0 0.75rem;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted, #5a6a7d);
+}
+
+.coach-prefs__question {
+  margin: 0 0 0.35rem;
+  font-size: var(--text-md, 1rem);
+  font-weight: 600;
+  color: var(--text, #122033);
+  line-height: 1.35;
+}
+
+.coach-prefs__hint {
+  margin: 0 0 0.65rem;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted, #5a6a7d);
+}
+
+.coach-prefs__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border, #ddd5cc);
+}
+
+.coach-prefs__actions .btn-ghost {
+  margin-inline-start: auto;
+}
+
+.passport-data__item--coach-prefs {
+  border: 1px solid color-mix(in srgb, var(--gold, #c9a227) 28%, var(--border));
+  background: color-mix(in srgb, var(--gold-soft, #faf6e8) 40%, var(--surface));
+}
+
+.passport-data__item--coach-prefs .passport-data__title {
+  color: var(--brand, #0f2d5c);
+}
+
+.lobsy-choice-tile[aria-pressed="true"],
+.lobsy-choice-tile.is-selected {
+  border-color: var(--lobsy-choice-border-selected, #1f2f55);
+  background: var(--lobsy-choice-selected-bg, color-mix(in srgb, #1f2f55 10%, #e8eef5));
+}
+
+.mockup-coach-open .lobsy-coach-dock__btn--warm {
+  opacity: 0.85;
+}
