@@ -11,6 +11,7 @@ using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Jobsy.Tests.TestSupport;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +38,7 @@ public class Wave1HonestClearBunitTests : BunitContext
         Services.AddSingleton<IFeatureFlags>(_flags);
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         BunitAntiforgery.Register(Services);
+        SetRendererInfo(new RendererInfo("Server", true));
     }
 
     [Theory]
