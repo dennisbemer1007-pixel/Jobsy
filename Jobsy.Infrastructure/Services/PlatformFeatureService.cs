@@ -384,8 +384,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         => ResolveAdminBool(
             row,
             "CandidateCoachTonePreferencesEnabled",
+            row?.CandidateCoachTonePreferencesEnabled ?? false,
             row?.CandidateCoachTonePreferencesEnabled ?? _options.CandidateCoachTonePreferencesEnabled,
-            false,
             "JobsyFeatures:CandidateCoachTonePreferencesEnabled");
 
     private bool ResolveTestItemExamplesEnabled(PlatformFeatureSettings? row)

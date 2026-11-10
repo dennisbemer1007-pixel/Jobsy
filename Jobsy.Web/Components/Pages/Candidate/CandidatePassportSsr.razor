@@ -60,6 +60,7 @@ else if (_bodyHtml is not null)
         query.TryGetValue("saved", out var savedValues);
         query.TryGetValue("from", out var fromValues);
         query.TryGetValue("section", out var sectionValues);
+        query.TryGetValue("coachEdit", out var coachEditValues);
         query.TryGetValue("item", out var itemValues);
         query.TryGetValue("returnUrl", out var returnUrlValues);
         query.TryGetValue("check", out var checkValues);
@@ -87,13 +88,15 @@ else if (_bodyHtml is not null)
             }
 
             var tokens = Antiforgery.GetAndStoreTokens(http);
+            var coachForceEdit = string.Equals(coachEditValues.FirstOrDefault(), "1", StringComparison.Ordinal);
             _bodyHtml = PassportSsrShells.BuildBody(
                 Culture,
                 data,
                 tokens.RequestToken ?? "",
                 sectionValues.FirstOrDefault(),
                 returnUrl,
-                proofItem);
+                proofItem,
+                coachForceEdit);
         }
         catch
         {
