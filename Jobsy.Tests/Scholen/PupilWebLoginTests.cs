@@ -366,9 +366,10 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
     }
 
     [Fact]
-    public void Pupil_web_and_api_idle_timeout_both_fifteen_minutes()
+    public void Pupil_web_and_api_idle_timeout_both_thirty_minutes()
     {
-        Assert.Equal(TimeSpan.FromMinutes(15), PupilAuthDefaults.IdleTimeout);
+        Assert.Equal(TimeSpan.FromMinutes(30), PupilAuthDefaults.IdleTimeout);
+        Assert.Equal(TimeSpan.FromMinutes(120), PupilAuthDefaults.AbsoluteTimeout);
     }
 
     [Fact]
