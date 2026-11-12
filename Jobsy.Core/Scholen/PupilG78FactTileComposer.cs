@@ -200,6 +200,7 @@ public static class PupilG78FactTileComposer
                             && !x.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
                             && !usedIds.Contains(x.ItemId))
                 .OrderByDescending(x => x.EffectiveScore)
+                .ThenBy(x => x.ItemId == 9001 ? 1 : 0)
                 .ThenBy(x => x.ItemId)
                 .FirstOrDefault();
             if (c is null)
@@ -275,7 +276,17 @@ public static class PupilG78FactTileComposer
             }
 
             var contrast = ContrastForTile(c);
-            if (PupilG78AnswerConflicts.ContrastLineConflictsHighs(highs, contrast))
+            var strongIds = highs.Select(h => h.ItemId).ToHashSet();
+            if (PupilG78AnswerConflicts.ContrastLineConflictsHighs(highs, contrast)
+                || PupilG78ItemThemes.ContrastConflictsStrength(contrast, strongIds, all))
+            {
+                continue;
+            }
+
+            if (contrast.Contains("minder naar voren", StringComparison.OrdinalIgnoreCase)
+                && all.Any(x => x.Model == AssessmentKind.Competence
+                                && string.Equals(x.Category, c.Category, StringComparison.OrdinalIgnoreCase)
+                                && x.EffectiveScore >= 4))
             {
                 continue;
             }

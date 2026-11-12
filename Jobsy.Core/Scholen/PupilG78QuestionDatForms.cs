@@ -36,7 +36,7 @@ public static class PupilG78QuestionDatForms
         [9022] = "je graag met je handen aan iets tastbaars werkt",
         [9023] = "je graag een eigen verhaal, dans of outfit bedenkt",
         [9024] = "je het fijn vindt om anderen te steunen",
-        [9025] = "je graag uitzoekt hoe een proefje of puzzels werken",
+        [9025] = "je graag uitzoekt hoe een proefje of puzzel werkt",
         [9026] = "je anderen graag overtuigt van jouw idee",
         [9027] = "je van vaste stappen en duidelijke lijstjes houdt",
         [9028] = "je het leuk vindt om buiten iets te bouwen of te fixen",

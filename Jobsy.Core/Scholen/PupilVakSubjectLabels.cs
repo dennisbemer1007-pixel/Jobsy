@@ -20,4 +20,18 @@ public static class PupilVakSubjectLabels
     };
 
     public static string UiKey(string subjectKey) => $"Leerling.Vakken.Subject.{subjectKey}";
+
+    /// <summary>Running text in stories: proper names capitalized, joined with &quot;en&quot;.</summary>
+    public static string NlStoryList(string subjectKey) => subjectKey.ToLowerInvariant() switch
+    {
+        "engels" => "Engels",
+        "frans" => "Frans",
+        "geschiedenis" => "geschiedenis",
+        "rekenen" => "rekenen",
+        "natuur-techniek" => "natuur en techniek",
+        "tekenen" => "tekenen en handvaardigheid",
+        "muziek" => "muziek",
+        "lezen" => "lezen",
+        _ => subjectKey.ToLowerInvariant()
+    };
 }

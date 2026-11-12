@@ -37,12 +37,12 @@ internal static class PupilG78RealisticFixtures
     {
         var strong = profile switch
         {
-            "SC" => itemId is 9001 or 9003 or 9006 or 9007 or 9019 or 9021 or 9024 or 9030
+            "SC" => itemId is 9003 or 9006 or 9007 or 9019 or 9021 or 9024 or 9030
                 or 9032 or 9037 or 9042 or 9048 or 9053 or 9054 or 9059 or 9060,
             "ES" => itemId is 9005 or 9009 or 9010 or 9020 or 9026 or 9029 or 9031 or 9036
                 or 9041 or 9043 or 9049 or 9050 or 9052 or 9058,
-            "IR" => itemId is 9014 or 9016 or 9017 or 9018 or 9022 or 9025 or 9028 or 9033
-                or 9038 or 9043 or 9046 or 9051 or 9056,
+            "IR" => itemId is 9002 or 9008 or 9016 or 9017 or 9018 or 9022 or 9025 or 9028
+                or 9033 or 9038 or 9043 or 9046 or 9051 or 9056,
             _ => false
         };
         if (strong)
@@ -52,8 +52,8 @@ internal static class PupilG78RealisticFixtures
 
         var low = profile switch
         {
-            "SC" => itemId is 9015 or 9016 or 9020,
-            "ES" => itemId is 9019 or 9024 or 9015,
+            "SC" => itemId is 9014 or 9015 or 9020,
+            "ES" => itemId is 9019 or 9024 or 9012,
             "IR" => itemId is 9020 or 9010 or 9026,
             _ => false
         };
@@ -78,7 +78,7 @@ internal static class PupilG78RealisticFixtures
             return 4;
         }
 
-        return 2 + (itemId * 7 + profile.GetHashCode(StringComparison.Ordinal)) % 3;
+        return 2 + (itemId * 7 + StringComparer.Ordinal.GetHashCode(profile)) % 3;
     }
 
     private static (PupilResult, PupilProgress) Build(

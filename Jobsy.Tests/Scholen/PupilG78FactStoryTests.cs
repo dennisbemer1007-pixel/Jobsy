@@ -57,7 +57,7 @@ public sealed class PupilG78FactStoryTests
     {
         var (result, progress) = FixtureMaker();
         var body = PupilG78FactStory.Build(result, progress, "nl").Body;
-        Assert.Contains("natuur", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("natuur en techniek", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Engels en Gym", body, StringComparison.Ordinal);
     }
 
@@ -129,7 +129,7 @@ public sealed class PupilG78FactStoryTests
                 || pkg.Body.Contains("communiceren", StringComparison.OrdinalIgnoreCase)
                 || pkg.Body.Contains("doorzetten", StringComparison.OrdinalIgnoreCase),
                 pkg.Body);
-            Assert.InRange(pkg.GrowthCompetencies.Count, 1, 5);
+            Assert.InRange(pkg.GrowthCompetencies.Count, 0, 5);
             Assert.DoesNotContain("Wat betreft doorzetten", pkg.Body, StringComparison.OrdinalIgnoreCase);
         }
     }
@@ -143,9 +143,8 @@ public sealed class PupilG78FactStoryTests
                  })
         {
             var pkg = PupilG78FactStory.Build(result, progress, "nl");
-            var all = new List<string> { pkg.Body };
-            all.AddRange(pkg.Tiles.Select(t => t.Explanation));
-            Assert.False(PupilG78AnswerConflicts.TextsContradict(all));
+            var overlaps = PupilG78PageCoherence.FindStrongWeakOverlaps(pkg, progress.AnswersJson);
+            Assert.True(overlaps.Count == 0, string.Join(", ", overlaps));
         }
     }
 

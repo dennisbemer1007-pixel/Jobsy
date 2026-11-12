@@ -28,10 +28,29 @@ public static class PupilG78GrowthCompetencies
 
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlySet<string>? excludedCategories = null,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> publishedStrongIds,
         string language = "nl")
     {
-        excludedCategories ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var averages = DimensionAverages(answers);
+        var excludedCategories = CompetencyTestCatalog.QuickScanCategories
+            .Where(cat => !PupilG78ItemThemes.GrowthCategoryAllowed(cat, publishedStrongIds, clauses))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return BuildCore(answers, excludedCategories, publishedStrongIds, language);
+    }
+
+    public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string>? excludedCategories = null,
+        string language = "nl")
+        => BuildCore(answers, excludedCategories ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase), null, language);
+
+    private static IReadOnlyList<PupilG78GrowthCompetencyDto> BuildCore(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string> excludedCategories,
+        IReadOnlySet<int>? publishedStrongIds,
+        string language)
+    {
         var averages = DimensionAverages(answers);
         if (averages.Count == 0)
         {
@@ -64,19 +83,27 @@ public static class PupilG78GrowthCompetencies
             list.Add(new PupilG78GrowthCompetencyDto(
                 category,
                 PupilG78CompetencyNarrative.KidLabelTitle(category),
-                WhyExplanation(stats, language),
+                WhyExplanation(stats, publishedStrongIds, language),
                 panelId));
         }
 
         if (list.Count == 0)
         {
-            var (category, _) = averages.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).First();
-            var stats = StatsForCategory(category, answers);
-            list.Add(new PupilG78GrowthCompetencyDto(
-                category,
-                PupilG78CompetencyNarrative.KidLabelTitle(category),
-                WhyExplanation(stats, language),
-                PanelId(category)));
+            var fallback = averages
+                .Where(kv => !excludedCategories.Contains(kv.Key))
+                .OrderBy(kv => kv.Value)
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .Select(kv => kv.Key)
+                .FirstOrDefault();
+            if (fallback is not null)
+            {
+                var stats = StatsForCategory(fallback, answers);
+                list.Add(new PupilG78GrowthCompetencyDto(
+                    fallback,
+                    PupilG78CompetencyNarrative.KidLabelTitle(fallback),
+                    WhyExplanation(stats, publishedStrongIds, language),
+                    PanelId(fallback)));
+            }
         }
 
         return list;
@@ -128,11 +155,15 @@ public static class PupilG78GrowthCompetencies
         return stats.HasLow || stats.OnlyMid || stats.Average <= 3.25;
     }
 
-    private static string WhyExplanation(DimensionStats stats, string language)
+    private static string WhyExplanation(
+        DimensionStats stats,
+        IReadOnlySet<int>? publishedStrongIds,
+        string language)
     {
         _ = language;
         var picks = stats.ItemScores
-            .Where(i => i.Effective <= 3)
+            .Where(i => i.Effective <= 3
+                        && (publishedStrongIds is null || !publishedStrongIds.Contains(i.ItemId)))
             .OrderBy(i => i.Effective)
             .ThenBy(i => i.ItemId)
             .Take(2)

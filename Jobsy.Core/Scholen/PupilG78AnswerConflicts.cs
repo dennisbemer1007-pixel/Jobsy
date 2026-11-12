@@ -21,6 +21,9 @@ public static class PupilG78AnswerConflicts
         ("muziek", "muziek"),
         ("driftig", "dr"),
         ("doorzet", "doorzet"),
+        ("groepje", "team"),
+        ("groepje", "samen"),
+        ("samen in een groepje", "deelt"),
     ];
 
     private static readonly Dictionary<int, ConflictProfile> LowProfiles = new()

@@ -19,10 +19,8 @@ public static class PupilG78StoryComposer
         IReadOnlyList<string> tileTexts,
         IReadOnlyList<int> tileLowItemIds,
         IReadOnlyList<string> storyStrongCategories,
-        IReadOnlySet<string> growthDimensionCategories,
         out IReadOnlyList<int> usedItemIds)
     {
-        _ = growthDimensionCategories;
         var pool = clauses.Where(c => !reservedItemIds.Contains(c.ItemId)).ToList();
         var usedIds = new HashSet<int>();
         var usedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -119,14 +117,19 @@ public static class PupilG78StoryComposer
 
         var topDims = storyStrongCategories.Take(3).ToList();
         var labels = topDims.Select(PupilG78CompetencyNarrative.KidLabel).ToList();
+        if (labels.Count == 0)
+        {
+            return "";
+        }
+
         var intro = labels.Count switch
         {
-            >= 2 => $"In je antwoorden komt vooral {JoinDutchList(labels)} naar voren.",
-            1 => $"In je antwoorden komt vooral {labels[0]} naar voren.",
+            >= 2 => $"Wat in je antwoorden vooral naar voren komt, is {JoinDutchList(labels)}.",
+            1 => $"Wat in je antwoorden vooral naar voren komt, is {labels[0]}.",
             _ => ""
         };
 
-        var support = new List<string>();
+        var examples = new List<string>();
         foreach (var dim in topDims)
         {
             var pick = pool.FirstOrDefault(c =>
@@ -149,27 +152,16 @@ public static class PupilG78StoryComposer
             var main = PupilG78StoryFlow.MainClause(pick);
             if (main.Length > 0)
             {
-                support.Add(main);
-            }
-
-            if (support.Count >= 3)
-            {
-                break;
+                examples.Add(main.TrimEnd('.'));
             }
         }
 
-        if (support.Count == 0)
+        if (examples.Count == 0)
         {
             return intro;
         }
 
-        var body = PupilG78StoryFlow.FlowJoin(support);
-        if (string.IsNullOrWhiteSpace(intro))
-        {
-            return body;
-        }
-
-        return $"{intro} {body}";
+        return $"{intro} Bijvoorbeeld: {string.Join(". ", examples)}.";
     }
 
     private static string ComposeLevenOpSchoolParagraph(
@@ -189,7 +181,7 @@ public static class PupilG78StoryComposer
             .Where(e => e.Leuk >= 4)
             .OrderByDescending(e => e.Leuk + e.Goed)
             .Take(3)
-            .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey).ToLowerInvariant())
+            .Select(e => PupilVakSubjectLabels.NlStoryList(e.SubjectKey))
             .ToList();
         var hobbies = HobbyLabels(progress, language)
             .Select(h => h.ToLowerInvariant())

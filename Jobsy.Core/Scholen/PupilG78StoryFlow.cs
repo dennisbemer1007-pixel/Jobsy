@@ -3,13 +3,6 @@ namespace Jobsy.Core.Scholen;
 /// <summary>Connects canonical je-clauses into flowing B1 paragraphs.</summary>
 internal static class PupilG78StoryFlow
 {
-    private static readonly string[] Openers =
-    [
-        "In je antwoorden zie je dat ",
-        "Je gaf aan dat ",
-        "Wat opvalt is dat ",
-    ];
-
     public static string MainClause(G78AnswerClause clause)
     {
         if (clause.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
@@ -22,6 +15,7 @@ internal static class PupilG78StoryFlow
                ?? PupilG78JeNarrative.AsSentence(clause.Text);
     }
 
+  /// <summary>At most one &quot;, en &quot; join; further sentences start new with &quot;. &quot;.</summary>
     public static string FlowJoin(IReadOnlyList<string> sentences)
     {
         var parts = sentences
@@ -38,73 +32,22 @@ internal static class PupilG78StoryFlow
             return parts[0] + ".";
         }
 
-        var sb = new System.Text.StringBuilder(parts[0]);
-        for (var i = 1; i < parts.Count; i++)
+        if (parts.Count == 2)
         {
-            var connector = i switch
-            {
-                1 => ", en ",
-                2 => ". Ook ",
-                _ => ". Daarbij ",
-            };
-            var next = FormatContinuation(parts[i], connector);
-            sb.Append(connector).Append(next);
+            return parts[0] + ", en " + LowerFirst(parts[1]) + ".";
         }
 
-        sb.Append('.');
-        return sb.ToString();
+        return string.Join(". ", parts.Select(LowerFirstIfNeeded)) + ".";
     }
 
-    public static string OptionalOpenerOnce(ref OpenerUse used, int index, string datClause)
+    private static string LowerFirstIfNeeded(string sentence)
     {
-        if (string.IsNullOrWhiteSpace(datClause))
+        if (sentence.StartsWith("Je ", StringComparison.Ordinal))
         {
-            return "";
+            return sentence;
         }
 
-        var key = Math.Abs(index) % Openers.Length;
-        if (key == 0 && used.Antwoorden)
-        {
-            key = 1;
-        }
-
-        if (key == 1 && used.GafAan)
-        {
-            key = 2;
-        }
-
-        if (key == 2 && used.Opvalt)
-        {
-            return "";
-        }
-
-        switch (key)
-        {
-            case 0:
-                used.Antwoorden = true;
-                return Openers[0] + datClause;
-            case 1:
-                used.GafAan = true;
-                return Openers[1] + datClause;
-            default:
-                used.Opvalt = true;
-                return Openers[2] + datClause;
-        }
-    }
-
-    private static string FormatContinuation(string sentence, string connector)
-    {
-        if (connector == ", en ")
-        {
-            return LowerFirst(sentence);
-        }
-
-        if (sentence.StartsWith("In ", StringComparison.Ordinal))
-        {
-            return "in " + sentence[3..];
-        }
-
-        return sentence;
+        return LowerFirst(sentence);
     }
 
     public static string LowerFirst(string sentence)
@@ -119,7 +62,7 @@ internal static class PupilG78StoryFlow
             return "je " + sentence[3..];
         }
 
-        if (sentence.Length >= 4 && char.IsUpper(sentence[0]))
+        if (sentence.Length >= 2 && char.IsUpper(sentence[0]))
         {
             return char.ToLowerInvariant(sentence[0]) + sentence[1..];
         }
@@ -134,28 +77,10 @@ internal static class PupilG78StoryFlow
             return text;
         }
 
-        var s = text
+        return text
             .Replace(", en Je ", ", en je ", StringComparison.Ordinal)
             .Replace(". Ook Je ", ". Ook je ", StringComparison.Ordinal)
-            .Replace(". Ook In ", ". Ook in ", StringComparison.Ordinal)
-            .Replace(". Ook\n", ". ", StringComparison.Ordinal);
-        if (s.EndsWith(" Ook", StringComparison.Ordinal)
-            || s.EndsWith(". Ook", StringComparison.Ordinal))
-        {
-            s = s[..s.LastIndexOf(" Ook", StringComparison.Ordinal)].TrimEnd();
-            if (!s.EndsWith('.'))
-            {
-                s += ".";
-            }
-        }
-
-        return s;
-    }
-
-    internal struct OpenerUse
-    {
-        public bool Antwoorden;
-        public bool GafAan;
-        public bool Opvalt;
+            .Replace(". Daarbij Je ", ". Daarbij je ", StringComparison.Ordinal)
+            .Replace(". Ook In ", ". Ook in ", StringComparison.Ordinal);
     }
 }
