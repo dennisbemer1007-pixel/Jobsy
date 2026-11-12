@@ -15,18 +15,19 @@ public static class PupilG78StoryComposer
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vak,
         string language,
-        IReadOnlySet<int> reservedItemIds,
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<int> tileBlockedIds,
         IReadOnlyList<string> tileTexts,
         IReadOnlySet<string> growthCategories,
         IReadOnlyList<string> storyStrongCategories,
         IReadOnlyList<int> competencyExampleIds,
         out IReadOnlyList<int> usedItemIds)
     {
-        var pool = clauses.Where(c => !reservedItemIds.Contains(c.ItemId)).ToList();
-        var usedIds = new HashSet<int>(competencyExampleIds);
+        var pool = clauses.Where(c => !tileBlockedIds.Contains(c.ItemId)).ToList();
+        var usedIds = new HashSet<int>();
         var usedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var usedThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var id in reservedItemIds.Concat(competencyExampleIds))
+        foreach (var id in tileBlockedIds)
         {
             var key = PupilG78ThemeKeys.DedupeKey(id);
             if (key is not null)
@@ -35,97 +36,108 @@ public static class PupilG78StoryComposer
             }
         }
 
-        var selected = reservedItemIds.ToHashSet();
+        var selected = tileBlockedIds.ToHashSet();
         var avoidSimilar = new List<string>(tileTexts);
         var paragraphs = new List<string>();
 
-        var mensen = Pick(pool, clauses, selected, usedThemes, growthCategories, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 3, similarFilter: true);
+        var p1Sentences = new List<string>();
+        var mensen = Pick(pool, clauses, selected, usedThemes, growthCategories, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
         RememberAvoid(avoidSimilar, mensen);
         foreach (var m in mensen)
         {
+            p1Sentences.Add(PupilG78StoryFlow.MainClause(m));
             selected.Add(m.ItemId);
         }
 
-        var mensenExtra = PickCareerSocial(pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar, Math.Max(0, 4 - mensen.Count));
-        RememberAvoid(avoidSimilar, mensenExtra);
-        foreach (var m in mensenExtra)
+        if (p1Sentences.Count < 2)
         {
-            selected.Add(m.ItemId);
-        }
-
-        var p1Bits = mensen.Concat(mensenExtra).ToList();
-        if (p1Bits.Count < 2)
-        {
-            var culturePeople = Pick(pool, clauses, selected, usedThemes, growthCategories, G78StoryBeat.SchoolLater, usedCategories, usedIds, avoidSimilar, 2);
-            p1Bits = p1Bits.Concat(culturePeople).ToList();
-        }
-
-        p1Bits = p1Bits.Take(3).ToList();
-        if (p1Bits.Count >= 2)
-        {
-            paragraphs.Add(BuildFactParagraph(p1Bits));
-            RememberAvoid(avoidSimilar, p1Bits);
-            foreach (var bit in p1Bits)
+            var mensenExtra = PickCareerSocial(pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar, 2);
+            foreach (var m in mensenExtra)
             {
-                selected.Add(bit.ItemId);
+                p1Sentences.Add(PupilG78StoryFlow.MainClause(m));
+                selected.Add(m.ItemId);
+            }
+
+            RememberAvoid(avoidSimilar, mensenExtra);
+        }
+
+        if (p1Sentences.Count < 2)
+        {
+            var summary = PupilG78StorySummaries.SocialOverviewLine(result, answers);
+            if (summary.Length > 0)
+            {
+                p1Sentences.Add(summary);
             }
         }
 
+        if (p1Sentences.Count < 2)
+        {
+            p1Sentences.Add(PupilG78StorySummaries.SocialOverviewLine(result, answers));
+        }
+
+        if (p1Sentences.Count < 2)
+        {
+            p1Sentences.Add("Je bent vaak bezig met de mensen om je heen.");
+        }
+
+        paragraphs.Add(PupilG78StoryFlow.FlowJoin(p1Sentences.Take(3).ToList()));
+
         var competencyPara = ComposeCompetencyParagraph(
             clauses,
+            pool,
+            tileBlockedIds,
             storyStrongCategories,
             competencyExampleIds,
-            usedIds);
-        if (!string.IsNullOrWhiteSpace(competencyPara))
-        {
-            paragraphs.Add(competencyPara);
-        }
+            growthCategories,
+            answers,
+            usedIds,
+            selected,
+            usedThemes,
+            usedCategories,
+            avoidSimilar);
+        paragraphs.Add(string.IsNullOrWhiteSpace(competencyPara)
+            ? FallbackCompetencyParagraph(storyStrongCategories, answers, growthCategories)
+            : competencyPara);
 
-        var waarden = Pick(pool, clauses, selected, usedThemes, growthCategories, G78StoryBeat.Waarden, usedCategories, usedIds, avoidSimilar, 2);
-        RememberAvoid(avoidSimilar, waarden);
-        foreach (var w in waarden)
-        {
-            selected.Add(w.ItemId);
-        }
+        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(result, answers));
 
-        var career = PickCareerHighs(pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar, 2);
-        RememberAvoid(avoidSimilar, career);
-        foreach (var c in career)
-        {
-            selected.Add(c.ItemId);
-        }
+        paragraphs.Add(PupilG78StorySummaries.ComposeSchoolHobbiesRiasecParagraph(result, progress, vak, language));
 
-        var p3Bits = waarden.Concat(career).Take(4).ToList();
-        if (p3Bits.Count > 0)
-        {
-            paragraphs.Add(BuildFactParagraph(p3Bits));
-        }
-
-        var p4 = ComposeLevenOpSchoolParagraph(result, progress, vak, language, pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar);
-        if (!string.IsNullOrWhiteSpace(p4))
-        {
-            paragraphs.Add(p4);
-        }
-
-        PadParagraphsFromPool(paragraphs, pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar);
-        EnsureParagraphMinimums(paragraphs, pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar);
-
-        while (paragraphs.Count > 4)
-        {
-            paragraphs.RemoveAt(paragraphs.Count - 1);
-        }
-
-        paragraphs = paragraphs
-            .Where(p => p.Length > 0)
-            .Select(EnsureRichParagraph)
-            .Where(p => p.Length > 0)
-            .ToList();
+        EnsureEveryParagraphHasTwoSentences(paragraphs, answers, result, progress, vak, language);
+        PadMinimumStorySentences(paragraphs, answers, result, progress, vak, language);
 
         usedItemIds = usedIds.ToList();
         return paragraphs
+            .Where(p => p.Length > 0)
+            .Take(4)
             .Select(PupilG78StoryFlow.PolishConnectors)
             .Select(PupilQuestionStoryParaphrase.PolishJeForm)
             .ToList();
+    }
+
+    private static string FallbackCompetencyParagraph(
+        IReadOnlyList<string> storyStrongCategories,
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string> growthCategories)
+    {
+        var dims = storyStrongCategories.Count > 0
+            ? storyStrongCategories.Take(3).ToList()
+            : PupilG78GrowthCompetencies.TopStrongCategories(
+                    PupilG78GrowthCompetencies.DimensionAverages(answers), 3)
+                .Where(c => !growthCategories.Contains(c))
+                .ToList();
+        if (dims.Count == 0)
+        {
+            return "";
+        }
+
+        var intro = $"Wat in je antwoorden vooral naar voren komt, is {PupilG78CompetencyNarrative.JoinKidLabelList(dims)}.";
+        var summaries = dims
+            .Select(d => PupilG78StorySummaries.CompetencyStrengthLine(d, answers))
+            .Where(s => s.Length > 0)
+            .ToList();
+        return PupilG78StoryFlow.FlowJoin(
+            summaries.Count == 0 ? [intro] : [intro, .. summaries.Take(2)]);
     }
 
     public static string ScrubStoryAgainstTiles(string body, IReadOnlyList<string> tileTexts)
@@ -138,132 +150,210 @@ public static class PupilG78StoryComposer
         return string.Join(PupilG78FactStory.ParagraphBreak, scrubbed);
     }
 
-    private static string BuildFactParagraph(IReadOnlyList<G78AnswerClause> bits)
-    {
-        var sentences = bits
-            .Select(PupilG78StoryFlow.MainClause)
-            .Where(s => s.Length > 0)
-            .ToList();
-        return PupilG78StoryFlow.FlowJoin(sentences);
-    }
-
     private static string ComposeCompetencyParagraph(
         IReadOnlyList<G78AnswerClause> clauses,
+        List<G78AnswerClause> pool,
+        IReadOnlySet<int> tileBlockedIds,
         IReadOnlyList<string> storyStrongCategories,
         IReadOnlyList<int> competencyExampleIds,
-        HashSet<int> usedIds)
+        IReadOnlySet<string> growthCategories,
+        IReadOnlyDictionary<string, int> answers,
+        HashSet<int> usedIds,
+        HashSet<int> selected,
+        HashSet<string> usedThemes,
+        HashSet<string> usedCategories,
+        List<string> avoidSimilar)
     {
-        _ = usedIds;
+        _ = usedCategories;
+        _ = avoidSimilar;
         if (storyStrongCategories.Count == 0)
         {
             return "";
         }
 
         var topDims = storyStrongCategories.Take(3).ToList();
-        if (topDims.Count == 0)
-        {
-            return "";
-        }
-
         var intro = $"Wat in je antwoorden vooral naar voren komt, is {PupilG78CompetencyNarrative.JoinKidLabelList(topDims)}.";
-
+        var itemTails = new List<string>();
+        var summarySentences = new List<string>();
         var byId = clauses.ToDictionary(c => c.ItemId);
-        var examples = new List<string>();
+
         foreach (var dim in topDims)
         {
             G78AnswerClause? pick = null;
             foreach (var preferredId in PupilG78CompetencyExampleItems.ForCategory(dim))
             {
-                if (byId.TryGetValue(preferredId, out var preferred)
-                    && preferred.EffectiveScore >= 4
-                    && PupilG78CompetencyExampleItems.ItemMatchesCategory(preferredId, dim))
+                if (!byId.TryGetValue(preferredId, out var preferred)
+                    || preferred.EffectiveScore < 4
+                    || tileBlockedIds.Contains(preferredId)
+                    || PupilG78OppositePairs.WouldCreatePageTension(preferredId, selected)
+                    || PupilG78StrengthGuard.IsForbiddenStrength(preferredId, preferred.EffectiveScore, growthCategories))
                 {
-                    pick = preferred;
-                    break;
+                    continue;
                 }
+
+                pick = preferred;
+                break;
             }
 
-            pick ??= clauses
-                .Where(c => c.EffectiveScore >= 4
-                            && PupilG78ItemDimensionMap.DimensionsFor(c.ItemId).Contains(dim))
-                .OrderByDescending(c => competencyExampleIds.Contains(c.ItemId))
-                .ThenByDescending(c => PupilG78CompetencyExampleItems.ForCategory(dim).Contains(c.ItemId))
-                .ThenByDescending(c => c.EffectiveScore)
-                .ThenBy(c => c.ItemId)
-                .FirstOrDefault();
-
             if (pick is null)
+            {
+                pick = pool
+                    .Where(c => c.EffectiveScore >= 4
+                                && !usedIds.Contains(c.ItemId)
+                                && PupilG78ItemDimensionMap.DimensionsFor(c.ItemId).Contains(dim)
+                                && !PupilG78OppositePairs.WouldCreatePageTension(c.ItemId, selected)
+                                && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
+                    .OrderByDescending(c => competencyExampleIds.Contains(c.ItemId))
+                    .ThenByDescending(c => c.EffectiveScore)
+                    .ThenBy(c => c.ItemId)
+                    .FirstOrDefault();
+            }
+
+            if (pick is not null)
+            {
+                var tail = CompetencyExampleTail(pick.ItemId);
+                if (tail.Length > 0)
+                {
+                    itemTails.Add(tail);
+                }
+
+                usedIds.Add(pick.ItemId);
+                selected.Add(pick.ItemId);
+                RememberTheme(pick.ItemId, usedThemes);
+                continue;
+            }
+
+            var summary = PupilG78StorySummaries.CompetencyStrengthLine(dim, answers);
+            if (summary.Length > 0)
+            {
+                summarySentences.Add(summary);
+            }
+        }
+
+        while (itemTails.Count + summarySentences.Count < topDims.Count)
+        {
+            var dim = topDims[itemTails.Count + summarySentences.Count];
+            var summary = PupilG78StorySummaries.CompetencyStrengthLine(dim, answers);
+            if (summary.Length == 0 || summarySentences.Contains(summary))
+            {
+                break;
+            }
+
+            summarySentences.Add(summary);
+        }
+
+        var chunks = new List<string> { intro };
+        if (itemTails.Count > 0)
+        {
+            chunks.Add(ComposeMerktExamplesSentence(itemTails));
+        }
+
+        chunks.AddRange(summarySentences);
+        return string.Join(' ', chunks).Replace("  ", " ").Trim();
+    }
+
+    private static string ComposeMerktExamplesSentence(IReadOnlyList<string> tails) => tails.Count switch
+    {
+        1 => $"Je merkt het bijvoorbeeld {tails[0]}.",
+        2 => $"Je merkt het bijvoorbeeld {tails[0]}, en {tails[1]}.",
+        _ => $"Je merkt het bijvoorbeeld {tails[0]}, en {tails[1]}. Ook {tails[2]}."
+    };
+
+    private static string CompetencyExampleTail(int itemId)
+    {
+        var dat = PupilG78QuestionDatForms.ForItem(itemId);
+        if (!string.IsNullOrWhiteSpace(dat))
+        {
+            return "dat " + dat.TrimEnd('.');
+        }
+
+        var je = PupilG78QuestionJeForms.ForItem(itemId);
+        if (string.IsNullOrWhiteSpace(je))
+        {
+            return "";
+        }
+
+        je = je.TrimEnd('.');
+        if (je.StartsWith("Je ", StringComparison.Ordinal))
+        {
+            return "dat " + char.ToLowerInvariant(je[3]) + je[4..];
+        }
+
+        return je;
+    }
+
+    private static void EnsureEveryParagraphHasTwoSentences(
+        List<string> paragraphs,
+        IReadOnlyDictionary<string, int> answers,
+        PupilResult result,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vak,
+        string language)
+    {
+        _ = progress;
+        _ = vak;
+        _ = language;
+        for (var i = 0; i < paragraphs.Count; i++)
+        {
+            if (SentenceCount(paragraphs[i]) >= 2)
             {
                 continue;
             }
 
-            var main = PupilG78StoryFlow.MainClause(pick);
-            if (main.Length > 0)
+            var extra = i switch
             {
-                examples.Add(main.TrimEnd('.'));
+                0 => PupilG78StorySummaries.SocialOverviewLine(result, answers),
+                1 => PupilG78StorySummaries.CompetencyStrengthLine(
+                    CompetencyTestCatalog.Samenwerken, answers),
+                2 => PupilG78StorySummaries.TopCultureSummary(result.TopCulture),
+                _ => PupilG78StorySummaries.RiasecTopTwoSentence(result)
+            };
+            if (extra.Length == 0 || paragraphs[i].Contains(extra.TrimEnd('.'), StringComparison.Ordinal))
+            {
+                continue;
             }
-        }
 
-        if (examples.Count == 0)
-        {
-            return intro;
+            paragraphs[i] = PupilG78StoryFlow.FlowJoin([paragraphs[i].TrimEnd('.'), extra]);
         }
-
-        return $"{intro} Bijvoorbeeld: {string.Join(". ", examples).TrimEnd('.')}.";
     }
 
-    private static string ComposeLevenOpSchoolParagraph(
+    private static void PadMinimumStorySentences(
+        List<string> paragraphs,
+        IReadOnlyDictionary<string, int> answers,
         PupilResult result,
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vak,
-        string language,
-        List<G78AnswerClause> pool,
-        IReadOnlyList<G78AnswerClause> allClauses,
-        HashSet<int> selected,
-        HashSet<string> usedThemes,
-        IReadOnlySet<string> growthCategories,
-        HashSet<int> usedIds,
-        HashSet<string> usedCategories,
-        List<string> avoidSimilar)
+        string language)
     {
-        var sentences = new List<string>();
-        var vakNames = vak
-            .Where(e => e.Leuk >= 4)
-            .OrderByDescending(e => e.Leuk + e.Goed)
-            .Take(3)
-            .Select(e => PupilVakSubjectLabels.NlStoryList(e.SubjectKey))
-            .ToList();
-        var hobbies = HobbyLabels(progress, language)
-            .Select(h => h.ToLowerInvariant())
-            .ToList();
-        if (vakNames.Count > 0)
+        _ = progress;
+        _ = vak;
+        _ = language;
+        var padByIndex = new Dictionary<int, Func<string>>
         {
-            sentences.Add($"Op school vind je vooral {JoinDutchList(vakNames)} leuk.");
-        }
+            [0] = () => PupilG78StorySummaries.SocialOverviewLine(result, answers),
+            [1] = () => PupilG78StorySummaries.CompetencyStrengthLine(CompetencyTestCatalog.Innovatie, answers),
+            [2] = () => PupilG78StorySummaries.TopValueSummary(result.TopValue),
+            [3] = () => PupilG78StorySummaries.RiasecTopTwoSentence(result),
+        };
 
-        if (hobbies.Count > 0)
+        for (var round = 0; round < 2 && paragraphs.Sum(p => SentenceCount(p)) < 8; round++)
         {
-            sentences.Add($"In je vrije tijd ben je graag bezig met {JoinDutchList(hobbies)}.");
-        }
-
-        var culture = Pick(pool, allClauses, selected, usedThemes, growthCategories, G78StoryBeat.SchoolLater, usedCategories, usedIds, avoidSimilar, 2);
-        RememberAvoid(avoidSimilar, culture);
-        foreach (var c in culture.Take(Math.Max(0, 4 - sentences.Count)))
-        {
-            var sent = PupilG78StoryFlow.MainClause(c);
-            if (!string.IsNullOrWhiteSpace(sent))
+            for (var i = 0; i < paragraphs.Count && paragraphs.Sum(p => SentenceCount(p)) < 8; i++)
             {
-                sentences.Add(sent);
+                if (SentenceCount(paragraphs[i]) >= 3 || !padByIndex.TryGetValue(i, out var pick))
+                {
+                    continue;
+                }
+
+                var extra = pick();
+                if (extra.Length == 0 || paragraphs[i].Contains(extra.TrimEnd('.'), StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                paragraphs[i] = PupilG78StoryFlow.FlowJoin([paragraphs[i].TrimEnd('.'), extra]);
             }
         }
-
-        var dream = DreamPhrase(result, progress, language);
-        if (!string.IsNullOrWhiteSpace(dream) && sentences.Count < 4)
-        {
-            sentences.Add(dream);
-        }
-
-        return sentences.Count == 0 ? "" : PupilG78StoryFlow.FlowJoin(sentences);
     }
 
     private static IReadOnlyList<G78AnswerClause> PickCareerSocial(
@@ -321,179 +411,6 @@ public static class PupilG78StoryComposer
         }
 
         return picked;
-    }
-
-    private static IReadOnlyList<G78AnswerClause> PickCareerHighs(
-        List<G78AnswerClause> pool,
-        IReadOnlyList<G78AnswerClause> allClauses,
-        HashSet<int> selected,
-        HashSet<string> usedThemes,
-        IReadOnlySet<string> growthCategories,
-        HashSet<int> usedIds,
-        HashSet<string> usedCategories,
-        List<string> avoidSimilar,
-        int max)
-    {
-        var blocked = PupilG78OppositePairs.BlockedItems(allClauses, selected);
-        var picked = new List<G78AnswerClause>();
-        foreach (var c in pool
-                     .Where(c => c.Model == AssessmentKind.Career
-                                 && c.Beat == G78StoryBeat.Doen
-                                 && c.EffectiveScore >= 4
-                                 && !usedIds.Contains(c.ItemId)
-                                 && !blocked.Contains(c.ItemId)
-                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
-                     .OrderByDescending(c => c.EffectiveScore)
-                     .ThenBy(c => c.ItemId))
-        {
-            if (picked.Count > 0 && PupilG78JeNarrative.TooSimilar(picked[0].Text, c.Text))
-            {
-                continue;
-            }
-
-            if (avoidSimilar.Any(t => PupilG78JeNarrative.TooSimilar(t, c.Text)))
-            {
-                continue;
-            }
-
-            if (ThemeBlocked(c.ItemId, usedThemes))
-            {
-                continue;
-            }
-
-            if (PupilG78OppositePairs.WouldCreatePageTension(c.ItemId, selected))
-            {
-                continue;
-            }
-
-            picked.Add(c);
-            selected.Add(c.ItemId);
-            RememberTheme(c.ItemId, usedThemes);
-            usedCategories.Add(c.Category);
-            usedIds.Add(c.ItemId);
-            if (picked.Count >= max)
-            {
-                break;
-            }
-        }
-
-        return picked;
-    }
-
-    private static void PadParagraphsFromPool(
-        List<string> paragraphs,
-        List<G78AnswerClause> pool,
-        IReadOnlyList<G78AnswerClause> allClauses,
-        HashSet<int> selected,
-        HashSet<string> usedThemes,
-        IReadOnlySet<string> growthCategories,
-        HashSet<int> usedIds,
-        HashSet<string> usedCategories,
-        List<string> avoidSimilar)
-    {
-        while (paragraphs.Count < 3)
-        {
-            var extra = Pick(pool, allClauses, selected, usedThemes, growthCategories, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, 2);
-            if (extra.Count == 0)
-            {
-                break;
-            }
-
-            paragraphs.Add(BuildFactParagraph(extra));
-            RememberAvoid(avoidSimilar, extra);
-        }
-
-        for (var i = 0; i < paragraphs.Count && paragraphs.Count <= 4; i++)
-        {
-            if (SentenceCount(paragraphs[i]) >= 3)
-            {
-                continue;
-            }
-
-            var need = 3 - SentenceCount(paragraphs[i]);
-            var fill = Pick(pool, allClauses, selected, usedThemes, growthCategories, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, need);
-            if (fill.Count == 0)
-            {
-                continue;
-            }
-
-            var extraSentences = fill
-                .Select(PupilG78StoryFlow.MainClause)
-                .Where(s => s.Length > 0)
-                .ToList();
-            if (extraSentences.Count == 0)
-            {
-                continue;
-            }
-
-            var merged = PupilG78StoryFlow.FlowJoin([paragraphs[i].TrimEnd('.'), ..extraSentences]);
-            paragraphs[i] = merged;
-            RememberAvoid(avoidSimilar, fill);
-        }
-    }
-
-    private static void EnsureParagraphMinimums(
-        List<string> paragraphs,
-        List<G78AnswerClause> pool,
-        IReadOnlyList<G78AnswerClause> allClauses,
-        HashSet<int> selected,
-        HashSet<string> usedThemes,
-        IReadOnlySet<string> growthCategories,
-        HashSet<int> usedIds,
-        HashSet<string> usedCategories,
-        List<string> avoidSimilar)
-    {
-        while (paragraphs.Count < 3)
-        {
-            var beat = paragraphs.Count switch
-            {
-                0 => G78StoryBeat.Samen,
-                1 => G78StoryBeat.Waarden,
-                _ => G78StoryBeat.Doen
-            };
-            var extra = Pick(pool, allClauses, selected, usedThemes, growthCategories, beat, usedCategories, usedIds, avoidSimilar, 2);
-            if (extra.Count == 0)
-            {
-                break;
-            }
-
-            paragraphs.Add(BuildFactParagraph(extra));
-            RememberAvoid(avoidSimilar, extra);
-        }
-
-        for (var i = 0; i < paragraphs.Count; i++)
-        {
-            if (SentenceCount(paragraphs[i]) >= 2)
-            {
-                continue;
-            }
-
-            var fill = Pick(pool, allClauses, selected, usedThemes, growthCategories, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, 2 - SentenceCount(paragraphs[i]) + 1);
-            if (fill.Count == 0)
-            {
-                continue;
-            }
-
-            var merged = PupilG78StoryFlow.FlowJoin(
-                [paragraphs[i].TrimEnd('.'), ..fill.Select(PupilG78StoryFlow.MainClause).Where(s => s.Length > 0)]);
-            paragraphs[i] = merged;
-            RememberAvoid(avoidSimilar, fill);
-        }
-
-        if (paragraphs.Count == 3 && pool.Any(c => c.EffectiveScore >= 4 && !usedIds.Contains(c.ItemId)))
-        {
-            var tail = Pick(pool, allClauses, selected, usedThemes, growthCategories, G78StoryBeat.SchoolLater, usedCategories, usedIds, avoidSimilar, 2);
-            if (tail.Count >= 2)
-            {
-                paragraphs.Add(BuildFactParagraph(tail));
-                RememberAvoid(avoidSimilar, tail);
-            }
-        }
-    }
-
-    private static string EnsureRichParagraph(string paragraph)
-    {
-        return SentenceCount(paragraph) >= 2 ? paragraph : paragraph;
     }
 
     private static string ScrubTileOverlap(string paragraph, IReadOnlyList<string> tileTexts)

@@ -16,6 +16,13 @@ public static class PupilG78StrengthGuard
             return false;
         }
 
+        var bank = new PupilQuestionBank();
+        var q = bank.Questions.FirstOrDefault(x => x.Id == itemId);
+        if (q is not null && q.Model != AssessmentKind.Competence)
+        {
+            return false;
+        }
+
         var competenceCat = PupilG78ItemThemes.CompetenceCategory(itemId);
         if (competenceCat is not null
             && growthCategories.Contains(competenceCat))

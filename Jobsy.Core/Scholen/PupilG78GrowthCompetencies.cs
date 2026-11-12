@@ -32,7 +32,7 @@ public static class PupilG78GrowthCompetencies
         int maxCount = 5)
         => CompetencyTestCatalog.QuickScanCategories
             .Select(cat => (Category: cat, Stats: StatsForCategory(cat, answers)))
-            .Where(x => x.Stats.Average < 3.0 || x.Stats.HasLow)
+            .Where(x => x.Stats.Average < 3.0 || (x.Stats.HasLow && x.Stats.Average < 3.35))
             .OrderBy(x => x.Stats.Average)
             .ThenBy(x => x.Category, StringComparer.Ordinal)
             .Take(maxCount)

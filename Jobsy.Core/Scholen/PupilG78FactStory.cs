@@ -60,7 +60,7 @@ public static class PupilG78FactStory
             clauses,
             growthCategorySet,
             blockedIds: new HashSet<int>(),
-            maxPerTile: 2);
+            maxPerTile: 3);
         var tilePlanIds = tilePlan.Values.SelectMany(v => v).ToHashSet();
         var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(
             clauses,
@@ -76,7 +76,8 @@ public static class PupilG78FactStory
             progress,
             vak,
             language,
-            blockedForStory,
+            answers,
+            tilePlanIds,
             tilePreviewTexts,
             growthCategorySet,
             storyStrongCategories,
@@ -86,9 +87,7 @@ public static class PupilG78FactStory
         var (tiles, tileIds) = PupilG78FactTileComposer.BuildFromPlan(
             clauses, language, tilePlan, growthCategorySet);
         var tileIdSet = tileIds.ToHashSet();
-        var body = PupilG78StoryComposer.ScrubStoryAgainstTiles(
-            string.Join(ParagraphBreak, paragraphs),
-            tiles.Select(t => t.Explanation).ToList());
+        var body = string.Join(ParagraphBreak, paragraphs);
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
         var growth = PupilG78GrowthCompetencies.BuildForCategories(
             answers,

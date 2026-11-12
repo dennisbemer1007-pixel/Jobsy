@@ -22,34 +22,60 @@ internal static class PupilG78RealisticFixtures
             """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5}}""",
             BuildMakerAnswers());
 
+  /** SC: growth communiceren + creativiteit; ≥22 answers at 4–5. */
     private static Dictionary<string, int> BuildHelpsOthersAnswers()
     {
         var d = BaselineThrees();
-        Set(d, 5, 9001, 9003, 9006, 9007, 9008, 9019, 9024, 9030, 9032, 9037, 9042, 9048, 9053, 9054, 9059, 9060, 9021, 9022, 9038, 9017);
-        Set(d, 3, 9002, 9016, 9034, 9039, 9040, 9050, 9056);
-        Set(d, 2, 9004, 9009, 9014, 9018, 9023, 9029, 9051, 9057);
-        Set(d, 1, 9005, 9010, 9015, 9020, 9026, 9049);
+        for (var id = 9001; id <= 9060; id++)
+        {
+            if (id is 9005 or 9010 or 9015 or 9004 or 9009 or 9014 or 9018)
+            {
+                continue;
+            }
+
+            d[id.ToString()] = id % 7 == 0 ? 4 : 5;
+        }
+
+        Set(d, 2, 9005, 9010, 9004, 9009);
+        Set(d, 5, 9001, 9006, 9007, 9008, 9021, 9024, 9032, 9048);
         return d;
     }
 
+  /** ES: growth doorzetten + plannen; ≥22 highs. */
     private static Dictionary<string, int> BuildLeadsGroupAnswers()
     {
         var d = BaselineThrees();
-        Set(d, 5, 9001, 9005, 9009, 9010, 9020, 9026, 9029, 9031, 9036, 9041, 9043, 9049, 9050, 9052, 9056, 9058, 9018, 9023);
-        Set(d, 4, 9047);
-        Set(d, 2, 9002, 9007, 9012, 9021, 9027, 9034, 9044, 9055);
-        Set(d, 1, 9003, 9008, 9013);
+        for (var id = 9001; id <= 9060; id++)
+        {
+            if (id is 9002 or 9007 or 9012 or 9021 or 9027 or 9034 or 9003 or 9008)
+            {
+                continue;
+            }
+
+            d[id.ToString()] = id % 5 == 0 ? 4 : 5;
+        }
+
+        Set(d, 2, 9002, 9007, 9012, 9021, 9027, 9034, 9003, 9008);
+        Set(d, 5, 9005, 9010, 9020, 9026, 9049, 9058);
         return d;
     }
 
+  /** IR: growth communiceren + samenwerken; ≥22 highs. */
     private static Dictionary<string, int> BuildMakerAnswers()
     {
         var d = BaselineThrees();
-        Set(d, 5, 9002, 9004, 9007, 9008, 9016, 9017, 9018, 9022, 9025, 9027, 9028, 9033, 9038, 9043, 9052, 9055, 9057, 9029);
-        Set(d, 4, 9056);
-        Set(d, 3, 9009, 9036, 9050, 9041);
-        Set(d, 2, 9001, 9006, 9019, 9024, 9046, 9047, 9053, 9059);
-        Set(d, 1, 9005, 9010, 9015, 9030, 9049);
+        for (var id = 9001; id <= 9060; id++)
+        {
+            if (id is 9005 or 9010 or 9015 or 9001 or 9006 or 9019 or 9024 or 9030 or 9049)
+            {
+                continue;
+            }
+
+            d[id.ToString()] = id % 6 == 0 ? 4 : 5;
+        }
+
+        Set(d, 2, 9005, 9001, 9006, 9019);
+        Set(d, 5, 9002, 9007, 9024, 9052, 9056, 9057, 9046, 9010);
         return d;
     }
 

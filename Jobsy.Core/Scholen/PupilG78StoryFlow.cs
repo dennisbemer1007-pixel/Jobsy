@@ -34,12 +34,7 @@ internal static class PupilG78StoryFlow
 
         if (parts.Count == 2)
         {
-            return parts[0] + ", en " + LowerFirst(parts[1]) + ".";
-        }
-
-        if (parts.Count == 0)
-        {
-            return "";
+            return parts[0] + ". " + LowerFirstIfNeeded(parts[1]) + ".";
         }
 
         var merged = new List<string> { parts[0] };
@@ -90,6 +85,7 @@ internal static class PupilG78StoryFlow
             .Replace(", en Je ", ", en je ", StringComparison.Ordinal)
             .Replace(". Ook Je ", ". Ook je ", StringComparison.Ordinal)
             .Replace(". Daarbij Je ", ". Daarbij je ", StringComparison.Ordinal)
-            .Replace(". Ook In ", ". Ook in ", StringComparison.Ordinal);
+            .Replace(". In je vrije ", ". In je vrije ", StringComparison.Ordinal)
+            .Replace(". in de beroepentest", ". In de beroepentest", StringComparison.OrdinalIgnoreCase);
     }
 }

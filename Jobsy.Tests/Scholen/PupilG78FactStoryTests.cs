@@ -17,6 +17,30 @@ public sealed class PupilG78FactStoryTests
         Assert.DoesNotContain("Ook je ", pkg.Body, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [MemberData(nameof(RealisticFixtures))]
+    public void Realistic_fixtures_have_rich_story((PupilResult Result, PupilProgress Progress) fixture)
+    {
+        var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
+        var paragraphs = PupilG78FactStory.SplitParagraphs(pkg.Body);
+        Assert.InRange(paragraphs.Count, 3, 4);
+        var sentences = paragraphs.Sum(CountSentences);
+        Assert.InRange(sentences, 8, 14);
+        foreach (var p in paragraphs)
+        {
+            Assert.InRange(CountSentences(p), 2, 6);
+        }
+
+        Assert.DoesNotContain("Bijvoorbeeld:", pkg.Body, StringComparison.Ordinal);
+    }
+
+    public static IEnumerable<object[]> RealisticFixtures() =>
+    [
+        [PupilG78RealisticFixtures.HelpsOthers()],
+        [PupilG78RealisticFixtures.LeadsGroup()],
+        [PupilG78RealisticFixtures.Maker()],
+    ];
+
     [Fact]
     public void Story_uses_proper_je_grammar()
     {

@@ -11,7 +11,7 @@ public static class PupilG78ContentAllocation
         IReadOnlySet<string> growthCategories,
         int count = 3)
         => PupilG78GrowthCompetencies.TopStrongCategories(
-                PupilG78GrowthCompetencies.DimensionAverages(answers), 5)
+                PupilG78GrowthCompetencies.DimensionAverages(answers), 10)
             .Where(c => !growthCategories.Contains(c))
             .Take(count)
             .ToList();
