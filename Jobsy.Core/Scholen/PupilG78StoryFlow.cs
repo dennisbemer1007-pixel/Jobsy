@@ -49,7 +49,9 @@ internal static class PupilG78StoryFlow
 
     private static string LowerFirstIfNeeded(string sentence)
     {
-        if (sentence.StartsWith("Je ", StringComparison.Ordinal))
+        if (sentence.StartsWith("Je ", StringComparison.Ordinal)
+            || sentence.StartsWith("In je ", StringComparison.Ordinal)
+            || sentence.StartsWith("Op school", StringComparison.OrdinalIgnoreCase))
         {
             return sentence;
         }

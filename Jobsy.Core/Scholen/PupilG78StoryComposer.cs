@@ -33,7 +33,7 @@ public static class PupilG78StoryComposer
         RememberAvoid(avoidSimilar, mensen);
         var mensenExtra = PickCareerSocial(pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory, Math.Max(0, 3 - mensen.Count));
         RememberAvoid(avoidSimilar, mensenExtra);
-        var p1Bits = mensen.Concat(mensenExtra).Take(4).ToList();
+        var p1Bits = mensen.Concat(mensenExtra).Take(2).ToList();
         if (p1Bits.Count > 0)
         {
             paragraphs.Add(BuildFactParagraph(p1Bits));
