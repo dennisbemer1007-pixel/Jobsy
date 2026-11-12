@@ -133,7 +133,8 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         }
 
         string? mirrorBody = null;
-        IReadOnlyList<string>? g78LeukItems = null;
+        IReadOnlyList<string>? g78SchoolLeuk = null;
+        IReadOnlyList<string>? g78HobbyLeuk = null;
         IReadOnlyList<string>? g78BelangrijkItems = null;
         IReadOnlyList<PupilPassportRiasecBar>? riasecBars = null;
         IReadOnlyList<PupilPassportCultureSlider>? cultureSliders = null;
@@ -161,7 +162,8 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             var vak = PupilVakScores.Parse(progress?.VakScoresJson);
             mirrorBody = null;
             var factPkg = PupilG78FactStory.Build(result, progress, lang);
-            g78LeukItems = factPkg.Preferences.LeukItems;
+            g78SchoolLeuk = factPkg.Preferences.SchoolLeuk;
+            g78HobbyLeuk = factPkg.Preferences.HobbyLeuk;
             g78BelangrijkItems = factPkg.Preferences.BelangrijkItems;
             (riasecBars, g78RiasecPending) = PupilG78PassportPdfData.BuildRiasecBars(result);
             valueBars = PupilG78PassportPdfData.BuildValueBars(result);
@@ -266,7 +268,8 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             UsageParentTips: parentTips,
             UsageTeacherTips: teacherTips,
             ValueBars: valueBars,
-            G78LeukItems: g78LeukItems,
+            G78SchoolLeukItems: g78SchoolLeuk,
+            G78HobbyLeukItems: g78HobbyLeuk,
             G78BelangrijkItems: g78BelangrijkItems,
             G78RiasecPending: g78RiasecPending);
     }

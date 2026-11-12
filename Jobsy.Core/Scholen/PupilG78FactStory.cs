@@ -23,7 +23,8 @@ public sealed record G78AnswerClause(
     int EffectiveScore);
 
 public sealed record PupilG78PreferencesCompact(
-    IReadOnlyList<string> LeukItems,
+    IReadOnlyList<string> SchoolLeuk,
+    IReadOnlyList<string> HobbyLeuk,
     IReadOnlyList<string> BelangrijkItems);
 
 public sealed record PupilG78StoryPackage(
@@ -48,42 +49,10 @@ public static class PupilG78FactStory
         var answers = ParseAnswers(progress?.AnswersJson);
         var clauses = CollectClauses(answers, language);
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-        var usedIds = new List<int>();
-        var usedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var paragraphs = new List<string>();
-
-        var usedItemIds = new HashSet<int>();
-        AddParagraph(paragraphs, usedIds, usedCategories, usedItemIds, Pick(clauses, G78StoryBeat.Doen, usedCategories, usedItemIds, 2));
-        AddParagraph(paragraphs, usedIds, usedCategories, usedItemIds, Pick(clauses, G78StoryBeat.Samen, usedCategories, usedItemIds, 2));
-        AddParagraph(paragraphs, usedIds, usedCategories, usedItemIds, Pick(clauses, G78StoryBeat.Waarden, usedCategories, usedItemIds, 2));
-        var schoolBits = new List<string>();
-        schoolBits.AddRange(SchoolVakLines(vak));
-        schoolBits.AddRange(LikeLines(progress, language));
-        var later = LaterLine(result, progress, language);
-        if (!string.IsNullOrWhiteSpace(later))
-        {
-            schoolBits.Add(later);
-        }
-
-        if (schoolBits.Count > 0)
-        {
-            paragraphs.Add(string.Join(' ', schoolBits));
-        }
-
-        if (paragraphs.Count == 0)
-        {
-            paragraphs.Add(PupilVerhaalLocalized.IsEnglish(language)
-                ? "You answered the questions yourself. There is no right or wrong."
-                : "Je gaf zelf antwoord op de vragen. Er is geen goed of fout.");
-        }
-
-        while (paragraphs.Count > 4)
-        {
-            paragraphs.RemoveAt(paragraphs.Count - 2);
-        }
-
+        var paragraphs = PupilG78StoryComposer.ComposeParagraphs(
+            clauses, result, progress, vak, language, out var usedIds);
         var body = string.Join(ParagraphBreak, paragraphs);
-        var preferences = BuildPreferences(clauses, usedIds, progress, vak, language);
+        var preferences = BuildPreferences(clauses, answers, usedIds, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
         return new PupilG78StoryPackage(body, usedIds, preferences, sheet);
     }
@@ -102,81 +71,6 @@ public static class PupilG78FactStory
 
     public static string ForSpeakAloud(string body)
         => string.Join(' ', SplitParagraphs(body));
-
-    private static void AddParagraph(
-        List<string> paragraphs,
-        List<int> usedIds,
-        HashSet<string> usedCategories,
-        HashSet<int> usedItemIds,
-        IReadOnlyList<G78AnswerClause> picked)
-    {
-        if (picked.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var c in picked)
-        {
-            usedIds.Add(c.ItemId);
-            usedCategories.Add(c.Category);
-            usedItemIds.Add(c.ItemId);
-        }
-
-        paragraphs.Add(JoinFlowing(picked.Select(p => p.Text)));
-    }
-
-    private static string JoinFlowing(IEnumerable<string> parts)
-    {
-        var list = parts.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()).ToList();
-        if (list.Count == 0)
-        {
-            return "";
-        }
-
-        if (list.Count == 1)
-        {
-            return list[0];
-        }
-
-        var sb = new System.Text.StringBuilder();
-        sb.Append(list[0].TrimEnd('.')).Append('.');
-        for (var i = 1; i < list.Count; i++)
-        {
-            var next = list[i].Trim();
-            var conn = i == list.Count - 1 ? " Ook" : " Daarnaast";
-            if (next.StartsWith("In je vrije tijd", StringComparison.Ordinal)
-                || next.StartsWith("Op school", StringComparison.Ordinal)
-                || next.StartsWith("Later", StringComparison.Ordinal))
-            {
-                conn = " ";
-            }
-
-            if (conn is " Ook" or " Daarnaast" && next.StartsWith("Je ", StringComparison.Ordinal))
-            {
-                next = "je " + next[3..];
-            }
-
-            sb.Append(conn).Append(' ');
-            sb.Append(next.TrimEnd('.')).Append('.');
-        }
-
-        return sb.ToString();
-    }
-
-    private static IReadOnlyList<G78AnswerClause> Pick(
-        IReadOnlyList<G78AnswerClause> all,
-        G78StoryBeat beat,
-        HashSet<string> usedCategories,
-        HashSet<int> usedItemIds,
-        int max)
-        => all
-            .Where(c => c.Beat == beat
-                        && !usedCategories.Contains(c.Category)
-                        && !usedItemIds.Contains(c.ItemId))
-            .OrderByDescending(c => c.EffectiveScore)
-            .ThenBy(c => c.ItemId)
-            .Take(max)
-            .ToList();
 
     private static List<G78AnswerClause> CollectClauses(IReadOnlyDictionary<string, int> answers, string language)
     {
@@ -210,7 +104,7 @@ public static class PupilG78FactStory
                 q.Category,
                 q.Model,
                 BeatFor(q),
-                text,
+                PupilQuestionStoryParaphrase.PolishJeForm(text),
                 eff));
         }
 
@@ -224,9 +118,21 @@ public static class PupilG78FactStory
             return G78StoryBeat.Waarden;
         }
 
+        if (q.Model == AssessmentKind.Culture
+            && q.Category is Rules.CulturePersonalityCatalog.Collaboration
+                or Rules.CulturePersonalityCatalog.PeopleFirst)
+        {
+            return G78StoryBeat.Samen;
+        }
+
         if (q.Model == AssessmentKind.Culture)
         {
             return G78StoryBeat.SchoolLater;
+        }
+
+        if (q.Model == AssessmentKind.Career && q.Category is Rules.CareerTestCatalog.Social)
+        {
+            return G78StoryBeat.Samen;
         }
 
         if (q.Model == AssessmentKind.Career)
@@ -239,127 +145,110 @@ public static class PupilG78FactStory
             return G78StoryBeat.Samen;
         }
 
-        if (q.Model == AssessmentKind.Career && q.Category is Rules.CareerTestCatalog.Social)
-        {
-            return G78StoryBeat.Samen;
-        }
-
-        if (q.Model == AssessmentKind.Culture
-            && q.Category is Rules.CulturePersonalityCatalog.Collaboration
-                or Rules.CulturePersonalityCatalog.PeopleFirst)
-        {
-            return G78StoryBeat.Samen;
-        }
-
         return G78StoryBeat.Doen;
-    }
-
-    private static IEnumerable<string> SchoolVakLines(IReadOnlyList<PupilVakScoreEntry> vak)
-    {
-        var fun = vak
-            .Where(e => e.Leuk >= 4)
-            .OrderByDescending(e => e.Leuk + e.Goed)
-            .Take(3)
-            .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey))
-            .ToList();
-        if (fun.Count == 0)
-        {
-            yield break;
-        }
-
-        var joined = JoinDutchList(fun);
-        yield return $"Op school vind je {joined} leuk om te doen.";
-    }
-
-    private static IEnumerable<string> LikeLines(PupilProgress? progress, string language)
-    {
-        var likes = ParseChips(progress?.LikesJson);
-        var labels = likes
-            .Select(k => PupilPortalChipLabels.Label(k, language))
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Take(3)
-            .ToList();
-        if (!string.IsNullOrWhiteSpace(progress?.LikeOtherWord))
-        {
-            labels.Add(progress.LikeOtherWord.Trim());
-        }
-
-        if (labels.Count == 0)
-        {
-            yield break;
-        }
-
-        yield return "In je vrije tijd vind je " + JoinDutchList(labels) + " leuk.";
-    }
-
-    private static string? LaterLine(PupilResult result, PupilProgress? progress, string language)
-    {
-        var key = progress?.DreamJobKey ?? result.DreamJobKey;
-        if (string.IsNullOrWhiteSpace(key)
-            || string.Equals(key, PupilDreamJobFit.UndecidedKey, StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        var title = PupilPassportLocalizedCopy.JobTitle(key.Trim(), language);
-        return $"Later wil je misschien iets proberen als {title.ToLowerInvariant()}";
     }
 
     private static PupilG78PreferencesCompact BuildPreferences(
         IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlyDictionary<string, int> answers,
         IReadOnlyList<int> usedStoryIds,
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vak,
         string language)
     {
-        var used = usedStoryIds.ToHashSet();
-        var leuk = new List<string>();
-        leuk.AddRange(ParseChips(progress?.LikesJson)
-            .Select(k => PupilPortalChipLabels.Label(k, language))
-            .Where(s => !string.IsNullOrWhiteSpace(s)));
-        if (!string.IsNullOrWhiteSpace(progress?.LikeOtherWord))
-        {
-            leuk.Add(progress.LikeOtherWord.Trim());
-        }
-
-        leuk.AddRange(vak
+        var school = vak
             .Where(e => e.Leuk >= 4)
             .OrderByDescending(e => e.Leuk + e.Goed)
-            .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey)));
-
-        var belangrijk = clauses
-            .Where(c => c.Model == AssessmentKind.Values && !used.Contains(c.ItemId))
-            .OrderByDescending(c => c.EffectiveScore)
-            .ThenBy(c => c.ItemId)
-            .Take(4)
-            .Select(c => TrimForList(c.Text))
+            .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey))
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(5)
             .ToList();
 
+        var hobbies = ParseChips(progress?.LikesJson)
+            .Select(k => PupilPortalChipLabels.Label(k, language))
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (!string.IsNullOrWhiteSpace(progress?.LikeOtherWord))
+        {
+            hobbies.Add(progress.LikeOtherWord.Trim());
+        }
+
+        hobbies = DedupeHobbyVsSchool(hobbies, school).Take(6).ToList();
+
+        var belangrijk = new List<string>();
+        foreach (var item in Bank.AllItems.OrderBy(i => i.NumericId))
+        {
+            if (item.NumericId is < 9031 or > 9045)
+            {
+                continue;
+            }
+
+            if (!answers.TryGetValue(item.Id, out var raw))
+            {
+                continue;
+            }
+
+            var q = Bank.Questions.First(x => x.Id == item.NumericId);
+            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            if (eff < 4)
+            {
+                continue;
+            }
+
+            var shortLabel = PupilG78ValueShortLabels.ForItem(item.NumericId);
+            if (!string.IsNullOrWhiteSpace(shortLabel))
+            {
+                belangrijk.Add(shortLabel);
+            }
+        }
+
+        belangrijk = belangrijk.Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList();
         if (belangrijk.Count == 0)
         {
             belangrijk = clauses
-                .Where(c => c.Model == AssessmentKind.Culture && !used.Contains(c.ItemId))
+                .Where(c => c.Model == AssessmentKind.Values && c.EffectiveScore >= 4)
                 .OrderByDescending(c => c.EffectiveScore)
-                .Take(2)
-                .Select(c => TrimForList(c.Text))
+                .Select(c => PupilG78ValueShortLabels.FromClause(c.Text))
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Cast<string>()
+                .Take(4)
                 .ToList();
         }
 
-        return new PupilG78PreferencesCompact(
-            leuk.Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToList(),
-            belangrijk.Take(6).ToList());
+        _ = usedStoryIds;
+        return new PupilG78PreferencesCompact(school, hobbies, belangrijk);
     }
 
-    private static string TrimForList(string text)
+    private static List<string> DedupeHobbyVsSchool(List<string> hobbies, List<string> school)
     {
-        var t = text.Trim().TrimEnd('.');
-        if (t.StartsWith("Dit zei je minder vaak", StringComparison.Ordinal))
+        var result = new List<string>();
+        foreach (var h in hobbies)
         {
-            return t;
+            if (string.Equals(h, "Sport", StringComparison.OrdinalIgnoreCase)
+                && school.Any(s => s.Contains("gym", StringComparison.OrdinalIgnoreCase)))
+            {
+                result.Add(h);
+                continue;
+            }
+
+            if (string.Equals(h, "Natuur", StringComparison.OrdinalIgnoreCase)
+                && school.Any(s => s.Contains("natuur", StringComparison.OrdinalIgnoreCase)))
+            {
+                result.Add(h);
+                continue;
+            }
+
+            if (school.Any(s => string.Equals(s, h, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            result.Add(h);
         }
 
-        return t.Length > 72 ? t[..69] + "…" : t;
+        return result;
     }
 
     private static CandidateFactSheet BuildFactSheet(
@@ -422,11 +311,4 @@ public static class PupilG78FactStory
         }
     }
 
-    private static string JoinDutchList(IReadOnlyList<string> items) => items.Count switch
-    {
-        0 => "",
-        1 => items[0],
-        2 => $"{items[0]} en {items[1]}",
-        _ => string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
-    };
 }

@@ -86,7 +86,8 @@ public static class PupilPassportWebMapper
             FooterPrivacy: m.FooterPrivacy,
             MirrorBody: m.MirrorBody,
             SubjectGroups: subjectGroups.Count == 0 ? null : subjectGroups,
-            LeukItems: m.G78LeukItems,
+            SchoolLeukItems: m.G78SchoolLeukItems,
+            HobbyLeukItems: m.G78HobbyLeukItems,
             BelangrijkItems: m.G78BelangrijkItems);
     }
 
@@ -175,7 +176,8 @@ public sealed record PupilG78PassportWebDto(
     string FooterPrivacy = "",
     string? MirrorBody = null,
     IReadOnlyList<PupilG78PassportSubjectGroupDto>? SubjectGroups = null,
-    IReadOnlyList<string>? LeukItems = null,
+    IReadOnlyList<string>? SchoolLeukItems = null,
+    IReadOnlyList<string>? HobbyLeukItems = null,
     IReadOnlyList<string>? BelangrijkItems = null);
 
 public sealed record PupilG78PassportSubjectGroupDto(

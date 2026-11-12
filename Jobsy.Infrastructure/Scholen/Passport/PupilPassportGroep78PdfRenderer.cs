@@ -276,10 +276,9 @@ internal static class PupilPassportGroep78PdfRenderer
 
         page.Content().Column(col =>
         {
-            col.Spacing(Mm(7));
-            col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Page.Subjects"), null,
-                inner => inner.Element(x => G78LeukBelangrijkColumns(x, m))));
-            col.Item().Element(c => TalkBox(c, m, FirstTalkQuestions(m)));
+            col.Spacing(Mm(6));
+            col.Item().Element(x => G78LeukBelangrijkColumns(x, m));
+            col.Item().PaddingTop(Mm(4)).Element(c => TalkBox(c, m, FirstTalkQuestions(m)));
         });
     }
 
@@ -561,15 +560,63 @@ internal static class PupilPassportGroep78PdfRenderer
 
     private static void G78LeukBelangrijkColumns(IContainer c, PupilPassportPdfModel m)
     {
-        var leuk = m.G78LeukItems ?? m.Likes ?? [];
+        var school = m.G78SchoolLeukItems ?? [];
+        var hobby = m.G78HobbyLeukItems ?? m.Likes ?? [];
         var belangrijk = m.G78BelangrijkItems ?? [];
+        var showBelangrijk = belangrijk.Count > 0;
 
         c.Row(row =>
         {
-            row.RelativeItem().MinWidth(0).Element(left => PreferencesColumn(left, T(m, "LeerlingPassport.G78.Col.Leuk"), leuk));
-            row.ConstantItem(Mm(4.5f));
-            row.RelativeItem().MinWidth(0).Element(right => PreferencesColumn(right, T(m, "LeerlingPassport.G78.Col.Belangrijk"), belangrijk));
+            row.RelativeItem().MinWidth(0).Element(left => LeukGroupedColumn(left, m, school, hobby));
+            if (showBelangrijk)
+            {
+                row.ConstantItem(Mm(4.5f));
+                row.RelativeItem().MinWidth(0).Element(right =>
+                    PreferencesColumn(right, T(m, "LeerlingPassport.G78.Col.Belangrijk"), belangrijk));
+            }
         });
+    }
+
+    private static void LeukGroupedColumn(
+        IContainer c,
+        PupilPassportPdfModel m,
+        IReadOnlyList<string> school,
+        IReadOnlyList<string> hobby)
+    {
+        c.Background(CreamWarm)
+            .Border(1).BorderColor(Border)
+            .CornerRadius(Mm(1.5f))
+            .Padding(Mm(3.5f))
+            .Column(col =>
+            {
+                col.Item().Text(T(m, "LeerlingPassport.G78.Col.Leuk")).Bold().FontSize(10.5f).FontColor(Navy);
+                if (school.Count > 0)
+                {
+                    col.Item().PaddingTop(4).Text(T(m, "LeerlingPassport.G78.Col.OpSchool"))
+                        .FontSize(8.5f).SemiBold().FontColor(Muted);
+                    foreach (var item in school.Take(5))
+                    {
+                        col.Item().PaddingTop(2).Row(line => PreferenceBullet(line, item));
+                    }
+                }
+
+                if (hobby.Count > 0)
+                {
+                    col.Item().PaddingTop(school.Count > 0 ? 5 : 4)
+                        .Text(T(m, "LeerlingPassport.G78.Col.VrijeTijd"))
+                        .FontSize(8.5f).SemiBold().FontColor(Muted);
+                    foreach (var item in hobby.Take(6))
+                    {
+                        col.Item().PaddingTop(2).Row(line => PreferenceBullet(line, item));
+                    }
+                }
+            });
+    }
+
+    private static void PreferenceBullet(RowDescriptor line, string item)
+    {
+        line.ConstantItem(8).Text("·").FontSize(10f).FontColor(Gold);
+        line.RelativeItem().Text(TruncateLabel(item)).FontSize(9.5f).FontColor(Ink).LineHeight(1.35f);
     }
 
     private static void PreferencesColumn(IContainer c, string heading, IReadOnlyList<string> items)
@@ -581,19 +628,9 @@ internal static class PupilPassportGroep78PdfRenderer
             .Column(col =>
             {
                 col.Item().Text(heading).Bold().FontSize(10.5f).FontColor(Navy);
-                if (items.Count == 0)
-                {
-                    col.Item().PaddingTop(4).Text("—").FontSize(9f).FontColor(Muted);
-                    return;
-                }
-
                 foreach (var item in items.Take(8))
                 {
-                    col.Item().PaddingTop(3).Row(line =>
-                    {
-                        line.ConstantItem(8).Text("·").FontSize(10f).FontColor(Gold);
-                        line.RelativeItem().Text(TruncateLabel(item)).FontSize(9.5f).FontColor(Ink).LineHeight(1.35f);
-                    });
+                    col.Item().PaddingTop(3).Row(line => PreferenceBullet(line, item));
                 }
             });
     }

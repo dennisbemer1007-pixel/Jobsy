@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Scholen;
 
@@ -9,24 +10,37 @@ public sealed class PupilG78FactStoryTests
     public void Story_has_no_section_headings_and_uses_paragraphs()
     {
         var (result, progress) = FixtureHelpsOthers();
-        result.ScoringVersion = "g78-1";
         var pkg = PupilG78FactStory.Build(result, progress, "nl");
         var paragraphs = PupilG78FactStory.SplitParagraphs(pkg.Body);
         Assert.InRange(paragraphs.Count, 2, 4);
         Assert.DoesNotContain("Zo kom jij over", pkg.Body, StringComparison.Ordinal);
-        Assert.DoesNotContain("Dit vind je belangrijk", pkg.Body, StringComparison.Ordinal);
-        Assert.DoesNotContain("Belangrijk voor jou", pkg.Body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ook je ", pkg.Body, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Mentioned_items_map_to_answered_dimensions()
+    public void Story_uses_proper_je_grammar()
+    {
+        var fixtures = new[] { FixtureHelpsOthers(), FixtureLeadsGroup(), FixtureMaker() };
+        foreach (var (result, progress) in fixtures)
+        {
+            var body = PupilG78FactStory.Build(result, progress, "nl").Body;
+            Assert.DoesNotContain("Ook je ", body, StringComparison.Ordinal);
+            Assert.False(Regex.IsMatch(body, @"\bme\b", RegexOptions.IgnoreCase));
+            Assert.False(Regex.IsMatch(body, @"\bmij\b", RegexOptions.IgnoreCase));
+            Assert.False(Regex.IsMatch(body, @"\bmijn\b", RegexOptions.IgnoreCase));
+            Assert.DoesNotContain("om me heen", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("past je vindt", body, StringComparison.OrdinalIgnoreCase);
+            Assert.False(Regex.IsMatch(body, @"\b(groep|bent),?\s+helpt\s+graag", RegexOptions.IgnoreCase));
+            Assert.False(Regex.IsMatch(body, @"\bdat\s+(wilt|vindt|helpt)\s", RegexOptions.IgnoreCase));
+        }
+    }
+
+    [Fact]
+    public void Story_item_ids_are_unique_in_narrative()
     {
         var (result, progress) = FixtureHelpsOthers();
-        result.ScoringVersion = "g78-1";
         var pkg = PupilG78FactStory.Build(result, progress, "nl");
-        Assert.Contains("helpt", pkg.Body, StringComparison.OrdinalIgnoreCase);
-        Assert.True(pkg.UsedItemIds.Count > 0);
-        Assert.All(pkg.UsedItemIds, id => Assert.InRange(id, 9001, 9060));
+        Assert.Equal(pkg.UsedItemIds.Count, pkg.UsedItemIds.Distinct().Count());
     }
 
     [Fact]
@@ -38,17 +52,22 @@ public sealed class PupilG78FactStoryTests
     }
 
     [Fact]
-    public void Fallback_works_without_ai_and_preferences_skip_story_items()
+    public void School_subjects_in_story_match_fixture_vakken()
+    {
+        var (result, progress) = FixtureMaker();
+        var body = PupilG78FactStory.Build(result, progress, "nl").Body;
+        Assert.Contains("Natuur", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Engels en Gym", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Preferences_group_school_and_hobbies()
     {
         var (result, progress) = FixtureHelpsOthers();
-        result.ScoringVersion = "g78-1";
-        var pkg = PupilG78FactStory.Build(result, progress, "nl");
-        Assert.False(string.IsNullOrWhiteSpace(pkg.Body));
-        foreach (var used in pkg.UsedItemIds)
-        {
-            Assert.DoesNotContain(pkg.Preferences.BelangrijkItems,
-                t => t.Contains(PupilQuestionBankNlStrings.Get($"LeerlingQ.{used}"), StringComparison.Ordinal));
-        }
+        var prefs = PupilG78FactStory.Build(result, progress, "nl").Preferences;
+        Assert.Contains(prefs.SchoolLeuk, s => s.Contains("Teken", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(prefs.HobbyLeuk, s => s.Contains("Sport", StringComparison.OrdinalIgnoreCase));
+        Assert.NotEmpty(prefs.BelangrijkItems);
     }
 
     [Fact]
@@ -56,23 +75,42 @@ public sealed class PupilG78FactStoryTests
     {
         var renderer = new PupilStoryRenderer();
         var (result, progress) = FixtureHelpsOthers();
-        result.ScoringVersion = "g78-1";
         var view = renderer.Render(result, progress, "nl");
         Assert.Empty(view.Tiles);
         Assert.InRange(PupilG78FactStory.SplitParagraphs(view.Body).Count, 2, 4);
     }
 
+    [Fact]
+    public void Write_example_stories_for_pr()
+    {
+        var stories = new[]
+        {
+            ("Helpt anderen", PupilG78FactStory.Build(FixtureHelpsOthers().Result, FixtureHelpsOthers().Progress, "nl").Body),
+            ("Neemt voortouw", PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl").Body),
+            ("Maker", PupilG78FactStory.Build(FixtureMaker().Result, FixtureMaker().Progress, "nl").Body),
+        };
+        var text = string.Join("\n\n---\n\n", stories.Select(s => $"## {s.Item1}\n\n{s.Item2}"));
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        File.WriteAllText("/opt/cursor/artifacts/g78-dit-ben-jij-example-stories.md", text);
+    }
+
     private static (PupilResult Result, PupilProgress Progress) FixtureHelpsOthers()
     {
         var answers = NeutralAnswers();
-        foreach (var id in new[] { "9006", "9019", "9024", "9032", "9037", "9042" })
+        foreach (var id in new[] { "9006", "9019", "9024", "9032", "9037", "9042", "9007", "9021" })
         {
             answers[id] = 5;
         }
 
         answers["9016"] = 2;
+        answers["9015"] = 2;
         answers["9020"] = 2;
-        return Build(answers, """["sport","dieren"]""");
+        return Build(
+            answers,
+            """["sport","dieren"]""",
+            """{"tekenen":{"leuk":5,"goed":4},"muziek":{"leuk":5,"goed":3}}""",
+            "SC",
+            "Connection");
     }
 
     private static (PupilResult Result, PupilProgress Progress) FixtureLeadsGroup()
@@ -85,47 +123,12 @@ public sealed class PupilG78FactStoryTests
 
         answers["9019"] = 1;
         answers["9024"] = 1;
-        return Build(answers, """["theater","lezen"]""");
-    }
-
-    private static (PupilResult Result, PupilProgress Progress) Build(Dictionary<string, int> answers, string likes)
-    {
-        var id = Guid.NewGuid();
-        var result = new PupilResult
-        {
-            PupilCodeId = id,
-            ScoringVersion = "g78-1",
-            HollandCode = "SE",
-            TopValue = "Connection",
-            TopCulture = "Collaboration",
-            CompetenceScoresJson = """{"Samenwerken":80,"Resultaatgerichtheid":50,"Stressbestendigheid":50,"Innovatie":50,"Extraversie":70}""",
-            RiasecScoresJson = """{"Realistic":40,"Investigative":50,"Artistic":45,"Social":80,"Enterprising":75,"Conventional":40}""",
-            ValuesScoresJson = """{"Autonomy":50,"Connection":85,"Achievement":55,"Stability":45,"Impact":50}""",
-            CultureScoresJson = """{"Autonomy":55,"Informal":45,"Collaboration":70,"Flexibility":50,"Innovation":45,"PeopleFirst":60}"""
-        };
-        var progress = new PupilProgress
-        {
-            PupilCodeId = id,
-            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
-            LikesJson = likes,
-            VakScoresJson = """{"engels":{"leuk":5,"goed":4},"gym":{"leuk":4,"goed":5}}"""
-        };
-        return (result, progress);
-    }
-
-    [Fact]
-    public void Write_example_stories_for_pr()
-    {
-        var maker = FixtureMaker();
-        var stories = new[]
-        {
-            ("Helpt anderen", PupilG78FactStory.Build(FixtureHelpsOthers().Result, FixtureHelpsOthers().Progress, "nl").Body),
-            ("Neemt voortouw", PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl").Body),
-            ("Maker", PupilG78FactStory.Build(maker.Result, maker.Progress, "nl").Body),
-        };
-        var text = string.Join("\n\n---\n\n", stories.Select(s => $"## {s.Item1}\n\n{s.Item2}"));
-        Directory.CreateDirectory("/opt/cursor/artifacts");
-        File.WriteAllText("/opt/cursor/artifacts/g78-dit-ben-jij-example-stories.md", text);
+        return Build(
+            answers,
+            """["theater","lezen"]""",
+            """{"geschiedenis":{"leuk":5,"goed":4},"engels":{"leuk":4,"goed":5}}""",
+            "ES",
+            "Autonomy");
     }
 
     private static (PupilResult Result, PupilProgress Progress) FixtureMaker()
@@ -137,7 +140,42 @@ public sealed class PupilG78FactStoryTests
         }
 
         answers["9020"] = 1;
-        return Build(answers, """["techniek","natuur"]""");
+        return Build(
+            answers,
+            """["techniek","natuur"]""",
+            """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5}}""",
+            "IR",
+            "Achievement");
+    }
+
+    private static (PupilResult Result, PupilProgress Progress) Build(
+        Dictionary<string, int> answers,
+        string likes,
+        string vakJson,
+        string holland,
+        string topValue)
+    {
+        var id = Guid.NewGuid();
+        var result = new PupilResult
+        {
+            PupilCodeId = id,
+            ScoringVersion = "g78-1",
+            HollandCode = holland,
+            TopValue = topValue,
+            TopCulture = "Collaboration",
+            CompetenceScoresJson = """{"Samenwerken":80,"Resultaatgerichtheid":50,"Stressbestendigheid":50,"Innovatie":50,"Extraversie":70}""",
+            RiasecScoresJson = """{"Realistic":40,"Investigative":50,"Artistic":45,"Social":80,"Enterprising":75,"Conventional":40}""",
+            ValuesScoresJson = """{"Autonomy":50,"Connection":85,"Achievement":55,"Stability":45,"Impact":50}""",
+            CultureScoresJson = """{"Autonomy":55,"Informal":45,"Collaboration":70,"Flexibility":50,"Innovation":45,"PeopleFirst":60}"""
+        };
+        var progress = new PupilProgress
+        {
+            PupilCodeId = id,
+            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
+            LikesJson = likes,
+            VakScoresJson = vakJson
+        };
+        return (result, progress);
     }
 
     private static Dictionary<string, int> NeutralAnswers()

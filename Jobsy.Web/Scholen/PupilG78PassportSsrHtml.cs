@@ -72,28 +72,53 @@ public static class PupilG78PassportSsrHtml
 
         sb.Append("</section>");
 
-        if ((model.LeukItems is { Count: > 0 }) || (model.BelangrijkItems is { Count: > 0 }))
+        if ((model.SchoolLeukItems is { Count: > 0 })
+            || (model.HobbyLeukItems is { Count: > 0 })
+            || (model.BelangrijkItems is { Count: > 0 }))
         {
             sb.Append("<section class=\"lp-g78__card lp-g78__prefs\"><h3>");
             sb.Append(E(culture["LeerlingPassport.G78.Page.Subjects"]));
             sb.Append("</h3><div class=\"lp-g78__prefs-grid\">");
             sb.Append("<div class=\"lp-g78__prefs-col\"><h4>");
             sb.Append(E(culture["LeerlingPassport.G78.Col.Leuk"]));
-            sb.Append("</h4><ul>");
-            foreach (var item in model.LeukItems ?? [])
+            sb.Append("</h4>");
+            if (model.SchoolLeukItems is { Count: > 0 })
             {
-                sb.Append("<li>").Append(E(item)).Append("</li>");
+                sb.Append("<p class=\"lp-g78__prefs-k\">").Append(E(culture["LeerlingPassport.G78.Col.OpSchool"])).Append("</p><ul>");
+                foreach (var item in model.SchoolLeukItems)
+                {
+                    sb.Append("<li>").Append(E(item)).Append("</li>");
+                }
+
+                sb.Append("</ul>");
             }
 
-            sb.Append("</ul></div><div class=\"lp-g78__prefs-col\"><h4>");
-            sb.Append(E(culture["LeerlingPassport.G78.Col.Belangrijk"]));
-            sb.Append("</h4><ul>");
-            foreach (var item in model.BelangrijkItems ?? [])
+            if (model.HobbyLeukItems is { Count: > 0 })
             {
-                sb.Append("<li>").Append(E(item)).Append("</li>");
+                sb.Append("<p class=\"lp-g78__prefs-k\">").Append(E(culture["LeerlingPassport.G78.Col.VrijeTijd"])).Append("</p><ul>");
+                foreach (var item in model.HobbyLeukItems)
+                {
+                    sb.Append("<li>").Append(E(item)).Append("</li>");
+                }
+
+                sb.Append("</ul>");
             }
 
-            sb.Append("</ul></div></div></section>");
+            sb.Append("</div>");
+            if (model.BelangrijkItems is { Count: > 0 })
+            {
+                sb.Append("<div class=\"lp-g78__prefs-col\"><h4>");
+                sb.Append(E(culture["LeerlingPassport.G78.Col.Belangrijk"]));
+                sb.Append("</h4><ul>");
+                foreach (var item in model.BelangrijkItems)
+                {
+                    sb.Append("<li>").Append(E(item)).Append("</li>");
+                }
+
+                sb.Append("</ul></div>");
+            }
+
+            sb.Append("</div></section>");
         }
 
         if (model.Worlds is { Count: > 0 })

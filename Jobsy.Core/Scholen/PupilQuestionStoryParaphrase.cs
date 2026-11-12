@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Scholen;
@@ -104,15 +105,41 @@ public static class PupilQuestionStoryParaphrase
         }
 
         s = s.Replace(" ik ", " je ", StringComparison.Ordinal);
+        s = s.Replace("op mijn gemak", "op je gemak", StringComparison.Ordinal);
         s = s.Replace(" mijn ", " jouw ", StringComparison.Ordinal);
+        s = s.Replace(" mij ", " jou ", StringComparison.Ordinal);
+        s = s.Replace(" me ", " je ", StringComparison.Ordinal);
+        s = s.Replace(" mezelf", " jezelf", StringComparison.Ordinal);
+        s = s.Replace(" om me heen", " om je heen", StringComparison.Ordinal);
+        s = s.Replace(" voel me ", " voel je ", StringComparison.Ordinal);
         s = s.Replace("Ik ", "Je ", StringComparison.Ordinal);
         s = FixJeVerb(s);
+        s = s.Replace(" die ik ken", " die je kent", StringComparison.Ordinal);
+        s = s.Replace(" die je ken", " die je kent", StringComparison.Ordinal);
+        s = NormalizeHeelBelangrijk(s);
         if (!s.EndsWith('.'))
         {
             s += ".";
         }
 
         return s;
+    }
+
+    private static string NormalizeHeelBelangrijk(string s)
+    {
+        var m = Regex.Match(s, @"^Je vindt (.+) heel belangrijk\.?$");
+        if (!m.Success)
+        {
+            return s;
+        }
+
+        var topic = m.Groups[1].Value.Trim();
+        if (topic.StartsWith("vrijheid om ", StringComparison.Ordinal))
+        {
+            topic = topic["vrijheid om ".Length..];
+        }
+
+        return $"Je vindt het heel belangrijk om {topic}.";
     }
 
     private static string SoftOpposite(string stem)
@@ -152,10 +179,9 @@ public static class PupilQuestionStoryParaphrase
             .Replace("Je raak ", "Je raakt ", StringComparison.Ordinal)
             .Replace("Je doe ", "Je doet ", StringComparison.Ordinal)
             .Replace("Je voel ", "Je voelt ", StringComparison.Ordinal)
-            .Replace(" je doe", " je doet", StringComparison.Ordinal)
+            .Replace(" je doe.", " je doet.", StringComparison.Ordinal)
             .Replace(" je heb ", " je hebt ", StringComparison.Ordinal)
-            .Replace("Je doe ", "Je doet ", StringComparison.Ordinal)
-            .Replace("iets doe", "iets doet", StringComparison.Ordinal);
+            .Replace("Je doe ", "Je doet ", StringComparison.Ordinal);
     }
 
     private static readonly Dictionary<int, string> ItemPositiveOpposite = new()
@@ -168,4 +194,24 @@ public static class PupilQuestionStoryParaphrase
         [9055] = "Je voelt je op je gemak in een informele sfeer.",
         [9057] = "Je vindt het juist fijn om af en toe iets nieuws te doen.",
     };
+
+    public static string PolishJeForm(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        var s = text;
+        s = s.Replace("Ook je ", "Je ", StringComparison.Ordinal);
+        s = s.Replace("Ook vind je ", "Je vindt ook ", StringComparison.Ordinal);
+        s = Regex.Replace(s, @"\bdat\s+(wilt|vindt|helpt|neemt|houdt)\b", "dat je $1", RegexOptions.CultureInvariant);
+        s = Regex.Replace(s, @"\bTegelijk je\s+(vindt|helpt|neemt|wilt)\b", "Tegelijk $1 je", RegexOptions.CultureInvariant);
+        s = s.Replace("op jouw gemak", "op je gemak", StringComparison.Ordinal);
+        s = s.Replace("jouw spullen", "je spullen", StringComparison.Ordinal);
+        s = s.Replace(" voel me ", " voel je ", StringComparison.Ordinal);
+        s = s.Replace(" op mijn ", " op jouw ", StringComparison.Ordinal);
+        s = s.Replace(" me op ", " je op ", StringComparison.Ordinal);
+        return FixJeVerb(s);
+    }
 }

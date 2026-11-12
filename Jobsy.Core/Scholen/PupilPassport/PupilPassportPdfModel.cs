@@ -109,7 +109,8 @@ public sealed record PupilPassportPdfModel(
     IReadOnlyList<string>? UsageParentTips = null,
     IReadOnlyList<string>? UsageTeacherTips = null,
     IReadOnlyList<PupilPassportValueBar>? ValueBars = null,
-    IReadOnlyList<string>? G78LeukItems = null,
+    IReadOnlyList<string>? G78SchoolLeukItems = null,
+    IReadOnlyList<string>? G78HobbyLeukItems = null,
     IReadOnlyList<string>? G78BelangrijkItems = null,
     bool G78RiasecPending = false,
     /// <summary>Red-orange VOORBEELDDATA chrome (export/mock only).</summary>

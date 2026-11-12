@@ -22,9 +22,22 @@ public class ExportG78PassportSampleTests
     {
         var renderer = new PupilStoryRenderer();
         var builder = new PupilPassportPdfModelBuilder(renderer);
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (var id = 9001; id <= 9060; id++)
+        {
+            answers[id.ToString()] = 3;
+        }
+
+        answers["9032"] = 5;
+        answers["9037"] = 5;
+        answers["9042"] = 5;
+        answers["9016"] = 5;
+        answers["9028"] = 5;
+
         var result = new PupilResult
         {
             PupilCodeId = Guid.NewGuid(),
+            ScoringVersion = "g78-1",
             CompletedAtUtc = new DateTime(2026, 10, 14, 0, 0, 0, DateTimeKind.Utc),
             HollandCode = "RI",
             DreamJobKey = "kok",
@@ -61,6 +74,7 @@ public class ExportG78PassportSampleTests
             LikesJson = """["sport","natuur","techniek"]""",
             DislikesJson = """["lang-stilzitten"]""",
             DreamJobKey = "kok",
+            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
             VakScoresJson = System.Text.Json.JsonSerializer.Serialize(vakMap)
         };
 
