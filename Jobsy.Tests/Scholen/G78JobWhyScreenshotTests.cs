@@ -20,12 +20,11 @@ public sealed class G78JobWhyScreenshotTests
         var jsPath = Path.Combine(root, "Jobsy.Web/wwwroot/js/leerling-journey-ssr.js");
         var domSafe = Path.Combine(root, "Jobsy.Web/wwwroot/js/jobsy-dom-safe.js");
 
-        var artistic = PupilG78JobMatchExplanationTestsFixtures.ArtisticResult();
-        var progress = PupilG78JobMatchExplanationTestsFixtures.ProgressWithLikes(
-            ["tekenen"],
-            """{"9018":5}""");
-        var why = PupilG78JobMatchExplanation.Build("hovenier", PupilG78JobMatchExplanationTestsFixtures.TechResult(),
-            PupilG78JobMatchExplanationTestsFixtures.ProgressWithLikes(["techniek"], """{"9016":5,"9028":5}"""));
+        var progressH = PupilG78JobMatchExplanationTestsFixtures.ProgressWithLikes(
+            ["bouwen"],
+            """{"9016":5,"9028":5,"9002":5,"9007":5,"9003":2,"9008":2}""");
+        var why = PupilG78JobMatchExplanation.BuildHtml("hovenier",
+            PupilG78JobMatchExplanationTestsFixtures.TechResult(), progressH);
 
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
@@ -49,7 +48,7 @@ public sealed class G78JobWhyScreenshotTests
                 <div id="g78-job-why-hovenier" class="ll-info g78-job-why-panel is-open">
                 <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
                 <p class="g78-job-why-panel__title"><b>Waarom past dit bij jou?</b></p>
-                <p class="g78-job-why-panel__body">{{System.Net.WebUtility.HtmlEncode(why)}}</p>
+                <div class="g78-job-why-panel__body">{{why}}</div>
                 </div></div>
                 <div class="lp-g78__job-k">Natuur en buiten</div>
                 <h4>Hovenier</h4>
@@ -66,8 +65,6 @@ public sealed class G78JobWhyScreenshotTests
                 Path = $"/opt/cursor/artifacts/g78-paspoort-job-why-{suffix}.png",
                 FullPage = true
             });
-            _ = artistic;
-            _ = progress;
             await page.CloseAsync();
         }
     }

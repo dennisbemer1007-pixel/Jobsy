@@ -7,7 +7,7 @@ using Jobsy.Core.Scholen.PupilPassport;
 
 namespace Jobsy.Core.Scholen;
 
-/// <summary>Deterministic "Waarom past dit bij jou?" copy from score drivers and pupil answers (no AI, no invented facts).</summary>
+/// <summary>Deterministic G78 job info panel from mapped data only (no AI).</summary>
 public static class PupilG78JobMatchExplanation
 {
     public const int MinSentences = 3;
@@ -42,7 +42,15 @@ public static class PupilG78JobMatchExplanation
         ["fietsen-repareren"] = "natuur-techniek",
     };
 
-    private sealed record AnswerPhrase(int ItemId, string Subordinate, string MainAfterWant);
+    private static readonly string[] BannedPhrases =
+    [
+        "past bij dit beroep",
+        "Toch past het",
+        "Hier had je misschien zelf niet aan gedacht",
+        "In de vragen koos je vaak",
+    ];
+
+    private sealed record AnswerPhrase(int ItemId, string Subordinate);
 
     public static string Build(
         string jobKey,
@@ -50,8 +58,31 @@ public static class PupilG78JobMatchExplanation
         PupilProgress? progress,
         string language = "nl")
     {
-        var sentences = BuildSentences(jobKey, result, progress, language);
-        return string.Join(' ', sentences);
+        var panel = BuildContent(jobKey, result, progress, language);
+        return PupilVerhaalLocalized.IsEnglish(language)
+            ? panel.FormatCompactPlain()
+            : panel.FormatCompactPlain();
+    }
+
+    public static string BuildHtml(
+        string jobKey,
+        PupilResult result,
+        PupilProgress? progress,
+        string language = "nl")
+        => BuildContent(jobKey, result, progress, language).FormatHtml();
+
+    public static PupilG78JobWhyContent BuildContent(
+        string jobKey,
+        PupilResult result,
+        PupilProgress? progress,
+        string language = "nl")
+    {
+        if (PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return ComposeDutch(jobKey, result, progress);
+        }
+
+        return ComposeDutch(jobKey, result, progress);
     }
 
     public static IReadOnlyList<string> BuildSentences(
@@ -60,12 +91,10 @@ public static class PupilG78JobMatchExplanation
         PupilProgress? progress,
         string language = "nl")
     {
-        if (PupilVerhaalLocalized.IsEnglish(language))
-        {
-            return BuildEnglishSentences(jobKey, result, progress);
-        }
-
-        return ComposeDutch(jobKey, result, progress);
+        var content = BuildContent(jobKey, result, progress, language);
+        return content.FormatFullPlain()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
     }
 
     public static bool IsPlaceholderJobBlurb(string blurb)
@@ -80,117 +109,237 @@ public static class PupilG78JobMatchExplanation
                || blurb.Contains("beroep om over na te denken", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static List<string> ComposeDutch(string jobKey, PupilResult result, PupilProgress? progress)
+    public static bool ContainsBannedPhrase(string text)
+        => BannedPhrases.Any(p => text.Contains(p, StringComparison.OrdinalIgnoreCase));
+
+    private static PupilG78JobWhyContent ComposeDutch(string jobKey, PupilResult result, PupilProgress? progress)
     {
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
         var factors = PupilG78CareerScoring.ScoreFactors(jobKey, result, progress, vak);
         var likes = ParseChips(progress?.LikesJson);
-        var surprise = !JobInLikesOrDream(likes, progress, jobKey);
+        var unexpected = !JobInLikesOrDream(likes, progress, jobKey);
 
-        var usedSemantic = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var likeLabel = LikeLabel(jobKey, likes);
-        if (likeLabel is not null)
+        var work = JobDescriptionSentences(jobKey);
+        var competencies = CompetencyLines(jobKey, progress?.AnswersJson);
+        var answers = AnswerReflectionSentences(
+            jobKey,
+            progress,
+            vak,
+            likes,
+            factors.PrimaryRiasecLetter,
+            unexpected);
+
+        return new PupilG78JobWhyContent(work, competencies, answers);
+    }
+
+    private static IReadOnlyList<string> JobDescriptionSentences(string jobKey)
+    {
+        var blurb = PupilPassportLocalizedCopy.JobBlurb(jobKey, PupilQuestionSet.Groep78, "nl");
+        if (IsPlaceholderJobBlurb(blurb))
         {
-            foreach (var like in likes)
+            return [];
+        }
+
+        var title = PupilPassportLocalizedCopy.JobTitle(jobKey, "nl").Trim().ToLowerInvariant();
+        var lines = new List<string>();
+        foreach (var part in blurb.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(3))
+        {
+            if (!part.StartsWith("Je ", StringComparison.Ordinal))
             {
-                if (LikeToSubjectKey.TryGetValue(like, out var sk))
+                continue;
+            }
+
+            if (part.StartsWith("Je bent ", StringComparison.Ordinal))
+            {
+                lines.Add($"Een {title} is {part[8..].ToLowerInvariant()}.");
+                continue;
+            }
+
+            var rest = part[3..].TrimEnd('.');
+            rest = rest.Replace(" je ", " de ", StringComparison.Ordinal);
+            lines.Add($"Een {title} {rest.ToLowerInvariant()}.");
+        }
+
+        return lines;
+    }
+
+    private static IReadOnlyList<PupilG78JobCompetencyLine> CompetencyLines(string jobKey, string? answersJson)
+    {
+        var reqs = PupilG78JobCompetencyMapping.ForJob(jobKey);
+        if (reqs.Count == 0)
+        {
+            return [];
+        }
+
+        var lines = new List<PupilG78JobCompetencyLine>();
+        foreach (var req in reqs)
+        {
+            var reflection = PupilG78CompetenceFromAnswers.NeutralReflection(
+                req.JobAsksLabel,
+                req.Category,
+                answersJson);
+            lines.Add(new PupilG78JobCompetencyLine(req.JobAsksLabel, reflection));
+        }
+
+        return lines;
+    }
+
+    private static List<string> AnswerReflectionSentences(
+        string jobKey,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vakScores,
+        IReadOnlySet<string> likes,
+        char jobLetter,
+        bool unexpected)
+    {
+        var sentences = new List<string>(5);
+        var usedSemantic = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (unexpected)
+        {
+            var topic = SurpriseTopic(progress, jobLetter);
+            sentences.Add(string.IsNullOrWhiteSpace(topic)
+                ? "Dit beroep kwam misschien onverwacht naar voren. Het kwam uit je antwoorden in de vragenlijsten."
+                : $"Dit beroep kwam misschien onverwacht naar voren. Het kwam uit je antwoorden over {topic}.");
+        }
+        else
+        {
+            var likeLabel = LikeLabel(jobKey, likes);
+            if (likeLabel is not null)
+            {
+                sentences.Add($"Dit beroep kwam naar voren omdat je {likeLabel} leuk vindt.");
+                if (LikeToSubjectKey.Values.Any(sk => likes.Any(l => LikeToSubjectKey.GetValueOrDefault(l) == sk)))
                 {
-                    usedSemantic.Add($"vak-{sk}");
+                    foreach (var like in likes)
+                    {
+                        if (LikeToSubjectKey.TryGetValue(like, out var sk))
+                        {
+                            usedSemantic.Add($"vak-{sk}");
+                        }
+                    }
                 }
             }
         }
 
-        var answers = new List<AnswerPhrase>();
-        foreach (var phrase in AnswerPhrases(factors.PrimaryRiasecLetter, progress))
+        var answers = CollectAnswers(jobLetter, progress, usedSemantic, max: 2);
+        foreach (var (idx, phrase) in answers.Select((p, i) => (i, p)))
         {
-            var key = PupilG78HighAnswerParaphrases.SemanticKey(phrase.ItemId);
+            var prefix = idx == 0 ? "Je antwoorden laten zien dat" : "Je gaf ook aan dat";
+            sentences.Add($"{prefix} {phrase.Subordinate}.");
+        }
+
+        var subject = SubjectLabel(jobKey, vakScores, likes, usedSemantic);
+        if (subject is not null)
+        {
+            sentences.Add($"Op school scoort je hoog in {subject}; dat staat in je antwoorden.");
+        }
+
+        foreach (var req in PupilG78JobCompetencyMapping.ForJob(jobKey).Take(2))
+        {
+            var band = PupilG78CompetenceFromAnswers.CategoryBand(req.Category, progress?.AnswersJson);
+            if (band == PupilG78CompetenceFromAnswers.Band.Strong)
+            {
+                sentences.Add(
+                    $"Bij {req.JobAsksLabel} laten je antwoorden zien dat je daar vaak hoog op scoorde.");
+            }
+            else if (band == PupilG78CompetenceFromAnswers.Band.Weak)
+            {
+                sentences.Add(
+                    $"Dit werk vraagt ook {req.JobAsksLabel}; daar scoorde je lager. Dat kun je verder ontdekken.");
+            }
+        }
+
+        return sentences
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.Ordinal)
+            .Take(4)
+            .ToList();
+    }
+
+    private static string? SurpriseTopic(PupilProgress? progress, char jobLetter)
+    {
+        var answers = ParseAnswers(progress?.AnswersJson);
+        var item = G78Bank.AsCareerItems()
+            .Where(q =>
+            {
+                if (!answers.TryGetValue(q.Id, out var value) || value < 4)
+                {
+                    return false;
+                }
+
+                return CategoryToLetter.TryGetValue(q.Category, out var letter) && letter == jobLetter;
+            })
+            .OrderByDescending(q => answers[q.Id])
+            .FirstOrDefault();
+
+        if (item is null || !PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out var sub))
+        {
+            return null;
+        }
+
+        if (sub.Contains("buiten", StringComparison.Ordinal))
+        {
+            return "buiten werken";
+        }
+
+        if (sub.Contains("maakt", StringComparison.Ordinal) || sub.Contains("repareert", StringComparison.Ordinal))
+        {
+            return "maken en repareren";
+        }
+
+        if (sub.Contains("uitzoekt", StringComparison.Ordinal))
+        {
+            return "uitzoeken hoe dingen werken";
+        }
+
+        if (sub.Contains("moois maakt", StringComparison.Ordinal))
+        {
+            return "creatief bezig zijn";
+        }
+
+        return "wat je energie geeft";
+    }
+
+    private static List<AnswerPhrase> CollectAnswers(
+        char jobLetter,
+        PupilProgress? progress,
+        HashSet<string> usedSemantic,
+        int max)
+    {
+        var answers = ParseAnswers(progress?.AnswersJson);
+        var list = new List<AnswerPhrase>();
+        foreach (var item in G78Bank.AsCareerItems()
+                     .Where(q =>
+                     {
+                         if (!answers.TryGetValue(q.Id, out var value) || value < 4)
+                         {
+                             return false;
+                         }
+
+                         return CategoryToLetter.TryGetValue(q.Category, out var letter) && letter == jobLetter;
+                     })
+                     .OrderByDescending(q => answers[q.Id])
+                     .ThenBy(q => q.Id))
+        {
+            var key = PupilG78HighAnswerParaphrases.SemanticKey(item.Id);
             if (!usedSemantic.Add(key))
             {
                 continue;
             }
 
-            answers.Add(phrase);
-            if (answers.Count >= 2)
+            if (!PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out var sub))
+            {
+                continue;
+            }
+
+            list.Add(new AnswerPhrase(item.Id, sub));
+            if (list.Count >= max)
             {
                 break;
             }
         }
 
-        var subjectLabel = SubjectLabel(jobKey, vak, likes, usedSemantic);
-        var jobSentences = JobDescriptionNl(jobKey);
-
-        return StitchSentences(likeLabel, answers, subjectLabel, jobSentences, surprise);
-    }
-
-    private static List<string> StitchSentences(
-        string? likeLabel,
-        IReadOnlyList<AnswerPhrase> answers,
-        string? subjectLabel,
-        IReadOnlyList<string> jobSentences,
-        bool surprise)
-    {
-        var reserveForJob = Math.Min(jobSentences.Count, 2);
-        var sentences = new List<string>(MaxSentences);
-
-        var usedFirstAnswerInWant = false;
-        if (surprise && answers.Count > 0)
-        {
-            sentences.Add(
-                $"Hier had je misschien zelf niet aan gedacht. Toch past het, want {answers[0].MainAfterWant}.");
-            usedFirstAnswerInWant = true;
-        }
-        else if (surprise)
-        {
-            sentences.Add("Hier had je misschien zelf niet aan gedacht. Toch laten je antwoorden zien dat dit beroep bij je kan passen.");
-        }
-        else if (answers.Count > 0 && likeLabel is null)
-        {
-            sentences.Add($"Dit past bij jou, want {answers[0].MainAfterWant}.");
-            usedFirstAnswerInWant = true;
-        }
-
-        if (!string.IsNullOrWhiteSpace(likeLabel))
-        {
-            sentences.Add($"Je vindt {likeLabel} leuk, en dat past bij dit beroep.");
-        }
-
-        var answerOffset = usedFirstAnswerInWant ? 1 : 0;
-        for (var i = answerOffset; i < answers.Count; i++)
-        {
-            if (sentences.Count >= MaxSentences - reserveForJob)
-            {
-                break;
-            }
-
-            var useBijVragen = !surprise
-                               && likeLabel is not null
-                               && i == answerOffset
-                               && answerOffset < answers.Count;
-            var prefix = useBijVragen ? "Bij de vragen zei je dat" : "Je gaf ook aan dat";
-            sentences.Add($"{prefix} {answers[i].Subordinate}.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(subjectLabel)
-            && sentences.Count < MaxSentences - reserveForJob)
-        {
-            sentences.Add($"Op school ben je goed in {subjectLabel}, en dat helpt je hier.");
-        }
-
-        foreach (var jobLine in jobSentences)
-        {
-            if (sentences.Count >= MaxSentences)
-            {
-                break;
-            }
-
-            sentences.Add(jobLine);
-        }
-
-        return sentences
-            .Select(EnsurePeriod)
-            .Where(s => s.Length > 10)
-            .Take(MaxSentences)
-            .ToList();
+        return list;
     }
 
     private static string? LikeLabel(string jobKey, IReadOnlySet<string> likes)
@@ -212,39 +361,6 @@ public static class PupilG78JobMatchExplanation
         }
 
         return null;
-    }
-
-    private static IEnumerable<AnswerPhrase> AnswerPhrases(char jobLetter, PupilProgress? progress)
-    {
-        var answers = ParseAnswers(progress?.AnswersJson);
-        if (answers.Count == 0)
-        {
-            yield break;
-        }
-
-        var items = G78Bank.AsCareerItems()
-            .Where(q =>
-            {
-                if (!answers.TryGetValue(q.Id, out var value) || value < 4)
-                {
-                    return false;
-                }
-
-                return CategoryToLetter.TryGetValue(q.Category, out var letter) && letter == jobLetter;
-            })
-            .OrderByDescending(q => answers[q.Id])
-            .ThenBy(q => q.Id);
-
-        foreach (var item in items)
-        {
-            if (!PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out var sub)
-                || !PupilG78HighAnswerParaphrases.TryGetMainClauseAfterWant(item.Id, out var main))
-            {
-                continue;
-            }
-
-            yield return new AnswerPhrase(item.Id, sub, main);
-        }
     }
 
     private static string? SubjectLabel(
@@ -285,7 +401,6 @@ public static class PupilG78JobMatchExplanation
             return null;
         }
 
-        usedSemantic.Add($"vak-{best.Entry.SubjectKey}");
         return PupilVakSubjectLabels.Nl(best.Entry.SubjectKey).ToLowerInvariant();
     }
 
@@ -313,40 +428,6 @@ public static class PupilG78JobMatchExplanation
         return false;
     }
 
-    private static IReadOnlyList<string> JobDescriptionNl(string jobKey)
-    {
-        var blurb = PupilPassportLocalizedCopy.JobBlurb(jobKey, PupilQuestionSet.Groep78, "nl");
-        if (IsPlaceholderJobBlurb(blurb))
-        {
-            return [];
-        }
-
-        var title = PupilPassportLocalizedCopy.JobTitle(jobKey, "nl").Trim().ToLowerInvariant();
-        var lines = new List<string>(2);
-        foreach (var part in blurb.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(2))
-        {
-            if (!part.StartsWith("Je ", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (part.StartsWith("Je bent ", StringComparison.Ordinal))
-            {
-                lines.Add($"Een {title} is {part[8..].ToLowerInvariant()}.");
-                continue;
-            }
-
-            var rest = part[3..].TrimEnd('.');
-            rest = rest.Replace(" je ", " de ", StringComparison.Ordinal);
-            lines.Add($"Een {title} {rest.ToLowerInvariant()}.");
-        }
-
-        return lines;
-    }
-
-    private static List<string> BuildEnglishSentences(string jobKey, PupilResult result, PupilProgress? progress)
-        => ComposeDutch(jobKey, result, progress);
-
     private static bool JobInLikesOrDream(IReadOnlySet<string> likes, PupilProgress? progress, string jobKey)
     {
         foreach (var like in likes)
@@ -361,9 +442,6 @@ public static class PupilG78JobMatchExplanation
         var dream = (progress?.DreamJobKey ?? "").Trim();
         return string.Equals(dream, jobKey, StringComparison.OrdinalIgnoreCase);
     }
-
-    private static string EnsurePeriod(string sentence)
-        => sentence.EndsWith('.') ? sentence : sentence + ".";
 
     private static Dictionary<int, int> ParseAnswers(string? json)
     {

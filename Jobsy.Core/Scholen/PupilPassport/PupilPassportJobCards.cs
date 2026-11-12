@@ -62,7 +62,7 @@ public static class PupilPassportJobCards
                 ? Array.Empty<string>()
                 : new[] { domain };
             var matchPercent = PupilG78CareerScoring.MatchPercentInt(match.MatchScore);
-            var why = PupilG78JobMatchExplanation.Build(key, result, progress, language);
+            var why = PupilG78JobMatchExplanation.BuildHtml(key, result, progress, language);
             cards.Add(new PupilPassportOccupationCard(
                 rank,
                 domain,

@@ -34,7 +34,7 @@ public static class PupilG78JobSuggestions
                 domain,
                 PupilG78CareerScoring.MatchPercentInt(match.MatchScore),
                 PupilPassportLocalizedCopy.JobBlurb(key, PupilQuestionSet.Groep78, language),
-                PupilG78JobMatchExplanation.Build(key, result, progress, language)));
+                PupilG78JobMatchExplanation.BuildHtml(key, result, progress, language)));
         }
 
         return list;

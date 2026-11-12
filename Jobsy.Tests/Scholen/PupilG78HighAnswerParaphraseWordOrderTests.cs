@@ -48,12 +48,12 @@ public class PupilG78HighAnswerParaphraseWordOrderTests
             LikesJson = """["techniek"]""",
             AnswersJson = """{"9016":5,"9028":5}""",
         };
+        progress.AnswersJson = """{"9016":5,"9028":5,"9002":5,"9007":5,"9003":2,"9008":2}""";
         var text = PupilG78JobMatchExplanation.Build("hovenier", result, progress, "nl");
-        Assert.Contains("want je maakt graag iets", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("want je graag iets maakt", text, StringComparison.Ordinal);
-        Assert.Contains("Je gaf ook aan dat je graag buiten", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("In de vragen koos je", text, StringComparison.Ordinal);
         Assert.Contains("Een hovenier ontwerpt", text, StringComparison.Ordinal);
+        Assert.Contains("netjes en precies werken", text, StringComparison.Ordinal);
+        Assert.False(PupilG78JobMatchExplanation.ContainsBannedPhrase(text));
+        Assert.DoesNotContain("In de vragen koos je", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Als hovenier", text, StringComparison.Ordinal);
     }
 }

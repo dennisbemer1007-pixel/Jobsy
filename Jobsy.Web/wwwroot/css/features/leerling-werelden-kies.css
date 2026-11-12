@@ -3070,6 +3070,24 @@
   margin: 0;
 }
 
+.ll-g78-shell .g78-job-why-panel__section-title {
+  margin: 10px 0 4px;
+  color: var(--navy);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.ll-g78-shell .g78-job-why-panel__section-title:first-child {
+  margin-top: 0;
+}
+
+.ll-g78-shell .g78-job-why-panel__section-body {
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
 .ll-g78-shell .lp-g78__job,
 .ll-g78-shell .card-deco .jpick {
   position: relative;
