@@ -1,9 +1,9 @@
 namespace Jobsy.Core.Scholen;
 
-/// <summary>B1 paraphrases of G78 beroepentest items for high answers (je-form).</summary>
+/// <summary>B1 paraphrases of G78 beroepentest items for high answers (je-form clauses, no leading Je gaf aan).</summary>
 internal static class PupilG78HighAnswerParaphrases
 {
-  private static readonly IReadOnlyDictionary<int, string> ByItemId = new Dictionary<int, string>
+    private static readonly IReadOnlyDictionary<int, string> ByItemId = new Dictionary<int, string>
     {
         [9016] = "je graag iets maakt of repareert",
         [9017] = "je graag wilt weten hoe dingen werken",
@@ -22,6 +22,28 @@ internal static class PupilG78HighAnswerParaphrases
         [9030] = "je graag met mensen oefent of speelt",
     };
 
+    private static readonly IReadOnlyDictionary<int, string> SemanticByItemId = new Dictionary<int, string>
+    {
+        [9016] = "realistic-hands",
+        [9022] = "realistic-hands",
+        [9028] = "realistic-outdoor",
+        [9017] = "investigative-why",
+        [9025] = "investigative-why",
+        [9018] = "artistic-create",
+        [9023] = "artistic-create",
+        [9029] = "artistic-create",
+        [9019] = "social-help",
+        [9024] = "social-help",
+        [9030] = "social-help",
+        [9020] = "enterprising-lead",
+        [9026] = "enterprising-lead",
+        [9021] = "conventional-order",
+        [9027] = "conventional-order",
+    };
+
     public static bool TryGet(int itemId, out string paraphrase)
         => ByItemId.TryGetValue(itemId, out paraphrase!);
+
+    public static string SemanticKey(int itemId)
+        => SemanticByItemId.TryGetValue(itemId, out var key) ? key : $"item-{itemId}";
 }

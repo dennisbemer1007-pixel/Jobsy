@@ -55,11 +55,53 @@ public class PupilG78JobMatchExplanationTests
     }
 
     [Fact]
-    public void Build_sentences_count_between_3_and_5_when_data_rich()
+    public void Never_uses_placeholder_job_blurb_or_generic_phrasing()
     {
         var result = ArtisticResult();
-        var progress = ProgressWithLikes(["tekenen", "dieren"], """{"9018":5,"9022":5}""");
-        var sentences = PupilG78JobMatchExplanation.BuildSentences("fotograaf", result, progress, "nl");
+        var progress = ProgressWithLikes(["tekenen"], """{"9018":5}""");
+        var text = PupilG78JobMatchExplanation.Build("fotograaf", result, progress, "nl");
+        Assert.DoesNotContain("beroep om over na te denken", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("dingen zoals:", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Uit je test blijkt", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Dedupes_overlapping_realistic_answer_paraphrases()
+    {
+        var result = TechResult();
+        var progress = ProgressWithLikes(["bouwen"], """{"9016":5,"9022":5,"9028":5}""");
+        var text = PupilG78JobMatchExplanation.Build("hovenier", result, progress, "nl");
+        Assert.DoesNotContain("met je handen", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("buiten", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Bioloog_does_not_cite_unrelated_tekenen_vak_when_only_gamen_like()
+    {
+        var result = ArtisticResult();
+        var progress = ProgressWithLikes(["gamen"], """{"9025":5}""");
+        var text = PupilG78JobMatchExplanation.Build("bioloog", result, progress, "nl");
+        Assert.DoesNotContain("Tekenen", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("handvaardigheid", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Dutch_grammar_guardrails()
+    {
+        var result = ArtisticResult();
+        var progress = ProgressWithLikes(["tekenen", "dieren"], """{"9018":5,"9025":5}""");
+        var text = PupilG78JobMatchExplanation.Build("fotograaf", result, progress, "nl");
+        Assert.DoesNotMatch(new System.Text.RegularExpressions.Regex(@"\sme\s"), text);
+        Assert.DoesNotContain(" mijn ", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ook je ", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Build_sentences_count_between_3_and_5_when_data_rich()
+    {
+        var result = TechResult();
+        var progress = ProgressWithLikes(["techniek"], """{"9016":5,"9028":5}""");
+        var sentences = PupilG78JobMatchExplanation.BuildSentences("hovenier", result, progress, "nl");
         Assert.InRange(sentences.Count, PupilG78JobMatchExplanation.MinSentences, PupilG78JobMatchExplanation.MaxSentences);
     }
 

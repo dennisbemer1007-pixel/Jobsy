@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -13,6 +14,8 @@ public static class PupilG78JobMatchExplanation
     public const int MinSentences = 3;
     public const int MaxSentences = 5;
 
+    private const string GenericBlurbKey = "LeerlingPassport.Card.Blurb.Generic.G78";
+
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
     private static readonly PupilQuestionBank G78Bank = new();
 
@@ -24,6 +27,20 @@ public static class PupilG78JobMatchExplanation
         [CareerTestCatalog.Social] = 'S',
         [CareerTestCatalog.Enterprising] = 'E',
         [CareerTestCatalog.Conventional] = 'C',
+    };
+
+    private static readonly Dictionary<string, string> LikeToSubjectKey = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["tekenen"] = "tekenen",
+        ["muziek"] = "muziek",
+        ["sport"] = "gym",
+        ["natuur"] = "natuur-techniek",
+        ["techniek"] = "natuur-techniek",
+        ["rekenen"] = "rekenen",
+        ["computers"] = "natuur-techniek",
+        ["programmeren"] = "natuur-techniek",
+        ["bouwen"] = "natuur-techniek",
+        ["fietsen-repareren"] = "natuur-techniek",
     };
 
     public static string Build(
@@ -42,86 +59,148 @@ public static class PupilG78JobMatchExplanation
         PupilProgress? progress,
         string language = "nl")
     {
-        var english = PupilVerhaalLocalized.IsEnglish(language);
+        if (PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return BuildEnglishSentences(jobKey, result, progress);
+        }
+
+        return ComposeDutch(jobKey, result, progress);
+    }
+
+    public static bool IsPlaceholderJobBlurb(string blurb)
+    {
+        if (string.IsNullOrWhiteSpace(blurb))
+        {
+            return true;
+        }
+
+        var generic = PupilPassportCopy.Get(GenericBlurbKey);
+        return string.Equals(blurb.Trim(), generic, StringComparison.Ordinal)
+               || blurb.Contains("beroep om over na te denken", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static List<string> ComposeDutch(string jobKey, PupilResult result, PupilProgress? progress)
+    {
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
         var factors = PupilG78CareerScoring.ScoreFactors(jobKey, result, progress, vak);
         var likes = ParseChips(progress?.LikesJson);
-        var sentences = new List<string>(MaxSentences);
+        var surprise = !JobInLikesOrDream(likes, progress, jobKey);
 
-        if (!english && !JobInLikesOrDream(likes, progress, jobKey))
-        {
-            sentences.Add("Misschien had je hier zelf niet aan gedacht, maar je antwoorden laten wel zien dat het past.");
-        }
-        else if (english && !JobInLikesOrDream(likes, progress, jobKey))
-        {
-            sentences.Add("You may not have thought of this yourself, but your answers show it could fit you.");
-        }
+        var usedSemantic = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var clauses = new List<(double Weight, string Clause)>();
 
-        foreach (var line in HighAnswerParaphrases(factors.PrimaryRiasecLetter, progress, english))
+        var likeClause = LikeClause(jobKey, likes);
+        if (likeClause is not null)
         {
-            sentences.Add(line);
-            if (sentences.Count >= MaxSentences - 1)
+            clauses.Add((factors.ChipFit * PupilCareerMatchWeights.Overige, likeClause.Value.Clause));
+            if (LikeToSubjectKey.TryGetValue(likeClause.Value.LikeKey, out var subj))
             {
-                break;
+                usedSemantic.Add($"vak-{subj}");
             }
         }
 
-        foreach (var line in TopDriverSentences(jobKey, factors, vak, likes, english))
+        var answerCount = 0;
+        foreach (var (weight, clause, key) in AnswerClauses(factors.PrimaryRiasecLetter, progress))
         {
-            if (sentences.Contains(line, StringComparer.Ordinal))
+            if (!usedSemantic.Add(key))
             {
                 continue;
             }
 
-            sentences.Add(line);
-            if (sentences.Count >= MaxSentences - 1)
+            if (answerCount >= 2)
             {
                 break;
             }
+
+            clauses.Add((weight, clause));
+            answerCount++;
         }
 
-        var jobLine = JobActivitySentence(jobKey, english);
-        if (!string.IsNullOrWhiteSpace(jobLine))
+        var subjectClause = SubjectClause(jobKey, vakScores: vak, likes, usedSemantic);
+        if (subjectClause is not null)
         {
-            sentences.Add(jobLine);
+            clauses.Add(subjectClause.Value);
+        }
+
+        var answerAndSubject = clauses
+            .Where(c => !c.Clause.Contains("leuk vindt", StringComparison.Ordinal))
+            .OrderByDescending(c => c.Weight)
+            .Select(c => c.Clause)
+            .ToList();
+        var likeOnly = likeClause?.Clause;
+        var ordered = new List<string>();
+        if (!string.IsNullOrWhiteSpace(likeOnly))
+        {
+            ordered.Add(likeOnly);
+        }
+
+        ordered.AddRange(answerAndSubject);
+
+        var jobClose = JobClosingNl(jobKey);
+        return StitchSentences(ordered, surprise, jobClose);
+    }
+
+    private static List<string> StitchSentences(IReadOnlyList<string> clauses, bool surprise, string? jobClose)
+    {
+        if (clauses.Count == 0 && jobClose is null)
+        {
+            return ["Je antwoorden passen bij dit beroep."];
+        }
+
+        var sentences = new List<string>(MaxSentences);
+        var idx = 0;
+
+        if (surprise && clauses.Count > 0)
+        {
+            sentences.Add($"Hier had je misschien zelf niet aan gedacht. Toch past het, want {clauses[0]}.");
+            idx = 1;
+        }
+        else if (surprise)
+        {
+            sentences.Add("Hier had je misschien zelf niet aan gedacht. Toch laten je antwoorden zien dat dit beroep bij je kan passen.");
+        }
+
+        while (idx < clauses.Count && sentences.Count < (jobClose is null ? MaxSentences : MaxSentences - 1))
+        {
+            sentences.Add(ClauseToSentence(clauses[idx], sentences.Count, surprise));
+            idx++;
+        }
+
+        if (jobClose is not null && sentences.Count < MaxSentences)
+        {
+            sentences.Add(jobClose);
         }
 
         return sentences
             .Select(EnsurePeriod)
-            .Where(s => s.Length > 0)
-            .Distinct(StringComparer.Ordinal)
+            .Where(s => s.Length > 10)
             .Take(MaxSentences)
             .ToList();
     }
 
-    private static IEnumerable<string> TopDriverSentences(
-        string jobKey,
-        PupilG78JobScoreFactors factors,
-        IReadOnlyList<PupilVakScoreEntry> vakScores,
-        IReadOnlySet<string> likes,
-        bool english)
+    private static string ClauseToSentence(string clause, int sentenceIndex, bool surprise)
     {
-        var riasecW = factors.RiasecFit * PupilCareerMatchWeights.Riasec;
-        var subjectW = factors.SubjectFit * PupilCareerMatchWeights.Vakken;
-        var chipW = factors.ChipFit * PupilCareerMatchWeights.Overige;
-
-        var drivers = new List<(double Weight, string Sentence)>
+        if (clause.Contains("leuk vindt", StringComparison.Ordinal) && !clause.Contains("graag", StringComparison.Ordinal))
         {
-            (chipW, LikeDriverSentence(jobKey, likes, english) ?? ""),
-            (subjectW, SubjectDriverSentence(jobKey, factors.PrimaryRiasecLetter, vakScores, english) ?? ""),
-            (riasecW, RiasecDriverSentence(factors.PrimaryRiasecLetter, english)),
-        };
-
-        foreach (var (_, sentence) in drivers
-                     .Where(d => !string.IsNullOrWhiteSpace(d.Sentence))
-                     .OrderByDescending(d => d.Weight))
-        {
-            yield return sentence!;
+            return $"Je vindt {clause.Replace("je ", "", StringComparison.Ordinal).Replace(" leuk vindt", "", StringComparison.Ordinal)} leuk, en dat past bij dit beroep.";
         }
+
+        if (clause.Contains("op school", StringComparison.Ordinal))
+        {
+            return $"Op school ben je goed in {clause.Replace("je op school goed bent in ", "", StringComparison.Ordinal)}, en dat helpt je hier.";
+        }
+
+        return sentenceIndex switch
+        {
+            0 when !surprise => $"Dit past bij jou, want {clause}.",
+            1 => $"In de vragen koos je vaak voor iets waarbij {clause}.",
+            _ => $"Daarbij {clause}.",
+        };
     }
 
-    private static string? LikeDriverSentence(string jobKey, IReadOnlySet<string> likes, bool english)
+    private static (string LikeKey, string Clause)? LikeClause(string jobKey, IReadOnlySet<string> likes)
     {
+        string? bestLike = null;
         foreach (var like in likes)
         {
             if (!PupilRiasecJobIdeas.LikeJobsForScoring.TryGetValue(like, out var jobs))
@@ -129,90 +208,30 @@ public static class PupilG78JobMatchExplanation
                 continue;
             }
 
-            if (!jobs.Any(j => string.Equals(j, jobKey, StringComparison.OrdinalIgnoreCase)))
+            if (jobs.Any(j => string.Equals(j, jobKey, StringComparison.OrdinalIgnoreCase)))
             {
-                continue;
+                bestLike = like;
+                break;
             }
-
-            var label = english
-                ? PupilPortalChipLabels.English(like)
-                : PupilPortalChipLabels.Dutch(like);
-            if (string.IsNullOrWhiteSpace(label))
-            {
-                continue;
-            }
-
-            return english
-                ? $"You said you enjoy {label.ToLowerInvariant()}, and that fits this job."
-                : $"Je gaf aan dat je {label.ToLowerInvariant()} leuk vindt, en dat sluit aan bij dit beroep.";
         }
 
-        return null;
-    }
-
-    private static string? SubjectDriverSentence(
-        string jobKey,
-        char jobLetter,
-        IReadOnlyList<PupilVakScoreEntry> vakScores,
-        bool english)
-    {
-        var ranked = vakScores
-            .Select(v =>
-            {
-                var map = PupilSubjectMap.TryGet(v.SubjectKey);
-                var letterBoost = map?.RiasecWeights.GetValueOrDefault(jobLetter) ?? 0;
-                var row = PupilSubjectIscedCatalog.TryGetG78(v.SubjectKey);
-                var linked = row?.LinkedOccupationJobKeys?.Any(j =>
-                                 string.Equals(j, jobKey, StringComparison.OrdinalIgnoreCase)) == true;
-                var score = PupilVakScores.SubjectWeight(v);
-                var weight = score * (0.5 + letterBoost) + (linked ? 0.35 : 0);
-                return (Entry: v, Weight: weight, Linked: linked);
-            })
-            .Where(x => x.Weight > 0.35)
-            .OrderByDescending(x => x.Weight)
-            .Take(2)
-            .ToList();
-
-        if (ranked.Count == 0)
+        if (bestLike is null)
         {
             return null;
         }
 
-        var names = ranked
-            .Select(r => PupilVakSubjectLabels.Nl(r.Entry.SubjectKey))
-            .Where(n => !string.IsNullOrWhiteSpace(n))
-            .ToList();
-        if (names.Count == 0)
+        var label = PupilPortalChipLabels.Dutch(bestLike);
+        if (string.IsNullOrWhiteSpace(label))
         {
             return null;
         }
 
-        var joined = JoinList(names, english);
-        return english
-            ? $"At school you like {joined}, and that helps in this job."
-            : $"Op school vind je {joined} leuk, en dat komt terug in dit beroep.";
+        return (bestLike, $"je {label.ToLowerInvariant()} leuk vindt");
     }
 
-    private static string RiasecDriverSentence(char letter, bool english)
-    {
-        var key = $"LeerlingPassport.G78.Riasec.{letter}.Desc";
-        var text = PupilPassportLocalizedCopy.Get(key, english ? "en" : "nl").Trim().TrimEnd('.');
-        if (string.IsNullOrWhiteSpace(text) || string.Equals(text, key, StringComparison.Ordinal))
-        {
-            return english
-                ? "Your career test answers point in this direction."
-                : "Je antwoorden op de beroepentest wijzen deze kant op.";
-        }
-
-        return english
-            ? $"Your test shows: {text.ToLowerInvariant()}."
-            : $"Uit je test blijkt: {text.ToLowerInvariant()}.";
-    }
-
-    private static IEnumerable<string> HighAnswerParaphrases(
+    private static IEnumerable<(double Weight, string Clause, string SemanticKey)> AnswerClauses(
         char jobLetter,
-        PupilProgress? progress,
-        bool english)
+        PupilProgress? progress)
     {
         var answers = ParseAnswers(progress?.AnswersJson);
         if (answers.Count == 0)
@@ -231,8 +250,7 @@ public static class PupilG78JobMatchExplanation
                 return CategoryToLetter.TryGetValue(q.Category, out var letter) && letter == jobLetter;
             })
             .OrderByDescending(q => answers[q.Id])
-            .ThenBy(q => q.Id)
-            .Take(2);
+            .ThenBy(q => q.Id);
 
         foreach (var item in items)
         {
@@ -241,31 +259,112 @@ public static class PupilG78JobMatchExplanation
                 continue;
             }
 
-            yield return english
-                ? $"You said that {paraphrase}."
-                : $"Je gaf aan dat {paraphrase}.";
+            var semantic = PupilG78HighAnswerParaphrases.SemanticKey(item.Id);
+            var weight = answers[item.Id] / 5.0;
+            yield return (weight, paraphrase, semantic);
         }
     }
 
-    private static string JobActivitySentence(string jobKey, bool english)
+    private static (double Weight, string Clause)? SubjectClause(
+        string jobKey,
+        IReadOnlyList<PupilVakScoreEntry> vakScores,
+        IReadOnlySet<string> likes,
+        HashSet<string> usedSemantic)
     {
-        var blurb = PupilPassportLocalizedCopy.JobBlurb(jobKey, PupilQuestionSet.Groep78, english ? "en" : "nl")
-            .Trim();
-        if (string.IsNullOrWhiteSpace(blurb))
+        var best = vakScores
+            .Select(v =>
+            {
+                if (!SubjectContributesToJob(jobKey, v))
+                {
+                    return (Entry: v, Score: 0.0);
+                }
+
+                if (likes.Any(like =>
+                        LikeToSubjectKey.TryGetValue(like, out var sk)
+                        && string.Equals(sk, v.SubjectKey, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return (Entry: v, Score: 0.0);
+                }
+
+                var key = $"vak-{v.SubjectKey}";
+                if (usedSemantic.Contains(key))
+                {
+                    return (Entry: v, Score: 0.0);
+                }
+
+                return (Entry: v, Score: PupilVakScores.SubjectWeight(v));
+            })
+            .Where(x => x.Score > 0.4)
+            .OrderByDescending(x => x.Score)
+            .FirstOrDefault();
+
+        if (best.Score <= 0)
         {
-            return "";
+            return null;
+        }
+
+        var label = PupilVakSubjectLabels.Nl(best.Entry.SubjectKey).ToLowerInvariant();
+        usedSemantic.Add($"vak-{best.Entry.SubjectKey}");
+        return (best.Score * PupilCareerMatchWeights.Vakken,
+            $"je op school goed bent in {label}");
+    }
+
+    private static bool SubjectContributesToJob(string jobKey, PupilVakScoreEntry entry)
+    {
+        var row = PupilSubjectIscedCatalog.TryGetG78(entry.SubjectKey);
+        if (row is { CountsInMatch: false })
+        {
+            return false;
+        }
+
+        if (row?.LinkedOccupationJobKeys?.Any(j =>
+                string.Equals(j, jobKey, StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            return PupilVakScores.SubjectWeight(entry) >= 0.45;
+        }
+
+        var occCodes = PupilDreamJobEscoCatalog.IscedCodesForJob(jobKey);
+        if (occCodes.Count > 0
+            && row?.IscedCodes.Any(c => occCodes.Any(o => string.Equals(o, c, StringComparison.OrdinalIgnoreCase))) == true)
+        {
+            return PupilVakScores.SubjectWeight(entry) >= 0.55;
+        }
+
+        return false;
+    }
+
+    private static string? JobClosingNl(string jobKey)
+    {
+        var blurb = PupilPassportLocalizedCopy.JobBlurb(jobKey, PupilQuestionSet.Groep78, "nl");
+        if (IsPlaceholderJobBlurb(blurb))
+        {
+            return null;
         }
 
         var first = blurb.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .FirstOrDefault();
         if (string.IsNullOrWhiteSpace(first))
         {
-            return "";
+            return null;
         }
 
-        return english
-            ? $"In this job you often {first.Trim().ToLowerInvariant()}."
-            : $"In dit beroep doe je vaak dingen zoals: {first.Trim().ToLowerInvariant()}.";
+        var title = PupilPassportLocalizedCopy.JobTitle(jobKey, "nl").Trim().ToLowerInvariant();
+        var match = Regex.Match(first, @"^Je\s+(\S+)\s+(.*)$", RegexOptions.CultureInvariant);
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        var verb = match.Groups[1].Value;
+        var tail = match.Groups[2].Value.TrimEnd('.');
+        var stem = verb.Length > 2 && verb.EndsWith('t') ? verb[..^1] : verb;
+        return $"Als {title} {stem} je {tail.ToLowerInvariant()}.";
+    }
+
+    private static List<string> BuildEnglishSentences(string jobKey, PupilResult result, PupilProgress? progress)
+    {
+        var dutch = ComposeDutch(jobKey, result, progress);
+        return dutch;
     }
 
     private static bool JobInLikesOrDream(IReadOnlySet<string> likes, PupilProgress? progress, string jobKey)
@@ -282,16 +381,6 @@ public static class PupilG78JobMatchExplanation
         var dream = (progress?.DreamJobKey ?? "").Trim();
         return string.Equals(dream, jobKey, StringComparison.OrdinalIgnoreCase);
     }
-
-    private static string JoinList(IReadOnlyList<string> items, bool english) => items.Count switch
-    {
-        0 => "",
-        1 => items[0],
-        2 => english ? $"{items[0]} and {items[1]}" : $"{items[0]} en {items[1]}",
-        _ => english
-            ? string.Join(", ", items.Take(items.Count - 1)) + " and " + items[^1]
-            : string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
-    };
 
     private static string EnsurePeriod(string sentence)
         => sentence.EndsWith('.') ? sentence : sentence + ".";
