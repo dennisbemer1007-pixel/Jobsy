@@ -9,6 +9,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json;
 using Jobsy.Web.Scholen;
