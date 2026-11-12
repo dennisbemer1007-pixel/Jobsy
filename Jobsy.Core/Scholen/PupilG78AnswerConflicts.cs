@@ -3,6 +3,26 @@ namespace Jobsy.Core.Scholen;
 /// <summary>Detects trait clashes between highs, tile contrasts, and Holland closing lines.</summary>
 public static class PupilG78AnswerConflicts
 {
+    public static readonly (string Weak, string Strong)[] ThemeClashTokens =
+    [
+        ("plan", "plan"),
+        ("plannen", "plan"),
+        ("organiseren", "plan"),
+        ("welkom", "welkom"),
+        ("maken", "maak"),
+        ("repareren", "repar"),
+        ("bouwen", "bouw"),
+        ("fixen", "fix"),
+        ("leiding", "leiding"),
+        ("uitleg", "help"),
+        ("steun", "steun"),
+        ("creativ", "creat"),
+        ("teken", "teken"),
+        ("muziek", "muziek"),
+        ("driftig", "dr"),
+        ("doorzet", "doorzet"),
+    ];
+
     private static readonly Dictionary<int, ConflictProfile> LowProfiles = new()
     {
         [9019] = new(["help", "uitleg", "klasgenoot", "steun", "iemand die iets niet snapt"], ['S']),
@@ -45,6 +65,30 @@ public static class PupilG78AnswerConflicts
                                     || t.Contains("helpt minder", StringComparison.OrdinalIgnoreCase)
                                     || t.Contains("minder vaak dat je helpt", StringComparison.OrdinalIgnoreCase));
         return helpHigh && helpLow;
+    }
+
+    public static bool ContrastLineConflictsHighs(IReadOnlyList<G78AnswerClause> highs, string contrastLine)
+    {
+        var c = contrastLine.ToLowerInvariant();
+        foreach (var h in highs)
+        {
+            var je = PupilG78QuestionJeForms.ForItem(h.ItemId);
+            if (je is null)
+            {
+                continue;
+            }
+
+            var t = je.ToLowerInvariant();
+            foreach (var (weak, strong) in ThemeClashTokens)
+            {
+                if (c.Contains(weak, StringComparison.Ordinal) && t.Contains(strong, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static bool ContainsHelpHigh(string text)

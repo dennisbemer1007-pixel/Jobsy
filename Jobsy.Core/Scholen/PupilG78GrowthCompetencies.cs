@@ -9,6 +9,15 @@ public static class PupilG78GrowthCompetencies
 {
     private static readonly PupilQuestionBank Bank = new();
 
+    private static readonly Dictionary<int, string> AnswerLabelNl = new()
+    {
+        [1] = "nee",
+        [2] = "niet echt",
+        [3] = "soms",
+        [4] = "best wel",
+        [5] = "ja!",
+    };
+
     public static IReadOnlyList<string> TopStrongCategories(IReadOnlyDictionary<string, double> averages, int count = 3)
         => averages
             .OrderByDescending(kv => kv.Value)
@@ -19,8 +28,10 @@ public static class PupilG78GrowthCompetencies
 
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
         IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string>? excludedCategories = null,
         string language = "nl")
     {
+        excludedCategories ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var averages = DimensionAverages(answers);
         if (averages.Count == 0)
         {
@@ -38,8 +49,13 @@ public static class PupilG78GrowthCompetencies
                 break;
             }
 
+            if (excludedCategories.Contains(category))
+            {
+                continue;
+            }
+
             var stats = StatsForCategory(category, answers);
-            if (!ShouldInclude(stats, strong, lowest, category))
+            if (!ShouldInclude(stats, strong, lowest, category, excludedCategories))
             {
                 continue;
             }
@@ -70,15 +86,25 @@ public static class PupilG78GrowthCompetencies
         return dict;
     }
 
-    private static bool ShouldInclude(DimensionStats stats, HashSet<string> strong, string lowest, string category)
+    private static bool ShouldInclude(
+        DimensionStats stats,
+        HashSet<string> strong,
+        string lowest,
+        string category,
+        IReadOnlySet<string> excludedCategories)
     {
+        if (excludedCategories.Contains(category))
+        {
+            return false;
+        }
+
         var isLowest = string.Equals(category, lowest, StringComparison.OrdinalIgnoreCase);
         if (isLowest)
         {
             return true;
         }
 
-        if (strong.Contains(category) && stats.Average >= 3.85 && !stats.HasLow)
+        if (strong.Contains(category))
         {
             return false;
         }
@@ -93,45 +119,27 @@ public static class PupilG78GrowthCompetencies
 
     private static string WhyExplanation(DimensionStats stats, string language)
     {
-        var lows = stats.ItemScores.Where(i => i.Effective <= 2).OrderBy(i => i.Effective).ThenBy(i => i.ItemId).ToList();
-        if (lows.Count > 0 && lows[0].Effective == 1)
+        _ = language;
+        var picks = stats.ItemScores
+            .Where(i => i.Effective <= 3)
+            .OrderBy(i => i.Effective)
+            .ThenBy(i => i.ItemId)
+            .Take(2)
+            .ToList();
+        if (picks.Count == 0)
         {
-            var low = lows[0];
-            var q = Bank.Questions.First(x => x.Id == low.ItemId);
-            var text = PupilQuestionStoryParaphrase.StrongDisagreeClause(
-                q.Id, q.Reverse, low.Raw, language);
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return "Je antwoorden hierover zaten in het midden.";
-            }
-
-            return ToJeGafAan(text);
+            picks = stats.ItemScores.OrderBy(i => i.Effective).ThenBy(i => i.ItemId).Take(1).ToList();
         }
 
-        return "Je antwoorden hierover zaten in het midden.";
-    }
-
-    private static string ToJeGafAan(string clause)
-    {
-        var s = clause.Trim().TrimEnd('.');
-        if (s.StartsWith("Dit zei je minder vaak over jezelf: ", StringComparison.Ordinal))
+        var parts = new List<string>();
+        foreach (var pick in picks)
         {
-            var inner = s["Dit zei je minder vaak over jezelf: ".Length..].Trim().TrimEnd('.');
-            return $"Je gaf aan dat {inner}.";
+            var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{pick.ItemId}");
+            var label = AnswerLabelNl.GetValueOrDefault(pick.Raw, "soms");
+            parts.Add($"Bij \"{stem}\" koos je \"{label}\".");
         }
 
-        if (s.StartsWith("Juist hier zie je het anders: ", StringComparison.Ordinal))
-        {
-            var inner = s["Juist hier zie je het anders: ".Length..].Trim().TrimEnd('.');
-            return $"Je gaf aan dat {inner}.";
-        }
-
-        if (s.StartsWith("Je ", StringComparison.Ordinal))
-        {
-            return $"Je gaf aan dat {PupilG78JeNarrative.ToDatSubordinate(s)}.";
-        }
-
-        return $"Je gaf aan dat {s}.";
+        return string.Join(' ', parts);
     }
 
     private static DimensionStats StatsForCategory(string category, IReadOnlyDictionary<string, int> answers)

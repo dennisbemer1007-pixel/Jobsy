@@ -34,7 +34,10 @@ public static class PupilG78FactTileComposer
         [9032] = "Veel vrienden om je heen is minder vaak jouw ding.",
         [9033] = "Heel goed worden in iets is minder vaak jouw ding.",
         [9031] = "Later alles zelf kiezen is minder vaak jouw ding.",
+        [9035] = "Later iets doen voor de wereld is minder vaak jouw ding.",
         [9050] = "Iedereen zich welkom laten voelen is minder vaak jouw ding.",
+        [9053] = "Taken delen in een team is minder vaak jouw ding.",
+        [9047] = "Samen in een groepje werken is minder vaak jouw ding.",
         [9058] = "Werken in een groepje is minder vaak jouw ding.",
         [9052] = "Een drukke, gezellige sfeer is minder vaak jouw ding.",
     };
@@ -81,14 +84,7 @@ public static class PupilG78FactTileComposer
             return fixedLine;
         }
 
-        var canonical = PupilG78QuestionJeForms.ForItem(low.ItemId);
-        if (canonical is not null)
-        {
-            return PupilG78JeNarrative.MinderVaakDatLine(canonical);
-        }
-
-        var inner = ExtractLowInner(low.Text);
-        return $"Je zei minder vaak dat {PupilG78JeNarrative.ToDatSubordinate(inner)}.";
+        return "";
     }
 
     private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs, G78AnswerClause? low)
@@ -96,15 +92,21 @@ public static class PupilG78FactTileComposer
         var sentences = new List<string>();
         foreach (var h in highs)
         {
-            sentences.Add(PupilG78JeNarrative.AsSentence(h.Text));
+            var main = PupilG78QuestionJeForms.ForItem(h.ItemId)
+                       ?? PupilG78JeNarrative.AsSentence(h.Text);
+            sentences.Add(main);
         }
 
         if (low is not null && highs.Count > 0)
         {
             var contrast = ContrastForTile(low);
             var tileSoFar = string.Join(' ', sentences);
-            if (!PupilG78JeNarrative.TooSimilar(highs[0].Text, low.Text)
-                && !PupilG78AnswerConflicts.TileLowConflictsWithText(low.ItemId, tileSoFar))
+            if (!string.IsNullOrWhiteSpace(contrast)
+                && !PupilG78JeNarrative.TooSimilar(highs[0].Text, low.Text)
+                && !PupilG78AnswerConflicts.TileLowConflictsWithText(low.ItemId, tileSoFar)
+                && !PupilG78AnswerConflicts.ContrastLineConflictsHighs(highs, contrast)
+                && !highs.Any(h => h.Model == AssessmentKind.Competence
+                                   && string.Equals(h.Category, low.Category, StringComparison.OrdinalIgnoreCase)))
             {
                 sentences.Add(contrast);
             }
@@ -116,22 +118,6 @@ public static class PupilG78FactTileComposer
         }
 
         return string.Join(' ', sentences);
-    }
-
-    private static string ExtractLowInner(string lowText)
-    {
-        var s = lowText.Trim().TrimEnd('.');
-        if (s.StartsWith("Dit zei je minder vaak over jezelf: ", StringComparison.Ordinal))
-        {
-            return s["Dit zei je minder vaak over jezelf: ".Length..].Trim().TrimEnd('.');
-        }
-
-        if (s.StartsWith("Juist hier zie je het anders: ", StringComparison.Ordinal))
-        {
-            return s["Juist hier zie je het anders: ".Length..].Trim().TrimEnd('.');
-        }
-
-        return s.StartsWith("Je ", StringComparison.Ordinal) ? "je " + s[3..] : s;
     }
 
     private static IReadOnlyList<G78AnswerClause> PickHighs(
@@ -275,9 +261,21 @@ public static class PupilG78FactTileComposer
                      .ThenBy(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
+            if (kind == AssessmentKind.Competence
+                && highs.Any(h => string.Equals(h.Category, c.Category, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
             if (highs.Count > 0
                 && PupilG78JeNarrative.TooSimilar(highs[0].Text, c.Text)
                 && !TileLowContrast.ContainsKey(c.ItemId))
+            {
+                continue;
+            }
+
+            var contrast = ContrastForTile(c);
+            if (PupilG78AnswerConflicts.ContrastLineConflictsHighs(highs, contrast))
             {
                 continue;
             }

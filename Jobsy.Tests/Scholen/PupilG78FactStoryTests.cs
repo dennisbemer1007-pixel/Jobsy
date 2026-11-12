@@ -57,7 +57,7 @@ public sealed class PupilG78FactStoryTests
     {
         var (result, progress) = FixtureMaker();
         var body = PupilG78FactStory.Build(result, progress, "nl").Body;
-        Assert.Contains("Natuur", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("natuur", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Engels en Gym", body, StringComparison.Ordinal);
     }
 
@@ -79,6 +79,23 @@ public sealed class PupilG78FactStoryTests
             var je = PupilG78QuestionJeForms.ForItem(id);
             Assert.NotNull(je);
             Assert.False(PupilG78QuestionJeForms.HasBareStemAfterJe(je!), $"item {id}: {je}");
+        }
+    }
+
+    [Fact]
+    public void Every_g78_item_has_main_and_dat_form()
+    {
+        for (var id = 9001; id <= 9060; id++)
+        {
+            var je = PupilG78QuestionJeForms.ForItem(id);
+            var dat = PupilG78QuestionJeForms.DatForItem(id);
+            Assert.NotNull(je);
+            Assert.NotNull(dat);
+            Assert.StartsWith("je ", dat!, StringComparison.Ordinal);
+            Assert.False(Regex.IsMatch(dat!, @"\bdat\s+je\s+", RegexOptions.CultureInvariant), $"item {id}");
+            Assert.False(PupilG78QuestionJeForms.HasBareStemAfterJe($"Je gaf aan dat {dat}."));
+            var rendered = $"Je gaf aan dat {dat}.";
+            Assert.InRange(rendered.Length, 12, 280);
         }
     }
 
@@ -113,7 +130,7 @@ public sealed class PupilG78FactStoryTests
                 || pkg.Body.Contains("doorzetten", StringComparison.OrdinalIgnoreCase),
                 pkg.Body);
             Assert.InRange(pkg.GrowthCompetencies.Count, 1, 5);
-            Assert.Contains("minder naar voren", pkg.Body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("Wat betreft doorzetten", pkg.Body, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -136,7 +153,7 @@ public sealed class PupilG78FactStoryTests
     public void Story_does_not_copy_tile_sentences_verbatim()
     {
         var pkg = PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl");
-        foreach (var tile in pkg.Tiles)
+        foreach (var tile in pkg.Tiles.Where(t => t.ModelKey is not "competence"))
         {
             foreach (var sentence in tile.Explanation.Split(". ", StringSplitOptions.TrimEntries))
             {

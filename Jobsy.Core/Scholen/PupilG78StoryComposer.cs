@@ -18,14 +18,16 @@ public static class PupilG78StoryComposer
         IReadOnlySet<int> reservedItemIds,
         IReadOnlyList<string> tileTexts,
         IReadOnlyList<int> tileLowItemIds,
+        IReadOnlyList<string> storyStrongCategories,
+        IReadOnlySet<string> growthDimensionCategories,
         out IReadOnlyList<int> usedItemIds)
     {
+        _ = growthDimensionCategories;
         var pool = clauses.Where(c => !reservedItemIds.Contains(c.ItemId)).ToList();
         var usedIds = new HashSet<int>();
         var usedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var avoidSimilar = new List<string>(tileTexts);
         var paragraphs = new List<string>();
-        var opener = 0;
         var suppressHelpInStory = tileLowItemIds.Contains(9019)
             || tileTexts.Any(t => t.Contains("uitleggen is minder", StringComparison.OrdinalIgnoreCase));
 
@@ -36,11 +38,19 @@ public static class PupilG78StoryComposer
         var p1Bits = mensen.Concat(mensenExtra).Take(4).ToList();
         if (p1Bits.Count > 0)
         {
-            paragraphs.Add(BuildFactParagraph(p1Bits, ref opener));
+            paragraphs.Add(BuildFactParagraph(p1Bits));
         }
 
         var dimAverages = PupilG78CompetencyNarrative.DimensionAverages(clauses);
-        var competencyPara = ComposeCompetencyParagraph(pool, dimAverages, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory, ref opener);
+        var competencyPara = ComposeCompetencyParagraph(
+            pool,
+            storyStrongCategories,
+            dimAverages,
+            usedIds,
+            usedCategories,
+            avoidSimilar,
+            tileLowItemIds,
+            suppressHelpInStory);
         if (!string.IsNullOrWhiteSpace(competencyPara))
         {
             paragraphs.Add(competencyPara);
@@ -53,16 +63,16 @@ public static class PupilG78StoryComposer
         var p3Bits = waarden.Concat(career).Take(4).ToList();
         if (p3Bits.Count > 0)
         {
-            paragraphs.Add(BuildFactParagraph(p3Bits, ref opener));
+            paragraphs.Add(BuildFactParagraph(p3Bits));
         }
 
-        var p4 = ComposeLevenOpSchoolParagraph(result, progress, vak, language, pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory, ref opener);
+        var p4 = ComposeLevenOpSchoolParagraph(result, progress, vak, language, pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory);
         if (!string.IsNullOrWhiteSpace(p4))
         {
             paragraphs.Add(p4);
         }
 
-        PadParagraphsFromPool(paragraphs, pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory, ref opener);
+        PadParagraphsFromPool(paragraphs, pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory);
 
         while (paragraphs.Count > 4)
         {
@@ -77,58 +87,46 @@ public static class PupilG78StoryComposer
             .ToList();
 
         usedItemIds = usedIds.ToList();
-        return paragraphs.Select(PupilQuestionStoryParaphrase.PolishJeForm).ToList();
+        return paragraphs
+            .Select(PupilG78StoryFlow.PolishConnectors)
+            .Select(PupilQuestionStoryParaphrase.PolishJeForm)
+            .ToList();
     }
 
-    private static string BuildFactParagraph(IReadOnlyList<G78AnswerClause> bits, ref int opener)
+    private static string BuildFactParagraph(IReadOnlyList<G78AnswerClause> bits)
     {
-        var sentences = new List<string>();
-        foreach (var c in bits)
-        {
-            var sent = PupilG78JeNarrative.NeutralFactSentence(c, opener++);
-            if (!string.IsNullOrWhiteSpace(sent))
-            {
-                sentences.Add(sent);
-            }
-        }
-
-        return string.Join(' ', sentences);
+        var sentences = bits
+            .Select(PupilG78StoryFlow.MainClause)
+            .Where(s => s.Length > 0)
+            .ToList();
+        return PupilG78StoryFlow.FlowJoin(sentences);
     }
 
     private static string ComposeCompetencyParagraph(
         List<G78AnswerClause> pool,
+        IReadOnlyList<string> storyStrongCategories,
         Dictionary<string, double> dimAverages,
         HashSet<int> usedIds,
         HashSet<string> usedCategories,
         List<string> avoidSimilar,
         IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory,
-        ref int opener)
+        bool suppressHelpInStory)
     {
-        if (dimAverages.Count == 0)
+        if (dimAverages.Count == 0 || storyStrongCategories.Count == 0)
         {
             return "";
         }
 
-        var topDims = dimAverages
-            .OrderByDescending(kv => kv.Value)
-            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
-            .Take(3)
-            .Select(kv => kv.Key)
-            .ToList();
-        var lowDim = dimAverages.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).First().Key;
-
+        var topDims = storyStrongCategories.Take(3).ToList();
         var labels = topDims.Select(PupilG78CompetencyNarrative.KidLabel).ToList();
-        var sentences = new List<string>
+        var intro = labels.Count switch
         {
-            labels.Count switch
-            {
-                >= 2 => $"In je antwoorden zie je vooral {JoinDutchList(labels)}.",
-                1 => $"In je antwoorden zie je vooral {labels[0]}.",
-                _ => "In je antwoorden zie je hoe je op school en met anderen omgaat."
-            }
+            >= 2 => $"In je antwoorden komt vooral {JoinDutchList(labels)} naar voren.",
+            1 => $"In je antwoorden komt vooral {labels[0]} naar voren.",
+            _ => ""
         };
 
+        var support = new List<string>();
         foreach (var dim in topDims)
         {
             var pick = pool.FirstOrDefault(c =>
@@ -148,42 +146,30 @@ public static class PupilG78StoryComposer
             usedIds.Add(pick.ItemId);
             usedCategories.Add(pick.Category);
             avoidSimilar.Add(pick.Text);
-            var sentPick = PupilG78JeNarrative.NeutralFactSentence(pick, opener++);
-            if (!string.IsNullOrWhiteSpace(sentPick))
+            var main = PupilG78StoryFlow.MainClause(pick);
+            if (main.Length > 0)
             {
-                sentences.Add(sentPick);
+                support.Add(main);
             }
-            if (sentences.Count >= 4)
+
+            if (support.Count >= 3)
             {
                 break;
             }
         }
 
-        sentences.Add(PupilG78CompetencyNarrative.StoryLowLine(lowDim));
-
-        while (sentences.Count < 3)
+        if (support.Count == 0)
         {
-            var extra = pool.FirstOrDefault(c =>
-                c.Model == AssessmentKind.Competence
-                && c.ItemId <= PupilG78CompetencyNarrative.CompetenceItemMax
-                && c.EffectiveScore >= 4
-                && !c.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
-                && !usedIds.Contains(c.ItemId));
-            if (extra is null)
-            {
-                break;
-            }
-
-            usedIds.Add(extra.ItemId);
-            avoidSimilar.Add(extra.Text);
-            var sentExtra = PupilG78JeNarrative.NeutralFactSentence(extra, opener++);
-            if (!string.IsNullOrWhiteSpace(sentExtra))
-            {
-                sentences.Add(sentExtra);
-            }
+            return intro;
         }
 
-        return string.Join(' ', sentences);
+        var body = PupilG78StoryFlow.FlowJoin(support);
+        if (string.IsNullOrWhiteSpace(intro))
+        {
+            return body;
+        }
+
+        return $"{intro} {body}";
     }
 
     private static string ComposeLevenOpSchoolParagraph(
@@ -196,20 +182,21 @@ public static class PupilG78StoryComposer
         HashSet<string> usedCategories,
         List<string> avoidSimilar,
         IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory,
-        ref int opener)
+        bool suppressHelpInStory)
     {
         var sentences = new List<string>();
         var vakNames = vak
             .Where(e => e.Leuk >= 4)
             .OrderByDescending(e => e.Leuk + e.Goed)
             .Take(3)
-            .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey))
+            .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey).ToLowerInvariant())
             .ToList();
-        var hobbies = HobbyLabels(progress, language);
+        var hobbies = HobbyLabels(progress, language)
+            .Select(h => h.ToLowerInvariant())
+            .ToList();
         if (vakNames.Count > 0)
         {
-            sentences.Add($"Je gaf aan dat je op school vooral {JoinDutchList(vakNames)} leuk vindt.");
+            sentences.Add($"Op school vind je vooral {JoinDutchList(vakNames)} leuk.");
         }
 
         if (hobbies.Count > 0)
@@ -221,7 +208,7 @@ public static class PupilG78StoryComposer
         RememberAvoid(avoidSimilar, culture);
         foreach (var c in culture.Take(Math.Max(0, 4 - sentences.Count)))
         {
-            var sent = PupilG78JeNarrative.NeutralFactSentence(c, opener++);
+            var sent = PupilG78StoryFlow.MainClause(c);
             if (!string.IsNullOrWhiteSpace(sent))
             {
                 sentences.Add(sent);
@@ -234,7 +221,7 @@ public static class PupilG78StoryComposer
             sentences.Add(dream);
         }
 
-        return sentences.Count == 0 ? "" : string.Join(' ', sentences);
+        return sentences.Count == 0 ? "" : PupilG78StoryFlow.FlowJoin(sentences);
     }
 
     private static IReadOnlyList<G78AnswerClause> PickCareerSocial(
@@ -344,8 +331,7 @@ public static class PupilG78StoryComposer
         HashSet<string> usedCategories,
         List<string> avoidSimilar,
         IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory,
-        ref int opener)
+        bool suppressHelpInStory)
     {
         while (paragraphs.Count < 3)
         {
@@ -355,7 +341,7 @@ public static class PupilG78StoryComposer
                 break;
             }
 
-            paragraphs.Add(BuildFactParagraph(extra, ref opener));
+            paragraphs.Add(BuildFactParagraph(extra));
             RememberAvoid(avoidSimilar, extra);
         }
 
@@ -373,17 +359,17 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            var extraSentences = new List<string>();
-            foreach (var c in fill)
+            var extraSentences = fill
+                .Select(PupilG78StoryFlow.MainClause)
+                .Where(s => s.Length > 0)
+                .ToList();
+            if (extraSentences.Count == 0)
             {
-                var sentFill = PupilG78JeNarrative.NeutralFactSentence(c, opener++);
-                if (!string.IsNullOrWhiteSpace(sentFill))
-                {
-                    extraSentences.Add(sentFill);
-                }
+                continue;
             }
 
-            paragraphs[i] = paragraphs[i].TrimEnd() + " " + string.Join(' ', extraSentences);
+            var merged = PupilG78StoryFlow.FlowJoin([paragraphs[i].TrimEnd('.'), ..extraSentences]);
+            paragraphs[i] = merged;
             RememberAvoid(avoidSimilar, fill);
         }
     }

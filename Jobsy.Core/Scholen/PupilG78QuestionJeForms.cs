@@ -12,6 +12,10 @@ public static partial class PupilG78QuestionJeForms
 
     public static IReadOnlyDictionary<int, string> All => AgreeJe;
 
+    public static string? DatForItem(int itemId) => PupilG78QuestionDatForms.ForItem(itemId);
+
+    public static IReadOnlyDictionary<int, string> AllDat => PupilG78QuestionDatForms.All;
+
     /// <summary>Detects common ik→je mistakes (bare verb stem immediately after "je").</summary>
     public static bool HasBareStemAfterJe(string text)
     {

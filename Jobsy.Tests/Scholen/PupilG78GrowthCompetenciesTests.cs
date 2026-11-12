@@ -17,7 +17,8 @@ public sealed class PupilG78GrowthCompetenciesTests
                 fixture.Progress.AnswersJson!)!;
             var avgs = PupilG78GrowthCompetencies.DimensionAverages(answers);
             var strong = PupilG78GrowthCompetencies.TopStrongCategories(avgs).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var growth = PupilG78GrowthCompetencies.Build(answers, "nl");
+            var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
+            var growth = pkg.GrowthCompetencies;
 
             Assert.InRange(growth.Count, 1, 5);
             for (var i = 1; i < growth.Count; i++)
@@ -27,12 +28,7 @@ public sealed class PupilG78GrowthCompetenciesTests
 
             foreach (var g in growth)
             {
-                if (strong.Contains(g.Category) && avgs[g.Category] >= 4.0)
-                {
-                    Assert.True(
-                        g.WhyExplanation.Contains("midden", StringComparison.OrdinalIgnoreCase)
-                        || g.WhyExplanation.StartsWith("Je gaf aan dat", StringComparison.Ordinal));
-                }
+                Assert.False(strong.Contains(g.Category) && avgs[g.Category] >= 4.0);
             }
         }
     }
@@ -42,13 +38,14 @@ public sealed class PupilG78GrowthCompetenciesTests
     {
         var answers = PupilG78RealisticFixtures.LeadsGroup().Progress.AnswersJson!;
         var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(answers)!;
-        foreach (var g in PupilG78GrowthCompetencies.Build(dict, "nl"))
+        var exclude = PupilG78GrowthCompetencies.TopStrongCategories(
+            PupilG78GrowthCompetencies.DimensionAverages(dict)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var g in PupilG78GrowthCompetencies.Build(dict, exclude, "nl"))
         {
             Assert.DoesNotContain("moet", g.WhyExplanation, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("je bent slecht", g.WhyExplanation, StringComparison.OrdinalIgnoreCase);
-            Assert.True(
-                g.WhyExplanation.StartsWith("Je gaf aan dat", StringComparison.Ordinal)
-                || g.WhyExplanation.StartsWith("Je antwoorden", StringComparison.Ordinal));
+            Assert.StartsWith("Bij \"", g.WhyExplanation, StringComparison.Ordinal);
+            Assert.Contains("koos je", g.WhyExplanation, StringComparison.Ordinal);
         }
     }
 
@@ -61,8 +58,9 @@ public sealed class PupilG78GrowthCompetenciesTests
         var avgs = PupilG78GrowthCompetencies.DimensionAverages(answers);
         var lowest = avgs.OrderBy(kv => kv.Value).First().Key;
         Assert.Contains(pkg.GrowthCompetencies, g => string.Equals(g.Category, lowest, StringComparison.OrdinalIgnoreCase));
-        Assert.True(
-            pkg.Body.Contains(PupilG78CompetencyNarrative.MinderNaarVoren(lowest), StringComparison.OrdinalIgnoreCase)
-            || pkg.GrowthCompetencies.Any(x => string.Equals(x.Category, lowest, StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(
+            PupilG78CompetencyNarrative.StoryLowLine(lowest),
+            pkg.Body,
+            StringComparison.OrdinalIgnoreCase);
     }
 }

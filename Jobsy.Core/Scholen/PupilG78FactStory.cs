@@ -54,14 +54,44 @@ public static class PupilG78FactStory
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
         var (tiles, tileIds, tileLowIds) = PupilG78FactTileComposer.Build(clauses, language);
         var tileIdSet = tileIds.ToHashSet();
+        var storyReservedIds = clauses
+            .Where(c => tileIdSet.Contains(c.ItemId) && c.Model != AssessmentKind.Competence)
+            .Select(c => c.ItemId)
+            .ToHashSet();
         var tileTexts = tiles.Select(t => t.Explanation).ToList();
+        var averages = PupilG78GrowthCompetencies.DimensionAverages(answers);
+        var topStrong = PupilG78GrowthCompetencies.TopStrongCategories(averages, 3).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var tileStrongCompetence = clauses
+            .Where(c => tileIdSet.Contains(c.ItemId)
+                        && c.Model == AssessmentKind.Competence
+                        && c.EffectiveScore >= 4
+                        && c.ItemId <= PupilG78CompetencyNarrative.CompetenceItemMax)
+            .Select(c => c.Category)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var growthExclude = new HashSet<string>(topStrong, StringComparer.OrdinalIgnoreCase);
+        growthExclude.UnionWith(tileStrongCompetence);
+        var growth = PupilG78GrowthCompetencies.Build(answers, growthExclude, language);
+        var growthCategories = growth.Select(g => g.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var storyStrongCategories = PupilG78GrowthCompetencies.TopStrongCategories(averages, 5)
+            .Where(c => !growthCategories.Contains(c))
+            .Take(3)
+            .ToList();
         var paragraphs = PupilG78StoryComposer.ComposeOverview(
-            clauses, result, progress, vak, language, tileIdSet, tileTexts, tileLowIds, out var storyIds);
+            clauses,
+            result,
+            progress,
+            vak,
+            language,
+            storyReservedIds,
+            tileTexts,
+            tileLowIds,
+            storyStrongCategories,
+            growthCategories,
+            out var storyIds);
         var body = string.Join(ParagraphBreak, paragraphs);
         var allUsed = tileIds.Concat(storyIds).Distinct().ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
-        var growth = PupilG78GrowthCompetencies.Build(answers, language);
         return new PupilG78StoryPackage(body, allUsed, tiles, preferences, sheet, growth);
     }
 

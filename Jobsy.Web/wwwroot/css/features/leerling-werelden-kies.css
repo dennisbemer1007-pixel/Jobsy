@@ -2956,6 +2956,24 @@
   background-position: center;
 }
 
+.ll-g78-shell .ll-result--g78 .rtile-img {
+  display: none;
+}
+
+.ll-g78-shell .ll-result--g78 .rtile {
+  min-height: 0;
+}
+
+.ll-g78-shell .ll-result--g78 .rtile-body {
+  padding-top: 18px;
+}
+
+.ll-g78-shell .ll-result--g78 .rtile-txt {
+  flex: 0 1 auto;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
 .ll-g78-shell .rtile-body {
   padding: 16px 18px;
   flex: 1;
@@ -3326,6 +3344,15 @@
 
 .ll-g78-shell .ll-result--g78 .ll-g78-coach {
   margin-top: 10px;
+}
+
+.ll-g78-shell .ll-result--g78 .ll-g78-coach .lob[src=""],
+.ll-g78-shell .ll-result--g78 .ll-g78-coach .lob:not([src]) {
+  display: none;
+}
+
+.ll-g78-shell .ll-result--g78 .ll-g78-coach .bubble {
+  min-height: 0;
 }
 
 @media (max-width: 600px) {
