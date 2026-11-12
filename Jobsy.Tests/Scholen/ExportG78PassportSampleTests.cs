@@ -161,6 +161,50 @@ public class ExportG78PassportSampleTests
         Directory.CreateDirectory("/opt/cursor/artifacts");
         File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-helpt-anderen.pdf", pdf);
         WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-dit-ben-jij-pdf-page.png");
+        WritePassportSectionPagePngs(pdf);
+    }
+
+    private static void WritePassportSectionPagePngs(byte[] pdf)
+    {
+        EnsurePythonCompareDeps();
+        var pdfPath = Path.Combine(Path.GetTempPath(), $"g78-sections-{Guid.NewGuid():N}.pdf");
+        File.WriteAllBytes(pdfPath, pdf);
+        var script = """
+import sys
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
+doc = fitz.open(sys.argv[1])
+out_dir = sys.argv[2]
+for i, page in enumerate(doc):
+    t = page.get_text()
+    if "D E E L 1" in t or "D E E L 2" in t or "DEEL 1" in t or "DEEL 2" in t:
+        pix = page.get_pixmap(matrix=fitz.Matrix(120/72, 120/72))
+        pix.save(f"{out_dir}/g78-pdf-section-page-{i}.png")
+print("ok", doc.page_count)
+""";
+        var scriptPath = "/tmp/g78-section-pages.py";
+        File.WriteAllText(scriptPath, script);
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "python3",
+            ArgumentList = { scriptPath, pdfPath, "/opt/cursor/artifacts" },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi);
+        proc!.WaitForExit(60_000);
+        Assert.Equal(0, proc.ExitCode);
+        try
+        {
+            File.Delete(pdfPath);
+        }
+        catch
+        {
+            // best-effort
+        }
     }
 
     private static void WriteSubjectsPagePng(byte[] pdf, string path)
@@ -178,7 +222,7 @@ doc = fitz.open(sys.argv[1])
 idx = min(3, len(doc) - 1)
 for i, page in enumerate(doc):
     t = page.get_text()
-    if "DEEL 2" in t and "Wat ik leuk vind" in t:
+    if ("D E E L 2" in t or "DEEL 2" in t) and "Wat ik leuk vind" in t:
         idx = i
         break
 page = doc[idx]

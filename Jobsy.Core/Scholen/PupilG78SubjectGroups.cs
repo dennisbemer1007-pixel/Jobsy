@@ -22,9 +22,9 @@ public static class PupilG78SubjectGroups
     {
         var english = PupilVerhaalLocalized.IsEnglish(language);
         _ = result;
-        var strong = Lines(scores, PupilVakScores.IsStrong, english);
-        var growth = Lines(scores, PupilVakScores.IsLeukGrowth, english);
-        var skill = Lines(scores, PupilVakScores.IsGoedOnly, english);
+        var strong = Lines(scores, PupilVakScores.IsStrong);
+        var growth = Lines(scores, PupilVakScores.IsLeukGrowth);
+        var skill = Lines(scores, PupilVakScores.IsGoedOnly);
 
         var talk = PupilG78PassportTalk.Questions(scores, english);
 
@@ -70,15 +70,18 @@ public static class PupilG78SubjectGroups
 
     private static List<PupilPassportSubjectLine> Lines(
         IReadOnlyList<PupilVakScoreEntry> scores,
-        Func<PupilVakScoreEntry, bool> pick,
-        bool english)
+        Func<PupilVakScoreEntry, bool> pick)
     {
-        return scores
-            .Where(pick)
+        var picked = scores.Where(pick).ToList();
+        var hasTekenCluster = picked.Any(e =>
+            e.SubjectKey.Equals("tekenen", StringComparison.OrdinalIgnoreCase));
+
+        return picked
+            .Where(e => !(hasTekenCluster && e.SubjectKey.Equals("handvaardigheid", StringComparison.OrdinalIgnoreCase)))
             .OrderBy(e => PupilVakScores.AllSubjectKeys.ToList().IndexOf(e.SubjectKey))
             .Select(e => new PupilPassportSubjectLine(
                 e.SubjectKey,
-                english ? PupilVakSubjectLabels.Nl(e.SubjectKey) : PupilVakSubjectLabels.Nl(e.SubjectKey),
+                PupilVakSubjectLabels.Nl(e.SubjectKey),
                 e.Leuk,
                 e.Goed))
             .ToList();

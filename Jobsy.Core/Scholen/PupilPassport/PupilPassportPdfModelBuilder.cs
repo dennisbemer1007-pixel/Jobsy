@@ -330,10 +330,12 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         var english = PupilVerhaalLocalized.IsEnglish(language);
         return code switch
         {
+            CulturePersonalityCatalog.Autonomy => english ? "Independent or clear rules" : "Zelfstandig of kader",
             CulturePersonalityCatalog.Collaboration => english ? "Together or alone" : "Samen of alleen",
             CulturePersonalityCatalog.PeopleFirst => english ? "Indoors or outdoors" : "Binnen of buiten",
             CulturePersonalityCatalog.Informal => english ? "Calm or busy" : "Rustig of druk",
             CulturePersonalityCatalog.Flexibility => english ? "Fixed or varied" : "Vast of afwisselend",
+            CulturePersonalityCatalog.Innovation => english ? "Familiar or new ideas" : "Bekend of vernieuwend",
             _ => PupilPassportLocalizedCopy.Get($"LeerlingStory.Tile.Cult.{code}", language)
         };
     }

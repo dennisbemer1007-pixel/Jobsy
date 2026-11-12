@@ -34,6 +34,8 @@ public static class PupilG78PageLint
         CheckCompetencyAnchors(pkg, issues);
         CheckReflexiveVerbs(pageText, issues);
         CheckStoryCultureTileTheme(pkg, issues);
+        CheckStoryExactDuplicateSentences(pkg.Body, issues);
+        CheckZoOokJeSubject(pageText, issues);
         return issues;
     }
 
@@ -270,6 +272,36 @@ public static class PupilG78PageLint
             && !pageText.Contains("voel je je op je gemak", StringComparison.OrdinalIgnoreCase))
         {
             issues.Add(new PupilG78PageLintIssue("reflexive-verb", "voel je op je gemak"));
+        }
+    }
+
+    private static void CheckStoryExactDuplicateSentences(string body, List<PupilG78PageLintIssue> issues)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var s in SplitSentences(body))
+        {
+            var norm = NormalizeSentence(s);
+            if (norm.Length < 15)
+            {
+                continue;
+            }
+
+            if (!seen.Add(norm))
+            {
+                issues.Add(new PupilG78PageLintIssue("dup-sentence-exact", Truncate(norm)));
+            }
+        }
+    }
+
+    private static void CheckZoOokJeSubject(string pageText, List<PupilG78PageLintIssue> issues)
+    {
+        foreach (Match match in Regex.Matches(pageText, @"(?:^|\. )(Zo|Ook) ([^.]+)\.", RegexOptions.Multiline))
+        {
+            var fragment = match.Groups[2].Value;
+            if (!Regex.IsMatch(fragment, @"\bje\b", RegexOptions.IgnoreCase))
+            {
+                issues.Add(new PupilG78PageLintIssue("zo-ook-je", $"{match.Groups[1].Value} {Truncate(fragment)}"));
+            }
         }
     }
 

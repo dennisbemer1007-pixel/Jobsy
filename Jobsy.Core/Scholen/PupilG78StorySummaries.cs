@@ -229,6 +229,12 @@ public static class PupilG78StorySummaries
                 continue;
             }
 
+            if (string.Equals(key, "handvaardigheid", StringComparison.OrdinalIgnoreCase)
+                && ranked.Any(k => string.Equals(k, "tekenen", StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
             if (picked.Count >= 3)
             {
                 break;
@@ -237,16 +243,30 @@ public static class PupilG78StorySummaries
             picked.Add(key);
         }
 
+        var hasHandvaardigheid = ranked.Any(k =>
+            string.Equals(k, "handvaardigheid", StringComparison.OrdinalIgnoreCase));
+
         return picked
-            .Select(FormatVakStoryName)
+            .Select(key => FormatVakStoryName(key, hasHandvaardigheid))
             .OrderBy(n => n.StartsWith("het vak", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
             .ToList();
     }
 
-    private static string FormatVakStoryName(string subjectKey)
-        => string.Equals(subjectKey, "natuur-techniek", StringComparison.OrdinalIgnoreCase)
-            ? "het vak natuur en techniek"
-            : PupilVakSubjectLabels.NlStoryList(subjectKey);
+    private static string FormatVakStoryName(string subjectKey, bool includeHandvaardigheidWithTekenen)
+    {
+        if (string.Equals(subjectKey, "natuur-techniek", StringComparison.OrdinalIgnoreCase))
+        {
+            return "het vak natuur en techniek";
+        }
+
+        if (includeHandvaardigheidWithTekenen
+            && string.Equals(subjectKey, "tekenen", StringComparison.OrdinalIgnoreCase))
+        {
+            return "tekenen en handvaardigheid";
+        }
+
+        return PupilVakSubjectLabels.NlStoryList(subjectKey);
+    }
 
     private static string MaakVakSummary(IReadOnlyList<string> vakNames)
         => $"Op school heb je het meest plezier in {JoinDutchList(vakNames)}.";

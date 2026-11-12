@@ -127,7 +127,50 @@ public static class PupilG78StoryComposer
 
         if (p1Sentences.Count < 2)
         {
-            p1Sentences.Add("Je hebt duidelijke voorkeuren in hoe je iets aanpakt.");
+            foreach (var extraId in new[] { 9024, 9054, 9001, 9002, 9003 })
+            {
+                TryAddOpeningClause(clauses, extraId, p1Sentences, selected, usedIds, usedThemes, growthCategories);
+                if (p1Sentences.Count >= 2)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (p1Sentences.Count < 2)
+        {
+            var social = PupilG78StorySummaries.SocialOverviewLine(result, answers, growthCategories);
+            if (social.Length > 0
+                && p1Sentences.All(s => !string.Equals(
+                    PupilG78PageLint.NormalizeSentence(s),
+                    PupilG78PageLint.NormalizeSentence(social),
+                    StringComparison.Ordinal)))
+            {
+                p1Sentences.Add(social);
+            }
+        }
+
+        if (p1Sentences.Count < 2)
+        {
+            foreach (var cat in storyStrongCategories)
+            {
+                var line = PupilG78StorySummaries.CompetencyStrengthLine(cat, answers, growthCategories);
+                if (line.Length == 0)
+                {
+                    continue;
+                }
+
+                if (p1Sentences.Any(s => PupilG78JeNarrative.TooSimilar(s, line)))
+                {
+                    continue;
+                }
+
+                p1Sentences.Add(line);
+                if (p1Sentences.Count >= 2)
+                {
+                    break;
+                }
+            }
         }
 
         paragraphs.Add(PupilG78StoryFlow.FlowJoin(p1Sentences.Take(2).ToList()));
@@ -149,6 +192,8 @@ public static class PupilG78StoryComposer
 
         paragraphs.Add(PupilG78StorySummaries.ComposeSchoolHobbiesRiasecParagraph(
             result, progress, vak, language, growthCategories));
+
+        DedupeSentencesAcrossParagraphs(paragraphs);
 
         EnsureEveryParagraphHasTwoSentences(paragraphs, answers, result, progress, vak, language, growthCategories);
 
@@ -316,6 +361,41 @@ public static class PupilG78StoryComposer
         return false;
     }
 
+    private static string PickParagraphPaddingSentence(
+        int paragraphIndex,
+        string paragraph,
+        PupilResult result,
+        IReadOnlySet<string> growthCategories)
+    {
+        string[] candidates = paragraphIndex switch
+        {
+            2 =>
+            [
+                PupilG78StorySummaries.TopCultureSummary(result.TopCulture),
+                PupilG78StorySummaries.TopValueSummary(result.TopValue),
+                "Je weet goed wat je belangrijk vindt en waar je je op je gemak voelt."
+            ],
+            3 => [PupilG78StorySummaries.RiasecTopTwoSentence(result, growthCategories)],
+            _ => []
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (candidate.Length == 0)
+            {
+                continue;
+            }
+
+            var stem = candidate.TrimEnd('.');
+            if (!paragraph.Contains(stem, StringComparison.Ordinal))
+            {
+                return candidate;
+            }
+        }
+
+        return "";
+    }
+
     private static void EnsureEveryParagraphHasTwoSentences(
         List<string> paragraphs,
         IReadOnlyDictionary<string, int> answers,
@@ -336,13 +416,8 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            var extra = i switch
-            {
-                2 => PupilG78StorySummaries.TopCultureSummary(result.TopCulture),
-                3 => PupilG78StorySummaries.RiasecTopTwoSentence(result, growthCategories),
-                _ => ""
-            };
-            if (extra.Length == 0 || paragraphs[i].Contains(extra.TrimEnd('.'), StringComparison.Ordinal))
+            var extra = PickParagraphPaddingSentence(i, paragraphs[i], result, growthCategories);
+            if (extra.Length == 0)
             {
                 continue;
             }
@@ -908,4 +983,39 @@ public static class PupilG78StoryComposer
         2 => $"{items[0]} en {items[1]}",
         _ => string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
     };
+
+    private static IEnumerable<string> SplitStorySentences(string text)
+    {
+        foreach (var part in text.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var s = part.Trim();
+            if (s.Length > 0)
+            {
+                yield return s.EndsWith('.') ? s : s + ".";
+            }
+        }
+    }
+
+    private static void DedupeSentencesAcrossParagraphs(List<string> paragraphs)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < paragraphs.Count; i++)
+        {
+            var kept = new List<string>();
+            foreach (var sentence in SplitStorySentences(paragraphs[i]))
+            {
+                var norm = PupilG78PageLint.NormalizeSentence(sentence);
+                if (norm.Length >= 15 && !seen.Add(norm))
+                {
+                    continue;
+                }
+
+                kept.Add(sentence);
+            }
+
+            paragraphs[i] = kept.Count == 0 ? "" : PupilG78StoryFlow.FlowJoin(kept);
+        }
+
+        paragraphs.RemoveAll(static p => string.IsNullOrWhiteSpace(p));
+    }
 }

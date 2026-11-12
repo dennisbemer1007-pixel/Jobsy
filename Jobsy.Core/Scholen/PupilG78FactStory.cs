@@ -265,11 +265,13 @@ public static class PupilG78FactStory
         IReadOnlyList<PupilVakScoreEntry> vak,
         string language)
     {
-        var school = vak
+        var school = DedupePreferenceSubjectLabels(vak
             .Where(e => e.Leuk >= 4)
             .OrderByDescending(e => e.Leuk + e.Goed)
             .Select(e => PupilVakSubjectLabels.Nl(e.SubjectKey))
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(6)
+            .ToList())
             .Take(5)
             .ToList();
 
@@ -359,6 +361,61 @@ public static class PupilG78FactStory
         }
 
         return true;
+    }
+
+    internal static List<string> DedupePreferenceSubjectLabels(IReadOnlyList<string> labels)
+    {
+        var ordered = labels
+            .Select(CapitalizePreferenceLabel)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+        var kept = new List<string>();
+        foreach (var label in ordered)
+        {
+            if (IsSubsumedByAnotherLabel(label, kept))
+            {
+                continue;
+            }
+
+            kept.RemoveAll(existing => IsSubsumedByAnotherLabel(existing, [label]));
+            kept.Add(label);
+        }
+
+        return kept;
+    }
+
+    private static string CapitalizePreferenceLabel(string label)
+    {
+        var t = label.Trim();
+        if (t.Length == 0)
+        {
+            return t;
+        }
+
+        return char.ToUpperInvariant(t[0]) + t[1..];
+    }
+
+    private static bool IsSubsumedByAnotherLabel(string label, IReadOnlyList<string> others)
+    {
+        foreach (var other in others)
+        {
+            if (string.Equals(other, label, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (other.Contains(label, StringComparison.OrdinalIgnoreCase) && label.Length < other.Length)
+            {
+                return true;
+            }
+
+            if (label.Contains(other, StringComparison.OrdinalIgnoreCase) && other.Length < label.Length)
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static List<string> DedupeHobbyVsSchool(List<string> hobbies, List<string> school)

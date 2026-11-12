@@ -46,7 +46,9 @@ internal static class PupilG78StoryFlow
     {
         if (sentence.StartsWith("Je ", StringComparison.Ordinal)
             || sentence.StartsWith("In je ", StringComparison.Ordinal)
-            || sentence.StartsWith("Op school", StringComparison.OrdinalIgnoreCase))
+            || sentence.StartsWith("Op school", StringComparison.OrdinalIgnoreCase)
+            || sentence.StartsWith("Zo ", StringComparison.Ordinal)
+            || sentence.StartsWith("Ook ", StringComparison.Ordinal))
         {
             return sentence;
         }

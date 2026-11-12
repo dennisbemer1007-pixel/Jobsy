@@ -241,17 +241,8 @@ internal static class PupilPassportGroep78PdfRenderer
 
         page.Content().Column(col =>
         {
-            col.Spacing(Mm(8));
+            col.Spacing(Mm(3));
             col.Item().Element(c => MirrorBox(c, m));
-            if (m.DnaTiles is { Count: > 0 })
-            {
-                col.Item().PaddingTop(Mm(2)).Element(c => G78DnaTilesGrid(c, m));
-            }
-
-            if (m.G78GrowthItems is { Count: > 0 })
-            {
-                col.Item().PaddingTop(Mm(3)).Element(c => G78GrowthCompact(c, m));
-            }
 
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
                 T(m, "LeerlingPassport.G78.Riasec.Sub"), inner =>
@@ -263,11 +254,12 @@ internal static class PupilPassportGroep78PdfRenderer
                     }
                     else
                     {
-                        inner.Element(x => RiasecBars(x, m, spacious: true));
+                        inner.Element(x => RiasecBars(x, m, spacious: false));
                     }
-                }));
+                }, goldRule: true));
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Strengths.Title"),
-                T(m, "LeerlingPassport.G78.Strengths.Sub"), inner => StrengthChips(inner, m, spacious: true)));
+                T(m, "LeerlingPassport.G78.Strengths.Sub"), inner => StrengthChips(inner, m, spacious: false),
+                goldRule: true));
         });
     }
 
@@ -350,28 +342,57 @@ internal static class PupilPassportGroep78PdfRenderer
             return;
         }
 
-        c.Column(col =>
+        var pair = groups.Take(2).ToList();
+        c.Row(row =>
         {
-            foreach (var g in groups.Take(3))
+            for (var i = 0; i < pair.Count; i++)
             {
-                col.Item().PaddingBottom(Mm(5)).Element(box => SectionBox(box, g.Title, g.Intro, inner =>
+                if (i > 0)
                 {
-                    inner.Column(list =>
-                    {
-                        foreach (var line in g.Subjects.Take(6))
-                        {
-                            list.Item().PaddingTop(2).Row(row =>
-                            {
-                                row.ConstantItem(8).Text("·").FontSize(10f).FontColor(Gold);
-                                row.RelativeItem().Text(TruncateLabel(line.Label)).FontSize(9.5f).FontColor(Ink);
-                                row.ConstantItem(40).AlignRight().Text($"leuk {line.Leuk} · goed {line.Goed}")
-                                    .FontSize(8f).FontColor(Muted);
-                            });
-                        }
-                    });
-                }));
+                    row.ConstantItem(Mm(4));
+                }
+
+                row.RelativeItem().MinWidth(0).Element(x => SubjectGroupCard(x, pair[i]));
             }
         });
+    }
+
+    private static void SubjectGroupCard(IContainer c, PupilPassportSubjectGroup g)
+    {
+        c.Background(CreamWarm)
+            .Border(1).BorderColor(Gold)
+            .CornerRadius(Mm(1.5f))
+            .Padding(Mm(3.5f))
+            .Column(col =>
+            {
+                col.Item().Text(g.Title).Bold().FontSize(10.5f).FontColor(Navy);
+                if (!string.IsNullOrWhiteSpace(g.Intro))
+                {
+                    col.Item().PaddingTop(1).Text(g.Intro).FontSize(8.5f).FontColor(Muted);
+                }
+
+                foreach (var line in g.Subjects.Take(6))
+                {
+                    col.Item().PaddingTop(3).Row(row =>
+                    {
+                        row.ConstantItem(8).Text("·").FontSize(10f).FontColor(Gold);
+                        row.RelativeItem().MinWidth(0).Text(TruncateLabel(line.Label, 36))
+                            .FontSize(9f).FontColor(Ink).LineHeight(1.25f);
+                        row.ConstantItem(Mm(24)).AlignMiddle().AlignRight()
+                            .Element(pill => SubjectScorePill(pill, line.Leuk, line.Goed));
+                    });
+                }
+            });
+    }
+
+    private static void SubjectScorePill(IContainer c, int leuk, int goed)
+    {
+        c.Background(Track)
+            .Border(1).BorderColor(Border)
+            .CornerRadius(Mm(1))
+            .PaddingHorizontal(4).PaddingVertical(2)
+            .Text($"leuk {leuk} · goed {goed}")
+            .FontSize(7f).FontColor(Muted);
     }
 
     private static void DirectionsPage(PageDescriptor page, PupilPassportPdfModel m, int pageNo)
@@ -636,9 +657,12 @@ internal static class PupilPassportGroep78PdfRenderer
         IContainer c,
         string heading,
         string? sub,
-        Action<IContainer> body)
+        Action<IContainer> body,
+        bool goldRule = false)
     {
-        c.PaddingBottom(Mm(5)).BorderTop(1.5f).BorderColor(Navy).PaddingTop(Mm(3)).Column(col =>
+        var ruleColor = goldRule ? Gold : Navy;
+        var ruleSize = goldRule ? 0.75f : 1.5f;
+        c.PaddingBottom(Mm(5)).BorderTop(ruleSize).BorderColor(ruleColor).PaddingTop(Mm(3)).Column(col =>
         {
             col.Item().Text(heading).Bold().FontSize(12.5f).FontColor(Navy);
             if (!string.IsNullOrWhiteSpace(sub))
@@ -709,66 +733,6 @@ internal static class PupilPassportGroep78PdfRenderer
             });
     }
 
-    private static void G78DnaTilesGrid(IContainer c, PupilPassportPdfModel m)
-    {
-        var tiles = m.DnaTiles.Take(4).ToList();
-        c.Column(outer =>
-        {
-            for (var i = 0; i < tiles.Count; i += 2)
-            {
-                var rowIndex = i;
-                outer.Item().PaddingBottom(Mm(2)).Row(row =>
-                {
-                    row.RelativeItem().MinWidth(0).PaddingRight(Mm(2))
-                        .Element(left => G78DnaTileCard(left, tiles[rowIndex]));
-                    if (rowIndex + 1 < tiles.Count)
-                    {
-                        row.RelativeItem().MinWidth(0).PaddingLeft(Mm(2))
-                            .Element(right => G78DnaTileCard(right, tiles[rowIndex + 1]));
-                    }
-                });
-            }
-        });
-    }
-
-    private static void G78DnaTileCard(IContainer c, (string Label, string Value) tile)
-    {
-        c.Background(CreamWarm)
-            .Border(1).BorderColor(Border)
-            .CornerRadius(Mm(1.2f))
-            .Padding(Mm(2.5f))
-            .Column(col =>
-            {
-                col.Item().Text(TruncateLabel(tile.Label, 32)).Bold().FontSize(9f).FontColor(Navy);
-                col.Item().PaddingTop(2).Text(NormalizePdfLine(tile.Value))
-                    .FontSize(8.5f).FontColor(Ink).LineHeight(1.4f);
-            });
-    }
-
-    private static void G78GrowthCompact(IContainer c, PupilPassportPdfModel m)
-    {
-        var items = m.G78GrowthItems!.Take(5).ToList();
-        c.Background(CreamWarm)
-            .Border(1).BorderColor(Border)
-            .CornerRadius(Mm(1.2f))
-            .Padding(Mm(2.5f))
-            .Column(col =>
-            {
-                col.Item().Text(T(m, "LeerlingPassport.G78.Growth.Title")).Bold().FontSize(10f).FontColor(Navy);
-                col.Item().PaddingTop(1.5f).Text(T(m, "LeerlingPassport.G78.Growth.Footnote"))
-                    .FontSize(8.25f).FontColor(Muted).LineHeight(1.35f);
-                foreach (var (label, why) in items)
-                {
-                    col.Item().PaddingTop(2.5f).Text(text =>
-                    {
-                        text.Span(label).SemiBold().FontSize(8.5f).FontColor(Navy);
-                        text.Span(": ").FontSize(8.5f);
-                        text.Span(NormalizePdfLine(why)).FontSize(8.5f).FontColor(Ink).LineHeight(1.35f);
-                    });
-                }
-            });
-    }
-
     private static void MirrorBox(IContainer c, PupilPassportPdfModel m)
     {
         var raw = NormalizePdfLine(m.MirrorBody ?? m.StoryBody);
@@ -782,8 +746,8 @@ internal static class PupilPassportGroep78PdfRenderer
             {
                 col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
                     .Bold().FontSize(12.5f).FontColor(Navy);
-                col.Item().PaddingTop(Mm(2.5f)).Text(body)
-                    .FontFamily(MirrorFont).FontSize(11.5f).FontColor(Ink).LineHeight(1.65f);
+                col.Item().PaddingTop(Mm(2)).Text(body)
+                    .FontFamily(MirrorFont).FontSize(10.5f).FontColor(Ink).LineHeight(1.5f);
                 col.Item().PaddingTop(Mm(3)).Text(T(m, "LeerlingPassport.G78.Mirror.Source"))
                     .FontSize(7.5f).FontColor(Muted);
             });
@@ -800,7 +764,7 @@ internal static class PupilPassportGroep78PdfRenderer
         var parts = Regex.Split(raw.Trim(), @"(?<=[.!?])\s+")
             .Select(p => p.Trim())
             .Where(p => p.Length > 0)
-            .Take(PupilG78MirrorTemplate.MaxSentences)
+            .Take(4)
             .ToList();
 
         if (parts.Count == 0)
@@ -813,7 +777,7 @@ internal static class PupilPassportGroep78PdfRenderer
 
     private static void RiasecBars(IContainer c, PupilPassportPdfModel m, bool spacious = false)
     {
-        var bars = (m.RiasecBars ?? []).Take(6).ToList();
+        var bars = (m.RiasecBars ?? []).Take(4).ToList();
         var barHeight = Mm(spacious ? 4.2f : 3.5f);
         var rowGap = spacious ? 6 : 3;
         c.Column(col =>
@@ -895,9 +859,15 @@ internal static class PupilPassportGroep78PdfRenderer
         }
 
         parts = label.Split(" or ", 2, StringSplitOptions.TrimEntries);
+        if (parts.Length == 2)
+        {
+            return (parts[0].ToLowerInvariant(), parts[1].ToLowerInvariant());
+        }
+
+        parts = label.Split(',', 2, StringSplitOptions.TrimEntries);
         return parts.Length == 2
             ? (parts[0].ToLowerInvariant(), parts[1].ToLowerInvariant())
-            : (label, "");
+            : (label.ToLowerInvariant(), "");
     }
 
     private static void StrengthChips(IContainer c, PupilPassportPdfModel m, bool spacious = false)
@@ -939,11 +909,13 @@ internal static class PupilPassportGroep78PdfRenderer
 
     private static void TalkBox(IContainer c, PupilPassportPdfModel m, IReadOnlyList<string> questions)
     {
-        SoftAccentPanel(c, Navy, CreamWarm, inner =>
-        {
-            inner.Column(col =>
+        c.Background(CreamWarm)
+            .Border(1).BorderColor(Gold)
+            .CornerRadius(Mm(1.5f))
+            .Padding(Mm(3.5f))
+            .Column(col =>
             {
-                col.Item().Text(T(m, "LeerlingPassport.G78.Talk.Heading")).Bold().FontColor(Navy).FontSize(10f);
+                col.Item().Text(T(m, "LeerlingPassport.G78.Talk.Heading")).Bold().FontColor(Navy).FontSize(10.5f);
                 foreach (var q in questions)
                 {
                     col.Item().PaddingTop(3).Text("• " + q).FontColor(Ink).FontSize(9.5f).LineHeight(1.5f);
@@ -954,7 +926,6 @@ internal static class PupilPassportGroep78PdfRenderer
                     col.Item().PaddingTop(3).Text(T(m, "LeerlingPassport.G78.Talk.Empty")).FontColor(Muted).FontSize(9.5f);
                 }
             });
-        });
     }
 
     private static void SamenBox(IContainer c, PupilPassportPdfModel m)
