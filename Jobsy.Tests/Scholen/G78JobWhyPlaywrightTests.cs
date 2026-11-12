@@ -20,7 +20,7 @@ public sealed class G78JobWhyPlaywrightTests
             <!DOCTYPE html><html lang="nl"><body class="ll-g78-shell">
             <article class="lp-g78__card lp-g78__job">
             <div class="g78-job-why-wrap">
-            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="Waarom past dit bij jou?" aria-expanded="false" aria-controls="g78-job-why-fotograaf">i</button>
+            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="Meer info over fotograaf" aria-expanded="false" aria-controls="g78-job-why-fotograaf">i</button>
             <div id="g78-job-why-fotograaf" class="ll-info g78-job-why-panel" hidden>
             <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
             <p class="g78-job-why-panel__body">Je gaf aan dat je tekenen leuk vindt.</p>
