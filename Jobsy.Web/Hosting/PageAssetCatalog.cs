@@ -240,12 +240,12 @@ public static partial class PageAssetCatalog
             return Area.Werkgever;
         }
 
-        if (path.StartsWith("/admin/", StringComparison.Ordinal))
+        if (path is "/admin" || path.StartsWith("/admin/", StringComparison.Ordinal))
         {
             return Area.Beheer;
         }
 
-        if (path.StartsWith("/sales/", StringComparison.Ordinal))
+        if (path is "/sales" || path.StartsWith("/sales/", StringComparison.Ordinal))
         {
             return Area.Sales;
         }

@@ -83,7 +83,7 @@
                     @foreach (var item in _todo.Take(6))
                     {
                         <li class="admin-todo-list__row admin-todo-list__row--@item.Severity">
-                            <span class="admin-todo-list__icon" aria-hidden="true">@((MarkupString)SeverityIcon(item.Severity))</span>
+                            <span class="admin-todo-list__icon" aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(SeverityIcon(item.Severity)))</span>
                             <div class="admin-todo-list__body">
                                 <p class="admin-todo-list__title">@TodoTitle(item)</p>
                                 <p class="muted admin-todo-list__sub">@item.Subtitle</p>
@@ -92,7 +92,7 @@
                             <span class="muted admin-todo-list__since">@AdminRelativeTime.Format(item.SinceUtc)</span>
                             <a class="btn-compact btn-compact--primary admin-todo-list__action" href="@item.Href">@Culture[item.ActionLabelKey]</a>
                             <a class="admin-todo-list__chevron" href="@item.Href" aria-label="@Culture[item.ActionLabelKey]">
-                                <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                                <span aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Chevron))</span>
                             </a>
                         </li>
                     }

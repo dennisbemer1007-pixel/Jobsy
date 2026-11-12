@@ -34,7 +34,7 @@
                     {
                         <span class="admin-count-pill">@groupCount</span>
                     }
-                    <span class="admin-sidebar__chevron" aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+                    <span class="admin-sidebar__chevron" aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Chevron))</span>
                 </button>
                 @if (open)
                 {
@@ -47,7 +47,7 @@
                                 <a class="admin-sidebar__link @(active ? "is-active" : null)"
                                    href="@item.Href"
                                    aria-current="@(active ? "page" : null)">
-                                    <span class="admin-sidebar__icon" aria-hidden="true">@((MarkupString)item.Svg)</span>
+                                    <span class="admin-sidebar__icon" aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(item.Svg))</span>
                                     <span class="admin-sidebar__label">@Culture[item.LabelKey]</span>
                                     @if (count > 0)
                                     {

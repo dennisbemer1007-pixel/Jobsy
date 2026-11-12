@@ -28,7 +28,7 @@
                     <strong>@Culture["AdminShell.Beheer"]</strong>
                     <button type="button" class="admin-drawer__close" @onclick="CloseDrawer"
                             aria-label="@Culture["AdminShell.CloseMenu"]">
-                        <span aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
+                        <span aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Close))</span>
                     </button>
                 </div>
                 <div class="admin-drawer__body" @onclick="CloseDrawer">
