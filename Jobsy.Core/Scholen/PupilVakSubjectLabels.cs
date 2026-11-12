@@ -12,8 +12,8 @@ public static class PupilVakSubjectLabels
         "schrijven" => "Schrijven",
         "aardrijkskunde" => "Aardrijkskunde",
         "geschiedenis" => "Geschiedenis",
-        "natuur-techniek" => "Natuur & techniek",
-        "tekenen" => "Tekenen/handvaardigheid",
+        "natuur-techniek" => "Natuur en techniek",
+        "tekenen" => "Tekenen en handvaardigheid",
         "muziek" => "Muziek",
         "gym" => "Gym",
         _ => subjectKey

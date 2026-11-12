@@ -145,7 +145,7 @@ public static class PupilG78StoryComposer
             ? FallbackCompetencyParagraph(storyStrongCategories, answers, growthCategories)
             : competencyPara);
 
-        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(result, answers, tileTexts));
+        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(result, answers, tileTexts, growthCategories));
 
         paragraphs.Add(PupilG78StorySummaries.ComposeSchoolHobbiesRiasecParagraph(
             result, progress, vak, language, growthCategories));
@@ -221,11 +221,20 @@ public static class PupilG78StoryComposer
         var ordinal = 0;
         foreach (var dim in topDims)
         {
-            var itemId = PupilG78CompetencyExampleItems.ForCategory(dim)
+            var itemId = competencyExampleIds
                 .FirstOrDefault(id =>
-                    competencyExampleIds.Contains(id)
+                    PupilG78CompetencyExampleItems.ItemMatchesCategory(id, dim)
                     && byId.TryGetValue(id, out var c)
                     && c.EffectiveScore >= 4);
+            if (itemId == 0)
+            {
+                itemId = PupilG78CompetencyExampleItems.ForCategory(dim)
+                    .FirstOrDefault(id =>
+                        competencyExampleIds.Contains(id)
+                        && byId.TryGetValue(id, out var c)
+                        && c.EffectiveScore >= 4);
+            }
+
             if (itemId == 0
                 || !byId.TryGetValue(itemId, out var clause)
                 || clause.EffectiveScore < 4

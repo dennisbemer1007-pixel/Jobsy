@@ -10,7 +10,7 @@ public static class PupilG78CompetencyExampleItems
         [CompetencyTestCatalog.Samenwerken] = [9006, 9001],
         [CompetencyTestCatalog.Resultaatgerichtheid] = [9007, 9021],
         [CompetencyTestCatalog.Stressbestendigheid] = [9002, 9008, 9003],
-        [CompetencyTestCatalog.Innovatie] = [9004, 9009],
+        [CompetencyTestCatalog.Innovatie] = [9023, 9004, 9009, 9018, 9029],
         [CompetencyTestCatalog.Extraversie] = [9005, 9010],
     };
 
@@ -22,6 +22,14 @@ public static class PupilG78CompetencyExampleItems
         if (ForCategory(competencyCategory).Contains(itemId))
         {
             return true;
+        }
+
+        foreach (var dim in PupilG78ItemDimensionMap.DimensionsFor(itemId))
+        {
+            if (string.Equals(dim, competencyCategory, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
         }
 
         if (itemId > PupilG78CompetencyNarrative.PositiveTileCompetenceMax)

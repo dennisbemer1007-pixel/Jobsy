@@ -114,10 +114,59 @@ public class ExportG78PassportSampleTests
         WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-subjects-page-after.png");
     }
 
+    [Fact]
+    public void Export_g78_realistic_helpt_anderen_subjects_page_artifact()
+    {
+        var (fixtureResult, fixtureProgress) = PupilG78RealisticFixtures.HelpsOthers();
+        var renderer = new PupilStoryRenderer();
+        var builder = new PupilPassportPdfModelBuilder(renderer);
+        var pupilCodeId = Guid.NewGuid();
+        var result = new PupilResult
+        {
+            PupilCodeId = pupilCodeId,
+            ScoringVersion = fixtureResult.ScoringVersion,
+            HollandCode = fixtureResult.HollandCode,
+            TopValue = fixtureResult.TopValue,
+            TopCulture = fixtureResult.TopCulture,
+            CompetenceScoresJson = fixtureResult.CompetenceScoresJson,
+            RiasecScoresJson = fixtureResult.RiasecScoresJson,
+            ValuesScoresJson = fixtureResult.ValuesScoresJson,
+            CultureScoresJson = fixtureResult.CultureScoresJson,
+            CompletedAtUtc = new DateTime(2026, 11, 12, 0, 0, 0, DateTimeKind.Utc),
+        };
+        var progress = new PupilProgress
+        {
+            PupilCodeId = pupilCodeId,
+            AnswersJson = fixtureProgress.AnswersJson,
+            LikesJson = fixtureProgress.LikesJson,
+            VakScoresJson = fixtureProgress.VakScoresJson,
+        };
+        var code = new PupilCode
+        {
+            Id = result.PupilCodeId,
+            Status = PupilCodeStatus.Completed,
+            Result = result,
+            Progress = progress,
+        };
+        var cls = new SchoolClass
+        {
+            Name = "8B",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+        };
+
+        var model = builder.Build(code, cls, "Demo OBS", "28A-Z7K", null);
+        var pdf = new PupilPassportPdfService().Render(model with { G78BijlagenMockChrome = false });
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-helpt-anderen.pdf", pdf);
+        WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-dit-ben-jij-pdf-page.png");
+    }
+
     private static void WriteSubjectsPagePng(byte[] pdf, string path)
     {
         EnsurePythonCompareDeps();
-        var pdfPath = "/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf";
+        var pdfPath = Path.Combine(Path.GetTempPath(), $"g78-subjects-{Guid.NewGuid():N}.pdf");
         File.WriteAllBytes(pdfPath, pdf);
         var script = """
 import sys
@@ -126,7 +175,13 @@ try:
 except ImportError:
     import fitz
 doc = fitz.open(sys.argv[1])
-page = doc[2]
+idx = min(3, len(doc) - 1)
+for i, page in enumerate(doc):
+    t = page.get_text()
+    if "DEEL 2" in t and "Wat ik leuk vind" in t:
+        idx = i
+        break
+page = doc[idx]
 pix = page.get_pixmap(matrix=fitz.Matrix(120/72, 120/72))
 pix.save(sys.argv[2])
 print("ok")
@@ -145,6 +200,14 @@ print("ok")
         proc!.WaitForExit(60_000);
         Assert.Equal(0, proc.ExitCode);
         Assert.True(File.Exists(path), path);
+        try
+        {
+            File.Delete(pdfPath);
+        }
+        catch
+        {
+            // best-effort temp cleanup
+        }
     }
 
     private static void WriteMockupComparisonPngs(byte[] samplePdf)

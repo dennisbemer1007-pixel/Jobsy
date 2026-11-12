@@ -14,7 +14,8 @@ public static class PupilG78CompetencyZoForms
         [9007] = "maak je een plan voordat je aan een klus begint",
         [9008] = "bij een lastige toets blijf je nadenken zonder paniek",
         [9009] = "vind je het leuk om iets nieuws te proberen",
-        [9010] = "voel je op je gemak in een drukke groep",
+        [9010] = "voel je je op je gemak in een drukke groep",
+        [9023] = "bedenkt graag een eigen verhaal, dans of outfit",
     };
 
     public static bool TryStem(int itemId, out string stem)

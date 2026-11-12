@@ -102,10 +102,8 @@ public static class PupilG78ContentAllocation
             }
 
             pick ??= clauses
-                .Where(c => c.Model == AssessmentKind.Competence
-                            && c.ItemId <= PupilG78CompetencyNarrative.PositiveTileCompetenceMax
+                .Where(c => c.EffectiveScore >= 4
                             && PupilG78CompetencyExampleItems.ItemMatchesCategory(c.ItemId, dim)
-                            && c.EffectiveScore >= 4
                             && !selected.Contains(c.ItemId)
                             && !blocked.Contains(c.ItemId)
                             && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, selected)

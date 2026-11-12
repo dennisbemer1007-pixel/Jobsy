@@ -17,7 +17,7 @@ internal static class PupilG78RealisticFixtures
             BuildLeadsGroupAnswers());
 
     internal static (PupilResult Result, PupilProgress Progress) Maker()
-        => Build("IR", "Achievement", "Flexibility",
+        => Build("IR", "Achievement", "Innovation",
             """["techniek","natuur"]""",
             """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5},"techniek":{"leuk":5,"goed":4}}""",
             BuildMakerAnswers());
@@ -34,7 +34,7 @@ internal static class PupilG78RealisticFixtures
         Set(d, 2, 9005, 9010);
         Set(d, 4, 9004, 9009);
         Set(d, 2, 9012, 9007, 9021, 9002, 9014);
-        Set(d, 5, 9001, 9003, 9006, 9008, 9013, 9054, 9019, 9030, 9024);
+        Set(d, 5, 9001, 9003, 9006, 9008, 9013, 9023, 9054, 9019, 9030, 9024);
         Set(d, 2, 9017, 9025, 9018, 9028, 9016);
         Set(d, 5, 9017, 9025, 9028, 9032, 9040, 9045, 9048, 9053);
         Set(d, 2, 9031, 9032, 9036, 9041, 9042, 9046, 9047, 9020);

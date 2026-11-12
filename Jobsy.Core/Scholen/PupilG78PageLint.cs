@@ -32,6 +32,8 @@ public static class PupilG78PageLint
         CheckStoryTileParaphrase(pkg, issues);
         CheckGrowthClashes(pkg, answers, growth, issues);
         CheckCompetencyAnchors(pkg, issues);
+        CheckReflexiveVerbs(pageText, issues);
+        CheckStoryCultureTileTheme(pkg, issues);
         return issues;
     }
 
@@ -252,6 +254,64 @@ public static class PupilG78PageLint
                     $"{anchor.Category} vs item {anchor.ItemId}"));
             }
         }
+
+        var expectedLabels = CountCompetencyIntroLabels(pkg.Body);
+        if (expectedLabels >= 2 && pkg.CompetencyExamples.Count < expectedLabels)
+        {
+            issues.Add(new PupilG78PageLintIssue(
+                "competency-examples-missing",
+                $"{pkg.CompetencyExamples.Count}/{expectedLabels}"));
+        }
+    }
+
+    private static void CheckReflexiveVerbs(string pageText, List<PupilG78PageLintIssue> issues)
+    {
+        if (Regex.IsMatch(pageText, @"\bvoel je op je gemak\b", RegexOptions.IgnoreCase)
+            && !pageText.Contains("voel je je op je gemak", StringComparison.OrdinalIgnoreCase))
+        {
+            issues.Add(new PupilG78PageLintIssue("reflexive-verb", "voel je op je gemak"));
+        }
+    }
+
+    private static void CheckStoryCultureTileTheme(PupilG78StoryPackage pkg, List<PupilG78PageLintIssue> issues)
+    {
+        var cultureTile = pkg.Tiles.FirstOrDefault(t => t.ModelKey == "culture");
+        if (cultureTile is null)
+        {
+            return;
+        }
+
+        var storyMentionsFlexibility = pkg.Body.Contains(
+            "ruimte is om dingen anders",
+            StringComparison.OrdinalIgnoreCase);
+        if (!storyMentionsFlexibility)
+        {
+            return;
+        }
+
+        foreach (var id in ExtractItemIds(cultureTile.Explanation))
+        {
+            if (string.Equals(PupilG78ThemeKeys.DedupeKey(id), "change_variety", StringComparison.OrdinalIgnoreCase))
+            {
+                issues.Add(new PupilG78PageLintIssue("story-culture-theme", "change_variety"));
+            }
+        }
+    }
+
+    private static int CountCompetencyIntroLabels(string body)
+    {
+        var match = Regex.Match(
+            body,
+            @"Wat in je antwoorden vooral naar voren komt, is ([^.]+)\.",
+            RegexOptions.IgnoreCase);
+        if (!match.Success)
+        {
+            return 0;
+        }
+
+        var fragment = match.Groups[1].Value;
+        var parts = Regex.Split(fragment, @"\s*,\s*|\s+en\s+");
+        return parts.Count(p => !string.IsNullOrWhiteSpace(p));
     }
 
     public static string NormalizeSentence(string sentence)

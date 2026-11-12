@@ -73,7 +73,8 @@ public static class PupilG78StorySummaries
     public static string ComposeValuesCultureParagraph(
         PupilResult result,
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlyList<string>? avoidTileSentences = null)
+        IReadOnlyList<string>? avoidTileSentences = null,
+        IReadOnlySet<string>? growthCategories = null)
     {
         var sentences = new List<string>();
         var valueLine = TopValueSummary(result.TopValue);
@@ -83,17 +84,23 @@ public static class PupilG78StorySummaries
         }
 
         var cultureLine = TopCultureSummary(result.TopCulture);
-        if (cultureLine.Length > 0 && !ConflictsWithTiles(cultureLine, avoidTileSentences))
+        if (cultureLine.Length > 0
+            && !ConflictsWithTiles(cultureLine, avoidTileSentences)
+            && !CultureLineClashesChangeTile(cultureLine, avoidTileSentences))
         {
             sentences.Add(cultureLine);
         }
 
-        if (sentences.Count < 2)
+        foreach (var clause in ValueMainClausesFromAnswers(answers, growthCategories, maxCount: 2))
         {
-            var extra = ValuesFromAnswersSummary(answers);
-            if (extra.Length > 0 && !sentences.Contains(extra))
+            if (ConflictsWithTiles(clause, avoidTileSentences))
             {
-                sentences.Add(extra);
+                continue;
+            }
+
+            if (!sentences.Any(s => PupilG78JeNarrative.TooSimilar(s, clause)))
+            {
+                sentences.Add(clause);
             }
         }
 
@@ -102,15 +109,6 @@ public static class PupilG78StorySummaries
             .Where(s => s.Length > 0)
             .Distinct(StringComparer.Ordinal)
             .ToList();
-
-        if (sentences.Count < 2)
-        {
-            var connection = ValuesFromAnswersSummary(answers);
-            if (connection.Length > 0 && !sentences.Contains(connection))
-            {
-                sentences.Add(connection);
-            }
-        }
 
         if (sentences.Count < 2)
         {
@@ -128,15 +126,10 @@ public static class PupilG78StorySummaries
         IReadOnlySet<string>? growthCategories = null)
     {
         var sentences = new List<string>();
-        var vakNames = vak
-            .Where(e => e.Leuk >= 4)
-            .OrderByDescending(e => e.Leuk + e.Goed)
-            .Take(3)
-            .Select(e => PupilVakSubjectLabels.NlStoryList(e.SubjectKey))
-            .ToList();
+        var vakNames = BuildVakStoryNames(vak);
         if (vakNames.Count > 0)
         {
-            sentences.Add(MaakVakSummary(vak, vakNames));
+            sentences.Add(MaakVakSummary(vakNames));
         }
 
         var hobbies = HobbyLabels(progress, language);
@@ -219,11 +212,44 @@ public static class PupilG78StorySummaries
         };
     }
 
-    private static string MaakVakSummary(IReadOnlyList<PupilVakScoreEntry> vak, IReadOnlyList<string> vakNames)
+    private static IReadOnlyList<string> BuildVakStoryNames(IReadOnlyList<PupilVakScoreEntry> vak)
     {
-        _ = vak;
-        return $"Op school heb je het meest plezier in {JoinDutchList(vakNames)}.";
+        var ranked = vak
+            .Where(e => e.Leuk >= 4)
+            .OrderByDescending(e => e.Leuk + e.Goed)
+            .Select(e => e.SubjectKey)
+            .ToList();
+
+        var picked = new List<string>();
+        foreach (var key in ranked)
+        {
+            if (string.Equals(key, "techniek", StringComparison.OrdinalIgnoreCase)
+                && ranked.Any(k => string.Equals(k, "natuur-techniek", StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            if (picked.Count >= 3)
+            {
+                break;
+            }
+
+            picked.Add(key);
+        }
+
+        return picked
+            .Select(FormatVakStoryName)
+            .OrderBy(n => n.StartsWith("het vak", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+            .ToList();
     }
+
+    private static string FormatVakStoryName(string subjectKey)
+        => string.Equals(subjectKey, "natuur-techniek", StringComparison.OrdinalIgnoreCase)
+            ? "het vak natuur en techniek"
+            : PupilVakSubjectLabels.NlStoryList(subjectKey);
+
+    private static string MaakVakSummary(IReadOnlyList<string> vakNames)
+        => $"Op school heb je het meest plezier in {JoinDutchList(vakNames)}.";
 
     public static string TopValueSummary(string? topValue) => topValue?.Trim() switch
     {
@@ -240,14 +266,18 @@ public static class PupilG78StorySummaries
         "Collaboration" => "Je voelt je thuis als iedereen samenwerkt en elkaar steunt.",
         "Informal" => "Je voelt je op je plek als de sfeer open en gezellig is.",
         "Autonomy" => "Je voelt je thuis als je zelf ruimte krijgt om te werken.",
-        "Flexibility" => "Je voelt je op je gemak als er ruimte is om dingen anders te doen.",
+        "Flexibility" => "Je voelt je je op je gemak als er ruimte is om dingen anders te doen.",
         "Innovation" => "Je voelt je thuis waar nieuwe ideeën welkom zijn.",
         "PeopleFirst" => "Je voelt je op je plek als mensen centraal staan.",
         _ => ""
     };
 
-    private static string ValuesFromAnswersSummary(IReadOnlyDictionary<string, int> answers)
+    private static IReadOnlyList<string> ValueMainClausesFromAnswers(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string>? growthCategories,
+        int maxCount = 2)
     {
+        growthCategories ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var highs = new List<int>();
         for (var id = 9031; id <= 9045; id++)
         {
@@ -257,23 +287,52 @@ public static class PupilG78StorySummaries
             }
         }
 
-        highs = highs.OrderByDescending(id => answers[id.ToString()]).Take(2).ToList();
-        if (highs.Count == 0)
+        highs = highs
+            .OrderByDescending(id => answers[id.ToString()])
+            .ThenBy(id => id)
+            .ToList();
+
+        var sentences = new List<string>();
+        foreach (var id in highs)
         {
-            return "";
+            if (sentences.Count >= maxCount)
+            {
+                break;
+            }
+
+            if (!answers.TryGetValue(id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var reverse = new PupilQuestionBank().Questions.FirstOrDefault(q => q.Id == id)?.Reverse ?? false;
+            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, reverse);
+            if (eff < 4 || PupilG78StrengthGuard.IsForbiddenStrength(id, eff, growthCategories))
+            {
+                continue;
+            }
+
+            var je = PupilG78QuestionJeForms.ForItem(id);
+            if (string.IsNullOrWhiteSpace(je))
+            {
+                continue;
+            }
+
+            je = je.TrimEnd();
+            if (!je.EndsWith('.'))
+            {
+                je += ".";
+            }
+
+            if (sentences.Any(s => PupilG78JeNarrative.TooSimilar(s, je)))
+            {
+                continue;
+            }
+
+            sentences.Add(je);
         }
 
-        var labels = highs
-            .Select(PupilG78ValueShortLabels.ForItem)
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .Select(s => s!.ToLowerInvariant())
-            .ToList();
-        return labels.Count switch
-        {
-            0 => "",
-            1 => $"In je antwoorden kwam naar voren dat je {labels[0]} belangrijk vindt.",
-            _ => $"Je antwoorden laten zien dat je {labels[0]} en {labels[1]} belangrijk vindt."
-        };
+        return sentences;
     }
 
     private static List<string> HobbyLabels(PupilProgress? progress, string language)
@@ -305,6 +364,18 @@ public static class PupilG78StorySummaries
         {
             return [];
         }
+    }
+
+    private static bool CultureLineClashesChangeTile(string cultureLine, IReadOnlyList<string>? tileSentences)
+    {
+        if (!cultureLine.Contains("dingen anders", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return tileSentences?.Any(t =>
+                   t.Contains("saai als alles altijd hetzelfde", StringComparison.OrdinalIgnoreCase))
+               ?? false;
     }
 
     private static bool ConflictsWithTiles(string line, IReadOnlyList<string>? tileSentences)

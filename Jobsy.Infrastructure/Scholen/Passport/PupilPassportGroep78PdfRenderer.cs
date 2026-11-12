@@ -266,20 +266,8 @@ internal static class PupilPassportGroep78PdfRenderer
                         inner.Element(x => RiasecBars(x, m, spacious: true));
                     }
                 }));
-            col.Item().Row(row =>
-            {
-                row.RelativeItem().MinWidth(0).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Culture.Title"), null,
-                    inner => CultureSliders(inner, m, spacious: true)));
-                row.ConstantItem(Mm(4.5f));
-                row.RelativeItem().MinWidth(0).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Strengths.Title"),
-                    T(m, "LeerlingPassport.G78.Strengths.Sub"), inner => StrengthChips(inner, m, spacious: true)));
-            });
-            col.Item().PaddingTop(Mm(2)).Element(x => G78LeukBelangrijkColumns(x, m));
-            var talk = FirstTalkQuestions(m);
-            if (talk.Count > 0)
-            {
-                col.Item().PaddingTop(Mm(3)).Element(c => TalkBox(c, m, talk));
-            }
+            col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Strengths.Title"),
+                T(m, "LeerlingPassport.G78.Strengths.Sub"), inner => StrengthChips(inner, m, spacious: true)));
         });
     }
 
@@ -292,8 +280,63 @@ internal static class PupilPassportGroep78PdfRenderer
 
         page.Content().Column(col =>
         {
-            col.Spacing(Mm(6));
-            col.Item().Element(c => SubjectGroupsCompact(c, m));
+            col.Spacing(Mm(4));
+            col.Item().PaddingBottom(Mm(1)).BorderBottom(0.75f).BorderColor(Gold);
+            col.Item().PaddingTop(Mm(4)).Element(c => CultureSlidersFullWidth(c, m));
+            col.Item().PaddingTop(Mm(4)).Element(c => G78LeukBelangrijkColumnsEqual(c, m));
+            var talk = FirstTalkQuestions(m);
+            if (talk.Count > 0)
+            {
+                col.Item().PaddingTop(Mm(4)).Element(c => TalkBox(c, m, talk));
+            }
+
+            if (m.SubjectGroups is { Count: > 0 })
+            {
+                col.Item().PaddingTop(Mm(4)).Element(c => SubjectGroupsCompact(c, m));
+            }
+        });
+    }
+
+    private static void CultureSlidersFullWidth(IContainer c, PupilPassportPdfModel m)
+    {
+        var sliders = (m.CultureSliders ?? []).Take(3).ToList();
+        if (sliders.Count == 0)
+        {
+            c.Text(T(m, "LeerlingPassport.G78.Culture.Empty")).FontSize(8f).FontColor(Muted);
+            return;
+        }
+
+        c.Row(row =>
+        {
+            for (var i = 0; i < sliders.Count; i++)
+            {
+                if (i > 0)
+                {
+                    row.ConstantItem(Mm(4));
+                }
+
+                row.RelativeItem().MinWidth(0).Element(x => CultureSliderCard(x, sliders[i], spacious: true));
+            }
+        });
+    }
+
+    private static void G78LeukBelangrijkColumnsEqual(IContainer c, PupilPassportPdfModel m)
+    {
+        var school = m.G78SchoolLeukItems ?? [];
+        var hobby = m.G78HobbyLeukItems ?? m.Likes ?? [];
+        var belangrijk = m.G78BelangrijkItems ?? [];
+        var showBelangrijk = belangrijk.Count > 0;
+
+        c.MinHeight(Mm(48)).Row(row =>
+        {
+            row.RelativeItem().MinWidth(0).MinHeight(Mm(48))
+                .Element(left => LeukGroupedColumn(left, m, school, hobby));
+            if (showBelangrijk)
+            {
+                row.ConstantItem(Mm(4));
+                row.RelativeItem().MinWidth(0).MinHeight(Mm(48)).Element(right =>
+                    PreferencesColumnWrapped(right, T(m, "LeerlingPassport.G78.Col.Belangrijk"), belangrijk));
+            }
         });
     }
 
@@ -552,7 +595,7 @@ internal static class PupilPassportGroep78PdfRenderer
         string kicker,
         string title)
     {
-        c.PaddingBottom(Mm(4)).BorderBottom(1).BorderColor(Navy).Row(row =>
+        c.PaddingBottom(Mm(4)).BorderBottom(0.75f).BorderColor(Gold).Row(row =>
         {
             row.RelativeItem().MinWidth(0).Column(left =>
             {
@@ -607,25 +650,6 @@ internal static class PupilPassportGroep78PdfRenderer
         });
     }
 
-    private static void G78LeukBelangrijkColumns(IContainer c, PupilPassportPdfModel m)
-    {
-        var school = m.G78SchoolLeukItems ?? [];
-        var hobby = m.G78HobbyLeukItems ?? m.Likes ?? [];
-        var belangrijk = m.G78BelangrijkItems ?? [];
-        var showBelangrijk = belangrijk.Count > 0;
-
-        c.Row(row =>
-        {
-            row.RelativeItem().MinWidth(0).Element(left => LeukGroupedColumn(left, m, school, hobby));
-            if (showBelangrijk)
-            {
-                row.ConstantItem(Mm(4.5f));
-                row.RelativeItem().MinWidth(0).Element(right =>
-                    PreferencesColumn(right, T(m, "LeerlingPassport.G78.Col.Belangrijk"), belangrijk));
-            }
-        });
-    }
-
     private static void LeukGroupedColumn(
         IContainer c,
         PupilPassportPdfModel m,
@@ -633,7 +657,7 @@ internal static class PupilPassportGroep78PdfRenderer
         IReadOnlyList<string> hobby)
     {
         c.Background(CreamWarm)
-            .Border(1).BorderColor(Border)
+            .Border(1).BorderColor(Gold)
             .CornerRadius(Mm(1.5f))
             .Padding(Mm(3.5f))
             .Column(col =>
@@ -662,24 +686,25 @@ internal static class PupilPassportGroep78PdfRenderer
             });
     }
 
-    private static void PreferenceBullet(RowDescriptor line, string item)
+    private static void PreferenceBullet(RowDescriptor line, string item, bool truncate = true)
     {
         line.ConstantItem(8).Text("·").FontSize(10f).FontColor(Gold);
-        line.RelativeItem().Text(TruncateLabel(item)).FontSize(9.5f).FontColor(Ink).LineHeight(1.35f);
+        var text = truncate ? TruncateLabel(item) : NormalizePdfLine(item);
+        line.RelativeItem().Text(text).FontSize(9.5f).FontColor(Ink).LineHeight(1.35f);
     }
 
-    private static void PreferencesColumn(IContainer c, string heading, IReadOnlyList<string> items)
+    private static void PreferencesColumnWrapped(IContainer c, string heading, IReadOnlyList<string> items, bool truncateItems = false)
     {
         c.Background(CreamWarm)
-            .Border(1).BorderColor(Border)
+            .Border(1).BorderColor(Gold)
             .CornerRadius(Mm(1.5f))
             .Padding(Mm(3.5f))
             .Column(col =>
             {
                 col.Item().Text(heading).Bold().FontSize(10.5f).FontColor(Navy);
-                foreach (var item in items.Take(4))
+                foreach (var item in items.Take(6))
                 {
-                    col.Item().PaddingTop(3).Row(line => PreferenceBullet(line, item));
+                    col.Item().PaddingTop(3).Row(line => PreferenceBullet(line, item, truncate: truncateItems));
                 }
             });
     }
@@ -831,37 +856,6 @@ internal static class PupilPassportGroep78PdfRenderer
                     {
                         row.Item().PaddingLeft(92).PaddingTop(1).Text(desc).FontSize(8.3f).FontColor(Muted)
                             .LineHeight(1.2f);
-                    }
-                });
-            }
-        });
-    }
-
-    private static void CultureSliders(IContainer c, PupilPassportPdfModel m, bool spacious = false)
-    {
-        var sliders = (m.CultureSliders ?? []).Take(4).ToList();
-        if (sliders.Count == 0)
-        {
-            c.Text(T(m, "LeerlingPassport.G78.Culture.Empty")).FontSize(8f).FontColor(Muted);
-            return;
-        }
-
-        var pairGap = spacious ? 7 : 4;
-        c.Column(col =>
-        {
-            for (var i = 0; i < sliders.Count; i += 2)
-            {
-                col.Item().PaddingBottom(pairGap).Row(row =>
-                {
-                    row.RelativeItem().Element(x => CultureSliderCard(x, sliders[i], spacious));
-                    if (i + 1 < sliders.Count)
-                    {
-                        row.ConstantItem(6);
-                        row.RelativeItem().Element(x => CultureSliderCard(x, sliders[i + 1], spacious));
-                    }
-                    else
-                    {
-                        row.RelativeItem();
                     }
                 });
             }
