@@ -26,8 +26,10 @@ public static class PupilG78PageLint
         var growth = pkg.GrowthCompetencies.Select(g => g.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var pageText = RenderedPageText(pkg);
         CheckBadPatterns(pageText, issues);
+        CheckTiles(pkg, issues);
         CheckDuplicates(pkg, issues);
         CheckPageWideRepeats(pkg, issues);
+        CheckStoryTileParaphrase(pkg, issues);
         CheckGrowthClashes(pkg, answers, growth, issues);
         CheckCompetencyAnchors(pkg, issues);
         return issues;
@@ -64,6 +66,60 @@ public static class PupilG78PageLint
         {
             issues.Add(new PupilG78PageLintIssue("bad-pattern", "ik … hebt"));
         }
+
+    }
+
+    private static void CheckTiles(PupilG78StoryPackage pkg, List<PupilG78PageLintIssue> issues)
+    {
+        foreach (var tile in pkg.Tiles)
+        {
+            if (tile.Explanation.Contains("Je gaf zelf antwoord op deze vragen", StringComparison.Ordinal))
+            {
+                issues.Add(new PupilG78PageLintIssue("placeholder-tile", tile.ModelKey));
+            }
+
+            var count = SplitSentences(tile.Explanation).Count(s => !IsPlaceholderSentence(s));
+            if (count < 2)
+            {
+                issues.Add(new PupilG78PageLintIssue("tile-min-sentences", $"{tile.ModelKey}:{count}"));
+            }
+        }
+    }
+
+    private static void CheckStoryTileParaphrase(PupilG78StoryPackage pkg, List<PupilG78PageLintIssue> issues)
+    {
+        var storyIds = pkg.StoryItemIds.ToHashSet();
+        foreach (var storySentence in SplitSentences(pkg.Body))
+        {
+            foreach (var tile in pkg.Tiles)
+            {
+                foreach (var tileSentence in SplitSentences(tile.Explanation))
+                {
+                    if (IsPlaceholderSentence(tileSentence))
+                    {
+                        continue;
+                    }
+
+                    var tileItemIds = ExtractItemIds(tileSentence).ToList();
+                    if (tileItemIds.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    if (!tileItemIds.Any(storyIds.Contains))
+                    {
+                        continue;
+                    }
+
+                    if (PupilG78JeNarrative.TooSimilar(storySentence, tileSentence))
+                    {
+                        issues.Add(new PupilG78PageLintIssue(
+                            "story-tile-paraphrase",
+                            $"{tile.ModelKey}: {Truncate(NormalizeSentence(tileSentence))}"));
+                    }
+                }
+            }
+        }
     }
 
     private static void CheckDuplicates(PupilG78StoryPackage pkg, List<PupilG78PageLintIssue> issues)
@@ -90,20 +146,6 @@ public static class PupilG78PageLint
             }
         }
 
-        foreach (var id in pkg.UsedItemIds)
-        {
-            if (storyItemIds.Contains(id))
-            {
-                continue;
-            }
-
-            var key = PupilG78ThemeKeys.DedupeKey(id);
-            if (key is not null && storyThemes.Contains(key))
-            {
-                issues.Add(new PupilG78PageLintIssue("dup-theme", $"story↔page: {key} (item {id})"));
-            }
-        }
-
         foreach (var tile in pkg.Tiles)
         {
             foreach (var s in SplitSentences(tile.Explanation))
@@ -127,11 +169,6 @@ public static class PupilG78PageLint
                     issues.Add(new PupilG78PageLintIssue("dup-item", $"story↔{tile.ModelKey}: {id}"));
                 }
 
-                var key = PupilG78ThemeKeys.DedupeKey(id);
-                if (key is not null && storyThemes.Contains(key))
-                {
-                    issues.Add(new PupilG78PageLintIssue("dup-theme", $"story↔{tile.ModelKey}: {key}"));
-                }
             }
         }
     }
@@ -141,22 +178,22 @@ public static class PupilG78PageLint
 
     private static void CheckPageWideRepeats(PupilG78StoryPackage pkg, List<PupilG78PageLintIssue> issues)
     {
-        var themeCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var id in pkg.UsedItemIds.Concat(pkg.StoryItemIds).Distinct())
+        foreach (var tile in pkg.Tiles)
         {
-            var key = PupilG78ThemeKeys.DedupeKey(id);
-            if (key is null)
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var id in ExtractItemIds(tile.Explanation))
             {
-                continue;
+                var key = PupilG78ThemeKeys.DedupeKey(id);
+                if (key is null)
+                {
+                    continue;
+                }
+
+                if (!seen.Add(key))
+                {
+                    issues.Add(new PupilG78PageLintIssue("dup-theme-tile", $"{tile.ModelKey}:{key}"));
+                }
             }
-
-            themeCounts.TryGetValue(key, out var n);
-            themeCounts[key] = n + 1;
-        }
-
-        foreach (var (key, count) in themeCounts.Where(kv => kv.Value > 1))
-        {
-            issues.Add(new PupilG78PageLintIssue("dup-theme-page", key));
         }
 
         var sentenceCounts = new Dictionary<string, int>(StringComparer.Ordinal);

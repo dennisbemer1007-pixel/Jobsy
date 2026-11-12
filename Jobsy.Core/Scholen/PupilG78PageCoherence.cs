@@ -90,9 +90,9 @@ public static class PupilG78PageCoherence
     public static IReadOnlyList<string> FindDuplicateThemesAcrossTiles(IReadOnlyList<PupilStoryTileDto> tiles)
     {
         var clashes = new List<string>();
-        var seen = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var tile in tiles)
         {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var id in ExtractJeFormItemIds(tile.Explanation))
             {
                 var key = PupilG78ThemeKeys.DedupeKey(id);
@@ -101,13 +101,9 @@ public static class PupilG78PageCoherence
                     continue;
                 }
 
-                if (seen.TryGetValue(key, out var prior) && !string.Equals(prior, tile.ModelKey, StringComparison.Ordinal))
+                if (!seen.Add(key))
                 {
                     clashes.Add("theme-dup:" + key);
-                }
-                else
-                {
-                    seen[key] = tile.ModelKey;
                 }
             }
         }

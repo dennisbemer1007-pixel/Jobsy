@@ -23,19 +23,18 @@ public static class PupilG78FactTileComposer
         IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> plan,
         IReadOnlySet<string> growthCategories,
         IReadOnlySet<int>? pageBlockedIds = null,
-        IReadOnlySet<int>? storyItemIds = null)
+        IReadOnlySet<int>? storyItemIds = null,
+        IReadOnlyDictionary<string, int>? answers = null)
     {
         var byId = clauses.ToDictionary(c => c.ItemId);
         var usedIds = new List<int>();
+        var reservedIds = pageBlockedIds?.ToHashSet() ?? [];
         var pageSelected = plan.Values.SelectMany(v => v).ToHashSet();
-        if (pageBlockedIds is not null)
-        {
-            pageSelected.UnionWith(pageBlockedIds);
-        }
-
+        pageSelected.UnionWith(reservedIds);
+        var oppositeContext = new HashSet<int>(pageSelected);
         if (storyItemIds is not null)
         {
-            pageSelected.UnionWith(storyItemIds);
+            oppositeContext.UnionWith(storyItemIds);
         }
 
         var storyThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -47,45 +46,45 @@ public static class PupilG78FactTileComposer
             }
         }
 
-        if (pageBlockedIds is not null)
-        {
-            foreach (var sid in pageBlockedIds)
-            {
-                RememberTheme(sid, storyThemes);
-            }
-        }
-
-        var usedThemes = new HashSet<string>(storyThemes, StringComparer.OrdinalIgnoreCase);
-        foreach (var id in pageSelected)
-        {
-            RememberTheme(id, usedThemes);
-        }
+        var tileThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var tiles = new List<PupilStoryTileDto>();
 
         foreach (var (modelKey, labelKey, kind) in Slots)
         {
-            if (!plan.TryGetValue(kind, out var ids) || ids.Count == 0)
-            {
-                tiles.Add(new PupilStoryTileDto(
-                    modelKey,
-                    PupilVerhaalLocalized.Get(labelKey, language),
-                    "Je gaf zelf antwoord op deze vragen."));
-                continue;
-            }
+            plan.TryGetValue(kind, out var ids);
+            ids ??= [];
 
-            var highs = ids
-                .Where(id => byId.ContainsKey(id)
-                             && (pageBlockedIds is null || !pageBlockedIds.Contains(id))
-                             && !StoryThemeConflicts(id, storyThemes))
-                .Select(id => byId[id])
-                .Where(c => c.EffectiveScore >= 4)
-                .Take(4)
-                .ToList();
-            EnsureMinimumHighs(highs, clauses, kind, pageSelected, growthCategories, usedThemes, storyThemes, minimum: 2);
+            var tileLocalThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var highs = new List<G78AnswerClause>();
+            foreach (var id in ids)
+            {
+                if (!byId.TryGetValue(id, out var clause)
+                    || clause.EffectiveScore < 4
+                    || (pageBlockedIds is not null && pageBlockedIds.Contains(id))
+                    || StoryThemeConflicts(id, storyThemes)
+                    || ThemeBlocked(id, tileLocalThemes))
+                {
+                    continue;
+                }
+
+                highs.Add(clause);
+                RememberTheme(id, tileLocalThemes);
+                if (highs.Count >= 4)
+                {
+                    break;
+                }
+            }
+            FillTileToMinimum(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileLocalThemes, storyThemes, storyItemIds, answers, minimum: 2);
             foreach (var h in highs)
             {
-                RememberTheme(h.ItemId, usedThemes);
+                RememberTheme(h.ItemId, tileThemes);
+                RememberTheme(h.ItemId, tileLocalThemes);
+            }
+
+            if (highs.Count < 2 && answers is not null)
+            {
+                TryFillFromAnswerBank(kind, answers, growthCategories, reservedIds, storyItemIds, tileLocalThemes, highs, 2);
             }
 
             usedIds.AddRange(highs.Select(h => h.ItemId));
@@ -148,38 +147,113 @@ public static class PupilG78FactTileComposer
         return (tiles, usedIds.ToList());
     }
 
-    private static void EnsureMinimumHighs(
+    private static void FillTileToMinimum(
         List<G78AnswerClause> highs,
         IReadOnlyList<G78AnswerClause> clauses,
         AssessmentKind kind,
-        IReadOnlySet<int> pageSelected,
+        IReadOnlySet<int> oppositeContext,
+        IReadOnlySet<int> reservedIds,
         IReadOnlySet<string> growthCategories,
-        HashSet<string> usedThemes,
+        HashSet<string> tileThemes,
         IReadOnlySet<string> storyThemes,
+        IReadOnlySet<int>? storyItemIds,
+        IReadOnlyDictionary<string, int>? answers,
         int minimum)
     {
-        if (highs.Count >= minimum)
+        TryFillHighs(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileThemes, storyThemes, storyItemIds, minimum, TilePickMode.Strict);
+        if (highs.Count < minimum)
         {
-            return;
+            TryFillHighs(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileThemes, storyThemes, storyItemIds, minimum, TilePickMode.RelaxStoryThemes);
         }
 
-        var blocked = PupilG78OppositePairs.BlockedItems(clauses, pageSelected);
-        foreach (var c in clauses
-                     .Where(c => c.Model == kind
-                                 && c.EffectiveScore >= 4
-                                 && !highs.Contains(c)
-                                 && !pageSelected.Contains(c.ItemId)
-                                 && !blocked.Contains(c.ItemId)
-                                 && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, pageSelected)
-                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
-                     .OrderByDescending(c => c.EffectiveScore)
-                     .ThenBy(c => c.ItemId))
+        if (highs.Count < minimum)
         {
-            if (ThemeBlocked(c.ItemId, usedThemes) || StoryThemeConflicts(c.ItemId, storyThemes))
+            TryFillHighs(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileThemes, storyThemes, storyItemIds, minimum, TilePickMode.RelaxTileThemes);
+        }
+
+        if (highs.Count < minimum)
+        {
+            TryFillHighsFromAnyHigh(clauses, kind, growthCategories, reservedIds, storyItemIds, highs, minimum);
+        }
+
+        if (highs.Count < minimum && answers is not null)
+        {
+            TryFillFromAnswerBank(kind, answers, growthCategories, reservedIds, storyItemIds, tileThemes, highs, minimum);
+        }
+
+        if (highs.Count < minimum)
+        {
+            TryFillDesperation(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, storyItemIds, minimum);
+        }
+
+        if (kind == AssessmentKind.Culture && highs.Count < minimum)
+        {
+            TryFillCultureFallback(highs, clauses, growthCategories, reservedIds, storyItemIds, oppositeContext, minimum);
+        }
+
+    }
+
+    private static readonly int[] CultureFallbackIds =
+        [9049, 9054, 9048, 9058, 9052, 9060, 9055, 9059, 9047, 9053, 9046];
+
+    private static void TryFillCultureFallback(
+        List<G78AnswerClause> highs,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<string> growthCategories,
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<int>? storyItemIds,
+        IReadOnlySet<int> oppositeContext,
+        int minimum)
+    {
+        var byId = clauses.ToDictionary(c => c.ItemId);
+        foreach (var id in CultureFallbackIds)
+        {
+            if (highs.Count >= minimum)
+            {
+                break;
+            }
+
+            if (!byId.TryGetValue(id, out var clause)
+                || clause.EffectiveScore < 4
+                || highs.Any(h => h.ItemId == id)
+                || reservedIds.Contains(id)
+                || (storyItemIds?.Contains(id) ?? false)
+                || PupilG78StrengthGuard.IsForbiddenStrength(id, clause.EffectiveScore, growthCategories)
+                || PupilG78OppositePairs.WouldCreatePageTension(id, oppositeContext))
             {
                 continue;
             }
 
+            if (highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, clause.Text)))
+            {
+                continue;
+            }
+
+            highs.Add(clause);
+        }
+    }
+
+    private static void TryFillDesperation(
+        List<G78AnswerClause> highs,
+        IReadOnlyList<G78AnswerClause> clauses,
+        AssessmentKind kind,
+        IReadOnlySet<int> oppositeContext,
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<string> growthCategories,
+        IReadOnlySet<int>? storyItemIds,
+        int minimum)
+    {
+        foreach (var c in clauses
+                     .Where(c => c.Model == kind
+                                 && c.EffectiveScore >= 4
+                                 && !highs.Any(h => h.ItemId == c.ItemId)
+                                 && !(storyItemIds?.Contains(c.ItemId) ?? false)
+                                 && !reservedIds.Contains(c.ItemId)
+                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories)
+                                 && !PupilG78OppositePairs.WouldCreatePageTension(c.ItemId, oppositeContext))
+                     .OrderByDescending(c => c.EffectiveScore)
+                     .ThenBy(c => c.ItemId))
+        {
             if (highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, c.Text)))
             {
                 continue;
@@ -191,27 +265,144 @@ public static class PupilG78FactTileComposer
                 break;
             }
         }
+    }
 
+    private static void TryFillFromAnswerBank(
+        AssessmentKind kind,
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string> growthCategories,
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<int>? storyItemIds,
+        HashSet<string>? tileThemes,
+        List<G78AnswerClause> highs,
+        int minimum)
+    {
+        var bank = new PupilQuestionBank();
+        foreach (var q in bank.Questions.Where(q => q.Model == kind).OrderByDescending(q =>
+                 {
+                     if (!answers.TryGetValue(q.Id.ToString(), out var raw))
+                     {
+                         return 0;
+                     }
+
+                     return PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+                 }).ThenBy(q => q.Id))
+        {
+            if (highs.Count >= minimum)
+            {
+                break;
+            }
+
+            if (!answers.TryGetValue(q.Id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            if (eff < 4
+                || highs.Any(h => h.ItemId == q.Id)
+                || reservedIds.Contains(q.Id)
+                || (storyItemIds?.Contains(q.Id) ?? false)
+                || PupilG78StrengthGuard.IsForbiddenStrength(q.Id, eff, growthCategories)
+                || (tileThemes is not null && ThemeBlocked(q.Id, tileThemes)))
+            {
+                continue;
+            }
+
+            var je = PupilG78QuestionJeForms.ForItem(q.Id);
+            if (string.IsNullOrWhiteSpace(je))
+            {
+                continue;
+            }
+
+            highs.Add(new G78AnswerClause(
+                q.Id,
+                q.Category,
+                kind,
+                G78StoryBeat.Doen,
+                je,
+                eff));
+        }
+    }
+
+    private static void TryFillHighsFromAnyHigh(
+        IReadOnlyList<G78AnswerClause> clauses,
+        AssessmentKind kind,
+        IReadOnlySet<string> growthCategories,
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<int>? storyItemIds,
+        List<G78AnswerClause> highs,
+        int minimum)
+    {
+        foreach (var c in clauses
+                     .Where(c => c.Model == kind
+                                 && c.EffectiveScore >= 4
+                                 && !highs.Any(h => h.ItemId == c.ItemId)
+                                 && !(storyItemIds?.Contains(c.ItemId) ?? false)
+                                 && !reservedIds.Contains(c.ItemId)
+                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
+                     .OrderByDescending(c => c.EffectiveScore)
+                     .ThenBy(c => c.ItemId))
+        {
+            highs.Add(c);
+            if (highs.Count >= minimum)
+            {
+                break;
+            }
+        }
+    }
+
+    private enum TilePickMode
+    {
+        Strict,
+        RelaxStoryThemes,
+        RelaxTileThemes,
+    }
+
+    private static void TryFillHighs(
+        List<G78AnswerClause> highs,
+        IReadOnlyList<G78AnswerClause> clauses,
+        AssessmentKind kind,
+        IReadOnlySet<int> oppositeContext,
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<string> growthCategories,
+        HashSet<string> tileThemes,
+        IReadOnlySet<string> storyThemes,
+        IReadOnlySet<int>? storyItemIds,
+        int minimum,
+        TilePickMode mode)
+    {
         if (highs.Count >= minimum)
         {
             return;
         }
 
-        blocked = PupilG78OppositePairs.BlockedItems(clauses, pageSelected);
+        var blocked = PupilG78OppositePairs.BlockedItems(clauses, oppositeContext);
         foreach (var c in clauses
                      .Where(c => c.Model == kind
                                  && c.EffectiveScore >= 4
                                  && !highs.Any(h => h.ItemId == c.ItemId)
-                                 && !pageSelected.Contains(c.ItemId)
+                                 && !(storyItemIds?.Contains(c.ItemId) ?? false)
+                                 && !reservedIds.Contains(c.ItemId)
                                  && !blocked.Contains(c.ItemId)
-                                 && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, pageSelected)
+                                 && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, oppositeContext)
                                  && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
-            if (ThemeBlocked(c.ItemId, usedThemes) || StoryThemeConflicts(c.ItemId, storyThemes))
+            if (mode == TilePickMode.Strict)
             {
-                continue;
+                if (ThemeBlocked(c.ItemId, tileThemes) || StoryThemeConflicts(c.ItemId, storyThemes))
+                {
+                    continue;
+                }
+            }
+            else if (mode == TilePickMode.RelaxStoryThemes)
+            {
+                if (ThemeBlocked(c.ItemId, tileThemes))
+                {
+                    continue;
+                }
             }
 
             if (highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, c.Text)))
@@ -240,11 +431,6 @@ public static class PupilG78FactTileComposer
 
     private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs)
     {
-        if (highs.Count == 0)
-        {
-            return "Je gaf zelf antwoord op deze vragen.";
-        }
-
         var sentences = highs
             .Select(h => PupilG78QuestionJeForms.ForItem(h.ItemId) ?? PupilG78JeNarrative.AsSentence(h.Text))
             .ToList();

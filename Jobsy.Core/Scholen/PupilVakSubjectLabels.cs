@@ -29,7 +29,8 @@ public static class PupilVakSubjectLabels
         "geschiedenis" => "geschiedenis",
         "rekenen" => "rekenen",
         "natuur-techniek" => "natuur en techniek",
-        "tekenen" => "tekenen en handvaardigheid",
+        "tekenen" => "tekenen",
+        "handvaardigheid" => "handvaardigheid",
         "muziek" => "muziek",
         "lezen" => "lezen",
         _ => subjectKey.ToLowerInvariant()

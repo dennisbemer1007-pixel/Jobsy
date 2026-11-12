@@ -67,6 +67,10 @@ public static class PupilG78StoryComposer
         {
             TryAddOpeningClause(clauses, 9024, p1Sentences, selected, usedIds, usedThemes, growthCategories);
             TryAddOpeningClause(clauses, 9054, p1Sentences, selected, usedIds, usedThemes, growthCategories);
+            if (p1Sentences.Count < 2)
+            {
+                TryAddOpeningClause(clauses, 9037, p1Sentences, selected, usedIds, usedThemes, growthCategories);
+            }
         }
 
         var mensen = Pick(pool, clauses, selected, usedThemes, growthCategories, p1Beat, usedCategories, usedIds, avoidSimilar, Math.Max(0, 2 - p1Sentences.Count), similarFilter: true);
@@ -141,7 +145,7 @@ public static class PupilG78StoryComposer
             ? FallbackCompetencyParagraph(storyStrongCategories, answers, growthCategories)
             : competencyPara);
 
-        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(result, answers));
+        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(result, answers, tileTexts));
 
         paragraphs.Add(PupilG78StorySummaries.ComposeSchoolHobbiesRiasecParagraph(
             result, progress, vak, language, growthCategories));
@@ -230,22 +234,16 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            if (!PupilG78CompetencyZoForms.TryPhrase(itemId, ordinal, out var phrase))
+            if (!PupilG78CompetencyZoForms.TryStem(itemId, out var stem))
             {
                 continue;
             }
 
-            if (SentenceOnPage(phrase, avoidSimilar))
-            {
-                continue;
-            }
-
-            phrases.Add(phrase);
             anchorList.Add(new PupilG78CompetencyExampleAnchor(dim, itemId));
             usedIds.Add(itemId);
             selected.Add(itemId);
             RememberTheme(itemId, usedThemes);
-            avoidSimilar.Add(phrase);
+            phrases.Add(stem);
             ordinal++;
         }
 
@@ -254,7 +252,14 @@ public static class PupilG78StoryComposer
             return intro;
         }
 
-        return intro + " " + string.Join(' ', phrases);
+        var examples = PupilG78CompetencyZoForms.JoinExampleStems(phrases);
+        if (SentenceOnPage(examples, avoidSimilar))
+        {
+            return intro;
+        }
+
+        avoidSimilar.Add(examples);
+        return intro + " " + examples;
     }
 
     private static void TryAddOpeningClause(

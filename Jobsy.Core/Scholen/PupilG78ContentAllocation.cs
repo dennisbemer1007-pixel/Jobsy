@@ -27,7 +27,7 @@ public static class PupilG78ContentAllocation
         if (string.Equals(result.TopValue, "Connection", StringComparison.OrdinalIgnoreCase)
             && !growthCategories.Contains(CompetencyTestCatalog.Samenwerken))
         {
-            TryReserveOpening(clauses, growthCategories, reserved, 9024, 9054);
+            TryReserveOpening(clauses, growthCategories, reserved, 9054, 9037);
         }
         else if (string.Equals(result.HollandCode, "ES", StringComparison.OrdinalIgnoreCase)
                  && !growthCategories.Contains(CompetencyTestCatalog.Extraversie))

@@ -127,7 +127,8 @@ public static class PupilG78FactStory
             tilePlan,
             growthCategorySet,
             storyReservedForTiles,
-            fullStoryIds);
+            fullStoryIds,
+            answers);
         var tileIdSet = tileIds.ToHashSet();
         var body = string.Join(ParagraphBreak, paragraphs);
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();

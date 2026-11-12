@@ -27,6 +27,7 @@ public static class PupilVakScores
         "geschiedenis",
         "natuur-techniek",
         "tekenen",
+        "handvaardigheid",
         "muziek",
         "gym"
     ];

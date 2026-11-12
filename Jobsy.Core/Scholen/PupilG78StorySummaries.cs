@@ -72,17 +72,18 @@ public static class PupilG78StorySummaries
 
     public static string ComposeValuesCultureParagraph(
         PupilResult result,
-        IReadOnlyDictionary<string, int> answers)
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlyList<string>? avoidTileSentences = null)
     {
         var sentences = new List<string>();
         var valueLine = TopValueSummary(result.TopValue);
-        if (valueLine.Length > 0)
+        if (valueLine.Length > 0 && !ConflictsWithTiles(valueLine, avoidTileSentences))
         {
             sentences.Add(valueLine);
         }
 
         var cultureLine = TopCultureSummary(result.TopCulture);
-        if (cultureLine.Length > 0)
+        if (cultureLine.Length > 0 && !ConflictsWithTiles(cultureLine, avoidTileSentences))
         {
             sentences.Add(cultureLine);
         }
@@ -220,15 +221,7 @@ public static class PupilG78StorySummaries
 
     private static string MaakVakSummary(IReadOnlyList<PupilVakScoreEntry> vak, IReadOnlyList<string> vakNames)
     {
-        var maakKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "tekenen", "handvaardigheid", "muziek", "natuur-techniek", "techniek"
-        };
-        if (vak.Any(e => e.Leuk >= 4 && maakKeys.Contains(e.SubjectKey)))
-        {
-            return $"Op school heb je het meest plezier in {JoinDutchList(vakNames)}, vaak omdat je er iets maakt of uitprobeert.";
-        }
-
+        _ = vak;
         return $"Op school heb je het meest plezier in {JoinDutchList(vakNames)}.";
     }
 
@@ -236,7 +229,7 @@ public static class PupilG78StorySummaries
     {
         "Connection" => "Verbinding met anderen vind je belangrijk.",
         "Autonomy" => "Je vindt het belangrijk om zelf te kunnen kiezen.",
-        "Achievement" => "Je wilt graag iets goed afmaken en trots zijn op wat je bereikt.",
+        "Achievement" => "Je wilt graag dingen helemaal afmaken.",
         "Stability" => "Rust en duidelijkheid vind je belangrijk.",
         "Impact" => "Je vindt het belangrijk om verschil te maken voor anderen.",
         _ => ""
@@ -312,6 +305,16 @@ public static class PupilG78StorySummaries
         {
             return [];
         }
+    }
+
+    private static bool ConflictsWithTiles(string line, IReadOnlyList<string>? tileSentences)
+    {
+        if (tileSentences is null || tileSentences.Count == 0)
+        {
+            return false;
+        }
+
+        return tileSentences.Any(t => PupilG78JeNarrative.TooSimilar(t, line));
     }
 
     private static string JoinDutchList(IReadOnlyList<string> items) => items.Count switch
