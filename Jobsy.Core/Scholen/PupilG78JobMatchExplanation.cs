@@ -126,6 +126,7 @@ public static class PupilG78JobMatchExplanation
         var competencies = CompetencyLines(jobKey, progress?.AnswersJson);
         var answers = AnswerReflectionSentences(
             jobKey,
+            result,
             progress,
             vak,
             likes,
@@ -175,15 +176,13 @@ public static class PupilG78JobMatchExplanation
         }
 
         var lines = new List<PupilG78JobCompetencyLine>();
-        var exploreUsed = false;
         foreach (var req in reqs)
         {
-            var reflection = PupilG78CompetenceFromAnswers.PupilReflectionClause(
-                req.Category,
-                req.NeedKey,
+            var reflection = PupilG78CompetenceFromAnswers.PupilReflectionForEvidence(
+                req.SlotKey,
                 jobKey,
-                answersJson,
-                ref exploreUsed);
+                req.EvidenceItemIds,
+                answersJson);
             lines.Add(new PupilG78JobCompetencyLine(req.JobAsksLabel, reflection));
         }
 
@@ -192,6 +191,7 @@ public static class PupilG78JobMatchExplanation
 
     private static List<string> AnswerReflectionSentences(
         string jobKey,
+        PupilResult result,
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vakScores,
         IReadOnlySet<string> likes,
@@ -227,7 +227,7 @@ public static class PupilG78JobMatchExplanation
             }
         }
 
-        var answers = CollectAnswers(jobLetter, progress, usedSemantic, max: 2);
+        var answers = CollectAnswers(jobLetter, progress, usedSemantic, max: 3);
         foreach (var (idx, phrase) in answers.Select((p, i) => (i, p)))
         {
             var prefix = idx == 0 ? "Je antwoorden laten zien dat" : "Je gaf ook aan dat";
@@ -240,12 +240,110 @@ public static class PupilG78JobMatchExplanation
             sentences.Add($"Je gaf aan dat je op school goed bent in {subject}.");
         }
 
+        var riasec = RiasecDriverSentence(jobLetter, result);
+        if (riasec is not null)
+        {
+            sentences.Add(riasec);
+        }
+
+        var contrast = NeutralContrastSentence(jobLetter, result);
+        if (contrast is not null)
+        {
+            sentences.Add(contrast);
+        }
+
         return sentences
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Distinct(StringComparer.Ordinal)
-            .Take(4)
+            .Take(MaxSentences)
             .ToList();
     }
+
+    private static string? RiasecDriverSentence(char jobLetter, PupilResult result)
+    {
+        var scores = ParseRiasecScores(result.RiasecScoresJson);
+        if (scores is null || !scores.TryGetValue(jobLetter, out var jobScore) || jobScore < 55)
+        {
+            return null;
+        }
+
+        var label = RiasecLetterLabel(jobLetter);
+        return $"In de beroepentest kwam {label} bij jou naar voren.";
+    }
+
+    private static string? NeutralContrastSentence(char jobLetter, PupilResult result)
+    {
+        var scores = ParseRiasecScores(result.RiasecScoresJson);
+        if (scores is null || scores.Count < 2)
+        {
+            return null;
+        }
+
+        var other = scores
+            .Where(kv => char.ToUpperInvariant(kv.Key) != char.ToUpperInvariant(jobLetter))
+            .OrderByDescending(kv => kv.Value)
+            .FirstOrDefault();
+        if (other.Key == default || other.Value < 50)
+        {
+            return null;
+        }
+
+        var label = RiasecLetterLabel(other.Key);
+        return $"Sommige antwoorden laten ook ruimte zien voor werk met meer {label}.";
+    }
+
+    private static Dictionary<char, int>? ParseRiasecScores(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            var doc = JsonSerializer.Deserialize<Dictionary<string, int>>(json, JsonOpts);
+            if (doc is null || doc.Count == 0)
+            {
+                return null;
+            }
+
+            var map = new Dictionary<char, int>();
+            foreach (var (key, value) in doc)
+            {
+                var letter = key.Trim().ToLowerInvariant() switch
+                {
+                    "realistic" or "r" => 'R',
+                    "investigative" or "i" => 'I',
+                    "artistic" or "a" => 'A',
+                    "social" or "s" => 'S',
+                    "enterprising" or "e" => 'E',
+                    "conventional" or "c" => 'C',
+                    _ => '\0'
+                };
+                if (letter != '\0')
+                {
+                    map[letter] = value;
+                }
+            }
+
+            return map.Count > 0 ? map : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string RiasecLetterLabel(char letter) => letter switch
+    {
+        'R' => "praktisch werken en bouwen",
+        'I' => "uitzoeken en begrijpen",
+        'A' => "creatief bezig zijn",
+        'S' => "mensen helpen",
+        'E' => "leiding nemen",
+        'C' => "ordelijk werken",
+        _ => "andere interesses"
+    };
 
     private static string? SurpriseTopic(PupilProgress? progress, char jobLetter)
     {

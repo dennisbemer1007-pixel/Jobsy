@@ -288,9 +288,12 @@ public static class PupilG78PassportSsrHtml
                     sb.Append("</p>");
                 }
 
-                sb.Append("<p>");
-                sb.Append(E(job.Blurb));
-                sb.Append("</p>");
+                if (string.IsNullOrWhiteSpace(job.WhyFit))
+                {
+                    sb.Append("<p>");
+                    sb.Append(E(job.Blurb));
+                    sb.Append("</p>");
+                }
                 if (job.FitTags is { Count: > 0 })
                 {
                     sb.Append("<div class=\"lp-g78__fit\"><b>");

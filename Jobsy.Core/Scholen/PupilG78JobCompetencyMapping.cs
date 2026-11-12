@@ -1,95 +1,93 @@
-using Jobsy.Core.Rules;
+using Jobsy.Core.Enums;
 
 namespace Jobsy.Core.Scholen;
 
-/// <summary>
-/// Job competencies from <see cref="PupilDreamJobRoutes"/> only (one row per route need with a
-/// <see cref="PupilNeedSignal"/> competence signal). Labels derive from the route <c>NeedKey</c>, not a global default list.
-/// ESCO skills are not duplicated here; when a job has fewer than two competence needs in the route, only those are shown.
-/// </summary>
+/// <summary>Job-specific competency labels and explicit evidence item ids (competence 9001–9015 or career 9016–9030).</summary>
 internal static class PupilG78JobCompetencyMapping
 {
     internal sealed record JobCompetencyRequirement(
         string JobKey,
-        string NeedKey,
-        string Category,
+        string SlotKey,
         string JobAsksLabel,
-        PupilNeedSignal SourceSignal);
+        IReadOnlyList<int> EvidenceItemIds);
+
+    private static readonly Dictionary<string, IReadOnlyList<JobCompetencyRequirement>> Explicit =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["fotograaf"] =
+            [
+                new("fotograaf", "detail", "Oog voor detail", [9021, 9027, 9012, 9008]),
+                new("fotograaf", "creatief", "Creativiteit", [9004, 9009, 9018, 9023]),
+                new("fotograaf", "mensen", "Omgaan met mensen", [9006, 9005, 9030, 9010]),
+            ],
+            ["hovenier"] =
+            [
+                new("hovenier", "buiten", "Fysiek buiten werken", [9016, 9028, 9022]),
+                new("hovenier", "doorzet", "Doorzetten", [9002, 9012]),
+                new("hovenier", "samen", "Samenwerken", [9006, 9001, 9011]),
+            ],
+            ["bioloog"] =
+            [
+                new("bioloog", "onderzoek", "Onderzoeken", [9017, 9025]),
+                new("bioloog", "nauw", "Nauwkeurig werken", [9021, 9027, 9012]),
+                new("bioloog", "doorzet", "Doorzetten", [9012, 9002]),
+            ],
+        };
+
+    private static readonly Dictionary<string, IReadOnlyList<JobCompetencyRequirement>> FallbackByNeed =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Precies"] = [new("", "precies", "Nauwkeurig werken", [9021, 9027, 9012])],
+            ["Nauwkeurig"] = [new("", "nauw", "Nauwkeurig werken", [9021, 9027, 9012])],
+            ["Netjes"] = [new("", "netjes", "Nauwkeurig werken", [9021, 9027, 9012])],
+            ["Maken"] = [new("", "doorzet", "Doorzetten", [9002, 9012])],
+            ["Geduld"] = [new("", "kalm", "Kalm blijven onder druk", [9003, 9008, 9013])],
+            ["Kalm"] = [new("", "kalm", "Kalm blijven onder druk", [9003, 9008, 9013])],
+            ["Stress"] = [new("", "kalm", "Kalm blijven onder druk", [9003, 9008, 9013])],
+            ["Nieuwsgierig"] = [new("", "idee", "Nieuwe ideeën bedenken", [9004, 9009, 9014])],
+            ["Ideeën"] = [new("", "idee", "Nieuwe ideeën bedenken", [9004, 9009, 9014])],
+            ["Nieuw"] = [new("", "idee", "Nieuwe ideeën bedenken", [9004, 9009, 9014])],
+            ["Mensen"] = [new("", "mensen", "Omgaan met mensen", [9005, 9010, 9006])],
+            ["Samen"] = [new("", "samen", "Samenwerken", [9006, 9001, 9011])],
+        };
 
     public static IReadOnlyList<JobCompetencyRequirement> ForJob(string jobKey)
     {
+        if (Explicit.TryGetValue(jobKey, out var list))
+        {
+            return list;
+        }
+
         var route = PupilDreamJobRoutes.TryGet(jobKey);
         if (route is null)
         {
             return [];
         }
 
-        var list = new List<JobCompetencyRequirement>();
+        var built = new List<JobCompetencyRequirement>();
         foreach (var need in route.Needs)
         {
-            if (!IsCompetenceSignal(need.Signal))
+            if (need.Signal is not (PupilNeedSignal.CompetenceSamenwerken
+                or PupilNeedSignal.CompetenceResultaat
+                or PupilNeedSignal.CompetenceStress
+                or PupilNeedSignal.CompetenceInnovatie
+                or PupilNeedSignal.CompetenceExtraversie))
             {
                 continue;
             }
 
-            var label = Capitalize(LabelForNeedKey(need.NeedKey, need.Signal));
-            list.Add(new JobCompetencyRequirement(
-                jobKey,
-                need.NeedKey,
-                CategoryForSignal(need.Signal),
-                label,
-                need.Signal));
+            if (!FallbackByNeed.TryGetValue(need.NeedKey, out var templates) || templates.Count == 0)
+            {
+                continue;
+            }
+
+            var t = templates[0];
+            built.Add(new JobCompetencyRequirement(jobKey, $"{jobKey}-{t.SlotKey}", t.JobAsksLabel, t.EvidenceItemIds));
         }
 
-        return list
-            .DistinctBy(x => x.NeedKey)
+        return built
+            .DistinctBy(x => x.SlotKey)
             .Take(4)
             .ToList();
-    }
-
-    private static bool IsCompetenceSignal(PupilNeedSignal signal)
-        => signal is PupilNeedSignal.CompetenceSamenwerken
-            or PupilNeedSignal.CompetenceResultaat
-            or PupilNeedSignal.CompetenceStress
-            or PupilNeedSignal.CompetenceInnovatie
-            or PupilNeedSignal.CompetenceExtraversie;
-
-    private static string CategoryForSignal(PupilNeedSignal signal) => signal switch
-    {
-        PupilNeedSignal.CompetenceSamenwerken => CompetencyTestCatalog.Samenwerken,
-        PupilNeedSignal.CompetenceResultaat => CompetencyTestCatalog.Resultaatgerichtheid,
-        PupilNeedSignal.CompetenceStress => CompetencyTestCatalog.Stressbestendigheid,
-        PupilNeedSignal.CompetenceInnovatie => CompetencyTestCatalog.Innovatie,
-        PupilNeedSignal.CompetenceExtraversie => CompetencyTestCatalog.Extraversie,
-        _ => ""
-    };
-
-    private static string LabelForNeedKey(string needKey, PupilNeedSignal signal) => needKey switch
-    {
-        "Precies" or "Nauwkeurig" or "Netjes" => "netjes en precies werken",
-        "Maken" or "Verantwoordelijk" or "Concentratie" => "netjes maken en afmaken",
-        "Geduld" or "Kalm" or "RustigBlijven" or "Stress" => "kalm blijven als het druk is",
-        "Nieuwsgierig" or "Ideeën" or "Nieuw" or "Probleem" => "nieuwe ideeën bedenken",
-        "Mensen" or "Overtuigen" => "makkelijk met mensen praten",
-        "Samen" => "goed kunnen samenwerken",
-        _ => signal switch
-        {
-            PupilNeedSignal.CompetenceSamenwerken => "goed kunnen samenwerken",
-            PupilNeedSignal.CompetenceResultaat => "netjes en precies werken",
-            PupilNeedSignal.CompetenceStress => "kalm blijven als het druk is",
-            PupilNeedSignal.CompetenceInnovatie => "nieuwe ideeën bedenken",
-            PupilNeedSignal.CompetenceExtraversie => "makkelijk met mensen praten",
-            _ => needKey.ToLowerInvariant()
-        }
-    };
-
-    private static string Capitalize(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return text;
-        }
-
-        return char.ToUpper(text[0]) + text[1..];
     }
 }

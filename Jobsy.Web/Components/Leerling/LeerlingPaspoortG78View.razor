@@ -228,7 +228,10 @@
                         {
                             <p class="lp-g78__job-match">@Culture.Format("LeerlingPassport.G78.Jobs.MatchSuggest", job.MatchPercent.Value)</p>
                         }
-                        <p>@job.Blurb</p>
+                        @if (string.IsNullOrWhiteSpace(job.WhyFit))
+                        {
+                            <p>@job.Blurb</p>
+                        }
                         @if (job.FitTags is { Count: > 0 })
                         {
                             <div class="lp-g78__fit"><b>@Culture["LeerlingPassport.Cards.Fit"]:</b> @string.Join(", ", job.FitTags)</div>
