@@ -119,7 +119,7 @@ public class PupilG78JobMatchExplanationTests
         Assert.False(string.IsNullOrWhiteSpace(e1));
     }
 
-  private static string CareerAnswers(params object[] pairs)
+    private static string CareerAnswers(params object[] pairs)
     {
         var dict = new Dictionary<string, int>();
         for (var i = 0; i < pairs.Length; i += 2)
