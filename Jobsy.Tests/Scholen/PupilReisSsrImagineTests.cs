@@ -35,6 +35,7 @@ public sealed class PupilReisSsrImagineTests
 
         Assert.Contains("id=\"ll-imagine-9001\"", html, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"ll-question-imagine\"", html, StringComparison.Ordinal);
+        Assert.Contains("ll-question__head", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-imagine-toggle", html, StringComparison.Ordinal);
         Assert.Contains(imagine, html, StringComparison.Ordinal);
         Assert.Contains(culture["Leerling.Reis.Imagine"], html, StringComparison.Ordinal);

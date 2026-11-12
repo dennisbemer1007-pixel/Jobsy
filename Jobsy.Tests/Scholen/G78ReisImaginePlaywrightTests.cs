@@ -87,7 +87,7 @@ public sealed class G78ReisImaginePlaywrightTests
         await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = cssKies });
         await page.AddScriptTagAsync(new PageAddScriptTagOptions { Path = jsPath });
 
-        var info = page.Locator(".ll-info-btn");
+        var info = page.Locator(".ll-question__head .ll-info-btn");
         await info.WaitForAsync();
         Assert.Equal("false", await info.GetAttributeAsync("aria-expanded"));
         Assert.Equal(0, await page.Locator("#ll-imagine-9001:not([hidden])").CountAsync());

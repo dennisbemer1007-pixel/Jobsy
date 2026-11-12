@@ -85,27 +85,44 @@ public static class PupilReisSsrHtml
         }
 
         state.Answers.TryGetValue(item.Id, out var selected);
-        sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(groep78 ? "qtitle" : "ll-question__text").Append("\">");
+        var hasImagine = PupilLeerlingSsrParts.HasImagineText(imagine);
+        var titleClass = groep78 ? "qtitle" : "ll-question__text";
+        sb.Append("""<div class="ll-question__head">""");
+        sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(titleClass).Append("\">");
         sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</h1>");
+        if (hasImagine)
+        {
+            sb.Append(PupilLeerlingSsrParts.QuestionImagineButton(culture, item.Id));
+        }
+
+        sb.Append("</div>");
         if (groep78)
         {
             sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(qLabel, $"ll-q-{item.Id}", culture, "Leerling.G78.ReadQuestion"));
-            sb.Append(PupilLeerlingSsrParts.QuestionImaginePanel(
-                culture,
-                item.Id,
-                imagine,
-                PupilGroep78SsrParts.Groep78SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
+            if (hasImagine)
+            {
+                sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(
+                    culture,
+                    item.Id,
+                    imagine,
+                    PupilGroep78SsrParts.Groep78SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
+            }
+
             sb.Append(PupilGroep78SsrParts.Groep78AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error, qLabel));
             sb.Append(PupilGroep78SsrParts.Groep78PrevFoot(culture, state.CurrentIndex > 0));
         }
         else
         {
             sb.Append(PupilLeerlingSsrParts.SpeakButton(qLabel, $"ll-q-{item.Id}", culture));
-            sb.Append(PupilLeerlingSsrParts.QuestionImaginePanel(
-                culture,
-                item.Id,
-                imagine,
-                PupilLeerlingSsrParts.SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
+            if (hasImagine)
+            {
+                sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(
+                    culture,
+                    item.Id,
+                    imagine,
+                    PupilLeerlingSsrParts.SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
+            }
+
             sb.Append(PupilLeerlingSsrParts.AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error));
             if (state.CurrentIndex > 0)
             {

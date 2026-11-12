@@ -33,7 +33,18 @@ public static class PupilLeerlingSsrParts
             """;
     }
 
-    public static string QuestionImaginePanel(
+    public static string QuestionImagineButton(CultureState culture, string itemId)
+    {
+        var infoId = "ll-imagine-" + itemId;
+        var sb = new StringBuilder();
+        sb.Append("<button type=\"button\" class=\"ll-info-btn\" data-ll-imagine-toggle aria-label=\"");
+        sb.Append(E(culture["Leerling.Reis.More"]));
+        sb.Append("\" aria-expanded=\"false\" aria-controls=\"").Append(E(infoId));
+        sb.Append("\" title=\"").Append(E(culture["Leerling.Reis.Imagine"])).Append("\">i</button>");
+        return sb.ToString();
+    }
+
+    public static string QuestionImaginePanelBody(
         CultureState culture,
         string itemId,
         string imagineText,
@@ -46,18 +57,20 @@ public static class PupilLeerlingSsrParts
 
         var infoId = "ll-imagine-" + itemId;
         var sb = new StringBuilder();
-        sb.Append("<button type=\"button\" class=\"ll-info-btn\" data-ll-imagine-toggle aria-label=\"");
-        sb.Append(E(culture["Leerling.Reis.More"]));
-        sb.Append("\" aria-expanded=\"false\" aria-controls=\"").Append(E(infoId));
-        sb.Append("\" title=\"").Append(E(culture["Leerling.Reis.Imagine"])).Append("\">i</button>");
         sb.Append("<div id=\"").Append(E(infoId)).Append("\" class=\"ll-info\" hidden data-testid=\"ll-question-imagine\">");
-        sb.Append("<p><strong>").Append(E(culture["Leerling.Reis.Imagine"])).Append("</strong></p>");
-        sb.Append(imagineSpeakMarkup);
-        sb.Append("<p>").Append(E(imagineText)).Append("</p>");
+        sb.Append("<p class=\"ll-info__lead\"><strong>").Append(E(culture["Leerling.Reis.Imagine"])).Append("</strong></p>");
+        if (!string.IsNullOrWhiteSpace(imagineSpeakMarkup))
+        {
+            sb.Append("<div class=\"ll-info__speak\">").Append(imagineSpeakMarkup).Append("</div>");
+        }
+
+        sb.Append("<p class=\"ll-info__text\">").Append(E(imagineText)).Append("</p>");
         sb.Append("""<button type="button" class="ll-info__close" data-ll-imagine-close aria-label="Sluiten">×</button>""");
         sb.Append("</div>");
         return sb.ToString();
     }
+
+    public static bool HasImagineText(string? imagineText) => !string.IsNullOrWhiteSpace(imagineText);
 
     public static string CoachCue(string text)
         => $"""<div class="ll-coach-cue" data-testid="ll-coach-cue"><p>{E(text)}</p></div>""";
