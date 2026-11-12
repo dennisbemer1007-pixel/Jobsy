@@ -161,7 +161,7 @@ public static class PupilG78StoryComposer
             return intro;
         }
 
-        return $"{intro} Bijvoorbeeld: {string.Join(". ", examples)}.";
+        return $"{intro} Bijvoorbeeld: {string.Join(". ", examples).TrimEnd('.')}.";
     }
 
     private static string ComposeLevenOpSchoolParagraph(

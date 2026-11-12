@@ -74,10 +74,21 @@ public static class PupilG78FactStory
             .Where(c => (tileIdSet.Contains(c.ItemId) || storyIds.Contains(c.ItemId)) && c.EffectiveScore >= 4)
             .Select(c => c.ItemId)
             .ToHashSet();
+        var growthExcludedFromTiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cat in Rules.CompetencyTestCatalog.QuickScanCategories)
+        {
+            var minder = PupilG78CompetencyNarrative.MinderNaarVoren(cat);
+            if (tileTexts.Any(t => t.Contains(minder, StringComparison.OrdinalIgnoreCase)))
+            {
+                growthExcludedFromTiles.Add(cat);
+            }
+        }
+
         var growth = PupilG78GrowthCompetencies.Build(
             answers,
             clauses,
             publishedStrongIds,
+            growthExcludedFromTiles,
             language);
         var allUsed = tileIds.Concat(storyIds).Distinct().ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);

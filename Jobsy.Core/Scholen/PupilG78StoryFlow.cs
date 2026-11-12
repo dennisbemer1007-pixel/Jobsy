@@ -37,7 +37,14 @@ internal static class PupilG78StoryFlow
             return parts[0] + ", en " + LowerFirst(parts[1]) + ".";
         }
 
-        return string.Join(". ", parts.Select(LowerFirstIfNeeded)) + ".";
+        if (parts.Count == 0)
+        {
+            return "";
+        }
+
+        var merged = new List<string> { parts[0] };
+        merged.AddRange(parts.Skip(1).Select(LowerFirstIfNeeded));
+        return string.Join(". ", merged) + ".";
     }
 
     private static string LowerFirstIfNeeded(string sentence)

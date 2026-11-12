@@ -30,12 +30,18 @@ public static class PupilG78GrowthCompetencies
         IReadOnlyDictionary<string, int> answers,
         IReadOnlyList<G78AnswerClause> clauses,
         IReadOnlySet<int> publishedStrongIds,
+        IReadOnlySet<string>? alsoExcludedCategories = null,
         string language = "nl")
     {
         var averages = DimensionAverages(answers);
         var excludedCategories = CompetencyTestCatalog.QuickScanCategories
             .Where(cat => !PupilG78ItemThemes.GrowthCategoryAllowed(cat, publishedStrongIds, clauses))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (alsoExcludedCategories is not null)
+        {
+            excludedCategories.UnionWith(alsoExcludedCategories);
+        }
+
         return BuildCore(answers, excludedCategories, publishedStrongIds, language);
     }
 

@@ -65,6 +65,12 @@ public static class PupilG78PageCoherence
             {
                 overlaps.Add("growth:" + g.Category);
             }
+
+            var minder = PupilG78CompetencyNarrative.MinderNaarVoren(g.Category);
+            if (pkg.Tiles.Any(t => t.Explanation.Contains(minder, StringComparison.OrdinalIgnoreCase)))
+            {
+                overlaps.Add("growth-tile:" + g.Category);
+            }
         }
 
         foreach (var tile in pkg.Tiles)
