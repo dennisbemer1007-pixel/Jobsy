@@ -51,7 +51,27 @@ public static class PupilG78OppositePairs
         int itemId,
         IReadOnlyList<G78AnswerClause> clauses,
         IReadOnlySet<int> alreadySelected)
-        => !BlockedItems(clauses, alreadySelected).Contains(itemId);
+        => !BlockedItems(clauses, alreadySelected).Contains(itemId)
+           && !WouldCreatePageTension(itemId, alreadySelected);
+
+    /// <summary>True when adding itemId would place both poles of a pair on the page.</summary>
+    public static bool WouldCreatePageTension(int itemId, IReadOnlySet<int> alreadySelected)
+    {
+        foreach (var (poleA, poleB) in NamedPairs)
+        {
+            if (poleA.Contains(itemId) && poleB.Any(alreadySelected.Contains))
+            {
+                return true;
+            }
+
+            if (poleB.Contains(itemId) && poleA.Any(alreadySelected.Contains))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public static IReadOnlyList<string> FindPageTensions(IEnumerable<int> pageItemIds)
     {

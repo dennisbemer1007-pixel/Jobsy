@@ -53,35 +53,47 @@ public static class PupilG78FactStory
         var answers = ParseAnswers(progress?.AnswersJson);
         var clauses = CollectClauses(answers, language);
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-        var averages = PupilG78GrowthCompetencies.DimensionAverages(answers);
-        var storyStrongCategories = PupilG78GrowthCompetencies.TopStrongCategories(averages, 5).Take(3).ToList();
-        var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(clauses, storyStrongCategories);
+        var growthCategories = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4).ToList();
+        var growthCategorySet = growthCategories.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(answers, growthCategorySet);
+        var tilePlan = PupilG78ContentAllocation.PlanTileItems(
+            clauses,
+            growthCategorySet,
+            blockedIds: new HashSet<int>(),
+            maxPerTile: 2);
+        var tilePlanIds = tilePlan.Values.SelectMany(v => v).ToHashSet();
+        var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(
+            clauses,
+            storyStrongCategories,
+            growthCategorySet,
+            tilePlanIds);
         var reservedForStory = competencyExampleIds.ToHashSet();
-        var (tiles, tileIds) = PupilG78FactTileComposer.Build(clauses, language, reservedForStory);
-        var tileIdSet = tileIds.ToHashSet();
-        var tileTexts = tiles.Select(t => t.Explanation).ToList();
-        var reservedItemIds = reservedForStory.Union(tileIdSet).ToHashSet();
+        var blockedForStory = reservedForStory.Union(tilePlanIds).ToHashSet();
+        var tilePreviewTexts = PreviewTileJeSentences(clauses, tilePlan);
         var paragraphs = PupilG78StoryComposer.ComposeOverview(
             clauses,
             result,
             progress,
             vak,
             language,
-            reservedItemIds,
-            tileTexts,
+            blockedForStory,
+            tilePreviewTexts,
+            growthCategorySet,
             storyStrongCategories,
             competencyExampleIds,
             out var storyIds);
-        var body = string.Join(ParagraphBreak, paragraphs);
-        var pageItemIds = reservedForStory
-            .Union(tileIdSet)
-            .Union(storyIds)
-            .ToHashSet();
-        var pageDimensions = PupilG78ItemDimensionMap.DimensionsOnPage(pageItemIds);
-        var growth = PupilG78GrowthCompetencies.Build(
+        var storyReserved = blockedForStory.Union(storyIds).ToHashSet();
+        var (tiles, tileIds) = PupilG78FactTileComposer.BuildFromPlan(
+            clauses, language, tilePlan, growthCategorySet);
+        var tileIdSet = tileIds.ToHashSet();
+        var body = PupilG78StoryComposer.ScrubStoryAgainstTiles(
+            string.Join(ParagraphBreak, paragraphs),
+            tiles.Select(t => t.Explanation).ToList());
+        var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
+        var growth = PupilG78GrowthCompetencies.BuildForCategories(
             answers,
+            growthCategories,
             pageItemIds,
-            pageDimensions,
             language);
         var allUsed = pageItemIds.ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
@@ -103,6 +115,29 @@ public static class PupilG78FactStory
 
     public static string ForSpeakAloud(string body)
         => string.Join(' ', SplitParagraphs(body));
+
+    private static IReadOnlyList<string> PreviewTileJeSentences(
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> tilePlan)
+    {
+        var byId = clauses.ToDictionary(c => c.ItemId);
+        var texts = new List<string>();
+        foreach (var ids in tilePlan.Values)
+        {
+            foreach (var id in ids)
+            {
+                if (!byId.TryGetValue(id, out var clause) || clause.EffectiveScore < 4)
+                {
+                    continue;
+                }
+
+                var je = PupilG78QuestionJeForms.ForItem(id);
+                texts.Add(je ?? clause.Text);
+            }
+        }
+
+        return texts;
+    }
 
     private static List<G78AnswerClause> CollectClauses(IReadOnlyDictionary<string, int> answers, string language)
     {

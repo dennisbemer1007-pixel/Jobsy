@@ -1,6 +1,4 @@
-using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts.Scholen;
-using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
 
@@ -53,20 +51,6 @@ public static class PupilG78PageCoherence
             overlaps.AddRange(FindDuplicateThemesAcrossTiles(pkg.Tiles));
         }
 
-        var pageDimensions = PupilG78ItemDimensionMap.DimensionsOnPage(pageIds);
-        foreach (var g in pkg.GrowthCompetencies)
-        {
-            if (pageDimensions.Contains(g.Category))
-            {
-                overlaps.Add("growth-page-dim:" + g.Category);
-            }
-
-            if (PupilG78ItemDimensionMap.PageMentionsDimension(pageIds, g.Category))
-            {
-                overlaps.Add("growth-page-dim:" + g.Category);
-            }
-        }
-
         overlaps.AddRange(
             PupilG78OppositePairs.FindPageTensions(pageIds)
                 .Select(t => "page-" + t));
@@ -74,10 +58,33 @@ public static class PupilG78PageCoherence
         return overlaps.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    public static IReadOnlyList<string> FindStrongWeakOverlaps(
+        PupilG78StoryPackage pkg,
+        IReadOnlyDictionary<string, int> answers)
+    {
+        var overlaps = new List<string>(FindStrongWeakOverlaps(pkg));
+        var pageIds = pkg.UsedItemIds.ToHashSet();
+        foreach (var g in pkg.GrowthCompetencies)
+        {
+            if (PupilG78StrengthGuard.GrowthCategoryPublishedStrong(pageIds, g.Category, answers))
+            {
+                overlaps.Add("growth-strong-on-page:" + g.Category);
+            }
+        }
+
+        return overlaps.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
     public static IReadOnlyList<string> FindStrongWeakOverlaps(PupilG78StoryPackage pkg, string? answersJson)
     {
-        _ = answersJson;
-        return FindStrongWeakOverlaps(pkg);
+        if (string.IsNullOrWhiteSpace(answersJson))
+        {
+            return FindStrongWeakOverlaps(pkg);
+        }
+
+        var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(answersJson)
+                      ?? new Dictionary<string, int>(StringComparer.Ordinal);
+        return FindStrongWeakOverlaps(pkg, answers);
     }
 
     public static IReadOnlyList<string> FindDuplicateThemesAcrossTiles(IReadOnlyList<PupilStoryTileDto> tiles)
@@ -125,5 +132,4 @@ public static class PupilG78PageCoherence
         => text.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(s => s.TrimEnd('.'))
             .ToList();
-
 }

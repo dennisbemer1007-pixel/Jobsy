@@ -15,10 +15,64 @@ public static class PupilG78FactTileComposer
         ("culture", "LeerlingStory.Tile.Thuis", AssessmentKind.Culture),
     ];
 
+    public const int DefaultMaxSentencesPerTile = 3;
+
+    public static (IReadOnlyList<PupilStoryTileDto> Tiles, IReadOnlyList<int> UsedItemIds) BuildFromPlan(
+        IReadOnlyList<G78AnswerClause> clauses,
+        string language,
+        IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> plan,
+        IReadOnlySet<string> growthCategories)
+    {
+        var byId = clauses.ToDictionary(c => c.ItemId);
+        var usedIds = new List<int>();
+        var pageSelected = plan.Values.SelectMany(v => v).ToHashSet();
+        var usedThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in pageSelected)
+        {
+            RememberTheme(id, usedThemes);
+        }
+
+        var tiles = new List<PupilStoryTileDto>();
+
+        foreach (var (modelKey, labelKey, kind) in Slots)
+        {
+            if (!plan.TryGetValue(kind, out var ids) || ids.Count == 0)
+            {
+                tiles.Add(new PupilStoryTileDto(
+                    modelKey,
+                    PupilVerhaalLocalized.Get(labelKey, language),
+                    "Je gaf zelf antwoord op deze vragen."));
+                continue;
+            }
+
+            var highs = ids
+                .Where(byId.ContainsKey)
+                .Select(id => byId[id])
+                .Where(c => c.EffectiveScore >= 4)
+                .Take(4)
+                .ToList();
+            EnsureMinimumHighs(highs, clauses, kind, pageSelected, growthCategories, usedThemes, minimum: 2);
+            foreach (var h in highs)
+            {
+                RememberTheme(h.ItemId, usedThemes);
+            }
+
+            usedIds.AddRange(highs.Select(h => h.ItemId));
+            tiles.Add(new PupilStoryTileDto(
+                modelKey,
+                PupilVerhaalLocalized.Get(labelKey, language),
+                ComposeTileText(highs)));
+        }
+
+        return (tiles, usedIds);
+    }
+
     public static (IReadOnlyList<PupilStoryTileDto> Tiles, IReadOnlyList<int> UsedItemIds) Build(
         IReadOnlyList<G78AnswerClause> clauses,
         string language,
-        IReadOnlySet<int> reservedIds)
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<string> growthCategories,
+        int maxSentencesPerTile = DefaultMaxSentencesPerTile)
     {
         var blockedIds = new HashSet<int>(reservedIds);
         var usedIds = new HashSet<int>();
@@ -38,7 +92,16 @@ public static class PupilG78FactTileComposer
 
         foreach (var (modelKey, labelKey, kind) in Slots)
         {
-            var highs = PickHighs(clauses, kind, usedCategories, usedIds, blockedIds, usedThemes, selected);
+            var highs = PickHighs(
+                clauses,
+                kind,
+                usedCategories,
+                usedIds,
+                blockedIds,
+                usedThemes,
+                selected,
+                growthCategories,
+                maxSentencesPerTile);
             foreach (var h in highs)
             {
                 selected.Add(h.ItemId);
@@ -52,6 +115,50 @@ public static class PupilG78FactTileComposer
         }
 
         return (tiles, usedIds.ToList());
+    }
+
+    private static void EnsureMinimumHighs(
+        List<G78AnswerClause> highs,
+        IReadOnlyList<G78AnswerClause> clauses,
+        AssessmentKind kind,
+        IReadOnlySet<int> pageSelected,
+        IReadOnlySet<string> growthCategories,
+        HashSet<string> usedThemes,
+        int minimum)
+    {
+        if (highs.Count >= minimum)
+        {
+            return;
+        }
+
+        var blocked = PupilG78OppositePairs.BlockedItems(clauses, pageSelected);
+        foreach (var c in clauses
+                     .Where(c => c.Model == kind
+                                 && c.EffectiveScore >= 4
+                                 && !highs.Contains(c)
+                                 && !blocked.Contains(c.ItemId)
+                                 && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, pageSelected)
+                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
+                     .OrderByDescending(c => c.EffectiveScore)
+                     .ThenBy(c => c.ItemId))
+        {
+            if (ThemeBlocked(c.ItemId, usedThemes))
+            {
+                continue;
+            }
+
+            if (highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, c.Text)))
+            {
+                continue;
+            }
+
+            highs.Add(c);
+            if (highs.Count >= minimum)
+            {
+                break;
+            }
+        }
+
     }
 
     private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs)
@@ -74,11 +181,13 @@ public static class PupilG78FactTileComposer
         HashSet<int> usedIds,
         HashSet<int> blockedIds,
         HashSet<string> usedThemes,
-        IReadOnlySet<int> selectedSoFar)
+        IReadOnlySet<int> selectedSoFar,
+        IReadOnlySet<string> growthCategories,
+        int maxSentences)
     {
         if (kind == AssessmentKind.Competence)
         {
-            return PickCompetenceHighs(all, usedIds, blockedIds, usedThemes, selectedSoFar);
+            return PickCompetenceHighs(all, usedIds, blockedIds, usedThemes, selectedSoFar, growthCategories, maxSentences);
         }
 
         var blocked = PupilG78OppositePairs.BlockedItems(all, selectedSoFar);
@@ -91,6 +200,7 @@ public static class PupilG78FactTileComposer
                                  && !usedIds.Contains(c.ItemId)
                                  && !blockedIds.Contains(c.ItemId)
                                  && !blocked.Contains(c.ItemId)
+                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories)
                                  && PupilG78OppositePairs.IsAllowed(c.ItemId, all, selectedSoFar.Union(picked.Select(p => p.ItemId)).ToHashSet()))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
@@ -114,7 +224,7 @@ public static class PupilG78FactTileComposer
             usedCategories.Add(c.Category);
             usedIds.Add(c.ItemId);
             RememberTheme(c.ItemId, usedThemes);
-            if (picked.Count >= 4)
+            if (picked.Count >= maxSentences)
             {
                 break;
             }
@@ -127,7 +237,8 @@ public static class PupilG78FactTileComposer
                                      && c.EffectiveScore == 4
                                      && !usedIds.Contains(c.ItemId)
                                      && !blockedIds.Contains(c.ItemId)
-                                     && !blocked.Contains(c.ItemId))
+                                     && !blocked.Contains(c.ItemId)
+                                     && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
                          .OrderBy(c => c.ItemId))
             {
                 if (ThemeBlocked(c.ItemId, usedThemes))
@@ -150,7 +261,17 @@ public static class PupilG78FactTileComposer
             }
         }
 
-        EnsureMinimumSentences(picked, all, kind, usedIds, blockedIds, usedThemes, selectedSoFar, minimum: 2);
+        EnsureMinimumSentences(
+            picked,
+            all,
+            kind,
+            usedIds,
+            blockedIds,
+            usedThemes,
+            selectedSoFar,
+            growthCategories,
+            minimum: 2,
+            maxSentences);
         return picked;
     }
 
@@ -159,7 +280,9 @@ public static class PupilG78FactTileComposer
         HashSet<int> usedIds,
         HashSet<int> blockedIds,
         HashSet<string> usedThemes,
-        IReadOnlySet<int> selectedSoFar)
+        IReadOnlySet<int> selectedSoFar,
+        IReadOnlySet<string> growthCategories,
+        int maxSentences)
     {
         var blocked = PupilG78OppositePairs.BlockedItems(all, selectedSoFar);
         var picked = new List<G78AnswerClause>();
@@ -173,7 +296,8 @@ public static class PupilG78FactTileComposer
                             && x.EffectiveScore >= 4
                             && !usedIds.Contains(x.ItemId)
                             && !blockedIds.Contains(x.ItemId)
-                            && !blocked.Contains(x.ItemId))
+                            && !blocked.Contains(x.ItemId)
+                            && !PupilG78StrengthGuard.IsForbiddenStrength(x.ItemId, x.EffectiveScore, growthCategories))
                 .Where(x => !ThemeBlocked(x.ItemId, usedThemes))
                 .OrderByDescending(x => x.EffectiveScore)
                 .ThenBy(x => x.ItemId == 9001 ? 1 : 0)
@@ -193,7 +317,7 @@ public static class PupilG78FactTileComposer
             picked.Add(c);
             usedIds.Add(c.ItemId);
             RememberTheme(c.ItemId, usedThemes);
-            if (picked.Count >= 4)
+            if (picked.Count >= maxSentences)
             {
                 break;
             }
@@ -207,7 +331,8 @@ public static class PupilG78FactTileComposer
                                      && x.EffectiveScore >= 4
                                      && !usedIds.Contains(x.ItemId)
                                      && !blockedIds.Contains(x.ItemId)
-                                     && !blocked.Contains(x.ItemId))
+                                     && !blocked.Contains(x.ItemId)
+                                     && !PupilG78StrengthGuard.IsForbiddenStrength(x.ItemId, x.EffectiveScore, growthCategories))
                          .OrderByDescending(x => x.EffectiveScore)
                          .ThenBy(x => x.ItemId))
             {
@@ -224,14 +349,24 @@ public static class PupilG78FactTileComposer
                 picked.Add(c);
                 usedIds.Add(c.ItemId);
                 RememberTheme(c.ItemId, usedThemes);
-                if (picked.Count >= 4)
+                if (picked.Count >= maxSentences)
                 {
                     break;
                 }
             }
         }
 
-        EnsureMinimumSentences(picked, all, AssessmentKind.Competence, usedIds, blockedIds, usedThemes, selectedSoFar, minimum: 2);
+        EnsureMinimumSentences(
+            picked,
+            all,
+            AssessmentKind.Competence,
+            usedIds,
+            blockedIds,
+            usedThemes,
+            selectedSoFar,
+            growthCategories,
+            minimum: 2,
+            maxSentences);
         return picked;
     }
 
@@ -243,7 +378,9 @@ public static class PupilG78FactTileComposer
         HashSet<int> blockedIds,
         HashSet<string> usedThemes,
         IReadOnlySet<int> selectedSoFar,
-        int minimum)
+        IReadOnlySet<string> growthCategories,
+        int minimum,
+        int maxSentences)
     {
         if (picked.Count >= minimum)
         {
@@ -257,6 +394,7 @@ public static class PupilG78FactTileComposer
                                  && !usedIds.Contains(c.ItemId)
                                  && !blockedIds.Contains(c.ItemId)
                                  && !blocked.Contains(c.ItemId)
+                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories)
                                  && !picked.Contains(c))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
@@ -274,7 +412,7 @@ public static class PupilG78FactTileComposer
             picked.Add(c);
             usedIds.Add(c.ItemId);
             RememberTheme(c.ItemId, usedThemes);
-            if (picked.Count >= minimum)
+            if (picked.Count >= maxSentences)
             {
                 break;
             }

@@ -10,7 +10,8 @@ public sealed class PupilG78StrongWeakConsistencyTests
     public void Strong_competency_labels_do_not_overlap_weak_mentions((PupilResult Result, PupilProgress Progress) fixture)
     {
         var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
-        var overlaps = PupilG78PageCoherence.FindStrongWeakOverlaps(pkg, fixture.Progress.AnswersJson);
+        var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(fixture.Progress.AnswersJson!)!;
+        var overlaps = PupilG78PageCoherence.FindStrongWeakOverlaps(pkg, answers);
         Assert.True(overlaps.Count == 0, string.Join(", ", overlaps));
     }
 
@@ -26,19 +27,18 @@ public sealed class PupilG78StrongWeakConsistencyTests
 
     [Theory]
     [MemberData(nameof(Fixtures))]
-    public void Growth_dimensions_are_disjoint_from_story_strong_top_three(
+    public void Growth_block_has_two_to_four_items_and_no_strength_on_page(
         (PupilResult Result, PupilProgress Progress) fixture)
     {
         var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(fixture.Progress.AnswersJson!)!;
-        var avgs = PupilG78GrowthCompetencies.DimensionAverages(answers);
-        var top = PupilG78GrowthCompetencies.TopStrongCategories(avgs, 3).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
-        var pageIds = pkg.UsedItemIds.Concat(pkg.StoryItemIds).ToHashSet();
-        var onPage = PupilG78ItemDimensionMap.DimensionsOnPage(pageIds);
+        Assert.InRange(pkg.GrowthCompetencies.Count, 2, 4);
         foreach (var g in pkg.GrowthCompetencies)
         {
-            Assert.DoesNotContain(g.Category, top);
-            Assert.DoesNotContain(g.Category, onPage);
+            Assert.False(
+                PupilG78StrengthGuard.GrowthCategoryPublishedStrong(pkg.UsedItemIds, g.Category, answers),
+                g.Category);
+            Assert.False(string.IsNullOrWhiteSpace(g.WhyExplanation));
         }
     }
 

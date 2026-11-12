@@ -8,77 +8,68 @@ internal static class PupilG78RealisticFixtures
         => Build("SC", "Connection", "Collaboration",
             """["sport","dieren"]""",
             """{"tekenen":{"leuk":5,"goed":4},"muziek":{"leuk":5,"goed":3}}""",
-            RealisticAnswers("SC"));
+            BuildHelpsOthersAnswers());
 
     internal static (PupilResult Result, PupilProgress Progress) LeadsGroup()
         => Build("ES", "Autonomy", "Informal",
             """["theater","lezen"]""",
             """{"geschiedenis":{"leuk":5,"goed":4},"engels":{"leuk":4,"goed":5}}""",
-            RealisticAnswers("ES"));
+            BuildLeadsGroupAnswers());
 
     internal static (PupilResult Result, PupilProgress Progress) Maker()
         => Build("IR", "Achievement", "Flexibility",
             """["techniek","natuur"]""",
             """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5}}""",
-            RealisticAnswers("IR"));
+            BuildMakerAnswers());
 
-    private static Dictionary<string, int> RealisticAnswers(string profile)
+    private static Dictionary<string, int> BuildHelpsOthersAnswers()
+    {
+        var d = BaselineThrees();
+        Set(d, 5, 9001, 9003, 9006, 9007, 9008, 9019, 9024, 9030, 9032, 9037, 9042, 9048, 9053, 9054, 9059, 9060, 9021, 9022, 9038, 9017);
+        Set(d, 3, 9002, 9016, 9034, 9039, 9040, 9050, 9056);
+        Set(d, 2, 9004, 9009, 9014, 9018, 9023, 9029, 9051, 9057);
+        Set(d, 1, 9005, 9010, 9015, 9020, 9026, 9049);
+        return d;
+    }
+
+    private static Dictionary<string, int> BuildLeadsGroupAnswers()
+    {
+        var d = BaselineThrees();
+        Set(d, 5, 9001, 9005, 9009, 9010, 9020, 9026, 9029, 9031, 9036, 9041, 9043, 9049, 9050, 9052, 9056, 9058, 9018, 9023);
+        Set(d, 4, 9047);
+        Set(d, 2, 9002, 9007, 9012, 9021, 9027, 9034, 9044, 9055);
+        Set(d, 1, 9003, 9008, 9013);
+        return d;
+    }
+
+    private static Dictionary<string, int> BuildMakerAnswers()
+    {
+        var d = BaselineThrees();
+        Set(d, 5, 9002, 9004, 9007, 9008, 9016, 9017, 9018, 9022, 9025, 9027, 9028, 9033, 9038, 9043, 9052, 9055, 9057, 9029);
+        Set(d, 4, 9056);
+        Set(d, 3, 9009, 9036, 9050, 9041);
+        Set(d, 2, 9001, 9006, 9019, 9024, 9046, 9047, 9053, 9059);
+        Set(d, 1, 9005, 9010, 9015, 9030, 9049);
+        return d;
+    }
+
+    private static Dictionary<string, int> BaselineThrees()
     {
         var d = new Dictionary<string, int>(StringComparer.Ordinal);
         for (var id = 9001; id <= 9060; id++)
         {
-            d[id.ToString()] = ScoreFor(id, profile);
+            d[id.ToString()] = 3;
         }
 
         return d;
     }
 
-    private static int ScoreFor(int itemId, string profile)
+    private static void Set(Dictionary<string, int> d, int score, params int[] ids)
     {
-        var strong = profile switch
+        foreach (var id in ids)
         {
-            "SC" => itemId is 9001 or 9003 or 9006 or 9007 or 9021 or 9024 or 9030
-                or 9032 or 9037 or 9042 or 9048 or 9053 or 9054 or 9059 or 9060,
-            "ES" => itemId is 9005 or 9007 or 9009 or 9010 or 9020 or 9026 or 9029 or 9031 or 9036
-                or 9041 or 9043 or 9047 or 9049 or 9050 or 9052 or 9056 or 9058,
-            "IR" => itemId is 9001 or 9002 or 9004 or 9007 or 9008 or 9016 or 9017 or 9018 or 9022 or 9025 or 9027 or 9028
-                or 9033 or 9038 or 9043 or 9046 or 9055 or 9056,
-            _ => false
-        };
-        if (strong)
-        {
-            return 5;
+            d[id.ToString()] = score;
         }
-
-        var low = profile switch
-        {
-            "SC" => itemId is 9014 or 9015 or 9020,
-            "ES" => itemId is 9019 or 9024 or 9012,
-            "IR" => itemId is 9020 or 9010 or 9026,
-            _ => false
-        };
-        if (low)
-        {
-            return itemId switch
-            {
-                9019 when profile == "ES" => 1,
-                _ => 2
-            };
-        }
-
-        var mid = profile switch
-        {
-            "SC" => itemId % 4 == 0,
-            "ES" => itemId % 5 == 1,
-            "IR" => itemId % 6 == 2,
-            _ => itemId % 3 == 0
-        };
-        if (mid)
-        {
-            return 4;
-        }
-
-        return 2 + (itemId * 7 + StringComparer.Ordinal.GetHashCode(profile)) % 3;
     }
 
     private static (PupilResult, PupilProgress) Build(

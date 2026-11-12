@@ -21,6 +21,25 @@ public static class PupilG78CompetencyNarrative
         _ => competencyCategory.ToLowerInvariant()
     };
 
+    /// <summary>Short label for flowing lists (avoids double “en” with “plannen en organiseren”).</summary>
+    public static string KidLabelList(string competencyCategory) => competencyCategory switch
+    {
+        CompetencyTestCatalog.Resultaatgerichtheid => "plannen",
+        _ => KidLabel(competencyCategory)
+    };
+
+    public static string JoinKidLabelList(IReadOnlyList<string> competencyCategories)
+    {
+        var labels = competencyCategories.Select(KidLabelList).ToList();
+        return labels.Count switch
+        {
+            0 => "",
+            1 => labels[0],
+            2 => $"{labels[0]} en {labels[1]}",
+            _ => string.Join(", ", labels.Take(labels.Count - 1)) + " en " + labels[^1]
+        };
+    }
+
     public static string KidLabelTitle(string competencyCategory) =>
         char.ToUpperInvariant(KidLabel(competencyCategory)[0]) + KidLabel(competencyCategory)[1..];
 

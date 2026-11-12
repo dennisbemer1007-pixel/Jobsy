@@ -26,22 +26,37 @@ public static class PupilG78GrowthCompetencies
             .Select(kv => kv.Key)
             .ToList();
 
-    public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
+    /// <summary>Lowest competency dimensions for growth (mean &lt; 3.0 or any 1–2 answer), max 5.</summary>
+    public static IReadOnlyList<string> SelectGrowthCategories(
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlySet<int> pageItemIds,
-        IReadOnlySet<string> pageDimensions,
+        int maxCount = 5)
+        => CompetencyTestCatalog.QuickScanCategories
+            .Select(cat => (Category: cat, Stats: StatsForCategory(cat, answers)))
+            .Where(x => x.Stats.Average < 3.0 || x.Stats.HasLow)
+            .OrderBy(x => x.Stats.Average)
+            .ThenBy(x => x.Category, StringComparer.Ordinal)
+            .Take(maxCount)
+            .Select(x => x.Category)
+            .ToList();
+
+    public static IReadOnlyList<PupilG78GrowthCompetencyDto> BuildForCategories(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlyList<string> growthCategories,
+        IReadOnlySet<int>? pageItemIds,
         string language = "nl")
     {
-        var excludedCategories = new HashSet<string>(pageDimensions, StringComparer.OrdinalIgnoreCase);
-        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
+        var list = new List<PupilG78GrowthCompetencyDto>();
+        foreach (var category in growthCategories)
         {
-            if (PupilG78ItemDimensionMap.PageMentionsDimension(pageItemIds, cat))
-            {
-                excludedCategories.Add(cat);
-            }
+            var stats = StatsForCategory(category, answers);
+            list.Add(new PupilG78GrowthCompetencyDto(
+                category,
+                PupilG78CompetencyNarrative.KidLabelTitle(category),
+                WhyExplanation(stats, pageItemIds, category, language),
+                PanelId(category)));
         }
 
-        return BuildCore(answers, excludedCategories, pageItemIds, language);
+        return list;
     }
 
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
