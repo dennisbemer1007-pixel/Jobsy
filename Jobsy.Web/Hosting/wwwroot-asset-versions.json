@@ -168,8 +168,8 @@
     "v": "20261028-59"
   },
   "css/features/leerling-werelden-kies.css": {
-    "sha256": "4c3200d2a380d8be34cea14fe4471247abbb75e7b998a66cb026abb0242f3bba",
-    "v": "20261112-01"
+    "sha256": "6092d2a52068f5640952fc6af5dbd4b40d190e5889917956dd407d6b5bc0da31",
+    "v": "20261102-02"
   },
   "css/features/lobsy-assistant-panel.css": {
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
@@ -312,7 +312,7 @@
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "b004ae144ab43d9159b4ae54240dda697cd6e50fecde543bb4262a849a661583",
+    "sha256": "39bb73b0bb8626f8c703427e0437101d7d7a8aebe399924998c0271549eeeca3",
     "v": "20261030-01"
   },
   "css/features/signup-static.css": {
@@ -496,8 +496,8 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "26ea731e6ae3f8356085973f12382b767de0d0fbe8ef448cc62a282c6516dc6b",
-    "v": "20261112-01"
+    "sha256": "91f775a03a89fb2076f754918868373e59a162ae5fdcb8a0eb8ec3e1d9feddd2",
+    "v": "20261103-01"
   },
   "js/leerling-login.js": {
     "sha256": "25521f1a69b2f38a757d8670e8d3f28befe0458b7a2ce2761f3a5d969eaec2d8",

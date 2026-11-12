@@ -117,6 +117,7 @@
     }
     document.title = doc.title || document.title;
     bindReadAloud(shell);
+    bindImagineInfo(shell);
     bindAnswerScale(shell);
     bindChips(shell);
     bindVakkenScale(shell);
@@ -234,6 +235,64 @@
         var recovery = (err && err.redirectPath) || target;
         window.location.assign(recovery);
       });
+  }
+
+  function bindImagineInfo(root) {
+    var scope = root || document;
+    scope.querySelectorAll("[data-ll-imagine-toggle]").forEach(function (btn) {
+      if (btn.getAttribute("data-ll-imagine-bound") === "1") {
+        return;
+      }
+      btn.setAttribute("data-ll-imagine-bound", "1");
+      btn.addEventListener("click", function () {
+        var panelId = btn.getAttribute("aria-controls");
+        var panel = panelId ? document.getElementById(panelId) : null;
+        if (!panel) {
+          return;
+        }
+        var opening = panel.hasAttribute("hidden");
+        if (opening) {
+          panel.removeAttribute("hidden");
+          clAdd(panel, "is-open");
+          btn.setAttribute("aria-expanded", "true");
+          var title = scope.querySelector("#ll-q-title");
+          if (title) {
+            title.setAttribute("aria-describedby", panelId);
+          }
+        } else {
+          panel.setAttribute("hidden", "");
+          clRemove(panel, "is-open");
+          btn.setAttribute("aria-expanded", "false");
+          var titleClose = scope.querySelector("#ll-q-title");
+          if (titleClose) {
+            titleClose.removeAttribute("aria-describedby");
+          }
+        }
+      });
+    });
+    scope.querySelectorAll("[data-ll-imagine-close]").forEach(function (closeBtn) {
+      if (closeBtn.getAttribute("data-ll-imagine-bound") === "1") {
+        return;
+      }
+      closeBtn.setAttribute("data-ll-imagine-bound", "1");
+      closeBtn.addEventListener("click", function () {
+        var panel = closeBtn.closest(".ll-info");
+        if (!panel) {
+          return;
+        }
+        panel.setAttribute("hidden", "");
+        clRemove(panel, "is-open");
+        var panelId = panel.id;
+        var toggle = panelId ? scope.querySelector('[data-ll-imagine-toggle][aria-controls="' + panelId + '"]') : null;
+        if (toggle) {
+          toggle.setAttribute("aria-expanded", "false");
+        }
+        var title = scope.querySelector("#ll-q-title");
+        if (title) {
+          title.removeAttribute("aria-describedby");
+        }
+      });
+    });
   }
 
   function bindReadAloud(root) {
@@ -1134,6 +1193,7 @@
     var root = document.body;
     bindSessionKeepalive();
     bindReadAloud(root);
+    bindImagineInfo(root);
     bindAnswerScale(root);
     bindChips(root);
     bindVakkenScale(root);

@@ -52,6 +52,23 @@ public static class SpokenText
         return text[heading.Length..].TrimStart(' ', '.', '!', '?', '…', ':', '—', '-', '·').Trim();
     }
 
+    /// <summary>Capitalises the first letter for on-screen imagine copy after the lead is stripped.</summary>
+    public static string CapitalizeFirstSentence(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "";
+        }
+
+        text = text.Trim();
+        if (text.Length == 1)
+        {
+            return text.ToUpperInvariant();
+        }
+
+        return char.ToUpper(text[0], System.Globalization.CultureInfo.GetCultureInfo("nl-NL")) + text[1..];
+    }
+
     private static string NormalizeLead(string? lead)
         => (lead ?? "").Trim().TrimEnd(' ', '.', '!', '?', '…', ':');
 }
