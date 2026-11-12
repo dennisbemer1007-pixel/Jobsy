@@ -213,6 +213,8 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Strengths.Title"] = "Dit kan ik al goed";
         d["LeerlingPassport.G78.Strengths.Sub"] = "Jouw sterke punten uit de test";
         d["LeerlingPassport.G78.Strengths.Question"] = "Wanneer heb je dit laatst laten zien?";
+        d["LeerlingPassport.G78.Growth.Title"] = "Hier kun je nog in groeien";
+        d["LeerlingPassport.G78.Growth.Footnote"] = "Dit kun je later nog ontdekken.";
         d["LeerlingPassport.G78.Subjects.BlockTitle"] = "Mijn vakken";
         d["LeerlingPassport.G78.Subjects.Sub"] = "Zo heb jij je vakken zelf ingevuld";
         d["LeerlingPassport.G78.Subjects.Question"] =

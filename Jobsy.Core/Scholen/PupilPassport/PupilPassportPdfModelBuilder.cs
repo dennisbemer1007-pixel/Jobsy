@@ -175,11 +175,14 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             g78SchoolLeuk = factPkg.Preferences.SchoolLeuk;
             g78HobbyLeuk = factPkg.Preferences.HobbyLeuk;
             g78BelangrijkItems = factPkg.Preferences.BelangrijkItems;
+            var growthFoot = PupilPassportCopy.Get("LeerlingPassport.G78.Growth.Footnote");
             g78GrowthItems = factPkg.GrowthCompetencies
-                .Select(g => (g.Label, g.WhyExplanation))
+                .Take(2)
+                .Select(g => (g.Label, growthFoot))
                 .ToList();
-            riasecBars = PupilG78PassportPdfData.BuildCompetencyEnergyBars(answers, storyStrong);
-            g78RiasecPending = riasecBars.Count == 0;
+            var (riasecBuilt, riasecPending) = PupilG78PassportPdfData.BuildRiasecBars(result);
+            riasecBars = riasecBuilt;
+            g78RiasecPending = riasecPending;
             valueBars = PupilG78PassportPdfData.BuildValueBars(result);
             cultureSliders = BuildCultureSliders(result, lang);
             subjectGroups = PupilG78SubjectGroups.Build(vak, result, lang);

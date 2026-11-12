@@ -107,8 +107,7 @@ public class ExportG78PassportSampleTests
         using var doc = PdfDocument.Open(pdf);
         Assert.InRange(doc.NumberOfPages, 5, 6);
 
-        Directory.CreateDirectory("/opt/cursor/artifacts");
-        File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf", pdf);
+        WriteArtifactBytes("/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf", pdf);
 
         WriteMockupComparisonPngs(pdf);
         WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-subjects-page-after.png");
@@ -158,8 +157,22 @@ public class ExportG78PassportSampleTests
 
         var model = builder.Build(code, cls, "Demo OBS", "28A-Z7K", null);
         var pdf = new PupilPassportPdfService().Render(model with { G78BijlagenMockChrome = false });
-        Directory.CreateDirectory("/opt/cursor/artifacts");
-        File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-helpt-anderen.pdf", pdf);
+        using (var docCheck = PdfDocument.Open(pdf))
+        {
+            Assert.Equal(5, docCheck.NumberOfPages);
+            var allText = string.Join('\n', docCheck.GetPages().Select(p => p.Text));
+            Assert.Contains("Maken & bouwen", allText, StringComparison.Ordinal);
+            Assert.Contains("Waar ik energie van krijg", allText, StringComparison.Ordinal);
+            Assert.Contains("Creativiteit", allText, StringComparison.Ordinal);
+            Assert.DoesNotContain("Dit zie je ook terug", allText, StringComparison.Ordinal);
+            var deel2 = docCheck.GetPages()
+                .Select(p => p.Text)
+                .FirstOrDefault(t => t.Contains("D E E L 2", StringComparison.Ordinal) || t.Contains("DEEL 2", StringComparison.Ordinal));
+            Assert.NotNull(deel2);
+            Assert.Contains("Hier kun je nog in groeien", deel2, StringComparison.Ordinal);
+        }
+
+        WriteArtifactBytes("/opt/cursor/artifacts/g78-paspoort-helpt-anderen.pdf", pdf);
         WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-dit-ben-jij-pdf-page.png");
         WritePassportSectionPagePngs(pdf);
     }
@@ -334,5 +347,35 @@ print("ok")
         }
 
         return proc.StandardOutput.ReadToEnd();
+    }
+
+    private static void WriteArtifactBytes(string path, byte[] data)
+    {
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        var tmp = Path.Combine(Path.GetTempPath(), $"artifact-{Guid.NewGuid():N}.bin");
+        File.WriteAllBytes(tmp, data);
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            try
+            {
+                File.Copy(tmp, path, overwrite: true);
+                File.Delete(tmp);
+                return;
+            }
+            catch (IOException) when (attempt < 3)
+            {
+                Thread.Sleep(500 << attempt);
+            }
+        }
+
+        File.Copy(tmp, path, overwrite: true);
+        try
+        {
+            File.Delete(tmp);
+        }
+        catch
+        {
+            // best-effort
+        }
     }
 }
