@@ -23,6 +23,8 @@ public class PageAssetCatalogTests
     [InlineData("/werkgever/kandidatenkaart", CoreCss + WerkgeverCss)]
     [InlineData("/admin", CoreCss + BeheerCss)]
     [InlineData("/admin/users", CoreCss + BeheerCss)]
+    [InlineData("/admin/scholen", CoreCss + BeheerCss + 1)]
+    [InlineData("/admin/scholen/rapportage", CoreCss + BeheerCss + 1)]
     [InlineData("/sales/dashboard", CoreCss + SalesCss)]
     [InlineData("/leerling", CoreCss + SchoolCss)]
     [InlineData("/leerling/vo-paspoort", CoreCss + SchoolCss)]
@@ -38,6 +40,13 @@ public class PageAssetCatalogTests
         if (path is "/admin" or "/admin/users")
         {
             Assert.Contains(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
+        }
+
+        if (path.StartsWith("/admin/scholen", StringComparison.Ordinal))
+        {
+            var routeSheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(areas, path);
+            Assert.Contains(routeSheets, s => s.StartsWith("css/features/scholen.css", StringComparison.Ordinal));
+            Assert.Contains(routeSheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
         }
         else
         {

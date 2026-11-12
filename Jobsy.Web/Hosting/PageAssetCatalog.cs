@@ -346,6 +346,11 @@ public static partial class PageAssetCatalog
     public static IReadOnlyList<string> RouteStylesheets(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
+        if (path.StartsWith("/admin/scholen", StringComparison.OrdinalIgnoreCase))
+        {
+            return [WwwrootAssetCatalog.Url("css/features/scholen.css")];
+        }
+
         if (path.Equals("/werkgever/kandidatenkaart", StringComparison.OrdinalIgnoreCase))
         {
             return KandidatenkaartCss;

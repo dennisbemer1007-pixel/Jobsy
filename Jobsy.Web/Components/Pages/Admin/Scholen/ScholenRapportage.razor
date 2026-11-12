@@ -80,7 +80,7 @@
     else
     {
         <section class="panel-section">
-            <div class="sch-admin-toolbar" style="flex-wrap:wrap;gap:0.75rem">
+            <div class="sch-admin-toolbar ent-filter-bar">
                 <label>
                     @Culture["AdminScholen.Report.Filter.Year"]
                     <select class="input" @bind="_year" @bind:after="ReloadReportAsync">
@@ -148,7 +148,7 @@
                     <ul class="sch-todo-list">
                         @if (_report.RiasecTop3.Count == 0)
                         {
-                            <li>—</li>
+                            <li class="muted">@Culture["AdminDash.Todo.Empty"]</li>
                         }
                         else
                         {
@@ -164,7 +164,7 @@
                     <ul class="sch-todo-list">
                         @if (_report.TopValues.Count == 0)
                         {
-                            <li>—</li>
+                            <li class="muted">@Culture["AdminDash.Todo.Empty"]</li>
                         }
                         else
                         {
@@ -180,7 +180,7 @@
                     <ul class="sch-todo-list">
                         @if (_report.TopCultures.Count == 0)
                         {
-                            <li>—</li>
+                            <li class="muted">@Culture["AdminDash.Todo.Empty"]</li>
                         }
                         else
                         {
@@ -196,7 +196,7 @@
                     <ul class="sch-todo-list">
                         @if (_report.DreamJobsTop10.Count == 0)
                         {
-                            <li>—</li>
+                            <li class="muted">@Culture["AdminDash.Todo.Empty"]</li>
                         }
                         else
                         {

@@ -2001,3 +2001,163 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
         display: none;
     }
 }
+
+/* --- Beheer shell: forms, filters, drawers (all /admin routes) --- */
+.admin-main .filter-bar,
+.admin-shell .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+    grid-template-columns: unset;
+    padding: var(--space-3, 0.75rem);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm, 8px);
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+
+.admin-main .filter-bar > button,
+.admin-shell .filter-bar > button {
+    flex: 0 0 auto;
+}
+
+.admin-main .ent-filter-bar > label,
+.admin-shell .ent-filter-bar > label,
+.admin-main .sch-admin-toolbar.ent-filter-bar > label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+    min-width: min(100%, 8.5rem);
+}
+
+.admin-main .ent-filter-bar .input,
+.admin-shell .ent-filter-bar .input,
+.admin-main .ent-filter-bar select,
+.admin-shell .ent-filter-bar select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.admin-main .admin-drawer__body label:not(.filter-check),
+.admin-shell .admin-drawer__body label:not(.filter-check),
+.admin-main .ent-drawer label:not(.filter-check),
+.admin-shell .ent-drawer label:not(.filter-check) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-block-end: var(--space-3, 0.75rem);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+}
+
+.admin-main .admin-drawer__body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.admin-main .admin-drawer__body select,
+.admin-main .admin-drawer__body textarea,
+.admin-shell .admin-drawer__body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.admin-shell .admin-drawer__body select,
+.admin-shell .admin-drawer__body textarea,
+.admin-main .ent-drawer input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.admin-main .ent-drawer select,
+.admin-main .ent-drawer textarea,
+.admin-shell .ent-drawer input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.admin-shell .ent-drawer select,
+.admin-shell .ent-drawer textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm, 8px);
+    background: var(--surface);
+    font: inherit;
+    font-weight: 400;
+}
+
+.admin-main .btn-primary,
+.admin-shell .btn-primary,
+.admin-main .admin-drawer__footer .btn-primary,
+.admin-shell .ent-drawer .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 0;
+    border-radius: var(--r-sm, 8px);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-main .btn-primary:disabled,
+.admin-shell .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.admin-main .sch-kpi-row,
+.admin-shell .sch-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--space-4, 1rem);
+    margin-block: var(--space-4, 1rem);
+}
+
+.admin-main .sch-drawer-actions,
+.admin-shell .sch-drawer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3, 0.75rem);
+    justify-content: flex-end;
+    margin-top: var(--space-4, 1rem);
+}
+
+.admin-main .research-admin__enable {
+    margin: 0 0 var(--space-4, 1rem);
+}
+
+.admin-main .research-admin__pilot-create,
+.admin-shell .research-admin__pilot-create {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3, 0.75rem);
+    align-items: center;
+    margin-bottom: var(--space-3, 0.75rem);
+}
+
+.admin-main .research-admin__pilot-create .input,
+.admin-shell .research-admin__pilot-create .input {
+    flex: 1 1 12rem;
+    min-width: min(100%, 12rem);
+}
+
+.admin-main .platform-features-card,
+.admin-shell .platform-features-card {
+    max-width: none;
+}
+
+.admin-main .vacancy-category-fields__grid,
+.admin-shell .vacancy-category-fields__grid {
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+}
+
+.admin-main .vacancy-category-summary,
+.admin-shell .vacancy-category-summary {
+    flex-wrap: wrap;
+}
+
+.admin-main .data-table tbody:empty::after,
+.admin-shell .data-table tbody:empty::after {
+    content: "";
+    display: table-row;
+}
+
+.admin-main .table-scroll:has(.data-table tbody:empty) {
+    display: none;
+}

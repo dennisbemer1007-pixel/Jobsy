@@ -20,7 +20,10 @@
         <button type="button" class="@TabClass("toegang")" @onclick="ShowAccessTab">@Culture["AdminWa.Tab.Access"]</button>
         <button type="button" class="@TabClass("betrokkenheid")" @onclick="ShowEngageTab">@Culture["AdminWa.Tab.Engagement"]</button>
         <button type="button" class="@TabClass("waadi")" @onclick="ShowWaadiTab">@Culture["AdminWa.Tab.Waadi"]</button>
-        <span class="muted">@(CountLabel())</span>
+        @if (CountValue() > 0)
+        {
+            <span class="admin-count-pill">@CountValue()</span>
+        }
     </div>
 
     @if (_loading)
@@ -42,6 +45,12 @@
             <input class="filter-bar__search" @bind="_engageSearch" @bind:event="oninput" placeholder="@Culture["AdminWa.Engage.Search"]" />
             <button type="button" class="btn-compact" @onclick="ReloadAsync">@Culture["AdminWa.Engage.Go"]</button>
         </div>
+        @if (_engageItems.Count == 0)
+        {
+            <p class="state-message">@Culture["AdminUi.Empty"]</p>
+        }
+        else
+        {
         <div class="table-scroll">
             <table class="data-table">
                 <thead>
@@ -87,6 +96,7 @@
                 </tbody>
             </table>
         </div>
+        }
         @if (_engageRemoveTarget is not null)
         {
             <div class="panel admin-wa-reject">
@@ -277,6 +287,10 @@
             </table>
         </div>
     }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">@Culture["AdminUi.Empty"]</p>
+    }
     else
     {
         <div class="table-scroll">
@@ -372,13 +386,13 @@
     private string EngageFilterClass(string filter)
         => "btn-compact" + (_engageFilter == filter ? " is-active" : "");
 
-    private string CountLabel()
+    private int CountValue()
         => _tab switch
         {
-            "toegang" => (_access.Count + _ownership.Count).ToString(),
-            "betrokkenheid" => _engageItems.Count.ToString(),
-            "waadi" => _waadiItems.Count.ToString(),
-            _ => _items.Count.ToString()
+            "toegang" => _access.Count + _ownership.Count,
+            "betrokkenheid" => _engageItems.Count,
+            "waadi" => _waadiItems.Count,
+            _ => _items.Count
         };
 
     protected override void OnInitialized()
