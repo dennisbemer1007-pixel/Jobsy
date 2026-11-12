@@ -34,6 +34,13 @@ internal static class PupilPassportGroep78PdfRenderer
 
     private static float Mm(float mm) => mm * 72f / 25.4f;
 
+    /// <summary>CSS px at 96dpi → PDF points (16px ≈ 12pt).</summary>
+    private static float Px(float px) => px * 72f / 96f;
+
+    private static float CardGap => Px(16);
+
+    private static float TilePad => Px(11);
+
     /// <summary>Calm highlight: warm cream fill, thin border, coloured left accent strip.</summary>
     private static void SoftAccentPanel(
         IContainer c,
@@ -242,7 +249,7 @@ internal static class PupilPassportGroep78PdfRenderer
 
         page.Content().Column(col =>
         {
-            col.Spacing(Mm(2));
+            col.Spacing(CardGap);
             col.Item().Element(c => MirrorBox(c, m));
 
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
@@ -264,7 +271,7 @@ internal static class PupilPassportGroep78PdfRenderer
 
             if (m.DnaTiles is { Count: > 0 })
             {
-                col.Item().PaddingTop(Mm(1)).Element(c => G78PassportTileGrid(c, m));
+                col.Item().Element(c => G78PassportTileGrid(c, m));
             }
         });
     }
@@ -272,18 +279,20 @@ internal static class PupilPassportGroep78PdfRenderer
     private static void G78PassportTileGrid(IContainer c, PupilPassportPdfModel m)
     {
         var tiles = m.DnaTiles.Take(4).ToList();
+        var halfGap = CardGap / 2f;
         c.Column(outer =>
         {
             for (var i = 0; i < tiles.Count; i += 2)
             {
                 var rowIndex = i;
-                outer.Item().PaddingBottom(Mm(1.5f)).Row(row =>
+                var padBottom = rowIndex + 2 < tiles.Count ? CardGap : 0f;
+                outer.Item().PaddingBottom(padBottom).Row(row =>
                 {
-                    row.RelativeItem().MinWidth(0).PaddingRight(Mm(1.5f))
+                    row.RelativeItem().MinWidth(0).PaddingRight(halfGap)
                         .Element(left => G78PassportTileCard(left, tiles[rowIndex]));
                     if (rowIndex + 1 < tiles.Count)
                     {
-                        row.RelativeItem().MinWidth(0).PaddingLeft(Mm(1.5f))
+                        row.RelativeItem().MinWidth(0).PaddingLeft(halfGap)
                             .Element(right => G78PassportTileCard(right, tiles[rowIndex + 1]));
                     }
                 });
@@ -296,45 +305,41 @@ internal static class PupilPassportGroep78PdfRenderer
         c.Background(CreamWarm)
             .Border(1).BorderColor(Gold)
             .CornerRadius(Mm(1.2f))
-            .Padding(Mm(1.5f))
+            .Padding(TilePad)
             .Column(col =>
-        {
-            col.Item().Text(TruncateLabel(tile.Label, 28)).Bold().FontSize(8.5f).FontColor(Navy);
-            col.Item().PaddingTop(1).Text(NormalizePdfLine(tile.Value))
-                .FontSize(7.75f).FontColor(Ink).LineHeight(1.35f);
-        });
+            {
+                col.Item().Text(TruncateLabel(tile.Label, 28)).Bold().FontSize(8.5f).FontColor(Navy);
+                col.Item().PaddingTop(2).Text(NormalizePdfLine(tile.Value))
+                    .FontSize(7.75f).FontColor(Ink).LineHeight(1.4f);
+            });
     }
 
     private static void G78PassportGrowthCard(IContainer c, PupilPassportPdfModel m)
     {
         var items = m.G78GrowthItems!.Take(2).ToList();
-        var foot = items.Select(i => i.Why).FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
         c.Background(CreamWarm)
             .Border(1).BorderColor(Gold)
-            .CornerRadius(Mm(1.2f))
-            .Padding(Mm(1.5f))
+            .CornerRadius(Mm(1.5f))
+            .Padding(Mm(3.5f))
             .Column(col =>
             {
                 col.Item().Text(T(m, "LeerlingPassport.G78.Growth.Title"))
-                    .Bold().FontSize(9f).FontColor(Navy);
-                col.Item().PaddingTop(2).Row(row =>
+                    .Bold().FontSize(10.5f).FontColor(Navy);
+                foreach (var (label, _) in items)
                 {
-                    for (var i = 0; i < items.Count; i++)
+                    col.Item().PaddingTop(4).Row(row =>
                     {
-                        if (i > 0)
-                        {
-                            row.ConstantItem(Mm(2));
-                        }
-
-                        row.RelativeItem().MinWidth(0).Text(TruncateLabel(items[i].Label, 28))
-                            .SemiBold().FontSize(8.25f).FontColor(Ink).LineHeight(1.2f);
-                    }
-                });
-                if (!string.IsNullOrWhiteSpace(foot))
-                {
-                    col.Item().PaddingTop(2).Text(NormalizePdfLine(foot))
-                        .FontSize(7.5f).FontColor(Muted).LineHeight(1.25f);
+                        row.AutoItem()
+                            .Background(Track)
+                            .Border(1).BorderColor(Border)
+                            .CornerRadius(Mm(1))
+                            .PaddingHorizontal(8).PaddingVertical(4)
+                            .Text(TruncateLabel(label, 32)).SemiBold().FontSize(9f).FontColor(Ink);
+                    });
                 }
+
+                col.Item().PaddingTop(6).Text(T(m, "LeerlingPassport.G78.Growth.Footnote"))
+                    .FontSize(8.5f).FontColor(Muted).LineHeight(1.35f);
             });
     }
 
@@ -347,27 +352,23 @@ internal static class PupilPassportGroep78PdfRenderer
 
         page.Content().Column(col =>
         {
-            var compact = m.G78GrowthItems is { Count: > 0 };
-            var gap = compact ? Mm(2.5f) : Mm(4);
-            col.Spacing(gap);
             col.Item().PaddingBottom(Mm(1)).BorderBottom(0.75f).BorderColor(Gold);
-            col.Item().PaddingTop(compact ? Mm(2) : Mm(4)).Element(c => CultureSlidersFullWidth(c, m, compact));
-            col.Item().PaddingTop(gap).Element(c => G78LeukBelangrijkColumnsEqual(c, m));
+            col.Item().PaddingTop(CardGap).Element(c => CultureSlidersFullWidth(c, m));
+            col.Item().PaddingTop(CardGap).Element(c => G78LeukBelangrijkColumnsEqual(c, m));
             var talk = FirstTalkQuestions(m);
             if (talk.Count > 0)
             {
-                col.Item().PaddingTop(gap).Element(c => TalkBox(c, m, talk));
+                col.Item().PaddingTop(CardGap).Element(c => TalkBox(c, m, talk));
             }
 
-            var showGrowth = m.G78GrowthItems is { Count: > 0 };
-            if (m.SubjectGroups is { Count: > 0 } && !showGrowth)
+            if (m.SubjectGroups is { Count: > 0 })
             {
-                col.Item().PaddingTop(gap).Element(c => SubjectGroupsCompact(c, m));
+                col.Item().PaddingTop(CardGap).Element(c => SubjectGroupsCompact(c, m));
             }
 
-            if (showGrowth)
+            if (m.G78GrowthItems is { Count: > 0 })
             {
-                col.Item().PaddingTop(Mm(1.5f)).Element(c => G78PassportGrowthCard(c, m));
+                col.Item().PaddingTop(CardGap).Element(c => G78PassportGrowthCard(c, m));
             }
         });
     }
@@ -432,7 +433,7 @@ internal static class PupilPassportGroep78PdfRenderer
             {
                 if (i > 0)
                 {
-                    row.ConstantItem(Mm(4));
+                    row.ConstantItem(CardGap);
                 }
 
                 row.RelativeItem().MinWidth(0).Element(x => SubjectGroupCard(x, pair[i]));
@@ -826,10 +827,9 @@ internal static class PupilPassportGroep78PdfRenderer
     private static void MirrorBox(IContainer c, PupilPassportPdfModel m)
     {
         var raw = NormalizePdfLine(m.MirrorBody ?? m.StoryBody);
-        var flat = raw.Contains(PupilG78FactStory.ParagraphBreak, StringComparison.Ordinal)
-            ? raw.Replace(PupilG78FactStory.ParagraphBreak, " ", StringComparison.Ordinal)
-            : raw;
-        var body = TrimMirrorSentences(flat);
+        var paragraphs = raw.Contains(PupilG78FactStory.ParagraphBreak, StringComparison.Ordinal)
+            ? raw.Split(PupilG78FactStory.ParagraphBreak, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            : [string.IsNullOrWhiteSpace(raw) ? "" : raw.Trim()];
 
         SoftAccentPanel(c, Gold, CreamWarm, inner =>
         {
@@ -837,38 +837,27 @@ internal static class PupilPassportGroep78PdfRenderer
             {
                 col.Item().Text(T(m, "LeerlingPassport.G78.Mirror.Title"))
                     .Bold().FontSize(12.5f).FontColor(Navy);
-                col.Item().PaddingTop(Mm(1.5f)).Text(body)
-                    .FontFamily(MirrorFont).FontSize(10f).FontColor(Ink).LineHeight(1.4f);
+                var first = true;
+                foreach (var para in paragraphs)
+                {
+                    if (string.IsNullOrWhiteSpace(para))
+                    {
+                        continue;
+                    }
+
+                    col.Item().PaddingTop(first ? Mm(1.5f) : 6).Text(para.Trim())
+                        .FontFamily(MirrorFont).FontSize(10f).FontColor(Ink).LineHeight(1.4f);
+                    first = false;
+                }
             });
         });
-    }
-
-    private static string TrimMirrorSentences(string raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return raw;
-        }
-
-        var parts = Regex.Split(raw.Trim(), @"(?<=[.!?])\s+")
-            .Select(p => p.Trim())
-            .Where(p => p.Length > 0)
-            .Take(2)
-            .ToList();
-
-        if (parts.Count == 0)
-        {
-            return raw.Length > 720 ? raw[..717] + "…" : raw;
-        }
-
-        return string.Join(' ', parts);
     }
 
     private static void RiasecBars(IContainer c, PupilPassportPdfModel m, bool spacious = false)
     {
         var bars = (m.RiasecBars ?? []).Take(4).ToList();
-        var barHeight = Mm(spacious ? 4.2f : 3.2f);
-        var rowGap = spacious ? 6 : 2;
+        var barHeight = Mm(spacious ? 4.2f : 3f);
+        var rowGap = spacious ? 6 : 1.5f;
         c.Column(col =>
         {
             foreach (var bar in bars)
