@@ -97,6 +97,40 @@ public class ExportG78PassportSampleTests
         File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf", pdf);
 
         WriteMockupComparisonPngs(pdf);
+        WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-subjects-page-after.png");
+    }
+
+    private static void WriteSubjectsPagePng(byte[] pdf, string path)
+    {
+        EnsurePythonCompareDeps();
+        var pdfPath = "/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf";
+        File.WriteAllBytes(pdfPath, pdf);
+        var script = """
+import sys
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
+doc = fitz.open(sys.argv[1])
+page = doc[2]
+pix = page.get_pixmap(matrix=fitz.Matrix(120/72, 120/72))
+pix.save(sys.argv[2])
+print("ok")
+""";
+        var scriptPath = "/tmp/g78-page3.py";
+        File.WriteAllText(scriptPath, script);
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "python3",
+            ArgumentList = { scriptPath, pdfPath, path },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi);
+        proc!.WaitForExit(60_000);
+        Assert.Equal(0, proc.ExitCode);
+        Assert.True(File.Exists(path), path);
     }
 
     private static void WriteMockupComparisonPngs(byte[] samplePdf)

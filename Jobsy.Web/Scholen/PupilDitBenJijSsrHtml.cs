@@ -24,7 +24,6 @@ public static class PupilDitBenJijSsrHtml
         }
 
         var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
-        var tileStems = PupilJourneyTheme.ResultTileStems(themeKey);
         var sb = new StringBuilder();
         sb.Append("""<section class="ll-g78-scene ll-g78-result-scene" data-testid="leerling-g78-scene">""");
         sb.Append("<section class=\"band ll-g78-world-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
@@ -40,20 +39,14 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("<h1 class=\"island-lead rs-h serif\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1></header>");
         sb.Append("""<div class="qrow">""");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(
-            PupilStoryNarrative.ForSpeakAloud(result.Story.Body),
+            PupilG78FactStory.ForSpeakAloud(result.Story.Body),
             "ll-story",
             culture,
             "Leerling.G78.Result.ReadStory"));
         sb.Append("</div>");
         AppendG78StoryParagraphs(sb, result.Story.Body);
         sb.Append("</div>");
-        sb.Append("<div class=\"rtiles\">");
-        for (var i = 0; i < result.Story.Tiles.Count && i < tileStems.Count; i++)
-        {
-            sb.Append(PupilGroep78MockHtml.ResultTile(culture, tileStems[i], result.Story.Tiles[i]));
-        }
-
-        sb.Append("</div><div class=\"card ll-result-chips\"><h2 class=\"rsub\">");
+        sb.Append("<div class=\"card ll-result-chips\"><h2 class=\"rsub\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.LikesTitle"])).Append("</h2><div class=\"chips\">");
         foreach (var likeKey in result.Likes)
         {
@@ -135,7 +128,7 @@ public static class PupilDitBenJijSsrHtml
 
     private static void AppendG78StoryParagraphs(StringBuilder sb, string body)
     {
-        foreach (var para in PupilStoryNarrative.SplitParagraphs(body))
+        foreach (var para in PupilG78FactStory.SplitParagraphs(body))
         {
             sb.Append("<p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(para)).Append("</p>");
         }

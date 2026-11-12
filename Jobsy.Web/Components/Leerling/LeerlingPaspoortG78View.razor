@@ -53,25 +53,36 @@
                 @Culture["LeerlingPassport.Section.DitBenIk"]
                 <span class="lp-g78__who">@Culture["LeerlingPassport.Section.DitBenIk.Who"]</span>
             </h3>
-            <p>@Model.StoryBody</p>
-            @if (!string.IsNullOrWhiteSpace(Model.MirrorBody))
+            @foreach (var para in PupilG78FactStory.SplitParagraphs(Model.StoryBody))
             {
-                <p class="lp-g78__mirror">@Model.MirrorBody</p>
+                <p>@para</p>
             }
         </section>
 
-        @if (Model.SubjectGroups is { Count: > 0 })
+        @if ((Model.LeukItems is { Count: > 0 }) || (Model.BelangrijkItems is { Count: > 0 }))
         {
-            <section class="lp-g78__card">
+            <section class="lp-g78__card lp-g78__prefs">
                 <h3>@Culture["LeerlingPassport.G78.Page.Subjects"]</h3>
-                @foreach (var group in Model.SubjectGroups)
-                {
-                    <div class="lp-g78__vak-group">
-                        <h4>@group.Title</h4>
-                        <p>@group.Intro</p>
-                        <p><b>@string.Join(" · ", group.SubjectLabels)</b></p>
+                <div class="lp-g78__prefs-grid">
+                    <div class="lp-g78__prefs-col">
+                        <h4>@Culture["LeerlingPassport.G78.Col.Leuk"]</h4>
+                        <ul>
+                            @foreach (var item in Model.LeukItems ?? [])
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
                     </div>
-                }
+                    <div class="lp-g78__prefs-col">
+                        <h4>@Culture["LeerlingPassport.G78.Col.Belangrijk"]</h4>
+                        <ul>
+                            @foreach (var item in Model.BelangrijkItems ?? [])
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
             </section>
         }
 

@@ -8,10 +8,20 @@ public sealed class PupilStoryNarrativeTests
     private readonly PupilStoryRenderer _renderer = new();
 
     [Fact]
-    public void G78_story_uses_paragraphs_and_merges_autonomy_value_culture()
+    public void G78_story_uses_paragraphs_from_answers()
     {
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (var id = 9001; id <= 9060; id++)
+        {
+            answers[id.ToString()] = 3;
+        }
+
+        answers["9031"] = 5;
+        answers["9018"] = 5;
+        answers["9019"] = 5;
         var result = new PupilResult
         {
+            ScoringVersion = "g78-1",
             CompetenceScoresJson = """{"Samenwerken":72,"Resultaatgerichtheid":40,"Stressbestendigheid":50,"Innovatie":30,"Extraversie":45}""",
             RiasecScoresJson = """{"Realistic":30,"Investigative":35,"Artistic":40,"Social":50,"Enterprising":70,"Conventional":68}""",
             HollandCode = "CE",
@@ -22,17 +32,19 @@ public sealed class PupilStoryNarrativeTests
         };
         var progress = new PupilProgress
         {
-            LikesJson = """["theater","fietsen-repareren"]"""
+            LikesJson = """["theater","fietsen-repareren"]""",
+            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers)
         };
 
         var view = _renderer.Render(result, progress, "nl");
-        var paragraphs = PupilStoryNarrative.SplitParagraphs(view.Body);
+        var paragraphs = PupilG78FactStory.SplitParagraphs(view.Body);
 
-        Assert.InRange(paragraphs.Count, 2, 3);
-        Assert.DoesNotContain("zelf mag kiezen", view.Body, StringComparison.Ordinal);
-        Assert.Contains("theater", view.Body, StringComparison.Ordinal);
-        Assert.Contains("fietsen repareren", view.Body, StringComparison.Ordinal);
+        Assert.InRange(paragraphs.Count, 2, 4);
         Assert.Contains("In je vrije tijd", view.Body, StringComparison.Ordinal);
+        Assert.True(
+            view.Body.Contains("theater", StringComparison.OrdinalIgnoreCase)
+            || view.Body.Contains("Toneel", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(view.Tiles);
     }
 
     [Fact]
