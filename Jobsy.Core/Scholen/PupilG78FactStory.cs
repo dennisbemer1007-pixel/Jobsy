@@ -268,7 +268,7 @@ public static class PupilG78FactStory
         }
 
         var joined = JoinDutchList(fun);
-        yield return $"Op school vind je {joined} leuk om te doen";
+        yield return $"Op school vind je {joined} leuk om te doen.";
     }
 
     private static IEnumerable<string> LikeLines(PupilProgress? progress, string language)
@@ -289,7 +289,7 @@ public static class PupilG78FactStory
             yield break;
         }
 
-        yield return "In je vrije tijd vind je " + JoinDutchList(labels) + " leuk";
+        yield return "In je vrije tijd vind je " + JoinDutchList(labels) + " leuk.";
     }
 
     private static string? LaterLine(PupilResult result, PupilProgress? progress, string language)
