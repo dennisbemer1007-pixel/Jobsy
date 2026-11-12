@@ -1,18 +1,29 @@
 namespace Jobsy.Core.Scholen;
 
-/// <summary>Short kid-language labels from G78 value items (9031–9045).</summary>
+/// <summary>Short kid-language labels for passport “Belangrijk” (values 9031–9045, one per item).</summary>
 public static class PupilG78ValueShortLabels
 {
     public static string? ForItem(int itemId)
         => itemId switch
         {
-            9031 or 9036 or 9041 or 9046 or 9052 or 9058 => "Zelf kiezen",
-            9032 or 9037 or 9042 or 9047 or 9053 or 9059 => "Samen met anderen",
-            9033 or 9038 or 9043 => "Heel goed worden",
-            9034 or 9039 or 9044 or 9055 => "Rust en duidelijkheid",
-            9035 or 9040 or 9045 or 9060 => "Iets betekenen voor anderen",
+            9031 => "Zelf kiezen hoe je iets doet",
+            9032 => "Goede vrienden om je heen",
+            9033 => "Heel goed worden in wat je doet",
+            9034 => "Weten wat er gaat gebeuren",
+            9035 => "Iets doen waar de wereld beter van wordt",
+            9036 => "Zelf je dag indelen",
+            9037 => "Bij mensen horen die elkaar helpen",
+            9038 => "Trots zijn op wat je bereikt",
+            9039 => "Rust en duidelijkheid",
+            9040 => "Iets betekenen voor anderen",
+            9041 => "Zelf mogen kiezen",
+            9042 => "Dicht bij mensen die je kent",
+            9043 => "Uitdagingen en groeien",
+            9044 => "Weten waar je aan toe bent",
+            9045 => "Meehelpen aan iets goeds",
             9048 => "Dat iedereen zich welkom voelt",
-            9054 => "Dat iedereen zich goed voelt in de groep",
+            9054 => "Dat iedereen zich goed voelt",
+            9060 => "Sfeer belangrijker dan winnen",
             _ => null
         };
 
@@ -23,30 +34,17 @@ public static class PupilG78ValueShortLabels
             return null;
         }
 
-        var t = clauseText.ToLowerInvariant();
-        if (t.Contains("vriend", StringComparison.Ordinal) || t.Contains("mensen horen", StringComparison.Ordinal))
+        foreach (var (id, je) in PupilG78QuestionJeForms.All)
         {
-            return "Samen met anderen";
-        }
+            if (id is < 9031 or > 9045)
+            {
+                continue;
+            }
 
-        if (t.Contains("zelf", StringComparison.Ordinal) && t.Contains("kiez", StringComparison.Ordinal))
-        {
-            return "Zelf kiezen";
-        }
-
-        if (t.Contains("goed word", StringComparison.Ordinal) || t.Contains("trots", StringComparison.Ordinal))
-        {
-            return "Heel goed worden";
-        }
-
-        if (t.Contains("rust", StringComparison.Ordinal) || t.Contains("duidelijk", StringComparison.Ordinal))
-        {
-            return "Rust en duidelijkheid";
-        }
-
-        if (t.Contains("beter", StringComparison.Ordinal) && t.Contains("wereld", StringComparison.Ordinal))
-        {
-            return "Iets goeds voor iedereen";
+            if (clauseText.Contains(je.TrimEnd('.'), StringComparison.Ordinal))
+            {
+                return ForItem(id);
+            }
         }
 
         return null;

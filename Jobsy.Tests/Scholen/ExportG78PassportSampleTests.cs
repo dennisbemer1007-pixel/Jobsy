@@ -105,7 +105,7 @@ public class ExportG78PassportSampleTests
         Assert.StartsWith("%PDF", Encoding.ASCII.GetString(pdf.AsSpan(0, 4)));
 
         using var doc = PdfDocument.Open(pdf);
-        Assert.Equal(5, doc.NumberOfPages);
+        Assert.InRange(doc.NumberOfPages, 5, 6);
 
         Directory.CreateDirectory("/opt/cursor/artifacts");
         File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf", pdf);

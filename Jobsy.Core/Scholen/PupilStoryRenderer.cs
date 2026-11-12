@@ -94,7 +94,7 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
         return new PupilStoryViewDto(
             Title: PupilVerhaalLocalized.Get("LeerlingStory.Title", language),
             Body: package.Body,
-            Tiles: [],
+            Tiles: package.Tiles.ToList(),
             JobIdeas: jobIdeas,
             LikeChipKeys: keys.LikeChipKeys.ToList());
     }

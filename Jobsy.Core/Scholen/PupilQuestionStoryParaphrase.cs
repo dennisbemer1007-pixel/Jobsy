@@ -67,10 +67,10 @@ public static class PupilQuestionStoryParaphrase
 
         if (negative)
         {
-            return agrees ? PositiveOpposite(itemId, stem) : ToJeForm(stem);
+            return agrees ? PositiveOpposite(itemId, stem) : AgreeJe(itemId, stem);
         }
 
-        return agrees ? ToJeForm(stem) : SoftOpposite(stem);
+        return agrees ? AgreeJe(itemId, stem) : SoftOpposite(itemId, stem);
     }
 
     private static string? DisagreeClauseNl(int itemId, bool reverse, int answer)
@@ -93,8 +93,11 @@ public static class PupilQuestionStoryParaphrase
             negative = !negative;
         }
 
-        return negative ? PositiveOpposite(itemId, stem) : SoftOpposite(stem);
+        return negative ? PositiveOpposite(itemId, stem) : SoftOpposite(itemId, stem);
     }
+
+    private static string AgreeJe(int itemId, string stem)
+        => PupilG78QuestionJeForms.ForItem(itemId) ?? ToJeForm(stem);
 
     public static string ToJeForm(string stem)
     {
@@ -142,10 +145,15 @@ public static class PupilQuestionStoryParaphrase
         return $"Je vindt het heel belangrijk om {topic}.";
     }
 
-    private static string SoftOpposite(string stem)
+    private static string SoftOpposite(int itemId, string stem)
     {
-        var je = ToJeForm(stem).TrimEnd('.');
-        return $"Dit zei je minder vaak over jezelf: {je.ToLowerInvariant()}.";
+        var je = AgreeJe(itemId, stem).Trim().TrimEnd('.');
+        if (je.StartsWith("Je ", StringComparison.Ordinal))
+        {
+            je = "je " + je[3..];
+        }
+
+        return $"Dit zei je minder vaak over jezelf: {je}.";
     }
 
     private static string? PositiveOpposite(int itemId, string stem)

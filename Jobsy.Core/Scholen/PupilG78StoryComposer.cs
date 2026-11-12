@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen.PupilPassport;
@@ -8,6 +7,52 @@ namespace Jobsy.Core.Scholen;
 /// <summary>Turns scored answer clauses into flowing B1 paragraphs (deterministic).</summary>
 public static class PupilG78StoryComposer
 {
+    /// <summary>Short connecting overview; detail lives in the four tiles.</summary>
+    public static IReadOnlyList<string> ComposeOverview(
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vak,
+        string language,
+        IReadOnlySet<int> reservedItemIds,
+        out IReadOnlyList<int> usedItemIds)
+    {
+        _ = clauses;
+        _ = reservedItemIds;
+        usedItemIds = [];
+        var paragraphs = new List<string>();
+
+        var schoolLater = ComposeSchoolLater(result, progress, vak, language);
+        if (!string.IsNullOrWhiteSpace(schoolLater))
+        {
+            paragraphs.Add(schoolLater);
+        }
+
+        var closing = ClosingSentence(result, language);
+        if (!string.IsNullOrWhiteSpace(closing) && paragraphs.Count > 0)
+        {
+            paragraphs[^1] = paragraphs[^1].TrimEnd() + " " + closing;
+        }
+        else if (!string.IsNullOrWhiteSpace(closing))
+        {
+            paragraphs.Add(closing);
+        }
+
+        if (paragraphs.Count == 0)
+        {
+            paragraphs.Add(PupilVerhaalLocalized.IsEnglish(language)
+                ? "You answered the questions yourself. There is no right or wrong."
+                : "Je gaf zelf antwoord op de vragen. Er is geen goed of fout.");
+        }
+
+        while (paragraphs.Count > 3)
+        {
+            paragraphs.RemoveAt(0);
+        }
+
+        return paragraphs.Select(PupilQuestionStoryParaphrase.PolishJeForm).ToList();
+    }
+
     public static IReadOnlyList<string> ComposeParagraphs(
         IReadOnlyList<G78AnswerClause> clauses,
         PupilResult result,
@@ -31,10 +76,9 @@ public static class PupilG78StoryComposer
 
         var samen = Pick(clauses, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
         RememberAvoid(avoidSimilar, samen);
-        var samenLow = PickLow(clauses, G78StoryBeat.Samen, usedIds, 1, skipSimilarTo: samen);
-        if (samen.Count + samenLow.Count > 0)
+        if (samen.Count > 0)
         {
-            paragraphs.Add(ComposeSamen(samen, samenLow));
+            paragraphs.Add(ComposeSamen(samen));
         }
 
         var waarden = Pick(clauses, G78StoryBeat.Waarden, usedCategories, usedIds, avoidSimilar, 2);
@@ -62,6 +106,8 @@ public static class PupilG78StoryComposer
                 : "Je gaf zelf antwoord op de vragen. Er is geen goed of fout.");
         }
 
+        paragraphs = MergeThinMiddleParagraphs(paragraphs);
+
         while (paragraphs.Count > 4)
         {
             paragraphs.RemoveAt(paragraphs.Count - 2);
@@ -76,95 +122,94 @@ public static class PupilG78StoryComposer
         var parts = new List<string>();
         if (highs.Count >= 2)
         {
-            parts.Add(MergeJeSentences(highs[0].Text, highs[1].Text));
+            parts.Add(PupilG78JeNarrative.MergeTwo(highs[0].Text, highs[1].Text));
         }
         else if (highs.Count == 1)
         {
-            parts.Add(LeadIn(highs[0].Text, "Het liefst"));
+            parts.Add(PupilG78JeNarrative.AsSentence(highs[0].Text));
         }
 
-        if (lows.Count > 0)
+        if (lows.Count > 0 && IsDoenContrast(highs, lows[0]))
         {
             parts.Add(ContrastLine(lows[0].Text));
-        }
-        else if (highs.Count >= 1 && parts.Count == 1)
-        {
-            parts.Add("Daardoor weet je steeds beter wat bij je past.");
         }
 
         return string.Join(' ', parts);
     }
 
-    private static string ComposeSamen(IReadOnlyList<G78AnswerClause> highs, IReadOnlyList<G78AnswerClause> lows)
+    private static string ComposeSamen(IReadOnlyList<G78AnswerClause> highs)
     {
-        var parts = new List<string>();
         if (highs.Count >= 2)
         {
-            parts.Add(MergeJeSentences(highs[0].Text, highs[1].Text));
-        }
-        else if (highs.Count == 1)
-        {
-            parts.Add(LeadIn(highs[0].Text, "Met anderen om je heen"));
+            return PupilG78JeNarrative.MergeTwo(highs[0].Text, highs[1].Text);
         }
 
-        if (lows.Count > 0)
-        {
-            parts.Add(ContrastLine(lows[0].Text));
-        }
-
-        return string.Join(' ', parts);
+        return PupilG78JeNarrative.AsSentence(highs[0].Text);
     }
 
     private static string ComposeWaarden(IReadOnlyList<G78AnswerClause> highs)
     {
         if (highs.Count >= 2)
         {
-            var first = Sentence(highs[0].Text).TrimEnd('.');
-            var second = Sentence(highs[1].Text).TrimEnd('.');
-            return $"{first}, en {JeContinuation(second)}.";
+            var first = PupilG78JeNarrative.AsSentence(highs[0].Text).TrimEnd('.');
+            var second = PupilG78JeNarrative.AsSentence(highs[1].Text).TrimEnd('.');
+            return $"{first}, en {PupilG78JeNarrative.JeContinuation(second)}.";
         }
 
-        return LeadIn(highs[0].Text, "Wat voor jou telt");
+        return PupilG78JeNarrative.AsSentence(highs[0].Text);
     }
 
-    private static string MergeJeSentences(string a, string b)
+    private static bool IsDoenContrast(IReadOnlyList<G78AnswerClause> highs, G78AnswerClause low)
     {
-        var first = Sentence(a).TrimEnd('.');
-        var tail = JeContinuation(b);
-        return $"{first}, en {tail}.";
+        if (highs.Count == 0)
+        {
+            return true;
+        }
+
+        if (low.Text.StartsWith("Juist hier zie je het anders", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (low.Text.StartsWith("Dit zei je minder vaak", StringComparison.Ordinal))
+        {
+            return !highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, low.Text));
+        }
+
+        return !highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, low.Text));
     }
 
-    private static string Sentence(string text) => PupilQuestionStoryParaphrase.PolishJeForm(text.Trim().TrimEnd('.') + ".");
-
-    private static string JeContinuation(string text)
+    private static List<string> MergeThinMiddleParagraphs(List<string> paragraphs)
     {
-        var s = text.Trim().TrimEnd('.');
-        if (s.StartsWith("Je ", StringComparison.Ordinal))
+        if (paragraphs.Count < 3)
         {
-            return "je " + s[3..];
+            return paragraphs;
         }
 
-        return s;
+        var i = 1;
+        while (i < paragraphs.Count - 1)
+        {
+            if (SentenceCount(paragraphs[i]) == 1 || SentenceCount(paragraphs[i + 1]) == 1)
+            {
+                paragraphs[i] = paragraphs[i].TrimEnd() + " " + paragraphs[i + 1].TrimStart();
+                paragraphs.RemoveAt(i + 1);
+                continue;
+            }
+
+            i++;
+        }
+
+        return paragraphs;
     }
 
-    private static string LeadIn(string jeSentence, string prefix)
+    private static int SentenceCount(string paragraph)
     {
-        if (!jeSentence.Trim().StartsWith("Je ", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(paragraph))
         {
-            return Sentence(jeSentence);
+            return 0;
         }
 
-        var rest = jeSentence.Trim().TrimEnd('.')[3..];
-        var m = Regex.Match(rest, @"^(\S+)\s+(.*)$");
-        if (!m.Success)
-        {
-            return $"{prefix} {rest.ToLowerInvariant()}.";
-        }
-
-        var verb = m.Groups[1].Value;
-        var remainder = m.Groups[2].Value;
-        var stem = InvertFiniteVerb(verb);
-        return $"{prefix} {stem} je {remainder}.";
+        return paragraph.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
     }
 
     private static string ContrastLine(string lowSentence)
@@ -173,11 +218,6 @@ public static class PupilG78StoryComposer
         if (s.StartsWith("Dit zei je minder vaak over jezelf: ", StringComparison.Ordinal))
         {
             var inner = s["Dit zei je minder vaak over jezelf: ".Length..].Trim().TrimEnd('.');
-            if (!inner.StartsWith("je ", StringComparison.Ordinal) && !inner.StartsWith("Je ", StringComparison.Ordinal))
-            {
-                inner = "je " + inner;
-            }
-
             return ContrastFromJeInner(inner);
         }
 
@@ -192,7 +232,7 @@ public static class PupilG78StoryComposer
             return ContrastFromJeInner("je " + s[3..]);
         }
 
-        return $"Tegelijk past dat minder bij jou: {s.ToLowerInvariant()}.";
+        return ContrastFromJeInner(s);
     }
 
     private static string ContrastFromJeInner(string inner)
@@ -203,25 +243,7 @@ public static class PupilG78StoryComposer
             inner = "je " + inner[3..];
         }
 
-        if (inner.StartsWith("je ", StringComparison.Ordinal))
-        {
-            var rest = inner[3..];
-            var m = Regex.Match(rest, @"^(\S+)\s+(.*)$");
-            if (m.Success)
-            {
-                var verb = m.Groups[1].Value;
-                var remainder = m.Groups[2].Value;
-                var stem = InvertFiniteVerb(verb);
-                if (!string.Equals(stem, verb, StringComparison.OrdinalIgnoreCase))
-                {
-                    return $"Tegelijk {stem} je {remainder}.";
-                }
-            }
-
-            return $"Tegelijk {inner}.";
-        }
-
-        return $"Tegelijk past {inner} minder bij jou.";
+        return $"Tegelijk {inner}.";
     }
 
     private static void RememberAvoid(List<string> avoid, IReadOnlyList<G78AnswerClause> picked)
@@ -230,51 +252,6 @@ public static class PupilG78StoryComposer
         {
             avoid.Add(c.Text);
         }
-    }
-
-    private static string InvertFiniteVerb(string verb) => verb.ToLowerInvariant() switch
-    {
-        "helpt" => "help",
-        "vindt" => "vind",
-        "neemt" => "neem",
-        "wilt" => "wil",
-        "houdt" => "houd",
-        "maakt" => "maak",
-        "werkt" => "werk",
-        "zoekt" => "zoek",
-        "leert" => "leer",
-        "doet" => "doe",
-        "voelt" => "voel",
-        "blijft" => "blijf",
-        "durft" => "durv",
-        "probeert" => "probeer",
-        "overtuigt" => "overtuig",
-        "bedenkt" => "bedenk",
-        "speelt" => "speel",
-        "raakt" => "raak",
-        "past" => "pas",
-        "deelt" => "deel",
-        "laat" => "laat",
-        "praat" => "praat",
-        "luistert" => "luister",
-        "kiest" => "kies",
-        "wordt" => "word",
-        _ => verb
-    };
-
-    private static bool TooSimilar(string a, string b)
-    {
-        static IEnumerable<string> Tokens(string t) => t
-            .ToLowerInvariant()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Where(w => w.Length > 4);
-
-        var overlap = Tokens(a).Intersect(Tokens(b)).ToList();
-        return overlap.Count >= 2
-               || (a.Contains("help", StringComparison.OrdinalIgnoreCase)
-                   && b.Contains("help", StringComparison.OrdinalIgnoreCase))
-               || (a.Contains("niet snapt", StringComparison.OrdinalIgnoreCase)
-                   && b.Contains("niet snapt", StringComparison.OrdinalIgnoreCase));
     }
 
     private static IReadOnlyList<G78AnswerClause> Pick(
@@ -296,12 +273,12 @@ public static class PupilG78StoryComposer
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
-            if (similarFilter && picked.Count > 0 && TooSimilar(picked[0].Text, c.Text))
+            if (similarFilter && picked.Count > 0 && PupilG78JeNarrative.TooSimilar(picked[0].Text, c.Text))
             {
                 continue;
             }
 
-            if (avoidSimilarTexts.Any(t => TooSimilar(t, c.Text)))
+            if (avoidSimilarTexts.Any(t => PupilG78JeNarrative.TooSimilar(t, c.Text)))
             {
                 continue;
             }
@@ -333,7 +310,7 @@ public static class PupilG78StoryComposer
                      .OrderBy(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
-            if (skipSimilarTo.Count > 0 && skipSimilarTo.Any(h => TooSimilar(h.Text, c.Text)))
+            if (skipSimilarTo.Count > 0 && skipSimilarTo.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, c.Text)))
             {
                 continue;
             }
@@ -366,7 +343,7 @@ public static class PupilG78StoryComposer
         if (vakNames.Count > 0 && hobbies.Count > 0)
         {
             bits.Add(
-                $"Voor school en later geldt: op school vind je vooral {JoinDutchList(vakNames)} leuk, en in je vrije tijd {JoinDutchList(hobbies)}.");
+                $"Op school vind je vooral {JoinDutchList(vakNames)} leuk, en in je vrije tijd ben je graag bezig met {JoinDutchList(hobbies)}.");
         }
         else if (vakNames.Count > 0)
         {
@@ -374,7 +351,7 @@ public static class PupilG78StoryComposer
         }
         else if (hobbies.Count > 0)
         {
-            bits.Add($"In je vrije tijd gaat je voorkeur naar {JoinDutchList(hobbies)}.");
+            bits.Add($"In je vrije tijd ben je graag bezig met {JoinDutchList(hobbies)}.");
         }
 
         var dream = DreamPhrase(result, progress, language);
@@ -412,11 +389,11 @@ public static class PupilG78StoryComposer
         {
             var bit = ch switch
             {
-                'R' => "graag met je handen bezig bent",
-                'I' => "graag wil weten hoe iets werkt",
-                'A' => "graag creatief bezig bent",
+                'R' => "graag met de handen bezig is",
+                'I' => "graag wil weten hoe dingen werken",
+                'A' => "graag creatief bezig is",
                 'S' => "anderen graag helpt",
-                'E' => "het voortouw durft nemen",
+                'E' => "graag het voortouw neemt",
                 'C' => "van overzicht en duidelijke stappen houdt",
                 _ => null
             };
@@ -427,7 +404,7 @@ public static class PupilG78StoryComposer
         }
 
         riasecBits = riasecBits.Take(2).ToList();
-        var value = ValueClosingNoun(result.TopValue);
+        var value = ValueClosingPhrase(result.TopValue);
         if (riasecBits.Count == 0 && value is null)
         {
             return "";
@@ -435,29 +412,29 @@ public static class PupilG78StoryComposer
 
         if (riasecBits.Count >= 2 && value is not null)
         {
-            return $"Al met al sluit dit aan bij iemand die {riasecBits[0]} en {riasecBits[1]}, en voor wie {value} telt.";
+            return $"Je bent dus iemand die {riasecBits[0]} en {riasecBits[1]}, en voor wie {value}.";
         }
 
         if (riasecBits.Count == 1 && value is not null)
         {
-            return $"Al met al sluit dit aan bij iemand die {riasecBits[0]}, en voor wie {value} telt.";
+            return $"Je bent dus iemand die {riasecBits[0]}, en voor wie {value}.";
         }
 
         return riasecBits.Count switch
         {
-            >= 2 => $"Al met al past dat bij iemand die {riasecBits[0]} en {riasecBits[1]}.",
-            1 => $"Al met al past dat bij iemand die {riasecBits[0]}.",
-            _ => value is null ? "" : $"Al met al past dat bij iemand voor wie {value} telt."
+            >= 2 => $"Je bent dus iemand die {riasecBits[0]} en {riasecBits[1]}.",
+            1 => $"Je bent dus iemand die {riasecBits[0]}.",
+            _ => value is null ? "" : $"Je bent dus iemand voor wie {value}."
         };
     }
 
-    private static string? ValueClosingNoun(string? topValue) => topValue?.Trim() switch
+    private static string? ValueClosingPhrase(string? topValue) => topValue?.Trim() switch
     {
-        "Connection" => "verbinding met anderen",
-        "Autonomy" => "zelf mogen kiezen",
-        "Achievement" => "iets goed afmaken",
-        "Stability" => "rust en duidelijkheid",
-        "Impact" => "verschil maken voor anderen",
+        "Connection" => "verbinding met anderen belangrijk is",
+        "Autonomy" => "zelf mogen kiezen belangrijk is",
+        "Achievement" => "iets goed afmaken belangrijk is",
+        "Stability" => "rust en duidelijkheid belangrijk is",
+        "Impact" => "verschil maken voor anderen belangrijk is",
         _ => null
     };
 

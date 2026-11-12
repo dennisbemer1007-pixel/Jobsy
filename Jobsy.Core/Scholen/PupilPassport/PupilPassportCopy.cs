@@ -184,6 +184,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Header.Usage"] = "MIJN PASPOORT · GEBRUIK";
         d["LeerlingPassport.G78.Page.Who"] = "Wie ben ik?";
         d["LeerlingPassport.G78.Page.Subjects"] = "Wat ik leuk vind en belangrijk vind";
+        d["LeerlingPassport.G78.Subjects.Empty"] = "Nog geen vakscores ingevuld.";
         d["LeerlingPassport.G78.Col.Leuk"] = "Leuk";
         d["LeerlingPassport.G78.Col.Belangrijk"] = "Belangrijk";
         d["LeerlingPassport.G78.Col.OpSchool"] = "Op school";

@@ -45,6 +45,7 @@ public static class PupilDitBenJijSsrHtml
             "Leerling.G78.Result.ReadStory"));
         sb.Append("</div>");
         AppendG78StoryParagraphs(sb, result.Story.Body);
+        AppendG78ResultTiles(sb, result, culture);
         sb.Append("</div>");
         sb.Append("<div class=\"card ll-result-chips\"><h2 class=\"rsub\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.LikesTitle"])).Append("</h2><div class=\"chips\">");
@@ -133,6 +134,31 @@ public static class PupilDitBenJijSsrHtml
             sb.Append("<p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(para)).Append("</p>");
         }
     }
+
+    private static void AppendG78ResultTiles(StringBuilder sb, PupilResultPageDto result, CultureState culture)
+    {
+        if (result.Story.Tiles.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("""<div class="rtiles" data-testid="ll-g78-result-tiles">""");
+        foreach (var tile in result.Story.Tiles)
+        {
+            sb.Append(PupilGroep78MockHtml.ResultTile(culture, TileImageStem(tile.ModelKey), tile));
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static string TileImageStem(string modelKey) => modelKey switch
+    {
+        "competence" => "koraalrif",
+        "riasec" => "schatgrot",
+        "values" => "vuurtoren",
+        "culture" => "lagune",
+        _ => "koraalrif",
+    };
 
     private static string BuildLegacy(PupilResultPageDto result, CultureState culture, bool passportV2, string pdfHref)
     {

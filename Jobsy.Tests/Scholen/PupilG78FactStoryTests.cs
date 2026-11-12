@@ -12,7 +12,7 @@ public sealed class PupilG78FactStoryTests
         var (result, progress) = FixtureHelpsOthers();
         var pkg = PupilG78FactStory.Build(result, progress, "nl");
         var paragraphs = PupilG78FactStory.SplitParagraphs(pkg.Body);
-        Assert.InRange(paragraphs.Count, 2, 4);
+        Assert.InRange(paragraphs.Count, 1, 3);
         Assert.DoesNotContain("Zo kom jij over", pkg.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("Ook je ", pkg.Body, StringComparison.Ordinal);
     }
@@ -32,6 +32,7 @@ public sealed class PupilG78FactStoryTests
             Assert.DoesNotContain("past je vindt", body, StringComparison.OrdinalIgnoreCase);
             Assert.False(Regex.IsMatch(body, @"\b(groep|bent),?\s+helpt\s+graag", RegexOptions.IgnoreCase));
             Assert.False(Regex.IsMatch(body, @"\bdat\s+(wilt|vindt|helpt)\s", RegexOptions.IgnoreCase));
+            Assert.False(PupilG78QuestionJeForms.HasBareStemAfterJe(body));
         }
     }
 
@@ -67,17 +68,84 @@ public sealed class PupilG78FactStoryTests
         var prefs = PupilG78FactStory.Build(result, progress, "nl").Preferences;
         Assert.Contains(prefs.SchoolLeuk, s => s.Contains("Teken", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(prefs.HobbyLeuk, s => s.Contains("Sport", StringComparison.OrdinalIgnoreCase));
-        Assert.NotEmpty(prefs.BelangrijkItems);
+        Assert.InRange(prefs.BelangrijkItems.Count, 2, 4);
     }
 
     [Fact]
-    public void Renderer_g78_has_no_tiles()
+    public void Every_g78_item_je_form_has_no_bare_stem_after_je()
+    {
+        for (var id = 9001; id <= 9060; id++)
+        {
+            var je = PupilG78QuestionJeForms.ForItem(id);
+            Assert.NotNull(je);
+            Assert.False(PupilG78QuestionJeForms.HasBareStemAfterJe(je!), $"item {id}: {je}");
+        }
+    }
+
+    [Fact]
+    public void Story_has_no_invented_filler_or_stiff_openers()
+    {
+        var fixtures = new[] { FixtureHelpsOthers(), FixtureLeadsGroup(), FixtureMaker() };
+        foreach (var (result, progress) in fixtures)
+        {
+            var body = PupilG78FactStory.Build(result, progress, "nl").Body;
+            Assert.DoesNotContain("Daardoor weet je steeds beter", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("Voor school en later geldt", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("Al met al sluit dit aan", body, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Renderer_g78_has_four_substantive_tiles()
     {
         var renderer = new PupilStoryRenderer();
-        var (result, progress) = FixtureHelpsOthers();
+        var (result, progress) = FixtureLeadsGroup();
         var view = renderer.Render(result, progress, "nl");
-        Assert.Empty(view.Tiles);
-        Assert.InRange(PupilG78FactStory.SplitParagraphs(view.Body).Count, 2, 4);
+        Assert.Equal(4, view.Tiles.Count);
+        foreach (var tile in view.Tiles)
+        {
+            Assert.InRange(tile.Explanation.Length, 40, 1200);
+            Assert.Contains(" ", tile.Explanation, StringComparison.Ordinal);
+            Assert.DoesNotContain("Je gaf zelf antwoord op deze vragen", tile.Explanation, StringComparison.Ordinal);
+        }
+
+        var pkg = PupilG78FactStory.Build(result, progress, "nl");
+        Assert.Equal(4, pkg.Tiles.Count);
+        var tileTexts = pkg.Tiles.Select(t => t.Explanation).ToList();
+        _ = tileTexts;
+        Assert.InRange(PupilG78FactStory.SplitParagraphs(pkg.Body).Count, 1, 3);
+    }
+
+    [Fact]
+    public void Tile_item_ids_do_not_overlap()
+    {
+        var pkg = PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl");
+        Assert.Equal(pkg.UsedItemIds.Count, pkg.UsedItemIds.Distinct().Count());
+        Assert.InRange(pkg.UsedItemIds.Count, 6, 32);
+    }
+
+    [Fact]
+    public void Write_fixture_full_result_page_text()
+    {
+        var (result, progress) = FixtureLeadsGroup();
+        var pkg = PupilG78FactStory.Build(result, progress, "nl");
+        var renderer = new PupilStoryRenderer();
+        var view = renderer.Render(result, progress, "nl");
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("# Dit ben jij — Neemt voortouw (fixture)");
+        sb.AppendLine();
+        sb.AppendLine("## Story");
+        sb.AppendLine(pkg.Body);
+        sb.AppendLine();
+        foreach (var tile in view.Tiles)
+        {
+            sb.AppendLine($"## {tile.KidLabel}");
+            sb.AppendLine(tile.Explanation);
+            sb.AppendLine();
+        }
+
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        File.WriteAllText("/opt/cursor/artifacts/g78-result-page-neemt-voortouw.md", sb.ToString());
     }
 
     [Fact]
@@ -97,7 +165,7 @@ public sealed class PupilG78FactStoryTests
     private static (PupilResult Result, PupilProgress Progress) FixtureHelpsOthers()
     {
         var answers = NeutralAnswers();
-        foreach (var id in new[] { "9006", "9019", "9024", "9032", "9037", "9042", "9007", "9021" })
+        foreach (var id in new[] { "9006", "9019", "9024", "9032", "9037", "9042", "9007", "9021", "9048", "9054", "9003", "9017" })
         {
             answers[id] = 5;
         }
@@ -116,7 +184,7 @@ public sealed class PupilG78FactStoryTests
     private static (PupilResult Result, PupilProgress Progress) FixtureLeadsGroup()
     {
         var answers = NeutralAnswers();
-        foreach (var id in new[] { "9005", "9010", "9020", "9026", "9031", "9041", "9052", "9058" })
+        foreach (var id in new[] { "9005", "9007", "9010", "9020", "9026", "9031", "9041", "9049", "9052", "9058" })
         {
             answers[id] = 5;
         }
@@ -134,7 +202,7 @@ public sealed class PupilG78FactStoryTests
     private static (PupilResult Result, PupilProgress Progress) FixtureMaker()
     {
         var answers = NeutralAnswers();
-        foreach (var id in new[] { "9016", "9022", "9028", "9017", "9025", "9033", "9038", "9044" })
+        foreach (var id in new[] { "9016", "9022", "9028", "9017", "9025", "9033", "9038", "9044", "9004", "9018", "9046", "9051" })
         {
             answers[id] = 5;
         }

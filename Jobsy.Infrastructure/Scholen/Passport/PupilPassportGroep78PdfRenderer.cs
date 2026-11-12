@@ -243,6 +243,11 @@ internal static class PupilPassportGroep78PdfRenderer
         {
             col.Spacing(Mm(8));
             col.Item().Element(c => MirrorBox(c, m));
+            if (m.DnaTiles is { Count: > 0 })
+            {
+                col.Item().PaddingTop(Mm(2)).Element(c => G78DnaTilesGrid(c, m));
+            }
+
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
                 T(m, "LeerlingPassport.G78.Riasec.Sub"), inner =>
                 {
@@ -264,6 +269,12 @@ internal static class PupilPassportGroep78PdfRenderer
                 row.RelativeItem().MinWidth(0).Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Strengths.Title"),
                     T(m, "LeerlingPassport.G78.Strengths.Sub"), inner => StrengthChips(inner, m, spacious: true)));
             });
+            col.Item().PaddingTop(Mm(2)).Element(x => G78LeukBelangrijkColumns(x, m));
+            var talk = FirstTalkQuestions(m);
+            if (talk.Count > 0)
+            {
+                col.Item().PaddingTop(Mm(3)).Element(c => TalkBox(c, m, talk));
+            }
         });
     }
 
@@ -277,8 +288,41 @@ internal static class PupilPassportGroep78PdfRenderer
         page.Content().Column(col =>
         {
             col.Spacing(Mm(6));
-            col.Item().Element(x => G78LeukBelangrijkColumns(x, m));
-            col.Item().PaddingTop(Mm(4)).Element(c => TalkBox(c, m, FirstTalkQuestions(m)));
+            col.Item().Element(c => SubjectGroupsCompact(c, m));
+        });
+    }
+
+    private static void SubjectGroupsCompact(IContainer c, PupilPassportPdfModel m)
+    {
+        var groups = m.SubjectGroups ?? [];
+        if (groups.Count == 0)
+        {
+            c.Text(T(m, "LeerlingPassport.G78.Subjects.Empty"))
+                .FontSize(9.5f).FontColor(Muted).Italic();
+            return;
+        }
+
+        c.Column(col =>
+        {
+            foreach (var g in groups.Take(3))
+            {
+                col.Item().PaddingBottom(Mm(5)).Element(box => SectionBox(box, g.Title, g.Intro, inner =>
+                {
+                    inner.Column(list =>
+                    {
+                        foreach (var line in g.Subjects.Take(6))
+                        {
+                            list.Item().PaddingTop(2).Row(row =>
+                            {
+                                row.ConstantItem(8).Text("·").FontSize(10f).FontColor(Gold);
+                                row.RelativeItem().Text(TruncateLabel(line.Label)).FontSize(9.5f).FontColor(Ink);
+                                row.ConstantItem(40).AlignRight().Text($"leuk {line.Leuk} · goed {line.Goed}")
+                                    .FontSize(8f).FontColor(Muted);
+                            });
+                        }
+                    });
+                }));
+            }
         });
     }
 
@@ -628,10 +672,46 @@ internal static class PupilPassportGroep78PdfRenderer
             .Column(col =>
             {
                 col.Item().Text(heading).Bold().FontSize(10.5f).FontColor(Navy);
-                foreach (var item in items.Take(8))
+                foreach (var item in items.Take(4))
                 {
                     col.Item().PaddingTop(3).Row(line => PreferenceBullet(line, item));
                 }
+            });
+    }
+
+    private static void G78DnaTilesGrid(IContainer c, PupilPassportPdfModel m)
+    {
+        var tiles = m.DnaTiles.Take(4).ToList();
+        c.Column(outer =>
+        {
+            for (var i = 0; i < tiles.Count; i += 2)
+            {
+                var rowIndex = i;
+                outer.Item().PaddingBottom(Mm(2)).Row(row =>
+                {
+                    row.RelativeItem().MinWidth(0).PaddingRight(Mm(2))
+                        .Element(left => G78DnaTileCard(left, tiles[rowIndex]));
+                    if (rowIndex + 1 < tiles.Count)
+                    {
+                        row.RelativeItem().MinWidth(0).PaddingLeft(Mm(2))
+                            .Element(right => G78DnaTileCard(right, tiles[rowIndex + 1]));
+                    }
+                });
+            }
+        });
+    }
+
+    private static void G78DnaTileCard(IContainer c, (string Label, string Value) tile)
+    {
+        c.Background(CreamWarm)
+            .Border(1).BorderColor(Border)
+            .CornerRadius(Mm(1.2f))
+            .Padding(Mm(2.5f))
+            .Column(col =>
+            {
+                col.Item().Text(TruncateLabel(tile.Label, 32)).Bold().FontSize(9f).FontColor(Navy);
+                col.Item().PaddingTop(2).Text(NormalizePdfLine(tile.Value))
+                    .FontSize(8.5f).FontColor(Ink).LineHeight(1.4f);
             });
     }
 

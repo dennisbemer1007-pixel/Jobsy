@@ -39,12 +39,12 @@ public sealed class PupilStoryNarrativeTests
         var view = _renderer.Render(result, progress, "nl");
         var paragraphs = PupilG78FactStory.SplitParagraphs(view.Body);
 
-        Assert.InRange(paragraphs.Count, 2, 4);
+        Assert.InRange(paragraphs.Count, 1, 3);
         Assert.Contains("In je vrije tijd", view.Body, StringComparison.Ordinal);
         Assert.True(
             view.Body.Contains("theater", StringComparison.OrdinalIgnoreCase)
             || view.Body.Contains("Toneel", StringComparison.OrdinalIgnoreCase));
-        Assert.Empty(view.Tiles);
+        Assert.Equal(4, view.Tiles.Count);
     }
 
     [Fact]

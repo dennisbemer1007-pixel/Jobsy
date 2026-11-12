@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -30,6 +31,7 @@ public sealed record PupilG78PreferencesCompact(
 public sealed record PupilG78StoryPackage(
     string Body,
     IReadOnlyList<int> UsedItemIds,
+    IReadOnlyList<PupilStoryTileDto> Tiles,
     PupilG78PreferencesCompact Preferences,
     CandidateFactSheet FactSheet);
 
@@ -49,12 +51,15 @@ public static class PupilG78FactStory
         var answers = ParseAnswers(progress?.AnswersJson);
         var clauses = CollectClauses(answers, language);
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-        var paragraphs = PupilG78StoryComposer.ComposeParagraphs(
-            clauses, result, progress, vak, language, out var usedIds);
+        var (tiles, tileIds) = PupilG78FactTileComposer.Build(clauses, language);
+        var tileIdSet = tileIds.ToHashSet();
+        var paragraphs = PupilG78StoryComposer.ComposeOverview(
+            clauses, result, progress, vak, language, tileIdSet, out var storyIds);
         var body = string.Join(ParagraphBreak, paragraphs);
-        var preferences = BuildPreferences(clauses, answers, usedIds, progress, vak, language);
+        var allUsed = tileIds.Concat(storyIds).Distinct().ToList();
+        var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
-        return new PupilG78StoryPackage(body, usedIds, preferences, sheet);
+        return new PupilG78StoryPackage(body, allUsed, tiles, preferences, sheet);
     }
 
     public static IReadOnlyList<string> SplitParagraphs(string body)
@@ -176,8 +181,8 @@ public static class PupilG78FactStory
 
         hobbies = DedupeHobbyVsSchool(hobbies, school).Take(6).ToList();
 
-        var belangrijk = new List<string>();
-        foreach (var item in Bank.AllItems.OrderBy(i => i.NumericId))
+        var belangrijkRanked = new List<(int Eff, string Label)>();
+        foreach (var item in Bank.AllItems)
         {
             if (item.NumericId is < 9031 or > 9045)
             {
@@ -199,11 +204,17 @@ public static class PupilG78FactStory
             var shortLabel = PupilG78ValueShortLabels.ForItem(item.NumericId);
             if (!string.IsNullOrWhiteSpace(shortLabel))
             {
-                belangrijk.Add(shortLabel);
+                belangrijkRanked.Add((eff, shortLabel));
             }
         }
 
-        belangrijk = belangrijk.Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList();
+        var belangrijk = belangrijkRanked
+            .OrderByDescending(x => x.Eff)
+            .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.Label)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(4)
+            .ToList();
         if (belangrijk.Count == 0)
         {
             belangrijk = clauses
