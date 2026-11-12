@@ -1202,10 +1202,21 @@
     background: color-mix(in srgb, var(--brand) 6%, var(--surface));
 }.ll-question__meta--muted { color: var(--muted); }@media (min-width: 900px) {.ll-answers { grid-template-columns: repeat(5, 1fr); }.ll-answer--vo {
         min-height: 72px;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        display: grid;
+        grid-template-rows: 28px minmax(0, 1fr);
+        align-items: start;
+        justify-items: center;
+        gap: 6px;
         text-align: center;
+        padding: 10px 8px;
+        box-sizing: border-box;
+    }.ll-answer--vo .ll-answer__box {
+        grid-row: 1;
+        align-self: center;
+    }.ll-answer--vo .ll-answer__label {
+        grid-row: 2;
+        align-self: start;
+        display: block;
     }.ll-answers--vo .ll-answer__label { text-align: center; }.ll-question__text { font-size: var(--text-xl); }.ll-reis {
         grid-template-columns: 240px 1fr 200px;
         align-items: start;

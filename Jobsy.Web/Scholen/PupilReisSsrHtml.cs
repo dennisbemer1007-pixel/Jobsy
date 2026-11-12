@@ -36,11 +36,6 @@ public static class PupilReisSsrHtml
         var imagineBody = SpokenText.CapitalizeFirstSentence(SpokenText.WithoutRepeatedLead(imagineLead, imagine));
         var imagineSpeak = SpokenText.Join(imagineLead, imagineBody);
         var sb = new StringBuilder();
-        if (!groep78)
-        {
-            sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Reis"]));
-        }
-
         if (groep78)
         {
             var worldTitle = culture[PupilJourneyTheme.WorldTitleKey(themeKey, worldKey)];
@@ -65,6 +60,7 @@ public static class PupilReisSsrHtml
         sb.Append(groep78 ? """<section class="card ll-question">""" : """<section class="ll-card ll-question">""");
         if (!groep78)
         {
+            sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Reis"]));
             var pct = state.TotalItems <= 0 ? 0 : 100.0 * state.AnsweredCount / state.TotalItems;
             sb.Append("<div class=\"ll-progress-bar\" role=\"progressbar\"><span class=\"ll-progress-bar__fill\" style=\"width:");
             sb.Append(pct.ToString("0.#", CultureInfo.InvariantCulture)).Append("%\"></span></div>");

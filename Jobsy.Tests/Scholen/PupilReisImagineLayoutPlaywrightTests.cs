@@ -245,6 +245,35 @@ public sealed class PupilReisImagineLayoutPlaywrightTests
                 """);
             Assert.True(lobsterOk, label + " coach lobster image should load");
         }
+        else
+        {
+            var coachCueOk = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const cue = document.querySelector('[data-testid="ll-coach-cue"]');
+                  const card = document.querySelector('.ll-card.ll-question');
+                  if (!cue || !card || !card.contains(cue)) return false;
+                  const display = getComputedStyle(cue).display;
+                  if (window.innerWidth >= 900) return display === 'none';
+                  return display !== 'none';
+                }
+                """);
+            Assert.True(coachCueOk, label + " coach cue should live in the card and hide on desktop");
+
+            if (width >= 900)
+            {
+                var boxesAligned = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                      const boxes = [...document.querySelectorAll('.ll-answer--vo .ll-answer__box')];
+                      if (boxes.length < 5) return false;
+                      const tops = boxes.map((b) => b.getBoundingClientRect().top);
+                      return Math.max(...tops) - Math.min(...tops) <= 2;
+                    }
+                    """);
+                Assert.True(boxesAligned, label + " VO answer checkboxes should share one row");
+            }
+        }
 
         await page.ScreenshotAsync(new PageScreenshotOptions
         {

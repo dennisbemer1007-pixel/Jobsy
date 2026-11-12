@@ -78,7 +78,7 @@ public static class PupilLeerlingSsrParts
     public static bool HasImagineText(string? imagineText) => !string.IsNullOrWhiteSpace(imagineText);
 
     public static string CoachCue(string text)
-        => $"""<div class="ll-coach-cue" data-testid="ll-coach-cue"><p>{E(text)}</p></div>""";
+        => $"""<p class="ll-cheer-toast" role="status" aria-live="polite" data-testid="ll-coach-cue">{E(text)}</p>""";
 
     public static string Groep78WorldBand(string? themeKey, string worldKey, string backgroundPosition = "center 30%")
     {
