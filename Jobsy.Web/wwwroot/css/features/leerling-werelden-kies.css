@@ -875,13 +875,23 @@
   margin-bottom: 6px;
 }
 
+.ll-g78-shell .ll-question__head {
+  align-items: flex-start;
+  gap: 14px;
+  margin: 10px 0 16px;
+}
+
+.ll-g78-shell .ll-question__head .qtitle {
+  padding-inline-end: 4px;
+}
+
 .ll-g78-shell h1.qtitle,
 .ll-g78-shell .qtitle {
   font-family: "Lexend", sans-serif;
   font-weight: 600;
   font-size: 32px;
   line-height: 1.3;
-  margin: 10px 0 18px;
+  margin: 0;
   color: var(--ink);
   letter-spacing: -0.005em;
 }
@@ -891,6 +901,60 @@
   align-items: center;
   gap: 14px;
   margin-bottom: 18px;
+}
+
+.ll-g78-shell .card.ll-question .ll-question__head .ll-info-btn {
+  margin-top: 6px;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 50%;
+  background: var(--teal);
+  border-color: color-mix(in srgb, var(--teal) 55%, var(--navy));
+  font-family: "Lexend", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--navy) 20%, transparent);
+}
+
+.ll-g78-shell .card.ll-question .ll-info {
+  background: linear-gradient(180deg, #fffdf8 0%, #f6edd9 100%);
+  border: 1px solid color-mix(in srgb, var(--brass2) 38%, var(--sand));
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin: 6px 0 22px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.55;
+  z-index: 3;
+}
+
+.ll-g78-shell .card.ll-question .ll-info__lead {
+  color: var(--teal);
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.ll-g78-shell .card.ll-question .ll-info__lead strong {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.ll-g78-shell .card.ll-question .ll-info__top .read-aloud.speak {
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--sand));
+  color: var(--navy);
+  background: #fffdf8;
+}
+
+.ll-g78-shell .card.ll-question .ll-info__text {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.ll-g78-shell .card.ll-question .ll-info__close {
+  color: var(--muted);
 }
 
 .ll-g78-shell .qfoot {
@@ -1605,6 +1669,23 @@
   .ll-g78-shell h1.qtitle,
   .ll-g78-shell .qtitle {
     font-size: 25px;
+  }
+
+  .ll-g78-shell .ll-question__head .ll-info-btn {
+    margin-top: 2px;
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .ll-g78-shell .card.ll-question .ll-info {
+    padding: 16px 16px 14px;
+    margin-bottom: 18px;
+    font-size: 16px;
+  }
+
+  .ll-g78-shell .card.ll-question .ll-info__text {
+    padding-inline-end: 20px;
   }
 
   .ll-g78-shell .answers {

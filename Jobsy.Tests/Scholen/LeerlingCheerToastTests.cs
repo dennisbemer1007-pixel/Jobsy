@@ -66,9 +66,11 @@ public class LeerlingCheerToastTests : BunitContext
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilReisSsrHtml.cs"));
+        var parts = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingSsrParts.cs"));
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Layout", "LeerlingLayout.razor"));
         Assert.Contains("CoachCue", reis, StringComparison.Ordinal);
-        Assert.Contains("ll-coach-cue", reis, StringComparison.Ordinal);
+        Assert.Contains("ll-cheer-toast", parts, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"ll-coach-cue\"", parts, StringComparison.Ordinal);
         Assert.Contains("<LeerlingCoach", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("ll-lob-zone", reis, StringComparison.Ordinal);
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "scholen.css"));
