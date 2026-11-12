@@ -1142,6 +1142,53 @@
     });
   }
 
+  function bindG78JobWhyPanels(root) {
+    root.querySelectorAll(".g78-job-why-wrap").forEach(function (wrap) {
+      if (wrap.getAttribute("data-ll-why-bound") === "1") {
+        return;
+      }
+      wrap.setAttribute("data-ll-why-bound", "1");
+      var btn = wrap.querySelector(".g78-job-why-btn");
+      var panel = wrap.querySelector(".g78-job-why-panel");
+      var close = wrap.querySelector(".ll-info__close");
+      if (!btn || !panel) {
+        return;
+      }
+      var openLabel = btn.getAttribute("data-open-label") || "Sluiten";
+      var closedLabel = btn.getAttribute("aria-label") || btn.getAttribute("data-closed-label") || "Meer info";
+      function setOpen(on) {
+        btn.setAttribute("aria-expanded", on ? "true" : "false");
+        btn.textContent = on ? "\u00d7" : "i";
+        btn.setAttribute("aria-label", on ? openLabel : closedLabel);
+        if (on) {
+          panel.removeAttribute("hidden");
+          clAdd(panel, "is-open");
+        } else {
+          panel.setAttribute("hidden", "hidden");
+          clRemove(panel, "is-open");
+        }
+      }
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        var open = btn.getAttribute("aria-expanded") === "true";
+        setOpen(!open);
+      });
+      if (close) {
+        close.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          setOpen(false);
+        });
+      }
+      btn.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") {
+          setOpen(false);
+        }
+      });
+    });
+  }
+
   function init() {
     var root = document.body;
     bindSessionKeepalive();
@@ -1155,6 +1202,7 @@
     bindPuzzle(root);
     bindIslandSteps(root);
     bindJobPicks(root);
+    bindG78JobWhyPanels(root);
     bindJpickSpeakIsolation(root);
     bindMhboScale(root);
     bindPauseForms(root);

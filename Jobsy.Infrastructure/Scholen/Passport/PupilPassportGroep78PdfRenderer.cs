@@ -496,6 +496,13 @@ internal static class PupilPassportGroep78PdfRenderer
                                             .Text(TruncateLabel(sub, spacious ? 32 : 28))
                                             .FontSize(7f).FontColor(Muted).LineHeight(1.1f);
                                     }
+
+                                    if (!string.IsNullOrWhiteSpace(occ.WhyFit))
+                                    {
+                                        inner.Item().PaddingTop(3)
+                                            .Text(TruncateLabel(occ.WhyFit, spacious ? 280 : 200))
+                                            .FontSize(6.5f).FontColor(Muted).LineHeight(1.25f);
+                                    }
                                 });
                         });
                     }

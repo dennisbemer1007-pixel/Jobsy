@@ -273,7 +273,10 @@ public static class PupilG78PassportSsrHtml
             sb.Append("</small></h2><div class=\"lp-g78__jobs\">");
             foreach (var job in model.OccupationCards)
             {
-                sb.Append("<article class=\"lp-g78__card lp-g78__job\"><div class=\"lp-g78__job-k\">");
+                var jobKey = PupilGroep78MockHtml.ResolveJobKey(job.Title);
+                sb.Append("<article class=\"lp-g78__card lp-g78__job\">");
+                sb.Append(PupilLeerlingSsrParts.Groep78JobWhyPanel(jobKey, job.Title, job.WhyFit));
+                sb.Append("<div class=\"lp-g78__job-k\">");
                 sb.Append(E(job.DomainLabel));
                 sb.Append("</div><h4>");
                 sb.Append(E(job.Title));
@@ -285,9 +288,12 @@ public static class PupilG78PassportSsrHtml
                     sb.Append("</p>");
                 }
 
-                sb.Append("<p>");
-                sb.Append(E(job.Blurb));
-                sb.Append("</p>");
+                if (string.IsNullOrWhiteSpace(job.WhyFit))
+                {
+                    sb.Append("<p>");
+                    sb.Append(E(job.Blurb));
+                    sb.Append("</p>");
+                }
                 if (job.FitTags is { Count: > 0 })
                 {
                     sb.Append("<div class=\"lp-g78__fit\"><b>");

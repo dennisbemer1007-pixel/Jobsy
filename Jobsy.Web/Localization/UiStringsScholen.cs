@@ -527,6 +527,7 @@ public static class UiStringsScholen
         nl["Leerling.G78.Dream.Kicker"] = "Droombaan";
         nl["Leerling.G78.Dream.PickOne"] = "Kies 1";
         nl["Leerling.G78.Dream.Title"] = "Welk beroep past bij jou?";
+        nl["Leerling.G78.Job.WhyTitle"] = "Waarom past dit bij jou?";
         nl["Leerling.G78.Dream.Hint"] = "Kies 1 beroep. Of kies: Ik vind er geen leuk.";
         nl["Leerling.G78.Dream.ReadIntro"] = "Lobsy leest de uitleg voor";
         nl["Leerling.G78.Dream.ConfirmHint"] = "Druk op Bevestigen als je iets hebt gekozen.";

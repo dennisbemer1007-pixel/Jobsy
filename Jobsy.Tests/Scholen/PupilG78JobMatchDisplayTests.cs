@@ -31,7 +31,9 @@ public class PupilG78JobMatchDisplayTests
     public void BuildGroep78_sets_match_percent_on_cards()
     {
         var matches = new[] { new PupilG78JobMatch("fotograaf", 0.823) };
-        var cards = PupilPassportJobCards.BuildGroep78(matches, "nl");
+        var result = FixtureResult();
+        var progress = FixtureProgress(result.PupilCodeId);
+        var cards = PupilPassportJobCards.BuildGroep78(matches, result, progress, "nl");
         Assert.Single(cards);
         Assert.Equal(82, cards[0].MatchPercent);
     }

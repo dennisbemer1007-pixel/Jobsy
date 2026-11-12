@@ -12,6 +12,12 @@ public sealed record PupilG78SchoolDirectionRank(string Key, double Score);
 
 public sealed record PupilG78JobMatch(string JobKey, double MatchScore);
 
+public sealed record PupilG78JobScoreFactors(
+    double RiasecFit,
+    double SubjectFit,
+    double ChipFit,
+    char PrimaryRiasecLetter);
+
 /// <summary>Deterministic G78 job and beroepssoort ranking (no AI).</summary>
 public static class PupilG78CareerScoring
 {
@@ -48,6 +54,23 @@ public static class PupilG78CareerScoring
     /// <summary>Rounded 0–100 display percent from the same 0–1 score used for ranking and threshold.</summary>
     public static int MatchPercentInt(double matchScore)
         => Math.Clamp((int)Math.Round(Math.Clamp(matchScore, 0, 1) * 100, MidpointRounding.AwayFromZero), 0, 100);
+
+    public static PupilG78JobScoreFactors ScoreFactors(
+        string jobKey,
+        PupilResult result,
+        PupilProgress? progress,
+        IReadOnlyList<PupilVakScoreEntry> vakScores)
+    {
+        var riasec = Deserialize<RiasecScores>(result.RiasecScoresJson);
+        var likes = ParseChips(progress?.LikesJson);
+        var letters = JobPrimaryLetters(jobKey);
+        var primary = letters.Count > 0 ? letters[0] : 'S';
+        return new PupilG78JobScoreFactors(
+            JobRiasecFit(jobKey, riasec),
+            JobSubjectFit(jobKey, vakScores),
+            JobChipFit(jobKey, likes),
+            primary);
+    }
 
     public static IReadOnlyList<string> TopJobKeys(
         PupilResult result,

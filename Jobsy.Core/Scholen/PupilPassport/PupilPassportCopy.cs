@@ -312,6 +312,8 @@ public static class PupilPassportCopy
             "Je traint heel hard om op topniveau te sporten. Je speelt wedstrijden voor een club of team.";
         d["LeerlingPassport.Card.hovenier.Blurb"] =
             "Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.";
+        d["LeerlingPassport.Card.fotograaf.Blurb"] =
+            "Je maakt foto's van mensen, plekken of dieren. Je kiest goed licht en stelt je camera in.";
 
         d["LeerlingPassport.Discover.dierenarts.1"] = "Hoe ziet een dag bij de dierenarts eruit?";
         d["LeerlingPassport.Discover.dierenarts.2"] = "Welke vakken horen bij biologie op de middelbare school?";
