@@ -20,7 +20,7 @@ public class PupilG78JobMatchExplanationTests
     {
         var artistic = ArtisticResult();
         var tech = TechResult();
-        var progressArt = ProgressWithLikes(["tekenen"], """{"9018":5}""");
+        var progressArt = ProgressWithLikes(["tekenen"], """{"9018":5,"9029":5}""");
         var progressTech = ProgressWithLikes(["techniek", "bouwen"], """{"9016":5,"9022":5}""");
         progressTech.VakScoresJson = VakJson(natuurTechniek: 5);
 
@@ -41,8 +41,8 @@ public class PupilG78JobMatchExplanationTests
 
         var artistic = ArtisticResult();
         var tech = TechResult();
-        var progressArt = ProgressWithLikes(["tekenen"], """{"9018":5}""");
-        var progressTech = ProgressWithLikes(["techniek", "bouwen"], """{"9016":5,"9028":5}""");
+        var progressArt = ProgressWithLikes(["tekenen"], """{"9018":5,"9029":5}""");
+        var progressTech = ProgressWithLikes(["bouwen"], """{"9016":5,"9028":5}""");
         progressTech.VakScoresJson = VakJson(natuurTechniek: 5);
         var e1 = PupilG78JobMatchExplanation.Build("fotograaf", artistic, progressArt, "nl");
         var e2 = PupilG78JobMatchExplanation.Build("hovenier", tech, progressTech, "nl");

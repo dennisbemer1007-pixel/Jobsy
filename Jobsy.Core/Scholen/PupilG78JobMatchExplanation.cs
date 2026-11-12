@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -42,6 +41,8 @@ public static class PupilG78JobMatchExplanation
         ["bouwen"] = "natuur-techniek",
         ["fietsen-repareren"] = "natuur-techniek",
     };
+
+    private sealed record AnswerPhrase(int ItemId, string Subordinate, string MainAfterWant);
 
     public static string Build(
         string jobKey,
@@ -87,88 +88,102 @@ public static class PupilG78JobMatchExplanation
         var surprise = !JobInLikesOrDream(likes, progress, jobKey);
 
         var usedSemantic = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var clauses = new List<(double Weight, string Clause)>();
-
-        var likeClause = LikeClause(jobKey, likes);
-        if (likeClause is not null)
+        var likeLabel = LikeLabel(jobKey, likes);
+        if (likeLabel is not null)
         {
-            clauses.Add((factors.ChipFit * PupilCareerMatchWeights.Overige, likeClause.Value.Clause));
-            if (LikeToSubjectKey.TryGetValue(likeClause.Value.LikeKey, out var subj))
+            foreach (var like in likes)
             {
-                usedSemantic.Add($"vak-{subj}");
+                if (LikeToSubjectKey.TryGetValue(like, out var sk))
+                {
+                    usedSemantic.Add($"vak-{sk}");
+                }
             }
         }
 
-        var answerCount = 0;
-        foreach (var (weight, clause, key) in AnswerClauses(factors.PrimaryRiasecLetter, progress))
+        var answers = new List<AnswerPhrase>();
+        foreach (var phrase in AnswerPhrases(factors.PrimaryRiasecLetter, progress))
         {
+            var key = PupilG78HighAnswerParaphrases.SemanticKey(phrase.ItemId);
             if (!usedSemantic.Add(key))
             {
                 continue;
             }
 
-            if (answerCount >= 2)
+            answers.Add(phrase);
+            if (answers.Count >= 2)
             {
                 break;
             }
-
-            clauses.Add((weight, clause));
-            answerCount++;
         }
 
-        var subjectClause = SubjectClause(jobKey, vakScores: vak, likes, usedSemantic);
-        if (subjectClause is not null)
-        {
-            clauses.Add(subjectClause.Value);
-        }
+        var subjectLabel = SubjectLabel(jobKey, vak, likes, usedSemantic);
+        var jobSentences = JobDescriptionNl(jobKey);
 
-        var answerAndSubject = clauses
-            .Where(c => !c.Clause.Contains("leuk vindt", StringComparison.Ordinal))
-            .OrderByDescending(c => c.Weight)
-            .Select(c => c.Clause)
-            .ToList();
-        var likeOnly = likeClause?.Clause;
-        var ordered = new List<string>();
-        if (!string.IsNullOrWhiteSpace(likeOnly))
-        {
-            ordered.Add(likeOnly);
-        }
-
-        ordered.AddRange(answerAndSubject);
-
-        var jobClose = JobClosingNl(jobKey);
-        return StitchSentences(ordered, surprise, jobClose);
+        return StitchSentences(likeLabel, answers, subjectLabel, jobSentences, surprise);
     }
 
-    private static List<string> StitchSentences(IReadOnlyList<string> clauses, bool surprise, string? jobClose)
+    private static List<string> StitchSentences(
+        string? likeLabel,
+        IReadOnlyList<AnswerPhrase> answers,
+        string? subjectLabel,
+        IReadOnlyList<string> jobSentences,
+        bool surprise)
     {
-        if (clauses.Count == 0 && jobClose is null)
-        {
-            return ["Je antwoorden passen bij dit beroep."];
-        }
-
+        var reserveForJob = Math.Min(jobSentences.Count, 2);
         var sentences = new List<string>(MaxSentences);
-        var idx = 0;
 
-        if (surprise && clauses.Count > 0)
+        var usedFirstAnswerInWant = false;
+        if (surprise && answers.Count > 0)
         {
-            sentences.Add($"Hier had je misschien zelf niet aan gedacht. Toch past het, want {clauses[0]}.");
-            idx = 1;
+            sentences.Add(
+                $"Hier had je misschien zelf niet aan gedacht. Toch past het, want {answers[0].MainAfterWant}.");
+            usedFirstAnswerInWant = true;
         }
         else if (surprise)
         {
             sentences.Add("Hier had je misschien zelf niet aan gedacht. Toch laten je antwoorden zien dat dit beroep bij je kan passen.");
         }
-
-        while (idx < clauses.Count && sentences.Count < (jobClose is null ? MaxSentences : MaxSentences - 1))
+        else if (answers.Count > 0 && likeLabel is null)
         {
-            sentences.Add(ClauseToSentence(clauses[idx], sentences.Count, surprise));
-            idx++;
+            sentences.Add($"Dit past bij jou, want {answers[0].MainAfterWant}.");
+            usedFirstAnswerInWant = true;
         }
 
-        if (jobClose is not null && sentences.Count < MaxSentences)
+        if (!string.IsNullOrWhiteSpace(likeLabel))
         {
-            sentences.Add(jobClose);
+            sentences.Add($"Je vindt {likeLabel} leuk, en dat past bij dit beroep.");
+        }
+
+        var answerOffset = usedFirstAnswerInWant ? 1 : 0;
+        for (var i = answerOffset; i < answers.Count; i++)
+        {
+            if (sentences.Count >= MaxSentences - reserveForJob)
+            {
+                break;
+            }
+
+            var useBijVragen = !surprise
+                               && likeLabel is not null
+                               && i == answerOffset
+                               && answerOffset < answers.Count;
+            var prefix = useBijVragen ? "Bij de vragen zei je dat" : "Je gaf ook aan dat";
+            sentences.Add($"{prefix} {answers[i].Subordinate}.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(subjectLabel)
+            && sentences.Count < MaxSentences - reserveForJob)
+        {
+            sentences.Add($"Op school ben je goed in {subjectLabel}, en dat helpt je hier.");
+        }
+
+        foreach (var jobLine in jobSentences)
+        {
+            if (sentences.Count >= MaxSentences)
+            {
+                break;
+            }
+
+            sentences.Add(jobLine);
         }
 
         return sentences
@@ -178,29 +193,8 @@ public static class PupilG78JobMatchExplanation
             .ToList();
     }
 
-    private static string ClauseToSentence(string clause, int sentenceIndex, bool surprise)
+    private static string? LikeLabel(string jobKey, IReadOnlySet<string> likes)
     {
-        if (clause.Contains("leuk vindt", StringComparison.Ordinal) && !clause.Contains("graag", StringComparison.Ordinal))
-        {
-            return $"Je vindt {clause.Replace("je ", "", StringComparison.Ordinal).Replace(" leuk vindt", "", StringComparison.Ordinal)} leuk, en dat past bij dit beroep.";
-        }
-
-        if (clause.Contains("op school", StringComparison.Ordinal))
-        {
-            return $"Op school ben je goed in {clause.Replace("je op school goed bent in ", "", StringComparison.Ordinal)}, en dat helpt je hier.";
-        }
-
-        return sentenceIndex switch
-        {
-            0 when !surprise => $"Dit past bij jou, want {clause}.",
-            1 => $"In de vragen koos je vaak voor iets waarbij {clause}.",
-            _ => $"Daarbij {clause}.",
-        };
-    }
-
-    private static (string LikeKey, string Clause)? LikeClause(string jobKey, IReadOnlySet<string> likes)
-    {
-        string? bestLike = null;
         foreach (var like in likes)
         {
             if (!PupilRiasecJobIdeas.LikeJobsForScoring.TryGetValue(like, out var jobs))
@@ -208,30 +202,19 @@ public static class PupilG78JobMatchExplanation
                 continue;
             }
 
-            if (jobs.Any(j => string.Equals(j, jobKey, StringComparison.OrdinalIgnoreCase)))
+            if (!jobs.Any(j => string.Equals(j, jobKey, StringComparison.OrdinalIgnoreCase)))
             {
-                bestLike = like;
-                break;
+                continue;
             }
+
+            var label = PupilPortalChipLabels.Dutch(like);
+            return string.IsNullOrWhiteSpace(label) ? null : label.ToLowerInvariant();
         }
 
-        if (bestLike is null)
-        {
-            return null;
-        }
-
-        var label = PupilPortalChipLabels.Dutch(bestLike);
-        if (string.IsNullOrWhiteSpace(label))
-        {
-            return null;
-        }
-
-        return (bestLike, $"je {label.ToLowerInvariant()} leuk vindt");
+        return null;
     }
 
-    private static IEnumerable<(double Weight, string Clause, string SemanticKey)> AnswerClauses(
-        char jobLetter,
-        PupilProgress? progress)
+    private static IEnumerable<AnswerPhrase> AnswerPhrases(char jobLetter, PupilProgress? progress)
     {
         var answers = ParseAnswers(progress?.AnswersJson);
         if (answers.Count == 0)
@@ -254,18 +237,17 @@ public static class PupilG78JobMatchExplanation
 
         foreach (var item in items)
         {
-            if (!PupilG78HighAnswerParaphrases.TryGet(item.Id, out var paraphrase))
+            if (!PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out var sub)
+                || !PupilG78HighAnswerParaphrases.TryGetMainClauseAfterWant(item.Id, out var main))
             {
                 continue;
             }
 
-            var semantic = PupilG78HighAnswerParaphrases.SemanticKey(item.Id);
-            var weight = answers[item.Id] / 5.0;
-            yield return (weight, paraphrase, semantic);
+            yield return new AnswerPhrase(item.Id, sub, main);
         }
     }
 
-    private static (double Weight, string Clause)? SubjectClause(
+    private static string? SubjectLabel(
         string jobKey,
         IReadOnlyList<PupilVakScoreEntry> vakScores,
         IReadOnlySet<string> likes,
@@ -303,10 +285,8 @@ public static class PupilG78JobMatchExplanation
             return null;
         }
 
-        var label = PupilVakSubjectLabels.Nl(best.Entry.SubjectKey).ToLowerInvariant();
         usedSemantic.Add($"vak-{best.Entry.SubjectKey}");
-        return (best.Score * PupilCareerMatchWeights.Vakken,
-            $"je op school goed bent in {label}");
+        return PupilVakSubjectLabels.Nl(best.Entry.SubjectKey).ToLowerInvariant();
     }
 
     private static bool SubjectContributesToJob(string jobKey, PupilVakScoreEntry entry)
@@ -333,39 +313,39 @@ public static class PupilG78JobMatchExplanation
         return false;
     }
 
-    private static string? JobClosingNl(string jobKey)
+    private static IReadOnlyList<string> JobDescriptionNl(string jobKey)
     {
         var blurb = PupilPassportLocalizedCopy.JobBlurb(jobKey, PupilQuestionSet.Groep78, "nl");
         if (IsPlaceholderJobBlurb(blurb))
         {
-            return null;
-        }
-
-        var first = blurb.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(first))
-        {
-            return null;
+            return [];
         }
 
         var title = PupilPassportLocalizedCopy.JobTitle(jobKey, "nl").Trim().ToLowerInvariant();
-        var match = Regex.Match(first, @"^Je\s+(\S+)\s+(.*)$", RegexOptions.CultureInvariant);
-        if (!match.Success)
+        var lines = new List<string>(2);
+        foreach (var part in blurb.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(2))
         {
-            return null;
+            if (!part.StartsWith("Je ", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (part.StartsWith("Je bent ", StringComparison.Ordinal))
+            {
+                lines.Add($"Een {title} is {part[8..].ToLowerInvariant()}.");
+                continue;
+            }
+
+            var rest = part[3..].TrimEnd('.');
+            rest = rest.Replace(" je ", " de ", StringComparison.Ordinal);
+            lines.Add($"Een {title} {rest.ToLowerInvariant()}.");
         }
 
-        var verb = match.Groups[1].Value;
-        var tail = match.Groups[2].Value.TrimEnd('.');
-        var stem = verb.Length > 2 && verb.EndsWith('t') ? verb[..^1] : verb;
-        return $"Als {title} {stem} je {tail.ToLowerInvariant()}.";
+        return lines;
     }
 
     private static List<string> BuildEnglishSentences(string jobKey, PupilResult result, PupilProgress? progress)
-    {
-        var dutch = ComposeDutch(jobKey, result, progress);
-        return dutch;
-    }
+        => ComposeDutch(jobKey, result, progress);
 
     private static bool JobInLikesOrDream(IReadOnlySet<string> likes, PupilProgress? progress, string jobKey)
     {
