@@ -922,6 +922,9 @@
     font-size: var(--text-lg);
     font-weight: 700;
     margin: 0 var(--space-8) var(--space-3) 0;
+}.ll-card.ll-question,
+.card.ll-question {
+    position: relative;
 }.ll-info-btn {
     position: absolute;
     top: var(--space-5);

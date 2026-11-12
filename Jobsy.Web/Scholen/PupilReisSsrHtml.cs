@@ -31,6 +31,7 @@ public static class PupilReisSsrHtml
         var worldKey = item.WorldKey ?? state.CurrentWorldKey ?? "koraalrif";
         var world = PupilWorldCatalog.Find(worldKey);
         var qLabel = culture[item.TextKey];
+        var imagine = culture[item.ImagineKey];
         var sb = new StringBuilder();
         if (!groep78)
         {
@@ -89,12 +90,22 @@ public static class PupilReisSsrHtml
         if (groep78)
         {
             sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(qLabel, $"ll-q-{item.Id}", culture, "Leerling.G78.ReadQuestion"));
+            sb.Append(PupilLeerlingSsrParts.QuestionImaginePanel(
+                culture,
+                item.Id,
+                imagine,
+                PupilGroep78SsrParts.Groep78SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
             sb.Append(PupilGroep78SsrParts.Groep78AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error, qLabel));
             sb.Append(PupilGroep78SsrParts.Groep78PrevFoot(culture, state.CurrentIndex > 0));
         }
         else
         {
             sb.Append(PupilLeerlingSsrParts.SpeakButton(qLabel, $"ll-q-{item.Id}", culture));
+            sb.Append(PupilLeerlingSsrParts.QuestionImaginePanel(
+                culture,
+                item.Id,
+                imagine,
+                PupilLeerlingSsrParts.SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
             sb.Append(PupilLeerlingSsrParts.AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error));
             if (state.CurrentIndex > 0)
             {

@@ -893,6 +893,41 @@
   margin-bottom: 18px;
 }
 
+.ll-g78-shell .card.ll-question {
+  padding-top: 48px;
+}
+
+.ll-g78-shell .card.ll-question .ll-info-btn {
+  top: 20px;
+  inset-inline-end: 20px;
+  background: var(--teal);
+  font-family: "Lexend", sans-serif;
+  font-size: 18px;
+}
+
+.ll-g78-shell .card.ll-question .ll-info {
+  background: color-mix(in srgb, var(--sea) 14%, var(--paper));
+  border: 1px solid color-mix(in srgb, var(--teal) 22%, var(--sand));
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.ll-g78-shell .card.ll-question .ll-info p {
+  margin: 0 0 10px;
+}
+
+.ll-g78-shell .card.ll-question .ll-info p:last-of-type {
+  margin-bottom: 0;
+}
+
+.ll-g78-shell .card.ll-question .ll-info .read-aloud.speak {
+  margin: 6px 0 12px;
+}
+
 .ll-g78-shell .qfoot {
   margin-top: 22px;
   display: flex;

@@ -33,6 +33,32 @@ public static class PupilLeerlingSsrParts
             """;
     }
 
+    public static string QuestionImaginePanel(
+        CultureState culture,
+        string itemId,
+        string imagineText,
+        string imagineSpeakMarkup)
+    {
+        if (string.IsNullOrWhiteSpace(imagineText))
+        {
+            return "";
+        }
+
+        var infoId = "ll-imagine-" + itemId;
+        var sb = new StringBuilder();
+        sb.Append("<button type=\"button\" class=\"ll-info-btn\" data-ll-imagine-toggle aria-label=\"");
+        sb.Append(E(culture["Leerling.Reis.More"]));
+        sb.Append("\" aria-expanded=\"false\" aria-controls=\"").Append(E(infoId));
+        sb.Append("\" title=\"").Append(E(culture["Leerling.Reis.Imagine"])).Append("\">i</button>");
+        sb.Append("<div id=\"").Append(E(infoId)).Append("\" class=\"ll-info\" hidden data-testid=\"ll-question-imagine\">");
+        sb.Append("<p><strong>").Append(E(culture["Leerling.Reis.Imagine"])).Append("</strong></p>");
+        sb.Append(imagineSpeakMarkup);
+        sb.Append("<p>").Append(E(imagineText)).Append("</p>");
+        sb.Append("""<button type="button" class="ll-info__close" data-ll-imagine-close aria-label="Sluiten">×</button>""");
+        sb.Append("</div>");
+        return sb.ToString();
+    }
+
     public static string CoachCue(string text)
         => $"""<div class="ll-coach-cue" data-testid="ll-coach-cue"><p>{E(text)}</p></div>""";
 
