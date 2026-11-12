@@ -12,6 +12,8 @@ public class HotfixPlatformSettingsSaveTests
         Assert.Contains("VerifySavedValues", editor, StringComparison.Ordinal);
         Assert.Contains("FeatureFlags.Invalidate()", editor, StringComparison.Ordinal);
         Assert.Contains("if (saved is null)", editor, StringComparison.Ordinal);
+        Assert.Contains("CandidateCoachTonePreferencesEnabled = u.CandidateCoachTonePreferencesEnabled", editor, StringComparison.Ordinal);
+        Assert.Contains("catch (InvalidOperationException ex)", editor, StringComparison.Ordinal);
 
         var client = File.ReadAllText(Path.Combine(
             FindRepoRoot(),

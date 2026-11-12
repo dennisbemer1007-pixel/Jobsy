@@ -31,7 +31,7 @@
             </select>
         </label>
         <div class="ats-toolbar__actions">
-            <button class="btn-primary" type="button" disabled="@_busy" @onclick="ScrapeAsync">
+            <button class="btn-compact btn-compact--primary" type="button" disabled="@_busy" @onclick="ScrapeAsync">
                 @Culture["AdminAts.FetchNow"]
             </button>
             <button class="btn-compact" type="button" disabled="@_busy" @onclick="HealthAsync">@Culture["AdminAts.CheckSources"]</button>

@@ -12,7 +12,7 @@
 
 <AdminPageShell Title="@Culture["AdminScholen.ListTitle"]" Lead="@Culture["AdminScholen.ListLead"]">
     <div class="sch-admin-toolbar">
-        <button type="button" class="btn-primary" @onclick="() => _drawerOpen = true">@Culture["AdminScholen.Add"]</button>
+        <button type="button" class="btn-compact btn-compact--primary" @onclick="() => _drawerOpen = true">@Culture["AdminScholen.Add"]</button>
         <a class="btn-compact" href="/admin/scholen/rapportage">@Culture["AdminScholen.Nav.Report"]</a>
     </div>
 
@@ -101,7 +101,7 @@
         }
         <div class="sch-drawer-actions">
             <button type="button" class="btn-compact" @onclick="() => _drawerOpen = false">@Culture["AdminScholen.Cancel"]</button>
-            <button type="submit" class="btn-primary" disabled="@_busy">@Culture["AdminScholen.Save"]</button>
+            <button type="submit" class="btn-compact btn-compact--primary" disabled="@_busy">@Culture["AdminScholen.Save"]</button>
         </div>
     </EditForm>
 </EntDrawer>

@@ -359,6 +359,11 @@ else if (_snapshot is not null)
             await LoadRecentChangesAsync();
             _message = Culture["AdminSettings.Saved"];
         }
+        catch (InvalidOperationException ex)
+        {
+            _messageIsError = true;
+            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+        }
         catch (Exception ex)
         {
             _messageIsError = true;
@@ -584,6 +589,11 @@ else if (_snapshot is not null)
             await NavRefresh.RequestRefreshAsync();
             _message = Culture["AdminSettings.Saved"];
         }
+        catch (InvalidOperationException ex)
+        {
+            _messageIsError = true;
+            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+        }
         catch (Exception ex)
         {
             _messageIsError = true;
@@ -742,6 +752,7 @@ else if (_snapshot is not null)
             TrainingPartnersEnabled = u.TrainingPartnersEnabled,
             UwvFeaturesEnabled = u.UwvFeaturesEnabled,
             ActivityLogEnabled = u.ActivityLogEnabled,
+            CandidateCoachTonePreferencesEnabled = u.CandidateCoachTonePreferencesEnabled,
             ReferenceVerificationEnabled = u.ReferenceVerificationEnabled,
             TestJourneyIllustrationEnabled = u.TestJourneyIllustrationEnabled,
             OnboardingFinaleV2Enabled = u.OnboardingFinaleV2Enabled,
