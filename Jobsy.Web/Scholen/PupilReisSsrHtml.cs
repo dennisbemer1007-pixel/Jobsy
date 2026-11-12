@@ -32,6 +32,9 @@ public static class PupilReisSsrHtml
         var world = PupilWorldCatalog.Find(worldKey);
         var qLabel = culture[item.TextKey];
         var imagine = culture[item.ImagineKey];
+        var imagineLead = culture["Leerling.Reis.Imagine"];
+        var imagineBody = SpokenText.WithoutRepeatedLead(imagineLead, imagine);
+        var imagineSpeak = SpokenText.Join(imagineLead, imagineBody);
         var sb = new StringBuilder();
         if (!groep78)
         {
@@ -104,8 +107,8 @@ public static class PupilReisSsrHtml
                 sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(
                     culture,
                     item.Id,
-                    imagine,
-                    PupilGroep78SsrParts.Groep78SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
+                    imagineBody,
+                    PupilGroep78SsrParts.Groep78SpeakButton(imagineSpeak, $"ll-imagine-{item.Id}", culture)));
             }
 
             sb.Append(PupilGroep78SsrParts.Groep78AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error, qLabel));
@@ -119,8 +122,8 @@ public static class PupilReisSsrHtml
                 sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(
                     culture,
                     item.Id,
-                    imagine,
-                    PupilLeerlingSsrParts.SpeakButton(imagine, $"ll-imagine-{item.Id}", culture)));
+                    imagineBody,
+                    PupilLeerlingSsrParts.SpeakButton(imagineSpeak, $"ll-imagine-{item.Id}", culture)));
             }
 
             sb.Append(PupilLeerlingSsrParts.AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error));

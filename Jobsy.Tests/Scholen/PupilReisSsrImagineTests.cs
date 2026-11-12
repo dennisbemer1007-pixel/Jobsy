@@ -37,7 +37,9 @@ public sealed class PupilReisSsrImagineTests
         Assert.Contains("data-testid=\"ll-question-imagine\"", html, StringComparison.Ordinal);
         Assert.Contains("ll-question__head", html, StringComparison.Ordinal);
         Assert.Contains("data-ll-imagine-toggle", html, StringComparison.Ordinal);
-        Assert.Contains(imagine, html, StringComparison.Ordinal);
+        var imagineBody = SpokenText.WithoutRepeatedLead(culture["Leerling.Reis.Imagine"], imagine);
+        Assert.Contains(imagineBody, html, StringComparison.Ordinal);
+        Assert.DoesNotContain("ll-info__text\">Stel je voor:", html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains(culture["Leerling.Reis.Imagine"], html, StringComparison.Ordinal);
     }
 
@@ -62,7 +64,9 @@ public sealed class PupilReisSsrImagineTests
             themeKey: null);
 
         Assert.Contains("id=\"ll-imagine-9101\"", html, StringComparison.Ordinal);
-        Assert.Contains(imagine, html, StringComparison.Ordinal);
+        var imagineBody = SpokenText.WithoutRepeatedLead(culture["Leerling.Reis.Imagine"], imagine);
+        Assert.Contains(imagineBody, html, StringComparison.Ordinal);
+        Assert.DoesNotContain("ll-info__text\">Stel je voor:", html, StringComparison.OrdinalIgnoreCase);
     }
 
     private static PupilProgressStateDto Groep78State(string itemId)

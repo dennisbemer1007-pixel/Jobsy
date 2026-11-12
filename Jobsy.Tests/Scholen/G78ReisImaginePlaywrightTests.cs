@@ -2,6 +2,7 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Scholen;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -30,7 +31,8 @@ public sealed class G78ReisImaginePlaywrightTests
         var culture = NlCulture();
         var registry = new PupilQuestionSetRegistry();
         var def = registry.Get(PupilQuestionSet.Groep78);
-        var imagine = culture["LeerlingQ.9001.Voorbeeld"];
+        var imagineRaw = culture["LeerlingQ.9001.Voorbeeld"];
+        var imagineBody = SpokenText.WithoutRepeatedLead(culture["Leerling.Reis.Imagine"], imagineRaw);
         var state = new PupilProgressStateDto(
             Guid.Parse("11111111-1111-1111-1111-111111111111"),
             "7A",
@@ -67,8 +69,6 @@ public sealed class G78ReisImaginePlaywrightTests
             true,
             PupilJourneyTheme.ZeeExpeditie);
 
-        var cssScholen = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "css", "features", "scholen.css");
-        var cssKies = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "css", "features", "leerling-werelden-kies.css");
         var jsPath = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", "leerling-journey-ssr.js");
         var html = $"""
             <!DOCTYPE html>
@@ -83,8 +83,17 @@ public sealed class G78ReisImaginePlaywrightTests
             ViewportSize = new ViewportSize { Width = width, Height = height }
         });
         await page.SetContentAsync(html);
-        await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = cssScholen });
-        await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = cssKies });
+        var wwwroot = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot");
+        foreach (var url in PageAssetCatalog.StylesheetsForPupilSsr("/leerling/reis")
+                     .Concat(PageAssetCatalog.LeerlingGroep78ThemeStylesheets("/leerling/reis")))
+        {
+            var path = Path.Combine(wwwroot, url.Split('?')[0].TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(path))
+            {
+                await page.AddStyleTagAsync(new PageAddStyleTagOptions { Path = path });
+            }
+        }
+
         await page.AddScriptTagAsync(new PageAddScriptTagOptions { Path = jsPath });
 
         var info = page.Locator(".ll-question__head .ll-info-btn");
@@ -96,8 +105,9 @@ public sealed class G78ReisImaginePlaywrightTests
         Assert.Equal("true", await info.GetAttributeAsync("aria-expanded"));
         var panel = page.Locator("#ll-imagine-9001");
         await panel.WaitForAsync();
+        await page.WaitForTimeoutAsync(280);
         Assert.DoesNotContain("hidden", await panel.EvaluateAsync<string>("el => el.getAttribute('hidden')") ?? "", StringComparison.Ordinal);
-        Assert.Contains(imagine, await panel.InnerTextAsync(), StringComparison.Ordinal);
+        Assert.Contains(imagineBody, await panel.InnerTextAsync(), StringComparison.Ordinal);
 
         await page.ScreenshotAsync(new PageScreenshotOptions
         {

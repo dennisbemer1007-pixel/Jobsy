@@ -905,12 +905,15 @@
 
 .ll-g78-shell .card.ll-question .ll-question__head .ll-info-btn {
   margin-top: 6px;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 50%;
   background: var(--teal);
   border-color: color-mix(in srgb, var(--teal) 55%, var(--navy));
   font-family: "Lexend", sans-serif;
-  font-size: 17px;
+  font-size: 1.05rem;
   font-weight: 700;
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--navy) 25%, transparent);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--navy) 20%, transparent);
 }
 
 .ll-g78-shell .card.ll-question .ll-info {
@@ -934,7 +937,7 @@
 }
 
 .ll-g78-shell .card.ll-question .ll-info__lead strong {
-  color: var(--teal);
+  color: var(--navy);
   font-weight: 700;
 }
 
