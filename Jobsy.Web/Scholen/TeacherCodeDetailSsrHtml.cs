@@ -204,19 +204,31 @@ public static class TeacherCodeDetailSsrHtml
         sb.Append("</h2>");
         if (detail.Story is not null)
         {
-            sb.Append("<p>");
-            sb.Append(E(detail.Story.Body));
-            sb.Append("</p><div class=\"sch-tile-grid\">");
-            foreach (var tile in detail.Story.Tiles)
+            if (detail.QuestionSet == PupilQuestionSet.Groep78)
             {
-                sb.Append("<div class=\"sch-tile\"><p class=\"sch-tile__label\">");
-                sb.Append(E(tile.KidLabel));
-                sb.Append("</p><p class=\"sch-tile__value\">");
-                sb.Append(E(tile.Explanation));
-                sb.Append("</p></div>");
+                foreach (var para in PupilG78FactStory.SplitParagraphs(detail.Story.Body))
+                {
+                    sb.Append("<p>").Append(E(para)).Append("</p>");
+                }
             }
+            else
+            {
+                sb.Append("<p>").Append(E(detail.Story.Body)).Append("</p>");
+                if (detail.Story.Tiles.Count > 0)
+                {
+                    sb.Append("<div class=\"sch-tile-grid\">");
+                    foreach (var tile in detail.Story.Tiles)
+                    {
+                        sb.Append("<div class=\"sch-tile\"><p class=\"sch-tile__label\">");
+                        sb.Append(E(tile.KidLabel));
+                        sb.Append("</p><p class=\"sch-tile__value\">");
+                        sb.Append(E(tile.Explanation));
+                        sb.Append("</p></div>");
+                    }
 
-            sb.Append("</div>");
+                    sb.Append("</div>");
+                }
+            }
         }
 
         sb.Append("</section>");

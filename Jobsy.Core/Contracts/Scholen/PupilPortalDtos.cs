@@ -122,6 +122,12 @@ public sealed record PupilG78JobSuggestionDto(
     string Blurb,
     string? WhyFit = null);
 
+public sealed record PupilG78GrowthCompetencyDto(
+    string Category,
+    string Label,
+    string WhyExplanation,
+    string PanelId);
+
 public sealed record PupilResultPageDto(
     string ClassLabel,
     string CodeDisplay,

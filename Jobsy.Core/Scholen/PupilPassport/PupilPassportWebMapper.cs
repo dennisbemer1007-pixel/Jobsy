@@ -86,7 +86,10 @@ public static class PupilPassportWebMapper
             HomeClassTips: m.HomeClassTips,
             FooterPrivacy: m.FooterPrivacy,
             MirrorBody: m.MirrorBody,
-            SubjectGroups: subjectGroups.Count == 0 ? null : subjectGroups);
+            SubjectGroups: subjectGroups.Count == 0 ? null : subjectGroups,
+            SchoolLeukItems: m.G78SchoolLeukItems,
+            HobbyLeukItems: m.G78HobbyLeukItems,
+            BelangrijkItems: m.G78BelangrijkItems);
     }
 
     private static string? DreamEncouragement(PupilPassportPdfModel m)
@@ -174,7 +177,10 @@ public sealed record PupilG78PassportWebDto(
     IReadOnlyList<string>? HomeClassTips = null,
     string FooterPrivacy = "",
     string? MirrorBody = null,
-    IReadOnlyList<PupilG78PassportSubjectGroupDto>? SubjectGroups = null);
+    IReadOnlyList<PupilG78PassportSubjectGroupDto>? SubjectGroups = null,
+    IReadOnlyList<string>? SchoolLeukItems = null,
+    IReadOnlyList<string>? HobbyLeukItems = null,
+    IReadOnlyList<string>? BelangrijkItems = null);
 
 public sealed record PupilG78PassportSubjectGroupDto(
     string Title,

@@ -43,7 +43,7 @@ public sealed record PupilPassportSectorFit(
     IReadOnlyList<string> Bullets,
     IReadOnlyList<string> ExampleRoles);
 
-public sealed record PupilPassportRiasecBar(string Letter, string Label, int Score);
+public sealed record PupilPassportRiasecBar(string Letter, string Label, int Score, string? Description = null);
 
 public sealed record PupilPassportCultureSlider(string Label, int Position);
 
@@ -110,6 +110,10 @@ public sealed record PupilPassportPdfModel(
     IReadOnlyList<string>? UsageParentTips = null,
     IReadOnlyList<string>? UsageTeacherTips = null,
     IReadOnlyList<PupilPassportValueBar>? ValueBars = null,
+    IReadOnlyList<string>? G78SchoolLeukItems = null,
+    IReadOnlyList<string>? G78HobbyLeukItems = null,
+    IReadOnlyList<string>? G78BelangrijkItems = null,
+    IReadOnlyList<(string Label, string Why)>? G78GrowthItems = null,
     bool G78RiasecPending = false,
     /// <summary>Red-orange VOORBEELDDATA chrome (export/mock only).</summary>
     bool G78BijlagenMockChrome = false);

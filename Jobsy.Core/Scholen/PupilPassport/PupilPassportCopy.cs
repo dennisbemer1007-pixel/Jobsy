@@ -184,6 +184,11 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Header.Usage"] = "MIJN PASPOORT · GEBRUIK";
         d["LeerlingPassport.G78.Page.Who"] = "Wie ben ik?";
         d["LeerlingPassport.G78.Page.Subjects"] = "Wat ik leuk vind en belangrijk vind";
+        d["LeerlingPassport.G78.Subjects.Empty"] = "Nog geen vakscores ingevuld.";
+        d["LeerlingPassport.G78.Col.Leuk"] = "Leuk";
+        d["LeerlingPassport.G78.Col.Belangrijk"] = "Belangrijk";
+        d["LeerlingPassport.G78.Col.OpSchool"] = "Op school";
+        d["LeerlingPassport.G78.Col.VrijeTijd"] = "In je vrije tijd";
         d["LeerlingPassport.G78.Page.Where"] = "Waar kan ik naartoe?";
         d["LeerlingPassport.G78.Page.Usage"] = "Zo gebruik je dit";
         d["LeerlingPassport.G78.Mirror.Title"] = "Zo zie jij jezelf";
@@ -208,6 +213,8 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Strengths.Title"] = "Dit kan ik al goed";
         d["LeerlingPassport.G78.Strengths.Sub"] = "Jouw sterke punten uit de test";
         d["LeerlingPassport.G78.Strengths.Question"] = "Wanneer heb je dit laatst laten zien?";
+        d["LeerlingPassport.G78.Growth.Title"] = "Hier kun je nog in groeien";
+        d["LeerlingPassport.G78.Growth.Footnote"] = "Dit kun je later nog ontdekken.";
         d["LeerlingPassport.G78.Subjects.BlockTitle"] = "Mijn vakken";
         d["LeerlingPassport.G78.Subjects.Sub"] = "Zo heb jij je vakken zelf ingevuld";
         d["LeerlingPassport.G78.Subjects.Question"] =
