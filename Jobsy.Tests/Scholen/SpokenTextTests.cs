@@ -31,6 +31,17 @@ public class SpokenTextTests
     }
 
     [Fact]
+    public void CapitalizeFirstSentence_uppercases_first_letter_only()
+    {
+        Assert.Equal(
+            "Een vriendin zegt dat het prima gaat.",
+            SpokenText.CapitalizeFirstSentence("een vriendin zegt dat het prima gaat."));
+        Assert.Equal(
+            "Jullie verdelen de taken.",
+            SpokenText.CapitalizeFirstSentence("jullie verdelen de taken."));
+    }
+
+    [Fact]
     public void WithoutRepeatedLead_drops_a_heading_that_the_body_repeats()
     {
         Assert.Equal(

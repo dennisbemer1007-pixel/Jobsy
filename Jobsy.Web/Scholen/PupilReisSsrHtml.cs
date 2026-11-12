@@ -31,12 +31,11 @@ public static class PupilReisSsrHtml
         var worldKey = item.WorldKey ?? state.CurrentWorldKey ?? "koraalrif";
         var world = PupilWorldCatalog.Find(worldKey);
         var qLabel = culture[item.TextKey];
+        var imagine = culture[item.ImagineKey];
+        var imagineLead = culture["Leerling.Reis.Imagine"];
+        var imagineBody = SpokenText.CapitalizeFirstSentence(SpokenText.WithoutRepeatedLead(imagineLead, imagine));
+        var imagineSpeak = SpokenText.Join(imagineLead, imagineBody);
         var sb = new StringBuilder();
-        if (!groep78)
-        {
-            sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Reis"]));
-        }
-
         if (groep78)
         {
             var worldTitle = culture[PupilJourneyTheme.WorldTitleKey(themeKey, worldKey)];
@@ -61,6 +60,7 @@ public static class PupilReisSsrHtml
         sb.Append(groep78 ? """<section class="card ll-question">""" : """<section class="ll-card ll-question">""");
         if (!groep78)
         {
+            sb.Append(PupilLeerlingSsrParts.CoachCue(culture["Leerling.Coach.Reis"]));
             var pct = state.TotalItems <= 0 ? 0 : 100.0 * state.AnsweredCount / state.TotalItems;
             sb.Append("<div class=\"ll-progress-bar\" role=\"progressbar\"><span class=\"ll-progress-bar__fill\" style=\"width:");
             sb.Append(pct.ToString("0.#", CultureInfo.InvariantCulture)).Append("%\"></span></div>");
@@ -84,17 +84,44 @@ public static class PupilReisSsrHtml
         }
 
         state.Answers.TryGetValue(item.Id, out var selected);
-        sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(groep78 ? "qtitle" : "ll-question__text").Append("\">");
+        var hasImagine = PupilLeerlingSsrParts.HasImagineText(imagine);
+        var titleClass = groep78 ? "qtitle" : "ll-question__text";
+        sb.Append("""<div class="ll-question__head">""");
+        sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(titleClass).Append("\">");
         sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</h1>");
+        if (hasImagine)
+        {
+            sb.Append(PupilLeerlingSsrParts.QuestionImagineButton(culture, item.Id));
+        }
+
+        sb.Append("</div>");
         if (groep78)
         {
             sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(qLabel, $"ll-q-{item.Id}", culture, "Leerling.G78.ReadQuestion"));
+            if (hasImagine)
+            {
+                sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(
+                    culture,
+                    item.Id,
+                    imagineBody,
+                    PupilGroep78SsrParts.Groep78SpeakButton(imagineSpeak, $"ll-imagine-{item.Id}", culture)));
+            }
+
             sb.Append(PupilGroep78SsrParts.Groep78AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error, qLabel));
             sb.Append(PupilGroep78SsrParts.Groep78PrevFoot(culture, state.CurrentIndex > 0));
         }
         else
         {
             sb.Append(PupilLeerlingSsrParts.SpeakButton(qLabel, $"ll-q-{item.Id}", culture));
+            if (hasImagine)
+            {
+                sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(
+                    culture,
+                    item.Id,
+                    imagineBody,
+                    PupilLeerlingSsrParts.SpeakButton(imagineSpeak, $"ll-imagine-{item.Id}", culture)));
+            }
+
             sb.Append(PupilLeerlingSsrParts.AnswerScaleForm(def, culture, antiforgeryHtml, answerSavePath, item.Id, selected, error));
             if (state.CurrentIndex > 0)
             {
