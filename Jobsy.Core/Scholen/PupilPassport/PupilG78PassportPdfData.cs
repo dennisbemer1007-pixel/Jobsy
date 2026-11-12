@@ -40,6 +40,50 @@ public static class PupilG78PassportPdfData
         return (bars, false);
     }
 
+    /// <summary>Top story competencies with scores from the same Likert averages as the fact story.</summary>
+    public static IReadOnlyList<PupilPassportRiasecBar> BuildCompetencyEnergyBars(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlyList<string> storyStrongCategories)
+    {
+        if (storyStrongCategories.Count == 0)
+        {
+            return [];
+        }
+
+        var avgs = PupilG78GrowthCompetencies.DimensionAverages(answers);
+        return storyStrongCategories
+            .Take(3)
+            .Select(cat =>
+            {
+                var mean = avgs.TryGetValue(cat, out var m) ? m : 3.0;
+                var score = (int)Math.Clamp(Math.Round(mean / 5.0 * 100.0, MidpointRounding.AwayFromZero), 0, 100);
+                return new PupilPassportRiasecBar(
+                    CompetencyGlyphLetter(cat),
+                    PupilG78CompetencyNarrative.KidLabelTitle(cat),
+                    score,
+                    CompetencyBarDescription(mean));
+            })
+            .ToList();
+    }
+
+    private static string CompetencyBarDescription(double mean) => mean switch
+    {
+        >= 4.25 => "Dit komt in je antwoorden duidelijk naar voren.",
+        >= 3.5 => "Dit zie je ook terug in je antwoorden.",
+        >= 3.0 => "Soms komt dit in je antwoorden naar voren.",
+        _ => "Dit komt in je antwoorden minder naar voren."
+    };
+
+    private static string CompetencyGlyphLetter(string category) => category switch
+    {
+        CompetencyTestCatalog.Innovatie => "A",
+        CompetencyTestCatalog.Samenwerken => "S",
+        CompetencyTestCatalog.Extraversie => "E",
+        CompetencyTestCatalog.Resultaatgerichtheid => "C",
+        CompetencyTestCatalog.Stressbestendigheid => "R",
+        _ => "S"
+    };
+
     public static IReadOnlyList<PupilPassportValueBar> BuildValueBars(PupilResult result)
     {
         var values = ParseValues(result.ValuesScoresJson);

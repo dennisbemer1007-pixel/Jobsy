@@ -260,7 +260,49 @@ internal static class PupilPassportGroep78PdfRenderer
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Strengths.Title"),
                 T(m, "LeerlingPassport.G78.Strengths.Sub"), inner => StrengthChips(inner, m, spacious: false),
                 goldRule: true));
+
+            if (m.DnaTiles is { Count: > 0 })
+            {
+                col.Item().PaddingTop(Mm(2)).Element(c => G78PassportTileGrid(c, m));
+            }
         });
+    }
+
+    private static void G78PassportTileGrid(IContainer c, PupilPassportPdfModel m)
+    {
+        var tiles = m.DnaTiles.Take(4).ToList();
+        c.Column(outer =>
+        {
+            for (var i = 0; i < tiles.Count; i += 2)
+            {
+                var rowIndex = i;
+                outer.Item().PaddingBottom(Mm(2)).Row(row =>
+                {
+                    row.RelativeItem().MinWidth(0).PaddingRight(Mm(1.5f))
+                        .Element(left => G78PassportTileCard(left, tiles[rowIndex]));
+                    if (rowIndex + 1 < tiles.Count)
+                    {
+                        row.RelativeItem().MinWidth(0).PaddingLeft(Mm(1.5f))
+                            .Element(right => G78PassportTileCard(right, tiles[rowIndex + 1]));
+                    }
+                });
+            }
+        });
+    }
+
+    private static void G78PassportTileCard(IContainer c, (string Label, string Value) tile)
+    {
+        c.Background(CreamWarm)
+            .Border(1).BorderColor(Gold)
+            .CornerRadius(Mm(1.2f))
+            .Padding(Mm(2.5f))
+            .MinHeight(Mm(22))
+            .Column(col =>
+            {
+                col.Item().Text(TruncateLabel(tile.Label, 28)).Bold().FontSize(8.5f).FontColor(Navy);
+                col.Item().PaddingTop(2).Text(NormalizePdfLine(tile.Value))
+                    .FontSize(7.75f).FontColor(Ink).LineHeight(1.35f);
+            });
     }
 
     private static void SubjectsPage(PageDescriptor page, PupilPassportPdfModel m, int pageNo)
@@ -786,11 +828,15 @@ internal static class PupilPassportGroep78PdfRenderer
             {
                 var tenths = Math.Clamp((int)Math.Round(bar.Score / 10.0, MidpointRounding.AwayFromZero), 0, 10);
                 var ratio = tenths / 10f;
-                var descKey = $"LeerlingPassport.G78.Riasec.{bar.Letter}.Desc";
-                var desc = T(m, descKey);
-                if (string.Equals(desc, descKey, StringComparison.Ordinal))
+                var desc = bar.Description;
+                if (string.IsNullOrWhiteSpace(desc))
                 {
-                    desc = "";
+                    var descKey = $"LeerlingPassport.G78.Riasec.{bar.Letter}.Desc";
+                    desc = T(m, descKey);
+                    if (string.Equals(desc, descKey, StringComparison.Ordinal))
+                    {
+                        desc = "";
+                    }
                 }
 
                 col.Item().PaddingBottom(rowGap).Column(row =>

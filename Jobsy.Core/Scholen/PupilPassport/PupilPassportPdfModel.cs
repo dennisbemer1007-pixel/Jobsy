@@ -42,7 +42,7 @@ public sealed record PupilPassportSectorFit(
     IReadOnlyList<string> Bullets,
     IReadOnlyList<string> ExampleRoles);
 
-public sealed record PupilPassportRiasecBar(string Letter, string Label, int Score);
+public sealed record PupilPassportRiasecBar(string Letter, string Label, int Score, string? Description = null);
 
 public sealed record PupilPassportCultureSlider(string Label, int Position);
 

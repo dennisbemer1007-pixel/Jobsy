@@ -36,6 +36,7 @@ public static class PupilG78PageLint
         CheckStoryCultureTileTheme(pkg, issues);
         CheckStoryExactDuplicateSentences(pkg.Body, issues);
         CheckZoOokJeSubject(pageText, issues);
+        CheckTripleEnListJoins(pageText, issues);
         return issues;
     }
 
@@ -301,6 +302,18 @@ public static class PupilG78PageLint
             if (!Regex.IsMatch(fragment, @"\bje\b", RegexOptions.IgnoreCase))
             {
                 issues.Add(new PupilG78PageLintIssue("zo-ook-je", $"{match.Groups[1].Value} {Truncate(fragment)}"));
+            }
+        }
+    }
+
+    private static void CheckTripleEnListJoins(string pageText, List<PupilG78PageLintIssue> issues)
+    {
+        foreach (var sentence in SplitSentences(pageText))
+        {
+            var enCount = Regex.Matches(sentence, @"\ben\b", RegexOptions.IgnoreCase).Count;
+            if (enCount >= 3)
+            {
+                issues.Add(new PupilG78PageLintIssue("triple-en-list", Truncate(NormalizeSentence(sentence))));
             }
         }
     }

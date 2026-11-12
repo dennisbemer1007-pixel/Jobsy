@@ -246,23 +246,36 @@ public static class PupilG78StorySummaries
         var hasHandvaardigheid = ranked.Any(k =>
             string.Equals(k, "handvaardigheid", StringComparison.OrdinalIgnoreCase));
 
-        return picked
-            .Select(key => FormatVakStoryName(key, hasHandvaardigheid))
+        var names = new List<string>();
+        foreach (var key in picked)
+        {
+            if (string.Equals(key, "handvaardigheid", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (hasHandvaardigheid
+                && string.Equals(key, "tekenen", StringComparison.OrdinalIgnoreCase))
+            {
+                names.Add(PupilVakSubjectLabels.NlStoryList("tekenen"));
+                names.Add(PupilVakSubjectLabels.NlStoryList("handvaardigheid"));
+                continue;
+            }
+
+            names.Add(FormatVakStoryName(key));
+        }
+
+        return names
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n.StartsWith("het vak", StringComparison.OrdinalIgnoreCase) ? 1 : 0)
             .ToList();
     }
 
-    private static string FormatVakStoryName(string subjectKey, bool includeHandvaardigheidWithTekenen)
+    private static string FormatVakStoryName(string subjectKey)
     {
         if (string.Equals(subjectKey, "natuur-techniek", StringComparison.OrdinalIgnoreCase))
         {
             return "het vak natuur en techniek";
-        }
-
-        if (includeHandvaardigheidWithTekenen
-            && string.Equals(subjectKey, "tekenen", StringComparison.OrdinalIgnoreCase))
-        {
-            return "tekenen en handvaardigheid";
         }
 
         return PupilVakSubjectLabels.NlStoryList(subjectKey);

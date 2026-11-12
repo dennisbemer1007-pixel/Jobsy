@@ -93,6 +93,23 @@ public sealed class G78ResultPagePlaywrightTests : BunitContext
         });
     }
 
+  private static IReadOnlyList<string> ParseLikes(string? likesJson)
+  {
+      if (string.IsNullOrWhiteSpace(likesJson))
+      {
+          return [];
+      }
+
+      try
+      {
+          return System.Text.Json.JsonSerializer.Deserialize<List<string>>(likesJson) ?? [];
+      }
+      catch
+      {
+          return [];
+      }
+  }
+
   private static (PupilResult Result, PupilProgress Progress) FixtureFor(string profile) => profile switch
   {
       "helpt-anderen" => PupilG78RealisticFixtures.HelpsOthers(),
@@ -107,12 +124,13 @@ public sealed class G78ResultPagePlaywrightTests : BunitContext
       var story = renderer.Render(fixture.Result, fixture.Progress, "nl");
       var culture = Services.GetRequiredService<CultureState>();
       culture.SetLanguageAsync("nl").GetAwaiter().GetResult();
+      var likeKeys = ParseLikes(fixture.Progress.LikesJson);
       var dto = new PupilResultPageDto(
           "8B",
           "DEMO-CODE",
           "Demo OBS",
           story,
-          ["theater", "lezen"],
+          likeKeys,
           [],
           null,
           null,
