@@ -59,13 +59,17 @@ public static class PupilStopSsrHtml
         }
 
         sb.Append("</section>");
-        sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
-            culture,
-            culture["Leerling.Coach.Stop"],
-            culture["Leerling.Coach.Stop"],
-            "ll-stop-coach",
-            "kreeft-welkom.png",
-            mobileGuideFirst: true));
+        if (!paused)
+        {
+            sb.Append(PupilGroep78SsrParts.Groep78CoachAside(
+                culture,
+                culture["Leerling.Coach.Stop"],
+                culture["Leerling.Coach.Stop"],
+                "ll-stop-coach",
+                "kreeft-welkom.png",
+                mobileGuideFirst: true));
+        }
+
         sb.Append("</div></div>");
         return sb.ToString();
     }

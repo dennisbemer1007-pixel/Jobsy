@@ -321,19 +321,40 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
         var saved = await PutAnswerAsync(api, apiTicket, itemId!, 3);
         Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+        // Sync the web cookie jar with the API session ticket before pausing.
+        var refreshReis = await client.GetAsync("/leerling/reis");
+        Assert.Equal(HttpStatusCode.OK, refreshReis.StatusCode);
 
         var pause = await client.PostAsync(
             "/leerling/pauze",
             new FormUrlEncodedContent(pauseFields));
         Assert.Equal(HttpStatusCode.Redirect, pause.StatusCode);
         Assert.Contains("/leerling/stop", pause.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
-        Assert.Contains("done=1", pause.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        var stopLocation = pause.Headers.Location?.ToString() ?? "";
+        Assert.Contains("done=1", stopLocation, StringComparison.Ordinal);
+        Assert.Contains("ja=1", stopLocation, StringComparison.Ordinal);
 
         var stop = await client.GetAsync(pause.Headers.Location!);
         var stopHtml = await stop.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, stop.StatusCode);
         Assert.Contains("data-testid=\"leerling-stop-pause\"", stopHtml, StringComparison.Ordinal);
         Assert.Contains("Goed gedaan", stopHtml, StringComparison.Ordinal);
+        Assert.Contains("1 van 60", stopHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("ll-g78-coach-mobile", stopHtml, StringComparison.Ordinal);
+
+        var relogin = await PostLoginWithPageAntiforgeryAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, relogin.StatusCode);
+        Assert.Contains("/leerling/reis", relogin.Headers.Location?.ToString() ?? "", StringComparison.Ordinal);
+        var resumedTicket = CookieValue(relogin.Headers.GetValues("Set-Cookie"), PupilApiSessionCookie.Name)!;
+        await client.GetAsync(relogin.Headers.Location!);
+        var after = await GetProgressAsync(api, resumedTicket);
+        Assert.Equal(HttpStatusCode.OK, after.Status);
+        Assert.Equal(1, after.Body!.AnsweredCount);
+        Assert.NotEqual(itemId, after.Body.CurrentItemId);
+        var resumed = await client.GetAsync("/leerling/reis");
+        Assert.Equal(HttpStatusCode.OK, resumed.StatusCode);
+        var resumedHtml = await resumed.Content.ReadAsStringAsync();
+        Assert.Equal(after.Body.CurrentItemId, ExtractHiddenInput(resumedHtml, "ItemId"));
     }
 
     [Fact]
