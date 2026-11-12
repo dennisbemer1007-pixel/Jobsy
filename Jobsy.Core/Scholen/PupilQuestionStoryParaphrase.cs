@@ -32,7 +32,7 @@ public static class PupilQuestionStoryParaphrase
             : ClauseNl(itemId, reverse, answer);
     }
 
-  /// <summary>Clause when the pupil clearly disagreed (effective ≤ 2).</summary>
+    /// <summary>Clause when the pupil clearly disagreed (effective ≤ 2).</summary>
     public static string? StrongDisagreeClause(int itemId, bool reverse, int answer, string language = "nl")
     {
         if (answer is < 1 or > 5)
