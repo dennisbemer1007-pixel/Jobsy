@@ -3030,6 +3030,51 @@
   display: block;
 }
 
+.ll-g78-shell .g78-job-why-wrap {
+  position: relative;
+}
+
+.ll-g78-shell .g78-job-why-btn.ll-info-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--brass2) 55%, transparent);
+  background: color-mix(in srgb, var(--paper) 95%, var(--brass2));
+  color: var(--brand);
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.ll-g78-shell .g78-job-why-panel.ll-info {
+  margin: 0 0 10px;
+  background: color-mix(in srgb, var(--paper) 94%, var(--brass2));
+  border: 1px solid color-mix(in srgb, var(--brass2) 40%, transparent);
+  border-radius: 12px;
+  padding: 12px 14px 10px;
+  color: var(--ink);
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.ll-g78-shell .g78-job-why-panel__title {
+  margin: 0 0 6px;
+  color: var(--brand);
+  font-size: 0.95rem;
+}
+
+.ll-g78-shell .g78-job-why-panel__body {
+  margin: 0;
+}
+
+.ll-g78-shell .lp-g78__job,
+.ll-g78-shell .card-deco .jpick {
+  position: relative;
+}
+
 .ll-g78-shell .jpick .jwhy {
   font-size: 15px;
   color: var(--ink);

@@ -804,7 +804,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         Assert.Equal(5, await page.Locator("[data-testid=ll-g78-job-picks] .jpick-paint img").CountAsync());
         Assert.True(await page.GetByRole(AriaRole.Link, new() { Name = "Vorige" }).IsVisibleAsync());
         Assert.DoesNotContain("Andere baan", await page.Locator(".ll-dream-pick .qfoot").InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
-        Assert.True(await page.Locator(".jpick .jwhy").CountAsync() >= 5);
+        Assert.True(await page.Locator("[data-testid=ll-g78-job-picks] .g78-job-why-btn").CountAsync() >= 5);
         Assert.True(await page.Locator(".jpick-next.on").IsVisibleAsync());
         Row("12-droombaan", "load+screenshot", VisualResult(
             await CaptureAsync("12-droombaan", "12-zee-beroep-kiezen.png", async () => { }, fullPage: true)));

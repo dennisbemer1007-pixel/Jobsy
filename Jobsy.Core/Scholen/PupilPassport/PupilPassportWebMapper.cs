@@ -44,7 +44,8 @@ public static class PupilPassportWebMapper
             c.Title,
             c.Blurb,
             c.FitTags,
-            c.MatchPercent)).ToList();
+            c.MatchPercent,
+            c.WhyFit)).ToList();
 
         var strengths = m.Strengths.Select(s => new PupilG78PassportStrengthDto(
             s.Title,
@@ -143,7 +144,8 @@ public sealed record PupilG78PassportCardDto(
     string Title,
     string Blurb,
     IReadOnlyList<string> FitTags,
-    int? MatchPercent = null);
+    int? MatchPercent = null,
+    string? WhyFit = null);
 
 public sealed record PupilG78PassportStrengthDto(string Title, string Subtitle, string IconKey);
 

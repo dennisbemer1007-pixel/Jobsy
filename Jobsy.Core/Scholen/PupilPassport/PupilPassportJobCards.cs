@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
@@ -41,6 +42,8 @@ public static class PupilPassportJobCards
 
     public static IReadOnlyList<PupilPassportOccupationCard> BuildGroep78(
         IReadOnlyList<PupilG78JobMatch> matches,
+        PupilResult result,
+        PupilProgress? progress,
         string language = "nl")
     {
         var english = PupilVerhaalLocalized.IsEnglish(language);
@@ -59,6 +62,7 @@ public static class PupilPassportJobCards
                 ? Array.Empty<string>()
                 : new[] { domain };
             var matchPercent = PupilG78CareerScoring.MatchPercentInt(match.MatchScore);
+            var why = PupilG78JobMatchExplanation.Build(key, result, progress, language);
             cards.Add(new PupilPassportOccupationCard(
                 rank,
                 domain,
@@ -66,7 +70,8 @@ public static class PupilPassportJobCards
                 blurb,
                 tags,
                 IconFor(key),
-                matchPercent));
+                matchPercent,
+                why));
             rank++;
         }
 

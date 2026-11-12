@@ -187,7 +187,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
                 .ToList();
             var jobMatches = PupilG78CareerScoring.TopJobMatches(result, progress, vak, maxCount: 5);
             topJobs = jobMatches.Select(m => m.JobKey).ToList();
-            cards = PupilPassportJobCards.BuildGroep78(jobMatches, lang);
+            cards = PupilPassportJobCards.BuildGroep78(jobMatches, result, progress, lang);
             samen = BuildSamenAssignment(result, lang);
             parentTips =
             [

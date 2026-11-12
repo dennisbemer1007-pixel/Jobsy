@@ -251,4 +251,24 @@ public static class PupilLeerlingSsrParts
 
         return sb.ToString();
     }
+
+    public static string Groep78JobWhyPanel(string jobKey, string title, string? bodyText)
+    {
+        if (string.IsNullOrWhiteSpace(bodyText))
+        {
+            return "";
+        }
+
+        var panelId = $"g78-job-why-{jobKey}";
+        return $"""
+            <div class="g78-job-why-wrap">
+            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="{E(title)}" aria-expanded="false" aria-controls="{E(panelId)}">i</button>
+            <div id="{E(panelId)}" class="ll-info g78-job-why-panel" hidden>
+            <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
+            <p class="g78-job-why-panel__title"><b>{E(title)}</b></p>
+            <p class="g78-job-why-panel__body">{E(bodyText)}</p>
+            </div>
+            </div>
+            """;
+    }
 }

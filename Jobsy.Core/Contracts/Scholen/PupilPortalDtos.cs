@@ -119,7 +119,8 @@ public sealed record PupilG78JobSuggestionDto(
     string Title,
     string DomainLabel,
     int MatchPercent,
-    string Blurb);
+    string Blurb,
+    string? WhyFit = null);
 
 public sealed record PupilResultPageDto(
     string ClassLabel,
