@@ -137,7 +137,6 @@ internal static class PupilG78StoryFlow
         var s = text
             .Replace(", en Je ", ", en je ", StringComparison.Ordinal)
             .Replace(". Ook Je ", ". Ook je ", StringComparison.Ordinal)
-            .Replace(". Daarbij Je ", ". Daarbij ", StringComparison.Ordinal)
             .Replace(". Ook In ", ". Ook in ", StringComparison.Ordinal)
             .Replace(". Ook\n", ". ", StringComparison.Ordinal);
         if (s.EndsWith(" Ook", StringComparison.Ordinal)
