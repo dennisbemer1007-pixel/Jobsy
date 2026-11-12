@@ -132,7 +132,7 @@ public static class PupilAuthEndpoints
             var part = form["part"].ToString();
             var stopQuery = BuildStopRedirectQuery(form, part, progress);
             return Results.Redirect($"/leerling/stop{stopQuery}");
-        }).AllowAnonymous();
+        }).AllowAnonymous().DisableAntiforgery();
     }
 
     public static ClaimsPrincipal CreatePrincipal(PupilLoginResponse login)
