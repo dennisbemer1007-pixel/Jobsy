@@ -180,6 +180,8 @@ public static class PupilG78JobMatchExplanation
         {
             var reflection = PupilG78CompetenceFromAnswers.PupilReflectionClause(
                 req.Category,
+                req.NeedKey,
+                jobKey,
                 answersJson,
                 ref exploreUsed);
             lines.Add(new PupilG78JobCompetencyLine(req.JobAsksLabel, reflection));

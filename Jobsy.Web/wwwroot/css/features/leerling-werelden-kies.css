@@ -3030,11 +3030,13 @@
   display: block;
 }
 
-.ll-g78-shell .g78-job-why-wrap {
+.ll-g78-shell .g78-job-why-wrap,
+.lp-g78 .g78-job-why-wrap {
   position: relative;
 }
 
-.ll-g78-shell .g78-job-why-btn.ll-info-btn {
+.ll-g78-shell .g78-job-why-btn.ll-info-btn,
+.lp-g78 .g78-job-why-btn.ll-info-btn {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -3049,7 +3051,8 @@
   z-index: 2;
 }
 
-.ll-g78-shell .g78-job-why-panel.ll-info {
+.ll-g78-shell .g78-job-why-panel.ll-info,
+.lp-g78 .g78-job-why-panel.ll-info {
   margin: 0 0 12px;
   background: color-mix(in srgb, var(--paper) 92%, var(--brass2));
   border: 1px solid color-mix(in srgb, var(--brass2) 45%, transparent);
@@ -3065,29 +3068,36 @@
   box-shadow: 0 2px 8px color-mix(in srgb, var(--navy) 6%, transparent);
 }
 
-.ll-g78-shell .g78-job-why-panel__title {
+.ll-g78-shell .g78-job-why-panel__title,
+.lp-g78 .g78-job-why-panel__title {
   margin: 0 0 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid color-mix(in srgb, var(--brass2) 35%, transparent);
-  color: var(--brand);
-  font-size: 0.95rem;
+  color: var(--navy);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.05rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
-.ll-g78-shell .g78-job-why-panel__body {
+.ll-g78-shell .g78-job-why-panel__body,
+.lp-g78 .g78-job-why-panel__body {
   margin: 0;
 }
 
-.ll-g78-shell .g78-job-why-panel__section {
+.ll-g78-shell .g78-job-why-panel__section,
+.lp-g78 .g78-job-why-panel__section {
   margin: 0 0 14px;
   padding: 0;
 }
 
-.ll-g78-shell .g78-job-why-panel__section--last {
+.ll-g78-shell .g78-job-why-panel__section--last,
+.lp-g78 .g78-job-why-panel__section--last {
   margin-bottom: 0;
 }
 
-.ll-g78-shell .g78-job-why-panel__section-title {
+.ll-g78-shell .g78-job-why-panel__section-title,
+.lp-g78 .g78-job-why-panel__section-title {
   margin: 0 0 8px;
   padding: 0;
   color: var(--navy);
@@ -3097,22 +3107,26 @@
   line-height: 1.35;
 }
 
-.ll-g78-shell .g78-job-why-panel__section-body {
+.ll-g78-shell .g78-job-why-panel__section-body,
+.lp-g78 .g78-job-why-panel__section-body {
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.55;
   color: var(--ink);
 }
 
-.ll-g78-shell .g78-job-why-panel__section-body p {
+.ll-g78-shell .g78-job-why-panel__section-body p,
+.lp-g78 .g78-job-why-panel__section-body p {
   margin: 0 0 8px;
 }
 
-.ll-g78-shell .g78-job-why-panel__section-body p:last-child {
+.ll-g78-shell .g78-job-why-panel__section-body p:last-child,
+.lp-g78 .g78-job-why-panel__section-body p:last-child {
   margin-bottom: 0;
 }
 
-.ll-g78-shell .g78-job-why-panel__comp-list {
+.ll-g78-shell .g78-job-why-panel__comp-list,
+.lp-g78 .g78-job-why-panel__comp-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -3121,7 +3135,8 @@
   gap: 8px;
 }
 
-.ll-g78-shell .g78-job-why-panel__comp-row {
+.ll-g78-shell .g78-job-why-panel__comp-row,
+.lp-g78 .g78-job-why-panel__comp-row {
   margin: 0;
   padding: 10px 11px;
   border-radius: 10px;
@@ -3135,24 +3150,28 @@
 }
 
 @media (min-width: 768px) {
-  .ll-g78-shell .g78-job-why-panel.ll-info {
+  .ll-g78-shell .g78-job-why-panel.ll-info,
+.lp-g78 .g78-job-why-panel.ll-info {
     padding: 16px 16px 14px;
     font-size: 0.92rem;
     max-height: min(65vh, 560px);
   }
 
-  .ll-g78-shell .g78-job-why-panel__section-title {
+  .ll-g78-shell .g78-job-why-panel__section-title,
+  .lp-g78 .g78-job-why-panel__section-title {
     font-size: 0.86rem;
   }
 
-  .ll-g78-shell .g78-job-why-panel__comp-row {
+  .ll-g78-shell .g78-job-why-panel__comp-row,
+.lp-g78 .g78-job-why-panel__comp-row {
     font-size: 0.86rem;
     padding: 11px 12px;
   }
 }
 
 @media (min-width: 1440px) {
-  .ll-g78-shell .g78-job-why-panel.ll-info {
+  .ll-g78-shell .g78-job-why-panel.ll-info,
+.lp-g78 .g78-job-why-panel.ll-info {
     max-height: 480px;
   }
 }

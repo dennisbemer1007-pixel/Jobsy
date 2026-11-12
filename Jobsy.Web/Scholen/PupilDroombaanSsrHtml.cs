@@ -150,7 +150,6 @@ public static class PupilDroombaanSsrHtml
         sb.Append(antiforgeryFieldHtml);
         sb.Append("""<div class="job-picks" role="radiogroup" data-testid="ll-g78-job-picks" aria-label="Kies een beroep">""");
         var picks = BuildJobPickList(model);
-        var whyTitle = culture["Leerling.G78.Job.WhyTitle"];
         var whyByKey = (model.Result.JobSuggestions ?? [])
             .Select(s => (Key: PupilGroep78MockHtml.ResolveJobKey(s.Title), s.WhyFit))
             .Where(x => !string.IsNullOrWhiteSpace(x.Key) && !string.IsNullOrWhiteSpace(x.WhyFit))
@@ -159,7 +158,7 @@ public static class PupilDroombaanSsrHtml
         foreach (var (key, title, domain, blurb) in picks)
         {
             whyByKey.TryGetValue(key, out var whyFit);
-            var whyPanel = PupilLeerlingSsrParts.Groep78JobWhyPanel(key, whyTitle, whyFit);
+            var whyPanel = PupilLeerlingSsrParts.Groep78JobWhyPanel(key, title, whyFit);
             sb.Append(PupilGroep78MockHtml.JobPickCard(culture, key, title, domain, blurb, selected: false, journeyThemeKey, whyPanel));
         }
 

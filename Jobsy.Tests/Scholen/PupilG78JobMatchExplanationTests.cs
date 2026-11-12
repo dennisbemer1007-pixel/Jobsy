@@ -102,17 +102,17 @@ public class PupilG78JobMatchExplanationTests
         var progressArt = ProgressWithLikes(
             ["tekenen"],
             CareerAnswers("9018", 5, "9029", 5),
-            CompetenceAnswers(resultaat: 5, innovatie: 4));
+            CompetenceAnswers(samen: 3, resultaat: 3, stress: 3, innovatie: 3, extraversie: 3, "9007", 5));
         var progressTech = ProgressWithLikes(
             ["bouwen"],
             CareerAnswers("9016", 5, "9028", 5),
-            CompetenceAnswers(resultaat: 5, stress: 2),
+            CompetenceAnswers(samen: 3, resultaat: 3, stress: 1, innovatie: 3, extraversie: 3, "9002", 5, "9003", 2, "9008", 1),
             vakTeken: 3,
             vakNatuur: 5);
         var progressSurprise = ProgressWithLikes(
             ["gamen"],
             CareerAnswers("9025", 5),
-            CompetenceAnswers(resultaat: 4, innovatie: 5, stress: 3));
+            CompetenceAnswers(samen: 3, resultaat: 3, stress: 3, innovatie: 3, extraversie: 3, "9007", 4, "9009", 5));
         var e1 = PupilG78JobMatchExplanation.BuildContent("fotograaf", artistic, progressArt, "nl").FormatFullPlain();
         var e2 = PupilG78JobMatchExplanation.BuildContent("hovenier", tech, progressTech, "nl").FormatFullPlain();
         var e3 = PupilG78JobMatchExplanation.BuildContent("bioloog", artistic, progressSurprise, "nl").FormatFullPlain();
@@ -138,14 +138,36 @@ public class PupilG78JobMatchExplanationTests
         int resultaat = 3,
         int stress = 3,
         int innovatie = 3,
-        int extraversie = 3)
+        int extraversie = 3,
+        params object[] extraPairs)
     {
-        return CareerAnswers(
+        var pairs = new List<object>
+        {
             "9001", samen, "9006", samen,
             "9002", resultaat, "9007", resultaat,
             "9003", stress, "9008", stress,
             "9004", innovatie, "9009", innovatie,
-            "9005", extraversie, "9010", extraversie);
+            "9005", extraversie, "9010", extraversie,
+        };
+        pairs.AddRange(extraPairs);
+        return CareerAnswers(pairs.ToArray());
+    }
+
+    [Fact]
+    public void Competency_bullets_use_distinct_item_paraphrases_per_job()
+    {
+        var result = ArtisticResult();
+        var progressF = ProgressWithLikes(["tekenen"], CareerAnswers("9018", 5), CompetenceAnswers(3, 3, 3, 3, 3, "9007", 5));
+        var progressH = ProgressWithLikes(["bouwen"], CareerAnswers("9016", 5), CompetenceAnswers(3, 3, 3, 3, 3, "9002", 5));
+        var progressB = ProgressWithLikes(["gamen"], CareerAnswers("9025", 5), CompetenceAnswers(3, 3, 3, 3, 3, "9009", 5, "9007", 4));
+        var f = PupilG78JobMatchExplanation.BuildContent("fotograaf", result, progressF, "nl").Competencies[0].FormattedBullet;
+        var h = PupilG78JobMatchExplanation.BuildContent("hovenier", TechResult(), progressH, "nl").Competencies[0].FormattedBullet;
+        var b = PupilG78JobMatchExplanation.BuildContent("bioloog", result, progressB, "nl").Competencies
+            .First(c => c.JobAsksLabel.Contains("idee", StringComparison.OrdinalIgnoreCase)).FormattedBullet;
+        Assert.Contains("plan maakt", f, StringComparison.Ordinal);
+        Assert.Contains("huiswerk afmaakt", h, StringComparison.Ordinal);
+        Assert.Contains("iets nieuws te proberen", b, StringComparison.Ordinal);
+        Assert.DoesNotContain("huiswerk afmaakt", f, StringComparison.Ordinal);
     }
 
     private static PupilResult ArtisticResult() => new()

@@ -252,7 +252,7 @@ public static class PupilLeerlingSsrParts
         return sb.ToString();
     }
 
-    public static string Groep78JobWhyPanel(string jobKey, string title, string? bodyText)
+    public static string Groep78JobWhyPanel(string jobKey, string jobTitle, string? bodyText)
     {
         if (string.IsNullOrWhiteSpace(bodyText))
         {
@@ -260,12 +260,13 @@ public static class PupilLeerlingSsrParts
         }
 
         var panelId = $"g78-job-why-{jobKey}";
+        var aria = $"Meer info over {jobTitle}";
         return $"""
             <div class="g78-job-why-wrap">
-            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="{E(title)}" aria-expanded="false" aria-controls="{E(panelId)}">i</button>
+            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="{E(aria)}" aria-expanded="false" aria-controls="{E(panelId)}">i</button>
             <div id="{E(panelId)}" class="ll-info g78-job-why-panel" hidden>
             <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
-            <p class="g78-job-why-panel__title"><b>{E(title)}</b></p>
+            <p class="g78-job-why-panel__title"><b>{E(jobTitle)}</b></p>
             <div class="g78-job-why-panel__body">{bodyText}</div>
             </div>
             </div>

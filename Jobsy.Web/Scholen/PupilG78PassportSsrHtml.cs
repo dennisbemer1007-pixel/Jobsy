@@ -271,12 +271,11 @@ public static class PupilG78PassportSsrHtml
             sb.Append("<small>");
             sb.Append(E(culture["LeerlingPassport.Cards.Sub"]));
             sb.Append("</small></h2><div class=\"lp-g78__jobs\">");
-            var whyTitle = culture["Leerling.G78.Job.WhyTitle"];
             foreach (var job in model.OccupationCards)
             {
                 var jobKey = PupilGroep78MockHtml.ResolveJobKey(job.Title);
                 sb.Append("<article class=\"lp-g78__card lp-g78__job\">");
-                sb.Append(PupilLeerlingSsrParts.Groep78JobWhyPanel(jobKey, whyTitle, job.WhyFit));
+                sb.Append(PupilLeerlingSsrParts.Groep78JobWhyPanel(jobKey, job.Title, job.WhyFit));
                 sb.Append("<div class=\"lp-g78__job-k\">");
                 sb.Append(E(job.DomainLabel));
                 sb.Append("</div><h4>");
