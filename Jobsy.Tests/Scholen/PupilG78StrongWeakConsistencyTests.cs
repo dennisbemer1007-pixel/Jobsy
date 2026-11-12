@@ -36,7 +36,7 @@ public sealed class PupilG78StrongWeakConsistencyTests
         foreach (var g in pkg.GrowthCompetencies)
         {
             Assert.False(
-                PupilG78StrengthGuard.GrowthCategoryPublishedStrong(pkg.UsedItemIds, g.Category, answers),
+                PupilG78StrengthGuard.PagePublishesCategoryAsStrength(pkg.UsedItemIds, g.Category, answers),
                 g.Category);
             Assert.False(string.IsNullOrWhiteSpace(g.WhyExplanation));
         }

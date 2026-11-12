@@ -7,8 +7,16 @@ namespace Jobsy.Core.Scholen;
 /// <summary>Traceable story lines from scores (no extra question items consumed).</summary>
 public static class PupilG78StorySummaries
 {
-    public static string CompetencyStrengthLine(string competencyCategory, IReadOnlyDictionary<string, int> answers)
+    public static string CompetencyStrengthLine(
+        string competencyCategory,
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string>? growthCategories = null)
     {
+        if (growthCategories is not null && growthCategories.Contains(competencyCategory))
+        {
+            return "";
+        }
+
         var avg = PupilG78GrowthCompetencies.DimensionAverages(answers);
         if (!avg.TryGetValue(competencyCategory, out var mean) || mean < 3.25)
         {
@@ -31,17 +39,26 @@ public static class PupilG78StorySummaries
         };
     }
 
-    public static string SocialOverviewLine(PupilResult result, IReadOnlyDictionary<string, int> answers)
+    public static string SocialOverviewLine(
+        PupilResult result,
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlySet<string>? growthCategories = null)
     {
         var avg = PupilG78GrowthCompetencies.DimensionAverages(answers);
-        if (avg.TryGetValue(CompetencyTestCatalog.Samenwerken, out var sw) && sw >= 3.5)
+        if (growthCategories is null || !growthCategories.Contains(CompetencyTestCatalog.Samenwerken))
         {
-            return "Je bent vaak bezig met de mensen om je heen.";
+            if (avg.TryGetValue(CompetencyTestCatalog.Samenwerken, out var sw) && sw >= 3.5)
+            {
+                return "Je bent vaak bezig met de mensen om je heen.";
+            }
         }
 
-        if (avg.TryGetValue(CompetencyTestCatalog.Extraversie, out var ex) && ex >= 3.5)
+        if (growthCategories is null || !growthCategories.Contains(CompetencyTestCatalog.Extraversie))
         {
-            return "In een groep vind je het fijn als er contact is.";
+            if (avg.TryGetValue(CompetencyTestCatalog.Extraversie, out var ex) && ex >= 3.5)
+            {
+                return "In een groep vind je het fijn als er contact is.";
+            }
         }
 
         var holland = (result.HollandCode ?? "").ToUpperInvariant();
@@ -106,7 +123,8 @@ public static class PupilG78StorySummaries
         PupilResult result,
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vak,
-        string language)
+        string language,
+        IReadOnlySet<string>? growthCategories = null)
     {
         var sentences = new List<string>();
         var vakNames = vak
@@ -126,7 +144,7 @@ public static class PupilG78StorySummaries
             sentences.Add($"In je vrije tijd ben je graag bezig met {JoinDutchList(hobbies.Select(h => h.ToLowerInvariant()).ToList())}.");
         }
 
-        var riasec = RiasecTopTwoSentence(result);
+        var riasec = RiasecTopTwoSentence(result, growthCategories);
         if (riasec.Length > 0)
         {
             sentences.Add(riasec);
@@ -140,12 +158,37 @@ public static class PupilG78StorySummaries
         return PupilG78StoryFlow.FlowJoin(sentences);
     }
 
-    public static string RiasecTopTwoSentence(PupilResult result)
+    public static string RiasecTopTwoSentence(
+        PupilResult result,
+        IReadOnlySet<string>? growthCategories = null)
     {
         var holland = (result.HollandCode ?? "").Trim().ToUpperInvariant();
         var bits = new List<string>();
         foreach (var ch in holland.Take(3))
         {
+            if (growthCategories is not null)
+            {
+                if (ch == 'C' && growthCategories.Contains(CompetencyTestCatalog.Resultaatgerichtheid))
+                {
+                    continue;
+                }
+
+                if (ch == 'S' && growthCategories.Contains(CompetencyTestCatalog.Samenwerken))
+                {
+                    continue;
+                }
+
+                if (ch == 'A' && growthCategories.Contains(CompetencyTestCatalog.Innovatie))
+                {
+                    continue;
+                }
+
+                if (ch == 'E' && growthCategories.Contains(CompetencyTestCatalog.Extraversie))
+                {
+                    continue;
+                }
+            }
+
             var bit = ch switch
             {
                 'R' => "praktisch werken",

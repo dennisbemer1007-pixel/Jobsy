@@ -28,6 +28,8 @@ public sealed record PupilG78PreferencesCompact(
     IReadOnlyList<string> HobbyLeuk,
     IReadOnlyList<string> BelangrijkItems);
 
+public sealed record PupilG78CompetencyExampleAnchor(string Category, int ItemId);
+
 public sealed record PupilG78StoryPackage(
     string Body,
     IReadOnlyList<int> UsedItemIds,
@@ -35,7 +37,8 @@ public sealed record PupilG78StoryPackage(
     IReadOnlyList<PupilStoryTileDto> Tiles,
     PupilG78PreferencesCompact Preferences,
     CandidateFactSheet FactSheet,
-    IReadOnlyList<PupilG78GrowthCompetencyDto> GrowthCompetencies);
+    IReadOnlyList<PupilG78GrowthCompetencyDto> GrowthCompetencies,
+    IReadOnlyList<PupilG78CompetencyExampleAnchor> CompetencyExamples);
 
 /// <summary>Fact-only G78 "Dit ben jij" story from Likert answers (deterministic, no AI).</summary>
 public static class PupilG78FactStory
@@ -56,36 +59,75 @@ public static class PupilG78FactStory
         var growthCategories = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4).ToList();
         var growthCategorySet = growthCategories.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(answers, growthCategorySet);
-        var tilePlan = PupilG78ContentAllocation.PlanTileItems(
-            clauses,
-            growthCategorySet,
-            blockedIds: new HashSet<int>(),
-            maxPerTile: 3);
-        var tilePlanIds = tilePlan.Values.SelectMany(v => v).ToHashSet();
         var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(
             clauses,
             storyStrongCategories,
             growthCategorySet,
-            tilePlanIds);
-        var reservedForStory = competencyExampleIds.ToHashSet();
-        var blockedForStory = reservedForStory.Union(tilePlanIds).ToHashSet();
-        var tilePreviewTexts = PreviewTileJeSentences(clauses, tilePlan);
-        var paragraphs = PupilG78StoryComposer.ComposeOverview(
-            clauses,
+            excludeIds: null);
+        var storyOpeningIds = PupilG78ContentAllocation.ReserveStorySocialOpenings(
             result,
-            progress,
-            vak,
-            language,
-            answers,
-            tilePlanIds,
-            tilePreviewTexts,
+            clauses,
+            growthCategorySet);
+        var competencyReserved = competencyExampleIds.ToHashSet();
+        var storyReservedForTiles = competencyReserved
+            .Union(storyOpeningIds)
+            .ToHashSet();
+        var tilePlan = PupilG78ContentAllocation.PlanTileItems(
+            clauses,
             growthCategorySet,
-            storyStrongCategories,
-            competencyExampleIds,
-            out var storyIds);
-        var storyReserved = blockedForStory.Union(storyIds).ToHashSet();
+            blockedIds: storyReservedForTiles,
+            maxPerTile: 3);
+        var reservedForStory = competencyExampleIds.ToHashSet();
+        var tilePlanIds = tilePlan.Values.SelectMany(v => v).ToHashSet();
+        IReadOnlyList<string> paragraphs = [];
+        IReadOnlyList<int> storyIds = [];
+        IReadOnlyList<PupilG78CompetencyExampleAnchor> competencyExamples = [];
+        HashSet<int> fullStoryIds = [];
+        for (var pass = 0; pass < 3; pass++)
+        {
+            tilePlanIds = tilePlan.Values.SelectMany(v => v).ToHashSet();
+            var tilePreviewTexts = PreviewTileJeSentences(clauses, tilePlan);
+            paragraphs = PupilG78StoryComposer.ComposeOverview(
+                clauses,
+                result,
+                progress,
+                vak,
+                language,
+                answers,
+                tilePlanIds,
+                tilePreviewTexts,
+                growthCategorySet,
+                storyStrongCategories,
+                competencyExampleIds,
+                out storyIds,
+                out competencyExamples);
+            fullStoryIds = storyIds.Union(storyOpeningIds).ToHashSet();
+            var reconciled = PupilG78ContentAllocation.ReconcileTilePlanWithStory(
+                tilePlan,
+                clauses,
+                fullStoryIds,
+                growthCategorySet,
+                storyReservedForTiles,
+                maxPerTile: 3);
+            if (PlansEqual(tilePlan, reconciled))
+            {
+                break;
+            }
+
+            tilePlan = reconciled;
+        }
+
+        tilePlanIds = tilePlan.Values.SelectMany(v => v).ToHashSet();
+        fullStoryIds = storyIds.Union(storyOpeningIds).ToHashSet();
+        var blockedForStory = reservedForStory.Union(tilePlanIds).ToHashSet();
+        var storyReserved = blockedForStory.Union(fullStoryIds).ToHashSet();
         var (tiles, tileIds) = PupilG78FactTileComposer.BuildFromPlan(
-            clauses, language, tilePlan, growthCategorySet);
+            clauses,
+            language,
+            tilePlan,
+            growthCategorySet,
+            storyReservedForTiles,
+            fullStoryIds);
         var tileIdSet = tileIds.ToHashSet();
         var body = string.Join(ParagraphBreak, paragraphs);
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
@@ -97,7 +139,7 @@ public static class PupilG78FactStory
         var allUsed = pageItemIds.ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
-        return new PupilG78StoryPackage(body, allUsed, storyIds, tiles, preferences, sheet, growth);
+        return new PupilG78StoryPackage(body, allUsed, fullStoryIds.ToList(), tiles, preferences, sheet, growth, competencyExamples);
     }
 
     public static IReadOnlyList<string> SplitParagraphs(string body)
@@ -291,6 +333,31 @@ public static class PupilG78FactStory
 
         _ = usedStoryIds;
         return new PupilG78PreferencesCompact(school, hobbies, belangrijk);
+    }
+
+    private static bool PlansEqual(
+        IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> a,
+        IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        foreach (var (kind, ids) in a)
+        {
+            if (!b.TryGetValue(kind, out var other))
+            {
+                return false;
+            }
+
+            if (!ids.SequenceEqual(other))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static List<string> DedupeHobbyVsSchool(List<string> hobbies, List<string> school)

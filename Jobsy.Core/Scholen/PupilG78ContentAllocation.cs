@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
@@ -15,6 +16,51 @@ public static class PupilG78ContentAllocation
             .Where(c => !growthCategories.Contains(c))
             .Take(count)
             .ToList();
+
+    /// <summary>Reserve social/career clauses for paragraph 1 so tiles do not steal them.</summary>
+    public static IReadOnlyList<int> ReserveStorySocialOpenings(
+        PupilResult result,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<string> growthCategories)
+    {
+        var reserved = new List<int>();
+        if (string.Equals(result.TopValue, "Connection", StringComparison.OrdinalIgnoreCase)
+            && !growthCategories.Contains(CompetencyTestCatalog.Samenwerken))
+        {
+            TryReserveOpening(clauses, growthCategories, reserved, 9024, 9054);
+        }
+        else if (string.Equals(result.HollandCode, "ES", StringComparison.OrdinalIgnoreCase)
+                 && !growthCategories.Contains(CompetencyTestCatalog.Extraversie))
+        {
+            TryReserveOpening(clauses, growthCategories, reserved, 9026, 9042);
+        }
+        else if (string.Equals(result.HollandCode, "IR", StringComparison.OrdinalIgnoreCase))
+        {
+            TryReserveOpening(clauses, growthCategories, reserved, 9025, 9033);
+        }
+
+        return reserved;
+    }
+
+    private static void TryReserveOpening(
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<string> growthCategories,
+        List<int> reserved,
+        params int[] itemIds)
+    {
+        foreach (var id in itemIds)
+        {
+            var clause = clauses.FirstOrDefault(c => c.ItemId == id && c.EffectiveScore >= 4);
+            if (clause is null
+                || reserved.Contains(id)
+                || PupilG78StrengthGuard.IsForbiddenStrength(id, clause.EffectiveScore, growthCategories))
+            {
+                continue;
+            }
+
+            reserved.Add(id);
+        }
+    }
 
     public static IReadOnlyList<int> ReserveCompetencyExamples(
         IReadOnlyList<G78AnswerClause> clauses,
@@ -108,6 +154,14 @@ public static class PupilG78ContentAllocation
         var globalUsed = new HashSet<int>(blockedIds);
         var globalThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var selected = new HashSet<int>(blockedIds);
+        foreach (var id in blockedIds)
+        {
+            var key = PupilG78ThemeKeys.DedupeKey(id);
+            if (key is not null)
+            {
+                globalThemes.Add(key);
+            }
+        }
         foreach (var kind in kinds)
         {
             var picked = PickTileItems(
@@ -133,6 +187,95 @@ public static class PupilG78ContentAllocation
         }
 
         return result;
+    }
+
+    /// <summary>Drop or replace tile picks that clash with story themes after the story is composed.</summary>
+    public static IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> ReconcileTilePlanWithStory(
+        IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> plan,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> storyItemIds,
+        IReadOnlySet<string> growthCategories,
+        IReadOnlySet<int> blockedIds,
+        int maxPerTile = 3)
+    {
+        var storyThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in storyItemIds)
+        {
+            var key = PupilG78ThemeKeys.DedupeKey(id);
+            if (key is not null)
+            {
+                storyThemes.Add(key);
+            }
+        }
+
+        var result = new Dictionary<AssessmentKind, IReadOnlyList<int>>();
+        var globalUsed = new HashSet<int>(blockedIds);
+        var globalThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in blockedIds)
+        {
+            RememberTheme(id, globalThemes);
+        }
+
+        foreach (var (kind, ids) in plan)
+        {
+            var picked = new List<int>();
+            var localSelected = new HashSet<int>(globalUsed);
+            foreach (var id in ids)
+            {
+                if (StoryThemeClashes(id, storyThemes) || StoryThemeClashes(id, globalThemes))
+                {
+                    continue;
+                }
+
+                picked.Add(id);
+                localSelected.Add(id);
+                globalUsed.Add(id);
+                RememberTheme(id, globalThemes);
+            }
+
+            if (picked.Count < 2)
+            {
+                var topUp = PickTileItems(
+                    clauses,
+                    kind,
+                    growthCategories,
+                    globalUsed,
+                    globalThemes,
+                    localSelected,
+                    maxPerTile,
+                    minimum: 2 - picked.Count);
+                foreach (var id in topUp)
+                {
+                    if (picked.Contains(id) || StoryThemeClashes(id, storyThemes))
+                    {
+                        continue;
+                    }
+
+                    picked.Add(id);
+                    globalUsed.Add(id);
+                    RememberTheme(id, globalThemes);
+                }
+            }
+
+            result[kind] = picked.Take(maxPerTile).ToList();
+        }
+
+        return result;
+    }
+
+    private static bool StoryThemeClashes(int itemId, IReadOnlySet<string> storyThemes)
+    {
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        return key is not null && storyThemes.Contains(key);
+    }
+
+    private static void RememberTheme(int itemId, HashSet<string> usedThemes)
+    {
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        if (key is not null)
+        {
+            usedThemes.Add(key);
+        }
     }
 
     private static List<int> PickTileItems(

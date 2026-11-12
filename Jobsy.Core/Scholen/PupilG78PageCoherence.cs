@@ -115,7 +115,7 @@ public static class PupilG78PageCoherence
         return clashes;
     }
 
-    private static IEnumerable<int> ExtractJeFormItemIds(string tileExplanation)
+    public static IEnumerable<int> ExtractJeFormItemIds(string tileExplanation)
     {
         for (var id = 9001; id <= 9060; id++)
         {

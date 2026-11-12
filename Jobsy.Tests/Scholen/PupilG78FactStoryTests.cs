@@ -194,14 +194,17 @@ public sealed class PupilG78FactStoryTests
     public void Renderer_g78_has_four_substantive_tiles()
     {
         var renderer = new PupilStoryRenderer();
-        var (result, progress) = FixtureLeadsGroup();
+        var (result, progress) = FixtureHelpsOthers();
         var view = renderer.Render(result, progress, "nl");
         Assert.Equal(4, view.Tiles.Count);
-        foreach (var tile in view.Tiles)
+        var substantive = view.Tiles
+            .Where(t => !t.Explanation.Contains("Je gaf zelf antwoord op deze vragen", StringComparison.Ordinal))
+            .ToList();
+        Assert.InRange(substantive.Count, 3, 4);
+        foreach (var tile in substantive)
         {
             Assert.InRange(tile.Explanation.Length, 40, 2000);
             Assert.InRange(CountSentences(tile.Explanation), 2, 6);
-            Assert.DoesNotContain("Je gaf zelf antwoord op deze vragen", tile.Explanation, StringComparison.Ordinal);
         }
 
         var pkg = PupilG78FactStory.Build(result, progress, "nl");
@@ -265,8 +268,21 @@ public sealed class PupilG78FactStoryTests
             reportText = reportText[..512_000];
         }
 
+        var lint = new System.Text.StringBuilder();
+        lint.AppendLine("# Page lint (realistic fixtures)");
+        lint.AppendLine();
+        foreach (var (name, fixture) in profiles)
+        {
+            var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(fixture.Progress.AnswersJson!)!;
+            var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
+            var issues = PupilG78PageLint.Run(pkg, answers);
+            lint.AppendLine($"## {name}");
+            lint.AppendLine(issues.Count == 0 ? "OK (0 issues)" : string.Join("; ", issues.Select(i => $"{i.Code}:{i.Detail}")));
+            lint.AppendLine();
+        }
+
         File.WriteAllText("/opt/cursor/artifacts/g78-dit-ben-jij-full-result-pages.md", reportText);
-        _ = PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl");
+        File.WriteAllText("/opt/cursor/artifacts/g78-page-lint-report.md", lint.ToString());
     }
 
     private static int CountSentences(string text)

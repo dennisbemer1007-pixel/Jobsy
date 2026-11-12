@@ -7,75 +7,71 @@ internal static class PupilG78RealisticFixtures
     internal static (PupilResult Result, PupilProgress Progress) HelpsOthers()
         => Build("SC", "Connection", "Collaboration",
             """["sport","dieren"]""",
-            """{"tekenen":{"leuk":5,"goed":4},"muziek":{"leuk":5,"goed":3}}""",
+            """{"tekenen":{"leuk":5,"goed":4},"handvaardigheid":{"leuk":5,"goed":4},"muziek":{"leuk":5,"goed":3}}""",
             BuildHelpsOthersAnswers());
 
     internal static (PupilResult Result, PupilProgress Progress) LeadsGroup()
         => Build("ES", "Autonomy", "Informal",
             """["theater","lezen"]""",
-            """{"geschiedenis":{"leuk":5,"goed":4},"engels":{"leuk":4,"goed":5}}""",
+            """{"geschiedenis":{"leuk":5,"goed":4},"engels":{"leuk":4,"goed":5},"nederlands":{"leuk":5,"goed":4}}""",
             BuildLeadsGroupAnswers());
 
     internal static (PupilResult Result, PupilProgress Progress) Maker()
         => Build("IR", "Achievement", "Flexibility",
             """["techniek","natuur"]""",
-            """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5}}""",
+            """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5},"techniek":{"leuk":5,"goed":4}}""",
             BuildMakerAnswers());
 
-  /** SC: growth communiceren + creativiteit; ≥22 answers at 4–5. */
+  /** SC: growth communiceren + creativiteit; story strengths samenwerken + doorzetten. */
     private static Dictionary<string, int> BuildHelpsOthersAnswers()
     {
         var d = BaselineThrees();
         for (var id = 9001; id <= 9060; id++)
         {
-            if (id is 9005 or 9010 or 9015 or 9004 or 9009 or 9014 or 9018)
-            {
-                continue;
-            }
-
-            d[id.ToString()] = id % 7 == 0 ? 4 : 5;
+            d[id.ToString()] = 4;
         }
 
-        Set(d, 2, 9005, 9010, 9004, 9009);
-        Set(d, 5, 9001, 9006, 9007, 9008, 9021, 9024, 9032, 9048);
+        Set(d, 2, 9004, 9009, 9005, 9010);
+        Set(d, 2, 9012, 9007, 9021, 9002, 9014);
+        Set(d, 5, 9001, 9003, 9006, 9008, 9013, 9024, 9054, 9017, 9025);
+        Set(d, 5, 9017, 9025, 9028, 9032, 9040, 9045, 9048, 9053);
+        Set(d, 2, 9031, 9032, 9036, 9041, 9042, 9046, 9047, 9019, 9020, 9030);
+        Set(d, 5, 9037);
         return d;
     }
 
-  /** ES: growth doorzetten + plannen; ≥22 highs. */
+  /** ES: growth doorzetten + plannen; strengths communiceren/creativiteit. */
     private static Dictionary<string, int> BuildLeadsGroupAnswers()
     {
         var d = BaselineThrees();
         for (var id = 9001; id <= 9060; id++)
         {
-            if (id is 9002 or 9007 or 9012 or 9021 or 9027 or 9034 or 9003 or 9008)
-            {
-                continue;
-            }
-
-            d[id.ToString()] = id % 5 == 0 ? 4 : 5;
+            d[id.ToString()] = 4;
         }
 
-        Set(d, 2, 9002, 9007, 9012, 9021, 9027, 9034, 9003, 9008);
-        Set(d, 5, 9005, 9010, 9020, 9026, 9049, 9058);
+        Set(d, 2, 9002, 9003, 9008, 9007, 9021, 9027, 9034);
+        Set(d, 5, 9001, 9004, 9005, 9009, 9010, 9020, 9026, 9018, 9029, 9041, 9042, 9049, 9050, 9054, 9056, 9057);
+        Set(d, 5, 9038, 9043);
+        Set(d, 5, 9006, 9019);
+        Set(d, 2, 9031, 9036, 9041, 9046, 9058, 9053, 9055);
         return d;
     }
 
-  /** IR: growth communiceren + samenwerken; ≥22 highs. */
+  /** IR: growth samenwerken + communiceren; strengths plannen/creativiteit/doorzetten. */
     private static Dictionary<string, int> BuildMakerAnswers()
     {
         var d = BaselineThrees();
         for (var id = 9001; id <= 9060; id++)
         {
-            if (id is 9005 or 9010 or 9015 or 9001 or 9006 or 9019 or 9024 or 9030 or 9049)
-            {
-                continue;
-            }
-
-            d[id.ToString()] = id % 6 == 0 ? 4 : 5;
+            d[id.ToString()] = 4;
         }
 
-        Set(d, 2, 9005, 9001, 9006, 9019);
-        Set(d, 5, 9002, 9007, 9024, 9052, 9056, 9057, 9046, 9010);
+        Set(d, 2, 9001, 9006, 9011, 9005, 9010, 9015, 9019, 9024, 9030, 9046, 9048);
+        Set(d, 5, 9002, 9003, 9004, 9007, 9008, 9021, 9017, 9025, 9033, 9038, 9043, 9052);
+        Set(d, 2, 9056, 9057);
+        Set(d, 3, 9027);
+        Set(d, 4, 9016, 9022);
+        Set(d, 2, 9020, 9026, 9032, 9042, 9054, 9051, 9058);
         return d;
     }
 

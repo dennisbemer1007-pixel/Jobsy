@@ -7,7 +7,7 @@ public static class PupilG78CompetencyExampleItems
 {
     private static readonly IReadOnlyDictionary<string, int[]> Preferred = new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase)
     {
-        [CompetencyTestCatalog.Samenwerken] = [9001, 9006],
+        [CompetencyTestCatalog.Samenwerken] = [9006, 9001],
         [CompetencyTestCatalog.Resultaatgerichtheid] = [9007, 9021],
         [CompetencyTestCatalog.Stressbestendigheid] = [9002, 9008, 9003],
         [CompetencyTestCatalog.Innovatie] = [9004, 9009],

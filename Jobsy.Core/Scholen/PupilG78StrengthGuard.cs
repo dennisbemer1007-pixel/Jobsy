@@ -16,23 +16,44 @@ public static class PupilG78StrengthGuard
             return false;
         }
 
-        var bank = new PupilQuestionBank();
-        var q = bank.Questions.FirstOrDefault(x => x.Id == itemId);
-        if (q is not null && q.Model != AssessmentKind.Competence)
-        {
-            return false;
-        }
-
-        var competenceCat = PupilG78ItemThemes.CompetenceCategory(itemId);
-        if (competenceCat is not null
-            && growthCategories.Contains(competenceCat))
-        {
-            return true;
-        }
-
         foreach (var dim in PupilG78ItemDimensionMap.DimensionsFor(itemId))
         {
             if (growthCategories.Contains(dim))
+            {
+                return true;
+            }
+        }
+
+        var competenceCat = PupilG78ItemThemes.CompetenceCategory(itemId);
+        return competenceCat is not null && growthCategories.Contains(competenceCat);
+    }
+
+    public static bool PagePublishesCategoryAsStrength(
+        IReadOnlyCollection<int> publishedItemIds,
+        string growthCategory,
+        IReadOnlyDictionary<string, int> answers)
+    {
+        var bank = new PupilQuestionBank();
+        foreach (var id in publishedItemIds)
+        {
+            if (!answers.TryGetValue(id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var q = bank.Questions.FirstOrDefault(x => x.Id == id);
+            if (q is null)
+            {
+                continue;
+            }
+
+            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            if (eff < 4)
+            {
+                continue;
+            }
+
+            if (PupilG78ItemDimensionMap.DimensionsFor(id).Contains(growthCategory))
             {
                 return true;
             }

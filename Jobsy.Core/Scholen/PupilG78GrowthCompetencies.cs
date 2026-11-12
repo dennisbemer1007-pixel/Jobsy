@@ -199,6 +199,7 @@ public static class PupilG78GrowthCompetencies
         foreach (var pick in picks)
         {
             var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{pick.ItemId}");
+            stem = stem.Replace("geen zin hebt", "geen zin heb", StringComparison.Ordinal);
             var label = AnswerLabelNl.GetValueOrDefault(pick.Raw, "soms");
             parts.Add($"Bij \"{stem}\" koos je \"{label}\".");
         }

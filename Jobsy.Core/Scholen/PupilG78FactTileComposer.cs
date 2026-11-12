@@ -21,12 +21,41 @@ public static class PupilG78FactTileComposer
         IReadOnlyList<G78AnswerClause> clauses,
         string language,
         IReadOnlyDictionary<AssessmentKind, IReadOnlyList<int>> plan,
-        IReadOnlySet<string> growthCategories)
+        IReadOnlySet<string> growthCategories,
+        IReadOnlySet<int>? pageBlockedIds = null,
+        IReadOnlySet<int>? storyItemIds = null)
     {
         var byId = clauses.ToDictionary(c => c.ItemId);
         var usedIds = new List<int>();
         var pageSelected = plan.Values.SelectMany(v => v).ToHashSet();
-        var usedThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (pageBlockedIds is not null)
+        {
+            pageSelected.UnionWith(pageBlockedIds);
+        }
+
+        if (storyItemIds is not null)
+        {
+            pageSelected.UnionWith(storyItemIds);
+        }
+
+        var storyThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (storyItemIds is not null)
+        {
+            foreach (var sid in storyItemIds)
+            {
+                RememberTheme(sid, storyThemes);
+            }
+        }
+
+        if (pageBlockedIds is not null)
+        {
+            foreach (var sid in pageBlockedIds)
+            {
+                RememberTheme(sid, storyThemes);
+            }
+        }
+
+        var usedThemes = new HashSet<string>(storyThemes, StringComparer.OrdinalIgnoreCase);
         foreach (var id in pageSelected)
         {
             RememberTheme(id, usedThemes);
@@ -46,12 +75,14 @@ public static class PupilG78FactTileComposer
             }
 
             var highs = ids
-                .Where(byId.ContainsKey)
+                .Where(id => byId.ContainsKey(id)
+                             && (pageBlockedIds is null || !pageBlockedIds.Contains(id))
+                             && !StoryThemeConflicts(id, storyThemes))
                 .Select(id => byId[id])
                 .Where(c => c.EffectiveScore >= 4)
                 .Take(4)
                 .ToList();
-            EnsureMinimumHighs(highs, clauses, kind, pageSelected, growthCategories, usedThemes, minimum: 2);
+            EnsureMinimumHighs(highs, clauses, kind, pageSelected, growthCategories, usedThemes, storyThemes, minimum: 2);
             foreach (var h in highs)
             {
                 RememberTheme(h.ItemId, usedThemes);
@@ -124,6 +155,7 @@ public static class PupilG78FactTileComposer
         IReadOnlySet<int> pageSelected,
         IReadOnlySet<string> growthCategories,
         HashSet<string> usedThemes,
+        IReadOnlySet<string> storyThemes,
         int minimum)
     {
         if (highs.Count >= minimum)
@@ -136,13 +168,14 @@ public static class PupilG78FactTileComposer
                      .Where(c => c.Model == kind
                                  && c.EffectiveScore >= 4
                                  && !highs.Contains(c)
+                                 && !pageSelected.Contains(c.ItemId)
                                  && !blocked.Contains(c.ItemId)
                                  && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, pageSelected)
                                  && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
-            if (ThemeBlocked(c.ItemId, usedThemes))
+            if (ThemeBlocked(c.ItemId, usedThemes) || StoryThemeConflicts(c.ItemId, storyThemes))
             {
                 continue;
             }
@@ -159,6 +192,50 @@ public static class PupilG78FactTileComposer
             }
         }
 
+        if (highs.Count >= minimum)
+        {
+            return;
+        }
+
+        blocked = PupilG78OppositePairs.BlockedItems(clauses, pageSelected);
+        foreach (var c in clauses
+                     .Where(c => c.Model == kind
+                                 && c.EffectiveScore >= 4
+                                 && !highs.Any(h => h.ItemId == c.ItemId)
+                                 && !pageSelected.Contains(c.ItemId)
+                                 && !blocked.Contains(c.ItemId)
+                                 && PupilG78OppositePairs.IsAllowed(c.ItemId, clauses, pageSelected)
+                                 && !PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
+                     .OrderByDescending(c => c.EffectiveScore)
+                     .ThenBy(c => c.ItemId))
+        {
+            if (ThemeBlocked(c.ItemId, usedThemes) || StoryThemeConflicts(c.ItemId, storyThemes))
+            {
+                continue;
+            }
+
+            if (highs.Any(h => PupilG78JeNarrative.TooSimilar(h.Text, c.Text)))
+            {
+                continue;
+            }
+
+            highs.Add(c);
+            if (highs.Count >= minimum)
+            {
+                break;
+            }
+        }
+    }
+
+    private static bool StoryThemeConflicts(int itemId, IReadOnlySet<string> storyThemes)
+    {
+        if (storyThemes.Count == 0)
+        {
+            return false;
+        }
+
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        return key is not null && storyThemes.Contains(key);
     }
 
     private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs)
