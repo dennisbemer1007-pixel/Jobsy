@@ -21,6 +21,9 @@ public static class PupilLeerlingSsrParts
             : "";
     }
 
+    internal const string SpeakLineSvg =
+        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg>""";
+
     public static string SpeakButton(string text, string speechKey, CultureState culture)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -29,7 +32,7 @@ public static class PupilLeerlingSsrParts
         }
 
         return $"""
-            <button type="button" class="read-aloud read-aloud--icon" data-read-aloud-text="{E(text)}" data-speech-key="{E(speechKey)}" aria-pressed="false" aria-label="{E(culture["ReadAloud.PlayAria"])}" title="{E(culture["ReadAloud.Play"])}" data-read-aloud-play-aria="{E(culture["ReadAloud.PlayAria"])}" data-read-aloud-stop-aria="{E(culture["ReadAloud.StopAria"])}" data-read-aloud-unsupported="{E(culture["ReadAloud.Unsupported"])}"><span class="read-aloud__icon" aria-hidden="true">🔊</span></button>
+            <button type="button" class="read-aloud speak read-aloud--icon" data-read-aloud-text="{E(text)}" data-speech-key="{E(speechKey)}" aria-pressed="false" aria-label="{E(culture["ReadAloud.PlayAria"])}" title="{E(culture["ReadAloud.Play"])}" data-read-aloud-play-aria="{E(culture["ReadAloud.PlayAria"])}" data-read-aloud-stop-aria="{E(culture["ReadAloud.StopAria"])}" data-read-aloud-unsupported="{E(culture["ReadAloud.Unsupported"])}">{SpeakLineSvg}</button>
             """;
     }
 
@@ -58,14 +61,16 @@ public static class PupilLeerlingSsrParts
         var infoId = "ll-imagine-" + itemId;
         var sb = new StringBuilder();
         sb.Append("<div id=\"").Append(E(infoId)).Append("\" class=\"ll-info\" hidden data-testid=\"ll-question-imagine\">");
+        sb.Append("""<div class="ll-info__top">""");
         sb.Append("<p class=\"ll-info__lead\"><strong>").Append(E(culture["Leerling.Reis.Imagine"])).Append("</strong></p>");
         if (!string.IsNullOrWhiteSpace(imagineSpeakMarkup))
         {
-            sb.Append("<div class=\"ll-info__speak\">").Append(imagineSpeakMarkup).Append("</div>");
+            sb.Append(imagineSpeakMarkup);
         }
 
-        sb.Append("<p class=\"ll-info__text\">").Append(E(imagineText)).Append("</p>");
         sb.Append("""<button type="button" class="ll-info__close" data-ll-imagine-close aria-label="Sluiten">×</button>""");
+        sb.Append("</div>");
+        sb.Append("<p class=\"ll-info__text\">").Append(E(imagineText)).Append("</p>");
         sb.Append("</div>");
         return sb.ToString();
     }

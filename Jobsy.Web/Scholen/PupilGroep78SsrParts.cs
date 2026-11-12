@@ -9,8 +9,7 @@ namespace Jobsy.Web.Scholen;
 /// <summary>Mockup-aligned HTML fragments for groep 7/8 SSR pages.</summary>
 public static class PupilGroep78SsrParts
 {
-    internal const string SpeakSvg =
-        """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg>""";
+    internal const string SpeakSvg = PupilLeerlingSsrParts.SpeakLineSvg;
 
     internal const string BackSvg =
         """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>""";

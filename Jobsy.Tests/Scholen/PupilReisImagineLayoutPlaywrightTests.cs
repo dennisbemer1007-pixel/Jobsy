@@ -113,6 +113,7 @@ public sealed class PupilReisImagineLayoutPlaywrightTests
         var bodyClass = groep78 ? "ll-g78-shell t-zee" : "ll-reis-page";
         var html = "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"utf-8\">"
             + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+            + "<base href=\"http://127.0.0.1/\">"
             + "</head><body class=\"" + bodyClass + "\">" + body + "</body></html>";
 
         using var playwright = await Playwright.CreateAsync();
@@ -121,6 +122,7 @@ public sealed class PupilReisImagineLayoutPlaywrightTests
         {
             ViewportSize = new ViewportSize { Width = width, Height = height }
         });
+        await InstallWwwrootRoutingAsync(page, repoRoot);
         await page.SetContentAsync(html);
         await AddPupilReisStylesAsync(page, repoRoot, groep78);
         await page.AddScriptTagAsync(new PageAddScriptTagOptions
@@ -230,6 +232,19 @@ public sealed class PupilReisImagineLayoutPlaywrightTests
         Assert.True(panelMetrics.GetProperty("round").GetBoolean(), label + " info button should be round");
         var bodyText = panelMetrics.GetProperty("bodyText").GetString() ?? "";
         Assert.DoesNotContain("Stel je voor:", bodyText, StringComparison.OrdinalIgnoreCase);
+        Assert.True(bodyText.Length > 0 && char.IsUpper(bodyText[0]), label + " imagine body should start with a capital letter");
+
+        if (groep78)
+        {
+            var lobsterOk = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const img = document.querySelector('.ll-g78-coach .lob');
+                  return !!img && img.naturalWidth > 0;
+                }
+                """);
+            Assert.True(lobsterOk, label + " coach lobster image should load");
+        }
 
         await page.ScreenshotAsync(new PageScreenshotOptions
         {
@@ -243,6 +258,36 @@ public sealed class PupilReisImagineLayoutPlaywrightTests
         {
             Path = Path.Combine(artifactDir, "imagine-closed.png"),
             FullPage = false
+        });
+    }
+
+    private static async Task InstallWwwrootRoutingAsync(IPage page, string repoRoot)
+    {
+        var wwwroot = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot");
+        await page.RouteAsync("**/*", async route =>
+        {
+            var uri = new Uri(route.Request.Url);
+            if (!string.Equals(uri.Host, "127.0.0.1", StringComparison.Ordinal))
+            {
+                await route.FallbackAsync();
+                return;
+            }
+
+            var relative = uri.AbsolutePath.TrimStart('/');
+            if (string.IsNullOrEmpty(relative))
+            {
+                await route.FallbackAsync();
+                return;
+            }
+
+            var file = Path.Combine(wwwroot, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(file))
+            {
+                await route.FulfillAsync(new RouteFulfillOptions { Path = file });
+                return;
+            }
+
+            await route.FallbackAsync();
         });
     }
 

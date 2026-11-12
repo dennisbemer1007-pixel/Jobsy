@@ -32,7 +32,8 @@ public sealed class G78ReisImaginePlaywrightTests
         var registry = new PupilQuestionSetRegistry();
         var def = registry.Get(PupilQuestionSet.Groep78);
         var imagineRaw = culture["LeerlingQ.9001.Voorbeeld"];
-        var imagineBody = SpokenText.WithoutRepeatedLead(culture["Leerling.Reis.Imagine"], imagineRaw);
+        var imagineBody = SpokenText.CapitalizeFirstSentence(
+            SpokenText.WithoutRepeatedLead(culture["Leerling.Reis.Imagine"], imagineRaw));
         var state = new PupilProgressStateDto(
             Guid.Parse("11111111-1111-1111-1111-111111111111"),
             "7A",
@@ -72,7 +73,7 @@ public sealed class G78ReisImaginePlaywrightTests
         var jsPath = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot", "js", "leerling-journey-ssr.js");
         var html = $"""
             <!DOCTYPE html>
-            <html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+            <html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><base href="http://127.0.0.1/"></head>
             <body class="ll-g78-shell t-zee">{body}</body></html>
             """;
 
@@ -82,8 +83,33 @@ public sealed class G78ReisImaginePlaywrightTests
         {
             ViewportSize = new ViewportSize { Width = width, Height = height }
         });
-        await page.SetContentAsync(html);
         var wwwroot = Path.Combine(repoRoot, "Jobsy.Web", "wwwroot");
+        await page.RouteAsync("**/*", async route =>
+        {
+            var uri = new Uri(route.Request.Url);
+            if (!string.Equals(uri.Host, "127.0.0.1", StringComparison.Ordinal))
+            {
+                await route.FallbackAsync();
+                return;
+            }
+
+            var relative = uri.AbsolutePath.TrimStart('/');
+            if (string.IsNullOrEmpty(relative))
+            {
+                await route.FallbackAsync();
+                return;
+            }
+
+            var file = Path.Combine(wwwroot, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(file))
+            {
+                await route.FulfillAsync(new RouteFulfillOptions { Path = file });
+                return;
+            }
+
+            await route.FallbackAsync();
+        });
+        await page.SetContentAsync(html);
         foreach (var url in PageAssetCatalog.StylesheetsForPupilSsr("/leerling/reis")
                      .Concat(PageAssetCatalog.LeerlingGroep78ThemeStylesheets("/leerling/reis")))
         {

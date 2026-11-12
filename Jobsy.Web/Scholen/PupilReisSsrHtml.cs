@@ -33,7 +33,7 @@ public static class PupilReisSsrHtml
         var qLabel = culture[item.TextKey];
         var imagine = culture[item.ImagineKey];
         var imagineLead = culture["Leerling.Reis.Imagine"];
-        var imagineBody = SpokenText.WithoutRepeatedLead(imagineLead, imagine);
+        var imagineBody = SpokenText.CapitalizeFirstSentence(SpokenText.WithoutRepeatedLead(imagineLead, imagine));
         var imagineSpeak = SpokenText.Join(imagineLead, imagineBody);
         var sb = new StringBuilder();
         if (!groep78)

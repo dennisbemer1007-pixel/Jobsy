@@ -920,7 +920,7 @@
   background: linear-gradient(180deg, #fffdf8 0%, #f6edd9 100%);
   border: 1px solid color-mix(in srgb, var(--brass2) 38%, var(--sand));
   border-radius: 16px;
-  padding: 18px 44px 18px 18px;
+  padding: 16px 18px;
   margin: 6px 0 22px;
   color: var(--ink);
   font-size: 17px;
@@ -941,24 +941,19 @@
   font-weight: 700;
 }
 
-.ll-g78-shell .card.ll-question .ll-info__speak {
-  margin-bottom: 12px;
+.ll-g78-shell .card.ll-question .ll-info__top .read-aloud.speak {
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--sand));
+  color: var(--navy);
+  background: #fffdf8;
 }
 
 .ll-g78-shell .card.ll-question .ll-info__text {
   margin: 0;
-  padding-inline-end: 28px;
   color: var(--ink);
   font-weight: 500;
 }
 
-.ll-g78-shell .card.ll-question .ll-info .read-aloud.speak {
-  margin: 0;
-}
-
 .ll-g78-shell .card.ll-question .ll-info__close {
-  top: 10px;
-  inset-inline-end: 12px;
   color: var(--muted);
 }
 
