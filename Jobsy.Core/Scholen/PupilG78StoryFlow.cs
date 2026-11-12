@@ -47,12 +47,7 @@ internal static class PupilG78StoryFlow
                 2 => ". Ook ",
                 _ => ". Daarbij ",
             };
-            var next = parts[i];
-            if (connector == ", en ")
-            {
-                next = LowerFirst(next);
-            }
-
+            var next = FormatContinuation(parts[i], connector);
             sb.Append(connector).Append(next);
         }
 
@@ -97,6 +92,21 @@ internal static class PupilG78StoryFlow
         }
     }
 
+    private static string FormatContinuation(string sentence, string connector)
+    {
+        if (connector == ", en ")
+        {
+            return LowerFirst(sentence);
+        }
+
+        if (sentence.StartsWith("In ", StringComparison.Ordinal))
+        {
+            return "in " + sentence[3..];
+        }
+
+        return sentence;
+    }
+
     public static string LowerFirst(string sentence)
     {
         if (string.IsNullOrEmpty(sentence))
@@ -127,7 +137,8 @@ internal static class PupilG78StoryFlow
         var s = text
             .Replace(", en Je ", ", en je ", StringComparison.Ordinal)
             .Replace(". Ook Je ", ". Ook je ", StringComparison.Ordinal)
-            .Replace(". Daarbij Je ", ". Daarbij je ", StringComparison.Ordinal)
+            .Replace(". Daarbij Je ", ". Daarbij ", StringComparison.Ordinal)
+            .Replace(". Ook In ", ". Ook in ", StringComparison.Ordinal)
             .Replace(". Ook\n", ". ", StringComparison.Ordinal);
         if (s.EndsWith(" Ook", StringComparison.Ordinal)
             || s.EndsWith(". Ook", StringComparison.Ordinal))

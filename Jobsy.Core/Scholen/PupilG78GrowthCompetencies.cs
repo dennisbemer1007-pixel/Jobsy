@@ -68,6 +68,17 @@ public static class PupilG78GrowthCompetencies
                 panelId));
         }
 
+        if (list.Count == 0)
+        {
+            var (category, _) = averages.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).First();
+            var stats = StatsForCategory(category, answers);
+            list.Add(new PupilG78GrowthCompetencyDto(
+                category,
+                PupilG78CompetencyNarrative.KidLabelTitle(category),
+                WhyExplanation(stats, language),
+                PanelId(category)));
+        }
+
         return list;
     }
 
