@@ -12,7 +12,7 @@ public sealed class PupilG78FactStoryTests
         var (result, progress) = FixtureHelpsOthers();
         var pkg = PupilG78FactStory.Build(result, progress, "nl");
         var paragraphs = PupilG78FactStory.SplitParagraphs(pkg.Body);
-        Assert.InRange(paragraphs.Count, 1, 3);
+        Assert.InRange(paragraphs.Count, 3, 4);
         Assert.DoesNotContain("Zo kom jij over", pkg.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("Ook je ", pkg.Body, StringComparison.Ordinal);
     }
@@ -92,6 +92,61 @@ public sealed class PupilG78FactStoryTests
             Assert.DoesNotContain("Daardoor weet je steeds beter", body, StringComparison.Ordinal);
             Assert.DoesNotContain("Voor school en later geldt", body, StringComparison.Ordinal);
             Assert.DoesNotContain("Al met al sluit dit aan", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("Je bent dus iemand", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("geboren leider", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("past perfect", body, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("antwoorden", body, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public void Story_surfaces_competency_dimensions()
+    {
+        foreach (var (result, progress) in new[] { FixtureHelpsOthers(), FixtureLeadsGroup(), FixtureMaker() })
+        {
+            var pkg = PupilG78FactStory.Build(result, progress, "nl");
+            Assert.True(
+                pkg.Body.Contains("samenwerken", StringComparison.OrdinalIgnoreCase)
+                || pkg.Body.Contains("creativiteit", StringComparison.OrdinalIgnoreCase)
+                || pkg.Body.Contains("plannen", StringComparison.OrdinalIgnoreCase)
+                || pkg.Body.Contains("communiceren", StringComparison.OrdinalIgnoreCase)
+                || pkg.Body.Contains("doorzetten", StringComparison.OrdinalIgnoreCase),
+                pkg.Body);
+            Assert.InRange(pkg.GrowthCompetencies.Count, 1, 5);
+            Assert.Contains("minder naar voren", pkg.Body, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public void Story_and_tiles_have_no_trait_contradiction()
+    {
+        foreach (var (result, progress) in new[]
+                 {
+                     FixtureHelpsOthers(), FixtureLeadsGroup(), FixtureMaker()
+                 })
+        {
+            var pkg = PupilG78FactStory.Build(result, progress, "nl");
+            var all = new List<string> { pkg.Body };
+            all.AddRange(pkg.Tiles.Select(t => t.Explanation));
+            Assert.False(PupilG78AnswerConflicts.TextsContradict(all));
+        }
+    }
+
+    [Fact]
+    public void Story_does_not_copy_tile_sentences_verbatim()
+    {
+        var pkg = PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl");
+        foreach (var tile in pkg.Tiles)
+        {
+            foreach (var sentence in tile.Explanation.Split(". ", StringSplitOptions.TrimEntries))
+            {
+                var s = sentence.TrimEnd('.');
+                if (s.Length > 35)
+                {
+                    Assert.DoesNotContain(s + ".", pkg.Body, StringComparison.Ordinal);
+                    Assert.DoesNotContain(s + ",", pkg.Body, StringComparison.Ordinal);
+                }
+            }
         }
     }
 
@@ -104,16 +159,13 @@ public sealed class PupilG78FactStoryTests
         Assert.Equal(4, view.Tiles.Count);
         foreach (var tile in view.Tiles)
         {
-            Assert.InRange(tile.Explanation.Length, 40, 1200);
-            Assert.Contains(" ", tile.Explanation, StringComparison.Ordinal);
+            Assert.InRange(tile.Explanation.Length, 40, 2000);
+            Assert.InRange(CountSentences(tile.Explanation), 2, 6);
             Assert.DoesNotContain("Je gaf zelf antwoord op deze vragen", tile.Explanation, StringComparison.Ordinal);
         }
 
         var pkg = PupilG78FactStory.Build(result, progress, "nl");
-        Assert.Equal(4, pkg.Tiles.Count);
-        var tileTexts = pkg.Tiles.Select(t => t.Explanation).ToList();
-        _ = tileTexts;
-        Assert.InRange(PupilG78FactStory.SplitParagraphs(pkg.Body).Count, 1, 3);
+        Assert.InRange(PupilG78FactStory.SplitParagraphs(pkg.Body).Count, 3, 4);
     }
 
     [Fact]
@@ -125,135 +177,67 @@ public sealed class PupilG78FactStoryTests
     }
 
     [Fact]
-    public void Write_fixture_full_result_page_text()
+    public void Write_full_result_pages_for_pr()
     {
-        var (result, progress) = FixtureLeadsGroup();
-        var pkg = PupilG78FactStory.Build(result, progress, "nl");
-        var renderer = new PupilStoryRenderer();
-        var view = renderer.Render(result, progress, "nl");
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("# Dit ben jij — Neemt voortouw (fixture)");
-        sb.AppendLine();
-        sb.AppendLine("## Story");
-        sb.AppendLine(pkg.Body);
-        sb.AppendLine();
-        foreach (var tile in view.Tiles)
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        var profiles = new[]
         {
-            sb.AppendLine($"## {tile.KidLabel}");
-            sb.AppendLine(tile.Explanation);
-            sb.AppendLine();
+            ("Helpt anderen", FixtureHelpsOthers()),
+            ("Neemt voortouw", FixtureLeadsGroup()),
+            ("Maker", FixtureMaker()),
+        };
+        var renderer = new PupilStoryRenderer();
+        var report = new System.Text.StringBuilder();
+        foreach (var (name, fixture) in profiles)
+        {
+            var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
+            var view = renderer.Render(fixture.Result, fixture.Progress, "nl");
+            report.AppendLine($"# {name}");
+            report.AppendLine();
+            report.AppendLine("## Story");
+            report.AppendLine(pkg.Body);
+            report.AppendLine();
+            foreach (var tile in view.Tiles)
+            {
+                report.AppendLine($"## {tile.KidLabel}");
+                report.AppendLine(tile.Explanation);
+                report.AppendLine();
+            }
+
+            if (view.GrowthCompetencies is { Count: > 0 })
+            {
+                report.AppendLine("## Hier kun je nog in groeien");
+                foreach (var g in view.GrowthCompetencies)
+                {
+                    report.AppendLine($"- **{g.Label}**: {g.WhyExplanation}");
+                }
+
+                report.AppendLine();
+            }
+
+            report.AppendLine("---");
+            report.AppendLine();
         }
 
-        Directory.CreateDirectory("/opt/cursor/artifacts");
-        File.WriteAllText("/opt/cursor/artifacts/g78-result-page-neemt-voortouw.md", sb.ToString());
+        var reportText = report.ToString();
+        if (reportText.Length > 512_000)
+        {
+            reportText = reportText[..512_000];
+        }
+
+        File.WriteAllText("/opt/cursor/artifacts/g78-dit-ben-jij-full-result-pages.md", reportText);
+        _ = PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl");
     }
 
-    [Fact]
-    public void Write_example_stories_for_pr()
-    {
-        var stories = new[]
-        {
-            ("Helpt anderen", PupilG78FactStory.Build(FixtureHelpsOthers().Result, FixtureHelpsOthers().Progress, "nl").Body),
-            ("Neemt voortouw", PupilG78FactStory.Build(FixtureLeadsGroup().Result, FixtureLeadsGroup().Progress, "nl").Body),
-            ("Maker", PupilG78FactStory.Build(FixtureMaker().Result, FixtureMaker().Progress, "nl").Body),
-        };
-        var text = string.Join("\n\n---\n\n", stories.Select(s => $"## {s.Item1}\n\n{s.Item2}"));
-        Directory.CreateDirectory("/opt/cursor/artifacts");
-        File.WriteAllText("/opt/cursor/artifacts/g78-dit-ben-jij-example-stories.md", text);
-    }
+    private static int CountSentences(string text)
+        => text.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
 
     private static (PupilResult Result, PupilProgress Progress) FixtureHelpsOthers()
-    {
-        var answers = NeutralAnswers();
-        foreach (var id in new[] { "9006", "9019", "9024", "9032", "9037", "9042", "9007", "9021", "9048", "9054", "9003", "9017" })
-        {
-            answers[id] = 5;
-        }
-
-        answers["9016"] = 2;
-        answers["9015"] = 2;
-        answers["9020"] = 2;
-        return Build(
-            answers,
-            """["sport","dieren"]""",
-            """{"tekenen":{"leuk":5,"goed":4},"muziek":{"leuk":5,"goed":3}}""",
-            "SC",
-            "Connection");
-    }
+        => PupilG78RealisticFixtures.HelpsOthers();
 
     private static (PupilResult Result, PupilProgress Progress) FixtureLeadsGroup()
-    {
-        var answers = NeutralAnswers();
-        foreach (var id in new[] { "9005", "9007", "9010", "9020", "9026", "9031", "9041", "9049", "9052", "9058" })
-        {
-            answers[id] = 5;
-        }
-
-        answers["9019"] = 1;
-        answers["9024"] = 1;
-        return Build(
-            answers,
-            """["theater","lezen"]""",
-            """{"geschiedenis":{"leuk":5,"goed":4},"engels":{"leuk":4,"goed":5}}""",
-            "ES",
-            "Autonomy");
-    }
+        => PupilG78RealisticFixtures.LeadsGroup();
 
     private static (PupilResult Result, PupilProgress Progress) FixtureMaker()
-    {
-        var answers = NeutralAnswers();
-        foreach (var id in new[] { "9016", "9022", "9028", "9017", "9025", "9033", "9038", "9044", "9004", "9018", "9046", "9051" })
-        {
-            answers[id] = 5;
-        }
-
-        answers["9020"] = 1;
-        return Build(
-            answers,
-            """["techniek","natuur"]""",
-            """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5}}""",
-            "IR",
-            "Achievement");
-    }
-
-    private static (PupilResult Result, PupilProgress Progress) Build(
-        Dictionary<string, int> answers,
-        string likes,
-        string vakJson,
-        string holland,
-        string topValue)
-    {
-        var id = Guid.NewGuid();
-        var result = new PupilResult
-        {
-            PupilCodeId = id,
-            ScoringVersion = "g78-1",
-            HollandCode = holland,
-            TopValue = topValue,
-            TopCulture = "Collaboration",
-            CompetenceScoresJson = """{"Samenwerken":80,"Resultaatgerichtheid":50,"Stressbestendigheid":50,"Innovatie":50,"Extraversie":70}""",
-            RiasecScoresJson = """{"Realistic":40,"Investigative":50,"Artistic":45,"Social":80,"Enterprising":75,"Conventional":40}""",
-            ValuesScoresJson = """{"Autonomy":50,"Connection":85,"Achievement":55,"Stability":45,"Impact":50}""",
-            CultureScoresJson = """{"Autonomy":55,"Informal":45,"Collaboration":70,"Flexibility":50,"Innovation":45,"PeopleFirst":60}"""
-        };
-        var progress = new PupilProgress
-        {
-            PupilCodeId = id,
-            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
-            LikesJson = likes,
-            VakScoresJson = vakJson
-        };
-        return (result, progress);
-    }
-
-    private static Dictionary<string, int> NeutralAnswers()
-    {
-        var d = new Dictionary<string, int>(StringComparer.Ordinal);
-        for (var id = 9001; id <= 9060; id++)
-        {
-            d[id.ToString()] = 3;
-        }
-
-        return d;
-    }
+        => PupilG78RealisticFixtures.Maker();
 }

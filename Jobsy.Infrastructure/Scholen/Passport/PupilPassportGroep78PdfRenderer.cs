@@ -248,6 +248,11 @@ internal static class PupilPassportGroep78PdfRenderer
                 col.Item().PaddingTop(Mm(2)).Element(c => G78DnaTilesGrid(c, m));
             }
 
+            if (m.G78GrowthItems is { Count: > 0 })
+            {
+                col.Item().PaddingTop(Mm(3)).Element(c => G78GrowthCompact(c, m));
+            }
+
             col.Item().Element(c => SectionBox(c, T(m, "LeerlingPassport.G78.Riasec.Title"),
                 T(m, "LeerlingPassport.G78.Riasec.Sub"), inner =>
                 {
@@ -712,6 +717,30 @@ internal static class PupilPassportGroep78PdfRenderer
                 col.Item().Text(TruncateLabel(tile.Label, 32)).Bold().FontSize(9f).FontColor(Navy);
                 col.Item().PaddingTop(2).Text(NormalizePdfLine(tile.Value))
                     .FontSize(8.5f).FontColor(Ink).LineHeight(1.4f);
+            });
+    }
+
+    private static void G78GrowthCompact(IContainer c, PupilPassportPdfModel m)
+    {
+        var items = m.G78GrowthItems!.Take(5).ToList();
+        c.Background(CreamWarm)
+            .Border(1).BorderColor(Border)
+            .CornerRadius(Mm(1.2f))
+            .Padding(Mm(2.5f))
+            .Column(col =>
+            {
+                col.Item().Text(T(m, "LeerlingPassport.G78.Growth.Title")).Bold().FontSize(10f).FontColor(Navy);
+                col.Item().PaddingTop(1.5f).Text(T(m, "LeerlingPassport.G78.Growth.Footnote"))
+                    .FontSize(8.25f).FontColor(Muted).LineHeight(1.35f);
+                foreach (var (label, why) in items)
+                {
+                    col.Item().PaddingTop(2.5f).Text(text =>
+                    {
+                        text.Span(label).SemiBold().FontSize(8.5f).FontColor(Navy);
+                        text.Span(": ").FontSize(8.5f);
+                        text.Span(NormalizePdfLine(why)).FontSize(8.5f).FontColor(Ink).LineHeight(1.35f);
+                    });
+                }
             });
     }
 

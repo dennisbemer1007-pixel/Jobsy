@@ -117,6 +117,7 @@
     }
     document.title = doc.title || document.title;
     bindReadAloud(shell);
+    bindGrowthInfo(shell);
     bindAnswerScale(shell);
     bindChips(shell);
     bindVakkenScale(shell);
@@ -1083,10 +1084,40 @@
     });
   }
 
+  function bindGrowthInfo(root) {
+    root.querySelectorAll("[data-ll-grow-info]").forEach(function (btn) {
+      if (btn.getAttribute("data-ll-bound") === "1") {
+        return;
+      }
+      btn.setAttribute("data-ll-bound", "1");
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("aria-controls");
+        var panel = id ? document.getElementById(id) : null;
+        if (!panel) {
+          return;
+        }
+        var open = panel.hasAttribute("hidden");
+        root.querySelectorAll(".ll-g78-grow-panel").forEach(function (p) {
+          p.setAttribute("hidden", "");
+          p.classList.remove("is-open");
+        });
+        root.querySelectorAll("[data-ll-grow-info]").forEach(function (b) {
+          b.setAttribute("aria-expanded", "false");
+        });
+        if (open) {
+          panel.removeAttribute("hidden");
+          panel.classList.add("is-open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+  }
+
   function init() {
     var root = document.body;
     bindSessionKeepalive();
     bindReadAloud(root);
+    bindGrowthInfo(root);
     bindAnswerScale(root);
     bindChips(root);
     bindVakkenScale(root);

@@ -101,7 +101,8 @@ public sealed record PupilStoryViewDto(
     string Body,
     IReadOnlyList<PupilStoryTileDto> Tiles,
     IReadOnlyList<string> JobIdeas,
-    IReadOnlyList<string> LikeChipKeys);
+    IReadOnlyList<string> LikeChipKeys,
+    IReadOnlyList<PupilG78GrowthCompetencyDto>? GrowthCompetencies = null);
 
 public sealed record PupilStoryTileDto(string ModelKey, string KidLabel, string Explanation);
 

@@ -1,0 +1,201 @@
+using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
+
+namespace Jobsy.Core.Scholen;
+
+/// <summary>Low/mid competency dimensions for the G78 growth block (fact-only).</summary>
+public static class PupilG78GrowthCompetencies
+{
+    private static readonly PupilQuestionBank Bank = new();
+
+    public static IReadOnlyList<string> TopStrongCategories(IReadOnlyDictionary<string, double> averages, int count = 3)
+        => averages
+            .OrderByDescending(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Take(count)
+            .Select(kv => kv.Key)
+            .ToList();
+
+    public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
+        IReadOnlyDictionary<string, int> answers,
+        string language = "nl")
+    {
+        var averages = DimensionAverages(answers);
+        if (averages.Count == 0)
+        {
+            return [];
+        }
+
+        var strong = TopStrongCategories(averages).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var lowest = averages.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal).First().Key;
+        var list = new List<PupilG78GrowthCompetencyDto>();
+
+        foreach (var (category, avg) in averages.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.Ordinal))
+        {
+            if (list.Count >= 5)
+            {
+                break;
+            }
+
+            var stats = StatsForCategory(category, answers);
+            if (!ShouldInclude(stats, strong, lowest, category))
+            {
+                continue;
+            }
+
+            var panelId = PanelId(category);
+            list.Add(new PupilG78GrowthCompetencyDto(
+                category,
+                PupilG78CompetencyNarrative.KidLabelTitle(category),
+                WhyExplanation(stats, language),
+                panelId));
+        }
+
+        return list;
+    }
+
+    public static Dictionary<string, double> DimensionAverages(IReadOnlyDictionary<string, int> answers)
+    {
+        var dict = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
+        {
+            var scores = ScoresForCategory(cat, answers);
+            if (scores.Count > 0)
+            {
+                dict[cat] = scores.Average();
+            }
+        }
+
+        return dict;
+    }
+
+    private static bool ShouldInclude(DimensionStats stats, HashSet<string> strong, string lowest, string category)
+    {
+        var isLowest = string.Equals(category, lowest, StringComparison.OrdinalIgnoreCase);
+        if (isLowest)
+        {
+            return true;
+        }
+
+        if (strong.Contains(category) && stats.Average >= 3.85 && !stats.HasLow)
+        {
+            return false;
+        }
+
+        if (stats.Average >= 4.25 && stats.HasHigh && !stats.HasLow)
+        {
+            return false;
+        }
+
+        return stats.HasLow || stats.OnlyMid || stats.Average <= 3.25;
+    }
+
+    private static string WhyExplanation(DimensionStats stats, string language)
+    {
+        var lows = stats.ItemScores.Where(i => i.Effective <= 2).OrderBy(i => i.Effective).ThenBy(i => i.ItemId).ToList();
+        if (lows.Count > 0 && lows[0].Effective == 1)
+        {
+            var low = lows[0];
+            var q = Bank.Questions.First(x => x.Id == low.ItemId);
+            var text = PupilQuestionStoryParaphrase.StrongDisagreeClause(
+                q.Id, q.Reverse, low.Raw, language);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return "Je antwoorden hierover zaten in het midden.";
+            }
+
+            return ToJeGafAan(text);
+        }
+
+        return "Je antwoorden hierover zaten in het midden.";
+    }
+
+    private static string ToJeGafAan(string clause)
+    {
+        var s = clause.Trim().TrimEnd('.');
+        if (s.StartsWith("Dit zei je minder vaak over jezelf: ", StringComparison.Ordinal))
+        {
+            var inner = s["Dit zei je minder vaak over jezelf: ".Length..].Trim().TrimEnd('.');
+            return $"Je gaf aan dat {inner}.";
+        }
+
+        if (s.StartsWith("Juist hier zie je het anders: ", StringComparison.Ordinal))
+        {
+            var inner = s["Juist hier zie je het anders: ".Length..].Trim().TrimEnd('.');
+            return $"Je gaf aan dat {inner}.";
+        }
+
+        if (s.StartsWith("Je ", StringComparison.Ordinal))
+        {
+            return $"Je gaf aan dat {PupilG78JeNarrative.ToDatSubordinate(s)}.";
+        }
+
+        return $"Je gaf aan dat {s}.";
+    }
+
+    private static DimensionStats StatsForCategory(string category, IReadOnlyDictionary<string, int> answers)
+    {
+        var itemScores = new List<ItemScore>();
+        foreach (var q in Bank.Questions.Where(q =>
+                     q.Model == AssessmentKind.Competence
+                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
+                     && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (!answers.TryGetValue(q.Id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            itemScores.Add(new ItemScore(q.Id, raw, eff));
+        }
+
+        if (itemScores.Count == 0)
+        {
+            return new DimensionStats(0, false, false, false, itemScores);
+        }
+
+        var avg = itemScores.Average(i => i.Effective);
+        var hasLow = itemScores.Any(i => i.Effective <= 2);
+        var hasHigh = itemScores.Any(i => i.Effective >= 4);
+        var onlyMid = itemScores.All(i => i.Effective == 3);
+        return new DimensionStats(avg, hasLow, hasHigh, onlyMid, itemScores);
+    }
+
+    private static List<double> ScoresForCategory(string category, IReadOnlyDictionary<string, int> answers)
+    {
+        var list = new List<double>();
+        foreach (var q in Bank.Questions.Where(q =>
+                     q.Model == AssessmentKind.Competence
+                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
+                     && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (answers.TryGetValue(q.Id.ToString(), out var raw))
+            {
+                list.Add(PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse));
+            }
+        }
+
+        return list;
+    }
+
+    internal static string PanelId(string category) => category switch
+    {
+        CompetencyTestCatalog.Samenwerken => "ll-grow-samenwerken",
+        CompetencyTestCatalog.Resultaatgerichtheid => "ll-grow-plannen",
+        CompetencyTestCatalog.Stressbestendigheid => "ll-grow-doorzetten",
+        CompetencyTestCatalog.Innovatie => "ll-grow-creativiteit",
+        CompetencyTestCatalog.Extraversie => "ll-grow-communiceren",
+        _ => "ll-grow-" + category.ToLowerInvariant().Replace(" ", "-", StringComparison.Ordinal)
+    };
+
+    private sealed record ItemScore(int ItemId, int Raw, int Effective);
+
+    private sealed record DimensionStats(
+        double Average,
+        bool HasLow,
+        bool HasHigh,
+        bool OnlyMid,
+        IReadOnlyList<ItemScore> ItemScores);
+}

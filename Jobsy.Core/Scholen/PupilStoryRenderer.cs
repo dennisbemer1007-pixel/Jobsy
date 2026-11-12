@@ -96,7 +96,8 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             Body: package.Body,
             Tiles: package.Tiles.ToList(),
             JobIdeas: jobIdeas,
-            LikeChipKeys: keys.LikeChipKeys.ToList());
+            LikeChipKeys: keys.LikeChipKeys.ToList(),
+            GrowthCompetencies: package.GrowthCompetencies.ToList());
     }
 
     public DreamJobRouteStubDto RenderDreamRoute(

@@ -39,7 +39,7 @@ public static partial class PupilG78QuestionJeForms
         "begin", "doe", "maak", "help", "vind", "houd", "werk", "zoek", "neem", "deel", "leer", "speel",
         "bedenk", "overtuig", "blijf", "raak", "voel", "pas", "laat", "ken", "heb", "ga", "zit", "sta", "lig",
         "denk", "geef", "kom", "eet", "drink", "loop", "ren", "schrijf", "lees", "kies", "word", "beweeg", "merk",
-        "luister", "praat", "let", "probeer", "durf"
+        "luister", "praat", "probeer", "durf"
     };
 
     private static Dictionary<int, string> Build() => new()

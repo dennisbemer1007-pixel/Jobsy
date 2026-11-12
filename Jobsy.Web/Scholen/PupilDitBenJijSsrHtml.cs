@@ -46,6 +46,7 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("</div>");
         AppendG78StoryParagraphs(sb, result.Story.Body);
         AppendG78ResultTiles(sb, result, culture);
+        AppendG78GrowthCompetencies(sb, result, culture);
         sb.Append("</div>");
         sb.Append("<div class=\"card ll-result-chips\"><h2 class=\"rsub\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.LikesTitle"])).Append("</h2><div class=\"chips\">");
@@ -133,6 +134,35 @@ public static class PupilDitBenJijSsrHtml
         {
             sb.Append("<p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(para)).Append("</p>");
         }
+    }
+
+    private static void AppendG78GrowthCompetencies(StringBuilder sb, PupilResultPageDto result, CultureState culture)
+    {
+        var items = result.Story.GrowthCompetencies;
+        if (items is null || items.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("""<section class="ll-g78-grow" data-testid="ll-g78-growth-competencies">""");
+        sb.Append("<h2 class=\"ll-g78-grow__title\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.GrowthTitle"])).Append("</h2>");
+        sb.Append("<p class=\"ll-g78-grow__foot\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.GrowthFootnote"])).Append("</p>");
+        sb.Append("""<ul class="ll-g78-grow-list">""");
+        foreach (var item in items)
+        {
+            var aria = PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.GrowthInfoAria"]);
+            sb.Append("""<li class="ll-g78-grow-row">""");
+            sb.Append("<span class=\"ll-g78-grow-chip chip\">").Append(PupilLeerlingSsrParts.E(item.Label)).Append("</span>");
+            sb.Append("<button type=\"button\" class=\"ll-info-btn ll-g78-grow-info\" data-ll-grow-info=\"1\" aria-label=\"");
+            sb.Append(aria).Append("\" aria-expanded=\"false\" aria-controls=\"");
+            sb.Append(PupilLeerlingSsrParts.E(item.PanelId)).Append("\">i</button>");
+            sb.Append("<div id=\"").Append(PupilLeerlingSsrParts.E(item.PanelId));
+            sb.Append("\" class=\"ll-info ll-g78-grow-panel\" role=\"region\" hidden>");
+            sb.Append(PupilLeerlingSsrParts.E(item.WhyExplanation));
+            sb.Append("</div></li>");
+        }
+
+        sb.Append("</ul></section>");
     }
 
     private static void AppendG78ResultTiles(StringBuilder sb, PupilResultPageDto result, CultureState culture)

@@ -33,7 +33,8 @@ public sealed record PupilG78StoryPackage(
     IReadOnlyList<int> UsedItemIds,
     IReadOnlyList<PupilStoryTileDto> Tiles,
     PupilG78PreferencesCompact Preferences,
-    CandidateFactSheet FactSheet);
+    CandidateFactSheet FactSheet,
+    IReadOnlyList<PupilG78GrowthCompetencyDto> GrowthCompetencies);
 
 /// <summary>Fact-only G78 "Dit ben jij" story from Likert answers (deterministic, no AI).</summary>
 public static class PupilG78FactStory
@@ -51,15 +52,17 @@ public static class PupilG78FactStory
         var answers = ParseAnswers(progress?.AnswersJson);
         var clauses = CollectClauses(answers, language);
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-        var (tiles, tileIds) = PupilG78FactTileComposer.Build(clauses, language);
+        var (tiles, tileIds, tileLowIds) = PupilG78FactTileComposer.Build(clauses, language);
         var tileIdSet = tileIds.ToHashSet();
+        var tileTexts = tiles.Select(t => t.Explanation).ToList();
         var paragraphs = PupilG78StoryComposer.ComposeOverview(
-            clauses, result, progress, vak, language, tileIdSet, out var storyIds);
+            clauses, result, progress, vak, language, tileIdSet, tileTexts, tileLowIds, out var storyIds);
         var body = string.Join(ParagraphBreak, paragraphs);
         var allUsed = tileIds.Concat(storyIds).Distinct().ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
-        return new PupilG78StoryPackage(body, allUsed, tiles, preferences, sheet);
+        var growth = PupilG78GrowthCompetencies.Build(answers, language);
+        return new PupilG78StoryPackage(body, allUsed, tiles, preferences, sheet, growth);
     }
 
     public static IReadOnlyList<string> SplitParagraphs(string body)
