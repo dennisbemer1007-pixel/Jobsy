@@ -8,6 +8,9 @@ public static class PupilG78CompetencyNarrative
 {
     public const int CompetenceItemMax = 9015;
 
+    /// <summary>Non-reverse competence items only — safe for positive-only tiles.</summary>
+    public const int PositiveTileCompetenceMax = 9010;
+
     public static string KidLabel(string competencyCategory) => competencyCategory switch
     {
         CompetencyTestCatalog.Samenwerken => "samenwerken",

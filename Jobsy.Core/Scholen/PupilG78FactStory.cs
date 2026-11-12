@@ -53,44 +53,37 @@ public static class PupilG78FactStory
         var answers = ParseAnswers(progress?.AnswersJson);
         var clauses = CollectClauses(answers, language);
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-        var (tiles, tileIds, tileLowIds) = PupilG78FactTileComposer.Build(clauses, language);
-        var tileIdSet = tileIds.ToHashSet();
-        var tileTexts = tiles.Select(t => t.Explanation).ToList();
         var averages = PupilG78GrowthCompetencies.DimensionAverages(answers);
         var storyStrongCategories = PupilG78GrowthCompetencies.TopStrongCategories(averages, 5).Take(3).ToList();
+        var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(clauses, storyStrongCategories);
+        var reservedForStory = competencyExampleIds.ToHashSet();
+        var (tiles, tileIds) = PupilG78FactTileComposer.Build(clauses, language, reservedForStory);
+        var tileIdSet = tileIds.ToHashSet();
+        var tileTexts = tiles.Select(t => t.Explanation).ToList();
+        var reservedItemIds = reservedForStory.Union(tileIdSet).ToHashSet();
         var paragraphs = PupilG78StoryComposer.ComposeOverview(
             clauses,
             result,
             progress,
             vak,
             language,
-            tileIdSet,
+            reservedItemIds,
             tileTexts,
-            tileLowIds,
             storyStrongCategories,
+            competencyExampleIds,
             out var storyIds);
         var body = string.Join(ParagraphBreak, paragraphs);
-        var publishedStrongIds = clauses
-            .Where(c => (tileIdSet.Contains(c.ItemId) || storyIds.Contains(c.ItemId)) && c.EffectiveScore >= 4)
-            .Select(c => c.ItemId)
+        var pageItemIds = reservedForStory
+            .Union(tileIdSet)
+            .Union(storyIds)
             .ToHashSet();
-        var growthExcludedFromTiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var cat in Rules.CompetencyTestCatalog.QuickScanCategories)
-        {
-            var minder = PupilG78CompetencyNarrative.MinderNaarVoren(cat);
-            if (tileTexts.Any(t => t.Contains(minder, StringComparison.OrdinalIgnoreCase)))
-            {
-                growthExcludedFromTiles.Add(cat);
-            }
-        }
-
+        var pageDimensions = PupilG78ItemDimensionMap.DimensionsOnPage(pageItemIds);
         var growth = PupilG78GrowthCompetencies.Build(
             answers,
-            clauses,
-            publishedStrongIds,
-            growthExcludedFromTiles,
+            pageItemIds,
+            pageDimensions,
             language);
-        var allUsed = tileIds.Concat(storyIds).Distinct().ToList();
+        var allUsed = pageItemIds.ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
         return new PupilG78StoryPackage(body, allUsed, storyIds, tiles, preferences, sheet, growth);

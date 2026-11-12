@@ -17,60 +17,84 @@ public static class PupilG78StoryComposer
         string language,
         IReadOnlySet<int> reservedItemIds,
         IReadOnlyList<string> tileTexts,
-        IReadOnlyList<int> tileLowItemIds,
         IReadOnlyList<string> storyStrongCategories,
+        IReadOnlyList<int> competencyExampleIds,
         out IReadOnlyList<int> usedItemIds)
     {
         var pool = clauses.Where(c => !reservedItemIds.Contains(c.ItemId)).ToList();
-        var usedIds = new HashSet<int>();
+        var usedIds = new HashSet<int>(competencyExampleIds);
         var usedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var usedThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in reservedItemIds.Concat(competencyExampleIds))
+        {
+            var key = PupilG78ThemeKeys.DedupeKey(id);
+            if (key is not null)
+            {
+                usedThemes.Add(key);
+            }
+        }
+
+        var selected = reservedItemIds.ToHashSet();
         var avoidSimilar = new List<string>(tileTexts);
         var paragraphs = new List<string>();
-        var suppressHelpInStory = tileLowItemIds.Contains(9019)
-            || tileTexts.Any(t => t.Contains("uitleggen is minder", StringComparison.OrdinalIgnoreCase));
 
-        var mensen = Pick(pool, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true, tileLowItemIds, suppressHelpInStory);
+        var mensen = Pick(pool, clauses, selected, usedThemes, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
         RememberAvoid(avoidSimilar, mensen);
-        var mensenExtra = PickCareerSocial(pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory, Math.Max(0, 3 - mensen.Count));
+        foreach (var m in mensen)
+        {
+            selected.Add(m.ItemId);
+        }
+
+        var mensenExtra = PickCareerSocial(pool, clauses, selected, usedThemes, usedIds, usedCategories, avoidSimilar, Math.Max(0, 3 - mensen.Count));
         RememberAvoid(avoidSimilar, mensenExtra);
+        foreach (var m in mensenExtra)
+        {
+            selected.Add(m.ItemId);
+        }
+
         var p1Bits = mensen.Concat(mensenExtra).Take(2).ToList();
         if (p1Bits.Count > 0)
         {
             paragraphs.Add(BuildFactParagraph(p1Bits));
         }
 
-        var dimAverages = PupilG78CompetencyNarrative.DimensionAverages(clauses);
         var competencyPara = ComposeCompetencyParagraph(
-            pool,
+            clauses,
             storyStrongCategories,
-            dimAverages,
-            usedIds,
-            usedCategories,
-            avoidSimilar,
-            tileLowItemIds,
-            suppressHelpInStory);
+            competencyExampleIds,
+            usedIds);
         if (!string.IsNullOrWhiteSpace(competencyPara))
         {
             paragraphs.Add(competencyPara);
         }
 
-        var waarden = Pick(pool, G78StoryBeat.Waarden, usedCategories, usedIds, avoidSimilar, 2, tileLowItemIds: tileLowItemIds, suppressHelpInStory: suppressHelpInStory);
+        var waarden = Pick(pool, clauses, selected, usedThemes, G78StoryBeat.Waarden, usedCategories, usedIds, avoidSimilar, 2);
         RememberAvoid(avoidSimilar, waarden);
-        var career = PickCareerHighs(pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory, 2);
+        foreach (var w in waarden)
+        {
+            selected.Add(w.ItemId);
+        }
+
+        var career = PickCareerHighs(pool, clauses, selected, usedThemes, usedIds, usedCategories, avoidSimilar, 2);
         RememberAvoid(avoidSimilar, career);
+        foreach (var c in career)
+        {
+            selected.Add(c.ItemId);
+        }
+
         var p3Bits = waarden.Concat(career).Take(4).ToList();
         if (p3Bits.Count > 0)
         {
             paragraphs.Add(BuildFactParagraph(p3Bits));
         }
 
-        var p4 = ComposeLevenOpSchoolParagraph(result, progress, vak, language, pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory);
+        var p4 = ComposeLevenOpSchoolParagraph(result, progress, vak, language, pool, clauses, selected, usedThemes, usedIds, usedCategories, avoidSimilar);
         if (!string.IsNullOrWhiteSpace(p4))
         {
             paragraphs.Add(p4);
         }
 
-        PadParagraphsFromPool(paragraphs, pool, usedIds, usedCategories, avoidSimilar, tileLowItemIds, suppressHelpInStory);
+        PadParagraphsFromPool(paragraphs, pool, clauses, selected, usedThemes, usedIds, usedCategories, avoidSimilar);
 
         while (paragraphs.Count > 4)
         {
@@ -101,16 +125,13 @@ public static class PupilG78StoryComposer
     }
 
     private static string ComposeCompetencyParagraph(
-        List<G78AnswerClause> pool,
+        IReadOnlyList<G78AnswerClause> clauses,
         IReadOnlyList<string> storyStrongCategories,
-        Dictionary<string, double> dimAverages,
-        HashSet<int> usedIds,
-        HashSet<string> usedCategories,
-        List<string> avoidSimilar,
-        IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory)
+        IReadOnlyList<int> competencyExampleIds,
+        HashSet<int> usedIds)
     {
-        if (dimAverages.Count == 0 || storyStrongCategories.Count == 0)
+        _ = usedIds;
+        if (storyStrongCategories.Count == 0)
         {
             return "";
         }
@@ -129,26 +150,15 @@ public static class PupilG78StoryComposer
             _ => ""
         };
 
+        var byId = clauses.ToDictionary(c => c.ItemId);
         var examples = new List<string>();
-        foreach (var dim in topDims)
+        foreach (var id in competencyExampleIds)
         {
-            var pick = pool.FirstOrDefault(c =>
-                c.Model == AssessmentKind.Competence
-                && c.ItemId <= PupilG78CompetencyNarrative.CompetenceItemMax
-                && string.Equals(c.Category, dim, StringComparison.OrdinalIgnoreCase)
-                && c.EffectiveScore >= 4
-                && !c.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
-                && !usedIds.Contains(c.ItemId)
-                && (!suppressHelpInStory || !PupilG78AnswerConflicts.ContainsHelpHigh(c.Text))
-                && !tileLowItemIds.Any(id => PupilG78AnswerConflicts.TileLowConflictsWithText(id, c.Text)));
-            if (pick is null)
+            if (!byId.TryGetValue(id, out var pick))
             {
                 continue;
             }
 
-            usedIds.Add(pick.ItemId);
-            usedCategories.Add(pick.Category);
-            avoidSimilar.Add(pick.Text);
             var main = PupilG78StoryFlow.MainClause(pick);
             if (main.Length > 0)
             {
@@ -170,11 +180,12 @@ public static class PupilG78StoryComposer
         IReadOnlyList<PupilVakScoreEntry> vak,
         string language,
         List<G78AnswerClause> pool,
+        IReadOnlyList<G78AnswerClause> allClauses,
+        HashSet<int> selected,
+        HashSet<string> usedThemes,
         HashSet<int> usedIds,
         HashSet<string> usedCategories,
-        List<string> avoidSimilar,
-        IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory)
+        List<string> avoidSimilar)
     {
         var sentences = new List<string>();
         var vakNames = vak
@@ -196,7 +207,7 @@ public static class PupilG78StoryComposer
             sentences.Add($"In je vrije tijd ben je graag bezig met {JoinDutchList(hobbies)}.");
         }
 
-        var culture = Pick(pool, G78StoryBeat.SchoolLater, usedCategories, usedIds, avoidSimilar, 2, tileLowItemIds: tileLowItemIds, suppressHelpInStory: suppressHelpInStory);
+        var culture = Pick(pool, allClauses, selected, usedThemes, G78StoryBeat.SchoolLater, usedCategories, usedIds, avoidSimilar, 2);
         RememberAvoid(avoidSimilar, culture);
         foreach (var c in culture.Take(Math.Max(0, 4 - sentences.Count)))
         {
@@ -218,19 +229,22 @@ public static class PupilG78StoryComposer
 
     private static IReadOnlyList<G78AnswerClause> PickCareerSocial(
         List<G78AnswerClause> pool,
+        IReadOnlyList<G78AnswerClause> allClauses,
+        HashSet<int> selected,
+        HashSet<string> usedThemes,
         HashSet<int> usedIds,
         HashSet<string> usedCategories,
         List<string> avoidSimilar,
-        IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory,
         int max)
     {
+        var blocked = PupilG78OppositePairs.BlockedItems(allClauses, selected);
         var picked = new List<G78AnswerClause>();
         foreach (var c in pool
                      .Where(c => c.Model == AssessmentKind.Career
                                  && c.Beat == G78StoryBeat.Samen
                                  && c.EffectiveScore >= 4
-                                 && !usedIds.Contains(c.ItemId))
+                                 && !usedIds.Contains(c.ItemId)
+                                 && !blocked.Contains(c.ItemId))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
@@ -244,17 +258,13 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            if (tileLowItemIds.Any(id => PupilG78AnswerConflicts.TileLowConflictsWithText(id, c.Text)))
-            {
-                continue;
-            }
-
-            if (suppressHelpInStory && PupilG78AnswerConflicts.ContainsHelpHigh(c.Text))
+            if (ThemeBlocked(c.ItemId, usedThemes))
             {
                 continue;
             }
 
             picked.Add(c);
+            RememberTheme(c.ItemId, usedThemes);
             usedCategories.Add(c.Category);
             usedIds.Add(c.ItemId);
             if (picked.Count >= max)
@@ -268,19 +278,22 @@ public static class PupilG78StoryComposer
 
     private static IReadOnlyList<G78AnswerClause> PickCareerHighs(
         List<G78AnswerClause> pool,
+        IReadOnlyList<G78AnswerClause> allClauses,
+        HashSet<int> selected,
+        HashSet<string> usedThemes,
         HashSet<int> usedIds,
         HashSet<string> usedCategories,
         List<string> avoidSimilar,
-        IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory,
         int max)
     {
+        var blocked = PupilG78OppositePairs.BlockedItems(allClauses, selected);
         var picked = new List<G78AnswerClause>();
         foreach (var c in pool
                      .Where(c => c.Model == AssessmentKind.Career
                                  && c.Beat == G78StoryBeat.Doen
                                  && c.EffectiveScore >= 4
-                                 && !usedIds.Contains(c.ItemId))
+                                 && !usedIds.Contains(c.ItemId)
+                                 && !blocked.Contains(c.ItemId))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
@@ -294,17 +307,13 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            if (suppressHelpInStory && PupilG78AnswerConflicts.ContainsHelpHigh(c.Text))
-            {
-                continue;
-            }
-
-            if (tileLowItemIds.Any(id => PupilG78AnswerConflicts.TileLowConflictsWithText(id, c.Text)))
+            if (ThemeBlocked(c.ItemId, usedThemes))
             {
                 continue;
             }
 
             picked.Add(c);
+            RememberTheme(c.ItemId, usedThemes);
             usedCategories.Add(c.Category);
             usedIds.Add(c.ItemId);
             if (picked.Count >= max)
@@ -319,15 +328,16 @@ public static class PupilG78StoryComposer
     private static void PadParagraphsFromPool(
         List<string> paragraphs,
         List<G78AnswerClause> pool,
+        IReadOnlyList<G78AnswerClause> allClauses,
+        HashSet<int> selected,
+        HashSet<string> usedThemes,
         HashSet<int> usedIds,
         HashSet<string> usedCategories,
-        List<string> avoidSimilar,
-        IReadOnlyList<int> tileLowItemIds,
-        bool suppressHelpInStory)
+        List<string> avoidSimilar)
     {
         while (paragraphs.Count < 3)
         {
-            var extra = Pick(pool, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, 2, tileLowItemIds: tileLowItemIds, suppressHelpInStory: suppressHelpInStory);
+            var extra = Pick(pool, allClauses, selected, usedThemes, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, 2);
             if (extra.Count == 0)
             {
                 break;
@@ -345,7 +355,7 @@ public static class PupilG78StoryComposer
             }
 
             var need = 3 - SentenceCount(paragraphs[i]);
-            var fill = Pick(pool, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, need, tileLowItemIds: tileLowItemIds, suppressHelpInStory: suppressHelpInStory);
+            var fill = Pick(pool, allClauses, selected, usedThemes, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, need);
             if (fill.Count == 0)
             {
                 continue;
@@ -404,7 +414,9 @@ public static class PupilG78StoryComposer
         var avoidSimilar = new List<string>();
         var paragraphs = new List<string>();
 
-        var doen = Pick(clauses, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
+        var selected = new HashSet<int>();
+        var usedThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var doen = Pick(clauses, clauses, selected, usedThemes, G78StoryBeat.Doen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
         RememberAvoid(avoidSimilar, doen);
         var doenLow = PickLow(clauses, G78StoryBeat.Doen, usedIds, 1, skipSimilarTo: doen);
         if (doen.Count > 0)
@@ -412,14 +424,14 @@ public static class PupilG78StoryComposer
             paragraphs.Add(ComposeDoen(doen, doenLow));
         }
 
-        var samen = Pick(clauses, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
+        var samen = Pick(clauses, clauses, selected, usedThemes, G78StoryBeat.Samen, usedCategories, usedIds, avoidSimilar, 2, similarFilter: true);
         RememberAvoid(avoidSimilar, samen);
         if (samen.Count > 0)
         {
             paragraphs.Add(ComposeSamen(samen));
         }
 
-        var waarden = Pick(clauses, G78StoryBeat.Waarden, usedCategories, usedIds, avoidSimilar, 2);
+        var waarden = Pick(clauses, clauses, selected, usedThemes, G78StoryBeat.Waarden, usedCategories, usedIds, avoidSimilar, 2);
         if (waarden.Count > 0)
         {
             paragraphs.Add(ComposeWaarden(waarden));
@@ -593,23 +605,25 @@ public static class PupilG78StoryComposer
     }
 
     private static IReadOnlyList<G78AnswerClause> Pick(
-        IReadOnlyList<G78AnswerClause> all,
+        IReadOnlyList<G78AnswerClause> pool,
+        IReadOnlyList<G78AnswerClause> allClauses,
+        HashSet<int> selected,
+        HashSet<string> usedThemes,
         G78StoryBeat beat,
         HashSet<string> usedCategories,
         HashSet<int> usedIds,
         IReadOnlyList<string> avoidSimilarTexts,
         int max,
-        bool similarFilter = false,
-        IReadOnlyList<int>? tileLowItemIds = null,
-        bool suppressHelpInStory = false)
+        bool similarFilter = false)
     {
+        var blocked = PupilG78OppositePairs.BlockedItems(allClauses, selected);
         var picked = new List<G78AnswerClause>();
-        foreach (var c in all
+        foreach (var c in pool
                      .Where(c => c.Beat == beat
                                  && c.EffectiveScore >= 4
-                                 && !c.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
                                  && !usedCategories.Contains(c.Category)
-                                 && !usedIds.Contains(c.ItemId))
+                                 && !usedIds.Contains(c.ItemId)
+                                 && !blocked.Contains(c.ItemId))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
@@ -623,13 +637,7 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            if (tileLowItemIds is not null
-                && tileLowItemIds.Any(lowId => PupilG78AnswerConflicts.TileLowConflictsWithText(lowId, c.Text)))
-            {
-                continue;
-            }
-
-            if (suppressHelpInStory && PupilG78AnswerConflicts.ContainsHelpHigh(c.Text))
+            if (ThemeBlocked(c.ItemId, usedThemes))
             {
                 continue;
             }
@@ -637,6 +645,7 @@ public static class PupilG78StoryComposer
             picked.Add(c);
             usedCategories.Add(c.Category);
             usedIds.Add(c.ItemId);
+            RememberTheme(c.ItemId, usedThemes);
             if (picked.Count >= max)
             {
                 break;
@@ -644,6 +653,21 @@ public static class PupilG78StoryComposer
         }
 
         return picked;
+    }
+
+    private static bool ThemeBlocked(int itemId, HashSet<string> usedThemes)
+    {
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        return key is not null && usedThemes.Contains(key);
+    }
+
+    private static void RememberTheme(int itemId, HashSet<string> usedThemes)
+    {
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        if (key is not null)
+        {
+            usedThemes.Add(key);
+        }
     }
 
     private static IReadOnlyList<G78AnswerClause> PickLow(

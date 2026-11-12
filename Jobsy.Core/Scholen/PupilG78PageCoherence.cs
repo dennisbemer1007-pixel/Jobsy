@@ -1,7 +1,5 @@
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts.Scholen;
-using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
@@ -11,14 +9,6 @@ public static class PupilG78PageCoherence
 {
     public static IReadOnlyList<int> FindDuplicateItemIds(PupilG78StoryPackage pkg)
     {
-        var storyIds = Regex.Matches(
-                pkg.Body,
-                @"\b90[0-5][0-9]\b",
-                RegexOptions.CultureInvariant)
-            .Select(m => int.Parse(m.Value, System.Globalization.CultureInfo.InvariantCulture))
-            .ToList();
-
-        // Story ids tracked via package UsedItemIds split: story = used - tiles
         var tileIds = pkg.Tiles
             .SelectMany(t => ExtractJeFormItemIds(t.Explanation))
             .ToList();
@@ -33,13 +23,11 @@ public static class PupilG78PageCoherence
             return dupes;
         }
 
-        // Text-level: same canonical sentence in story and tile
         foreach (var tile in pkg.Tiles)
         {
             foreach (var sentence in SplitSentences(tile.Explanation))
             {
                 if (sentence.Length > 35
-                    && !sentence.Contains("minder", StringComparison.OrdinalIgnoreCase)
                     && pkg.Body.Contains(sentence.TrimEnd('.'), StringComparison.Ordinal))
                 {
                     dupes.Add(-1);
@@ -50,102 +38,74 @@ public static class PupilG78PageCoherence
         return dupes.Distinct().ToList();
     }
 
-    public static IReadOnlyList<string> FindStrongWeakOverlaps(
-        PupilG78StoryPackage pkg,
-        IReadOnlyDictionary<string, int> answers)
+    public static IReadOnlyList<string> FindStrongWeakOverlaps(PupilG78StoryPackage pkg)
     {
         var overlaps = new List<string>();
-        var clauses = BuildClauses(answers);
-        var publishedStrong = PublishedStrongIds(pkg, clauses);
-        var growthCats = pkg.GrowthCompetencies.Select(g => g.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var g in pkg.GrowthCompetencies)
-        {
-            if (!PupilG78ItemThemes.GrowthCategoryAllowed(g.Category, publishedStrong, clauses))
-            {
-                overlaps.Add("growth:" + g.Category);
-            }
-
-            var minder = PupilG78CompetencyNarrative.MinderNaarVoren(g.Category);
-            if (pkg.Tiles.Any(t => t.Explanation.Contains(minder, StringComparison.OrdinalIgnoreCase)))
-            {
-                overlaps.Add("growth-tile:" + g.Category);
-            }
-        }
+        var pageIds = pkg.UsedItemIds.ToHashSet();
 
         foreach (var tile in pkg.Tiles)
         {
-            overlaps.AddRange(FindTileInternalThemeClashes(tile.Explanation));
-            var tileStrongIds = ExtractJeFormItemIds(tile.Explanation)
-                .Where(id =>
-                {
-                    var je = PupilG78QuestionJeForms.ForItem(id);
-                    return je is not null
-                           && tile.Explanation.Contains(je.TrimEnd('.'), StringComparison.Ordinal)
-                           && !SplitSentences(tile.Explanation)
-                               .Any(s => s.Contains("minder", StringComparison.OrdinalIgnoreCase)
-                                         && s.Contains(je.TrimEnd('.'), StringComparison.Ordinal));
-                })
-                .ToHashSet();
-            var lows = SplitSentences(tile.Explanation)
-                .Where(s => s.Contains("minder", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-            foreach (var low in lows)
+            if (tile.Explanation.Contains("minder", StringComparison.OrdinalIgnoreCase))
             {
-                if (PupilG78ItemThemes.ContrastConflictsStrength(low, tileStrongIds, clauses))
-                {
-                    overlaps.Add("tile-weak:" + low);
-                }
+                overlaps.Add("tile-minder-line");
+            }
+
+            overlaps.AddRange(FindDuplicateThemesAcrossTiles(pkg.Tiles));
+        }
+
+        var pageDimensions = PupilG78ItemDimensionMap.DimensionsOnPage(pageIds);
+        foreach (var g in pkg.GrowthCompetencies)
+        {
+            if (pageDimensions.Contains(g.Category))
+            {
+                overlaps.Add("growth-page-dim:" + g.Category);
+            }
+
+            if (PupilG78ItemDimensionMap.PageMentionsDimension(pageIds, g.Category))
+            {
+                overlaps.Add("growth-page-dim:" + g.Category);
             }
         }
 
-        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
-        {
-            var kid = PupilG78CompetencyNarrative.KidLabel(cat);
-            var weakInTiles = pkg.Tiles.Any(t =>
-                t.Explanation.Contains("minder", StringComparison.OrdinalIgnoreCase)
-                && t.Explanation.Contains(kid, StringComparison.OrdinalIgnoreCase));
-            var strongPublished = clauses.Any(c =>
-                publishedStrong.Contains(c.ItemId)
-                && c.EffectiveScore >= 4
-                && string.Equals(c.Category, cat, StringComparison.OrdinalIgnoreCase));
-            if (weakInTiles && strongPublished)
-            {
-                overlaps.Add(kid);
-            }
-        }
+        overlaps.AddRange(
+            PupilG78OppositePairs.FindPageTensions(pageIds)
+                .Select(t => "page-" + t));
 
         return overlaps.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     public static IReadOnlyList<string> FindStrongWeakOverlaps(PupilG78StoryPackage pkg, string? answersJson)
     {
-        var answers = ParseAnswers(answersJson);
-        return FindStrongWeakOverlaps(pkg, answers);
+        _ = answersJson;
+        return FindStrongWeakOverlaps(pkg);
     }
 
-    private static List<G78AnswerClause> BuildClauses(IReadOnlyDictionary<string, int> answers)
+    public static IReadOnlyList<string> FindDuplicateThemesAcrossTiles(IReadOnlyList<PupilStoryTileDto> tiles)
     {
-        var bank = new PupilQuestionBank();
-        var list = new List<G78AnswerClause>();
-        foreach (var item in bank.AllItems)
+        var clashes = new List<string>();
+        var seen = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var tile in tiles)
         {
-            if (!answers.TryGetValue(item.Id, out var raw))
+            foreach (var id in ExtractJeFormItemIds(tile.Explanation))
             {
-                continue;
-            }
+                var key = PupilG78ThemeKeys.DedupeKey(id);
+                if (key is null)
+                {
+                    continue;
+                }
 
-            var q = bank.Questions.FirstOrDefault(x => x.Id == item.NumericId);
-            if (q is null)
-            {
-                continue;
+                if (seen.TryGetValue(key, out var prior) && !string.Equals(prior, tile.ModelKey, StringComparison.Ordinal))
+                {
+                    clashes.Add("theme-dup:" + key);
+                }
+                else
+                {
+                    seen[key] = tile.ModelKey;
+                }
             }
-
-            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
-            list.Add(new G78AnswerClause(q.Id, q.Category, q.Model, G78StoryBeat.Doen, "", eff));
         }
 
-        return list;
+        return clashes;
     }
 
     private static IEnumerable<int> ExtractJeFormItemIds(string tileExplanation)
@@ -161,59 +121,9 @@ public static class PupilG78PageCoherence
         }
     }
 
-    private static List<string> FindTileInternalThemeClashes(string tileText)
-    {
-        var clashes = new List<string>();
-        var sentences = SplitSentences(tileText);
-        var highs = sentences.Where(s => !s.Contains("minder", StringComparison.OrdinalIgnoreCase)).ToList();
-        var lows = sentences.Where(s => s.Contains("minder", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (lows.Count > 1)
-        {
-            clashes.Add("tile-multiple-low");
-        }
-
-        foreach (var low in lows)
-        {
-            var lowText = low.ToLowerInvariant();
-            foreach (var high in highs)
-            {
-                var highText = high.ToLowerInvariant();
-                foreach (var (weak, strong) in PupilG78AnswerConflicts.ThemeClashTokens)
-                {
-                    if (lowText.Contains(weak, StringComparison.Ordinal) && highText.Contains(strong, StringComparison.Ordinal))
-                    {
-                        clashes.Add(weak);
-                    }
-                }
-            }
-        }
-
-        return clashes;
-    }
-
     private static IReadOnlyList<string> SplitSentences(string text)
         => text.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(s => s.TrimEnd('.'))
             .ToList();
 
-    private static HashSet<int> PublishedStrongIds(PupilG78StoryPackage pkg, List<G78AnswerClause> clauses)
-    {
-        var tileIds = pkg.Tiles.SelectMany(t => ExtractJeFormItemIds(t.Explanation)).ToHashSet();
-        return clauses
-            .Where(c => c.EffectiveScore >= 4
-                        && (pkg.StoryItemIds.Contains(c.ItemId) || tileIds.Contains(c.ItemId)))
-            .Select(c => c.ItemId)
-            .ToHashSet();
-    }
-
-    private static Dictionary<string, int> ParseAnswers(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return new Dictionary<string, int>(StringComparer.Ordinal);
-        }
-
-        return JsonSerializer.Deserialize<Dictionary<string, int>>(json)
-               ?? new Dictionary<string, int>(StringComparer.Ordinal);
-    }
 }

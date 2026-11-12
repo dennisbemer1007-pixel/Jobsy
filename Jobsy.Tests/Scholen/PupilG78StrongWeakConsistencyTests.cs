@@ -33,9 +33,23 @@ public sealed class PupilG78StrongWeakConsistencyTests
         var avgs = PupilG78GrowthCompetencies.DimensionAverages(answers);
         var top = PupilG78GrowthCompetencies.TopStrongCategories(avgs, 3).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
+        var pageIds = pkg.UsedItemIds.Concat(pkg.StoryItemIds).ToHashSet();
+        var onPage = PupilG78ItemDimensionMap.DimensionsOnPage(pageIds);
         foreach (var g in pkg.GrowthCompetencies)
         {
             Assert.DoesNotContain(g.Category, top);
+            Assert.DoesNotContain(g.Category, onPage);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Fixtures))]
+    public void Tiles_contain_no_minder_lines((PupilResult Result, PupilProgress Progress) fixture)
+    {
+        var pkg = PupilG78FactStory.Build(fixture.Result, fixture.Progress, "nl");
+        foreach (var tile in pkg.Tiles)
+        {
+            Assert.DoesNotContain("minder", tile.Explanation, StringComparison.OrdinalIgnoreCase);
         }
     }
 

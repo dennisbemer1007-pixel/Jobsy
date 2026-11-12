@@ -28,21 +28,20 @@ public static class PupilG78GrowthCompetencies
 
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlyList<G78AnswerClause> clauses,
-        IReadOnlySet<int> publishedStrongIds,
-        IReadOnlySet<string>? alsoExcludedCategories = null,
+        IReadOnlySet<int> pageItemIds,
+        IReadOnlySet<string> pageDimensions,
         string language = "nl")
     {
-        var averages = DimensionAverages(answers);
-        var excludedCategories = CompetencyTestCatalog.QuickScanCategories
-            .Where(cat => !PupilG78ItemThemes.GrowthCategoryAllowed(cat, publishedStrongIds, clauses))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (alsoExcludedCategories is not null)
+        var excludedCategories = new HashSet<string>(pageDimensions, StringComparer.OrdinalIgnoreCase);
+        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
         {
-            excludedCategories.UnionWith(alsoExcludedCategories);
+            if (PupilG78ItemDimensionMap.PageMentionsDimension(pageItemIds, cat))
+            {
+                excludedCategories.Add(cat);
+            }
         }
 
-        return BuildCore(answers, excludedCategories, publishedStrongIds, language);
+        return BuildCore(answers, excludedCategories, pageItemIds, language);
     }
 
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> Build(
@@ -54,7 +53,7 @@ public static class PupilG78GrowthCompetencies
     private static IReadOnlyList<PupilG78GrowthCompetencyDto> BuildCore(
         IReadOnlyDictionary<string, int> answers,
         IReadOnlySet<string> excludedCategories,
-        IReadOnlySet<int>? publishedStrongIds,
+        IReadOnlySet<int>? pageItemIds,
         string language)
     {
         var averages = DimensionAverages(answers);
@@ -89,7 +88,7 @@ public static class PupilG78GrowthCompetencies
             list.Add(new PupilG78GrowthCompetencyDto(
                 category,
                 PupilG78CompetencyNarrative.KidLabelTitle(category),
-                WhyExplanation(stats, publishedStrongIds, language),
+                WhyExplanation(stats, pageItemIds, category, language),
                 panelId));
         }
 
@@ -107,7 +106,7 @@ public static class PupilG78GrowthCompetencies
                 list.Add(new PupilG78GrowthCompetencyDto(
                     fallback,
                     PupilG78CompetencyNarrative.KidLabelTitle(fallback),
-                    WhyExplanation(stats, publishedStrongIds, language),
+                    WhyExplanation(stats, pageItemIds, fallback, language),
                     PanelId(fallback)));
             }
         }
@@ -163,13 +162,15 @@ public static class PupilG78GrowthCompetencies
 
     private static string WhyExplanation(
         DimensionStats stats,
-        IReadOnlySet<int>? publishedStrongIds,
+        IReadOnlySet<int>? pageItemIds,
+        string growthCategory,
         string language)
     {
         _ = language;
+        _ = growthCategory;
         var picks = stats.ItemScores
             .Where(i => i.Effective <= 3
-                        && (publishedStrongIds is null || !publishedStrongIds.Contains(i.ItemId)))
+                        && (pageItemIds is null || !pageItemIds.Contains(i.ItemId)))
             .OrderBy(i => i.Effective)
             .ThenBy(i => i.ItemId)
             .Take(2)

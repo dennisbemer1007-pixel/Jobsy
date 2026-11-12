@@ -4,7 +4,7 @@ using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
 
-/// <summary>Four fact-based result tiles (competence, career, values, culture).</summary>
+/// <summary>Four fact-based result tiles — positive clauses only (2–4 per tile).</summary>
 public static class PupilG78FactTileComposer
 {
     private static readonly (string ModelKey, string LabelKey, AssessmentKind Kind)[] Slots =
@@ -15,108 +15,55 @@ public static class PupilG78FactTileComposer
         ("culture", "LeerlingStory.Tile.Thuis", AssessmentKind.Culture),
     ];
 
-    private static readonly Dictionary<int, string> TileLowContrast = new()
-    {
-        [9012] = "Taken uitstellen tot het laatst is minder jouw ding.",
-        [9014] = "Alles op de oude manier is minder jouw ding.",
-        [9015] = "Stil afwachten is minder jouw ding.",
-        [9016] = "Iets maken of repareren is minder jouw ding.",
-        [9018] = "Iets moois maken, zoals een tekening of muziek, is minder vaak jouw ding.",
-        [9019] = "Anderen uitleggen is minder vaak jouw ding.",
-        [9003] = "Rustig blijven bij een slecht cijfer is minder jouw ding.",
-        [9020] = "De leiding nemen is minder jouw ding.",
-        [9024] = "Anderen steunen is minder vaak jouw ding.",
-        [9055] = "Strakke regels zijn minder jouw ding.",
-        [9057] = "Alles hetzelfde houden is minder jouw ding.",
-        [9001] = "Vrienden in de gaten houden is minder vaak jouw ding.",
-        [9002] = "Huiswerk afmaken zonder zin is minder jouw ding.",
-        [9009] = "Iets nieuws proberen is minder vaak jouw ding.",
-        [9032] = "Veel vrienden om je heen is minder vaak jouw ding.",
-        [9033] = "Heel goed worden in iets is minder vaak jouw ding.",
-        [9031] = "Later alles zelf kiezen is minder vaak jouw ding.",
-        [9035] = "Later iets doen voor de wereld is minder vaak jouw ding.",
-        [9050] = "Iedereen zich welkom laten voelen is minder vaak jouw ding.",
-        [9053] = "Taken delen in een team is minder vaak jouw ding.",
-        [9047] = "Samen in een groepje werken is minder vaak jouw ding.",
-        [9058] = "Werken in een groepje is minder vaak jouw ding.",
-        [9052] = "Een drukke, gezellige sfeer is minder vaak jouw ding.",
-    };
-
-    public static (IReadOnlyList<PupilStoryTileDto> Tiles, IReadOnlyList<int> UsedItemIds, IReadOnlyList<int> LowItemIds) Build(
+    public static (IReadOnlyList<PupilStoryTileDto> Tiles, IReadOnlyList<int> UsedItemIds) Build(
         IReadOnlyList<G78AnswerClause> clauses,
-        string language)
+        string language,
+        IReadOnlySet<int> reservedIds)
     {
+        var blockedIds = new HashSet<int>(reservedIds);
         var usedIds = new HashSet<int>();
         var usedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var lowIds = new List<int>();
+        var usedThemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in reservedIds)
+        {
+            var key = PupilG78ThemeKeys.DedupeKey(id);
+            if (key is not null)
+            {
+                usedThemes.Add(key);
+            }
+        }
+
         var tiles = new List<PupilStoryTileDto>();
-        var builtTexts = new List<string>();
+        var selected = new HashSet<int>(reservedIds);
 
         foreach (var (modelKey, labelKey, kind) in Slots)
         {
-            var highs = PickHighs(clauses, kind, usedCategories, usedIds);
-            var low = PickLow(clauses, kind, usedIds, highs, builtTexts);
-            if (low is not null)
+            var highs = PickHighs(clauses, kind, usedCategories, usedIds, blockedIds, usedThemes, selected);
+            foreach (var h in highs)
             {
-                lowIds.Add(low.ItemId);
+                selected.Add(h.ItemId);
             }
 
-            var explanation = ComposeTileText(highs, low);
-            builtTexts.Add(explanation);
+            var explanation = ComposeTileText(highs);
             tiles.Add(new PupilStoryTileDto(
                 modelKey,
                 PupilVerhaalLocalized.Get(labelKey, language),
                 explanation));
         }
 
-        return (tiles, usedIds.ToList(), lowIds);
+        return (tiles, usedIds.ToList());
     }
 
-    private static string ContrastForTile(G78AnswerClause low)
+    private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs)
     {
-        if (low.ItemId is >= 9001 and <= PupilG78CompetencyNarrative.CompetenceItemMax)
-        {
-            return PupilG78CompetencyNarrative.MinderNaarVoren(low.Category);
-        }
-
-        if (TileLowContrast.TryGetValue(low.ItemId, out var fixedLine))
-        {
-            return fixedLine;
-        }
-
-        return "";
-    }
-
-    private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs, G78AnswerClause? low)
-    {
-        var sentences = new List<string>();
-        foreach (var h in highs)
-        {
-            var main = PupilG78QuestionJeForms.ForItem(h.ItemId)
-                       ?? PupilG78JeNarrative.AsSentence(h.Text);
-            sentences.Add(main);
-        }
-
-        if (low is not null && highs.Count > 0)
-        {
-            var contrast = ContrastForTile(low);
-            var tileSoFar = string.Join(' ', sentences);
-            if (!string.IsNullOrWhiteSpace(contrast)
-                && !PupilG78JeNarrative.TooSimilar(highs[0].Text, low.Text)
-                && !PupilG78AnswerConflicts.TileLowConflictsWithText(low.ItemId, tileSoFar)
-                && !PupilG78AnswerConflicts.ContrastLineConflictsHighs(highs, contrast)
-                && !highs.Any(h => h.Model == AssessmentKind.Competence
-                                   && string.Equals(h.Category, low.Category, StringComparison.OrdinalIgnoreCase)))
-            {
-                sentences.Add(contrast);
-            }
-        }
-
-        if (sentences.Count == 0)
+        if (highs.Count == 0)
         {
             return "Je gaf zelf antwoord op deze vragen.";
         }
 
+        var sentences = highs
+            .Select(h => PupilG78QuestionJeForms.ForItem(h.ItemId) ?? PupilG78JeNarrative.AsSentence(h.Text))
+            .ToList();
         return string.Join(' ', sentences);
     }
 
@@ -124,23 +71,36 @@ public static class PupilG78FactTileComposer
         IReadOnlyList<G78AnswerClause> all,
         AssessmentKind kind,
         HashSet<string> usedCategories,
-        HashSet<int> usedIds)
+        HashSet<int> usedIds,
+        HashSet<int> blockedIds,
+        HashSet<string> usedThemes,
+        IReadOnlySet<int> selectedSoFar)
     {
         if (kind == AssessmentKind.Competence)
         {
-            return PickCompetenceHighs(all, usedIds);
+            return PickCompetenceHighs(all, usedIds, blockedIds, usedThemes, selectedSoFar);
         }
 
+        var blocked = PupilG78OppositePairs.BlockedItems(all, selectedSoFar);
         var picked = new List<G78AnswerClause>();
+
         foreach (var c in all
                      .Where(c => c.Model == kind
                                  && c.EffectiveScore >= 4
-                                 && !c.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
-                                 && !usedIds.Contains(c.ItemId))
+                                 && (c.Model != AssessmentKind.Competence || c.ItemId <= PupilG78CompetencyNarrative.PositiveTileCompetenceMax)
+                                 && !usedIds.Contains(c.ItemId)
+                                 && !blockedIds.Contains(c.ItemId)
+                                 && !blocked.Contains(c.ItemId)
+                                 && PupilG78OppositePairs.IsAllowed(c.ItemId, all, selectedSoFar.Union(picked.Select(p => p.ItemId)).ToHashSet()))
                      .OrderByDescending(c => c.EffectiveScore)
                      .ThenBy(c => c.ItemId))
         {
             if (usedCategories.Contains(c.Category) && picked.Count >= 1)
+            {
+                continue;
+            }
+
+            if (ThemeBlocked(c.ItemId, usedThemes))
             {
                 continue;
             }
@@ -153,7 +113,8 @@ public static class PupilG78FactTileComposer
             picked.Add(c);
             usedCategories.Add(c.Category);
             usedIds.Add(c.ItemId);
-            if (picked.Count >= 3)
+            RememberTheme(c.ItemId, usedThemes);
+            if (picked.Count >= 4)
             {
                 break;
             }
@@ -165,9 +126,15 @@ public static class PupilG78FactTileComposer
                          .Where(c => c.Model == kind
                                      && c.EffectiveScore == 4
                                      && !usedIds.Contains(c.ItemId)
-                                     && !picked.Contains(c))
+                                     && !blockedIds.Contains(c.ItemId)
+                                     && !blocked.Contains(c.ItemId))
                          .OrderBy(c => c.ItemId))
             {
+                if (ThemeBlocked(c.ItemId, usedThemes))
+                {
+                    continue;
+                }
+
                 if (picked.Count > 0 && PupilG78JeNarrative.TooSimilar(picked[0].Text, c.Text))
                 {
                     continue;
@@ -175,6 +142,7 @@ public static class PupilG78FactTileComposer
 
                 picked.Add(c);
                 usedIds.Add(c.ItemId);
+                RememberTheme(c.ItemId, usedThemes);
                 if (picked.Count >= 2)
                 {
                     break;
@@ -182,27 +150,36 @@ public static class PupilG78FactTileComposer
             }
         }
 
+        EnsureMinimumSentences(picked, all, kind, usedIds, blockedIds, usedThemes, selectedSoFar, minimum: 2);
         return picked;
     }
 
     private static IReadOnlyList<G78AnswerClause> PickCompetenceHighs(
         IReadOnlyList<G78AnswerClause> all,
-        HashSet<int> usedIds)
+        HashSet<int> usedIds,
+        HashSet<int> blockedIds,
+        HashSet<string> usedThemes,
+        IReadOnlySet<int> selectedSoFar)
     {
+        var blocked = PupilG78OppositePairs.BlockedItems(all, selectedSoFar);
         var picked = new List<G78AnswerClause>();
+
         foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
         {
             var c = all
                 .Where(x => x.Model == AssessmentKind.Competence
-                            && x.ItemId <= PupilG78CompetencyNarrative.CompetenceItemMax
+                            && x.ItemId <= PupilG78CompetencyNarrative.PositiveTileCompetenceMax
                             && string.Equals(x.Category, cat, StringComparison.OrdinalIgnoreCase)
                             && x.EffectiveScore >= 4
-                            && !x.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
-                            && !usedIds.Contains(x.ItemId))
+                            && !usedIds.Contains(x.ItemId)
+                            && !blockedIds.Contains(x.ItemId)
+                            && !blocked.Contains(x.ItemId))
+                .Where(x => !ThemeBlocked(x.ItemId, usedThemes))
                 .OrderByDescending(x => x.EffectiveScore)
                 .ThenBy(x => x.ItemId == 9001 ? 1 : 0)
                 .ThenBy(x => x.ItemId)
                 .FirstOrDefault();
+
             if (c is null)
             {
                 continue;
@@ -215,7 +192,8 @@ public static class PupilG78FactTileComposer
 
             picked.Add(c);
             usedIds.Add(c.ItemId);
-            if (picked.Count >= 3)
+            RememberTheme(c.ItemId, usedThemes);
+            if (picked.Count >= 4)
             {
                 break;
             }
@@ -225,11 +203,19 @@ public static class PupilG78FactTileComposer
         {
             foreach (var c in all
                          .Where(x => x.Model == AssessmentKind.Competence
+                                     && x.ItemId <= PupilG78CompetencyNarrative.PositiveTileCompetenceMax
                                      && x.EffectiveScore >= 4
-                                     && !usedIds.Contains(x.ItemId))
+                                     && !usedIds.Contains(x.ItemId)
+                                     && !blockedIds.Contains(x.ItemId)
+                                     && !blocked.Contains(x.ItemId))
                          .OrderByDescending(x => x.EffectiveScore)
                          .ThenBy(x => x.ItemId))
             {
+                if (ThemeBlocked(c.ItemId, usedThemes))
+                {
+                    continue;
+                }
+
                 if (picked.Any(p => PupilG78JeNarrative.TooSimilar(p.Text, c.Text)))
                 {
                     continue;
@@ -237,73 +223,76 @@ public static class PupilG78FactTileComposer
 
                 picked.Add(c);
                 usedIds.Add(c.ItemId);
-                if (picked.Count >= 3)
+                RememberTheme(c.ItemId, usedThemes);
+                if (picked.Count >= 4)
                 {
                     break;
                 }
             }
         }
 
+        EnsureMinimumSentences(picked, all, AssessmentKind.Competence, usedIds, blockedIds, usedThemes, selectedSoFar, minimum: 2);
         return picked;
     }
 
-    private static G78AnswerClause? PickLow(
+    private static void EnsureMinimumSentences(
+        List<G78AnswerClause> picked,
         IReadOnlyList<G78AnswerClause> all,
         AssessmentKind kind,
         HashSet<int> usedIds,
-        IReadOnlyList<G78AnswerClause> highs,
-        IReadOnlyList<string> priorTileTexts)
+        HashSet<int> blockedIds,
+        HashSet<string> usedThemes,
+        IReadOnlySet<int> selectedSoFar,
+        int minimum)
     {
-        foreach (var c in all
-                     .Where(c => c.Model == kind
-                                 && c.EffectiveScore <= 2
-                                 && !usedIds.Contains(c.ItemId))
-                     .OrderBy(c => TileLowContrast.ContainsKey(c.ItemId) ? 0 : 1)
-                     .ThenBy(c => c.EffectiveScore)
-                     .ThenBy(c => c.ItemId))
+        if (picked.Count >= minimum)
         {
-            if (kind == AssessmentKind.Competence
-                && highs.Any(h => string.Equals(h.Category, c.Category, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
-
-            if (highs.Count > 0
-                && PupilG78JeNarrative.TooSimilar(highs[0].Text, c.Text)
-                && !TileLowContrast.ContainsKey(c.ItemId))
-            {
-                continue;
-            }
-
-            var contrast = ContrastForTile(c);
-            var strongIds = highs.Select(h => h.ItemId).ToHashSet();
-            if (PupilG78AnswerConflicts.ContrastLineConflictsHighs(highs, contrast)
-                || PupilG78ItemThemes.ContrastConflictsStrength(contrast, strongIds, all))
-            {
-                continue;
-            }
-
-            if (contrast.Contains("minder naar voren", StringComparison.OrdinalIgnoreCase)
-                && all.Any(x => x.Model == AssessmentKind.Competence
-                                && string.Equals(x.Category, c.Category, StringComparison.OrdinalIgnoreCase)
-                                && x.EffectiveScore >= 4))
-            {
-                continue;
-            }
-
-            var conflictsPrior = priorTileTexts.Any(prior =>
-                TileLowContrast.ContainsKey(c.ItemId) is false
-                &&
-                PupilG78AnswerConflicts.TileLowConflictsWithText(c.ItemId, prior));
-            if (conflictsPrior)
-            {
-                continue;
-            }
-
-            usedIds.Add(c.ItemId);
-            return c;
+            return;
         }
 
-        return null;
+        var blocked = PupilG78OppositePairs.BlockedItems(all, selectedSoFar.Union(picked.Select(p => p.ItemId)).ToHashSet());
+        foreach (var c in all
+                     .Where(c => c.Model == kind
+                                 && c.EffectiveScore >= 4
+                                 && !usedIds.Contains(c.ItemId)
+                                 && !blockedIds.Contains(c.ItemId)
+                                 && !blocked.Contains(c.ItemId)
+                                 && !picked.Contains(c))
+                     .OrderByDescending(c => c.EffectiveScore)
+                     .ThenBy(c => c.ItemId))
+        {
+            if (ThemeBlocked(c.ItemId, usedThemes))
+            {
+                continue;
+            }
+
+            if (picked.Any(p => PupilG78JeNarrative.TooSimilar(p.Text, c.Text)))
+            {
+                continue;
+            }
+
+            picked.Add(c);
+            usedIds.Add(c.ItemId);
+            RememberTheme(c.ItemId, usedThemes);
+            if (picked.Count >= minimum)
+            {
+                break;
+            }
+        }
+    }
+
+    private static bool ThemeBlocked(int itemId, HashSet<string> usedThemes)
+    {
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        return key is not null && usedThemes.Contains(key);
+    }
+
+    private static void RememberTheme(int itemId, HashSet<string> usedThemes)
+    {
+        var key = PupilG78ThemeKeys.DedupeKey(itemId);
+        if (key is not null)
+        {
+            usedThemes.Add(key);
+        }
     }
 }
