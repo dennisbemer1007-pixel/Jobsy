@@ -48,6 +48,9 @@ public static class PupilG78JobMatchExplanation
         "Toch past het",
         "Hier had je misschien zelf niet aan gedacht",
         "In de vragen koos je vaak",
+        "sterk in bent",
+        "scoorde",
+        "scoor je",
     ];
 
     private sealed record AnswerPhrase(int ItemId, string Subordinate);
@@ -172,12 +175,13 @@ public static class PupilG78JobMatchExplanation
         }
 
         var lines = new List<PupilG78JobCompetencyLine>();
+        var exploreUsed = false;
         foreach (var req in reqs)
         {
-            var reflection = PupilG78CompetenceFromAnswers.NeutralReflection(
-                req.JobAsksLabel,
+            var reflection = PupilG78CompetenceFromAnswers.PupilReflectionClause(
                 req.Category,
-                answersJson);
+                answersJson,
+                ref exploreUsed);
             lines.Add(new PupilG78JobCompetencyLine(req.JobAsksLabel, reflection));
         }
 
@@ -231,22 +235,7 @@ public static class PupilG78JobMatchExplanation
         var subject = SubjectLabel(jobKey, vakScores, likes, usedSemantic);
         if (subject is not null)
         {
-            sentences.Add($"Op school scoort je hoog in {subject}; dat staat in je antwoorden.");
-        }
-
-        foreach (var req in PupilG78JobCompetencyMapping.ForJob(jobKey).Take(2))
-        {
-            var band = PupilG78CompetenceFromAnswers.CategoryBand(req.Category, progress?.AnswersJson);
-            if (band == PupilG78CompetenceFromAnswers.Band.Strong)
-            {
-                sentences.Add(
-                    $"Bij {req.JobAsksLabel} laten je antwoorden zien dat je daar vaak hoog op scoorde.");
-            }
-            else if (band == PupilG78CompetenceFromAnswers.Band.Weak)
-            {
-                sentences.Add(
-                    $"Dit werk vraagt ook {req.JobAsksLabel}; daar scoorde je lager. Dat kun je verder ontdekken.");
-            }
+            sentences.Add($"Je gaf aan dat je op school goed bent in {subject}.");
         }
 
         return sentences

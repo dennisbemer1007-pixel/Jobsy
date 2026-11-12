@@ -146,7 +146,7 @@ internal static class PupilG78JobMatchExplanationTestsFixtures
         => new()
         {
             LikesJson = System.Text.Json.JsonSerializer.Serialize(likes),
-            VakScoresJson = """{"tekenen":{"leuk":5,"goed":5},"natuur-techniek":{"leuk":5,"goed":5}}""",
+            VakScoresJson = """{"tekenen":{"leuk":3,"goed":3},"natuur-techniek":{"leuk":5,"goed":5}}""",
             AnswersJson = answersJson
         };
 }

@@ -32,8 +32,31 @@ public class PupilG78JobMatchExplanationTests
         var result = ArtisticResult();
         var progress = ProgressWithLikes(["tekenen"], CareerAnswers("9018", 5, "9029", 5), CompetenceAnswers(resultaat: 5, innovatie: 4));
         var content = PupilG78JobMatchExplanation.BuildContent("fotograaf", result, progress, "nl");
-        Assert.Contains("netjes en precies werken", string.Join(' ', content.Competencies.Select(c => c.JobAsksLabel)));
+        Assert.Single(content.Competencies);
+        Assert.Contains("Netjes en precies werken", content.Competencies[0].JobAsksLabel, StringComparison.Ordinal);
+        Assert.Contains("je gaf aan dat", content.Competencies[0].PupilReflection ?? "", StringComparison.Ordinal);
         Assert.DoesNotContain("dingen zoals:", content.FormatCompactPlain(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Competency_counts_per_job_match_dream_routes()
+    {
+        var result = TechResult();
+        var progress = ProgressWithLikes(["bouwen"], CareerAnswers("9016", 5), CompetenceAnswers(resultaat: 5, stress: 2));
+        Assert.Equal(2, PupilG78JobMatchExplanation.BuildContent("hovenier", result, progress, "nl").Competencies.Count);
+        Assert.Equal(2, PupilG78JobMatchExplanation.BuildContent("bioloog", result, progress, "nl").Competencies.Count);
+    }
+
+    [Fact]
+    public void Competencies_appear_once_not_in_answers_section()
+    {
+        var result = TechResult();
+        var progress = ProgressWithLikes(["bouwen"], CareerAnswers("9016", 5, "9028", 5), CompetenceAnswers(resultaat: 5, stress: 2));
+        var content = PupilG78JobMatchExplanation.BuildContent("hovenier", result, progress, "nl");
+        var answersBlob = string.Join(' ', content.AnswerSentences);
+        Assert.DoesNotContain("Netjes en precies werken", answersBlob, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Kalm blijven", answersBlob, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("g78-job-why-panel__comp-list", PupilG78JobMatchExplanation.BuildHtml("hovenier", result, progress, "nl"));
     }
 
     [Fact]

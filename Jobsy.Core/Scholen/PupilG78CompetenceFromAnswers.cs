@@ -53,29 +53,75 @@ internal static class PupilG78CompetenceFromAnswers
         return Band.Mixed;
     }
 
-    public static string NeutralReflection(string jobAsksLabel, string category, string? answersJson)
+    /// <summary>Concrete pupil clause for competency bullet (no score language).</summary>
+    public static string? PupilReflectionClause(
+        string category,
+        string? answersJson,
+        ref bool explorePhraseUsed)
     {
-        return CategoryBand(category, answersJson) switch
+        var band = CategoryBand(category, answersJson);
+        var best = BestSupportingClause(category, answersJson);
+        if (best is not null)
         {
-            Band.Strong =>
-                $"Je antwoorden laten zien dat je hier sterk in bent.",
-            Band.Weak =>
-                $"Dit werk vraagt ook {jobAsksLabel}; daar scoorde je lager. Dat kun je verder ontdekken.",
-            Band.Mixed =>
-                $"Je antwoorden over {CategoryTopic(category)} wisselen; sommige punten passen hier, andere kun je nog verkennen.",
-            _ => ""
-        };
+            return $"je gaf aan dat {best}";
+        }
+
+        if (band is Band.Weak or Band.Mixed)
+        {
+            var text = "hierover zaten je antwoorden lager.";
+            if (!explorePhraseUsed)
+            {
+                text += " Dat kun je verder ontdekken.";
+                explorePhraseUsed = true;
+            }
+
+            return text;
+        }
+
+        return null;
     }
 
-    private static string CategoryTopic(string category) => category switch
+    private static string? BestSupportingClause(string category, string? answersJson)
     {
-        CompetencyTestCatalog.Samenwerken => "samenwerken",
-        CompetencyTestCatalog.Resultaatgerichtheid => "netjes en precies werken",
-        CompetencyTestCatalog.Stressbestendigheid => "kalm blijven",
-        CompetencyTestCatalog.Innovatie => "nieuwe ideeën",
-        CompetencyTestCatalog.Extraversie => "met mensen praten",
-        _ => category.ToLowerInvariant()
-    };
+        var byId = ParseAnswers(answersJson);
+        if (byId.Count == 0)
+        {
+            return null;
+        }
+
+        int? bestId = null;
+        var bestScore = 0;
+        foreach (var q in Bank.AsCompetencyItems())
+        {
+            if (!string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!byId.TryGetValue(q.Id, out var raw))
+            {
+                continue;
+            }
+
+            var adjusted = q.Reverse
+                ? LikertAnswerJson.LikertMax + LikertAnswerJson.LikertMin - raw
+                : raw;
+            if (adjusted < 4 || adjusted <= bestScore)
+            {
+                continue;
+            }
+
+            bestScore = adjusted;
+            bestId = q.Id;
+        }
+
+        if (bestId is null)
+        {
+            return null;
+        }
+
+        return PupilG78CompetenceAnswerParaphrases.TryGet(bestId.Value, out var clause) ? clause : null;
+    }
 
     private static List<int> AnswersForCategory(string category, string? answersJson)
     {
