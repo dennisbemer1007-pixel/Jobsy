@@ -639,3 +639,31 @@
     flex-wrap: wrap;
     gap: var(--space-2);
 }
+
+.occupation-day-passport-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-block-start: var(--space-2);
+    padding: 0.45rem 0.85rem;
+    border: 1px solid #ddd5cc;
+    border-radius: 10px;
+    background: #faf6e8;
+    color: #0a2044;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.lp-g78__job-day,
+.ll-g78-result-job-day {
+    margin-block-start: var(--space-2);
+}
+
+.ll-g78-result-job-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-end: var(--space-2);
+}

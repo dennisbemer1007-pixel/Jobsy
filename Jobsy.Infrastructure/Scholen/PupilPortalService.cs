@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
@@ -125,6 +126,7 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
     private readonly IPupilG78MirrorRenderer _g78Mirror;
     private readonly IPlatformFeatureService _features;
+    private readonly IOccupationDayInLifeReader _occupationDays;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
 
@@ -143,6 +145,7 @@ public sealed class PupilPortalService : IPupilPortalService
         PupilPassportPdfModelBuilder passportModelBuilder,
         IPupilG78MirrorRenderer g78Mirror,
         IPlatformFeatureService features,
+        IOccupationDayInLifeReader occupationDays,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
     {
@@ -160,6 +163,7 @@ public sealed class PupilPortalService : IPupilPortalService
         _passportModelBuilder = passportModelBuilder;
         _g78Mirror = g78Mirror;
         _features = features;
+        _occupationDays = occupationDays;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
@@ -1079,7 +1083,10 @@ public sealed class PupilPortalService : IPupilPortalService
             jobSuggestions = PupilG78JobSuggestions.Build(code.Result, code.Progress);
         }
 
-        return (new PupilResultPageDto(
+        var flags = await _features.GetAsync(cancellationToken);
+        var templateKeys = PupilStoryTemplates.TryParse(code.Result.StoryKeysJson)
+                         ?? PupilStoryTemplates.SelectKeys(code.Result, likes);
+        var partial = new PupilResultPageDto(
             ClassLabel: schoolClass.Name,
             CodeDisplay: pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "",
             SchoolName: schoolName,
@@ -1090,7 +1097,14 @@ public sealed class PupilPortalService : IPupilPortalService
             DreamJobKey: code.Result?.DreamJobKey ?? code.Progress?.DreamJobKey,
             TotalItems: def.Bank.AllItems.Count,
             QuestionSet: def.Set,
-            JobSuggestions: jobSuggestions), null, 200);
+            JobSuggestions: jobSuggestions);
+        var jobChips = await PupilJobExploreDayLinks.BuildChipsAsync(
+            partial,
+            templateKeys.JobIdeaKeys,
+            _occupationDays,
+            flags.OccupationDayInLifeEnabled,
+            cancellationToken);
+        return (partial with { JobExploreChips = jobChips }, null, 200);
     }
 
     public async Task<(PupilDreamJobResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveDreamJobAsync(
@@ -1336,7 +1350,15 @@ public sealed class PupilPortalService : IPupilPortalService
         displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
         var passportModel = _passportModelBuilder.Build(
             code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
-        return (PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true), null, 200);
+        var dto = PupilPassportWebMapper.ToGroep78Web(passportModel, enabled: true);
+        var dayEnabled = (await _features.GetAsync(cancellationToken)).OccupationDayInLifeEnabled;
+        dto = await PupilPassportDayLinkEnricher.WithDayLinksAsync(
+            dto,
+            passportModel.TopJobKeys,
+            _occupationDays,
+            dayEnabled,
+            cancellationToken);
+        return (dto, null, 200);
     }
 
     private static string? SanitizeDisplayName(string? name)

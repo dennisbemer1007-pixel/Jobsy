@@ -13,6 +13,33 @@ public interface IOccupationDayInLifeReader
         string? escoId,
         string? language = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>ESCO ids that have a stored day row (feature enabled, occupation known).</summary>
+    Task<IReadOnlySet<string>> StoredEscoIdsAsync(
+        IEnumerable<string> escoIds,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed record OccupationDayPublicResponse(
+    bool Enabled,
+    bool Found,
+    string? EscoId,
+    string? TitleNl,
+    string? Morning,
+    string? Midday,
+    string? Afternoon,
+    string? Closing,
+    IReadOnlyList<string> Highlights,
+    string? VariesNote,
+    bool ThinSource,
+    string Language,
+    IReadOnlyList<OccupationDayBlock>? Blocks = null,
+    IReadOnlyList<string>? Tasks = null,
+    IReadOnlyList<string>? Skills = null);
+
+public sealed class OccupationDayAvailableResponse
+{
+    public List<string> Ids { get; set; } = [];
 }
 
 public sealed record OccupationDayReadResult(bool KnownOccupation, bool Enabled, OccupationDayView? Day);

@@ -122,6 +122,8 @@ public sealed record PupilG78JobSuggestionDto(
     string Blurb,
     string? WhyFit = null);
 
+public sealed record PupilJobExploreChipDto(string Label, string? DayEscoId);
+
 public sealed record PupilResultPageDto(
     string ClassLabel,
     string CodeDisplay,
@@ -133,7 +135,8 @@ public sealed record PupilResultPageDto(
     string? DreamJobKey,
     int TotalItems = 60,
     PupilQuestionSet QuestionSet = PupilQuestionSet.Vo,
-    IReadOnlyList<PupilG78JobSuggestionDto>? JobSuggestions = null);
+    IReadOnlyList<PupilG78JobSuggestionDto>? JobSuggestions = null,
+    IReadOnlyList<PupilJobExploreChipDto>? JobExploreChips = null);
 
 public sealed record PupilDreamJobRequest(string? Key, string? DisplayTitle = null);
 

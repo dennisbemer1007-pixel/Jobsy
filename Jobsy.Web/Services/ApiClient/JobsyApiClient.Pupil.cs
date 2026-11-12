@@ -177,6 +177,29 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilG78PassportWebDto>(response.Content, ct);
     }
 
+    public async Task<OccupationDayResponse?> GetPupilOccupationDayAsync(
+        Guid escoId,
+        string? language = null,
+        CancellationToken ct = default)
+    {
+        var lang = string.IsNullOrWhiteSpace(language) ? "nl" : language.Trim();
+        var response = await _http.GetAsync(
+            $"api/pupil/occupation-day-in-life/{escoId:D}?lang={Uri.EscapeDataString(lang)}",
+            ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            throw new HttpRequestException("pupil session lost", null, response.StatusCode);
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await ReadApiJsonAsync<OccupationDayResponse>(response.Content, ct);
+    }
+
     public async Task<PupilVoPassportDto?> GetPupilVoPassportAsync(CancellationToken ct = default)
         => await GetApiJsonAsync<PupilVoPassportDto>("api/pupil/vo-passport", ct);
 

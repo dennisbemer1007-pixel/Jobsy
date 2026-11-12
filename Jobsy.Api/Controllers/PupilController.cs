@@ -1,6 +1,8 @@
 using Jobsy.Api.Security;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.Authorization;
@@ -17,8 +19,13 @@ namespace Jobsy.Api.Controllers;
 public sealed class PupilController : ControllerBase
 {
     private readonly IPupilPortalService _portal;
+    private readonly IOccupationDayInLifeReader _days;
 
-    public PupilController(IPupilPortalService portal) => _portal = portal;
+    public PupilController(IPupilPortalService portal, IOccupationDayInLifeReader days)
+    {
+        _portal = portal;
+        _days = days;
+    }
 
     [HttpGet("schools")]
     [AllowAnonymous]
@@ -172,6 +179,24 @@ public sealed class PupilController : ControllerBase
         NoStore();
         var (ok, error, status) = await _portal.SaveVoPassportAsync(User, request, cancellationToken);
         return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("occupation-day-in-life/{escoId:guid}")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> OccupationDay(
+        Guid escoId,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var id = escoId.ToString("D");
+        if (OccupationCatalog.Shared.Get(id) is null)
+        {
+            return NotFound(new { message = "Dit beroep kennen we niet." });
+        }
+
+        var response = await OccupationDayInLifeQuery.ToResponseAsync(_days, id, lang, cancellationToken);
+        return Ok(OccupationDayInLifeController.ToClient(response));
     }
 
     [HttpGet("passport/g78")]

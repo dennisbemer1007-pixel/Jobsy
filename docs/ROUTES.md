@@ -152,6 +152,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/applications/{ApplicationId:guid}/after-match/reschedule-ssr` | `Pages/Candidate/CandidateAfterMatchRescheduleSsr.razor` | Candidate |
 | `/candidate/applications/{ApplicationId:guid}/after-match/wait-ssr` | `Pages/Candidate/CandidateAfterMatchWaitSsr.razor` | Candidate |
 | `/candidate/beroep/{EscoId:guid}/dag` | `Pages/Candidate/OccupationDayPage.razor` | Candidate |
+| `/leerling/beroep/{EscoId:guid}/dag` | SSR (`Hosting/PupilLeerlingJourneyEndpoints`) | Pupil session |
 | `/candidate/binnenkort` | `Pages/Candidate/CandidateBinnenkort.razor` | Candidate |
 | `/candidate/career` | `Pages/Candidate/CareerTest.razor` | Candidate |
 | `/candidate/competencies` | `Pages/Candidate/CompetencyTest.razor` | Candidate |

@@ -7,6 +7,29 @@ namespace Jobsy.Web.Services;
 
 public sealed partial class JobsyApiClient
 {
+    public async Task<OccupationDayAvailableResponse?> GetOccupationDayAvailableAsync(
+        IEnumerable<string> escoIds,
+        CancellationToken ct = default)
+    {
+        var ids = string.Join(
+            ",",
+            escoIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct(StringComparer.OrdinalIgnoreCase));
+        if (ids.Length == 0)
+        {
+            return new OccupationDayAvailableResponse();
+        }
+
+        var response = await _http.GetAsync(
+            $"api/me/occupation-day-in-life/available?ids={Uri.EscapeDataString(ids)}",
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<OccupationDayAvailableResponse>(response.Content, ct);
+    }
+
     public async Task<OccupationDayResponse?> GetOccupationDayAsync(
         Guid escoId,
         string? language = null,

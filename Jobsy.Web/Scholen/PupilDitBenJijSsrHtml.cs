@@ -1,5 +1,6 @@
 using System.Text;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Web.Passport;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
@@ -64,10 +65,29 @@ public static class PupilDitBenJijSsrHtml
 
         sb.Append("</div><h2 class=\"rsub\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.JobsTitle"])).Append("</h2>");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(string.Join(", ", result.Story.JobIdeas), "ll-jobs", culture, "Leerling.G78.Result.ReadJobs"));
-        sb.Append("<div class=\"chips\" data-testid=\"ll-g78-result-jobs\">");
-        foreach (var job in JobChipLabels(result))
+        sb.Append("<div class=\"chips ll-g78-result-jobs\" data-testid=\"ll-g78-result-jobs\">");
+        if (result.JobExploreChips is { Count: > 0 } explore)
         {
-            sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(job)).Append("</span>");
+            foreach (var chip in explore)
+            {
+                sb.Append("<div class=\"ll-g78-result-job-row\">");
+                sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(chip.Label)).Append("</span>");
+                if (!string.IsNullOrWhiteSpace(chip.DayEscoId))
+                {
+                    sb.Append("<span class=\"ll-g78-result-job-day\">");
+                    OccupationDayPassportSsr.AppendLeerlingButton(sb, culture, chip.DayEscoId!, chip.Label);
+                    sb.Append("</span>");
+                }
+
+                sb.Append("</div>");
+            }
+        }
+        else
+        {
+            foreach (var job in JobChipLabels(result))
+            {
+                sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(job)).Append("</span>");
+            }
         }
 
         sb.Append("</div><p class=\"note note-teacher\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.TeacherNote"])).Append("</p></div>");
