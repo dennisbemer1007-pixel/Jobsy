@@ -9,7 +9,7 @@ internal static class PupilG78CompetenceFromAnswers
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
     private static readonly PupilQuestionBank Bank = new();
 
-    public static string? PupilReflectionForEvidence(
+    public static (string? Reflection, int? EvidenceItemId) PupilReflectionForEvidence(
         string slotKey,
         string jobKey,
         IReadOnlyList<int> evidenceItemIds,
@@ -18,7 +18,7 @@ internal static class PupilG78CompetenceFromAnswers
         var byId = ParseAnswers(answersJson);
         if (byId.Count == 0 || evidenceItemIds.Count == 0)
         {
-            return "dit kwam in je antwoorden niet naar voren.";
+            return ("dit kwam in je antwoorden niet naar voren.", null);
         }
 
         var scored = new List<(int Id, int Adjusted)>();
@@ -46,25 +46,27 @@ internal static class PupilG78CompetenceFromAnswers
                 .ToList();
             var pick = ordered[RotateIndex($"{slotKey}:{jobKey}", ordered.Count)];
             var clause = ClauseForItem(pick.Id);
-            return clause is null ? null : $"je gaf aan dat {clause}";
+            return clause is null
+                ? (null, pick.Id)
+                : ($"je gaf aan dat {clause}", pick.Id);
         }
 
         if (answered.Count == 0)
         {
-            return "dit kwam in je antwoorden niet naar voren.";
+            return ("dit kwam in je antwoorden niet naar voren.", null);
         }
 
         if (answered.All(x => x.Adjusted <= 2))
         {
-            return "hierover zaten je antwoorden lager.";
+            return ("hierover zaten je antwoorden lager.", null);
         }
 
         if (answered.All(x => x.Adjusted == 3) || answered.Average(x => x.Adjusted) is >= 2.6 and <= 3.4)
         {
-            return "hierover zaten je antwoorden in het midden.";
+            return ("hierover zaten je antwoorden in het midden.", null);
         }
 
-        return "hierover zaten je antwoorden in het midden.";
+        return ("hierover zaten je antwoorden in het midden.", null);
     }
 
     private static string? ClauseForItem(int itemId)

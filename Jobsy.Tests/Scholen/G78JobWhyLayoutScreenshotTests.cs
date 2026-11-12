@@ -27,7 +27,7 @@ public sealed class G78JobWhyLayoutScreenshotTests
             ("hovenier", "Hovenier", "Natuur en buiten", PupilG78JobMatchExplanationTestsFixtures.TechResult(),
                 PupilG78JobMatchExplanationTestsFixtures.ProgressWithLikes(
                     ["bouwen"],
-                    """{"9016":5,"9028":5,"9002":5,"9012":1,"9006":4,"9003":2,"9008":1,"9001":3}""")),
+                    """{"9016":5,"9028":5,"9002":5,"9012":1,"9011":1,"9003":2,"9008":1,"9001":3}""")),
             ("bioloog", "Bioloog", "Dieren en leven", PupilG78JobMatchExplanationTestsFixtures.ArtisticResult(),
                 PupilG78JobMatchExplanationTestsFixtures.ProgressWithLikes(
                     ["gamen"],
@@ -152,6 +152,20 @@ public sealed class G78JobWhyLayoutScreenshotTests
         var bodyFont = await page.Locator(".lp-g78").EvaluateAsync<string>(
             "el => getComputedStyle(el).fontFamily");
         Assert.Contains("Lexend", bodyFont, StringComparison.OrdinalIgnoreCase);
+
+        var panelMaxHeight = await page.Locator(".g78-job-why-panel.is-open").EvaluateAsync<string>(
+            "el => getComputedStyle(el).maxHeight");
+        Assert.Equal("none", panelMaxHeight);
+
+        var toggleLabel = await page.Locator(".g78-job-why-btn").InnerTextAsync();
+        Assert.Equal("×", toggleLabel.Trim());
+
+        var lastSection = page.Locator(".g78-job-why-panel__section--last");
+        Assert.True(await lastSection.IsVisibleAsync());
+        var box = await lastSection.BoundingBoxAsync();
+        Assert.NotNull(box);
+        var pageHeight = await page.EvaluateAsync<float>("() => document.documentElement.scrollHeight");
+        Assert.True(box!.Y + box.Height <= pageHeight + 2, "Answer section should not be clipped by panel");
     }
 
     private static string RepoRoot()

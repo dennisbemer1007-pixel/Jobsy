@@ -106,7 +106,7 @@ public class PupilG78JobMatchExplanationTests
             CareerAnswers("9018", 5, "9029", 5, "9021", 5, "9004", 5, "9006", 4));
         var progressTech = ProgressWithLikes(
             ["bouwen"],
-            CareerAnswers("9016", 5, "9028", 5, "9002", 5, "9012", 1, "9006", 4, "9003", 2, "9008", 1));
+            CareerAnswers("9016", 5, "9028", 5, "9002", 5, "9012", 1, "9011", 1, "9003", 2, "9008", 1));
         var progressSurprise = ProgressWithLikes(
             ["gamen"],
             CareerAnswers("9025", 5, "9017", 5, "9021", 4, "9009", 5, "9002", 4));

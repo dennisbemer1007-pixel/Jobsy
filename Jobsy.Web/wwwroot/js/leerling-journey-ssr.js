@@ -1095,8 +1095,12 @@
       if (!btn || !panel) {
         return;
       }
+      var openLabel = btn.getAttribute("data-open-label") || "Sluiten";
+      var closedLabel = btn.getAttribute("aria-label") || btn.getAttribute("data-closed-label") || "Meer info";
       function setOpen(on) {
         btn.setAttribute("aria-expanded", on ? "true" : "false");
+        btn.textContent = on ? "\u00d7" : "i";
+        btn.setAttribute("aria-label", on ? openLabel : closedLabel);
         if (on) {
           panel.removeAttribute("hidden");
           clAdd(panel, "is-open");

@@ -3047,12 +3047,17 @@
   background: color-mix(in srgb, var(--paper) 95%, var(--brass2));
   color: var(--brand);
   font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1;
   cursor: pointer;
-  z-index: 2;
+  z-index: 3;
 }
 
-.ll-g78-shell .g78-job-why-panel .ll-info__close,
 .lp-g78 .g78-job-why-panel .ll-info__close {
+  display: none;
+}
+
+.ll-g78-shell .g78-job-why-panel .ll-info__close {
   position: absolute;
   top: 8px;
   inset-inline-end: 10px;
@@ -3079,7 +3084,7 @@
   background: color-mix(in srgb, var(--paper) 92%, var(--brass2));
   border: 1px solid color-mix(in srgb, var(--brass2) 45%, transparent);
   border-radius: 12px;
-  padding: 14px 14px 12px;
+  padding: 14px 14px 16px;
   color: var(--ink);
   line-height: 1.5;
   font-size: 0.9rem;
@@ -3088,6 +3093,18 @@
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--navy) 6%, transparent);
+}
+
+.lp-g78 .g78-job-why-panel.ll-info {
+  max-height: none;
+  overflow: visible;
+  padding-bottom: 18px;
+}
+
+.ll-g78-shell .g78-job-why-wrap:has(.g78-job-why-panel.is-open) .g78-job-why-btn,
+.lp-g78 .g78-job-why-wrap:has(.g78-job-why-panel.is-open) .g78-job-why-btn {
+  color: var(--navy);
+  font-size: 1.35rem;
 }
 
 .ll-g78-shell .g78-job-why-panel__title,
@@ -3179,6 +3196,12 @@
     max-height: min(65vh, 560px);
   }
 
+  .lp-g78 .g78-job-why-panel.ll-info {
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 20px;
+  }
+
   .ll-g78-shell .g78-job-why-panel__section-title,
   .lp-g78 .g78-job-why-panel__section-title {
     font-size: 0.86rem;
@@ -3195,6 +3218,10 @@
   .ll-g78-shell .g78-job-why-panel.ll-info,
 .lp-g78 .g78-job-why-panel.ll-info {
     max-height: 480px;
+  }
+
+  .lp-g78 .g78-job-why-panel.ll-info {
+    max-height: none;
   }
 }
 

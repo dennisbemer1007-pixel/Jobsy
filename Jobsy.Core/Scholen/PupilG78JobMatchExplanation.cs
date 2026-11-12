@@ -123,15 +123,16 @@ public static class PupilG78JobMatchExplanation
         var unexpected = !JobInLikesOrDream(likes, progress, jobKey);
 
         var work = JobDescriptionSentences(jobKey);
-        var competencies = CompetencyLines(jobKey, progress?.AnswersJson);
-        var answers = AnswerReflectionSentences(
+        var (competencies, evidenceUsedInCompetencies) = CompetencyLines(jobKey, progress?.AnswersJson);
+        var answers = AnswerReflectionParagraphs(
             jobKey,
             result,
             progress,
             vak,
             likes,
             factors.PrimaryRiasecLetter,
-            unexpected);
+            unexpected,
+            evidenceUsedInCompetencies);
 
         return new PupilG78JobWhyContent(work, competencies, answers);
     }
@@ -167,39 +168,52 @@ public static class PupilG78JobMatchExplanation
         return lines;
     }
 
-    private static IReadOnlyList<PupilG78JobCompetencyLine> CompetencyLines(string jobKey, string? answersJson)
+    private static (IReadOnlyList<PupilG78JobCompetencyLine> Lines, HashSet<int> UsedEvidenceItemIds) CompetencyLines(
+        string jobKey,
+        string? answersJson)
     {
         var reqs = PupilG78JobCompetencyMapping.ForJob(jobKey);
         if (reqs.Count == 0)
         {
-            return [];
+            return ([], []);
         }
 
         var lines = new List<PupilG78JobCompetencyLine>();
+        var usedItems = new HashSet<int>();
         foreach (var req in reqs)
         {
-            var reflection = PupilG78CompetenceFromAnswers.PupilReflectionForEvidence(
+            var (reflection, itemId) = PupilG78CompetenceFromAnswers.PupilReflectionForEvidence(
                 req.SlotKey,
                 jobKey,
                 req.EvidenceItemIds,
                 answersJson);
+            if (itemId is > 0)
+            {
+                usedItems.Add(itemId.Value);
+            }
+
             lines.Add(new PupilG78JobCompetencyLine(req.JobAsksLabel, reflection));
         }
 
-        return lines;
+        return (lines, usedItems);
     }
 
-    private static List<string> AnswerReflectionSentences(
+    private static List<string> AnswerReflectionParagraphs(
         string jobKey,
         PupilResult result,
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vakScores,
         IReadOnlySet<string> likes,
         char jobLetter,
-        bool unexpected)
+        bool unexpected,
+        IReadOnlySet<int> reservedEvidenceItemIds)
     {
         var sentences = new List<string>(5);
         var usedSemantic = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in reservedEvidenceItemIds)
+        {
+            usedSemantic.Add(PupilG78HighAnswerParaphrases.SemanticKey(id));
+        }
 
         if (unexpected)
         {
@@ -227,17 +241,24 @@ public static class PupilG78JobMatchExplanation
             }
         }
 
-        var answers = CollectAnswers(jobLetter, progress, usedSemantic, max: 3);
-        foreach (var (idx, phrase) in answers.Select((p, i) => (i, p)))
+        var answers = CollectAnswers(jobLetter, progress, usedSemantic, reservedEvidenceItemIds, max: 3);
+        if (answers.Count > 0)
         {
-            var prefix = idx == 0 ? "Je antwoorden laten zien dat" : "Je gaf ook aan dat";
-            sentences.Add($"{prefix} {phrase.Subordinate}.");
+            var joined = string.Join(", en dat ", answers.Select(a => a.Subordinate));
+            if (sentences.Count > 0)
+            {
+                sentences.Add($"Je antwoorden laten ook zien dat {joined}.");
+            }
+            else
+            {
+                sentences.Add($"Je antwoorden laten zien dat {joined}.");
+            }
         }
 
         var subject = SubjectLabel(jobKey, vakScores, likes, usedSemantic);
         if (subject is not null)
         {
-            sentences.Add($"Je gaf aan dat je op school goed bent in {subject}.");
+            sentences.Add($"Op school gaf je aan dat je goed bent in {subject}.");
         }
 
         var riasec = RiasecDriverSentence(jobLetter, result);
@@ -252,11 +273,30 @@ public static class PupilG78JobMatchExplanation
             sentences.Add(contrast);
         }
 
-        return sentences
+        var distinct = sentences
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Distinct(StringComparer.Ordinal)
             .Take(MaxSentences)
             .ToList();
+        return FlowAnswerParagraphs(distinct);
+    }
+
+    private static List<string> FlowAnswerParagraphs(IReadOnlyList<string> sentences)
+    {
+        if (sentences.Count == 0)
+        {
+            return [];
+        }
+
+        if (sentences.Count <= 2)
+        {
+            return [string.Join(' ', sentences)];
+        }
+
+        var mid = (sentences.Count + 1) / 2;
+        var p1 = string.Join(' ', sentences.Take(mid));
+        var p2 = string.Join(' ', sentences.Skip(mid));
+        return string.IsNullOrWhiteSpace(p2) ? [p1] : [p1, p2];
     }
 
     private static string? RiasecDriverSentence(char jobLetter, PupilResult result)
@@ -334,6 +374,16 @@ public static class PupilG78JobMatchExplanation
         }
     }
 
+    private static string FormatSubjectForPanel(string subjectKey)
+    {
+        if (string.Equals(subjectKey, "tekenen", StringComparison.OrdinalIgnoreCase))
+        {
+            return "tekenen en handvaardigheid";
+        }
+
+        return PupilVakSubjectLabels.Nl(subjectKey).ToLowerInvariant();
+    }
+
     private static string RiasecLetterLabel(char letter) => letter switch
     {
         'R' => "praktisch werken en bouwen",
@@ -393,6 +443,7 @@ public static class PupilG78JobMatchExplanation
         char jobLetter,
         PupilProgress? progress,
         HashSet<string> usedSemantic,
+        IReadOnlySet<int> reservedItemIds,
         int max)
     {
         var answers = ParseAnswers(progress?.AnswersJson);
@@ -400,6 +451,11 @@ public static class PupilG78JobMatchExplanation
         foreach (var item in G78Bank.AsCareerItems()
                      .Where(q =>
                      {
+                         if (reservedItemIds.Contains(q.Id))
+                         {
+                             return false;
+                         }
+
                          if (!answers.TryGetValue(q.Id, out var value) || value < 4)
                          {
                              return false;
@@ -490,7 +546,7 @@ public static class PupilG78JobMatchExplanation
             return null;
         }
 
-        return PupilVakSubjectLabels.Nl(best.Entry.SubjectKey).ToLowerInvariant();
+        return FormatSubjectForPanel(best.Entry.SubjectKey);
     }
 
     private static bool SubjectContributesToJob(string jobKey, PupilVakScoreEntry entry)

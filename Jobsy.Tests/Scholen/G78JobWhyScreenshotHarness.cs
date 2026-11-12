@@ -33,9 +33,8 @@ internal static class G78JobWhyScreenshotHarness
             <div class="lp-g78" style="max-width:{{maxCardWidth}}px;margin:0 auto">
             <article class="lp-g78__card lp-g78__job" style="position:relative;padding:12px 14px">
             <div class="g78-job-why-wrap">
-            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="Meer info over {{jobTitle}}" aria-expanded="true">i</button>
+            <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="Sluiten" aria-expanded="true">×</button>
             <div id="g78-job-why-{{jobKey}}" class="ll-info g78-job-why-panel is-open">
-            <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
             <p class="g78-job-why-panel__title"><b>{{jobTitle}}</b></p>
             <div class="g78-job-why-panel__body">{{whyBodyHtml}}</div>
             </div></div>

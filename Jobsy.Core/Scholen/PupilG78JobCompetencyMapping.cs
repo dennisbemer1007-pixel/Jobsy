@@ -18,13 +18,13 @@ internal static class PupilG78JobCompetencyMapping
             [
                 new("fotograaf", "detail", "Oog voor detail", [9021, 9027, 9012, 9008]),
                 new("fotograaf", "creatief", "Creativiteit", [9004, 9009, 9018, 9023]),
-                new("fotograaf", "mensen", "Omgaan met mensen", [9006, 9005, 9030, 9010]),
+                new("fotograaf", "mensen", "Omgaan met mensen", [9011, 9030, 9005, 9010]),
             ],
             ["hovenier"] =
             [
-                new("hovenier", "buiten", "Fysiek buiten werken", [9016, 9028, 9022]),
+                new("hovenier", "buiten", "Fysiek buiten werken", [9028, 9022]),
                 new("hovenier", "doorzet", "Doorzetten", [9002, 9012]),
-                new("hovenier", "samen", "Samenwerken", [9006, 9001, 9011]),
+                new("hovenier", "samen", "Samenwerken", [9011, 9001, 9030]),
             ],
             ["bioloog"] =
             [
@@ -48,7 +48,7 @@ internal static class PupilG78JobCompetencyMapping
             ["Ideeën"] = [new("", "idee", "Nieuwe ideeën bedenken", [9004, 9009, 9014])],
             ["Nieuw"] = [new("", "idee", "Nieuwe ideeën bedenken", [9004, 9009, 9014])],
             ["Mensen"] = [new("", "mensen", "Omgaan met mensen", [9005, 9010, 9006])],
-            ["Samen"] = [new("", "samen", "Samenwerken", [9006, 9001, 9011])],
+            ["Samen"] = [new("", "samen", "Samenwerken", [9011, 9001, 9030])],
         };
 
     public static IReadOnlyList<JobCompetencyRequirement> ForJob(string jobKey)
