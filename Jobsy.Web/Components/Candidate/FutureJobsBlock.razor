@@ -7,6 +7,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Passport
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
@@ -116,7 +117,7 @@
                                     @if (_dayIds.Contains(row.EscoId))
                                     {
                                         <a class="future-jobs__link" href="@($"/candidate/beroep/{row.EscoId}/dag?from={DayFrom}")">
-                                            @Culture.Format("FutureJobs.Day", row.TitleNl)
+                                            @Culture.Format("FutureJobs.Day", OccupationDayPassportSsr.MidSentenceOccupationTitle(row.TitleNl))
                                             @((MarkupString)NavIcons.Chevron)
                                         </a>
                                     }

@@ -1,9 +1,16 @@
 using System.Text;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
+using Jobsy.Core.Scholen.QuestionSets;
+using Jobsy.Web.Components.Candidate;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Models;
+using Jobsy.Web.Navigation;
 using Jobsy.Web.Passport;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
@@ -32,42 +39,146 @@ internal static class PassportDayLinkScreenshotHarness
         return culture;
     }
 
-    public static string InlineStyles(string repoRoot, params string[] relativePaths)
+    public static IReadOnlyList<string> StylesheetPaths(string repoRoot, IReadOnlyList<string> catalogUrls, params string[] extraRelative)
     {
         var wwwroot = Path.Combine(repoRoot, "Jobsy.Web/wwwroot");
-        var blobs = new List<string>();
-        foreach (var rel in relativePaths)
+        var paths = new List<string>();
+        foreach (var url in catalogUrls)
         {
-            var path = Path.Combine(wwwroot, rel.Replace('/', Path.DirectorySeparatorChar));
-            if (File.Exists(path))
-            {
-                blobs.Add(File.ReadAllText(path));
-            }
+            AddStylesheetPath(paths, wwwroot, url);
         }
 
-        foreach (var href in PageAssetCatalog.StylesheetsForPupilSsr("/leerling/paspoort"))
+        foreach (var rel in extraRelative)
         {
-            var rel = href.TrimStart('/').Split('?')[0];
-            var path = Path.Combine(wwwroot, rel.Replace('/', Path.DirectorySeparatorChar));
-            if (File.Exists(path))
-            {
-                blobs.Add(File.ReadAllText(path));
-            }
+            AddStylesheetPath(paths, wwwroot, rel);
         }
 
-        return string.Join('\n', blobs);
+        return paths;
     }
 
-    public static string Wrap(string css, string body)
-        => $$"""
+    private static void AddStylesheetPath(List<string> paths, string wwwroot, string urlOrRel)
+    {
+        var rel = urlOrRel.TrimStart('/').Split('?')[0];
+        var path = Path.Combine(wwwroot, rel.Replace('/', Path.DirectorySeparatorChar));
+        if (File.Exists(path) && !paths.Contains(path, StringComparer.Ordinal))
+        {
+            paths.Add(path);
+        }
+    }
+
+    public static string PupilShellDocument(string bodyInner, string themeClass = "t-zee")
+        => $"""
             <!DOCTYPE html><html lang="nl"><head><meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Lexend:wght@400;600&display=swap" rel="stylesheet" />
-            <style>{{css}}</style></head>
-            <body style="margin:0;background:#f5f2ee;padding:20px;font-family:Lexend,sans-serif">{{body}}</body></html>
+            <base href="http://127.0.0.1/" />
+            <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Lexend:wght@400;600&display=swap" rel="stylesheet" />
+            </head><body class="ll-g78-shell {themeClass}">{bodyInner}</body></html>
             """;
 
-    public static string G78PaspoortJobCard(CultureState culture, bool withDay)
+    public static string CandidatePassportDocument(string bodyInner)
+        => $"""
+            <!DOCTYPE html><html lang="nl"><head><meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <base href="http://127.0.0.1/" />
+            <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Lexend:wght@400;600&display=swap" rel="stylesheet" />
+            </head><body class="app-shell has-bottom-nav candidate-app">{bodyInner}</body></html>
+            """;
+
+    public static string DitBenJijResultBody(CultureState culture)
+    {
+        var stems = PupilJourneyTheme.ResultTileStems(PupilJourneyTheme.ZeeExpeditie);
+        var tiles = stems.Take(3)
+            .Select((stem, i) => new PupilStoryTileDto(stem, $"Label {i + 1}", "Korte uitleg."))
+            .ToList();
+        var result = new PupilResultPageDto(
+            "Groep 8",
+            "ABC-12",
+            "Demoschool",
+            new PupilStoryViewDto(
+                "Dit ben jij",
+                "Je bent nieuwsgierig en houdt van samenwerken. Onderweg ontdekte je wat bij je past.",
+                tiles,
+                ["Kok"],
+                ["sport", "buiten"]),
+            ["sport", "buiten"],
+            [],
+            null,
+            null,
+            JobExploreChips:
+            [
+                new PupilJobExploreChipDto("Kok", CookId),
+                new PupilJobExploreChipDto("Hovenier", null),
+            ]);
+        var registry = new PupilQuestionSetRegistry();
+        return PupilDitBenJijSsrHtml.BuildBody(
+            result,
+            culture,
+            groep78: true,
+            PupilJourneyTheme.ZeeExpeditie,
+            registry,
+            passportV2: true,
+            pdfHref: "/leerling/pdf");
+    }
+
+    public static string CandidatePassportFitTabBody(CultureState culture)
+    {
+        var profile = new MeProfile { FullName = "Alex Demo", FirstName = "Alex", Preferences = new CandidatePreferences() };
+        var flags = FeatureFlagSnapshot.Defaults with { EmployersEnabled = true, FutureJobsForYouEnabled = false };
+        var card = PassportSsrDisplay.BuildCard(culture, profile, null, null, employersEnabled: true);
+        var overview = PassportSsrDisplay.BuildOverview(culture, null, null);
+        var dnaPanel = PassportSsrDisplay.BuildDnaPanel(culture, profile, null, null, 0, true);
+        var fitState = new RoleFitCheckState
+        {
+            IsUnlocked = true,
+            LastResult = new RoleFitCheckResult
+            {
+                JobTitle = "kok",
+                MatchPercent = 72,
+                Strengths = ["Samenwerken"],
+                Gaps = ["Ervaring in de keuken"],
+                ActionSteps = ["Zoek een proefstage"],
+            },
+        };
+        var dayIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { CookId };
+        var fitPanel = new PassportSsrFitHtml.Panel(fitState, [], "", 0, null, "", "", dayIds);
+        var careerView = CareerPlanViewBuilder.BuildPassport(null);
+        var careerPanel = new PassportSsrCareerHtml.Panel(careerView, [], "");
+        var proofStrength = ProofStrengthRules.Build(new ProofStrengthRules.ProofSnapshot(0, 0, 0, 0, false));
+        var proofPanel = new PassportSsrProofHtml.Panel(
+            proofStrength,
+            null,
+            [],
+            [],
+            [],
+            RefVerificationEnabled: false,
+            RefVerificationEligible: false,
+            HasConfirmedReference: false,
+            FirstEmployerEntryId: null,
+            UserIdForTip: "screenshot",
+            DnaPassportPdf: false);
+        var data = new PassportSsrData.PageData(
+            PassportTabs.Fit,
+            null,
+            false,
+            flags,
+            profile,
+            null,
+            null,
+            card,
+            overview,
+            dnaPanel,
+            "Alex",
+            4,
+            null,
+            FromDiscovery: false,
+            fitPanel,
+            ProactiveMatchingEnabled: false,
+            careerPanel,
+            proofPanel);
+        return PassportSsrShells.BuildBody(culture, data, antiforgeryToken: "", openDataSection: null);
+    }
+
+    public static string G78PaspoortPageBody(CultureState culture, bool withDay)
     {
         var model = new PupilG78PassportWebDto(
             Enabled: true,
@@ -82,62 +193,10 @@ internal static class PassportDayLinkScreenshotHarness
                     WhyFit: null,
                     DayEscoId: withDay ? CookId : null),
             ]);
-        return PupilG78PassportSsrHtml.Render(model, culture);
-    }
-
-    public static string DitBenJijJobs(CultureState culture, bool withDay)
-    {
-        var sb = new StringBuilder();
-        sb.Append("<h2 class=\"rsub\">Beroepen om eens te bekijken</h2>");
-        sb.Append("<div class=\"chips ll-g78-result-jobs\" data-testid=\"ll-g78-result-jobs\">");
-        AppendChipRow(sb, culture, "Kok", withDay ? CookId : null);
-        AppendChipRow(sb, culture, "Hovenier", null);
-        sb.Append("</div>");
-        return sb.ToString();
-    }
-
-    private static void AppendChipRow(StringBuilder sb, CultureState culture, string label, string? dayEscoId)
-    {
-        sb.Append("<div class=\"ll-g78-result-job-row\">");
-        sb.Append("<span class=\"chip\">").Append(System.Net.WebUtility.HtmlEncode(label)).Append("</span>");
-        if (!string.IsNullOrWhiteSpace(dayEscoId))
-        {
-            sb.Append("<span class=\"ll-g78-result-job-day\">");
-            OccupationDayPassportSsr.AppendLeerlingButton(sb, culture, dayEscoId!, label);
-            sb.Append("</span>");
-        }
-
-        sb.Append("</div>");
-    }
-
-    public static string CandidateFitPastDit(CultureState culture)
-    {
-        var sb = new StringBuilder();
-        sb.Append("""
-            <div class="passport-ssr passport-fit-shell" style="max-width:720px">
-            <nav class="passport-tabs" aria-label="Paspoort"><a class="passport-tabs__tab is-active" href="#">Past dit beroep?</a></nav>
-            <div class="passport-fit__layout"><section class="detail-card passport-fit__card">
-            """);
-        sb.Append("<h3 class=\"passport-fit__h\">");
-        sb.Append(System.Net.WebUtility.HtmlEncode(culture["Passport.Fit.Title"]));
-        sb.Append("</h3><p class=\"passport-fit__last-line\">");
-        sb.Append(System.Net.WebUtility.HtmlEncode(culture.Format("Passport.Fit.LastCheck", "kok")));
-        sb.Append("</p><p class=\"passport-fit__day\">");
-        OccupationDayPassportSsr.AppendCandidateButton(sb, culture, CookId, "kok");
-        sb.Append("</p></section></div></div>");
-        return sb.ToString();
-    }
-
-    public static string CandidateFutureJobs(CultureState culture)
-    {
-        var list = new FutureJobsList(
-            false,
-            [new FutureJobRow(CookId, "kok", 80, 3, "groot", 12, null, [])],
-            OccupationOutlook.Shared.Peildatum);
-        var sb = new StringBuilder();
-        var stored = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { CookId };
-        PassportSsrFutureJobsHtml.Append(sb, culture, list, "Nederland", "", showCheck: true, stored);
-        return sb.ToString();
+        var topbar = """
+            <header class="top ll-topbar"><a class="brand" href="/"><span class="brand__text">Lobsy</span></a></header>
+            """;
+        return topbar + PupilG78PassportSsrHtml.Render(model, culture);
     }
 
     public static string PupilDayPage(CultureState culture)

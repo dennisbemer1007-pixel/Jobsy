@@ -32,10 +32,11 @@ public sealed class PassportOccupationDayLinkTests : BunitContext
     {
         var culture = Services.GetRequiredService<CultureState>();
         var sb = new System.Text.StringBuilder();
-        OccupationDayPassportSsr.AppendCandidateButton(sb, culture, CookId, "kok");
+        OccupationDayPassportSsr.AppendCandidateButton(sb, culture, CookId, "Kok");
         var html = sb.ToString();
         Assert.Contains($"/candidate/beroep/{CookId}/dag?from=paspoort", html, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"occupation-day-passport-link\"", html, StringComparison.Ordinal);
+        Assert.Contains("Een dag als kok", html, StringComparison.Ordinal);
         Assert.Contains("→", html, StringComparison.Ordinal);
     }
 
