@@ -1,7 +1,7 @@
 using Bunit;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Scholen.PupilPassport;
-using Jobsy.Tests.Infrastructure;
+using Jobsy.Tests.Uat;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Passport;
 using Jobsy.Web.Scholen;

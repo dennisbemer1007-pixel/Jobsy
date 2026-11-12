@@ -1084,8 +1084,9 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         var flags = await _features.GetAsync(cancellationToken);
-        var templateKeys = PupilStoryTemplates.TryParse(code.Result.StoryKeysJson)
-                         ?? PupilStoryTemplates.SelectKeys(code.Result, likes);
+        var resultRow = code.Result!;
+        var templateKeys = PupilStoryTemplates.TryParse(resultRow.StoryKeysJson)
+                         ?? PupilStoryTemplates.SelectKeys(resultRow, likes);
         var partial = new PupilResultPageDto(
             ClassLabel: schoolClass.Name,
             CodeDisplay: pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "",

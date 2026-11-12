@@ -1,5 +1,6 @@
 using Jobsy.Core.Careers;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 
 namespace Jobsy.Core.Scholen;
 

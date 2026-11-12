@@ -47,7 +47,10 @@ public sealed class OccupationDayInLifeController : ControllerBase
         var list = (ids ?? "")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var stored = await _days.StoredEscoIdsAsync(list, cancellationToken);
-        return Ok(new OccupationDayAvailableResponse(stored.OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToList()));
+        return Ok(new OccupationDayAvailableResponse
+        {
+            Ids = stored.OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToList()
+        });
     }
 
     internal static OccupationDayResponse ToClient(OccupationDayPublicResponse response)
