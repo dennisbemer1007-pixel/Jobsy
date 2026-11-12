@@ -21,6 +21,7 @@ public class PageAssetCatalogTests
     [InlineData("/werkgever", CoreCss + WerkgeverCss)]
     [InlineData("/werkgever/vacatures", CoreCss + WerkgeverCss)]
     [InlineData("/werkgever/kandidatenkaart", CoreCss + WerkgeverCss)]
+    [InlineData("/admin", CoreCss + BeheerCss)]
     [InlineData("/admin/users", CoreCss + BeheerCss)]
     [InlineData("/sales/dashboard", CoreCss + SalesCss)]
     [InlineData("/leerling", CoreCss + SchoolCss)]
@@ -34,7 +35,15 @@ public class PageAssetCatalogTests
         var maxSheets = path is "/candidate/paspoort" ? 44 : 32;
         Assert.True(sheets.Count <= maxSheets, $"Too many stylesheets ({sheets.Count}) for {path}");
         Assert.Equal(1, sheets.Count(s => s.StartsWith("css/app.min.css", StringComparison.Ordinal)));
-        Assert.DoesNotContain("css/features/admin.css", sheets, StringComparer.Ordinal);
+        if (path is "/admin" or "/admin/users")
+        {
+            Assert.Contains(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
+        }
+        else
+        {
+            Assert.DoesNotContain("css/features/admin.css", sheets, StringComparer.Ordinal);
+        }
+
         if (path is "/login" or "/account-maken")
         {
             Assert.DoesNotContain("css/features/banenkaart.css", sheets, StringComparer.Ordinal);

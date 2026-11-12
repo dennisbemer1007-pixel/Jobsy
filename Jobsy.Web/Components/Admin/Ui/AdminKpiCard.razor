@@ -1,11 +1,12 @@
 @namespace Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Navigation
 
 @if (!string.IsNullOrWhiteSpace(Href))
 {
     <a class="admin-kpi-card admin-kpi-card--link @(HideOnNarrow ? "admin-kpi-card--hide-narrow" : null)" href="@Href">
         @if (!string.IsNullOrEmpty(IconSvg))
         {
-            <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
+            <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(IconSvg))</span>
         }
         <p class="admin-kpi-card__label">@Label</p>
         <p class="admin-kpi-card__value">@Value</p>
@@ -15,7 +16,7 @@
         }
         @if (Sparkline is { Count: > 1 })
         {
-            <svg class="admin-kpi-card__spark" viewBox="0 0 64 20" aria-hidden="true" preserveAspectRatio="none">
+            <svg class="admin-kpi-card__spark" width="64" height="20" viewBox="0 0 64 20" aria-hidden="true" preserveAspectRatio="none">
                 <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="@SparkPoints" />
             </svg>
         }
@@ -27,7 +28,7 @@ else
     <div class="admin-kpi-card @(HideOnNarrow ? "admin-kpi-card--hide-narrow" : null)">
         @if (!string.IsNullOrEmpty(IconSvg))
         {
-            <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
+            <span class="admin-kpi-card__icon" aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(IconSvg))</span>
         }
         <p class="admin-kpi-card__label">@Label</p>
         <p class="admin-kpi-card__value">@Value</p>
@@ -37,7 +38,7 @@ else
         }
         @if (Sparkline is { Count: > 1 })
         {
-            <svg class="admin-kpi-card__spark" viewBox="0 0 64 20" aria-hidden="true" preserveAspectRatio="none">
+            <svg class="admin-kpi-card__spark" width="64" height="20" viewBox="0 0 64 20" aria-hidden="true" preserveAspectRatio="none">
                 <polyline fill="none" stroke="currentColor" stroke-width="1.5" points="@SparkPoints" />
             </svg>
         }
