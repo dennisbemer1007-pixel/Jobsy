@@ -520,6 +520,19 @@
   line-height: 1.45;
 }
 
+/* Reiskaart: wired for guards; hidden in v3 chrome (desktop rail uses sidebar phases). */
+.ob-wizard--v3 .kreeft-reiskaart-wrap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .ob-wizard--v3 .ob-kreeft-zonetag,
 .ob-wizard--v3 .ob-rustig__illustrated-frame,
 .app-shell--onboarding-v3 .ob-wizard__mobile-top,

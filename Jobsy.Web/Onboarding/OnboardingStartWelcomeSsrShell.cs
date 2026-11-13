@@ -21,7 +21,7 @@ internal static class OnboardingStartWelcomeSsrShell
             : culture.Format("Onboarding.Welcome.Title", firstName.Trim());
 
         var sb = new StringBuilder();
-        sb.Append("<section class=\"ob-wizard__welcome ob-v3-welcome\" data-testid=\"onboarding-start-screen\">");
+        sb.Append("<section class=\"ob-wizard__welcome ob-v3-welcome\" data-ob-rustig-screen=\"start\" data-testid=\"onboarding-start-screen\">");
         sb.Append("<form method=\"post\" action=\"/candidate/start\" class=\"ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3\" data-enhance=\"false\" data-enhance-nav=\"false\">");
         sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
         sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
@@ -59,6 +59,7 @@ internal static class OnboardingStartWelcomeSsrShell
         sb.Append("<button type=\"submit\" name=\"obNav\" value=\"begin\" class=\"ob-v3-welcome__cta ob-rustig__btn ob-rustig__btn--primary\" data-testid=\"onboarding-begin\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.Cta"]));
         sb.Append("</button></div></form></section>");
+        sb.Append(KreeftReiskaartMarkup.ForScreen(culture, 3));
         return sb.ToString();
     }
 }

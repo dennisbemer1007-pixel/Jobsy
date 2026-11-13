@@ -1982,6 +1982,9 @@
     }
 
     function bootOnboardingClient() {
+        try {
+            document.documentElement.setAttribute("data-lobsy-circuit", "ready");
+        } catch (eCircuit) { }
         bindSsrOnboardingForm();
         autoMountClientSteps();
         bindWelcomeBegin();

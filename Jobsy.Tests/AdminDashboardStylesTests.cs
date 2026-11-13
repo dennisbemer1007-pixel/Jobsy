@@ -71,7 +71,7 @@ public class AdminDashboardStylesTests
     public void Admin_shell_markup_uses_intrinsic_svg_fallbacks()
     {
         var root = FindRepoRoot();
-        var topBar = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Admin/Shell/AdminTopBar.razor"));
+        var topBar = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shell/LobsyShellTopBar.razor"));
         var kpi = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Admin/Ui/AdminKpiCard.razor"));
         Assert.Contains("NavIconSvg.WithIntrinsicSize", topBar, StringComparison.Ordinal);
         Assert.Contains("width=\"64\" height=\"20\"", kpi, StringComparison.Ordinal);

@@ -26,6 +26,7 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css")" />
 </HeadContent>
 
@@ -180,6 +181,7 @@ else if (_step is >= 1 and <= 10)
                         }
                     </div>
                 </div>
+                @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
                 @if (_showJobsRail && _nearbySignal is not null)
                 {
                     <aside class="ob-rustig__rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">
