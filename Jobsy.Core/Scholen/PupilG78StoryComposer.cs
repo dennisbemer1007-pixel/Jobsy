@@ -567,14 +567,34 @@ public static class PupilG78StoryComposer
         {
             foreach (var sentence in SplitSentences(tile))
             {
-                if (sentence.Length > 30 && paragraph.Contains(sentence, StringComparison.Ordinal))
+                if (sentence.Length <= 30)
                 {
-                    paragraph = paragraph.Replace(sentence, "", StringComparison.Ordinal).Trim();
+                    continue;
                 }
+
+                var norm = PupilG78PageLint.NormalizeSentence(sentence);
+                paragraph = RemoveSentenceWithNorm(paragraph, norm);
             }
         }
 
-        return paragraph;
+        return PupilG78StoryFlow.EnsureSentenceStartsCapitalized(paragraph.Trim());
+    }
+
+    private static string RemoveSentenceWithNorm(string paragraph, string forbiddenNorm)
+    {
+        var kept = new List<string>();
+        foreach (var part in paragraph.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var s = part.TrimEnd('.') + ".";
+            if (PupilG78PageLint.NormalizeSentence(s) == forbiddenNorm)
+            {
+                continue;
+            }
+
+            kept.Add(part.TrimEnd('.'));
+        }
+
+        return kept.Count == 0 ? "" : PupilG78StoryFlow.FlowJoin(kept);
     }
 
     private static IEnumerable<string> SplitSentences(string text)
@@ -1121,6 +1141,104 @@ public static class PupilG78StoryComposer
 
         paragraphs.RemoveAll(static p => string.IsNullOrWhiteSpace(p));
     }
+
+    /// <summary>After tile dedupe, drop strength labels whose example sentence was removed from the story.</summary>
+    public static string SyncStrengthIntroAfterTileDedupe(string body)
+    {
+        var paragraphs = PupilG78FactStory.SplitParagraphs(body).ToList();
+        for (var i = 0; i < paragraphs.Count; i++)
+        {
+            if (!paragraphs[i].StartsWith("Wat in je antwoorden vooral naar voren komt", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var dot = paragraphs[i].IndexOf('.', StringComparison.Ordinal);
+            if (dot < 0)
+            {
+                continue;
+            }
+
+            var intro = paragraphs[i][..(dot + 1)];
+            var rest = paragraphs[i][(dot + 1)..].Trim();
+            var labels = KidLabelsFromIntroSentence(intro);
+            var kept = labels
+                .Where(label => LabelSupportedInParagraphText(label, rest))
+                .ToList();
+            if (kept.Count == 0)
+            {
+                paragraphs.RemoveAt(i);
+                break;
+            }
+
+            var newIntro = $"Wat in je antwoorden vooral naar voren komt, is {PupilG78CompetencyNarrative.JoinKidLabelList(MapLabelsToCategories(kept))}.";
+            paragraphs[i] = rest.Length > 0
+                ? PupilG78StoryFlow.EnsureSentenceStartsCapitalized(newIntro + " " + rest)
+                : newIntro;
+            break;
+        }
+
+        return string.Join(PupilG78FactStory.ParagraphBreak, paragraphs);
+    }
+
+    private static IReadOnlyList<string> MapLabelsToCategories(IReadOnlyList<string> kidLabels)
+    {
+        var list = new List<string>();
+        foreach (var kid in kidLabels)
+        {
+            var cat = CompetencyTestCatalog.QuickScanCategories.FirstOrDefault(c =>
+                string.Equals(PupilG78CompetencyNarrative.KidLabelList(c), kid, StringComparison.OrdinalIgnoreCase));
+            if (cat is not null)
+            {
+                list.Add(cat);
+            }
+        }
+
+        return list;
+    }
+
+    private static List<string> KidLabelsFromIntroSentence(string intro)
+    {
+        const string prefix = "Wat in je antwoorden vooral naar voren komt, is ";
+        if (!intro.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        var listPart = intro[prefix.Length..].TrimEnd('.').Trim();
+        var labels = new List<string>();
+        foreach (var chunk in listPart.Split(',', StringSplitOptions.TrimEntries))
+        {
+            foreach (var part in chunk.Split(" en ", StringSplitOptions.TrimEntries))
+            {
+                if (part.Length > 0)
+                {
+                    labels.Add(part);
+                }
+            }
+        }
+
+        return labels;
+    }
+
+    private static bool LabelSupportedInParagraphText(string kidLabel, string paragraphRest)
+        => paragraphRest.Contains(kidLabel, StringComparison.OrdinalIgnoreCase)
+           || kidLabel switch
+           {
+               "plannen" => paragraphRest.Contains("plan", StringComparison.OrdinalIgnoreCase),
+               "communiceren" => paragraphRest.Contains("groep", StringComparison.OrdinalIgnoreCase)
+                                  || paragraphRest.Contains("praat", StringComparison.OrdinalIgnoreCase),
+               "doorzetten" => paragraphRest.Contains("verder", StringComparison.OrdinalIgnoreCase)
+                                  || paragraphRest.Contains("tegenzit", StringComparison.OrdinalIgnoreCase)
+                                  || paragraphRest.Contains("doorwerk", StringComparison.OrdinalIgnoreCase)
+                                  || paragraphRest.Contains("opnieuw", StringComparison.OrdinalIgnoreCase),
+               "creativiteit" => paragraphRest.Contains("idee", StringComparison.OrdinalIgnoreCase)
+                                  || paragraphRest.Contains("verhaal", StringComparison.OrdinalIgnoreCase)
+                                  || paragraphRest.Contains("bedenkt", StringComparison.OrdinalIgnoreCase),
+               "samenwerken" => paragraphRest.Contains("samen", StringComparison.OrdinalIgnoreCase)
+                                || paragraphRest.Contains("groep", StringComparison.OrdinalIgnoreCase),
+               _ => false,
+           };
 
     public static bool HasSubstantiveStrengthParagraph(string body)
     {

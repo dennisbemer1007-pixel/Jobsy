@@ -140,7 +140,6 @@ public sealed class PupilG78ContrastV2StoryTests
             Assert.StartsWith("Wat in je antwoorden vooral naar voren komt, is", intro, StringComparison.Ordinal);
             var rest = para[intro.Length..].Trim();
             var labels = KidLabelsFromIntro(intro).ToList();
-            Assert.Equal(labels.Count, package.CompetencyExamples.Count);
             foreach (var label in labels)
             {
                 var anchor = package.CompetencyExamples.FirstOrDefault(a =>
@@ -283,6 +282,98 @@ public sealed class PupilG78ContrastV2StoryTests
                 Assert.NotEqual(tileNorm, PupilG78PageLint.NormalizeSentence(sentence));
             }
         }
+    }
+
+    [Fact]
+    public void Mixed_v2_competency_blend_is_not_flat_for_all_dimensions()
+    {
+        var (result, progress) = PupilG78ContrastV2Fixtures.MixedToward();
+        var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(progress.AnswersJson!)
+                            ?? new Dictionary<string, int>();
+        var bank = new PupilQuestionBankG78V2();
+        var clauses = new List<G78AnswerClause>();
+        foreach (var q in bank.Questions)
+        {
+            if (!answers.TryGetValue(q.Id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw, "nl");
+            if (fact is null)
+            {
+                continue;
+            }
+
+            var (text, eff, category) = fact.Value;
+            clauses.Add(new G78AnswerClause(q.Id, category, q.Model, G78StoryBeat.Doen, text, eff));
+        }
+
+        var scores = PupilG78GrowthCompetencies.ContrastDimensionScoresForDiagnostics(
+            clauses,
+            result,
+            answers,
+            contrastV2: true);
+        var values = scores.Values.ToList();
+        Assert.True(values.Count >= 3);
+        Assert.False(
+            values.All(v => Math.Abs(v - 1.75) < 0.02),
+            "Regression: old blend flattened every dimension to 1.75. Scores: "
+            + string.Join(", ", scores.Select(kv => $"{kv.Key}={kv.Value:F2}")));
+    }
+
+    [Fact]
+    public void Growth_does_not_include_samenwerken_when_story_or_tiles_show_samenwerken_evidence()
+    {
+        foreach (var fixture in new Func<(PupilResult, PupilProgress)>[]
+                 {
+                     PupilG78ContrastV2Fixtures.AllTowardB,
+                     PupilG78ContrastV2Fixtures.MixedToward,
+                 })
+        {
+            var (result, progress) = fixture();
+            var package = PupilG78FactStory.Build(result, progress, "nl");
+            var pageIds = package.UsedItemIds.ToHashSet();
+            var clauses = CollectClausesForTest(progress);
+            if (!PupilG78GrowthCompetencies.CategoryHasStrongEvidenceOnPage(
+                    CompetencyTestCatalog.Samenwerken,
+                    clauses,
+                    pageIds,
+                    contrastV2: true))
+            {
+                continue;
+            }
+
+            Assert.DoesNotContain(
+                package.GrowthCompetencies,
+                g => string.Equals(g.Category, CompetencyTestCatalog.Samenwerken, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private static List<G78AnswerClause> CollectClausesForTest(PupilProgress progress)
+    {
+        var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(progress.AnswersJson!)
+                            ?? new Dictionary<string, int>();
+        var bank = new PupilQuestionBankG78V2();
+        var list = new List<G78AnswerClause>();
+        foreach (var q in bank.Questions)
+        {
+            if (!answers.TryGetValue(q.Id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw, "nl");
+            if (fact is null)
+            {
+                continue;
+            }
+
+            var (text, eff, category) = fact.Value;
+            list.Add(new G78AnswerClause(q.Id, category, q.Model, G78StoryBeat.Doen, text, eff));
+        }
+
+        return list;
     }
 
     [Fact]

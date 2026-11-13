@@ -55,12 +55,54 @@ public static class PupilG78GrowthCompetencies
             return selected;
         }
 
-        return PupilG78GrowthCompetencies.DimensionScoresContrastV2(clauses, result)
+        return DimensionScoresContrastV2(clauses, result, answers)
             .OrderBy(kv => kv.Value)
             .ThenBy(kv => kv.Key, StringComparer.Ordinal)
             .Take(maxCount)
             .Select(kv => kv.Key)
             .ToList();
+    }
+
+    /// <summary>Drop growth rows when story or tiles already show strong evidence for that competency.</summary>
+    public static IReadOnlyList<string> FilterGrowthWithoutStrongPageEvidence(
+        IReadOnlyList<string> growthCategories,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> pageItemIds,
+        bool contrastV2)
+        => growthCategories
+            .Where(cat => !CategoryHasStrongEvidenceOnPage(cat, clauses, pageItemIds, contrastV2))
+            .ToList();
+
+    public static bool CategoryHasStrongEvidenceOnPage(
+        string category,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> pageItemIds,
+        bool contrastV2)
+    {
+        foreach (var clause in clauses)
+        {
+            if (!pageItemIds.Contains(clause.ItemId) || clause.EffectiveScore < 4)
+            {
+                continue;
+            }
+
+            if (contrastV2)
+            {
+                if (PupilG78CompetencyExampleItems.ClauseSupportsCategory(clause, category, contrastV2: true))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (string.Equals(clause.Category, category, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Diagnostics: blended v2 dimension scores used for strength intro selection.</summary>
@@ -69,8 +111,8 @@ public static class PupilG78GrowthCompetencies
         PupilResult result,
         IReadOnlyDictionary<string, int> answers,
         bool contrastV2)
-        => contrastV2 && clauses.Count > 0
-            ? DimensionScoresContrastV2(clauses, result)
+        => contrastV2
+            ? DimensionScoresContrastV2(clauses, result, answers)
             : DimensionAverages(answers, contrastV2);
 
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> BuildForCategories(
@@ -251,18 +293,21 @@ public static class PupilG78GrowthCompetencies
         ['C'] = [CompetencyTestCatalog.Resultaatgerichtheid, CompetencyTestCatalog.Stressbestendigheid],
     };
 
-    /// <summary>g78-2: clause evidence blended with RIASEC (chosen-pole career scoring).</summary>
+    /// <summary>g78-2: contrast Likert per dimension, lightly blended with RIASEC career profile.</summary>
     public static Dictionary<string, double> DimensionScoresContrastV2(
         IReadOnlyList<G78AnswerClause> clauses,
-        PupilResult result)
+        PupilResult result,
+        IReadOnlyDictionary<string, int> answers)
     {
         var fromClauses = DimensionAveragesFromChosenClauses(clauses);
         var merged = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
         {
+            var stats = StatsForCategory(cat, answers, contrastV2: true);
+            var baseAvg = stats.ItemScores.Count > 0 ? stats.Average : 0;
             fromClauses.TryGetValue(cat, out var clauseAvg);
             var bonus = RiasecCompetencyBonus(cat, result);
-            merged[cat] = clauseAvg * 0.35 + bonus;
+            merged[cat] = baseAvg * 0.55 + clauseAvg * 0.35 + bonus;
         }
 
         return merged;

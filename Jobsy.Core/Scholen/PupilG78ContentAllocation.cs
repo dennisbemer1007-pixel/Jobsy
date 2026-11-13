@@ -28,7 +28,7 @@ public static class PupilG78ContentAllocation
         }
 
         var avgs = contrastV2 && clauses is { Count: > 0 } && result is not null
-            ? PupilG78GrowthCompetencies.DimensionScoresContrastV2(clauses, result)
+            ? PupilG78GrowthCompetencies.DimensionScoresContrastV2(clauses, result, answers)
             : contrastV2 && clauses is { Count: > 0 }
                 ? PupilG78GrowthCompetencies.DimensionAveragesFromChosenClauses(clauses)
                 : PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2);

@@ -144,13 +144,10 @@ public static class PupilG78FactStory
             fullStoryIds,
             answers,
             contrast);
-        var body = string.Join(ParagraphBreak, paragraphs);
-        body = PupilG78PageTextDedupe.ScrubStoryAgainstTileExplanations(body, tiles);
-        var finalizedTileTexts = tiles
-            .Select(t => PupilG78PageTextDedupe.FinalizeRenderedText(t.Explanation))
-            .ToList();
-        body = PupilG78StoryComposer.ScrubStoryAgainstTiles(body, finalizedTileTexts);
         var tileIdSet = tileIds.ToHashSet();
+        var body = string.Join(ParagraphBreak, paragraphs);
+        body = PupilG78PageTextDedupe.ApplyFullStoryTileDedupe(body, tiles, tileIdSet, clauses);
+        body = PupilG78StoryComposer.SyncStrengthIntroAfterTileDedupe(body);
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
         var growthList = growthCategories;
         if (contrast && !PupilG78StoryComposer.HasSubstantiveStrengthParagraph(body))
@@ -161,9 +158,31 @@ public static class PupilG78FactStory
                     answers,
                     clauses,
                     result,
-                    maxCount: 4,
+                    maxCount: 8,
                     contrastV2: true).ToList();
             }
+        }
+
+        growthList = PupilG78GrowthCompetencies
+            .FilterGrowthWithoutStrongPageEvidence(growthList, clauses, pageItemIds, contrast)
+            .Take(4)
+            .ToList();
+
+        if (contrast && growthList.Count == 0)
+        {
+            growthList = PupilG78GrowthCompetencies.SelectGrowthCategoriesWithFallback(
+                    answers,
+                    clauses,
+                    result,
+                    maxCount: 8,
+                    contrastV2: true)
+                .Where(cat => !PupilG78GrowthCompetencies.CategoryHasStrongEvidenceOnPage(
+                    cat,
+                    clauses,
+                    pageItemIds,
+                    contrastV2: true))
+                .Take(4)
+                .ToList();
         }
 
         var growth = PupilG78GrowthCompetencies.BuildForCategories(
