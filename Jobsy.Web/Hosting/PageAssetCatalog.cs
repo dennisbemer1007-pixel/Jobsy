@@ -437,7 +437,8 @@ public static partial class PageAssetCatalog
             return uwvCss;
         }
 
-        if (path == OnboardingRoutes.ClassicStartPath)
+        if (path == OnboardingRoutes.ClassicStartPath
+            || path.Equals(OnboardingRoutes.WizardStartPath, StringComparison.OrdinalIgnoreCase))
         {
             return
             [
