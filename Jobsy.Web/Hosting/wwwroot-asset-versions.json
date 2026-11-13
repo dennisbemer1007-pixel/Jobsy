@@ -260,7 +260,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "aadec3b69e8a6ca751373a63b1d9668c0c54970533d384af599d9e37e95ad75a",
+    "sha256": "1fde28aa7163361964f03439f962fe231a41dac82de7bc72f77b530cd64a6510",
     "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -576,7 +576,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "f2db12db71c4b75c016242980bd4a086e82da8c620fa320332c70e392dc8e00a",
+    "sha256": "27c072db1c569fe5ea99df0bcd9209c3b610a69a630eaf64e595b46e2c036482",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
@@ -584,7 +584,7 @@
     "v": "20261025-87"
   },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "6ed308de3acb5a77a229b053fadb27696563f5d4a3f023013b760cb60908d59c",
+    "sha256": "093726cc1fc825022f9227b398054b8fe9cc8ab2ff7552aa7b54c2f8bac4c040",
     "v": "20261025-87"
   },
   "js/passport-availability-matrix.js": {

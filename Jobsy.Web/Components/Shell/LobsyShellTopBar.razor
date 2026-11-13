@@ -9,7 +9,7 @@
 @inject NavigationManager Navigation
 
 <header class="admin-topbar @(Kind == LobsyShellTopBarKind.CandidateOnboarding ? "admin-topbar--candidate-onboarding" : null)"
-        data-testid="lobsy-shell-topbar">
+        data-testid="@(Kind == LobsyShellTopBarKind.CandidateOnboarding ? "app-shell-header" : "lobsy-shell-topbar")">
     <div class="admin-topbar__start">
         @if (Kind == LobsyShellTopBarKind.Admin)
         {

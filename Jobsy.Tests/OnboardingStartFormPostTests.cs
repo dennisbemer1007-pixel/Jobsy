@@ -6,6 +6,37 @@ namespace Jobsy.Tests;
 public sealed class OnboardingStartFormPostTests
 {
     [Fact]
+    public async Task Post_step1_advance_without_obPayload_redirects_to_step2()
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=1"));
+
+        var get = await client.GetAsync("/candidate/start?step=1");
+        var html = await get.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgery(html);
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token!,
+            ["obNav"] = "next",
+            ["firstName"] = "Onboarding",
+            ["lastName"] = "Tester",
+            ["addressQuery"] = "2671GB Den Haag",
+            ["birthDateText"] = "12-03-1990",
+            ["workStatuses"] = "scholier",
+        };
+
+        var post = await client.PostAsync("/candidate/start?step=1", new FormUrlEncodedContent(form));
+        Assert.True(post.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.SeeOther,
+            $"Expected redirect, got {(int)post.StatusCode} {await post.Content.ReadAsStringAsync()}");
+        var location = post.Headers.Location?.ToString() ?? "";
+        Assert.Contains("step=2", location, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Post_step1_advance_redirects_to_step2()
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();

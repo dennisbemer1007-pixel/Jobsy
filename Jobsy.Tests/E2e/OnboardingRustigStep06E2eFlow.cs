@@ -18,7 +18,7 @@ internal static class OnboardingRustigStep06E2eFlow
         var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, "rustig-u6");
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 5, currentStep: 6);
 
-        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync($"{baseUrl}/candidate/start?step=6", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,

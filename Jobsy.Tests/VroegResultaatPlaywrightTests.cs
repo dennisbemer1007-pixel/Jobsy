@@ -773,6 +773,8 @@ combo.save(out)
         await next.ScrollIntoViewIfNeededAsync();
         await page.WaitForTimeoutAsync(150);
         var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+        var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+        var beforeUrl = page.Url;
         if (mobile)
         {
             await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
@@ -782,7 +784,15 @@ combo.save(out)
             await next.ClickAsync(new() { Timeout = 20_000 });
         }
 
-        await page.WaitForTimeoutAsync(500);
+        if (ssr)
+        {
+            await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 90_000 });
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        }
+        else
+        {
+            await page.WaitForTimeoutAsync(500);
+        }
     }
 }
 

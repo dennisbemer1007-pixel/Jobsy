@@ -256,6 +256,32 @@ public static class OnboardingStartFormEndpoints
                 culture);
             body = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draftFromStore);
         }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep == 1)
+        {
+            var req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance);
+            var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+                req,
+                api,
+                geocoder,
+                culture,
+                cancellationToken);
+            return ToRedirect(step1Status, step1Payload, currentStep, advance, goBack, culture);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep == 5)
+        {
+            MeProfile profileStep5;
+            try
+            {
+                profileStep5 = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            }
+            catch (Exception)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Common.Error.TryAgain"]));
+            }
+
+            var draftStep5 = OnboardingProfileDraftHydrator.FromProfile(profileStep5);
+            body = OnboardingSsrStepFormInteract.BuildPersistBody(5, draftStep5);
+        }
         else if (string.IsNullOrWhiteSpace(obPayload))
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));

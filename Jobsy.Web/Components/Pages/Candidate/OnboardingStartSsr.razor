@@ -99,7 +99,7 @@ else if (_step is >= 1 and <= 10)
                                            PhaseLabel="@phaseLabel"
                                            LaterHref="/home" />
 
-                    <div class="ob-v3-step-wrap" data-testid="@canvasTestId">
+                    <div class="ob-v3-step-wrap">
                         @if (_step is 4 or 5)
                         {
                             <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
@@ -112,7 +112,7 @@ else if (_step is >= 1 and <= 10)
                                      data-ob-client-step="@_step"
                                      data-initial="@_initialJson"
                                      data-ob-ssr-values="1"
-                                     data-testid="@($"onboarding-step-{_step}-illustrated")">
+                                     data-testid="@canvasTestId">
                                     @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles, _seed))
                                 </div>
                             </div>

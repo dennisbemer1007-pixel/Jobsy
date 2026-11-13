@@ -271,6 +271,7 @@
         var grid = root.querySelector("[data-ob-client=workStatusGrid]");
         var list = root.querySelector(".ob-client-suggest");
         var addressWrap = root.querySelector(".ob-fields__address");
+        var form = root.closest("form[data-ob-ssr-form]");
 
         function bindDirty(input, key) {
             if (!input || input.__obDirtyBound) return;
@@ -350,7 +351,19 @@
             }
         }
 
+        function syncStep1FormFields() {
+            var workField = root.querySelector("[data-ob-ssr-work-statuses]");
+            if (workField) {
+                workField.value = readWorkStatusesFromDom().join(",");
+            }
+            var latField = form.querySelector('[name="homeLat"][data-ob-client="homeLat"]');
+            var lngField = form.querySelector('[name="homeLng"][data-ob-client="homeLng"]');
+            if (latField && state.homeLat != null) latField.value = String(state.homeLat);
+            if (lngField && state.homeLng != null) lngField.value = String(state.homeLng);
+        }
+
         function saveWorkStatusNow() {
+            syncStep1FormFields();
             putOnboardingStep(root, 1, collectPayload, false, false, false).catch(function () { });
         }
 
@@ -362,6 +375,7 @@
                 ev.stopPropagation();
                 var selected = btn.getAttribute("aria-pressed") === "true";
                 setWorkStatusPressed(btn, !selected);
+                syncStep1FormFields();
                 saveWorkStatusNow();
             }, true);
         }
@@ -497,6 +511,7 @@
                             address.value = pick.label;
                             state.homeLat = pick.latitude;
                             state.homeLng = pick.longitude;
+                            syncStep1FormFields();
                             hideSuggest();
                             scheduleSave();
                         });
@@ -510,6 +525,7 @@
         }
 
         state.collect = collectPayload;
+        root.__obSyncStep1FormFields = syncStep1FormFields;
 
         return state;
     }
@@ -1968,6 +1984,9 @@
                 }
                 var root = form.querySelector("[data-ob-client-step]");
                 if (!root || !step) return;
+                if (step === 1 && typeof root.__obSyncStep1FormFields === "function") {
+                    root.__obSyncStep1FormFields();
+                }
                 if (form.getAttribute("data-ob-ssr-post-tiles") === "1" && step >= 2 && step <= 4) {
                     if (hidden) {
                         hidden.value = JSON.stringify(collectSsrPostStepFromDom(root, step));

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using Jobsy.Core.Rules;
@@ -46,22 +47,26 @@ internal static class OnboardingClientStepShells
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\">");
         sb.Append("<div class=\"ob-wizard__field-row\">");
-        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "given-name", draft.FirstName));
-        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "family-name", draft.LastName));
+        sb.Append(LabelInput("onboarding-field-firstname", culture["Profile.FirstName"], "firstName", "firstName", "given-name", draft.FirstName));
+        sb.Append(LabelInput("onboarding-field-lastname", culture["Profile.LastName"], "lastName", "lastName", "family-name", draft.LastName));
         sb.Append("</div>");
         sb.Append("<div id=\"onboarding-field-location\" class=\"ob-fields__address\">");
-        sb.Append("<label>");
+        sb.Append("<div class=\"kb-address\"><label class=\"kb-address__label\" for=\"onboarding-home-address\">");
         sb.Append(WebUtility.HtmlEncode(culture["Discovery.Address"]));
-        sb.Append("<input id=\"onboarding-home-address\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" value=\"");
+        sb.Append("</label><div class=\"kb-address__field\">");
+        sb.Append("<input id=\"onboarding-home-address\" name=\"addressQuery\" type=\"text\" autocomplete=\"street-address\" data-ob-client=\"address\" value=\"");
         sb.Append(WebUtility.HtmlEncode(draft.AddressQuery ?? string.Empty));
-        sb.Append("\" /></label>");
-        sb.Append("<ul class=\"address-suggestions ob-client-suggest\" role=\"listbox\" hidden></ul>");
-        sb.Append("</div>");
+        sb.Append("\" /><button type=\"button\" class=\"kb-address__geo\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Discovery.UseMyLocation"]));
+        sb.Append("\"><span class=\"kb-address__geo-icon\" aria-hidden=\"true\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"/><circle cx=\"12\" cy=\"12\" r=\"7\"/><path d=\"M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21\"/></svg></span></button></div>");
+        sb.Append("<ul class=\"address-suggestions ob-client-suggest\" role=\"listbox\" hidden></ul></div></div>");
         sb.Append("<fieldset id=\"onboarding-field-birthdate\"><legend>");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.BirthDate"]));
-        sb.Append("</legend><input data-ob-client=\"birthDate\" inputmode=\"numeric\" autocomplete=\"bday\" value=\"");
+        sb.Append("</legend><div class=\"ob-wizard__birth-date\"><div class=\"jobsy-date-field jobsy-date-field--typed\" data-testid=\"onboarding-birth-date\"><div class=\"jobsy-date-field__control\"><input id=\"onboarding-birth-date-input\" name=\"birthDateText\" class=\"jobsy-date-field__text\" type=\"text\" inputmode=\"numeric\" autocomplete=\"bday\" data-ob-client=\"birthDate\" value=\"");
         sb.Append(WebUtility.HtmlEncode(birthText));
-        sb.Append("\" /></fieldset>");
+        sb.Append("\" /><button type=\"button\" class=\"jobsy-date-field__picker-btn\" tabindex=\"-1\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.BirthDate"]));
+        sb.Append("\"><span class=\"jobsy-date-field__calendar-icon\" aria-hidden=\"true\"></span></button><input class=\"jobsy-date-field__input jobsy-date-field__input--native\" type=\"date\" tabindex=\"-1\" aria-hidden=\"true\" /></div><p class=\"jobsy-date-field__error\" role=\"status\" aria-live=\"polite\"></p></div></div></fieldset>");
         sb.Append("<fieldset class=\"work-status-field\" id=\"onboarding-field-work-status\">");
         sb.Append("<legend class=\"ob-wizard__section-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["WorkStatus.Legend"]));
@@ -73,7 +78,24 @@ internal static class OnboardingClientStepShells
         AppendWorkStatusChips(sb, culture, draft);
         sb.Append("</div>");
         sb.Append("</fieldset>");
-        sb.Append(LabelInput(null, culture["Profile.Phone"], "phone", "tel", draft.Phone));
+        sb.Append(LabelInput("onboarding-field-phone", culture["Profile.Phone"], "phone", "phone", "tel", draft.Phone));
+        sb.Append("<input type=\"hidden\" name=\"homeLat\" data-ob-client=\"homeLat\" value=\"");
+        if (draft.HomeLat is not null)
+        {
+            sb.Append(WebUtility.HtmlEncode(draft.HomeLat.Value.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        sb.Append("\" />");
+        sb.Append("<input type=\"hidden\" name=\"homeLng\" data-ob-client=\"homeLng\" value=\"");
+        if (draft.HomeLng is not null)
+        {
+            sb.Append(WebUtility.HtmlEncode(draft.HomeLng.Value.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        sb.Append("\" />");
+        sb.Append("<input type=\"hidden\" name=\"workStatuses\" data-ob-ssr-work-statuses value=\"");
+        sb.Append(WebUtility.HtmlEncode(string.Join(',', draft.WorkStatuses)));
+        sb.Append("\" />");
         sb.Append("</div>");
         return sb.ToString();
     }
@@ -710,14 +732,20 @@ internal static class OnboardingClientStepShells
         }
     }
 
-    private static string LabelInput(string? wrapId, string label, string clientKey, string autocomplete, string? value = null)
+    private static string LabelInput(
+        string? wrapId,
+        string label,
+        string clientKey,
+        string formName,
+        string autocomplete,
+        string? value = null)
     {
         var idAttr = wrapId is null ? "" : $" id=\"{wrapId}\"";
         var valueAttr = string.IsNullOrEmpty(value)
             ? string.Empty
             : $" value=\"{WebUtility.HtmlEncode(value)}\"";
         return $"""
-<label{idAttr}>{WebUtility.HtmlEncode(label)}<input autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}"{valueAttr} /></label>
+<label{idAttr}>{WebUtility.HtmlEncode(label)}<input name="{formName}" autocomplete="{autocomplete}" maxlength="128" data-ob-client="{clientKey}"{valueAttr} /></label>
 """;
     }
 }
