@@ -44,7 +44,14 @@ public class PupilG78CareerScoringTests
             new PupilG78JobMatch("contentmaker", 0.81),
             new PupilG78JobMatch("dierenarts", 0.79),
         };
-        var cards = PupilPassportJobCards.BuildGroep78(matches, "nl");
+        var result = MinimalResult("AI");
+        var progress = new PupilProgress
+        {
+            PupilCodeId = Guid.NewGuid(),
+            LikesJson = """["tekenen","dieren"]""",
+            VakScoresJson = FullVakJson()
+        };
+        var cards = PupilPassportJobCards.BuildGroep78(matches, result, progress, "nl");
         Assert.Equal(3, cards.Count);
         Assert.Equal(PupilG78BeroepssoortCatalog.Title("creatief-design", english: false), cards[0].DomainLabel);
         Assert.Equal(PupilG78BeroepssoortCatalog.Title("media-digital", english: false), cards[1].DomainLabel);

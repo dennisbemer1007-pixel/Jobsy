@@ -1,5 +1,6 @@
 using System.Text;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Web.Passport;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
@@ -24,7 +25,6 @@ public static class PupilDitBenJijSsrHtml
         }
 
         var (bandStem, bandPos) = PupilJourneyTheme.ResultSceneBand(themeKey);
-        var tileStems = PupilJourneyTheme.ResultTileStems(themeKey);
         var sb = new StringBuilder();
         sb.Append("""<section class="ll-g78-scene ll-g78-result-scene" data-testid="leerling-g78-scene">""");
         sb.Append("<section class=\"band ll-g78-world-band ll-g78-result-band\" style=\"background-image:url('/leerling/werelden/img/");
@@ -40,20 +40,16 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("<h1 class=\"island-lead rs-h serif\">").Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1></header>");
         sb.Append("""<div class="qrow">""");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(
-            PupilStoryNarrative.ForSpeakAloud(result.Story.Body),
+            PupilG78FactStory.ForSpeakAloud(result.Story.Body),
             "ll-story",
             culture,
             "Leerling.G78.Result.ReadStory"));
         sb.Append("</div>");
         AppendG78StoryParagraphs(sb, result.Story.Body);
+        AppendG78ResultTiles(sb, result, culture);
+        AppendG78GrowthCompetencies(sb, result, culture);
         sb.Append("</div>");
-        sb.Append("<div class=\"rtiles\">");
-        for (var i = 0; i < result.Story.Tiles.Count && i < tileStems.Count; i++)
-        {
-            sb.Append(PupilGroep78MockHtml.ResultTile(culture, tileStems[i], result.Story.Tiles[i]));
-        }
-
-        sb.Append("</div><div class=\"card ll-result-chips\"><h2 class=\"rsub\">");
+        sb.Append("<div class=\"card ll-result-chips\"><h2 class=\"rsub\">");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.LikesTitle"])).Append("</h2><div class=\"chips\">");
         foreach (var likeKey in result.Likes)
         {
@@ -64,10 +60,29 @@ public static class PupilDitBenJijSsrHtml
 
         sb.Append("</div><h2 class=\"rsub\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.JobsTitle"])).Append("</h2>");
         sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(string.Join(", ", result.Story.JobIdeas), "ll-jobs", culture, "Leerling.G78.Result.ReadJobs"));
-        sb.Append("<div class=\"chips\" data-testid=\"ll-g78-result-jobs\">");
-        foreach (var job in JobChipLabels(result))
+        sb.Append("<div class=\"chips ll-g78-result-jobs\" data-testid=\"ll-g78-result-jobs\">");
+        if (result.JobExploreChips is { Count: > 0 } explore)
         {
-            sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(job)).Append("</span>");
+            foreach (var chip in explore)
+            {
+                sb.Append("<div class=\"ll-g78-result-job-row\">");
+                sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(chip.Label)).Append("</span>");
+                if (!string.IsNullOrWhiteSpace(chip.DayEscoId))
+                {
+                    sb.Append("<span class=\"ll-g78-result-job-day\">");
+                    OccupationDayPassportSsr.AppendLeerlingButton(sb, culture, chip.DayEscoId!, chip.Label);
+                    sb.Append("</span>");
+                }
+
+                sb.Append("</div>");
+            }
+        }
+        else
+        {
+            foreach (var job in JobChipLabels(result))
+            {
+                sb.Append("<span class=\"chip\">").Append(PupilLeerlingSsrParts.E(job)).Append("</span>");
+            }
         }
 
         sb.Append("</div><p class=\"note note-teacher\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.TeacherNote"])).Append("</p></div>");
@@ -135,11 +150,65 @@ public static class PupilDitBenJijSsrHtml
 
     private static void AppendG78StoryParagraphs(StringBuilder sb, string body)
     {
-        foreach (var para in PupilStoryNarrative.SplitParagraphs(body))
+        foreach (var para in PupilG78FactStory.SplitParagraphs(body))
         {
             sb.Append("<p class=\"story-body\">").Append(PupilLeerlingSsrParts.E(para)).Append("</p>");
         }
     }
+
+    private static void AppendG78GrowthCompetencies(StringBuilder sb, PupilResultPageDto result, CultureState culture)
+    {
+        var items = result.Story.GrowthCompetencies;
+        if (items is null || items.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("""<section class="ll-g78-grow" data-testid="ll-g78-growth-competencies">""");
+        sb.Append("<h2 class=\"ll-g78-grow__title\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.GrowthTitle"])).Append("</h2>");
+        sb.Append("<p class=\"ll-g78-grow__foot\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.GrowthFootnote"])).Append("</p>");
+        sb.Append("""<ul class="ll-g78-grow-list">""");
+        foreach (var item in items)
+        {
+            var aria = PupilLeerlingSsrParts.E(culture["Leerling.G78.Result.GrowthInfoAria"]);
+            sb.Append("""<li class="ll-g78-grow-row">""");
+            sb.Append("<span class=\"ll-g78-grow-chip chip\">").Append(PupilLeerlingSsrParts.E(item.Label)).Append("</span>");
+            sb.Append("<button type=\"button\" class=\"ll-info-btn ll-g78-grow-info\" data-ll-grow-info=\"1\" aria-label=\"");
+            sb.Append(aria).Append("\" aria-expanded=\"false\" aria-controls=\"");
+            sb.Append(PupilLeerlingSsrParts.E(item.PanelId)).Append("\">i</button>");
+            sb.Append("<div id=\"").Append(PupilLeerlingSsrParts.E(item.PanelId));
+            sb.Append("\" class=\"ll-info ll-g78-grow-panel\" role=\"region\" hidden>");
+            sb.Append(PupilLeerlingSsrParts.E(item.WhyExplanation));
+            sb.Append("</div></li>");
+        }
+
+        sb.Append("</ul></section>");
+    }
+
+    private static void AppendG78ResultTiles(StringBuilder sb, PupilResultPageDto result, CultureState culture)
+    {
+        if (result.Story.Tiles.Count == 0)
+        {
+            return;
+        }
+
+        sb.Append("""<div class="rtiles" data-testid="ll-g78-result-tiles">""");
+        foreach (var tile in result.Story.Tiles)
+        {
+            sb.Append(PupilGroep78MockHtml.ResultTile(culture, TileImageStem(tile.ModelKey), tile));
+        }
+
+        sb.Append("</div>");
+    }
+
+    private static string TileImageStem(string modelKey) => modelKey switch
+    {
+        "competence" => "koraalrif",
+        "riasec" => "schatgrot",
+        "values" => "vuurtoren",
+        "culture" => "lagune",
+        _ => "koraalrif",
+    };
 
     private static string BuildLegacy(PupilResultPageDto result, CultureState culture, bool passportV2, string pdfHref)
     {

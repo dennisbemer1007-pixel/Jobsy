@@ -1,10 +1,32 @@
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen.PupilPassport;
 
 /// <summary>Top-3 competence strengths for the passport (rule-based, no scores shown).</summary>
 public static class PupilPassportStrengths
 {
+    public static IReadOnlyList<PupilPassportStrength> ForG78StoryCompetencies(
+        IReadOnlyList<string> competencyCategories)
+    {
+        return competencyCategories
+            .Take(3)
+            .Select(cat => new PupilPassportStrength(
+                PupilG78CompetencyNarrative.KidLabelTitle(cat),
+                "",
+                IconForCompetencyCategory(cat)))
+            .ToList();
+    }
+
+    private static string IconForCompetencyCategory(string category) => category switch
+    {
+        CompetencyTestCatalog.Resultaatgerichtheid => "target",
+        CompetencyTestCatalog.Stressbestendigheid => "bulb",
+        CompetencyTestCatalog.Innovatie => "spark",
+        CompetencyTestCatalog.Extraversie => "users",
+        _ => "hands"
+    };
+
     public static IReadOnlyList<PupilPassportStrength> For(PupilResult result, string language = "nl")
     {
         var keys = PupilStoryTemplates.TryParse(result.StoryKeysJson);

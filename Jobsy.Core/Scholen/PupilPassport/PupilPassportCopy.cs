@@ -184,6 +184,11 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Header.Usage"] = "MIJN PASPOORT · GEBRUIK";
         d["LeerlingPassport.G78.Page.Who"] = "Wie ben ik?";
         d["LeerlingPassport.G78.Page.Subjects"] = "Wat ik leuk vind en belangrijk vind";
+        d["LeerlingPassport.G78.Subjects.Empty"] = "Nog geen vakscores ingevuld.";
+        d["LeerlingPassport.G78.Col.Leuk"] = "Leuk";
+        d["LeerlingPassport.G78.Col.Belangrijk"] = "Belangrijk";
+        d["LeerlingPassport.G78.Col.OpSchool"] = "Op school";
+        d["LeerlingPassport.G78.Col.VrijeTijd"] = "In je vrije tijd";
         d["LeerlingPassport.G78.Page.Where"] = "Waar kan ik naartoe?";
         d["LeerlingPassport.G78.Page.Usage"] = "Zo gebruik je dit";
         d["LeerlingPassport.G78.Mirror.Title"] = "Zo zie jij jezelf";
@@ -208,6 +213,8 @@ public static class PupilPassportCopy
         d["LeerlingPassport.G78.Strengths.Title"] = "Dit kan ik al goed";
         d["LeerlingPassport.G78.Strengths.Sub"] = "Jouw sterke punten uit de test";
         d["LeerlingPassport.G78.Strengths.Question"] = "Wanneer heb je dit laatst laten zien?";
+        d["LeerlingPassport.G78.Growth.Title"] = "Hier kun je nog in groeien";
+        d["LeerlingPassport.G78.Growth.Footnote"] = "Dit kun je later nog ontdekken.";
         d["LeerlingPassport.G78.Subjects.BlockTitle"] = "Mijn vakken";
         d["LeerlingPassport.G78.Subjects.Sub"] = "Zo heb jij je vakken zelf ingevuld";
         d["LeerlingPassport.G78.Subjects.Question"] =
@@ -312,6 +319,8 @@ public static class PupilPassportCopy
             "Je traint heel hard om op topniveau te sporten. Je speelt wedstrijden voor een club of team.";
         d["LeerlingPassport.Card.hovenier.Blurb"] =
             "Je ontwerpt en maakt tuinen en parken. Je bent bijna de hele dag buiten.";
+        d["LeerlingPassport.Card.fotograaf.Blurb"] =
+            "Je maakt foto's van mensen, plekken of dieren. Je kiest goed licht en stelt je camera in.";
 
         d["LeerlingPassport.Discover.dierenarts.1"] = "Hoe ziet een dag bij de dierenarts eruit?";
         d["LeerlingPassport.Discover.dierenarts.2"] = "Welke vakken horen bij biologie op de middelbare school?";

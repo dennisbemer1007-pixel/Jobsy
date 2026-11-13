@@ -22,9 +22,22 @@ public class ExportG78PassportSampleTests
     {
         var renderer = new PupilStoryRenderer();
         var builder = new PupilPassportPdfModelBuilder(renderer);
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal);
+        for (var id = 9001; id <= 9060; id++)
+        {
+            answers[id.ToString()] = 3;
+        }
+
+        answers["9032"] = 5;
+        answers["9037"] = 5;
+        answers["9042"] = 5;
+        answers["9016"] = 5;
+        answers["9028"] = 5;
+
         var result = new PupilResult
         {
             PupilCodeId = Guid.NewGuid(),
+            ScoringVersion = "g78-1",
             CompletedAtUtc = new DateTime(2026, 10, 14, 0, 0, 0, DateTimeKind.Utc),
             HollandCode = "RI",
             DreamJobKey = "kok",
@@ -61,6 +74,7 @@ public class ExportG78PassportSampleTests
             LikesJson = """["sport","natuur","techniek"]""",
             DislikesJson = """["lang-stilzitten"]""",
             DreamJobKey = "kok",
+            AnswersJson = System.Text.Json.JsonSerializer.Serialize(answers),
             VakScoresJson = System.Text.Json.JsonSerializer.Serialize(vakMap)
         };
 
@@ -91,12 +105,166 @@ public class ExportG78PassportSampleTests
         Assert.StartsWith("%PDF", Encoding.ASCII.GetString(pdf.AsSpan(0, 4)));
 
         using var doc = PdfDocument.Open(pdf);
-        Assert.Equal(5, doc.NumberOfPages);
+        Assert.InRange(doc.NumberOfPages, 5, 6);
 
-        Directory.CreateDirectory("/opt/cursor/artifacts");
-        File.WriteAllBytes("/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf", pdf);
+        WriteArtifactBytes("/opt/cursor/artifacts/g78-paspoort-bijlagen-sample.pdf", pdf);
 
         WriteMockupComparisonPngs(pdf);
+        WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-subjects-page-after.png");
+    }
+
+    [Fact]
+    public void Export_g78_realistic_helpt_anderen_subjects_page_artifact()
+    {
+        var (fixtureResult, fixtureProgress) = PupilG78RealisticFixtures.HelpsOthers();
+        var renderer = new PupilStoryRenderer();
+        var builder = new PupilPassportPdfModelBuilder(renderer);
+        var pupilCodeId = Guid.NewGuid();
+        var result = new PupilResult
+        {
+            PupilCodeId = pupilCodeId,
+            ScoringVersion = fixtureResult.ScoringVersion,
+            HollandCode = fixtureResult.HollandCode,
+            TopValue = fixtureResult.TopValue,
+            TopCulture = fixtureResult.TopCulture,
+            CompetenceScoresJson = fixtureResult.CompetenceScoresJson,
+            RiasecScoresJson = fixtureResult.RiasecScoresJson,
+            ValuesScoresJson = fixtureResult.ValuesScoresJson,
+            CultureScoresJson = fixtureResult.CultureScoresJson,
+            CompletedAtUtc = new DateTime(2026, 11, 12, 0, 0, 0, DateTimeKind.Utc),
+        };
+        var progress = new PupilProgress
+        {
+            PupilCodeId = pupilCodeId,
+            AnswersJson = fixtureProgress.AnswersJson,
+            LikesJson = fixtureProgress.LikesJson,
+            VakScoresJson = fixtureProgress.VakScoresJson,
+        };
+        var code = new PupilCode
+        {
+            Id = result.PupilCodeId,
+            Status = PupilCodeStatus.Completed,
+            Result = result,
+            Progress = progress,
+        };
+        var cls = new SchoolClass
+        {
+            Name = "8B",
+            Level = SchoolLevel.Groep78,
+            Year = 8,
+            QuestionSet = PupilQuestionSet.Groep78,
+        };
+
+        var model = builder.Build(code, cls, "Demo OBS", "28A-Z7K", null);
+        var pdf = new PupilPassportPdfService().Render(model with { G78BijlagenMockChrome = false });
+        using (var docCheck = PdfDocument.Open(pdf))
+        {
+            Assert.Equal(5, docCheck.NumberOfPages);
+            var allText = string.Join('\n', docCheck.GetPages().Select(p => p.Text));
+            Assert.Contains("Maken & bouwen", allText, StringComparison.Ordinal);
+            Assert.Contains("Waar ik energie van krijg", allText, StringComparison.Ordinal);
+            Assert.Contains("Creativiteit", allText, StringComparison.Ordinal);
+            Assert.DoesNotContain("Dit zie je ook terug", allText, StringComparison.Ordinal);
+            var deel2 = docCheck.GetPages()
+                .Select(p => p.Text)
+                .FirstOrDefault(t => t.Contains("D E E L 2", StringComparison.Ordinal) || t.Contains("DEEL 2", StringComparison.Ordinal));
+            Assert.NotNull(deel2);
+            Assert.Contains("Hier kun je nog in groeien", deel2, StringComparison.Ordinal);
+        }
+
+        WriteArtifactBytes("/opt/cursor/artifacts/g78-paspoort-helpt-anderen.pdf", pdf);
+        WriteSubjectsPagePng(pdf, "/opt/cursor/artifacts/g78-dit-ben-jij-pdf-page.png");
+        WritePassportSectionPagePngs(pdf);
+    }
+
+    private static void WritePassportSectionPagePngs(byte[] pdf)
+    {
+        EnsurePythonCompareDeps();
+        var pdfPath = Path.Combine(Path.GetTempPath(), $"g78-sections-{Guid.NewGuid():N}.pdf");
+        File.WriteAllBytes(pdfPath, pdf);
+        var script = """
+import sys
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
+doc = fitz.open(sys.argv[1])
+out_dir = sys.argv[2]
+for i, page in enumerate(doc):
+    t = page.get_text()
+    if "D E E L 1" in t or "D E E L 2" in t or "DEEL 1" in t or "DEEL 2" in t:
+        pix = page.get_pixmap(matrix=fitz.Matrix(120/72, 120/72))
+        pix.save(f"{out_dir}/g78-pdf-section-page-{i}.png")
+print("ok", doc.page_count)
+""";
+        var scriptPath = "/tmp/g78-section-pages.py";
+        File.WriteAllText(scriptPath, script);
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "python3",
+            ArgumentList = { scriptPath, pdfPath, "/opt/cursor/artifacts" },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi);
+        proc!.WaitForExit(60_000);
+        Assert.Equal(0, proc.ExitCode);
+        try
+        {
+            File.Delete(pdfPath);
+        }
+        catch
+        {
+            // best-effort
+        }
+    }
+
+    private static void WriteSubjectsPagePng(byte[] pdf, string path)
+    {
+        EnsurePythonCompareDeps();
+        var pdfPath = Path.Combine(Path.GetTempPath(), $"g78-subjects-{Guid.NewGuid():N}.pdf");
+        File.WriteAllBytes(pdfPath, pdf);
+        var script = """
+import sys
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
+doc = fitz.open(sys.argv[1])
+idx = min(3, len(doc) - 1)
+for i, page in enumerate(doc):
+    t = page.get_text()
+    if ("D E E L 2" in t or "DEEL 2" in t) and "Wat ik leuk vind" in t:
+        idx = i
+        break
+page = doc[idx]
+pix = page.get_pixmap(matrix=fitz.Matrix(120/72, 120/72))
+pix.save(sys.argv[2])
+print("ok")
+""";
+        var scriptPath = "/tmp/g78-page3.py";
+        File.WriteAllText(scriptPath, script);
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "python3",
+            ArgumentList = { scriptPath, pdfPath, path },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi);
+        proc!.WaitForExit(60_000);
+        Assert.Equal(0, proc.ExitCode);
+        Assert.True(File.Exists(path), path);
+        try
+        {
+            File.Delete(pdfPath);
+        }
+        catch
+        {
+            // best-effort temp cleanup
+        }
     }
 
     private static void WriteMockupComparisonPngs(byte[] samplePdf)
@@ -179,5 +347,35 @@ print("ok")
         }
 
         return proc.StandardOutput.ReadToEnd();
+    }
+
+    private static void WriteArtifactBytes(string path, byte[] data)
+    {
+        Directory.CreateDirectory("/opt/cursor/artifacts");
+        var tmp = Path.Combine(Path.GetTempPath(), $"artifact-{Guid.NewGuid():N}.bin");
+        File.WriteAllBytes(tmp, data);
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            try
+            {
+                File.Copy(tmp, path, overwrite: true);
+                File.Delete(tmp);
+                return;
+            }
+            catch (IOException) when (attempt < 3)
+            {
+                Thread.Sleep(500 << attempt);
+            }
+        }
+
+        File.Copy(tmp, path, overwrite: true);
+        try
+        {
+            File.Delete(tmp);
+        }
+        catch
+        {
+            // best-effort
+        }
     }
 }

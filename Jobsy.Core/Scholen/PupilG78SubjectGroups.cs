@@ -21,11 +21,11 @@ public static class PupilG78SubjectGroups
         string language = "nl")
     {
         var english = PupilVerhaalLocalized.IsEnglish(language);
-        var strong = Lines(scores, PupilVakScores.IsStrong, english);
-        var growth = Lines(scores, PupilVakScores.IsLeukGrowth, english);
-        var skill = Lines(scores, PupilVakScores.IsGoedOnly, english);
+        _ = result;
+        var strong = Lines(scores, PupilVakScores.IsStrong);
+        var growth = Lines(scores, PupilVakScores.IsLeukGrowth);
+        var skill = Lines(scores, PupilVakScores.IsGoedOnly);
 
-        var valueLabel = ValueLabel(result?.TopValue, english);
         var talk = PupilG78PassportTalk.Questions(scores, english);
 
         var groups = new List<PupilPassportSubjectGroup>(3);
@@ -37,7 +37,7 @@ public static class PupilG78SubjectGroups
                     "Leuk én goed in",
                     "Fun and you do well"),
                 strong,
-                TraitLines(english, valueLabel, strong: true),
+                [],
                 talk));
         }
 
@@ -49,7 +49,7 @@ public static class PupilG78SubjectGroups
                     "Je plezier helpt je verder",
                     "Your enjoyment helps you grow"),
                 growth,
-                TraitLines(english, valueLabel, growth: true),
+                [],
                 talk));
         }
 
@@ -61,7 +61,7 @@ public static class PupilG78SubjectGroups
                     "Ook als het niet je favoriet is",
                     "Even when it is not your favourite"),
                 skill,
-                TraitLines(english, valueLabel, skill: true),
+                [],
                 talk));
         }
 
@@ -70,15 +70,18 @@ public static class PupilG78SubjectGroups
 
     private static List<PupilPassportSubjectLine> Lines(
         IReadOnlyList<PupilVakScoreEntry> scores,
-        Func<PupilVakScoreEntry, bool> pick,
-        bool english)
+        Func<PupilVakScoreEntry, bool> pick)
     {
-        return scores
-            .Where(pick)
+        var picked = scores.Where(pick).ToList();
+        var hasTekenCluster = picked.Any(e =>
+            e.SubjectKey.Equals("tekenen", StringComparison.OrdinalIgnoreCase));
+
+        return picked
+            .Where(e => !(hasTekenCluster && e.SubjectKey.Equals("handvaardigheid", StringComparison.OrdinalIgnoreCase)))
             .OrderBy(e => PupilVakScores.AllSubjectKeys.ToList().IndexOf(e.SubjectKey))
             .Select(e => new PupilPassportSubjectLine(
                 e.SubjectKey,
-                english ? PupilVakSubjectLabels.Nl(e.SubjectKey) : PupilVakSubjectLabels.Nl(e.SubjectKey),
+                PupilVakSubjectLabels.Nl(e.SubjectKey),
                 e.Leuk,
                 e.Goed))
             .ToList();
@@ -88,42 +91,4 @@ public static class PupilG78SubjectGroups
 
     private static string Intro(bool english, string nl, string en) => english ? en : nl;
 
-    private static string? ValueLabel(string? topValue, bool english)
-    {
-        if (string.IsNullOrWhiteSpace(topValue))
-        {
-            return null;
-        }
-
-        var key = $"LeerlingStory.Tile.Val.{topValue.Trim()}";
-        return PupilPassportLocalizedCopy.Get(key, english ? "en" : "nl");
-    }
-
-    private static IReadOnlyList<string> TraitLines(bool english, string? valueLabel, bool strong = false, bool growth = false, bool skill = false)
-    {
-        var lines = new List<string>
-        {
-            english switch
-            {
-                true when strong => "You said these subjects are fun and you do well in them.",
-                true when growth => "You said you enjoy these subjects.",
-                true when skill => "You said you do well in these subjects.",
-                false when strong => "Je vindt deze vakken leuk en je bent er goed in.",
-                false when growth => "Je vindt deze vakken leuk.",
-                false when skill => "Je bent in deze vakken goed.",
-                _ => english
-                    ? "You rated these subjects yourself."
-                    : "Je gaf zelf antwoord over deze vakken."
-            }
-        };
-
-        if (!string.IsNullOrWhiteSpace(valueLabel))
-        {
-            lines.Add(english
-                ? $"That fits what you find important: {valueLabel.TrimEnd('.')}."
-                : $"Dat past bij wat jij belangrijk vindt: {valueLabel.TrimEnd('.')}.");
-        }
-
-        return lines;
-    }
 }

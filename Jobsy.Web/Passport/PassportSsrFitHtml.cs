@@ -24,7 +24,8 @@ internal static class PassportSsrFitHtml
         int NewContacts,
         FutureJobsList? FutureJobs,
         string FutureJobsRegionLabel,
-        string FutureJobsRegionNote);
+        string FutureJobsRegionNote,
+        IReadOnlySet<string> DayEscoIds);
 
     internal static async Task<Panel?> LoadPanelAsync(
         JobsyApiClient api,
@@ -139,8 +140,46 @@ internal static class PassportSsrFitHtml
             }
         }
 
+        var dayEscoIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (flags.OccupationDayInLifeEnabled)
+        {
+            var candidates = new List<string>();
+            if (state.LastResult?.JobTitle is { Length: > 0 } fitTitle)
+            {
+                var fitId = OccupationDayEscoResolve.FromTitle(fitTitle);
+                if (fitId is not null)
+                {
+                    candidates.Add(fitId);
+                }
+            }
+
+            if (futureJobs is { Items.Count: > 0 })
+            {
+                candidates.AddRange(futureJobs.Items.Select(row => row.EscoId));
+            }
+
+            if (candidates.Count > 0)
+            {
+                try
+                {
+                    var avail = await api.GetOccupationDayAvailableAsync(candidates, cancellationToken);
+                    if (avail?.Ids is { Count: > 0 } ids)
+                    {
+                        foreach (var id in ids)
+                        {
+                            dayEscoIds.Add(id);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Hide day buttons when availability cannot be loaded.
+                }
+            }
+        }
+
         _ = kompas;
-        return new Panel(state, courseSlots, courseSkill, newContacts, futureJobs, regionLabel, regionNote);
+        return new Panel(state, courseSlots, courseSkill, newContacts, futureJobs, regionLabel, regionNote, dayEscoIds);
     }
 
     internal static void Append(
@@ -206,7 +245,7 @@ internal static class PassportSsrFitHtml
         sb.Append("</a></div></section>");
         if (futureJobsEnabled && panel.FutureJobs is { } list)
         {
-            PassportSsrFutureJobsHtml.Append(sb, culture, list, panel.FutureJobsRegionLabel, panel.FutureJobsRegionNote, showCheck: false);
+            PassportSsrFutureJobsHtml.Append(sb, culture, list, panel.FutureJobsRegionLabel, panel.FutureJobsRegionNote, showCheck: false, panel.DayEscoIds);
         }
     }
 
@@ -268,6 +307,14 @@ internal static class PassportSsrFitHtml
                 sb.Append("</ul></details>");
             }
 
+            if (OccupationDayEscoResolve.FromTitle(result.JobTitle) is { } fitEscoId
+                && panel.DayEscoIds.Contains(fitEscoId))
+            {
+                sb.Append("<p class=\"passport-fit__day\">");
+                OccupationDayPassportSsr.AppendCandidateButton(sb, culture, fitEscoId, result.JobTitle);
+                sb.Append("</p>");
+            }
+
             sb.Append("</div><ol class=\"passport-fit__grid\" aria-label=\"");
             sb.Append(WebUtility.HtmlEncode(culture["Passport.Fit.Title"]));
             sb.Append("\"><li class=\"passport-fit__cell\"><span class=\"passport-fit__cell-icon\" aria-hidden=\"true\">");
@@ -306,7 +353,7 @@ internal static class PassportSsrFitHtml
 
         if (flags.FutureJobsForYouEnabled && panel.FutureJobs is { } fj)
         {
-            PassportSsrFutureJobsHtml.Append(sb, culture, fj, panel.FutureJobsRegionLabel, panel.FutureJobsRegionNote, showCheck: true);
+            PassportSsrFutureJobsHtml.Append(sb, culture, fj, panel.FutureJobsRegionLabel, panel.FutureJobsRegionNote, showCheck: true, panel.DayEscoIds);
         }
 
         AppendAside(sb, culture, flags, profile, kompas, panel);

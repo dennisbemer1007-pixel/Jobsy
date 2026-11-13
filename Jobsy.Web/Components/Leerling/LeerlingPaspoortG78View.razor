@@ -53,25 +53,53 @@
                 @Culture["LeerlingPassport.Section.DitBenIk"]
                 <span class="lp-g78__who">@Culture["LeerlingPassport.Section.DitBenIk.Who"]</span>
             </h3>
-            <p>@Model.StoryBody</p>
-            @if (!string.IsNullOrWhiteSpace(Model.MirrorBody))
+            @foreach (var para in PupilG78FactStory.SplitParagraphs(Model.StoryBody))
             {
-                <p class="lp-g78__mirror">@Model.MirrorBody</p>
+                <p>@para</p>
             }
         </section>
 
-        @if (Model.SubjectGroups is { Count: > 0 })
+        @if ((Model.SchoolLeukItems is { Count: > 0 }) || (Model.HobbyLeukItems is { Count: > 0 }) || (Model.BelangrijkItems is { Count: > 0 }))
         {
-            <section class="lp-g78__card">
+            <section class="lp-g78__card lp-g78__prefs">
                 <h3>@Culture["LeerlingPassport.G78.Page.Subjects"]</h3>
-                @foreach (var group in Model.SubjectGroups)
-                {
-                    <div class="lp-g78__vak-group">
-                        <h4>@group.Title</h4>
-                        <p>@group.Intro</p>
-                        <p><b>@string.Join(" · ", group.SubjectLabels)</b></p>
+                <div class="lp-g78__prefs-grid">
+                    <div class="lp-g78__prefs-col">
+                        <h4>@Culture["LeerlingPassport.G78.Col.Leuk"]</h4>
+                        @if (Model.SchoolLeukItems is { Count: > 0 })
+                        {
+                            <p class="lp-g78__prefs-k">@Culture["LeerlingPassport.G78.Col.OpSchool"]</p>
+                            <ul>
+                                @foreach (var item in Model.SchoolLeukItems)
+                                {
+                                    <li>@item</li>
+                                }
+                            </ul>
+                        }
+                        @if (Model.HobbyLeukItems is { Count: > 0 })
+                        {
+                            <p class="lp-g78__prefs-k">@Culture["LeerlingPassport.G78.Col.VrijeTijd"]</p>
+                            <ul>
+                                @foreach (var item in Model.HobbyLeukItems)
+                                {
+                                    <li>@item</li>
+                                }
+                            </ul>
+                        }
                     </div>
-                }
+                    @if (Model.BelangrijkItems is { Count: > 0 })
+                    {
+                        <div class="lp-g78__prefs-col">
+                            <h4>@Culture["LeerlingPassport.G78.Col.Belangrijk"]</h4>
+                            <ul>
+                                @foreach (var item in Model.BelangrijkItems)
+                                {
+                                    <li>@item</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
             </section>
         }
 
@@ -211,13 +239,27 @@
                 @foreach (var job in Model.OccupationCards)
                 {
                     <article class="lp-g78__card lp-g78__job">
+                        @if (!string.IsNullOrWhiteSpace(job.WhyFit))
+                        {
+                            <div class="g78-job-why-wrap">
+                                <button type="button" class="ll-info-btn g78-job-why-btn" aria-label="@($"Meer info over {job.Title}")" aria-expanded="false" aria-controls="@($"g78-job-why-{job.Title}")">i</button>
+                                <div id="@($"g78-job-why-{job.Title}")" class="ll-info g78-job-why-panel" hidden>
+                                    <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
+                                    <p class="g78-job-why-panel__title"><b>@job.Title</b></p>
+                                    <div class="g78-job-why-panel__body">@((MarkupString)job.WhyFit)</div>
+                                </div>
+                            </div>
+                        }
                         <div class="lp-g78__job-k">@job.DomainLabel</div>
                         <h4>@job.Title</h4>
                         @if (job.MatchPercent is >= 70)
                         {
                             <p class="lp-g78__job-match">@Culture.Format("LeerlingPassport.G78.Jobs.MatchSuggest", job.MatchPercent.Value)</p>
                         }
-                        <p>@job.Blurb</p>
+                        @if (string.IsNullOrWhiteSpace(job.WhyFit))
+                        {
+                            <p>@job.Blurb</p>
+                        }
                         @if (job.FitTags is { Count: > 0 })
                         {
                             <div class="lp-g78__fit"><b>@Culture["LeerlingPassport.Cards.Fit"]:</b> @string.Join(", ", job.FitTags)</div>

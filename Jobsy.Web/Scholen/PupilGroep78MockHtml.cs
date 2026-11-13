@@ -183,21 +183,19 @@ internal static class PupilGroep78MockHtml
         string blurb,
         bool selected,
         string? journeyThemeKey = null,
-        string? whyHtml = null)
+        string? whyPanelHtml = null)
     {
         var paintClass = PupilGroep78JobPaint.PaintThemeClass(journeyThemeKey);
         var img = PupilGroep78JobPaint.PaintImagePath(jobKey);
         _ = selected;
         var mark = """<span class="jmark">✓ Jouw keuze</span>""";
-        var whyBlock = string.IsNullOrWhiteSpace(whyHtml)
-            ? ""
-            : $"""<p class="jwhy">{whyHtml}</p>""";
+        var whyBlock = string.IsNullOrWhiteSpace(whyPanelHtml) ? "" : whyPanelHtml;
         var checkedAttr = selected ? " checked" : "";
         return $"""
             <label class="jpick{(selected ? " sel" : "")}" data-ll-job-pick="{PupilLeerlingSsrParts.E(title)}">
             <input type="radio" name="DreamJob" value="{PupilLeerlingSsrParts.E(title)}" class="visually-hidden" aria-label="{PupilLeerlingSsrParts.E(title)}"{checkedAttr} />
             <figure class="jpick-paint {paintClass}"><img src="{PupilLeerlingSsrParts.E(img)}" alt="" width="400" height="400" loading="lazy" /></figure>
-            <div class="jbody"><p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p>{whyBlock}</div>
+            <div class="jbody">{whyBlock}<p class="jtitle">{PupilLeerlingSsrParts.E(title)}</p><p class="jdom">{PupilLeerlingSsrParts.E(domain)}</p><p class="jblurb">{PupilLeerlingSsrParts.E(blurb)}</p></div>
             <span class="jspeak">{PupilGroep78SsrParts.Groep78SpeakButton(blurb, $"ll-job-{jobKey}", culture)}</span>
             {mark}
             </label>

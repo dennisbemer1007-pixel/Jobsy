@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen.PupilPassport;
 
@@ -14,6 +15,11 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
     public PupilStoryViewDto Render(PupilResult result, PupilProgress? progress, string language = "nl")
     {
         ArgumentNullException.ThrowIfNull(result);
+        if (PupilG78FactStory.IsGroep78(result))
+        {
+            return RenderG78FactStory(result, progress, language);
+        }
+
         var likes = ParseChips(progress?.LikesJson);
         var keys = PupilStoryTemplates.TryParse(result.StoryKeysJson)
                    ?? PupilStoryTemplates.SelectKeys(result, likes);
@@ -70,6 +76,28 @@ public sealed class PupilStoryRenderer : IPupilStoryRenderer
             Tiles: tiles,
             JobIdeas: jobIdeas,
             LikeChipKeys: keys.LikeChipKeys.ToList());
+    }
+
+    private static PupilStoryViewDto RenderG78FactStory(
+        PupilResult result,
+        PupilProgress? progress,
+        string language)
+    {
+        var likes = ParseChips(progress?.LikesJson);
+        var keys = PupilStoryTemplates.TryParse(result.StoryKeysJson)
+                   ?? PupilStoryTemplates.SelectKeys(result, likes, PupilQuestionSet.Groep78, progress);
+        var package = PupilG78FactStory.Build(result, progress, language);
+        var jobIdeas = keys.JobIdeaKeys
+            .Select(PupilRiasecJobIdeas.TitleFor)
+            .ToList();
+
+        return new PupilStoryViewDto(
+            Title: PupilVerhaalLocalized.Get("LeerlingStory.Title", language),
+            Body: package.Body,
+            Tiles: package.Tiles.ToList(),
+            JobIdeas: jobIdeas,
+            LikeChipKeys: keys.LikeChipKeys.ToList(),
+            GrowthCompetencies: package.GrowthCompetencies.ToList());
     }
 
     public DreamJobRouteStubDto RenderDreamRoute(

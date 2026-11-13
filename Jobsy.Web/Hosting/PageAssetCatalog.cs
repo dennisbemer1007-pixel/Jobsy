@@ -465,12 +465,17 @@ public static partial class PageAssetCatalog
             return LeerlingMboHboStylesheets(path);
         }
 
-        if (path.Equals("/leerling/paspoort", StringComparison.OrdinalIgnoreCase))
+        if (path.Equals("/leerling/paspoort", StringComparison.OrdinalIgnoreCase)
+            || (path.StartsWith("/leerling/beroep/", StringComparison.OrdinalIgnoreCase)
+                && path.EndsWith("/dag", StringComparison.OrdinalIgnoreCase)))
         {
             return
             [
                 .. LeerlingGroep78ThemeStylesheets(path),
                 WwwrootAssetCatalog.UrlLeadingSlash("css/features/leerling-paspoort-g78.css"),
+                .. (path.Contains("/beroep/", StringComparison.OrdinalIgnoreCase)
+                    ? new[] { WwwrootAssetCatalog.UrlLeadingSlash("css/features/occupation-day.css") }
+                    : Array.Empty<string>()),
             ];
         }
 

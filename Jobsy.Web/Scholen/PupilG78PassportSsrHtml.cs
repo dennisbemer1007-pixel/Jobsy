@@ -1,8 +1,10 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Passport;
 
 namespace Jobsy.Web.Scholen;
 
@@ -63,35 +65,61 @@ public static class PupilG78PassportSsrHtml
         sb.Append(E(culture["LeerlingPassport.Section.DitBenIk"]));
         sb.Append("<span class=\"lp-g78__who\">");
         sb.Append(E(culture["LeerlingPassport.Section.DitBenIk.Who"]));
-        sb.Append("</span></h3><p>");
-        sb.Append(E(model.StoryBody));
-        sb.Append("</p>");
-        if (!string.IsNullOrWhiteSpace(model.MirrorBody))
+        sb.Append("</span></h3>");
+        foreach (var para in PupilG78FactStory.SplitParagraphs(model.StoryBody))
         {
-            sb.Append("<p class=\"lp-g78__mirror\">");
-            sb.Append(E(model.MirrorBody));
-            sb.Append("</p>");
+            sb.Append("<p>").Append(E(para)).Append("</p>");
         }
 
         sb.Append("</section>");
 
-        if (model.SubjectGroups is { Count: > 0 })
+        if ((model.SchoolLeukItems is { Count: > 0 })
+            || (model.HobbyLeukItems is { Count: > 0 })
+            || (model.BelangrijkItems is { Count: > 0 }))
         {
-            sb.Append("<section class=\"lp-g78__card\"><h3>");
+            sb.Append("<section class=\"lp-g78__card lp-g78__prefs\"><h3>");
             sb.Append(E(culture["LeerlingPassport.G78.Page.Subjects"]));
-            sb.Append("</h3>");
-            foreach (var group in model.SubjectGroups)
+            sb.Append("</h3><div class=\"lp-g78__prefs-grid\">");
+            sb.Append("<div class=\"lp-g78__prefs-col\"><h4>");
+            sb.Append(E(culture["LeerlingPassport.G78.Col.Leuk"]));
+            sb.Append("</h4>");
+            if (model.SchoolLeukItems is { Count: > 0 })
             {
-                sb.Append("<div class=\"lp-g78__vak-group\"><h4>");
-                sb.Append(E(group.Title));
-                sb.Append("</h4><p>");
-                sb.Append(E(group.Intro));
-                sb.Append("</p><p><b>");
-                sb.Append(E(string.Join(" · ", group.SubjectLabels)));
-                sb.Append("</b></p></div>");
+                sb.Append("<p class=\"lp-g78__prefs-k\">").Append(E(culture["LeerlingPassport.G78.Col.OpSchool"])).Append("</p><ul>");
+                foreach (var item in model.SchoolLeukItems)
+                {
+                    sb.Append("<li>").Append(E(item)).Append("</li>");
+                }
+
+                sb.Append("</ul>");
             }
 
-            sb.Append("</section>");
+            if (model.HobbyLeukItems is { Count: > 0 })
+            {
+                sb.Append("<p class=\"lp-g78__prefs-k\">").Append(E(culture["LeerlingPassport.G78.Col.VrijeTijd"])).Append("</p><ul>");
+                foreach (var item in model.HobbyLeukItems)
+                {
+                    sb.Append("<li>").Append(E(item)).Append("</li>");
+                }
+
+                sb.Append("</ul>");
+            }
+
+            sb.Append("</div>");
+            if (model.BelangrijkItems is { Count: > 0 })
+            {
+                sb.Append("<div class=\"lp-g78__prefs-col\"><h4>");
+                sb.Append(E(culture["LeerlingPassport.G78.Col.Belangrijk"]));
+                sb.Append("</h4><ul>");
+                foreach (var item in model.BelangrijkItems)
+                {
+                    sb.Append("<li>").Append(E(item)).Append("</li>");
+                }
+
+                sb.Append("</ul></div>");
+            }
+
+            sb.Append("</div></section>");
         }
 
         if (model.Worlds is { Count: > 0 })
@@ -273,7 +301,10 @@ public static class PupilG78PassportSsrHtml
             sb.Append("</small></h2><div class=\"lp-g78__jobs\">");
             foreach (var job in model.OccupationCards)
             {
-                sb.Append("<article class=\"lp-g78__card lp-g78__job\"><div class=\"lp-g78__job-k\">");
+                var jobKey = PupilGroep78MockHtml.ResolveJobKey(job.Title);
+                sb.Append("<article class=\"lp-g78__card lp-g78__job\">");
+                sb.Append(PupilLeerlingSsrParts.Groep78JobWhyPanel(jobKey, job.Title, job.WhyFit));
+                sb.Append("<div class=\"lp-g78__job-k\">");
                 sb.Append(E(job.DomainLabel));
                 sb.Append("</div><h4>");
                 sb.Append(E(job.Title));
@@ -285,9 +316,12 @@ public static class PupilG78PassportSsrHtml
                     sb.Append("</p>");
                 }
 
-                sb.Append("<p>");
-                sb.Append(E(job.Blurb));
-                sb.Append("</p>");
+                if (string.IsNullOrWhiteSpace(job.WhyFit))
+                {
+                    sb.Append("<p>");
+                    sb.Append(E(job.Blurb));
+                    sb.Append("</p>");
+                }
                 if (job.FitTags is { Count: > 0 })
                 {
                     sb.Append("<div class=\"lp-g78__fit\"><b>");
@@ -295,6 +329,13 @@ public static class PupilG78PassportSsrHtml
                     sb.Append(":</b> ");
                     sb.Append(E(string.Join(", ", job.FitTags)));
                     sb.Append("</div>");
+                }
+
+                if (!string.IsNullOrWhiteSpace(job.DayEscoId))
+                {
+                    sb.Append("<p class=\"lp-g78__job-day\">");
+                    OccupationDayPassportSsr.AppendLeerlingButton(sb, culture, job.DayEscoId!, job.Title);
+                    sb.Append("</p>");
                 }
 
                 sb.Append("</article>");

@@ -133,6 +133,10 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         }
 
         string? mirrorBody = null;
+        IReadOnlyList<string>? g78SchoolLeuk = null;
+        IReadOnlyList<string>? g78HobbyLeuk = null;
+        IReadOnlyList<string>? g78BelangrijkItems = null;
+        IReadOnlyList<(string Label, string Why)>? g78GrowthItems = null;
         IReadOnlyList<PupilPassportRiasecBar>? riasecBars = null;
         IReadOnlyList<PupilPassportCultureSlider>? cultureSliders = null;
         IReadOnlyList<PupilPassportSubjectGroup>? subjectGroups = null;
@@ -157,8 +161,28 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         if (variant == PupilPassportVariant.Groep78)
         {
             var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-            mirrorBody = PupilG78MirrorTemplate.Render(result, progress, vak, lang);
-            (riasecBars, g78RiasecPending) = PupilG78PassportPdfData.BuildRiasecBars(result);
+            mirrorBody = null;
+            var answers = ParseG78Answers(progress?.AnswersJson);
+            var growthSet = PupilG78GrowthCompetencies
+                .SelectGrowthCategories(answers, maxCount: 4)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var storyStrong = PupilG78ContentAllocation
+                .StoryStrongCategories(answers, growthSet)
+                .Take(3)
+                .ToList();
+            strengths = PupilPassportStrengths.ForG78StoryCompetencies(storyStrong);
+            var factPkg = PupilG78FactStory.Build(result, progress, lang);
+            g78SchoolLeuk = factPkg.Preferences.SchoolLeuk;
+            g78HobbyLeuk = factPkg.Preferences.HobbyLeuk;
+            g78BelangrijkItems = factPkg.Preferences.BelangrijkItems;
+            var growthFoot = PupilPassportCopy.Get("LeerlingPassport.G78.Growth.Footnote");
+            g78GrowthItems = factPkg.GrowthCompetencies
+                .Take(2)
+                .Select(g => (g.Label, growthFoot))
+                .ToList();
+            var (riasecBuilt, riasecPending) = PupilG78PassportPdfData.BuildRiasecBars(result);
+            riasecBars = riasecBuilt;
+            g78RiasecPending = riasecPending;
             valueBars = PupilG78PassportPdfData.BuildValueBars(result);
             cultureSliders = BuildCultureSliders(result, lang);
             subjectGroups = PupilG78SubjectGroups.Build(vak, result, lang);
@@ -187,7 +211,12 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
                 .ToList();
             var jobMatches = PupilG78CareerScoring.TopJobMatches(result, progress, vak, maxCount: 5);
             topJobs = jobMatches.Select(m => m.JobKey).ToList();
-            cards = PupilPassportJobCards.BuildGroep78(jobMatches, lang);
+            cards = PupilPassportJobCards.BuildGroep78(jobMatches, result, progress, lang)
+                .Select((c, i) => c with
+                {
+                    WhyFit = PupilG78JobMatchExplanation.Build(jobMatches[i].JobKey, result, progress, lang)
+                })
+                .ToList();
             samen = BuildSamenAssignment(result, lang);
             parentTips =
             [
@@ -261,6 +290,10 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             UsageParentTips: parentTips,
             UsageTeacherTips: teacherTips,
             ValueBars: valueBars,
+            G78SchoolLeukItems: g78SchoolLeuk,
+            G78HobbyLeukItems: g78HobbyLeuk,
+            G78BelangrijkItems: g78BelangrijkItems,
+            G78GrowthItems: g78GrowthItems,
             G78RiasecPending: g78RiasecPending);
     }
 
@@ -315,10 +348,12 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         var english = PupilVerhaalLocalized.IsEnglish(language);
         return code switch
         {
+            CulturePersonalityCatalog.Autonomy => english ? "Choose yourself or clear rules" : "Zelf kiezen of duidelijke regels",
             CulturePersonalityCatalog.Collaboration => english ? "Together or alone" : "Samen of alleen",
             CulturePersonalityCatalog.PeopleFirst => english ? "Indoors or outdoors" : "Binnen of buiten",
             CulturePersonalityCatalog.Informal => english ? "Calm or busy" : "Rustig of druk",
             CulturePersonalityCatalog.Flexibility => english ? "Fixed or varied" : "Vast of afwisselend",
+            CulturePersonalityCatalog.Innovation => english ? "Familiar or new ideas" : "Bekend of vernieuwend",
             _ => PupilPassportLocalizedCopy.Get($"LeerlingStory.Tile.Cult.{code}", language)
         };
     }
@@ -412,6 +447,24 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
 
     private static List<string> ResolveChipLabels(IReadOnlyList<string> keys, string language)
         => keys.Select(k => PupilPortalChipLabels.Label(k, language)).ToList();
+
+    private static IReadOnlyDictionary<string, int> ParseG78Answers(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new Dictionary<string, int>(StringComparer.Ordinal);
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, int>>(json, JsonCaseInsensitive)
+                   ?? new Dictionary<string, int>(StringComparer.Ordinal);
+        }
+        catch (JsonException)
+        {
+            return new Dictionary<string, int>(StringComparer.Ordinal);
+        }
+    }
 
     private static string NormalizeLanguage(string language)
         => string.IsNullOrWhiteSpace(language) ? "nl" : language.Trim();

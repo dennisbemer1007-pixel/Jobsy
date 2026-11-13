@@ -523,10 +523,16 @@ public static class UiStringsScholen
         nl["Leerling.G78.Result.TeacherNote"] = "Je leraar kan dit verhaal ook zien, met jouw code. Niemand anders.";
         nl["Leerling.G78.Result.Passport"] = "Jouw DNA-paspoort";
         nl["Leerling.G78.Result.Coach"] = "Kijk, dit ben jij.";
+        nl["Leerling.G78.Result.GrowthTitle"] = "Hier kun je nog in groeien";
+        nl["Leerling.G78.Result.GrowthFootnote"] = "Dit kun je later nog ontdekken.";
+        nl["Leerling.G78.Result.GrowthInfoAria"] = "Meer uitleg";
+        nl["LeerlingPassport.G78.Growth.Title"] = "Hier kun je nog in groeien";
+        nl["LeerlingPassport.G78.Growth.Footnote"] = "Dit kun je later nog ontdekken.";
         nl["Leerling.G78.Dream.Intro"] = "Dit zijn 5 beroepen die goed bij jou passen. Dat zien we aan jouw antwoorden!";
         nl["Leerling.G78.Dream.Kicker"] = "Droombaan";
         nl["Leerling.G78.Dream.PickOne"] = "Kies 1";
         nl["Leerling.G78.Dream.Title"] = "Welk beroep past bij jou?";
+        nl["Leerling.G78.Job.WhyTitle"] = "Waarom past dit bij jou?";
         nl["Leerling.G78.Dream.Hint"] = "Kies 1 beroep. Of kies: Ik vind er geen leuk.";
         nl["Leerling.G78.Dream.ReadIntro"] = "Lobsy leest de uitleg voor";
         nl["Leerling.G78.Dream.ConfirmHint"] = "Druk op Bevestigen als je iets hebt gekozen.";

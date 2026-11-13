@@ -27,37 +27,49 @@ public sealed class OccupationDayInLifeController : ControllerBase
         [FromQuery] string? lang,
         CancellationToken cancellationToken)
     {
-        var language = ResolveLanguage(lang);
-        var result = await _days.GetAsync(escoId.ToString("D"), language, cancellationToken);
-        if (!result.KnownOccupation)
+        var id = escoId.ToString("D");
+        if (OccupationCatalog.Shared.Get(id) is null)
         {
             return NotFound(new { message = "Dit beroep kennen we niet." });
         }
 
-        if (!result.Enabled || result.Day is null)
-        {
-            var title = OccupationCatalog.Shared.Get(escoId.ToString("D"))?.Nl;
-            return Ok(new OccupationDayResponse(result.Enabled, false, escoId.ToString("D"), title, null, null, null, null, [], null, false, language, [], [], []));
-        }
-
-        var day = result.Day;
-        return Ok(new OccupationDayResponse(
-            true,
-            true,
-            day.EscoId,
-            day.TitleNl,
-            day.Morning,
-            day.Midday,
-            day.Afternoon,
-            day.Closing,
-            day.Highlights,
-            day.VariesNote,
-            day.ThinSource,
-            language,
-            day.Blocks ?? [],
-            day.Tasks ?? [],
-            day.Skills ?? []));
+        var language = ResolveLanguage(lang);
+        var response = await OccupationDayInLifeQuery.ToResponseAsync(_days, id, language, cancellationToken);
+        return Ok(ToClient(response));
     }
+
+    [HttpGet("available")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<OccupationDayAvailableResponse>> Available(
+        [FromQuery] string? ids,
+        CancellationToken cancellationToken)
+    {
+        var list = (ids ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var stored = await _days.StoredEscoIdsAsync(list, cancellationToken);
+        return Ok(new OccupationDayAvailableResponse
+        {
+            Ids = stored.OrderBy(id => id, StringComparer.OrdinalIgnoreCase).ToList()
+        });
+    }
+
+    internal static OccupationDayResponse ToClient(OccupationDayPublicResponse response)
+        => new(
+            response.Enabled,
+            response.Found,
+            response.EscoId,
+            response.TitleNl,
+            response.Morning,
+            response.Midday,
+            response.Afternoon,
+            response.Closing,
+            response.Highlights,
+            response.VariesNote,
+            response.ThinSource,
+            response.Language,
+            response.Blocks ?? [],
+            response.Tasks ?? [],
+            response.Skills ?? []);
 
     private string ResolveLanguage(string? lang)
     {
