@@ -576,7 +576,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "27c072db1c569fe5ea99df0bcd9209c3b610a69a630eaf64e595b46e2c036482",
+    "sha256": "f01ef7008373c57c335f5421ad72b580b588448c414906a1dc89d22861b5bdbf",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {

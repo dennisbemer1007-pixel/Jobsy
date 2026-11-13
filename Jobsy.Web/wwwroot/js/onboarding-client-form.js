@@ -687,6 +687,13 @@
             presetGrid.addEventListener("click", function (ev) {
                 var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
                 if (!btn || !presetGrid.contains(btn)) return;
+                if (
+                    ssrForm
+                    && btn.getAttribute("type") === "submit"
+                    && btn.getAttribute("name") === "obPreset"
+                ) {
+                    return;
+                }
                 ev.preventDefault();
                 ev.stopPropagation();
                 togglePresetCode(btn.getAttribute("data-ob-code"));
@@ -725,6 +732,9 @@
             matrix.addEventListener("click", function (ev) {
                 var btn = ev.target.closest(".availability-matrix__cell--btn[data-ob-key]");
                 if (!btn || !matrix.contains(btn)) return;
+                if (ssrForm && btn.getAttribute("type") === "submit" && btn.getAttribute("name") === "obMatrix") {
+                    return;
+                }
                 ev.preventDefault();
                 ev.stopPropagation();
                 var key = btn.getAttribute("data-ob-key");
