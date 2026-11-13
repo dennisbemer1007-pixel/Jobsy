@@ -26,10 +26,7 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-journey.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-kreeft-mockup.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-strand.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css")" />
 </HeadContent>
 
 @if (_loading)
@@ -52,10 +49,10 @@ else if (_step is >= 1 and <= 10)
         ? OnboardingSsrMiniNavigation.StepQuestionUrl(_step, _miniQuestionQ)
         : $"/candidate/start?step={_step}";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
-    var zoneTag = OnboardingKreeftRailCatalog.ZoneTag(_step, Culture);
+    var phaseLabel = Culture[OnboardingWizardCatalog.PhaseForStep(_step).NameKey];
     <form method="post"
           action="@formAction"
-          class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
+          class="ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3"
           data-enhance="false"
           data-enhance-nav="false"
           data-ob-ssr-form="1"
@@ -91,12 +88,16 @@ else if (_step is >= 1 and <= 10)
         {
             <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
         }
-        <div class="ob-rustig ob-rustig--kreeft-steps" data-ob-rustig-screen="@($"step-{_step:D2}")">
-            <div class="ob-kreeft-ob @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
-                <OnboardingKreeftRail Zones="@OnboardingKreeftRailCatalog.ForOnboardingStep(_step, Culture)" />
+        <div class="ob-rustig ob-v3-layout" data-ob-rustig-screen="@($"step-{_step:D2}")">
+            <div class="ob-v3-desktop @(_showJobsRail ? "ob-v3-desktop--with-rail" : null)">
+                <OnboardingStartprofielSidebar CurrentStep="@_step" LaterHref="/home" />
 
-                <section class="ob-kreeft-qcard" data-testid="@canvasTestId">
-                    <p class="ob-kreeft-zonetag"><b>@zoneTag.Primary</b>@zoneTag.Secondary</p>
+                <div class="ob-v3-main">
+                    <OnboardingV3StepChrome Step="@_step"
+                                           PhaseLabel="@phaseLabel"
+                                           LaterHref="/home" />
+
+                    <section class="ob-v3-card ob-kreeft-qcard" data-testid="@canvasTestId">
                     @if (_step is 4 or 5)
                     {
                         <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
@@ -172,7 +173,7 @@ else if (_step is >= 1 and <= 10)
                             </div>
                         }
                 </section>
-                @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
+                </div>
                 @if (_showJobsRail && _nearbySignal is not null)
                 {
                     <aside class="ob-rustig__rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">

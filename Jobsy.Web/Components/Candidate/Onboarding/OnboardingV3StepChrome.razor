@@ -1,0 +1,54 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="ob-v3-chrome">
+    <div class="ob-v3-chrome__mobile-meta">
+        <div class="ob-v3-chrome__row">
+            @if (Step > 1 && ShowBack)
+            {
+                <button type="submit"
+                        class="ob-v3-chrome__back"
+                        name="obNav"
+                        value="back"
+                        aria-label="@Culture["Onboarding.BackAria"]"
+                        data-testid="onboarding-back-mobile">‹</button>
+            }
+            else
+            {
+                <span class="ob-v3-chrome__back ob-v3-chrome__back--off" aria-hidden="true">‹</span>
+            }
+            <div class="ob-v3-chrome__phases"
+                 role="progressbar"
+                 aria-valuemin="1"
+                 aria-valuemax="10"
+                 aria-valuenow="@Step"
+                 aria-label="@Culture.Format("Onboarding.ProgressAria", Step, 10)">
+                @foreach (var phase in OnboardingWizardCatalog.Phases)
+                {
+                    <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(phase, Step) * 100, System.Globalization.CultureInfo.InvariantCulture)%"></i></span>
+                }
+            </div>
+            <a class="ob-v3-chrome__later" href="@LaterHref" data-testid="onboarding-later-mobile">@Culture["Onboarding.Later"]</a>
+        </div>
+        <div class="ob-v3-chrome__meta">
+            <span>
+                <b>@PhaseLabel</b>
+                · @Culture.Format("Onboarding.StepLine", Step, OnboardingWizardCatalog.V3RemainingMinutes(Step))
+            </span>
+            <span class="ob-v3-chrome__saved">✓ @Culture["Onboarding.AllSaved"]</span>
+        </div>
+    </div>
+    <div class="ob-v3-chrome__desktop-top">
+        <span>@Culture.Format("Onboarding.StepOf", Step, 10)</span>
+        <span class="ob-v3-chrome__progress"><i style="width:@($"{Step * 10}%")"></i></span>
+        <span>@Culture.Format("Onboarding.MinutesLeft", OnboardingWizardCatalog.V3RemainingMinutes(Step))</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Step { get; set; } = 1;
+    [Parameter] public string PhaseLabel { get; set; } = "";
+    [Parameter] public bool ShowBack { get; set; } = true;
+    [Parameter] public string LaterHref { get; set; } = "/home";
+}
