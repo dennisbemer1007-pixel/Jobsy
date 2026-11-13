@@ -14,7 +14,7 @@ public class PupilG78ContrastLikertScorerTests
         var answers = new Dictionary<int, int> { [9016] = 1 };
         var bank = new PupilQuestionBankG78V2();
         var scores = PupilG78ContrastLikertScorer.ScoreCareer(answers, bank.Questions)!;
-        Assert.True(scores.Realistic > scores.Social);
+        Assert.True((scores.Realistic ?? 0) > (scores.Social ?? 0));
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class PupilG78ContrastLikertScorerTests
         var answers = new Dictionary<int, int> { [9016] = 5 };
         var bank = new PupilQuestionBankG78V2();
         var scores = PupilG78ContrastLikertScorer.ScoreCareer(answers, bank.Questions)!;
-        Assert.True(scores.Social > scores.Realistic);
+        Assert.True((scores.Social ?? 0) > (scores.Realistic ?? 0));
     }
 
     [Fact]

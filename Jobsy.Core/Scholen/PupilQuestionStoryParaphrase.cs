@@ -38,14 +38,13 @@ public static class PupilQuestionStoryParaphrase
             return null;
         }
 
-        var key = towardB ? q.TextKeyB! : q.TextKeyA;
-        if (!PupilQuestionBankNlStringsG78V2.TryGet(key, out var stem))
+        if (!PupilQuestionBankJeFormsG78V2.TryGet(q.Id, towardB, out var je))
         {
             return null;
         }
 
-        var text = PolishJeForm(ToJeForm(stem));
-        var category = towardB && !string.IsNullOrEmpty(q.CategoryB) ? q.CategoryB! : q.Category;
+        var text = PolishJeForm(je);
+        var category = PupilG78ContrastPoleSupport.StrengthCategory(q, towardB) ?? string.Empty;
         return (text, eff, category);
     }
 

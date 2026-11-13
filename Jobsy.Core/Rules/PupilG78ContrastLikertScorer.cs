@@ -27,13 +27,24 @@ public static class PupilG78ContrastLikertScorer
                 continue;
             }
 
-            if (string.Equals(item.Category, category, StringComparison.Ordinal))
+            var applies = string.Equals(item.Category, category, StringComparison.Ordinal)
+                          || (!string.IsNullOrEmpty(item.CategoryB)
+                              && string.Equals(item.CategoryB, category, StringComparison.Ordinal));
+            if (raw == 3 && applies)
+            {
+                scored.Add(3);
+                continue;
+            }
+
+            if (string.Equals(item.Category, category, StringComparison.Ordinal)
+                && PupilG78ContrastPoleSupport.TowardA(raw))
             {
                 scored.Add(TowardA(raw));
             }
 
             if (!string.IsNullOrEmpty(item.CategoryB)
-                && string.Equals(item.CategoryB, category, StringComparison.Ordinal))
+                && string.Equals(item.CategoryB, category, StringComparison.Ordinal)
+                && PupilG78ContrastPoleSupport.TowardB(raw))
             {
                 scored.Add(TowardB(raw));
             }

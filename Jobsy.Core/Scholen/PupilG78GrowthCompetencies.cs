@@ -155,13 +155,7 @@ public static class PupilG78GrowthCompetencies
                 list.Add(c.EffectiveScore);
             }
 
-            foreach (var dim in PupilG78ItemDimensionMap.DimensionsFor(c.ItemId))
-            {
-                Add(dim);
-            }
-
-            Add(PupilG78ItemThemes.CompetenceCategory(c.ItemId));
-            if (c.Model == AssessmentKind.Competence)
+            if (!string.IsNullOrWhiteSpace(c.Category))
             {
                 Add(c.Category);
             }
@@ -457,9 +451,7 @@ public static class PupilG78GrowthCompetencies
                 return -1;
             }
 
-            return raw is 1 or 2
-                ? PupilG78ContrastLikertScorer.TowardA(raw)
-                : PupilG78ContrastLikertScorer.TowardB(raw);
+            return raw is 1 or 2 ? PupilG78ContrastLikertScorer.TowardA(raw) : -1;
         }
 
         if (string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase) && raw is 1 or 2)

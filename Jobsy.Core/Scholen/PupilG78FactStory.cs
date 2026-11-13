@@ -144,8 +144,9 @@ public static class PupilG78FactStory
             fullStoryIds,
             answers,
             contrast);
-        var tileIdSet = tileIds.ToHashSet();
         var body = string.Join(ParagraphBreak, paragraphs);
+        body = PupilG78PageTextDedupe.ScrubStoryAgainstTileExplanations(body, tiles);
+        var tileIdSet = tileIds.ToHashSet();
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
         var growth = PupilG78GrowthCompetencies.BuildForCategories(
             answers,

@@ -9,9 +9,15 @@ public static class PupilG78StrengthGuard
     public static bool IsForbiddenStrength(
         int itemId,
         int effectiveScore,
-        IReadOnlySet<string> growthCategories)
+        IReadOnlySet<string> growthCategories,
+        bool contrastV2 = false)
     {
         if (effectiveScore < 4 || growthCategories.Count == 0)
+        {
+            return false;
+        }
+
+        if (contrastV2 && itemId > PupilG78CompetencyNarrative.CompetenceItemMax)
         {
             return false;
         }

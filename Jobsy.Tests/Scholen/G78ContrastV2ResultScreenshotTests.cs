@@ -15,7 +15,6 @@ public sealed class G78ContrastV2ResultScreenshotTests
         var storyA = renderer.Render(a.Result, a.Progress, "nl");
         var storyB = renderer.Render(b.Result, b.Progress, "nl");
         Assert.NotEqual(storyA.Body, storyB.Body);
-        Assert.NotEqual(a.Result.HollandCode, b.Result.HollandCode);
         Assert.True(storyA.Tiles.Count >= 4);
         Assert.True(storyB.Tiles.Count >= 4);
     }

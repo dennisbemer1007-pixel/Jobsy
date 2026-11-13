@@ -175,6 +175,13 @@ public static class PupilG78StoryComposer
         }
 
         paragraphs.Add(PupilG78StoryFlow.FlowJoin(p1Sentences.Take(2).ToList()));
+        foreach (var sentence in SplitStorySentences(paragraphs[^1]))
+        {
+            if (!SentenceOnPage(sentence, avoidSimilar))
+            {
+                avoidSimilar.Add(sentence);
+            }
+        }
 
         var competencyPara = ComposeCompetencyParagraph(
             clauses,
@@ -285,14 +292,9 @@ public static class PupilG78StoryComposer
                     continue;
                 }
 
-                if (contrastV2)
+                if (!PupilG78CompetencyExampleItems.ClauseSupportsCategory(candidate, dim, contrastV2))
                 {
-                    var main = PupilG78StoryFlow.MainClause(candidate, contrastV2: true).TrimEnd('.');
-                    if (main.Length == 0
-                        || !PupilG78CompetencyExampleItems.ChosenFactSupportsKidLabel(dim, main))
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 clause = candidate;
@@ -334,12 +336,18 @@ public static class PupilG78StoryComposer
             ordinal++;
         }
 
-        var introDims = dimsWithExamples.Count > 0 ? dimsWithExamples : topDims;
+        if (dimsWithExamples.Count == 0)
+        {
+            anchors = anchorList;
+            return "";
+        }
+
+        var introDims = dimsWithExamples;
         var intro = $"Wat in je antwoorden vooral naar voren komt, is {PupilG78CompetencyNarrative.JoinKidLabelList(introDims)}.";
 
         if (phrases.Count == 0)
         {
-            return intro;
+            return "";
         }
 
         var examples = contrastV2
@@ -1041,25 +1049,9 @@ public static class PupilG78StoryComposer
         for (var i = 0; i < paragraphs.Count; i++)
         {
             var kept = new List<string>();
-            var isCompetencyParagraph = i == 1
-                                        && paragraphs[i].StartsWith(
-                                            "Wat in je antwoorden vooral naar voren komt",
-                                            StringComparison.Ordinal);
-            var seenInCompetency = new HashSet<string>(StringComparer.Ordinal);
             foreach (var sentence in SplitStorySentences(paragraphs[i]))
             {
                 var norm = PupilG78PageLint.NormalizeSentence(sentence);
-                if (isCompetencyParagraph)
-                {
-                    if (norm.Length >= 15 && !seenInCompetency.Add(norm))
-                    {
-                        continue;
-                    }
-
-                    kept.Add(sentence);
-                    continue;
-                }
-
                 if (norm.Length >= 15 && !seen.Add(norm))
                 {
                     continue;
@@ -1069,6 +1061,26 @@ public static class PupilG78StoryComposer
             }
 
             paragraphs[i] = kept.Count == 0 ? "" : PupilG78StoryFlow.FlowJoin(kept);
+        }
+
+        paragraphs.RemoveAll(static p => string.IsNullOrWhiteSpace(p));
+        ReconcileCompetencyParagraphs(paragraphs);
+    }
+
+    private static void ReconcileCompetencyParagraphs(List<string> paragraphs)
+    {
+        for (var i = 0; i < paragraphs.Count; i++)
+        {
+            if (!paragraphs[i].StartsWith("Wat in je antwoorden vooral naar voren komt", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var firstDot = paragraphs[i].IndexOf('.', StringComparison.Ordinal);
+            if (firstDot < 0 || paragraphs[i].Length <= firstDot + 2)
+            {
+                paragraphs[i] = "";
+            }
         }
 
         paragraphs.RemoveAll(static p => string.IsNullOrWhiteSpace(p));
