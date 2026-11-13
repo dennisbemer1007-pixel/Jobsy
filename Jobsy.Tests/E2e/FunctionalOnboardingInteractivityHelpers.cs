@@ -1485,8 +1485,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         var back = page.GetByTestId("onboarding-back");
         await back.ScrollIntoViewIfNeededAsync();
+        var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+        var beforeUrl = page.Url;
         await back.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await page.WaitForTimeoutAsync(450);
+        if (ssr)
+        {
+            await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 90_000 });
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            await WaitForCircuitReadyAsync(page, 90_000);
+        }
+        else
+        {
+            await page.WaitForTimeoutAsync(450);
+        }
     }
 
     private static async Task<string> TargetSelectorAsync(ILocator target)
