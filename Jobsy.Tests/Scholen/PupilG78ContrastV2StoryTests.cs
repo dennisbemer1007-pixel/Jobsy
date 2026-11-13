@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 
@@ -14,6 +15,62 @@ public sealed class PupilG78ContrastV2StoryTests
             Assert.NotNull(PupilQuestionStoryParaphrase.ContrastChosenFact(q, 5));
             Assert.NotNull(PupilQuestionStoryParaphrase.ContrastChosenFact(q, 1));
             Assert.Null(PupilQuestionStoryParaphrase.ContrastChosenFact(q, 3));
+        }
+    }
+
+    [Fact]
+    public void Contrast_facts_use_A_text_for_1_2_and_B_text_for_4_5_every_item()
+    {
+        var bank = new PupilQuestionBankG78V2();
+        foreach (var q in bank.Questions)
+        {
+            Assert.True(
+                PupilQuestionBankNlStringsG78V2.TryGet(q.TextKeyA, out var stemA),
+                $"missing A stem for {q.Id}");
+            Assert.True(
+                PupilQuestionBankNlStringsG78V2.TryGet(q.TextKeyB!, out var stemB),
+                $"missing B stem for {q.Id}");
+
+            var towardA = PupilQuestionStoryParaphrase.ContrastChosenFact(q, 1)!.Value.Text;
+            var towardB = PupilQuestionStoryParaphrase.ContrastChosenFact(q, 5)!.Value.Text;
+            Assert.NotEqual(towardA, towardB);
+            Assert.DoesNotContain(
+                PupilQuestionStoryParaphrase.PolishJeForm(stemB),
+                towardA,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                PupilQuestionStoryParaphrase.PolishJeForm(stemA),
+                towardB,
+                StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void A_heavy_and_B_heavy_v2_stories_differ_and_use_chosen_pole_only()
+    {
+        var a = PupilG78ContrastV2Fixtures.AllTowardA();
+        var b = PupilG78ContrastV2Fixtures.AllTowardB();
+        var pkgA = PupilG78FactStory.Build(a.Result, a.Progress, "nl");
+        var pkgB = PupilG78FactStory.Build(b.Result, b.Progress, "nl");
+
+        Assert.NotEqual(pkgA.Body, pkgB.Body);
+        var parasA = PupilG78FactStory.SplitParagraphs(pkgA.Body);
+        var parasB = PupilG78FactStory.SplitParagraphs(pkgB.Body);
+        Assert.Equal(parasA.Count, parasB.Count);
+        Assert.All(parasA.Zip(parasB), pair => Assert.NotEqual(pair.First, pair.Second));
+
+        Assert.DoesNotContain("vindt het lastig", pkgB.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("verdrietig", pkgB.Body, StringComparison.OrdinalIgnoreCase);
+
+        var growthB = pkgB.GrowthCompetencies.Select(g => g.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var strongB = PupilG78GrowthCompetencies.TopStrongCategories(
+            PupilG78GrowthCompetencies.DimensionAverages(
+                JsonSerializer.Deserialize<Dictionary<string, int>>(b.Progress.AnswersJson!)!,
+                contrastV2: true),
+            3);
+        foreach (var dim in strongB)
+        {
+            Assert.DoesNotContain(dim, growthB);
         }
     }
 

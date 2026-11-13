@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen.PupilPassport;
 
@@ -10,14 +11,20 @@ public static class PupilG78StorySummaries
     public static string CompetencyStrengthLine(
         string competencyCategory,
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlySet<string>? growthCategories = null)
+        IReadOnlySet<string>? growthCategories = null,
+        bool contrastV2 = false)
     {
+        if (contrastV2)
+        {
+            return "";
+        }
+
         if (growthCategories is not null && growthCategories.Contains(competencyCategory))
         {
             return "";
         }
 
-        var avg = PupilG78GrowthCompetencies.DimensionAverages(answers);
+        var avg = PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2);
         if (!avg.TryGetValue(competencyCategory, out var mean) || mean < 3.25)
         {
             return "";
@@ -42,9 +49,15 @@ public static class PupilG78StorySummaries
     public static string SocialOverviewLine(
         PupilResult result,
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlySet<string>? growthCategories = null)
+        IReadOnlySet<string>? growthCategories = null,
+        bool contrastV2 = false)
     {
-        var avg = PupilG78GrowthCompetencies.DimensionAverages(answers);
+        if (contrastV2)
+        {
+            return "";
+        }
+
+        var avg = PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2);
         if (growthCategories is null || !growthCategories.Contains(CompetencyTestCatalog.Samenwerken))
         {
             if (avg.TryGetValue(CompetencyTestCatalog.Samenwerken, out var sw) && sw >= 3.5)
@@ -74,7 +87,8 @@ public static class PupilG78StorySummaries
         PupilResult result,
         IReadOnlyDictionary<string, int> answers,
         IReadOnlyList<string>? avoidTileSentences = null,
-        IReadOnlySet<string>? growthCategories = null)
+        IReadOnlySet<string>? growthCategories = null,
+        bool contrastV2 = false)
     {
         var sentences = new List<string>();
         var valueLine = TopValueSummary(result.TopValue);
@@ -91,7 +105,7 @@ public static class PupilG78StorySummaries
             sentences.Add(cultureLine);
         }
 
-        foreach (var clause in ValueMainClausesFromAnswers(answers, growthCategories, maxCount: 2))
+        foreach (var clause in ValueMainClausesFromAnswers(answers, growthCategories, maxCount: 2, contrastV2))
         {
             if (ConflictsWithTiles(clause, avoidTileSentences))
             {
@@ -110,7 +124,7 @@ public static class PupilG78StorySummaries
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
-        if (sentences.Count < 2)
+        if (sentences.Count < 2 && !contrastV2)
         {
             sentences.Add("Je weet goed wat je belangrijk vindt en waar je je op je gemak voelt.");
         }
@@ -123,8 +137,10 @@ public static class PupilG78StorySummaries
         PupilProgress? progress,
         IReadOnlyList<PupilVakScoreEntry> vak,
         string language,
-        IReadOnlySet<string>? growthCategories = null)
+        IReadOnlySet<string>? growthCategories = null,
+        bool contrastV2 = false)
     {
+        _ = contrastV2;
         var sentences = new List<string>();
         var vakNames = BuildVakStoryNames(vak);
         if (vakNames.Count > 0)
@@ -308,64 +324,73 @@ public static class PupilG78StorySummaries
     private static IReadOnlyList<string> ValueMainClausesFromAnswers(
         IReadOnlyDictionary<string, int> answers,
         IReadOnlySet<string>? growthCategories,
-        int maxCount = 2)
+        int maxCount = 2,
+        bool contrastV2 = false)
     {
         growthCategories ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var highs = new List<int>();
-        for (var id = 9031; id <= 9045; id++)
+        var bank = contrastV2 ? (IPupilQuestionBank)new PupilQuestionBankG78V2() : new PupilQuestionBank();
+        var ranked = new List<(string Sentence, int Id, int Eff)>();
+        foreach (var q in bank.Questions.Where(q => q.Model == AssessmentKind.Values))
         {
-            if (answers.TryGetValue(id.ToString(), out var raw) && raw >= 4)
+            if (!answers.TryGetValue(q.Id.ToString(), out var raw))
             {
-                highs.Add(id);
+                continue;
             }
+
+            string? sentence = null;
+            int eff;
+            if (contrastV2 && q.IsContrast)
+            {
+                var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw);
+                if (fact is null)
+                {
+                    continue;
+                }
+
+                eff = fact.Value.EffectiveScore;
+                sentence = PupilG78StoryFlow.MainClause(
+                    new G78AnswerClause(q.Id, fact.Value.Category, q.Model, G78StoryBeat.Waarden, fact.Value.Text, eff),
+                    contrastV2: true);
+            }
+            else
+            {
+                eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+                if (eff < 4)
+                {
+                    continue;
+                }
+
+                var je = PupilG78QuestionJeForms.ForItem(q.Id);
+                if (string.IsNullOrWhiteSpace(je))
+                {
+                    continue;
+                }
+
+                sentence = je.TrimEnd();
+                if (!sentence.EndsWith('.'))
+                {
+                    sentence += ".";
+                }
+            }
+
+            if (eff < 4
+                || string.IsNullOrWhiteSpace(sentence)
+                || PupilG78StrengthGuard.IsForbiddenStrength(q.Id, eff, growthCategories))
+            {
+                continue;
+            }
+
+            ranked.Add((sentence, q.Id, eff));
         }
 
-        highs = highs
-            .OrderByDescending(id => answers[id.ToString()])
-            .ThenBy(id => id)
+        return ranked
+            .OrderByDescending(c => c.Eff)
+            .ThenBy(c => c.Id)
+            .Select(c => c.Sentence)
+            .Where(s => s.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .Take(maxCount)
             .ToList();
-
-        var sentences = new List<string>();
-        foreach (var id in highs)
-        {
-            if (sentences.Count >= maxCount)
-            {
-                break;
-            }
-
-            if (!answers.TryGetValue(id.ToString(), out var raw))
-            {
-                continue;
-            }
-
-            var reverse = new PupilQuestionBank().Questions.FirstOrDefault(q => q.Id == id)?.Reverse ?? false;
-            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, reverse);
-            if (eff < 4 || PupilG78StrengthGuard.IsForbiddenStrength(id, eff, growthCategories))
-            {
-                continue;
-            }
-
-            var je = PupilG78QuestionJeForms.ForItem(id);
-            if (string.IsNullOrWhiteSpace(je))
-            {
-                continue;
-            }
-
-            je = je.TrimEnd();
-            if (!je.EndsWith('.'))
-            {
-                je += ".";
-            }
-
-            if (sentences.Any(s => PupilG78JeNarrative.TooSimilar(s, je)))
-            {
-                continue;
-            }
-
-            sentences.Add(je);
-        }
-
-        return sentences;
     }
 
     private static List<string> HobbyLabels(PupilProgress? progress, string language)

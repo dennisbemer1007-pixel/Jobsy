@@ -3,7 +3,7 @@ namespace Jobsy.Core.Scholen;
 /// <summary>Connects canonical je-clauses into flowing B1 paragraphs.</summary>
 internal static class PupilG78StoryFlow
 {
-    public static string MainClause(G78AnswerClause clause)
+    public static string MainClause(G78AnswerClause clause, bool contrastV2 = false)
     {
         if (clause.Text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
             || clause.Text.StartsWith("Juist hier zie je het anders", StringComparison.Ordinal))
@@ -11,8 +11,31 @@ internal static class PupilG78StoryFlow
             return "";
         }
 
+        if (contrastV2)
+        {
+            if (ContrastLooksNegative(clause.Text))
+            {
+                return "";
+            }
+
+            return PupilG78JeNarrative.AsSentence(clause.Text);
+        }
+
         return PupilG78QuestionJeForms.ForItem(clause.ItemId)
                ?? PupilG78JeNarrative.AsSentence(clause.Text);
+    }
+
+    internal static bool ContrastLooksNegative(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return true;
+        }
+
+        return text.Contains("vindt het lastig", StringComparison.OrdinalIgnoreCase)
+               || text.Contains("vind je het lastig", StringComparison.OrdinalIgnoreCase)
+               || text.StartsWith("Dit zei je minder", StringComparison.Ordinal)
+               || text.StartsWith("Juist hier zie je het anders", StringComparison.Ordinal);
     }
 
   /// <summary>At most one &quot;, en &quot; join; further sentences start new with &quot;. &quot;.</summary>

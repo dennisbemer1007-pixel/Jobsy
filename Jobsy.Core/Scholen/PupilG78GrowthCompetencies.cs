@@ -200,24 +200,23 @@ public static class PupilG78GrowthCompetencies
             picks = stats.ItemScores.OrderBy(i => i.Effective).ThenBy(i => i.ItemId).Take(1).ToList();
         }
 
+        if (contrastV2)
+        {
+            if (stats.Average >= 3.0 && !stats.HasLow)
+            {
+                return "";
+            }
+
+            var kid = PupilG78CompetencyNarrative.KidLabelTitle(growthCategory);
+            return $"{kid} kwam minder naar voren in je antwoorden.";
+        }
+
         var parts = new List<string>();
         foreach (var pick in picks)
         {
-            var stem = contrastV2 && PupilQuestionBankNlStringsG78V2.TryGet($"LeerlingQ.{pick.ItemId}.A", out var contrastStem)
-                ? contrastStem
-                : PupilQuestionBankNlStrings.Get($"LeerlingQ.{pick.ItemId}");
+            var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{pick.ItemId}");
             stem = stem.Replace("geen zin hebt", "geen zin heb", StringComparison.Ordinal);
-            var label = contrastV2
-                ? pick.Raw switch
-                {
-                    1 => "veel meer A",
-                    2 => "een beetje meer A",
-                    3 => "allebei even",
-                    4 => "een beetje meer B",
-                    5 => "veel meer B",
-                    _ => "soms",
-                }
-                : AnswerLabelNl.GetValueOrDefault(pick.Raw, "soms");
+            var label = AnswerLabelNl.GetValueOrDefault(pick.Raw, "soms");
             parts.Add($"Bij \"{stem}\" koos je \"{label}\".");
         }
 

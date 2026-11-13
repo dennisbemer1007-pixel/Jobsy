@@ -107,6 +107,7 @@ public static class PupilG78FactStory
                 growthCategorySet,
                 storyStrongCategories,
                 competencyExampleIds,
+                contrastV2: contrast,
                 out storyIds,
                 out competencyExamples);
             fullStoryIds = storyIds.Union(storyOpeningIds).ToHashSet();
@@ -183,8 +184,7 @@ public static class PupilG78FactStory
                     continue;
                 }
 
-                var je = PupilG78QuestionJeForms.ForItem(id);
-                texts.Add(je ?? clause.Text);
+                texts.Add(clause.Text);
             }
         }
 

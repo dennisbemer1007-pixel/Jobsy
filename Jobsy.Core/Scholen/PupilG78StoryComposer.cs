@@ -21,6 +21,7 @@ public static class PupilG78StoryComposer
         IReadOnlySet<string> growthCategories,
         IReadOnlyList<string> storyStrongCategories,
         IReadOnlyList<int> competencyExampleIds,
+        bool contrastV2,
         out IReadOnlyList<int> usedItemIds,
         out IReadOnlyList<PupilG78CompetencyExampleAnchor> competencyExamples)
     {
@@ -65,11 +66,11 @@ public static class PupilG78StoryComposer
         if (string.Equals(result.TopValue, "Connection", StringComparison.OrdinalIgnoreCase)
             && !growthCategories.Contains(CompetencyTestCatalog.Samenwerken))
         {
-            TryAddOpeningClause(clauses, 9024, p1Sentences, selected, usedIds, usedThemes, growthCategories);
-            TryAddOpeningClause(clauses, 9054, p1Sentences, selected, usedIds, usedThemes, growthCategories);
+            TryAddOpeningClause(clauses, 9024, p1Sentences, selected, usedIds, usedThemes, growthCategories, contrastV2);
+            TryAddOpeningClause(clauses, 9054, p1Sentences, selected, usedIds, usedThemes, growthCategories, contrastV2);
             if (p1Sentences.Count < 2)
             {
-                TryAddOpeningClause(clauses, 9037, p1Sentences, selected, usedIds, usedThemes, growthCategories);
+                TryAddOpeningClause(clauses, 9037, p1Sentences, selected, usedIds, usedThemes, growthCategories, contrastV2);
             }
         }
 
@@ -77,7 +78,7 @@ public static class PupilG78StoryComposer
         RememberAvoid(avoidSimilar, mensen);
         foreach (var m in mensen)
         {
-            p1Sentences.Add(PupilG78StoryFlow.MainClause(m));
+            p1Sentences.Add(PupilG78StoryFlow.MainClause(m, contrastV2));
             selected.Add(m.ItemId);
         }
 
@@ -86,7 +87,7 @@ public static class PupilG78StoryComposer
             var mensenExtra = PickCareerSocial(pool, clauses, selected, usedThemes, growthCategories, usedIds, usedCategories, avoidSimilar, 2);
             foreach (var m in mensenExtra)
             {
-                p1Sentences.Add(PupilG78StoryFlow.MainClause(m));
+                p1Sentences.Add(PupilG78StoryFlow.MainClause(m, contrastV2));
                 selected.Add(m.ItemId);
             }
 
@@ -95,7 +96,7 @@ public static class PupilG78StoryComposer
 
         if (p1Sentences.Count < 2)
         {
-            var summary = PupilG78StorySummaries.SocialOverviewLine(result, answers, growthCategories);
+            var summary = PupilG78StorySummaries.SocialOverviewLine(result, answers, growthCategories, contrastV2);
             if (summary.Length > 0 && !SentenceOnPage(summary, avoidSimilar))
             {
                 p1Sentences.Add(summary);
@@ -118,7 +119,7 @@ public static class PupilG78StoryComposer
                     continue;
                 }
 
-                p1Sentences.Add(PupilG78StoryFlow.MainClause(clause));
+                p1Sentences.Add(PupilG78StoryFlow.MainClause(clause, contrastV2));
                 selected.Add(extraId);
                 usedIds.Add(extraId);
                 RememberTheme(extraId, usedThemes);
@@ -129,7 +130,7 @@ public static class PupilG78StoryComposer
         {
             foreach (var extraId in new[] { 9024, 9054, 9001, 9002, 9003 })
             {
-                TryAddOpeningClause(clauses, extraId, p1Sentences, selected, usedIds, usedThemes, growthCategories);
+                TryAddOpeningClause(clauses, extraId, p1Sentences, selected, usedIds, usedThemes, growthCategories, contrastV2);
                 if (p1Sentences.Count >= 2)
                 {
                     break;
@@ -139,7 +140,7 @@ public static class PupilG78StoryComposer
 
         if (p1Sentences.Count < 2)
         {
-            var social = PupilG78StorySummaries.SocialOverviewLine(result, answers, growthCategories);
+            var social = PupilG78StorySummaries.SocialOverviewLine(result, answers, growthCategories, contrastV2);
             if (social.Length > 0
                 && p1Sentences.All(s => !string.Equals(
                     PupilG78PageLint.NormalizeSentence(s),
@@ -154,7 +155,7 @@ public static class PupilG78StoryComposer
         {
             foreach (var cat in storyStrongCategories)
             {
-                var line = PupilG78StorySummaries.CompetencyStrengthLine(cat, answers, growthCategories);
+                var line = PupilG78StorySummaries.CompetencyStrengthLine(cat, answers, growthCategories, contrastV2);
                 if (line.Length == 0)
                 {
                     continue;
@@ -183,15 +184,17 @@ public static class PupilG78StoryComposer
             selected,
             usedThemes,
             avoidSimilar,
+            contrastV2,
             out competencyExamples);
         paragraphs.Add(string.IsNullOrWhiteSpace(competencyPara)
-            ? FallbackCompetencyParagraph(storyStrongCategories, answers, growthCategories)
+            ? FallbackCompetencyParagraph(storyStrongCategories, answers, growthCategories, contrastV2)
             : competencyPara);
 
-        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(result, answers, tileTexts, growthCategories));
+        paragraphs.Add(PupilG78StorySummaries.ComposeValuesCultureParagraph(
+            result, answers, tileTexts, growthCategories, contrastV2));
 
         paragraphs.Add(PupilG78StorySummaries.ComposeSchoolHobbiesRiasecParagraph(
-            result, progress, vak, language, growthCategories));
+            result, progress, vak, language, growthCategories, contrastV2));
 
         DedupeSentencesAcrossParagraphs(paragraphs);
 
@@ -209,12 +212,13 @@ public static class PupilG78StoryComposer
     private static string FallbackCompetencyParagraph(
         IReadOnlyList<string> storyStrongCategories,
         IReadOnlyDictionary<string, int> answers,
-        IReadOnlySet<string> growthCategories)
+        IReadOnlySet<string> growthCategories,
+        bool contrastV2)
     {
         var dims = storyStrongCategories.Count > 0
             ? storyStrongCategories.Take(3).ToList()
             : PupilG78GrowthCompetencies.TopStrongCategories(
-                    PupilG78GrowthCompetencies.DimensionAverages(answers), 3)
+                    PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2), 3)
                 .Where(c => !growthCategories.Contains(c))
                 .ToList();
         if (dims.Count == 0)
@@ -224,7 +228,7 @@ public static class PupilG78StoryComposer
 
         var intro = $"Wat in je antwoorden vooral naar voren komt, is {PupilG78CompetencyNarrative.JoinKidLabelList(dims)}.";
         var summaries = dims
-            .Select(d => PupilG78StorySummaries.CompetencyStrengthLine(d, answers))
+            .Select(d => PupilG78StorySummaries.CompetencyStrengthLine(d, answers, growthCategories, contrastV2))
             .Where(s => s.Length > 0)
             .ToList();
         return PupilG78StoryFlow.FlowJoin(
@@ -249,6 +253,7 @@ public static class PupilG78StoryComposer
         HashSet<int> selected,
         HashSet<string> usedThemes,
         List<string> avoidSimilar,
+        bool contrastV2,
         out IReadOnlyList<PupilG78CompetencyExampleAnchor> anchors)
     {
         var anchorList = new List<PupilG78CompetencyExampleAnchor>();
@@ -288,16 +293,31 @@ public static class PupilG78StoryComposer
                 continue;
             }
 
-            if (!PupilG78CompetencyZoForms.TryStem(itemId, out var stem))
+            string phrase;
+            if (contrastV2)
+            {
+                var main = PupilG78StoryFlow.MainClause(clause, contrastV2: true).TrimEnd('.');
+                if (main.Length == 0)
+                {
+                    continue;
+                }
+
+                phrase = main;
+            }
+            else if (!PupilG78CompetencyZoForms.TryStem(itemId, out var stem))
             {
                 continue;
+            }
+            else
+            {
+                phrase = stem;
             }
 
             anchorList.Add(new PupilG78CompetencyExampleAnchor(dim, itemId));
             usedIds.Add(itemId);
             selected.Add(itemId);
             RememberTheme(itemId, usedThemes);
-            phrases.Add(stem);
+            phrases.Add(phrase);
             ordinal++;
         }
 
@@ -306,7 +326,9 @@ public static class PupilG78StoryComposer
             return intro;
         }
 
-        var examples = PupilG78CompetencyZoForms.JoinExampleStems(phrases);
+        var examples = contrastV2
+            ? PupilG78StoryFlow.FlowJoin(phrases.Take(2).ToList())
+            : PupilG78CompetencyZoForms.JoinExampleStems(phrases);
         if (SentenceOnPage(examples, avoidSimilar))
         {
             return intro;
@@ -323,7 +345,8 @@ public static class PupilG78StoryComposer
         HashSet<int> selected,
         HashSet<int> usedIds,
         HashSet<string> usedThemes,
-        IReadOnlySet<string> growthCategories)
+        IReadOnlySet<string> growthCategories,
+        bool contrastV2)
     {
         if (sentences.Count >= 2 || selected.Contains(itemId))
         {
@@ -337,7 +360,7 @@ public static class PupilG78StoryComposer
             return;
         }
 
-        sentences.Add(PupilG78StoryFlow.MainClause(clause));
+        sentences.Add(PupilG78StoryFlow.MainClause(clause, contrastV2));
         selected.Add(itemId);
         usedIds.Add(itemId);
         RememberTheme(itemId, usedThemes);
