@@ -2054,6 +2054,67 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
         });
     }
 
+    [Fact(Timeout = 600_000)]
+    public async Task G78_pause_then_resume_after_relogin_renders_styled()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await EnableSchoolsAsync();
+        var seeds = await SeedGroep78AtAsync(2, answered: 4, chipsSaved: true, journeyThemeKey: PupilJourneyTheme.ZeeExpeditie);
+        var baseUrl = EnsureWeb();
+        var artifactDir = "/opt/cursor/artifacts/pause-stop-fix";
+        Directory.CreateDirectory(artifactDir);
+
+        var viewports = new (int Width, int Height, string Label)[]
+        {
+            (1440, 900, "desktop"),
+            (390, 844, "mobile"),
+        };
+        for (var i = 0; i < viewports.Length; i++)
+        {
+            var (width, height, label) = viewports[i];
+            var seed = seeds[i];
+            var loginUrl = $"{baseUrl}/leerling?schoolId={seed.SchoolId:D}&classId={seed.ClassId:D}";
+            await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height }
+            });
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+            await page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator("[data-testid=ll-g78-answers] .ans").First.WaitForAsync();
+
+            var answerDone = page.WaitForResponseAsync(
+                r => r.Url.Contains("/leerling/reis/answer", StringComparison.OrdinalIgnoreCase)
+                     && r.Ok,
+                new() { Timeout = 30_000 });
+            await page.Locator("[data-testid=ll-g78-answers] .ans").First.ClickAsync();
+            await answerDone;
+            await page.Locator(".ll-g78-shell header.top .btn-pauze").ClickAsync();
+            await page.WaitForURLAsync("**/leerling/stop**", new() { Timeout = 5_000 });
+
+            await page.Locator("[data-testid=leerling-stop-pause]").WaitForAsync();
+            Assert.Contains("leerling-werelden-kies.css", await page.ContentAsync(), StringComparison.Ordinal);
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(artifactDir, $"pause-stop-live-{label}.png"),
+                FullPage = true
+            });
+
+            await LoginAsync(page, loginUrl, seed.PlainCode, seed.ClassId);
+            await page.WaitForURLAsync("**/leerling/reis**");
+            await page.Locator("[data-testid=ll-g78-answers]").WaitForAsync();
+            await Assertions.Expect(page.Locator(".g78-jmeta")).ToContainTextAsync("vraag 6 van 15");
+
+            await page.ScreenshotAsync(new PageScreenshotOptions
+            {
+                Path = Path.Combine(artifactDir, $"resume-after-relogin-{label}.png"),
+                FullPage = true
+            });
+        }
+    }
+
     [Theory]
     [InlineData(1440, 900)]
     [InlineData(390, 844)]

@@ -103,6 +103,11 @@
       window.location.assign("/leerling/reis");
       return false;
     }
+    var nextPause = nextHeader.querySelector("form[data-ll-pause-form]");
+    var curPause = header.querySelector("form[data-ll-pause-form]");
+    if (nextPause && curPause) {
+      curPause.replaceWith(document.importNode(nextPause, true));
+    }
     var node = header.nextElementSibling;
     while (node && node !== footer) {
       var remove = node;

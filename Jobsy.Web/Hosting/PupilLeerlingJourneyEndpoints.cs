@@ -118,7 +118,15 @@ public static class PupilLeerlingJourneyEndpoints
         var done = http.Request.Query["done"].ToString();
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
-        var progress = await LoadProgressAsync(http, api, progressCache, ct);
+        PupilProgressStateDto? progress = null;
+        try
+        {
+            progress = await LoadProgressOnceAsync(http, api, progressCache, ct);
+        }
+        catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+        {
+            // Normal after POST /leerling/pauze: the pupil cookie is already cleared.
+        }
         var themeFromQuery = http.Request.Query["theme"].ToString();
         var g78FromQuery = string.Equals(http.Request.Query["g78"], "1", StringComparison.Ordinal);
         var useG78 = g78FromQuery

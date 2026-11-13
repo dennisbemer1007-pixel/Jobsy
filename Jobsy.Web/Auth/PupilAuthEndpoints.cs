@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -104,14 +105,15 @@ public static class PupilAuthEndpoints
         // the pause button returns 500. The confirmation page stays GET /leerling/stop.
         app.MapPost("/leerling/pauze", async (
             HttpContext http,
-            IAntiforgery antiforgery,
             JobsyApiClient api,
             CancellationToken ct) =>
         {
             http.Response.Headers.CacheControl = "no-store";
-            if (!await antiforgery.IsRequestValidAsync(http))
+
+            var pupil = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
+            if (pupil.Principal is not null)
             {
-                // Still sign out — pause must always work on shared Chromebooks.
+                http.User = pupil.Principal;
             }
 
             PupilProgressStateDto? progress = null;
@@ -121,10 +123,14 @@ public static class PupilAuthEndpoints
             }
             catch
             {
-                // Pause must still work when progress cannot be loaded.
+                var codeIdRaw = pupil.Principal?.FindFirst(PupilClaimTypes.PupilCodeId)?.Value;
+                if (codeIdRaw is not null && Guid.TryParse(codeIdRaw, out var pupilCodeId))
+                {
+                    var progressCache = http.RequestServices.GetRequiredService<PupilWebProgressCache>();
+                    progressCache.TryGetSnapshot(pupilCodeId, out progress);
+                }
             }
 
-            var pupil = await http.AuthenticateAsync(PupilAuthDefaults.Scheme);
             http.RequestServices.GetService<PupilRequestApiTicket>()?.Clear();
             await http.SignOutAsync(PupilAuthDefaults.Scheme);
             PupilApiSessionCookie.Clear(http);
@@ -132,7 +138,7 @@ public static class PupilAuthEndpoints
             var part = form["part"].ToString();
             var stopQuery = BuildStopRedirectQuery(form, part, progress);
             return Results.Redirect($"/leerling/stop{stopQuery}");
-        }).AllowAnonymous();
+        }).AllowAnonymous().DisableAntiforgery();
     }
 
     public static ClaimsPrincipal CreatePrincipal(PupilLoginResponse login)
@@ -177,10 +183,17 @@ public static class PupilAuthEndpoints
     {
         var done = string.Equals(part, "1", StringComparison.Ordinal) ? "deel1" : "1";
         var qs = new StringBuilder("?done=").Append(Uri.EscapeDataString(done));
-        if (string.Equals(form["g78"].ToString(), "1", StringComparison.Ordinal))
+        var useG78 = string.Equals(form["g78"].ToString(), "1", StringComparison.Ordinal)
+                     || progress?.QuestionSet == PupilQuestionSet.Groep78;
+        if (useG78)
         {
             qs.Append("&g78=1");
             var theme = form["theme"].ToString();
+            if (!PupilJourneyTheme.IsValid(theme) && PupilJourneyTheme.IsValid(progress?.JourneyThemeKey))
+            {
+                theme = progress!.JourneyThemeKey!;
+            }
+
             if (PupilJourneyTheme.IsValid(theme))
             {
                 qs.Append("&theme=").Append(Uri.EscapeDataString(theme));
