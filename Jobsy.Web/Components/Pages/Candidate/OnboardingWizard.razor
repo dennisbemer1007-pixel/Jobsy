@@ -1,4 +1,5 @@
 @page "/candidate/start/wizard"
+@layout OnboardingStartSsrLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
@@ -53,11 +54,13 @@
     @if (OnboardingRustig.Enabled)
     {
         <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css")" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/admin.css")" />
+        <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css")" />
     }
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-client-nav.css")" />
 </HeadContent>
 
-<div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)"
+<div class="ob-wizard ob-wizard--richting-a @(OnboardingRustig.Enabled ? "ob-wizard--rustig ob-wizard--v3" : null) @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null) @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "ob-wizard--compact-preview-c" : null)"
      data-ob-antiforgery-header="@_antiforgeryHeader"
      data-ob-antiforgery-token="@_antiforgeryToken"
      data-ob-active-step="@(_loading ? null : _step.ToString())">

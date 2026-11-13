@@ -44,6 +44,10 @@ public sealed class OnboardingV3AdminHeaderScreenshotTests : IAsyncLifetime
     [InlineData(1440, 900, "step02")]
     [InlineData(390, 844, "step06")]
     [InlineData(1440, 900, "step06")]
+    [InlineData(390, 844, "step04")]
+    [InlineData(1440, 900, "step04")]
+    [InlineData(390, 844, "step08")]
+    [InlineData(1440, 900, "step08")]
     public async Task Capture_step_screenshots(int width, int height, string label)
     {
         if (!string.Equals(Environment.GetEnvironmentVariable("RUN_ONBOARDING_V3_SCREENSHOTS"), "1", StringComparison.Ordinal))
@@ -67,7 +71,9 @@ public sealed class OnboardingV3AdminHeaderScreenshotTests : IAsyncLifetime
         {
             "step01" => 1,
             "step02" => 2,
+            "step04" => 4,
             "step06" => 6,
+            "step08" => 8,
             _ => 0,
         };
         var url = step == 0

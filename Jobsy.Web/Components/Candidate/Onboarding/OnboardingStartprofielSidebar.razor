@@ -9,13 +9,11 @@
         @foreach (var phase in OnboardingStartprofielSidebarCatalog.Phases)
         {
             var isCurrent = phase.FirstStep <= CurrentStep && CurrentStep <= phase.LastStep;
-            var isDone = CurrentStep > phase.LastStep;
+            var isDone = CurrentStep > phase.LastStep && phase.LastStep <= 10;
             <div class="ob-v3-side__phase @(isCurrent ? "is-current" : isDone ? "is-done" : null)">
                 <em aria-hidden="true">@phase.Index</em>
-                <div>
-                    <span>@Culture[phase.LabelKey]</span>
-                    <small>@Culture[phase.HintKey]</small>
-                </div>
+                <span class="ob-v3-side__phase-title">@Culture[phase.LabelKey]</span>
+                <small class="ob-v3-side__phase-hint">@Culture[phase.HintKey]</small>
             </div>
         }
     </div>
