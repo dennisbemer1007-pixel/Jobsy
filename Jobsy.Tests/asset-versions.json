@@ -212,7 +212,7 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-client-nav.css": {
-    "sha256": "7d4d69517c5309f9357c16a5f1da21a242091293f1af43423623d9cb63584dbc",
+    "sha256": "16fd733110591a423b78806d72bffd40ce065ca8a93310a2063a69db953a32c7",
     "v": "20261025-87"
   },
   "css/features/onboarding-finale-v2.css": {
@@ -260,7 +260,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "f3d263e40c40201a55c1ade864a34faa1df02c7501dcbd0c34a930f3756f0440",
+    "sha256": "7dc4a5df78b4e1c69064cd0a46efd7f09a7dfee91c1c5407a48673f6fbd8f0a9",
     "v": "20261113-catalog"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {

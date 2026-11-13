@@ -55,8 +55,27 @@ public sealed class OnboardingV3AdminHeaderScreenshotTests : IAsyncLifetime
             return;
         }
 
+        await CaptureAsync(width, height, label, fullPage: true);
+    }
+
+    [Theory]
+    [InlineData(390, 844, "step01-viewport")]
+    [InlineData(390, 844, "step06-viewport")]
+    public async Task Capture_viewport_footer_screenshots(int width, int height, string label)
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("RUN_ONBOARDING_V3_SCREENSHOTS"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await CaptureAsync(width, height, label, fullPage: false);
+    }
+
+    private async Task CaptureAsync(int width, int height, string label, bool fullPage)
+    {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
-        factory.WelcomeDismissed = label != "step00-welcome";
+        var baseLabel = label.Replace("-viewport", "", StringComparison.Ordinal);
+        factory.WelcomeDismissed = baseLabel != "step00-welcome";
         var root = factory.EnsureServerAddress();
         await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
         {
@@ -67,7 +86,7 @@ public sealed class OnboardingV3AdminHeaderScreenshotTests : IAsyncLifetime
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        var step = label switch
+        var step = baseLabel switch
         {
             "step01" => 1,
             "step02" => 2,
@@ -93,7 +112,7 @@ public sealed class OnboardingV3AdminHeaderScreenshotTests : IAsyncLifetime
         await Assertions.Expect(page.Locator("[data-testid='lobsy-shell-topbar'], .admin-topbar").First).ToBeVisibleAsync();
 
         var file = Path.Combine(OutDir, $"{label}-{width}.png");
-        await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+        await page.ScreenshotAsync(new() { Path = file, FullPage = fullPage });
         Assert.True(File.Exists(file));
     }
 }

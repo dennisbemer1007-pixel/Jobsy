@@ -42,6 +42,10 @@ form[data-ob-ssr-form] [data-testid="onboarding-skip-optional"] {
   display: none !important;
 }
 
+form[data-ob-ssr-form].ob-wizard--v3 .ob-rustig__footer-actions {
+  display: none !important;
+}
+
 form[data-ob-ssr-form] .ob-rustig__footer-actions {
   display: flex;
   flex-wrap: nowrap;

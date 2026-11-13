@@ -92,7 +92,8 @@ else if (_step is >= 1 and <= 10)
             <div class="ob-v3-desktop @(_showJobsRail ? "ob-v3-desktop--with-rail" : null)">
                 <OnboardingStartprofielSidebar CurrentStep="@_step" LaterHref="/home" />
 
-                <div class="ob-v3-main">
+                <div class="ob-v3-main-col">
+                    <div class="ob-v3-main">
                     <OnboardingV3StepChrome Step="@_step"
                                            PhaseLabel="@phaseLabel"
                                            LaterHref="/home" />
@@ -115,6 +116,7 @@ else if (_step is >= 1 and <= 10)
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
                     <div class="ob-v3-dfoot @(_step is >= 7 and <= 10 ? "ob-v3-dfoot--mini" : null)">
                         @if (_step is >= 7 and <= 10)
