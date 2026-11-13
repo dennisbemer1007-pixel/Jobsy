@@ -1,4 +1,5 @@
 using Jobsy.Web.Hosting;
+using Jobsy.Web.Navigation;
 
 namespace Jobsy.Tests;
 
@@ -11,7 +12,7 @@ public class PageAssetCatalogOnboardingTests
         Assert.True(areas.HasFlag(PageAssetCatalog.Area.CandidateApp));
         Assert.True(areas.HasFlag(PageAssetCatalog.Area.CandidatePublic));
 
-        var sheets = PageAssetCatalog.StylesheetsFor(areas);
+        var sheets = PageAssetCatalog.StylesheetsFor(areas, OnboardingRoutes.ClassicStartPath);
         Assert.Contains(sheets, s => s.Contains("onboarding-wizard.css", StringComparison.Ordinal));
         Assert.Contains(sheets, s => s.Contains("onboarding-wizard-mobile-bar.css", StringComparison.Ordinal));
         Assert.Contains(sheets, s => s.Contains("onboarding-wizard-richting-a.css", StringComparison.Ordinal));

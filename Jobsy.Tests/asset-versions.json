@@ -181,7 +181,7 @@
   },
   "css/features/lobsy-coach-ssr-chrome.css": {
     "sha256": "7e155bd5270a49470620f6722d49c90839683f5876c64f2b9fcebb61e0ee0841",
-    "v": "20261113-catalog"
+    "v": "20261113-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "46fae2596ab48130ab952c5b1d92e7f1afc0d0052180dcde879c5a5c4b47aa0a",
@@ -260,8 +260,8 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "7dc4a5df78b4e1c69064cd0a46efd7f09a7dfee91c1c5407a48673f6fbd8f0a9",
-    "v": "20261113-catalog"
+    "sha256": "aadec3b69e8a6ca751373a63b1d9668c0c54970533d384af599d9e37e95ad75a",
+    "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
     "sha256": "c314b1f49152bd4af5e8e9d769ee6e8006aea2d0e187869ba1b724d721aa3dda",
@@ -576,7 +576,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "e9996e30a6c6c7d0962ec9dffc7c20a4b7c3ef833f45530d2eca33fbd013e98c",
+    "sha256": "f2db12db71c4b75c016242980bd4a086e82da8c620fa320332c70e392dc8e00a",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
