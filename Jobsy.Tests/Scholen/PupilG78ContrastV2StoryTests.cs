@@ -266,6 +266,82 @@ public sealed class PupilG78ContrastV2StoryTests
     }
 
     [Fact]
+    public void A_heavy_story_does_not_repeat_tijd_bijna_om_sentence_on_competence_tile()
+    {
+        var (result, progress) = PupilG78ContrastV2Fixtures.AllTowardA();
+        var package = PupilG78FactStory.Build(result, progress, "nl");
+        var zoBenJij = package.Tiles.First(t => t.ModelKey == "competence");
+        var tileSentence = PupilG78PageTextDedupe.SplitRenderedSentences(
+                PupilG78PageTextDedupe.FinalizeRenderedText(zoBenJij.Explanation))
+            .First(s => s.Contains("tijd bijna om is", StringComparison.OrdinalIgnoreCase));
+        var tileNorm = PupilG78PageLint.NormalizeSentence(tileSentence);
+        foreach (var para in PupilG78FactStory.SplitParagraphs(package.Body))
+        {
+            foreach (var sentence in PupilG78PageTextDedupe.SplitRenderedSentences(
+                         PupilG78PageTextDedupe.FinalizeRenderedText(para)))
+            {
+                Assert.NotEqual(tileNorm, PupilG78PageLint.NormalizeSentence(sentence));
+            }
+        }
+    }
+
+    [Fact]
+    public void Mixed_v2_has_strengths_paragraph_or_growth_block()
+    {
+        var (result, progress) = PupilG78ContrastV2Fixtures.MixedToward();
+        var package = PupilG78FactStory.Build(result, progress, "nl");
+        var hasStrength = PupilG78StoryComposer.HasSubstantiveStrengthParagraph(package.Body);
+        var hasGrowth = package.GrowthCompetencies.Count > 0;
+        Assert.True(hasStrength || hasGrowth, DescribeMixedCompetencyState(result, progress, package));
+    }
+
+    [Fact]
+    public void B_heavy_v2_has_three_story_paragraphs_without_strengths_intro()
+    {
+        var (result, progress) = PupilG78ContrastV2Fixtures.AllTowardB();
+        var package = PupilG78FactStory.Build(result, progress, "nl");
+        var paragraphs = PupilG78FactStory.SplitParagraphs(package.Body);
+        Assert.True(paragraphs.Count >= 3, string.Join(" | ", paragraphs));
+        Assert.False(
+            PupilG78StoryComposer.HasSubstantiveStrengthParagraph(package.Body),
+            "All-B foils: expect no strengths paragraph, only factual overview + values/culture + school.");
+    }
+
+    private static string DescribeMixedCompetencyState(
+        PupilResult result,
+        PupilProgress progress,
+        PupilG78StoryPackage package)
+    {
+        var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(progress.AnswersJson!)
+                            ?? new Dictionary<string, int>();
+        var bank = new PupilQuestionBankG78V2();
+        var clauses = new List<G78AnswerClause>();
+        foreach (var q in bank.Questions)
+        {
+            if (!answers.TryGetValue(q.Id.ToString(), out var raw))
+            {
+                continue;
+            }
+
+            var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw, "nl");
+            if (fact is null)
+            {
+                continue;
+            }
+
+            var (text, eff, category) = fact.Value;
+            clauses.Add(new G78AnswerClause(q.Id, category, q.Model, G78StoryBeat.Doen, text, eff));
+        }
+
+        var scores = PupilG78GrowthCompetencies.ContrastDimensionScoresForDiagnostics(clauses, result, answers, contrastV2: true);
+        var growth = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4, contrastV2: true);
+        var scoreLine = string.Join(", ", scores.OrderByDescending(kv => kv.Value).Select(kv => $"{PupilG78CompetencyNarrative.KidLabelTitle(kv.Key)}={kv.Value:F2}"));
+        var growthLine = string.Join(", ", growth.Select(PupilG78CompetencyNarrative.KidLabelTitle));
+        return $"strength={PupilG78StoryComposer.HasSubstantiveStrengthParagraph(package.Body)} growthCount={package.GrowthCompetencies.Count}; "
+               + $"threshold growth (avg<3.0 or low&avg<3.35): [{growthLine}]; blended scores: {scoreLine}";
+    }
+
+    [Fact]
     public void Display_job_chips_without_likes_follow_riasec_from_v2_answers_not_likes_pool()
     {
         var a = PupilG78ContrastV2Fixtures.AllTowardANoLikes();
@@ -325,30 +401,26 @@ public sealed class PupilG78ContrastV2StoryTests
 
     private static IEnumerable<string> EnumeratePageSentences(PupilG78StoryPackage package)
     {
-        foreach (var sentence in SplitSentences(package.Body))
+        foreach (var sentence in SplitRenderedSentences(package.Body))
         {
             yield return sentence;
         }
 
         foreach (var tile in package.Tiles)
         {
-            foreach (var sentence in SplitSentences(tile.Explanation))
+            foreach (var sentence in SplitRenderedSentences(tile.Explanation))
             {
                 yield return sentence;
             }
         }
     }
 
-    private static List<string> SplitSentences(string body)
+    private static IEnumerable<string> SplitRenderedSentences(string text)
     {
-        if (string.IsNullOrWhiteSpace(body))
-        {
-            return [];
-        }
-
-        return body.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(s => s.Length > 0)
-            .Select(s => s + ".")
-            .ToList();
+        var polished = PupilG78PageTextDedupe.FinalizeRenderedText(text);
+        return PupilG78PageTextDedupe.SplitRenderedSentences(polished);
     }
+
+    private static List<string> SplitSentences(string text)
+        => SplitRenderedSentences(text).ToList();
 }

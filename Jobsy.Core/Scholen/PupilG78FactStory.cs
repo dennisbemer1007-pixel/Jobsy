@@ -146,11 +146,29 @@ public static class PupilG78FactStory
             contrast);
         var body = string.Join(ParagraphBreak, paragraphs);
         body = PupilG78PageTextDedupe.ScrubStoryAgainstTileExplanations(body, tiles);
+        var finalizedTileTexts = tiles
+            .Select(t => PupilG78PageTextDedupe.FinalizeRenderedText(t.Explanation))
+            .ToList();
+        body = PupilG78StoryComposer.ScrubStoryAgainstTiles(body, finalizedTileTexts);
         var tileIdSet = tileIds.ToHashSet();
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
+        var growthList = growthCategories;
+        if (contrast && !PupilG78StoryComposer.HasSubstantiveStrengthParagraph(body))
+        {
+            if (growthList.Count == 0)
+            {
+                growthList = PupilG78GrowthCompetencies.SelectGrowthCategoriesWithFallback(
+                    answers,
+                    clauses,
+                    result,
+                    maxCount: 4,
+                    contrastV2: true).ToList();
+            }
+        }
+
         var growth = PupilG78GrowthCompetencies.BuildForCategories(
             answers,
-            growthCategories,
+            growthList,
             pageItemIds,
             language,
             contrast);

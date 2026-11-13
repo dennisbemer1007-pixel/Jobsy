@@ -138,6 +138,34 @@ public static class PupilG78StoryComposer
             }
         }
 
+        if (contrastV2 && p1Sentences.Count < 2)
+        {
+            foreach (var clause in clauses
+                         .Where(c => c.EffectiveScore >= 4
+                                     && !selected.Contains(c.ItemId)
+                                     && !tileBlockedIds.Contains(c.ItemId)
+                                     && c.Model is AssessmentKind.Career or AssessmentKind.Culture or AssessmentKind.Values)
+                         .OrderByDescending(c => c.EffectiveScore)
+                         .ThenBy(c => c.ItemId))
+            {
+                if (p1Sentences.Count >= 2)
+                {
+                    break;
+                }
+
+                var line = PupilG78StoryFlow.MainClause(clause, contrastV2: true);
+                if (line.Length == 0 || SentenceOnPage(line, avoidSimilar))
+                {
+                    continue;
+                }
+
+                p1Sentences.Add(line);
+                selected.Add(clause.ItemId);
+                usedIds.Add(clause.ItemId);
+                RememberTheme(clause.ItemId, usedThemes);
+            }
+        }
+
         if (p1Sentences.Count < 2)
         {
             var social = PupilG78StorySummaries.SocialOverviewLine(result, answers, growthCategories, contrastV2);
@@ -203,9 +231,12 @@ public static class PupilG78StoryComposer
         paragraphs.Add(PupilG78StorySummaries.ComposeSchoolHobbiesRiasecParagraph(
             result, progress, vak, language, growthCategories, contrastV2));
 
-        DedupeSentencesAcrossParagraphs(paragraphs);
+        DedupeSentencesAcrossParagraphs(paragraphs, contrastV2);
 
-        EnsureEveryParagraphHasTwoSentences(paragraphs, answers, result, progress, vak, language, growthCategories);
+        if (!contrastV2)
+        {
+            EnsureEveryParagraphHasTwoSentences(paragraphs, answers, result, progress, vak, language, growthCategories);
+        }
 
         usedItemIds = usedIds.ToList();
         return paragraphs
@@ -1043,7 +1074,7 @@ public static class PupilG78StoryComposer
         }
     }
 
-    private static void DedupeSentencesAcrossParagraphs(List<string> paragraphs)
+    private static void DedupeSentencesAcrossParagraphs(List<string> paragraphs, bool contrastV2 = false)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
         for (var i = 0; i < paragraphs.Count; i++)
@@ -1064,10 +1095,10 @@ public static class PupilG78StoryComposer
         }
 
         paragraphs.RemoveAll(static p => string.IsNullOrWhiteSpace(p));
-        ReconcileCompetencyParagraphs(paragraphs);
+        ReconcileCompetencyParagraphs(paragraphs, contrastV2);
     }
 
-    private static void ReconcileCompetencyParagraphs(List<string> paragraphs)
+    private static void ReconcileCompetencyParagraphs(List<string> paragraphs, bool contrastV2 = false)
     {
         for (var i = 0; i < paragraphs.Count; i++)
         {
@@ -1079,10 +1110,38 @@ public static class PupilG78StoryComposer
             var firstDot = paragraphs[i].IndexOf('.', StringComparison.Ordinal);
             if (firstDot < 0 || paragraphs[i].Length <= firstDot + 2)
             {
+                if (contrastV2 && PupilG78PageLint.CountCompetencyIntroLabels(paragraphs[i]) >= 2)
+                {
+                    continue;
+                }
+
                 paragraphs[i] = "";
             }
         }
 
         paragraphs.RemoveAll(static p => string.IsNullOrWhiteSpace(p));
+    }
+
+    public static bool HasSubstantiveStrengthParagraph(string body)
+    {
+        foreach (var paragraph in PupilG78FactStory.SplitParagraphs(body))
+        {
+            if (!paragraph.StartsWith("Wat in je antwoorden vooral naar voren komt", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (PupilG78PageLint.CountCompetencyIntroLabels(paragraph) >= 2)
+            {
+                return true;
+            }
+
+            if (SplitStorySentences(paragraph).Count() >= 2)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

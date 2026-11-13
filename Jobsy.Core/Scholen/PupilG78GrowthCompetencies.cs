@@ -41,6 +41,38 @@ public static class PupilG78GrowthCompetencies
             .Select(x => x.Category)
             .ToList();
 
+    /// <summary>g78-2: when threshold growth is empty and the story has no strengths block, pick the lowest blended dimensions.</summary>
+    public static IReadOnlyList<string> SelectGrowthCategoriesWithFallback(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result,
+        int maxCount,
+        bool contrastV2)
+    {
+        var selected = SelectGrowthCategories(answers, maxCount, contrastV2).ToList();
+        if (selected.Count > 0 || !contrastV2 || clauses.Count == 0)
+        {
+            return selected;
+        }
+
+        return PupilG78GrowthCompetencies.DimensionScoresContrastV2(clauses, result)
+            .OrderBy(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Take(maxCount)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+
+    /// <summary>Diagnostics: blended v2 dimension scores used for strength intro selection.</summary>
+    public static IReadOnlyDictionary<string, double> ContrastDimensionScoresForDiagnostics(
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result,
+        IReadOnlyDictionary<string, int> answers,
+        bool contrastV2)
+        => contrastV2 && clauses.Count > 0
+            ? DimensionScoresContrastV2(clauses, result)
+            : DimensionAverages(answers, contrastV2);
+
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> BuildForCategories(
         IReadOnlyDictionary<string, int> answers,
         IReadOnlyList<string> growthCategories,
@@ -52,10 +84,17 @@ public static class PupilG78GrowthCompetencies
         foreach (var category in growthCategories)
         {
             var stats = StatsForCategory(category, answers, contrastV2);
+            var why = WhyExplanation(stats, pageItemIds, category, language, contrastV2);
+            if (contrastV2 && string.IsNullOrWhiteSpace(why))
+            {
+                var kid = PupilG78CompetencyNarrative.KidLabelTitle(category);
+                why = $"{kid} kwam minder naar voren in je antwoorden.";
+            }
+
             list.Add(new PupilG78GrowthCompetencyDto(
                 category,
                 PupilG78CompetencyNarrative.KidLabelTitle(category),
-                WhyExplanation(stats, pageItemIds, category, language, contrastV2),
+                why,
                 PanelId(category)));
         }
 

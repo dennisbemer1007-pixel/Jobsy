@@ -1,9 +1,10 @@
+using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts.Scholen;
 
 namespace Jobsy.Core.Scholen;
 
 /// <summary>Each fact sentence at most once on the result page (story + tiles).</summary>
-internal static class PupilG78PageTextDedupe
+public static class PupilG78PageTextDedupe
 {
     /// <summary>Removes from the story any sentence that already appears on a tile; tiles stay intact.</summary>
     public static string ScrubStoryAgainstTileExplanations(
@@ -13,7 +14,8 @@ internal static class PupilG78PageTextDedupe
         var tileNorms = new HashSet<string>(StringComparer.Ordinal);
         foreach (var tile in tiles)
         {
-            foreach (var sentence in SplitSentences(tile.Explanation))
+            var rendered = FinalizeRenderedText(tile.Explanation);
+            foreach (var sentence in SplitRenderedSentences(rendered))
             {
                 var norm = PupilG78PageLint.NormalizeSentence(sentence);
                 if (norm.Length >= 12)
@@ -32,8 +34,9 @@ internal static class PupilG78PageTextDedupe
         var scrubbed = new List<string>();
         foreach (var para in paragraphs)
         {
+            var renderedPara = FinalizeRenderedText(para);
             var kept = new List<string>();
-            foreach (var sentence in SplitSentences(para))
+            foreach (var sentence in SplitRenderedSentences(renderedPara))
             {
                 var norm = PupilG78PageLint.NormalizeSentence(sentence);
                 if (norm.Length >= 12 && tileNorms.Contains(norm))
@@ -44,28 +47,42 @@ internal static class PupilG78PageTextDedupe
                 kept.Add(sentence);
             }
 
-            scrubbed.Add(kept.Count > 0 ? PupilG78StoryFlow.FlowJoin(kept) : para);
+            if (kept.Count > 0)
+            {
+                scrubbed.Add(PupilG78StoryFlow.EnsureSentenceStartsCapitalized(PupilG78StoryFlow.FlowJoin(kept)));
+            }
         }
 
-        return string.Join(
-            PupilG78FactStory.ParagraphBreak,
-            scrubbed.Select(PupilG78StoryFlow.EnsureSentenceStartsCapitalized));
+        return string.Join(PupilG78FactStory.ParagraphBreak, scrubbed);
     }
 
-    private static IEnumerable<string> SplitSentences(string text)
+    internal static string FinalizeRenderedText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "";
+        }
+
+        return PupilG78StoryFlow.EnsureSentenceStartsCapitalized(
+            PupilQuestionStoryParaphrase.PolishJeForm(text.Trim()));
+    }
+
+    internal static IEnumerable<string> SplitRenderedSentences(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             yield break;
         }
 
-        foreach (var part in text.Split(". ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        foreach (var part in Regex.Split(text, @"(?<=\.)\s+"))
         {
             var s = part.Trim();
-            if (s.Length > 0)
+            if (s.Length == 0)
             {
-                yield return s.EndsWith('.') ? s : s + ".";
+                continue;
             }
+
+            yield return s.EndsWith('.') ? s : s + ".";
         }
     }
 }
