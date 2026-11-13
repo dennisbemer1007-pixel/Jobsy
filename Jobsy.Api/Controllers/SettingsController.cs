@@ -609,6 +609,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
         Add("PupilPassportV2Enabled", before.PupilPassportV2Enabled.ToString(), after.PupilPassportV2Enabled.ToString());
+        Add("G78ContrastQuestionsEnabled", before.G78ContrastQuestionsEnabled.ToString(), after.G78ContrastQuestionsEnabled.ToString());
         Add("StudentPassportEnabled", before.StudentPassportEnabled.ToString(), after.StudentPassportEnabled.ToString());
         Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
         Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());

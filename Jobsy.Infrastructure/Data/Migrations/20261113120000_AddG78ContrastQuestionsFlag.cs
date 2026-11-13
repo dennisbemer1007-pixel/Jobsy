@@ -1,3 +1,5 @@
+using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,6 +7,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Jobsy.Infrastructure.Data.Migrations;
 
 /// <inheritdoc />
+[DbContext(typeof(JobsyDbContext))]
+[Migration("20261113120000_AddG78ContrastQuestionsFlag")]
 public partial class AddG78ContrastQuestionsFlag : Migration
 {
     /// <inheritdoc />

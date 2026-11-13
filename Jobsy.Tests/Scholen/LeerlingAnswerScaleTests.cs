@@ -1,5 +1,6 @@
 using Bunit;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Web.Components.Leerling;
 using Jobsy.Web.Localization;
@@ -31,7 +32,7 @@ public class LeerlingAnswerScaleTests : BunitContext
     {
         var culture = Services.GetRequiredService<CultureState>();
         await culture.SetLanguageAsync("nl");
-        var def = _registry.Get(PupilQuestionSet.Groep78);
+        var def = _registry.GetGroep78(PupilG78ScoringVersions.V1);
 
         var cut = RenderScale(def, selected: 3);
 
@@ -42,8 +43,21 @@ public class LeerlingAnswerScaleTests : BunitContext
         Assert.Contains("Niet echt", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Soms", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Best wel", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Ja", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("Ja!", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Ja!", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task G78_v2_renders_contrast_scale_labels()
+    {
+        var culture = Services.GetRequiredService<CultureState>();
+        await culture.SetLanguageAsync("nl");
+        var def = _registry.GetGroep78(PupilG78ScoringVersions.V2);
+
+        var cut = RenderScale(def, selected: 3);
+
+        Assert.Contains("Veel meer A", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Veel meer B", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Allebei even", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

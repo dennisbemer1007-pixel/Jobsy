@@ -80,7 +80,7 @@ public static class FeatureFlagRegistry
             Def("SchoolsEnabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.Schools, pub, false),
             Def("PupilPassportV2Enabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.PupilPassportV2, pub, false, "JobsyFeatures:PupilPassportV2Enabled"),
             Def("StudentPassportEnabled", FeatureFlagAdminGroup.Scholen, PlatformFeature.StudentPassport, pub, false, "Jobsy:StudentPassportEnabled"),
-            Def("G78ContrastQuestionsEnabled", FeatureFlagAdminGroup.Scholen, null, exposedOnPublicEndpoint: false, defaultValue: false, configurationKey: "G78ContrastQuestionsEnabled"),
+            Def("G78ContrastQuestionsEnabled", FeatureFlagAdminGroup.Scholen, null, exposedOnPublicEndpoint: false, defaultValue: false),
 
             Def("TestsV2Enabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestsV2, pub, false),
             Def("CompactTestPdfEnabled", FeatureFlagAdminGroup.Tests, PlatformFeature.CompactTestPdf, pub, false),
