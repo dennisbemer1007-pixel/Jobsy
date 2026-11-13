@@ -236,7 +236,10 @@ public class CandidateOnboardingWizardTests
         Assert.Contains("GratisDnaMerge.TryMergeAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("TryAutoAdvanceEmptyMiniStepAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("OnboardingMiniTest", wizard, StringComparison.Ordinal);
-        Assert.Contains("PersonalStep", wizard, StringComparison.Ordinal);
+        Assert.True(
+            wizard.Contains("PersonalStep", StringComparison.Ordinal)
+            || wizard.Contains("OnboardingRustigPersonalStepBody", StringComparison.Ordinal),
+            "Expected personal step component in onboarding wizard.");
         var personal = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Onboarding/PersonalStep.razor"));
         Assert.Contains("KbAddressField", personal, StringComparison.Ordinal);
         Assert.Contains("Discovery.AddressPlaceholder", personal, StringComparison.Ordinal);
