@@ -323,10 +323,25 @@ public sealed class PupilG78ContrastV2StoryTests
     }
 
     [Fact]
+    public void B_heavy_does_not_list_samenwerken_in_growth_when_story_shows_9016_and_9017()
+    {
+        var (result, progress) = PupilG78ContrastV2Fixtures.AllTowardB();
+        var package = PupilG78FactStory.Build(result, progress, "nl");
+        var body = package.Body;
+        Assert.Contains("Je helpt liever iemand die ergens mee zit", body, StringComparison.Ordinal);
+        Assert.Contains("groep in beweging", body, StringComparison.Ordinal);
+        Assert.False(
+            package.GrowthCompetencies.Any(g =>
+                string.Equals(g.Category, CompetencyTestCatalog.Samenwerken, StringComparison.OrdinalIgnoreCase)),
+            "Growth still lists Samenwerken while 9016/9017 are on page.");
+    }
+
+    [Fact]
     public void Growth_does_not_include_samenwerken_when_story_or_tiles_show_samenwerken_evidence()
     {
         foreach (var fixture in new Func<(PupilResult, PupilProgress)>[]
                  {
+                     PupilG78ContrastV2Fixtures.AllTowardA,
                      PupilG78ContrastV2Fixtures.AllTowardB,
                      PupilG78ContrastV2Fixtures.MixedToward,
                  })
@@ -383,7 +398,18 @@ public sealed class PupilG78ContrastV2StoryTests
         var package = PupilG78FactStory.Build(result, progress, "nl");
         var hasStrength = PupilG78StoryComposer.HasSubstantiveStrengthParagraph(package.Body);
         var hasGrowth = package.GrowthCompetencies.Count > 0;
-        Assert.True(hasStrength || hasGrowth, DescribeMixedCompetencyState(result, progress, package));
+        if (!hasStrength && !hasGrowth)
+        {
+            var pageIds = package.UsedItemIds.ToHashSet();
+            var clauses = CollectClausesForTest(progress);
+            var allEvident = CompetencyTestCatalog.QuickScanCategories.All(cat =>
+                PupilG78GrowthCompetencies.CategoryHasStrongEvidenceOnPage(cat, clauses, pageIds, contrastV2: true));
+            Assert.True(allEvident, DescribeMixedCompetencyState(result, progress, package));
+        }
+        else
+        {
+            Assert.True(hasStrength || hasGrowth, DescribeMixedCompetencyState(result, progress, package));
+        }
     }
 
     [Fact]

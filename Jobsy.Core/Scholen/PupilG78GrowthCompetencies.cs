@@ -88,7 +88,9 @@ public static class PupilG78GrowthCompetencies
 
             if (contrastV2)
             {
-                if (PupilG78CompetencyExampleItems.ClauseSupportsCategory(clause, category, contrastV2: true))
+                var text = clause.Text.Trim().TrimEnd('.');
+                if (PupilG78CompetencyExampleItems.ClauseSupportsCategory(clause, category, contrastV2: true)
+                    || PupilG78CompetencyExampleItems.ChosenFactSupportsKidLabel(category, text))
                 {
                     return true;
                 }
