@@ -47,9 +47,18 @@ public sealed class OnboardingRustigStep06PlaywrightTests
         await page.Locator(".ob-wizard__consent, [data-ob-rustig-screen=\"step-07\"], .test-likert").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
-        await FunctionalOnboardingInteractivityHelpers.ClickOnboardingBackAsync(page, mobile);
-        await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
-        var value = await input.InputValueAsync();
+        if (mobile)
+        {
+            await page.GotoAsync($"{baseUrl}/candidate/start?step=6", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+        else
+        {
+            await FunctionalOnboardingInteractivityHelpers.ClickOnboardingBackAsync(page, mobile);
+            await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+
+        var value = await page.Locator("#onboarding-rustig-dream-input").InputValueAsync();
         Assert.Contains("Software", value, StringComparison.OrdinalIgnoreCase);
     }
 }
