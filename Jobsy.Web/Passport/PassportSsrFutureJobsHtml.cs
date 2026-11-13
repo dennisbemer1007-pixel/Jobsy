@@ -16,7 +16,8 @@ internal static class PassportSsrFutureJobsHtml
         FutureJobsList list,
         string regionLabel,
         string regionNote,
-        bool showCheck)
+        bool showCheck,
+        IReadOnlySet<string>? dayEscoIds = null)
     {
         sb.Append("<section class=\"detail-card future-jobs\" data-testid=\"future-jobs\" aria-labelledby=\"passport-future-jobs-title\">");
         sb.Append("<p class=\"future-jobs__eyebrow\"><i class=\"future-jobs__dot\" aria-hidden=\"true\"></i>");
@@ -82,6 +83,13 @@ internal static class PassportSsrFutureJobsHtml
                 }
 
                 sb.Append("<div class=\"future-jobs__acts\">");
+                if (dayEscoIds is not null
+                    && dayEscoIds.Contains(row.EscoId)
+                    && Guid.TryParse(row.EscoId, out _))
+                {
+                    OccupationDayPassportSsr.AppendCandidateButton(sb, culture, row.EscoId, row.TitleNl);
+                }
+
                 if (showCheck)
                 {
                     sb.Append("<button type=\"button\" class=\"future-jobs__link\" data-passport-fit-future-check=\"");

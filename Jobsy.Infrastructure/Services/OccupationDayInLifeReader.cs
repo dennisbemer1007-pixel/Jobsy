@@ -45,6 +45,32 @@ public sealed class OccupationDayInLifeReader : IOccupationDayInLifeReader
         return new OccupationDayReadResult(true, true, ToView(row, facts.TitleNl, language, facts));
     }
 
+    public async Task<IReadOnlySet<string>> StoredEscoIdsAsync(
+        IEnumerable<string> escoIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_options.Enabled)
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var ids = escoIds
+            .Where(id => !string.IsNullOrWhiteSpace(id) && OccupationDayFacts.For(id) is not null)
+            .Select(id => id.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (ids.Count == 0)
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var stored = await _db.OccupationDayInLives.AsNoTracking()
+            .Where(row => ids.Contains(row.EscoId))
+            .Select(row => row.EscoId)
+            .ToListAsync(cancellationToken);
+        return stored.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
     public async Task<OccupationDayAdminStatus> StatusAsync(
         bool running,
         int generatedThisRun,

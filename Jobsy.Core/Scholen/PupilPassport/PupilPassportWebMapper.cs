@@ -148,7 +148,8 @@ public sealed record PupilG78PassportCardDto(
     string Blurb,
     IReadOnlyList<string> FitTags,
     int? MatchPercent = null,
-    string? WhyFit = null);
+    string? WhyFit = null,
+    string? DayEscoId = null);
 
 public sealed record PupilG78PassportStrengthDto(string Title, string Subtitle, string IconKey);
 

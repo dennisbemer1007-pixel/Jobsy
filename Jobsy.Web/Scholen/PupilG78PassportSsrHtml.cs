@@ -4,6 +4,7 @@ using System.Text;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Passport;
 
 namespace Jobsy.Web.Scholen;
 
@@ -328,6 +329,13 @@ public static class PupilG78PassportSsrHtml
                     sb.Append(":</b> ");
                     sb.Append(E(string.Join(", ", job.FitTags)));
                     sb.Append("</div>");
+                }
+
+                if (!string.IsNullOrWhiteSpace(job.DayEscoId))
+                {
+                    sb.Append("<p class=\"lp-g78__job-day\">");
+                    OccupationDayPassportSsr.AppendLeerlingButton(sb, culture, job.DayEscoId!, job.Title);
+                    sb.Append("</p>");
                 }
 
                 sb.Append("</article>");

@@ -685,3 +685,57 @@
     flex-wrap: wrap;
     gap: var(--space-2);
 }
+
+.occupation-day-passport-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-block-start: var(--space-2);
+    padding: 0.45rem 0.85rem;
+    border: 1px solid #ddd5cc;
+    border-radius: 10px;
+    background: #faf6e8;
+    color: #0a2044;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.lp-g78__job-day,
+.ll-g78-result-job-day {
+    margin-block-start: 0.35rem;
+}
+
+.ll-g78-result-job-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    margin-block-end: var(--space-3);
+}
+
+.ll-g78-result-job-row .occupation-day-passport-btn {
+    margin-block-start: 0;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+}
+
+.ll-g78-result-jobs {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+}
+
+@media (min-width: 600px) {
+    .ll-g78-result-job-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .ll-g78-result-job-day {
+        margin-block-start: 0;
+    }
+}

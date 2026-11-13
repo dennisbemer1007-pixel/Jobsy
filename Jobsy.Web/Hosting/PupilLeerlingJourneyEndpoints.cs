@@ -44,6 +44,7 @@ public static class PupilLeerlingJourneyEndpoints
         app.MapPost("/leerling/puzzel/{key}/save", PostPuzzelAsync).RequireAuthorization(pupil);
         app.MapGet("/leerling/dit-ben-jij", GetDitBenJijAsync).RequireAuthorization(pupil);
         app.MapGet("/leerling/paspoort", GetPaspoortAsync).RequireAuthorization(pupil);
+        app.MapGet("/leerling/beroep/{escoId:guid}/dag", GetLeerlingOccupationDayAsync).RequireAuthorization(pupil);
         app.MapGet("/leerling/vo-paspoort", GetVoPaspoortAsync).RequireAuthorization(pupil);
         app.MapPost(VoPaspoortSavePath, PostVoPaspoortAsync).RequireAuthorization(pupil);
         app.MapGet("/leerling/mbo-hbo/uitleg", GetMboUitlegAsync).RequireAuthorization(pupil);
@@ -715,6 +716,46 @@ public static class PupilLeerlingJourneyEndpoints
         var body = PupilDitBenJijSsrHtml.BuildBody(result, culture, groep78, progress?.JourneyThemeKey, registry, passportV2, pdfHref);
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         return Html(http, culture["LeerlingStory.Title"], body, "/leerling/dit-ben-jij", groep78, progress?.JourneyThemeKey, afHtml, progress: progress);
+    }
+
+    private static async Task<IResult> GetLeerlingOccupationDayAsync(
+        HttpContext http,
+        Guid escoId,
+        JobsyApiClient api,
+        CultureState culture,
+        IAntiforgery af,
+        CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        culture.InitializeFromRequest(http);
+        var id = escoId.ToString("D");
+        var occupation = Jobsy.Core.Careers.OccupationCatalog.Shared.Get(id);
+        var unknown = occupation is null;
+        var error = false;
+        OccupationDayResponse? day = null;
+        if (!unknown)
+        {
+            try
+            {
+                day = await api.GetPupilOccupationDayAsync(escoId, culture.Language, ct);
+            }
+            catch (HttpRequestException ex) when (PupilLoadRetry.IsSessionLost(ex.StatusCode))
+            {
+                return await PupilSessionRecovery.RedirectToCodeLoginAsync(http);
+            }
+            catch
+            {
+                error = true;
+            }
+        }
+
+        var title = occupation?.Nl;
+        var pageTitle = string.IsNullOrWhiteSpace(title)
+            ? culture["Day.Eyebrow"]
+            : culture.Format("Day.Title", title);
+        var body = PupilOccupationDaySsrHtml.Build(culture, title, day, unknown, error);
+        var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
+        return Html(http, pageTitle, body, "/leerling/paspoort", useG78: true, themeKey: null, afHtml, showPause: false);
     }
 
     private static async Task<IResult> GetPaspoortAsync(HttpContext http, JobsyApiClient api, CultureState culture, IFeatureFlags features, IAntiforgery af, CancellationToken ct)
