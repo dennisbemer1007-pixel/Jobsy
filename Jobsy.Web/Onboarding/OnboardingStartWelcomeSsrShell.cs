@@ -55,7 +55,14 @@ internal static class OnboardingStartWelcomeSsrShell
 
         sb.Append("</div><p class=\"ob-v3-welcome__hint\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.Hint"]));
-        sb.Append("</p></div><div class=\"ob-v3-welcome__foot\">");
+        sb.Append("</p><div class=\"ob-v3-welcome__actions ob-rustig__actions\">");
+        sb.Append("<button type=\"button\" class=\"ob-rustig__link ob-v3-welcome__later\" onclick=\"window.location.assign('/home')\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Later"]));
+        sb.Append("</button><a class=\"ob-rustig__link ob-rustig__link--underline\" href=\"/privacy/data\" title=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AccountPrivacyLink"]));
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AccountPrivacyLink"]));
+        sb.Append("</a></div></div><div class=\"ob-v3-welcome__foot\">");
         sb.Append("<button type=\"submit\" name=\"obNav\" value=\"begin\" class=\"ob-v3-welcome__cta ob-rustig__btn ob-rustig__btn--primary\" data-testid=\"onboarding-begin\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.Cta"]));
         sb.Append("</button></div></form></section>");

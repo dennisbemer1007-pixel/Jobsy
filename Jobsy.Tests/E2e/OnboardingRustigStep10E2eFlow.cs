@@ -23,7 +23,7 @@ internal static class OnboardingRustigStep10E2eFlow
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 9, currentStep: 10);
         await CandidateJourneyE2e.ResetDemoValuesProfileForE2eAsync(email);
 
-        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync($"{baseUrl}/candidate/start?step=10", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,

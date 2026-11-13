@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Localization;
@@ -10,6 +11,53 @@ namespace Jobsy.Web.Onboarding;
 internal static class OnboardingSsrStepFormInteract
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
+
+    public static OnboardingClientStep1Request BuildStep1RequestFromForm(IFormCollection form, bool advance)
+    {
+        var workStatuses = new List<string>();
+        if (form.TryGetValue("workStatuses", out var rawStatuses))
+        {
+            foreach (var raw in rawStatuses)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    continue;
+                }
+
+                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    workStatuses.Add(part);
+                }
+            }
+        }
+
+        double? homeLat = null;
+        double? homeLng = null;
+        var latText = form["homeLat"].ToString();
+        var lngText = form["homeLng"].ToString();
+        if (double.TryParse(latText, NumberStyles.Float, CultureInfo.InvariantCulture, out var lat))
+        {
+            homeLat = lat;
+        }
+
+        if (double.TryParse(lngText, NumberStyles.Float, CultureInfo.InvariantCulture, out var lng))
+        {
+            homeLng = lng;
+        }
+
+        return new OnboardingClientStep1Request
+        {
+            FirstName = form["firstName"].ToString(),
+            LastName = form["lastName"].ToString(),
+            Phone = form["phone"].ToString(),
+            AddressQuery = form["addressQuery"].ToString(),
+            BirthDateText = form["birthDateText"].ToString(),
+            WorkStatuses = workStatuses,
+            HomeLat = homeLat,
+            HomeLng = homeLng,
+            Advance = advance,
+        };
+    }
 
     public static bool TryApply(
         int step,

@@ -30,11 +30,11 @@ public sealed class OnboardingRustigStep06PlaywrightTests
         await OnboardingRustigStep06E2eFlow.ReachRustigStep06Async(page, baseUrl, mobile);
         await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
 
-        var dreamChip = page.Locator(".ob-rustig__dream").First;
-        if (await dreamChip.CountAsync() > 0)
+        var dreamTile = page.GetByTestId("onboarding-dream-tile").First;
+        if (await dreamTile.CountAsync() > 0)
         {
-            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, dreamChip, "dream-chip");
-            await dreamChip.ClickAsync(new() { Force = mobile });
+            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, dreamTile, "dream-tile");
+            await dreamTile.ClickAsync(new() { Force = mobile });
         }
 
         var input = page.Locator("#onboarding-rustig-dream-input");

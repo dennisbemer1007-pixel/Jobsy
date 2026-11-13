@@ -262,6 +262,13 @@ internal static class FunctionalOnboardingInteractivityHelpers
             null,
             new() { Timeout = timeoutMs });
 
+    internal static async Task WaitForOnboardingStartStepAsync(IPage page, int step, int timeoutMs = 90_000)
+    {
+        await page.WaitForURLAsync($"**step={step}**", new() { Timeout = timeoutMs });
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await WaitForCircuitReadyAsync(page, timeoutMs);
+    }
+
     internal static async Task AssertChoiceTileTogglesWithinMsAsync(IPage page, ILocator tile, int maxMs = 300)
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_E2E_FUNCTIONAL_GATE") ?? "").Trim() == "1")
@@ -793,7 +800,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await FillKennismakenBasicsExceptWorkStatusAsync(page);
         await SelectAnyWorkStatusChipAsync(page);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await WaitForCircuitReadyAsync(page, 60_000);
+        await WaitForOnboardingStartStepAsync(page, 2, 90_000);
         await AssertOnboardingRustigStepScreenAsync(page, 2);
         if (targetStep == 2)
         {
@@ -814,7 +821,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             await preset.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
             await WaitForCircuitReadyAsync(page, 60_000);
             await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-            await WaitForCircuitReadyAsync(page, 60_000);
+            await WaitForOnboardingStartStepAsync(page, 3, 90_000);
         }
 
         await AssertOnboardingRustigStepScreenAsync(page, 3);
@@ -834,7 +841,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             {
                 await SelectRustigTransportAndTravelAsync(page, mobile);
                 await ClickWizardNextWhenVisibleAsync(page);
-                await WaitForCircuitReadyAsync(page, 60_000);
+                await WaitForOnboardingStartStepAsync(page, 4, 90_000);
                 continue;
             }
 
@@ -848,6 +855,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
 
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        await WaitForOnboardingStartStepAsync(page, 5, 90_000);
         await AssertOnboardingRustigStepScreenAsync(page, 5);
     }
 
@@ -1458,8 +1466,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var next = page.GetByTestId("onboarding-next");
         await next.ScrollIntoViewIfNeededAsync();
         await WaitForCircuitReadyAsync(page, 15_000);
+        var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+        var beforeUrl = page.Url;
         await next.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
-        await page.WaitForTimeoutAsync(450);
+        if (ssr)
+        {
+            await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 90_000 });
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            await WaitForCircuitReadyAsync(page, 90_000);
+        }
+        else
+        {
+            await page.WaitForTimeoutAsync(450);
+        }
     }
 
     internal static async Task ClickOnboardingBackAsync(IPage page, bool mobile)

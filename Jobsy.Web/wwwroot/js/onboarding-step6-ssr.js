@@ -7,7 +7,6 @@
 
         var input = form.querySelector('input[name="dream"]');
         var grid = form.querySelector("[data-ob-ssr-dream-grid]");
-        var saveBtn = form.querySelector("[data-ob-step6-save]");
 
         function deselectTiles() {
             if (!grid) return;
@@ -54,8 +53,7 @@
             input.addEventListener("input", deselectTiles);
             input.addEventListener("blur", function () {
                 if (form.getAttribute("data-ob-step6-submitting") === "1") return;
-                if (saveBtn) saveBtn.click();
-                else saveDream();
+                saveDream();
             });
         }
 
