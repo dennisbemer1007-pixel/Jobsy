@@ -38,7 +38,7 @@ internal static class PupilG78StoryFlow
                || text.StartsWith("Juist hier zie je het anders", StringComparison.Ordinal);
     }
 
-  /// <summary>At most one &quot;, en &quot; join; further sentences start new with &quot;. &quot;.</summary>
+    /// <summary>At most one &quot;, en &quot; join; further sentences start new with &quot;. &quot;.</summary>
     public static string FlowJoin(IReadOnlyList<string> sentences)
     {
         var parts = sentences

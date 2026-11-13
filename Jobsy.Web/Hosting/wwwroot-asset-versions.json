@@ -164,11 +164,11 @@
     "v": "20261018-01"
   },
   "css/features/leerling-paspoort-g78.css": {
-    "sha256": "9f3b674dd100e9d85f3f65104b7fa0a11bacb201cd94d57aa6f102e338ee5edf",
+    "sha256": "d2598ceadc1c3a473bc1ca633c8c8dd710adefaddfa1867b78fb4b95c85d1578",
     "v": "20261028-59"
   },
   "css/features/leerling-werelden-kies.css": {
-    "sha256": "6092d2a52068f5640952fc6af5dbd4b40d190e5889917956dd407d6b5bc0da31",
+    "sha256": "5fd113ce000d284eece5661933b8c8d958790a4008ac98b081aa933b5695c40f",
     "v": "20261102-02"
   },
   "css/features/lobsy-assistant-panel.css": {
@@ -496,7 +496,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "91f775a03a89fb2076f754918868373e59a162ae5fdcb8a0eb8ec3e1d9feddd2",
+    "sha256": "3c43d3ef35f494d30e700584366a5b48e43432c46269c1ad92966a3f552d5ccd",
     "v": "20261103-01"
   },
   "js/leerling-login.js": {

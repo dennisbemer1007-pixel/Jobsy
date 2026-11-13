@@ -14,7 +14,7 @@ public sealed class G78ContrastQuestionScreenshotTests
     [InlineData(9001, 390, 844, "mobile", true)]
     [InlineData(9016, 1440, 900, "desktop", false)]
     [InlineData(9016, 390, 844, "mobile", false)]
-  public async Task Contrast_reis_full_page_screenshot(int itemId, int width, int height, string label, bool selected)
+    public async Task Contrast_reis_full_page_screenshot(int itemId, int width, int height, string label, bool selected)
     {
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         var repoRoot = G78ContrastScreenshotHarness.RepoRoot();
