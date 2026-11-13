@@ -333,6 +333,13 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         if (step is >= 1 and <= 6)
         {
+            var v3Rustig = await page.Locator("form[data-ob-ssr-form], .ob-wizard--v3").CountAsync() > 0;
+            if (v3Rustig)
+            {
+                await AssertOnboardingRustigStepScreenAsync(page, step);
+                return;
+            }
+
             var mobile = (page.ViewportSize?.Width ?? 1440) < 768;
             var selector = mobile
                 ? "[data-testid=onboarding-mobile-hero-img]"

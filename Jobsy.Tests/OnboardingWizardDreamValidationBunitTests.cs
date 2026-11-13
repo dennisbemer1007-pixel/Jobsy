@@ -154,7 +154,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
 
     private sealed class FixedRustigGate : IOnboardingRustigGate
     {
-        public bool Enabled => false;
+        public bool Enabled => true;
     }
 
     private sealed class FixedFlags : IFeatureFlags
