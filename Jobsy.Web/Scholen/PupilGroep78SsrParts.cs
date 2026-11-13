@@ -125,7 +125,14 @@ public static class PupilGroep78SsrParts
         sb.Append("\" /><input type=\"hidden\" name=\"Value\" value=\"");
         sb.Append(selected?.ToString(CultureInfo.InvariantCulture) ?? "");
         sb.Append("\" />");
-        sb.Append("<div class=\"answers\" role=\"radiogroup\" aria-label=\"");
+        var contrastScale = string.Equals(def.ScoringVersion, PupilG78ScoringVersions.V2, StringComparison.Ordinal);
+        sb.Append("<div class=\"answers");
+        if (contrastScale)
+        {
+            sb.Append(" answers--contrast");
+        }
+
+        sb.Append("\" role=\"radiogroup\" aria-label=\"");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Answers"]));
         sb.Append("\" data-testid=\"ll-g78-answers\">");
         foreach (var (value, key) in def.AnswerLabels)

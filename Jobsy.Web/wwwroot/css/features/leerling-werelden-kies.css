@@ -1703,6 +1703,15 @@
     font-size: 20px;
   }
 
+  .ll-g78-shell .answers--contrast .ans {
+    white-space: normal;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.25;
+    padding: 10px 14px;
+    min-height: 52px;
+  }
+
   .ll-g78-shell .ans .lvl {
     width: 28px;
     height: 28px;

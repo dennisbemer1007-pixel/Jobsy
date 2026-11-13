@@ -44,19 +44,27 @@ public sealed record PupilG78StoryPackage(
 public static class PupilG78FactStory
 {
     public const string ParagraphBreak = "\n\n";
-    private static readonly PupilQuestionBank Bank = new();
+    private static readonly PupilQuestionBank BankV1 = new();
+    private static readonly PupilQuestionBankG78V2 BankV2 = new();
 
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
     public static bool IsGroep78(PupilResult result)
-        => string.Equals(result.ScoringVersion, "g78-1", StringComparison.OrdinalIgnoreCase);
+        => PupilG78ScoringVersions.IsKnown(result.ScoringVersion);
+
+    private static bool IsContrastV2(PupilResult result)
+        => string.Equals(result.ScoringVersion, PupilG78ScoringVersions.V2, StringComparison.Ordinal);
+
+    private static IPupilQuestionBank BankFor(PupilResult result)
+        => IsContrastV2(result) ? BankV2 : BankV1;
 
     public static PupilG78StoryPackage Build(PupilResult result, PupilProgress? progress, string language = "nl")
     {
         var answers = ParseAnswers(progress?.AnswersJson);
-        var clauses = CollectClauses(answers, language);
+        var contrast = IsContrastV2(result);
+        var clauses = CollectClauses(answers, language, BankFor(result), contrast);
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
-        var growthCategories = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4).ToList();
+        var growthCategories = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4, contrast).ToList();
         var growthCategorySet = growthCategories.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(answers, growthCategorySet);
         var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(
@@ -136,7 +144,8 @@ public static class PupilG78FactStory
             answers,
             growthCategories,
             pageItemIds,
-            language);
+            language,
+            contrast);
         var allUsed = pageItemIds.ToList();
         var preferences = BuildPreferences(clauses, answers, allUsed, progress, vak, language);
         var sheet = BuildFactSheet(clauses, progress, vak, language);
@@ -181,27 +190,34 @@ public static class PupilG78FactStory
         return texts;
     }
 
-    private static List<G78AnswerClause> CollectClauses(IReadOnlyDictionary<string, int> answers, string language)
+    private static List<G78AnswerClause> CollectClauses(
+        IReadOnlyDictionary<string, int> answers,
+        string language,
+        IPupilQuestionBank bank,
+        bool contrast)
     {
         var list = new List<G78AnswerClause>();
-        foreach (var item in Bank.AllItems)
+        foreach (var item in bank.AllItems)
         {
             if (!answers.TryGetValue(item.Id, out var raw))
             {
                 continue;
             }
 
-            var q = Bank.Questions.FirstOrDefault(x => x.Id == item.NumericId);
+            var q = bank.Questions.FirstOrDefault(x => x.Id == item.NumericId);
             if (q is null)
             {
                 continue;
             }
 
-            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            var likert = contrast && q.IsContrast ? PupilG78ContrastLikertScorer.TowardA(raw) : raw;
+            var eff = contrast && q.IsContrast
+                ? likert
+                : PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
             var text = eff >= 4
-                ? PupilQuestionStoryParaphrase.StrongAgreeClause(q.Id, q.Reverse, raw, language)
+                ? PupilQuestionStoryParaphrase.StrongAgreeClause(q.Id, false, likert, language)
                 : eff <= 2
-                    ? PupilQuestionStoryParaphrase.StrongDisagreeClause(q.Id, q.Reverse, raw, language)
+                    ? PupilQuestionStoryParaphrase.StrongDisagreeClause(q.Id, false, likert, language)
                     : null;
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -288,7 +304,8 @@ public static class PupilG78FactStory
         hobbies = DedupeHobbyVsSchool(hobbies, school).Take(6).ToList();
 
         var belangrijkRanked = new List<(int Eff, string Label)>();
-        foreach (var item in Bank.AllItems)
+        var bank = BankV1;
+        foreach (var item in bank.AllItems)
         {
             if (item.NumericId is < 9031 or > 9045)
             {
@@ -300,7 +317,7 @@ public static class PupilG78FactStory
                 continue;
             }
 
-            var q = Bank.Questions.First(x => x.Id == item.NumericId);
+            var q = bank.Questions.First(x => x.Id == item.NumericId);
             var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
             if (eff < 4)
             {

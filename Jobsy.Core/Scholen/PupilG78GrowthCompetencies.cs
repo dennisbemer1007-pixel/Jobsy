@@ -29,9 +29,10 @@ public static class PupilG78GrowthCompetencies
     /// <summary>Lowest competency dimensions for growth (mean &lt; 3.0 or any 1–2 answer), max 5.</summary>
     public static IReadOnlyList<string> SelectGrowthCategories(
         IReadOnlyDictionary<string, int> answers,
-        int maxCount = 5)
+        int maxCount = 5,
+        bool contrastV2 = false)
         => CompetencyTestCatalog.QuickScanCategories
-            .Select(cat => (Category: cat, Stats: StatsForCategory(cat, answers)))
+            .Select(cat => (Category: cat, Stats: StatsForCategory(cat, answers, contrastV2)))
             .Where(x => x.Stats.Average < 3.0 || (x.Stats.HasLow && x.Stats.Average < 3.35))
             .OrderBy(x => x.Stats.Average)
             .ThenBy(x => x.Category, StringComparer.Ordinal)
@@ -43,16 +44,17 @@ public static class PupilG78GrowthCompetencies
         IReadOnlyDictionary<string, int> answers,
         IReadOnlyList<string> growthCategories,
         IReadOnlySet<int>? pageItemIds,
-        string language = "nl")
+        string language = "nl",
+        bool contrastV2 = false)
     {
         var list = new List<PupilG78GrowthCompetencyDto>();
         foreach (var category in growthCategories)
         {
-            var stats = StatsForCategory(category, answers);
+            var stats = StatsForCategory(category, answers, contrastV2);
             list.Add(new PupilG78GrowthCompetencyDto(
                 category,
                 PupilG78CompetencyNarrative.KidLabelTitle(category),
-                WhyExplanation(stats, pageItemIds, category, language),
+                WhyExplanation(stats, pageItemIds, category, language, contrastV2),
                 PanelId(category)));
         }
 
@@ -179,7 +181,8 @@ public static class PupilG78GrowthCompetencies
         DimensionStats stats,
         IReadOnlySet<int>? pageItemIds,
         string growthCategory,
-        string language)
+        string language,
+        bool contrastV2 = false)
     {
         _ = language;
         _ = growthCategory;
@@ -198,19 +201,35 @@ public static class PupilG78GrowthCompetencies
         var parts = new List<string>();
         foreach (var pick in picks)
         {
-            var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{pick.ItemId}");
+            var stem = contrastV2 && PupilQuestionBankNlStringsG78V2.TryGet($"LeerlingQ.{pick.ItemId}.A", out var contrastStem)
+                ? contrastStem
+                : PupilQuestionBankNlStrings.Get($"LeerlingQ.{pick.ItemId}");
             stem = stem.Replace("geen zin hebt", "geen zin heb", StringComparison.Ordinal);
-            var label = AnswerLabelNl.GetValueOrDefault(pick.Raw, "soms");
+            var label = contrastV2
+                ? pick.Raw switch
+                {
+                    1 => "veel meer A",
+                    2 => "een beetje meer A",
+                    3 => "allebei even",
+                    4 => "een beetje meer B",
+                    5 => "veel meer B",
+                    _ => "soms",
+                }
+                : AnswerLabelNl.GetValueOrDefault(pick.Raw, "soms");
             parts.Add($"Bij \"{stem}\" koos je \"{label}\".");
         }
 
         return string.Join(' ', parts);
     }
 
-    private static DimensionStats StatsForCategory(string category, IReadOnlyDictionary<string, int> answers)
+    private static DimensionStats StatsForCategory(
+        string category,
+        IReadOnlyDictionary<string, int> answers,
+        bool contrastV2 = false)
     {
+        var bank = contrastV2 ? (IPupilQuestionBank)new PupilQuestionBankG78V2() : Bank;
         var itemScores = new List<ItemScore>();
-        foreach (var q in Bank.Questions.Where(q =>
+        foreach (var q in bank.Questions.Where(q =>
                      q.Model == AssessmentKind.Competence
                      && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
                      && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
@@ -220,7 +239,9 @@ public static class PupilG78GrowthCompetencies
                 continue;
             }
 
-            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            var eff = contrastV2 && q.IsContrast
+                ? PupilG78ContrastLikertScorer.TowardA(raw)
+                : PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
             itemScores.Add(new ItemScore(q.Id, raw, eff));
         }
 
