@@ -179,6 +179,10 @@
     "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a",
     "v": "20261026-08"
   },
+  "css/features/lobsy-coach-ssr-chrome.css": {
+    "sha256": "7e155bd5270a49470620f6722d49c90839683f5876c64f2b9fcebb61e0ee0841",
+    "v": "20261113-catalog"
+  },
   "css/features/match-desktop.css": {
     "sha256": "46fae2596ab48130ab952c5b1d92e7f1afc0d0052180dcde879c5a5c4b47aa0a",
     "v": "20261013-01"
@@ -254,6 +258,10 @@
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
     "v": "20261018-07"
+  },
+  "css/features/onboarding-wizard-v3.css": {
+    "sha256": "731f7966ecbf724b16f751a9dba01c8c722ec7158ce1b22894fb95a0318c4e7c",
+    "v": "20261113-catalog"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
     "sha256": "c314b1f49152bd4af5e8e9d769ee6e8006aea2d0e187869ba1b724d721aa3dda",
@@ -496,7 +504,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "3c43d3ef35f494d30e700584366a5b48e43432c46269c1ad92966a3f552d5ccd",
+    "sha256": "f021296a9813f81c792868a42ae556cd0e9c4b3f5289b926f2a46f42bd2900d8",
     "v": "20261103-01"
   },
   "js/leerling-login.js": {

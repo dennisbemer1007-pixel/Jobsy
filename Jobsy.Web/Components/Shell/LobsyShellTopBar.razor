@@ -1,0 +1,100 @@
+@using System.Security.Claims
+@using Jobsy.Core.Hosting
+@using Jobsy.Web.Components.Admin.Shell
+@using Jobsy.Web.Media
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Security
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<header class="admin-topbar @(Kind == LobsyShellTopBarKind.CandidateOnboarding ? "admin-topbar--candidate-onboarding" : null)"
+        data-testid="lobsy-shell-topbar">
+    <div class="admin-topbar__start">
+        @if (Kind == LobsyShellTopBarKind.Admin)
+        {
+            <button type="button"
+                    class="admin-topbar__menu"
+                    aria-label="@Culture["AdminShell.OpenMenu"]"
+                    @onclick="OnMenuClick">
+                <span aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Menu))</span>
+            </button>
+            <a class="admin-topbar__brand" href="/admin" aria-label="Lobsy Beheer">
+                <span class="admin-topbar__logo-tile">
+                    <LobsyLogo Class="admin-topbar__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Mark" />
+                </span>
+                <span class="admin-topbar__brand-text">
+                    <span class="admin-topbar__beheer">@Culture["AdminShell.Beheer"]</span>
+                </span>
+            </a>
+            <AdminEnvBadge Label="@EnvLabel" />
+        }
+        else
+        {
+            <a class="admin-topbar__brand" href="@CandidateHomeHref" aria-label="Lobsy">
+                <span class="admin-topbar__logo-tile">
+                    <LobsyLogo Class="admin-topbar__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Mark" />
+                </span>
+                <span class="admin-topbar__brand-text">
+                    <span class="admin-topbar__name">Lobsy</span>
+                </span>
+            </a>
+        }
+    </div>
+
+    @if (Kind == LobsyShellTopBarKind.Admin)
+    {
+        <div class="admin-topbar__search">
+            <AdminGlobalSearch @ref="_search" CompactTrigger="false" />
+        </div>
+    }
+
+    <div class="admin-topbar__end">
+        @if (Kind == LobsyShellTopBarKind.Admin)
+        {
+            <button type="button"
+                    class="admin-topbar__search-trigger"
+                    aria-label="@Culture["AdminShell.SearchOpen"]"
+                    @onclick="OnMobileSearchClick">
+                <span aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Search))</span>
+                <span class="admin-topbar__search-label">@Culture["AdminShell.SearchOpen"]</span>
+            </button>
+        }
+        <PageHelp />
+        <NotificationBell />
+        <LanguageSelector />
+        <AuthorizeView>
+            <Authorized>
+                <div class="admin-topbar__account">
+                    <AuthHeader />
+                    <span class="admin-topbar__meta">
+                        @if (Kind == LobsyShellTopBarKind.CandidateOnboarding)
+                        {
+                            @Culture["Role.Candidate"]
+                        }
+                        else
+                        {
+                            @Culture["AdminShell.RoleAdmin"]
+                            @if (AdminSessionClaims.IsMfaSatisfiedInSession(context.User))
+                            {
+                                <span aria-hidden="true"> · </span>@Culture["AdminShell.MfaActive"]
+                            }
+                        }
+                    </span>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</header>
+
+@code {
+    [Parameter] public LobsyShellTopBarKind Kind { get; set; } = LobsyShellTopBarKind.Admin;
+    [Parameter] public string EnvLabel { get; set; } = DeploymentEnvironment.Lokaal;
+    [Parameter] public EventCallback OnMenuClick { get; set; }
+    [Parameter] public EventCallback OnMobileSearchClick { get; set; }
+    [Parameter] public string CandidateHomeHref { get; set; } = "/home";
+
+    private AdminGlobalSearch? _search;
+
+    public Task FocusSearchAsync() => _search?.FocusAsync() ?? Task.CompletedTask;
+}

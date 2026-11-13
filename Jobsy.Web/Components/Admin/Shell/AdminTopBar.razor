@@ -1,62 +1,12 @@
-@using System.Security.Claims
 @using Jobsy.Core.Hosting
-@using Jobsy.Web.Media
-@using Jobsy.Web.Navigation
-@using Jobsy.Web.Security
-@using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Web.Components.Shell
 @inject CultureState Culture
-@inject NavigationManager Navigation
 
-<header class="admin-topbar">
-    <div class="admin-topbar__start">
-        <button type="button"
-                class="admin-topbar__menu"
-                aria-label="@Culture["AdminShell.OpenMenu"]"
-                @onclick="OnMenuClick">
-            <span aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Menu))</span>
-        </button>
-        <a class="admin-topbar__brand" href="/admin" aria-label="Lobsy Beheer">
-            <span class="admin-topbar__logo-tile">
-                <LobsyLogo Class="admin-topbar__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Mark" />
-            </span>
-            <span class="admin-topbar__brand-text">
-                <span class="admin-topbar__beheer">@Culture["AdminShell.Beheer"]</span>
-            </span>
-        </a>
-        <AdminEnvBadge Label="@EnvLabel" />
-    </div>
-
-    <div class="admin-topbar__search">
-        <AdminGlobalSearch @ref="_search" CompactTrigger="false" />
-    </div>
-
-    <div class="admin-topbar__end">
-        <button type="button"
-                class="admin-topbar__search-trigger"
-                aria-label="@Culture["AdminShell.SearchOpen"]"
-                @onclick="OpenMobileSearch">
-            <span aria-hidden="true">@((MarkupString)NavIconSvg.WithIntrinsicSize(NavIcons.Search))</span>
-            <span class="admin-topbar__search-label">@Culture["AdminShell.SearchOpen"]</span>
-        </button>
-        <PageHelp />
-        <NotificationBell />
-        <LanguageSelector />
-        <AuthorizeView>
-            <Authorized>
-                <div class="admin-topbar__account">
-                    <AuthHeader />
-                    <span class="admin-topbar__meta">
-                        @Culture["AdminShell.RoleAdmin"]
-                        @if (AdminSessionClaims.IsMfaSatisfiedInSession(context.User))
-                        {
-                            <span aria-hidden="true"> · </span>@Culture["AdminShell.MfaActive"]
-                        }
-                    </span>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-    </div>
-</header>
+<LobsyShellTopBar @ref="_topBar"
+                  Kind="LobsyShellTopBarKind.Admin"
+                  EnvLabel="@EnvLabel"
+                  OnMenuClick="OnMenuClick"
+                  OnMobileSearchClick="OpenMobileSearch" />
 
 @if (_mobileSearchOpen)
 {
@@ -74,19 +24,20 @@
     [Parameter] public string EnvLabel { get; set; } = DeploymentEnvironment.Lokaal;
     [Parameter] public EventCallback OnMenuClick { get; set; }
 
-    private AdminGlobalSearch? _search;
+    private LobsyShellTopBar? _topBar;
     private bool _mobileSearchOpen;
 
     private void OpenMobileSearch() => _mobileSearchOpen = true;
+
     private void CloseMobileSearch() => _mobileSearchOpen = false;
 
     private void OnSearchKey(KeyboardEventArgs e)
     {
         if (e.Key == "Escape")
         {
-            _mobileSearchOpen = false;
+            CloseMobileSearch();
         }
     }
 
-    public Task FocusSearchAsync() => _search?.FocusAsync() ?? Task.CompletedTask;
+    public Task FocusSearchAsync() => _topBar?.FocusSearchAsync() ?? Task.CompletedTask;
 }

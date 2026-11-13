@@ -2,6 +2,7 @@
 @attribute [NoBlazorRuntime]
 @using Jobsy.Core.Authorization
 @using Jobsy.Core.Features
+@using Jobsy.Web.Components.Shell
 @using Jobsy.Web.Security
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
@@ -15,19 +16,17 @@
 @inject AuthenticationStateProvider AuthState
 @inject IFeatureFlags FeatureFlags
 
-<div class="app-shell app-shell--candidate has-bottom-nav app-shell--onboarding-ssr" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
-    <AppShellHeader HomeHref="@_homeHref"
-                    HeaderTagline="@Culture["Brand.Tagline"]"
-                    ShowCandidatePwaInstall="false" />
-    <main class="app-main">
+<div class="app-shell app-shell--candidate app-shell--onboarding-ssr app-shell--onboarding-v3" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <LobsyShellTopBar Kind="LobsyShellTopBarKind.CandidateOnboarding"
+                      CandidateHomeHref="@_homeHref" />
+    <main class="app-main app-main--onboarding-v3">
         <div class="app-main__content">
             @Body
         </div>
     </main>
-    <NoBlazorCandidateNav RenderPart="NoBlazorCandidateNav.Part.Bottom" />
     @if (_ssrCoachAvailable)
     {
-        <LobsyCoachSsr HasBottomNav="true" AskLabel="@Culture["Coach.Ask"]" />
+        <LobsyCoachSsr HasBottomNav="false" AskLabel="@Culture["Coach.Ask"]" />
     }
 </div>
 

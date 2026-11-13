@@ -441,9 +441,11 @@ public static partial class PageAssetCatalog
         {
             return
             [
-                WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css"),
+                WwwrootAssetCatalog.Url("css/features/admin.css"),
                 WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css"),
+                WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css"),
                 WwwrootAssetCatalog.Url("css/features/onboarding-client-nav.css"),
+                WwwrootAssetCatalog.Url("css/features/lobsy-coach-ssr-chrome.css"),
             ];
         }
 
