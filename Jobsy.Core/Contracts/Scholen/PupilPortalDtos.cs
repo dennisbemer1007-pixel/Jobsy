@@ -124,6 +124,12 @@ public sealed record PupilG78JobSuggestionDto(
 
 public sealed record PupilJobExploreChipDto(string Label, string? DayEscoId);
 
+public sealed record PupilG78GrowthCompetencyDto(
+    string Category,
+    string Label,
+    string WhyExplanation,
+    string PanelId);
+
 public sealed record PupilResultPageDto(
     string ClassLabel,
     string CodeDisplay,

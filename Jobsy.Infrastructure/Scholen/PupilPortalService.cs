@@ -124,7 +124,9 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilReportPdfService _pdf;
     private readonly IPupilPassportPdfService _passportV2;
     private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
+#pragma warning disable IDE0052
     private readonly IPupilG78MirrorRenderer _g78Mirror;
+#pragma warning restore IDE0052
     private readonly IPlatformFeatureService _features;
     private readonly IOccupationDayInLifeReader _occupationDays;
     private readonly TimeProvider _clock;
@@ -1292,17 +1294,6 @@ public sealed class PupilPortalService : IPupilPortalService
         {
             var passportModel = _passportModelBuilder.Build(
                 code, schoolClass, schoolName, display, displayNameOnPdf, language ?? "nl");
-            if (passportModel.Variant == PupilPassportVariant.Groep78
-                && schoolClass.QuestionSet == PupilQuestionSet.Groep78)
-            {
-                var mirror = await _g78Mirror.RenderMirrorBodyAsync(
-                    code.Result!,
-                    code.Progress,
-                    language ?? "nl",
-                    cancellationToken);
-                passportModel = passportModel with { MirrorBody = mirror };
-            }
-
             bytes = _passportV2.Render(passportModel);
         }
         else
