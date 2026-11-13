@@ -10,6 +10,7 @@ public sealed class OnboardingStartFormPostTests
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
+        factory.EnsureServerAddress();
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=1"));
 
@@ -41,6 +42,7 @@ public sealed class OnboardingStartFormPostTests
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
+        factory.EnsureServerAddress();
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=1"));
 
