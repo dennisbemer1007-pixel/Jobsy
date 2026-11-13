@@ -6271,6 +6271,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("TestDepthValueMockupEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("G78ContrastQuestionsEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("TestEditModeEnabled")
                         .HasColumnType("boolean");
 
@@ -7668,6 +7671,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("JourneyThemeKey")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
+
+                    b.Property<string>("QuestionScoringVersion")
+                        .HasColumnType("text");
 
                     b.Property<string>("LikeOtherWord")
                         .HasMaxLength(24)

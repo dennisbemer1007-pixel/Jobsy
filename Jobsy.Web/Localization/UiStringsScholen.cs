@@ -460,6 +460,15 @@ public static class UiStringsScholen
         nl["Leerling.G78.Route.IslandSub"] = "Wat vind jij leuk?";
         nl["Leerling.G78.Route.FinalSub"] = "Jouw eiland";
         nl["Leerling.G78.Answer.Yes"] = "Ja!";
+        nl["Leerling.G78.Contrast.Or"] = "of";
+        nl["Leerling.G78.Contrast.Pick"] = "Wat past het beste bij jou?";
+        nl["Leerling.G78.Contrast.Answer.1"] = "Veel meer A";
+        nl["Leerling.G78.Contrast.Answer.2"] = "Een beetje meer A";
+        nl["Leerling.G78.Contrast.Answer.3"] = "Allebei even";
+        nl["Leerling.G78.Contrast.Answer.4"] = "Een beetje meer B";
+        nl["Leerling.G78.Contrast.Answer.5"] = "Veel meer B";
+        nl["AdminSettings.G78ContrastQuestionsEnabled.Title"] = "G78 contrastvragen (A/B)";
+        nl["AdminSettings.G78ContrastQuestionsEnabled.Desc"] = "Nieuwe groep 7/8-vragenbank g78-2 met contrastschalen. Uit = oude Likert g78-1 voor nieuwe sessies.";
         nl["Leerling.G78.Strip.koraalrif"] = "Koraalrif";
         nl["Leerling.G78.Strip.schatgrot"] = "Schatgrot";
         nl["Leerling.G78.Strip.vuurtoren"] = "Vuurtoren";

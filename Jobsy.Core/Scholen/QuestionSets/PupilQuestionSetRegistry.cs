@@ -11,10 +11,13 @@ namespace Jobsy.Core.Scholen.QuestionSets;
 public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
 {
     private readonly Dictionary<PupilQuestionSet, PupilQuestionSetDef> _bySet;
+    private readonly PupilQuestionSetDef _g78V1;
+    private readonly PupilQuestionSetDef _g78V2;
 
     public PupilQuestionSetRegistry()
     {
         var g78Bank = new PupilQuestionBank();
+        var g78BankV2 = new PupilQuestionBankG78V2();
         var voBank = new PupilQuestionBankVo();
         var g78Worlds = new PupilWorldPlan[]
         {
@@ -38,6 +41,14 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             (4, "Leerling.Answer.Quite"),
             (5, "Leerling.G78.Answer.Yes"),
         };
+        var g78ContrastLabels = new (int Value, string Key)[]
+        {
+            (1, "Leerling.G78.Contrast.Answer.1"),
+            (2, "Leerling.G78.Contrast.Answer.2"),
+            (3, "Leerling.G78.Contrast.Answer.3"),
+            (4, "Leerling.G78.Contrast.Answer.4"),
+            (5, "Leerling.G78.Contrast.Answer.5"),
+        };
         var voLabels = new (int Value, string Key)[]
         {
             (1, "Leerling.Vo.Answer.1"),
@@ -47,10 +58,10 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
             (5, "Leerling.Vo.Answer.5"),
         };
 
-        var g78 = new PupilQuestionSetDef(
+        _g78V1 = new PupilQuestionSetDef(
             Set: PupilQuestionSet.Groep78,
             Key: "g78",
-            ScoringVersion: "g78-1",
+            ScoringVersion: PupilG78ScoringVersions.V1,
             Bank: g78Bank,
             Worlds: g78Worlds,
             IslandAfter: 30,
@@ -61,6 +72,28 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
                 new PupilPuzzleSlot(45, "vuurtorenlampen"),
             ],
             AnswerLabels: g78Labels,
+            ItemsPerPlate: 6,
+            PlateCount: 10,
+            CheerKeyPrefix: "LeerlingQ.Cheer.",
+            CheerCount: 12,
+            PartBreakAfterIsland: false,
+            StartTimeKey: "Leerling.Start.NoteTime",
+            LabelKey: "School.QuestionSet.Groep78");
+
+        _g78V2 = new PupilQuestionSetDef(
+            Set: PupilQuestionSet.Groep78,
+            Key: "g78",
+            ScoringVersion: PupilG78ScoringVersions.V2,
+            Bank: g78BankV2,
+            Worlds: g78Worlds,
+            IslandAfter: 30,
+            PuzzleSlots:
+            [
+                new PupilPuzzleSlot(15, "schelpenrij"),
+                new PupilPuzzleSlot(30, "schatkaart"),
+                new PupilPuzzleSlot(45, "vuurtorenlampen"),
+            ],
+            AnswerLabels: g78ContrastLabels,
             ItemsPerPlate: 6,
             PlateCount: 10,
             CheerKeyPrefix: "LeerlingQ.Cheer.",
@@ -113,7 +146,7 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
 
         _bySet = new Dictionary<PupilQuestionSet, PupilQuestionSetDef>
         {
-            [PupilQuestionSet.Groep78] = g78,
+            [PupilQuestionSet.Groep78] = _g78V1,
             [PupilQuestionSet.Vo] = vo,
             [PupilQuestionSet.MboHbo] = mboHbo,
         };
@@ -122,11 +155,21 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
 
     public IReadOnlyList<PupilQuestionSetDef> All { get; }
 
-    public PupilQuestionSetDef ForClass(SchoolClass schoolClass)
+    public PupilQuestionSetDef ForClass(SchoolClass schoolClass, string? g78ScoringVersion = null)
     {
         ArgumentNullException.ThrowIfNull(schoolClass);
+        if (schoolClass.QuestionSet == PupilQuestionSet.Groep78 && !string.IsNullOrEmpty(g78ScoringVersion))
+        {
+            return GetGroep78(g78ScoringVersion);
+        }
+
         return Get(schoolClass.QuestionSet);
     }
+
+    public PupilQuestionSetDef GetGroep78(string scoringVersion)
+        => string.Equals(scoringVersion, PupilG78ScoringVersions.V2, StringComparison.Ordinal)
+            ? _g78V2
+            : _g78V1;
 
     public PupilQuestionSetDef Get(PupilQuestionSet set)
     {
@@ -147,11 +190,26 @@ public sealed class PupilQuestionSetRegistry : IPupilQuestionSetRegistry
 
     public PupilQuestionSetDef? FindByItemId(PupilQuestionSet set, string itemId)
     {
-        if (!_bySet.TryGetValue(set, out var def))
+        if (set != PupilQuestionSet.Groep78)
         {
-            return null;
+            if (!_bySet.TryGetValue(set, out var single))
+            {
+                return null;
+            }
+
+            return single.Bank.GetById(itemId) is null ? null : single;
         }
 
-        return def.Bank.GetById(itemId) is null ? null : def;
+        if (_g78V1.Bank.GetById(itemId) is not null)
+        {
+            return _g78V1;
+        }
+
+        if (_g78V2.Bank.GetById(itemId) is not null)
+        {
+            return _g78V2;
+        }
+
+        return null;
     }
 }

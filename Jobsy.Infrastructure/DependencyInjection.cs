@@ -521,6 +521,7 @@ public static class DependencyInjection
         services.AddSingleton<IPupilStoryRenderer, PupilStoryRenderer>();
         services.AddSingleton<IPupilQuestionBank, PupilQuestionBank>();
         services.AddSingleton<IPupilQuestionSetRegistry, PupilQuestionSetRegistry>();
+        services.AddScoped<IG78ContrastQuestionsGate, G78ContrastQuestionsGate>();
         services.AddScoped<IPupilResultBuilder, PupilResultBuilder>();
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();

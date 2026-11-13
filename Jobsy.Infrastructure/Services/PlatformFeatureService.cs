@@ -245,6 +245,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         ApplyAdminBoolUpdate(row, "TestEditModeEnabled", update.TestEditModeEnabled, v => row.TestEditModeEnabled = v);
         ApplyAdminBoolUpdate(row, "SamplePdfEnabled", update.SamplePdfEnabled, v => row.SamplePdfEnabled = v);
         ApplyAdminBoolUpdate(row, "TestDepthValueMockupEnabled", update.TestDepthValueMockupEnabled, v => row.TestDepthValueMockupEnabled = v);
+        ApplyAdminBoolUpdate(row, "G78ContrastQuestionsEnabled", update.G78ContrastQuestionsEnabled, v => row.G78ContrastQuestionsEnabled = v);
 
         if (update.ClearAdminFlagOverrideKeys is { Count: > 0 } clearKeys)
         {
@@ -425,6 +426,14 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private bool ResolveTestDepthValueMockupEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "TestDepthValueMockupEnabled", row?.TestDepthValueMockupEnabled ?? true, true, "TestDepthValueMockupEnabled");
 
+    private bool ResolveG78ContrastQuestionsEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(
+            row,
+            "G78ContrastQuestionsEnabled",
+            row?.G78ContrastQuestionsEnabled ?? false,
+            false,
+            "G78ContrastQuestionsEnabled");
+
     private bool ResolveAdminBool(
         PlatformFeatureSettings? row,
         string key,
@@ -602,6 +611,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveTestEditModeEnabled(row),
             ResolveSamplePdfEnabled(row),
             ResolveTestDepthValueMockupEnabled(row),
+            ResolveG78ContrastQuestionsEnabled(row),
             AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

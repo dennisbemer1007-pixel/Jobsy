@@ -19,5 +19,7 @@ internal static class PlatformFeatureSchemaIdempotentSql
         ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "TestEditModeEnabled" boolean NOT NULL DEFAULT false;
         ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "SamplePdfEnabled" boolean NOT NULL DEFAULT false;
         ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "TestDepthValueMockupEnabled" boolean NOT NULL DEFAULT true;
+        ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "G78ContrastQuestionsEnabled" boolean NOT NULL DEFAULT false;
+        ALTER TABLE "PupilProgress" ADD COLUMN IF NOT EXISTS "QuestionScoringVersion" text;
         """;
 }

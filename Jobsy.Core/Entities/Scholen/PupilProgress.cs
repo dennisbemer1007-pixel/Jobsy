@@ -11,6 +11,9 @@ public class PupilProgress
     /// <summary>Set when the pupil confirms screen 00 (Kies je wereld); styling fallbacks must not set this.</summary>
     public DateTime? JourneyThemeChosenAtUtc { get; set; }
 
+    /// <summary>G78 only: pinned bank version (<see cref="PupilG78ScoringVersions"/>) for in-progress sessions.</summary>
+    public string? QuestionScoringVersion { get; set; }
+
     /// <summary>JSON map item id → Likert 1..5.</summary>
     public string AnswersJson { get; set; } = "{}";
     public int CurrentIndex { get; set; }

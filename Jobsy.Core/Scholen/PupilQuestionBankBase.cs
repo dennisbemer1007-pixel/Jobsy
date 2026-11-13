@@ -87,12 +87,14 @@ public abstract class PupilQuestionBankBase : IPupilQuestionBank
                 WorldKey(q.World),
                 worldIndex,
                 i,
-                q.TextKey,
+                q.TextKeyA,
                 q.ExampleKey,
                 q.Model,
                 q.Category,
                 q.Reverse,
-                q.Id));
+                q.Id,
+                TextKeyB: q.TextKeyB,
+                CategoryB: q.CategoryB));
         }
 
         return items;

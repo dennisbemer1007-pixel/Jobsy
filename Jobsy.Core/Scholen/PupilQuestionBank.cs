@@ -17,8 +17,16 @@ public sealed record PupilQuestion(
     AssessmentKind Model,
     string Category,
     bool Reverse,
-    string TextKey,
-    string ExampleKey);
+    string TextKeyA,
+    string ExampleKey,
+    string? TextKeyB = null,
+    string? CategoryB = null)
+{
+    /// <summary>Legacy single-line stem (v1 Likert); contrast bank uses <see cref="TextKeyA"/> and <see cref="TextKeyB"/>.</summary>
+    public string TextKey => TextKeyA;
+
+    public bool IsContrast => !string.IsNullOrEmpty(TextKeyB);
+}
 
 /// <summary>Wizard/API view of a pupil item (string id for JSON answers).</summary>
 public sealed record PupilQuestionItem(
@@ -31,7 +39,12 @@ public sealed record PupilQuestionItem(
     AssessmentKind Model,
     string Category,
     bool Reverse,
-    int NumericId);
+    int NumericId,
+    string? TextKeyB = null,
+    string? CategoryB = null)
+{
+    public bool IsContrast => !string.IsNullOrEmpty(TextKeyB);
+}
 
 public interface IPupilQuestionBank
 {
@@ -156,8 +169,8 @@ public sealed class PupilQuestionBank : PupilQuestionBankBase
             model,
             category,
             reverse,
-            $"LeerlingQ.{id}",
-            $"LeerlingQ.{id}.Voorbeeld");
+            TextKeyA: $"LeerlingQ.{id}",
+            ExampleKey: $"LeerlingQ.{id}.Voorbeeld");
 }
 
 /// <summary>Builds <see cref="Entities.Scholen.PupilResult"/> after all items are answered.</summary>

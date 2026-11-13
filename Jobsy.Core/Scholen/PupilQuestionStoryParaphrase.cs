@@ -52,7 +52,7 @@ public static class PupilQuestionStoryParaphrase
 
     private static string? ClauseNl(int itemId, bool reverse, int answer)
     {
-        var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{itemId}");
+        var stem = ResolveStem(itemId);
         if (stem.StartsWith("LeerlingQ.", StringComparison.Ordinal))
         {
             return null;
@@ -75,7 +75,7 @@ public static class PupilQuestionStoryParaphrase
 
     private static string? DisagreeClauseNl(int itemId, bool reverse, int answer)
     {
-        var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{itemId}");
+        var stem = ResolveStem(itemId);
         if (stem.StartsWith("LeerlingQ.", StringComparison.Ordinal))
         {
             return null;
@@ -202,6 +202,14 @@ public static class PupilQuestionStoryParaphrase
         [9055] = "Je voelt je op je gemak in een informele sfeer.",
         [9057] = "Je vindt het juist fijn om af en toe iets nieuws te doen.",
     };
+
+    private static string ResolveStem(int itemId)
+    {
+        var contrastKey = $"LeerlingQ.{itemId}.A";
+        return PupilQuestionBankNlStringsG78V2.TryGet(contrastKey, out var contrast)
+            ? contrast
+            : PupilQuestionBankNlStrings.Get($"LeerlingQ.{itemId}");
+    }
 
     public static string PolishJeForm(string text)
     {

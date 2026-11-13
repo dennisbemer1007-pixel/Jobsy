@@ -6,5 +6,8 @@ namespace Jobsy.Web.Localization;
 public static class UiStringsLeerlingVragen
 {
     public static void MergeNl(Dictionary<string, string> nl)
-        => Jobsy.Core.Scholen.PupilQuestionBankNlStrings.MergeInto(nl);
+    {
+        Jobsy.Core.Scholen.PupilQuestionBankNlStrings.MergeInto(nl);
+        Jobsy.Core.Scholen.PupilQuestionBankNlStringsG78V2.MergeInto(nl);
+    }
 }
