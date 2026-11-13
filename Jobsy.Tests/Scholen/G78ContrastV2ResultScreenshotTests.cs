@@ -25,6 +25,8 @@ public sealed class G78ContrastV2ResultScreenshotTests
     [InlineData("toward-a", 390, 844, "mobile")]
     [InlineData("toward-b", 1440, 900, "desktop")]
     [InlineData("toward-b", 390, 844, "mobile")]
+    [InlineData("toward-mixed", 1440, 900, "desktop")]
+    [InlineData("toward-mixed", 390, 844, "mobile")]
     public async Task Dit_ben_jij_v2_full_result_screenshot(string profile, int width, int height, string label)
     {
         _ = Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -32,9 +34,12 @@ public sealed class G78ContrastV2ResultScreenshotTests
         var artifactDir = Path.Combine("/opt/cursor/artifacts", "g78-contrast-v2", "result", profile);
         Directory.CreateDirectory(artifactDir);
 
-        var fixture = profile == "toward-a"
-            ? PupilG78ContrastV2Fixtures.AllTowardA()
-            : PupilG78ContrastV2Fixtures.AllTowardB();
+        var fixture = profile switch
+        {
+            "toward-a" => PupilG78ContrastV2Fixtures.AllTowardA(),
+            "toward-mixed" => PupilG78ContrastV2Fixtures.MixedToward(),
+            _ => PupilG78ContrastV2Fixtures.AllTowardB(),
+        };
         var culture = G78ContrastScreenshotHarness.NlCulture();
         var dto = G78ContrastScreenshotHarness.BuildResultDto(fixture);
 

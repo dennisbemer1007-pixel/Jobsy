@@ -66,7 +66,7 @@ public static class PupilG78FactStory
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
         var growthCategories = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4, contrast).ToList();
         var growthCategorySet = growthCategories.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(answers, growthCategorySet);
+        var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(answers, growthCategorySet, contrastV2: contrast);
         var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(
             clauses,
             storyStrongCategories,
@@ -136,7 +136,8 @@ public static class PupilG78FactStory
             growthCategorySet,
             storyReservedForTiles,
             fullStoryIds,
-            answers);
+            answers,
+            contrast);
         var tileIdSet = tileIds.ToHashSet();
         var body = string.Join(ParagraphBreak, paragraphs);
         var pageItemIds = storyReserved.Union(tileIdSet).ToHashSet();
@@ -210,26 +211,43 @@ public static class PupilG78FactStory
                 continue;
             }
 
-            var likert = contrast && q.IsContrast ? PupilG78ContrastLikertScorer.TowardA(raw) : raw;
-            var eff = contrast && q.IsContrast
-                ? likert
-                : PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
-            var text = eff >= 4
-                ? PupilQuestionStoryParaphrase.StrongAgreeClause(q.Id, false, likert, language)
-                : eff <= 2
-                    ? PupilQuestionStoryParaphrase.StrongDisagreeClause(q.Id, false, likert, language)
-                    : null;
+            string? text;
+            int eff;
+            string category;
+            if (contrast && q.IsContrast)
+            {
+                var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw, language);
+                if (fact is null)
+                {
+                    continue;
+                }
+
+                (text, eff, category) = fact.Value;
+            }
+            else
+            {
+                var likert = raw;
+                eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+                text = eff >= 4
+                    ? PupilQuestionStoryParaphrase.StrongAgreeClause(q.Id, false, likert, language)
+                    : eff <= 2
+                        ? PupilQuestionStoryParaphrase.StrongDisagreeClause(q.Id, false, likert, language)
+                        : null;
+                category = q.Category;
+            }
+
             if (string.IsNullOrWhiteSpace(text))
             {
                 continue;
             }
 
+            var beatQ = category == q.Category ? q : q with { Category = category };
             list.Add(new G78AnswerClause(
                 q.Id,
-                q.Category,
+                category,
                 q.Model,
-                BeatFor(q),
-                PupilQuestionStoryParaphrase.PolishJeForm(text),
+                BeatFor(beatQ),
+                text,
                 eff));
         }
 

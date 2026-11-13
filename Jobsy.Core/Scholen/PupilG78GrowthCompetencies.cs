@@ -131,15 +131,17 @@ public static class PupilG78GrowthCompetencies
         return list;
     }
 
-    public static Dictionary<string, double> DimensionAverages(IReadOnlyDictionary<string, int> answers)
+    public static Dictionary<string, double> DimensionAverages(
+        IReadOnlyDictionary<string, int> answers,
+        bool contrastV2 = false)
     {
         var dict = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
         {
-            var scores = ScoresForCategory(cat, answers);
-            if (scores.Count > 0)
+            var stats = StatsForCategory(cat, answers, contrastV2);
+            if (stats.ItemScores.Count > 0)
             {
-                dict[cat] = scores.Average();
+                dict[cat] = stats.Average;
             }
         }
 
@@ -231,17 +233,41 @@ public static class PupilG78GrowthCompetencies
         var itemScores = new List<ItemScore>();
         foreach (var q in bank.Questions.Where(q =>
                      q.Model == AssessmentKind.Competence
-                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
-                     && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
+                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax))
         {
             if (!answers.TryGetValue(q.Id.ToString(), out var raw))
             {
                 continue;
             }
 
-            var eff = contrastV2 && q.IsContrast
-                ? PupilG78ContrastLikertScorer.TowardA(raw)
-                : PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            int eff;
+            if (contrastV2 && q.IsContrast)
+            {
+                var countsForCategory =
+                    string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)
+                    || (!string.IsNullOrEmpty(q.CategoryB)
+                        && string.Equals(q.CategoryB, category, StringComparison.OrdinalIgnoreCase));
+                if (!countsForCategory)
+                {
+                    continue;
+                }
+
+                eff = ContrastEffectiveForCategory(q, category, raw);
+                if (eff < 1)
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                if (!string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            }
+
             itemScores.Add(new ItemScore(q.Id, raw, eff));
         }
 
@@ -257,23 +283,6 @@ public static class PupilG78GrowthCompetencies
         return new DimensionStats(avg, hasLow, hasHigh, onlyMid, itemScores);
     }
 
-    private static List<double> ScoresForCategory(string category, IReadOnlyDictionary<string, int> answers)
-    {
-        var list = new List<double>();
-        foreach (var q in Bank.Questions.Where(q =>
-                     q.Model == AssessmentKind.Competence
-                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
-                     && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (answers.TryGetValue(q.Id.ToString(), out var raw))
-            {
-                list.Add(PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse));
-            }
-        }
-
-        return list;
-    }
-
     internal static string PanelId(string category) => category switch
     {
         CompetencyTestCatalog.Samenwerken => "ll-grow-samenwerken",
@@ -283,6 +292,39 @@ public static class PupilG78GrowthCompetencies
         CompetencyTestCatalog.Extraversie => "ll-grow-communiceren",
         _ => "ll-grow-" + category.ToLowerInvariant().Replace(" ", "-", StringComparison.Ordinal)
     };
+
+    /// <summary>Effective 1–5 for a competency dimension on contrast items (only the chosen pole counts).</summary>
+    private static int ContrastEffectiveForCategory(PupilQuestion q, string category, int raw)
+    {
+        if (raw is < 1 or > 5 || raw == 3)
+        {
+            return -1;
+        }
+
+        if (string.IsNullOrEmpty(q.CategoryB))
+        {
+            if (!string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase))
+            {
+                return -1;
+            }
+
+            return raw is 1 or 2
+                ? PupilG78ContrastLikertScorer.TowardA(raw)
+                : PupilG78ContrastLikertScorer.TowardB(raw);
+        }
+
+        if (string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase) && raw is 1 or 2)
+        {
+            return PupilG78ContrastLikertScorer.TowardA(raw);
+        }
+
+        if (string.Equals(q.CategoryB, category, StringComparison.OrdinalIgnoreCase) && raw is 4 or 5)
+        {
+            return PupilG78ContrastLikertScorer.TowardB(raw);
+        }
+
+        return -1;
+    }
 
     private sealed record ItemScore(int ItemId, int Raw, int Effective);
 

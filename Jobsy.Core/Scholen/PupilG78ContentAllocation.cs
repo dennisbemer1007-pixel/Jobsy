@@ -10,9 +10,10 @@ public static class PupilG78ContentAllocation
     public static IReadOnlyList<string> StoryStrongCategories(
         IReadOnlyDictionary<string, int> answers,
         IReadOnlySet<string> growthCategories,
-        int count = 3)
+        int count = 3,
+        bool contrastV2 = false)
         => PupilG78GrowthCompetencies.TopStrongCategories(
-                PupilG78GrowthCompetencies.DimensionAverages(answers), 10)
+                PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2), 10)
             .Where(c => !growthCategories.Contains(c))
             .Take(count)
             .ToList();

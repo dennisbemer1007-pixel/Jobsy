@@ -24,7 +24,8 @@ public static class PupilG78FactTileComposer
         IReadOnlySet<string> growthCategories,
         IReadOnlySet<int>? pageBlockedIds = null,
         IReadOnlySet<int>? storyItemIds = null,
-        IReadOnlyDictionary<string, int>? answers = null)
+        IReadOnlyDictionary<string, int>? answers = null,
+        bool contrastV2 = false)
     {
         var byId = clauses.ToDictionary(c => c.ItemId);
         var usedIds = new List<int>();
@@ -75,7 +76,7 @@ public static class PupilG78FactTileComposer
                     break;
                 }
             }
-            FillTileToMinimum(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileLocalThemes, storyThemes, storyItemIds, answers, minimum: 2);
+            FillTileToMinimum(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileLocalThemes, storyThemes, storyItemIds, answers, minimum: 2, contrastV2);
             foreach (var h in highs)
             {
                 RememberTheme(h.ItemId, tileThemes);
@@ -84,7 +85,7 @@ public static class PupilG78FactTileComposer
 
             if (highs.Count < 2 && answers is not null)
             {
-                TryFillFromAnswerBank(kind, answers, growthCategories, reservedIds, storyItemIds, tileLocalThemes, highs, 2);
+                TryFillFromAnswerBank(kind, answers, growthCategories, reservedIds, storyItemIds, tileLocalThemes, highs, 2, contrastV2);
             }
 
             usedIds.AddRange(highs.Select(h => h.ItemId));
@@ -158,7 +159,8 @@ public static class PupilG78FactTileComposer
         IReadOnlySet<string> storyThemes,
         IReadOnlySet<int>? storyItemIds,
         IReadOnlyDictionary<string, int>? answers,
-        int minimum)
+        int minimum,
+        bool contrastV2 = false)
     {
         TryFillHighs(highs, clauses, kind, oppositeContext, reservedIds, growthCategories, tileThemes, storyThemes, storyItemIds, minimum, TilePickMode.Strict);
         if (highs.Count < minimum)
@@ -176,9 +178,14 @@ public static class PupilG78FactTileComposer
             TryFillHighsFromAnyHigh(clauses, kind, growthCategories, reservedIds, storyItemIds, highs, minimum);
         }
 
+        if (contrastV2 && highs.Count < minimum)
+        {
+            ContrastFillTileFromClauses(kind, clauses, reservedIds, storyItemIds, growthCategories, highs, minimum);
+        }
+
         if (highs.Count < minimum && answers is not null)
         {
-            TryFillFromAnswerBank(kind, answers, growthCategories, reservedIds, storyItemIds, tileThemes, highs, minimum);
+            TryFillFromAnswerBank(kind, answers, growthCategories, reservedIds, storyItemIds, tileThemes, highs, minimum, contrastV2);
         }
 
         if (highs.Count < minimum)
@@ -267,6 +274,46 @@ public static class PupilG78FactTileComposer
         }
     }
 
+    private static void ContrastFillTileFromClauses(
+        AssessmentKind kind,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> reservedIds,
+        IReadOnlySet<int>? storyItemIds,
+        IReadOnlySet<string> growthCategories,
+        List<G78AnswerClause> highs,
+        int minimum)
+    {
+        void Pick(bool allowStoryOverlap)
+        {
+            foreach (var c in clauses
+                         .Where(c => c.Model == kind && c.EffectiveScore >= 4)
+                         .OrderByDescending(c => c.EffectiveScore)
+                         .ThenBy(c => c.ItemId))
+            {
+                if (highs.Count >= minimum)
+                {
+                    return;
+                }
+
+                if (highs.Any(h => h.ItemId == c.ItemId)
+                    || reservedIds.Contains(c.ItemId)
+                    || (!allowStoryOverlap && (storyItemIds?.Contains(c.ItemId) ?? false))
+                    || PupilG78StrengthGuard.IsForbiddenStrength(c.ItemId, c.EffectiveScore, growthCategories))
+                {
+                    continue;
+                }
+
+                highs.Add(c);
+            }
+        }
+
+        Pick(allowStoryOverlap: false);
+        if (highs.Count < minimum)
+        {
+            Pick(allowStoryOverlap: true);
+        }
+    }
+
     private static void TryFillFromAnswerBank(
         AssessmentKind kind,
         IReadOnlyDictionary<string, int> answers,
@@ -275,14 +322,21 @@ public static class PupilG78FactTileComposer
         IReadOnlySet<int>? storyItemIds,
         HashSet<string>? tileThemes,
         List<G78AnswerClause> highs,
-        int minimum)
+        int minimum,
+        bool contrastV2 = false)
     {
-        var bank = new PupilQuestionBank();
+        var bank = contrastV2 ? (IPupilQuestionBank)new PupilQuestionBankG78V2() : new PupilQuestionBank();
         foreach (var q in bank.Questions.Where(q => q.Model == kind).OrderByDescending(q =>
                  {
                      if (!answers.TryGetValue(q.Id.ToString(), out var raw))
                      {
                          return 0;
+                     }
+
+                     if (contrastV2 && q.IsContrast)
+                     {
+                         var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw);
+                         return fact?.EffectiveScore ?? 0;
                      }
 
                      return PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
@@ -298,8 +352,28 @@ public static class PupilG78FactTileComposer
                 continue;
             }
 
-            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            string text;
+            int eff;
+            string category;
+            if (contrastV2 && q.IsContrast)
+            {
+                var fact = PupilQuestionStoryParaphrase.ContrastChosenFact(q, raw);
+                if (fact is null)
+                {
+                    continue;
+                }
+
+                (text, eff, category) = fact.Value;
+            }
+            else
+            {
+                eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+                category = q.Category;
+                text = PupilG78QuestionJeForms.ForItem(q.Id) ?? "";
+            }
+
             if (eff < 4
+                || string.IsNullOrWhiteSpace(text)
                 || highs.Any(h => h.ItemId == q.Id)
                 || reservedIds.Contains(q.Id)
                 || (storyItemIds?.Contains(q.Id) ?? false)
@@ -309,18 +383,12 @@ public static class PupilG78FactTileComposer
                 continue;
             }
 
-            var je = PupilG78QuestionJeForms.ForItem(q.Id);
-            if (string.IsNullOrWhiteSpace(je))
-            {
-                continue;
-            }
-
             highs.Add(new G78AnswerClause(
                 q.Id,
-                q.Category,
+                category,
                 kind,
                 G78StoryBeat.Doen,
-                je,
+                text,
                 eff));
         }
     }
@@ -432,7 +500,19 @@ public static class PupilG78FactTileComposer
     private static string ComposeTileText(IReadOnlyList<G78AnswerClause> highs)
     {
         var sentences = highs
-            .Select(h => PupilG78QuestionJeForms.ForItem(h.ItemId) ?? PupilG78JeNarrative.AsSentence(h.Text))
+            .Select(h =>
+            {
+                if (!string.IsNullOrWhiteSpace(h.Text))
+                {
+                    return PupilG78JeNarrative.AsSentence(h.Text);
+                }
+
+                var fallback = PupilG78QuestionJeForms.ForItem(h.ItemId);
+                return string.IsNullOrWhiteSpace(fallback)
+                    ? ""
+                    : PupilG78JeNarrative.AsSentence(fallback);
+            })
+            .Where(s => s.Length > 0)
             .ToList();
         return string.Join(' ', sentences);
     }
