@@ -99,6 +99,38 @@ internal static class PupilG78StoryFlow
         return sentence;
     }
 
+    public static string EnsureSentenceStartsCapitalized(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return text;
+        }
+
+        var parts = text.Split(". ", StringSplitOptions.None);
+        for (var i = 0; i < parts.Length; i++)
+        {
+            parts[i] = CapitalizeSentenceStart(parts[i]);
+        }
+
+        return string.Join(". ", parts);
+    }
+
+    private static string CapitalizeSentenceStart(string sentence)
+    {
+        var s = sentence.Trim();
+        if (s.Length == 0)
+        {
+            return s;
+        }
+
+        if (char.IsUpper(s[0]))
+        {
+            return s;
+        }
+
+        return char.ToUpperInvariant(s[0]) + s[1..];
+    }
+
     public static string PolishConnectors(string text)
     {
         if (string.IsNullOrWhiteSpace(text))

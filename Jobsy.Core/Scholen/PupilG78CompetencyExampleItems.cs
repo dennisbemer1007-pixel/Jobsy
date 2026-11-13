@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
@@ -40,5 +41,72 @@ public static class PupilG78CompetencyExampleItems
         var bankCat = PupilG78ItemThemes.CompetenceCategory(itemId);
         return bankCat is not null
                && string.Equals(bankCat, competencyCategory, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>g78-2: chosen-pole sentence must read as the kid label we name in paragraph 2.</summary>
+    public static bool ChosenFactSupportsKidLabel(string competencyCategory, string mainClauseJeForm)
+    {
+        var text = mainClauseJeForm.ToLowerInvariant();
+        return competencyCategory switch
+        {
+            CompetencyTestCatalog.Innovatie => SupportsAny(text, "bedenk", "nieuw", "mooi", "verhaal", "teken", "muziek", "verzin", "idee", "outfit", "dans")
+                && !SupportsAny(text, "handleiding", "stappenplan", "lijstjes", "mappen", "volgorde", "altijd doen"),
+            CompetencyTestCatalog.Extraversie => SupportsAny(text, "groep", "praat", "vertel", "voor groep", "nieuwe mensen", "opstap"),
+            CompetencyTestCatalog.Samenwerken => SupportsAny(text, "samen", "groep", "samenwer", "help", "team"),
+            CompetencyTestCatalog.Stressbestendigheid => SupportsAny(text, "verder", "doorwerk", "rustig", "volhou", "leuks", "tegenzit")
+                && !SupportsAny(text, "wil je stoppen", "wil ik stoppen"),
+            CompetencyTestCatalog.Resultaatgerichtheid => SupportsAny(text, "plan", "organis", "afmaken", "volgorde", "handleiding", "stappen", "op tijd", "lijst"),
+            _ => text.Length > 0,
+        };
+    }
+
+    public static IEnumerable<int> ExampleCandidateIds(
+        string competencyCategory,
+        IReadOnlyList<int> reservedExampleIds,
+        IReadOnlyList<G78AnswerClause> clauses,
+        bool contrastV2)
+    {
+        var ordered = new List<int>();
+        void TryAdd(int id)
+        {
+            if (id != 0 && ItemMatchesCategory(id, competencyCategory) && !ordered.Contains(id))
+            {
+                ordered.Add(id);
+            }
+        }
+
+        foreach (var id in reservedExampleIds)
+        {
+            TryAdd(id);
+        }
+
+        foreach (var id in ForCategory(competencyCategory))
+        {
+            TryAdd(id);
+        }
+
+        foreach (var c in clauses
+                     .Where(x => x.EffectiveScore >= 4 && ItemMatchesCategory(x.ItemId, competencyCategory))
+                     .OrderByDescending(x => contrastV2 && x.Model == AssessmentKind.Competence ? 1 : 0)
+                     .ThenByDescending(x => x.EffectiveScore)
+                     .ThenBy(x => x.ItemId))
+        {
+            TryAdd(c.ItemId);
+        }
+
+        return ordered;
+    }
+
+    private static bool SupportsAny(string text, params string[] needles)
+    {
+        foreach (var n in needles)
+        {
+            if (text.Contains(n, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

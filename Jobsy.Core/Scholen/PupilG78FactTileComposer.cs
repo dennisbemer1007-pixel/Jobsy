@@ -514,7 +514,7 @@ public static class PupilG78FactTileComposer
             })
             .Where(s => s.Length > 0)
             .ToList();
-        return string.Join(' ', sentences);
+        return PupilG78TileSentenceGlue.Join(highs, sentences);
     }
 
     private static IReadOnlyList<G78AnswerClause> PickHighs(

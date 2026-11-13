@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
@@ -129,6 +130,155 @@ public static class PupilG78GrowthCompetencies
         }
 
         return list;
+    }
+
+    /// <summary>g78-2: strength per competency dimension from chosen-pole facts (all worlds).</summary>
+    public static Dictionary<string, double> DimensionAveragesFromChosenClauses(IReadOnlyList<G78AnswerClause> clauses)
+    {
+        var scores = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var c in clauses.Where(c => c.EffectiveScore >= 4))
+        {
+            void Add(string? dim)
+            {
+                if (string.IsNullOrEmpty(dim)
+                    || !CompetencyTestCatalog.QuickScanCategories.Contains(dim, StringComparer.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                if (!scores.TryGetValue(dim, out var list))
+                {
+                    list = [];
+                    scores[dim] = list;
+                }
+
+                list.Add(c.EffectiveScore);
+            }
+
+            foreach (var dim in PupilG78ItemDimensionMap.DimensionsFor(c.ItemId))
+            {
+                Add(dim);
+            }
+
+            Add(PupilG78ItemThemes.CompetenceCategory(c.ItemId));
+            if (c.Model == AssessmentKind.Competence)
+            {
+                Add(c.Category);
+            }
+        }
+
+        return scores.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value.Average(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static IReadOnlyList<string> CompetencyCategoriesFromHolland(string? hollandCode, int count = 3)
+    {
+        if (string.IsNullOrWhiteSpace(hollandCode))
+        {
+            return [];
+        }
+
+        var list = new List<string>();
+        foreach (var ch in hollandCode.Trim().ToUpperInvariant())
+        {
+            var cat = ch switch
+            {
+                'R' => CompetencyTestCatalog.Resultaatgerichtheid,
+                'I' => CompetencyTestCatalog.Innovatie,
+                'A' => CompetencyTestCatalog.Innovatie,
+                'S' => CompetencyTestCatalog.Samenwerken,
+                'E' => CompetencyTestCatalog.Extraversie,
+                'C' => CompetencyTestCatalog.Stressbestendigheid,
+                _ => null,
+            };
+            if (cat is null || list.Contains(cat, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            list.Add(cat);
+            if (list.Count >= count)
+            {
+                break;
+            }
+        }
+
+        return list;
+    }
+
+    private static readonly Dictionary<char, string[]> HollandLetterToCompetency = new()
+    {
+        ['R'] = [CompetencyTestCatalog.Resultaatgerichtheid, CompetencyTestCatalog.Stressbestendigheid],
+        ['I'] = [CompetencyTestCatalog.Innovatie],
+        ['A'] = [CompetencyTestCatalog.Innovatie],
+        ['S'] = [CompetencyTestCatalog.Samenwerken, CompetencyTestCatalog.Extraversie],
+        ['E'] = [CompetencyTestCatalog.Extraversie, CompetencyTestCatalog.Resultaatgerichtheid],
+        ['C'] = [CompetencyTestCatalog.Resultaatgerichtheid, CompetencyTestCatalog.Stressbestendigheid],
+    };
+
+    /// <summary>g78-2: clause evidence blended with RIASEC (chosen-pole career scoring).</summary>
+    public static Dictionary<string, double> DimensionScoresContrastV2(
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result)
+    {
+        var fromClauses = DimensionAveragesFromChosenClauses(clauses);
+        var merged = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
+        {
+            fromClauses.TryGetValue(cat, out var clauseAvg);
+            var bonus = RiasecCompetencyBonus(cat, result);
+            merged[cat] = clauseAvg * 0.35 + bonus;
+        }
+
+        return merged;
+    }
+
+    private static double RiasecCompetencyBonus(string competencyCategory, PupilResult result)
+    {
+        var riasec = ParseRiasec(result.RiasecScoresJson);
+        if (riasec is null)
+        {
+            return 0;
+        }
+
+        double Bonus(char letter, int? score)
+        {
+            if (score is null or 0)
+            {
+                return 0;
+            }
+
+            return HollandLetterToCompetency.TryGetValue(letter, out var comps)
+                   && comps.Contains(competencyCategory, StringComparer.OrdinalIgnoreCase)
+                ? score.Value / 15.0
+                : 0;
+        }
+
+        return Bonus('R', riasec.Realistic)
+               + Bonus('I', riasec.Investigative)
+               + Bonus('A', riasec.Artistic)
+               + Bonus('S', riasec.Social)
+               + Bonus('E', riasec.Enterprising)
+               + Bonus('C', riasec.Conventional);
+    }
+
+    private static RiasecScores? ParseRiasec(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<RiasecScores>(json);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 
     public static Dictionary<string, double> DimensionAverages(

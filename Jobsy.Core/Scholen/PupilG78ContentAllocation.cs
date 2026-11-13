@@ -11,12 +11,32 @@ public static class PupilG78ContentAllocation
         IReadOnlyDictionary<string, int> answers,
         IReadOnlySet<string> growthCategories,
         int count = 3,
-        bool contrastV2 = false)
-        => PupilG78GrowthCompetencies.TopStrongCategories(
-                PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2), 10)
+        bool contrastV2 = false,
+        IReadOnlyList<G78AnswerClause>? clauses = null,
+        PupilResult? result = null)
+    {
+        if (contrastV2 && result is not null && !string.IsNullOrWhiteSpace(result.HollandCode))
+        {
+            var fromHolland = PupilG78GrowthCompetencies.CompetencyCategoriesFromHolland(result.HollandCode, count + 3)
+                .Where(c => !growthCategories.Contains(c))
+                .Take(count)
+                .ToList();
+            if (fromHolland.Count >= 2)
+            {
+                return fromHolland;
+            }
+        }
+
+        var avgs = contrastV2 && clauses is { Count: > 0 } && result is not null
+            ? PupilG78GrowthCompetencies.DimensionScoresContrastV2(clauses, result)
+            : contrastV2 && clauses is { Count: > 0 }
+                ? PupilG78GrowthCompetencies.DimensionAveragesFromChosenClauses(clauses)
+                : PupilG78GrowthCompetencies.DimensionAverages(answers, contrastV2);
+        return PupilG78GrowthCompetencies.TopStrongCategories(avgs, 10)
             .Where(c => !growthCategories.Contains(c))
             .Take(count)
             .ToList();
+    }
 
     /// <summary>Reserve social/career clauses for paragraph 1 so tiles do not steal them.</summary>
     public static IReadOnlyList<int> ReserveStorySocialOpenings(

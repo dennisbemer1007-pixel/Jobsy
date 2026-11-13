@@ -66,7 +66,12 @@ public static class PupilG78FactStory
         var vak = PupilVakScores.Parse(progress?.VakScoresJson);
         var growthCategories = PupilG78GrowthCompetencies.SelectGrowthCategories(answers, maxCount: 4, contrast).ToList();
         var growthCategorySet = growthCategories.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(answers, growthCategorySet, contrastV2: contrast);
+        var storyStrongCategories = PupilG78ContentAllocation.StoryStrongCategories(
+            answers,
+            growthCategorySet,
+            clauses: clauses,
+            result: result,
+            contrastV2: contrast);
         var competencyExampleIds = PupilG78ContentAllocation.ReserveCompetencyExamples(
             clauses,
             storyStrongCategories,
