@@ -62,12 +62,12 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         await Assertions.Expect(page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile[data-ob-code=custom]")).ToHaveAttributeAsync("aria-pressed", "false");
         await page.WaitForTimeoutAsync(800);
 
-        await page.Locator("[data-ob-client=startFromDate]").CheckAsync();
-        var dateInput = page.Locator("[data-ob-client=availableFrom]");
-        await dateInput.FillAsync("15032027");
+        await page.Locator("[data-ob-client=startFromDate], [data-testid=onboarding-start-from]").First.CheckAsync();
+        var dateInput = page.Locator("[data-ob-client=availableFrom], [data-testid=onboarding-available-from]").First;
+        await dateInput.FillAsync("2027-03-15");
         await dateInput.BlurAsync();
         await page.WaitForTimeoutAsync(400);
-        await Assertions.Expect(dateInput).ToHaveValueAsync("15-03-2027");
+        await Assertions.Expect(dateInput).ToHaveValueAsync("2027-03-15");
 
         await page.GetByTestId("onboarding-back").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=1**");
@@ -82,7 +82,7 @@ public sealed class OnboardingStartSsrSanityPlaywrightTests : IAsyncLifetime
         weekendTile = page.Locator("[data-ob-client=presetGrid] .lobsy-choice-tile").Filter(new() { HasText = "Weekenden" });
         dateInput = page.Locator("[data-ob-client=availableFrom]");
         await Assertions.Expect(weekendTile).ToHaveAttributeAsync("aria-pressed", "true");
-        await Assertions.Expect(dateInput).ToHaveValueAsync("15-03-2027");
+        await Assertions.Expect(dateInput).ToHaveValueAsync("2027-03-15");
 
         await page.GetByTestId("onboarding-next").ClickAsync();
         await page.WaitForURLAsync("**/candidate/start?step=3**");

@@ -48,6 +48,9 @@ public sealed class FunctionalOnboardingPlaywrightTestsMobile
         await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, "2671GB");
         await FunctionalOnboardingInteractivityHelpers.AssertGeolocateButtonRespondsAsync(page);
         await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.FillBirthDateAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.DismissAddressSuggestionsAsync(page);
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
 
         var next = page.GetByTestId("onboarding-next");
         await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 20_000 });
