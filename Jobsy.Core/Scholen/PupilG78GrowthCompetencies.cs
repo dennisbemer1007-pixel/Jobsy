@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts.Scholen;
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
@@ -29,9 +30,10 @@ public static class PupilG78GrowthCompetencies
     /// <summary>Lowest competency dimensions for growth (mean &lt; 3.0 or any 1–2 answer), max 5.</summary>
     public static IReadOnlyList<string> SelectGrowthCategories(
         IReadOnlyDictionary<string, int> answers,
-        int maxCount = 5)
+        int maxCount = 5,
+        bool contrastV2 = false)
         => CompetencyTestCatalog.QuickScanCategories
-            .Select(cat => (Category: cat, Stats: StatsForCategory(cat, answers)))
+            .Select(cat => (Category: cat, Stats: StatsForCategory(cat, answers, contrastV2)))
             .Where(x => x.Stats.Average < 3.0 || (x.Stats.HasLow && x.Stats.Average < 3.35))
             .OrderBy(x => x.Stats.Average)
             .ThenBy(x => x.Category, StringComparer.Ordinal)
@@ -39,20 +41,104 @@ public static class PupilG78GrowthCompetencies
             .Select(x => x.Category)
             .ToList();
 
+    /// <summary>g78-2: when threshold growth is empty and the story has no strengths block, pick the lowest blended dimensions.</summary>
+    public static IReadOnlyList<string> SelectGrowthCategoriesWithFallback(
+        IReadOnlyDictionary<string, int> answers,
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result,
+        int maxCount,
+        bool contrastV2)
+    {
+        var selected = SelectGrowthCategories(answers, maxCount, contrastV2).ToList();
+        if (selected.Count > 0 || !contrastV2 || clauses.Count == 0)
+        {
+            return selected;
+        }
+
+        return DimensionScoresContrastV2(clauses, result, answers)
+            .OrderBy(kv => kv.Value)
+            .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+            .Take(maxCount)
+            .Select(kv => kv.Key)
+            .ToList();
+    }
+
+    /// <summary>Drop growth rows when story or tiles already show strong evidence for that competency.</summary>
+    public static IReadOnlyList<string> FilterGrowthWithoutStrongPageEvidence(
+        IReadOnlyList<string> growthCategories,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> pageItemIds,
+        bool contrastV2)
+        => growthCategories
+            .Where(cat => !CategoryHasStrongEvidenceOnPage(cat, clauses, pageItemIds, contrastV2))
+            .ToList();
+
+    public static bool CategoryHasStrongEvidenceOnPage(
+        string category,
+        IReadOnlyList<G78AnswerClause> clauses,
+        IReadOnlySet<int> pageItemIds,
+        bool contrastV2)
+    {
+        foreach (var clause in clauses)
+        {
+            if (!pageItemIds.Contains(clause.ItemId) || clause.EffectiveScore < 4)
+            {
+                continue;
+            }
+
+            if (contrastV2)
+            {
+                var text = clause.Text.Trim().TrimEnd('.');
+                if (PupilG78CompetencyExampleItems.ClauseSupportsCategory(clause, category, contrastV2: true)
+                    || PupilG78CompetencyExampleItems.ChosenFactSupportsKidLabel(category, text))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (string.Equals(clause.Category, category, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Diagnostics: blended v2 dimension scores used for strength intro selection.</summary>
+    public static IReadOnlyDictionary<string, double> ContrastDimensionScoresForDiagnostics(
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result,
+        IReadOnlyDictionary<string, int> answers,
+        bool contrastV2)
+        => contrastV2
+            ? DimensionScoresContrastV2(clauses, result, answers)
+            : DimensionAverages(answers, contrastV2);
+
     public static IReadOnlyList<PupilG78GrowthCompetencyDto> BuildForCategories(
         IReadOnlyDictionary<string, int> answers,
         IReadOnlyList<string> growthCategories,
         IReadOnlySet<int>? pageItemIds,
-        string language = "nl")
+        string language = "nl",
+        bool contrastV2 = false)
     {
         var list = new List<PupilG78GrowthCompetencyDto>();
         foreach (var category in growthCategories)
         {
-            var stats = StatsForCategory(category, answers);
+            var stats = StatsForCategory(category, answers, contrastV2);
+            var why = WhyExplanation(stats, pageItemIds, category, language, contrastV2);
+            if (contrastV2 && string.IsNullOrWhiteSpace(why))
+            {
+                var kid = PupilG78CompetencyNarrative.KidLabelTitle(category);
+                why = $"{kid} kwam minder naar voren in je antwoorden.";
+            }
+
             list.Add(new PupilG78GrowthCompetencyDto(
                 category,
                 PupilG78CompetencyNarrative.KidLabelTitle(category),
-                WhyExplanation(stats, pageItemIds, category, language),
+                why,
                 PanelId(category)));
         }
 
@@ -129,15 +215,163 @@ public static class PupilG78GrowthCompetencies
         return list;
     }
 
-    public static Dictionary<string, double> DimensionAverages(IReadOnlyDictionary<string, int> answers)
+    /// <summary>g78-2: strength per competency dimension from chosen-pole facts (all worlds).</summary>
+    public static Dictionary<string, double> DimensionAveragesFromChosenClauses(IReadOnlyList<G78AnswerClause> clauses)
+    {
+        var scores = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var c in clauses.Where(c => c.EffectiveScore >= 4))
+        {
+            void Add(string? dim)
+            {
+                if (string.IsNullOrEmpty(dim)
+                    || !CompetencyTestCatalog.QuickScanCategories.Contains(dim, StringComparer.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                if (!scores.TryGetValue(dim, out var list))
+                {
+                    list = [];
+                    scores[dim] = list;
+                }
+
+                list.Add(c.EffectiveScore);
+            }
+
+            if (!string.IsNullOrWhiteSpace(c.Category))
+            {
+                Add(c.Category);
+            }
+        }
+
+        return scores.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value.Average(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static IReadOnlyList<string> CompetencyCategoriesFromHolland(string? hollandCode, int count = 3)
+    {
+        if (string.IsNullOrWhiteSpace(hollandCode))
+        {
+            return [];
+        }
+
+        var list = new List<string>();
+        foreach (var ch in hollandCode.Trim().ToUpperInvariant())
+        {
+            var cat = ch switch
+            {
+                'R' => CompetencyTestCatalog.Resultaatgerichtheid,
+                'I' => CompetencyTestCatalog.Innovatie,
+                'A' => CompetencyTestCatalog.Innovatie,
+                'S' => CompetencyTestCatalog.Samenwerken,
+                'E' => CompetencyTestCatalog.Extraversie,
+                'C' => CompetencyTestCatalog.Stressbestendigheid,
+                _ => null,
+            };
+            if (cat is null || list.Contains(cat, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            list.Add(cat);
+            if (list.Count >= count)
+            {
+                break;
+            }
+        }
+
+        return list;
+    }
+
+    private static readonly Dictionary<char, string[]> HollandLetterToCompetency = new()
+    {
+        ['R'] = [CompetencyTestCatalog.Resultaatgerichtheid, CompetencyTestCatalog.Stressbestendigheid],
+        ['I'] = [CompetencyTestCatalog.Innovatie],
+        ['A'] = [CompetencyTestCatalog.Innovatie],
+        ['S'] = [CompetencyTestCatalog.Samenwerken, CompetencyTestCatalog.Extraversie],
+        ['E'] = [CompetencyTestCatalog.Extraversie, CompetencyTestCatalog.Resultaatgerichtheid],
+        ['C'] = [CompetencyTestCatalog.Resultaatgerichtheid, CompetencyTestCatalog.Stressbestendigheid],
+    };
+
+    /// <summary>g78-2: contrast Likert per dimension, lightly blended with RIASEC career profile.</summary>
+    public static Dictionary<string, double> DimensionScoresContrastV2(
+        IReadOnlyList<G78AnswerClause> clauses,
+        PupilResult result,
+        IReadOnlyDictionary<string, int> answers)
+    {
+        var fromClauses = DimensionAveragesFromChosenClauses(clauses);
+        var merged = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
+        {
+            var stats = StatsForCategory(cat, answers, contrastV2: true);
+            var baseAvg = stats.ItemScores.Count > 0 ? stats.Average : 0;
+            fromClauses.TryGetValue(cat, out var clauseAvg);
+            var bonus = RiasecCompetencyBonus(cat, result);
+            merged[cat] = baseAvg * 0.55 + clauseAvg * 0.35 + bonus;
+        }
+
+        return merged;
+    }
+
+    private static double RiasecCompetencyBonus(string competencyCategory, PupilResult result)
+    {
+        var riasec = ParseRiasec(result.RiasecScoresJson);
+        if (riasec is null)
+        {
+            return 0;
+        }
+
+        double Bonus(char letter, int? score)
+        {
+            if (score is null or 0)
+            {
+                return 0;
+            }
+
+            return HollandLetterToCompetency.TryGetValue(letter, out var comps)
+                   && comps.Contains(competencyCategory, StringComparer.OrdinalIgnoreCase)
+                ? score.Value / 15.0
+                : 0;
+        }
+
+        return Bonus('R', riasec.Realistic)
+               + Bonus('I', riasec.Investigative)
+               + Bonus('A', riasec.Artistic)
+               + Bonus('S', riasec.Social)
+               + Bonus('E', riasec.Enterprising)
+               + Bonus('C', riasec.Conventional);
+    }
+
+    private static RiasecScores? ParseRiasec(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<RiasecScores>(json);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    public static Dictionary<string, double> DimensionAverages(
+        IReadOnlyDictionary<string, int> answers,
+        bool contrastV2 = false)
     {
         var dict = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var cat in CompetencyTestCatalog.QuickScanCategories)
         {
-            var scores = ScoresForCategory(cat, answers);
-            if (scores.Count > 0)
+            var stats = StatsForCategory(cat, answers, contrastV2);
+            if (stats.ItemScores.Count > 0)
             {
-                dict[cat] = scores.Average();
+                dict[cat] = stats.Average;
             }
         }
 
@@ -179,7 +413,8 @@ public static class PupilG78GrowthCompetencies
         DimensionStats stats,
         IReadOnlySet<int>? pageItemIds,
         string growthCategory,
-        string language)
+        string language,
+        bool contrastV2 = false)
     {
         _ = language;
         _ = growthCategory;
@@ -195,6 +430,17 @@ public static class PupilG78GrowthCompetencies
             picks = stats.ItemScores.OrderBy(i => i.Effective).ThenBy(i => i.ItemId).Take(1).ToList();
         }
 
+        if (contrastV2)
+        {
+            if (stats.Average >= 3.0 && !stats.HasLow)
+            {
+                return "";
+            }
+
+            var kid = PupilG78CompetencyNarrative.KidLabelTitle(growthCategory);
+            return $"{kid} kwam minder naar voren in je antwoorden.";
+        }
+
         var parts = new List<string>();
         foreach (var pick in picks)
         {
@@ -207,20 +453,50 @@ public static class PupilG78GrowthCompetencies
         return string.Join(' ', parts);
     }
 
-    private static DimensionStats StatsForCategory(string category, IReadOnlyDictionary<string, int> answers)
+    private static DimensionStats StatsForCategory(
+        string category,
+        IReadOnlyDictionary<string, int> answers,
+        bool contrastV2 = false)
     {
+        var bank = contrastV2 ? (IPupilQuestionBank)new PupilQuestionBankG78V2() : Bank;
         var itemScores = new List<ItemScore>();
-        foreach (var q in Bank.Questions.Where(q =>
+        foreach (var q in bank.Questions.Where(q =>
                      q.Model == AssessmentKind.Competence
-                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
-                     && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
+                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax))
         {
             if (!answers.TryGetValue(q.Id.ToString(), out var raw))
             {
                 continue;
             }
 
-            var eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            int eff;
+            if (contrastV2 && q.IsContrast)
+            {
+                var countsForCategory =
+                    string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)
+                    || (!string.IsNullOrEmpty(q.CategoryB)
+                        && string.Equals(q.CategoryB, category, StringComparison.OrdinalIgnoreCase));
+                if (!countsForCategory)
+                {
+                    continue;
+                }
+
+                eff = ContrastEffectiveForCategory(q, category, raw);
+                if (eff < 1)
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                if (!string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                eff = PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse);
+            }
+
             itemScores.Add(new ItemScore(q.Id, raw, eff));
         }
 
@@ -236,23 +512,6 @@ public static class PupilG78GrowthCompetencies
         return new DimensionStats(avg, hasLow, hasHigh, onlyMid, itemScores);
     }
 
-    private static List<double> ScoresForCategory(string category, IReadOnlyDictionary<string, int> answers)
-    {
-        var list = new List<double>();
-        foreach (var q in Bank.Questions.Where(q =>
-                     q.Model == AssessmentKind.Competence
-                     && q.Id <= PupilG78CompetencyNarrative.CompetenceItemMax
-                     && string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (answers.TryGetValue(q.Id.ToString(), out var raw))
-            {
-                list.Add(PupilQuestionStoryParaphrase.EffectiveScore(raw, q.Reverse));
-            }
-        }
-
-        return list;
-    }
-
     internal static string PanelId(string category) => category switch
     {
         CompetencyTestCatalog.Samenwerken => "ll-grow-samenwerken",
@@ -262,6 +521,37 @@ public static class PupilG78GrowthCompetencies
         CompetencyTestCatalog.Extraversie => "ll-grow-communiceren",
         _ => "ll-grow-" + category.ToLowerInvariant().Replace(" ", "-", StringComparison.Ordinal)
     };
+
+    /// <summary>Effective 1–5 for a competency dimension on contrast items (only the chosen pole counts).</summary>
+    private static int ContrastEffectiveForCategory(PupilQuestion q, string category, int raw)
+    {
+        if (raw is < 1 or > 5 || raw == 3)
+        {
+            return -1;
+        }
+
+        if (string.IsNullOrEmpty(q.CategoryB))
+        {
+            if (!string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase))
+            {
+                return -1;
+            }
+
+            return raw is 1 or 2 ? PupilG78ContrastLikertScorer.TowardA(raw) : -1;
+        }
+
+        if (string.Equals(q.Category, category, StringComparison.OrdinalIgnoreCase) && raw is 1 or 2)
+        {
+            return PupilG78ContrastLikertScorer.TowardA(raw);
+        }
+
+        if (string.Equals(q.CategoryB, category, StringComparison.OrdinalIgnoreCase) && raw is 4 or 5)
+        {
+            return PupilG78ContrastLikertScorer.TowardB(raw);
+        }
+
+        return -1;
+    }
 
     private sealed record ItemScore(int ItemId, int Raw, int Effective);
 

@@ -51,10 +51,22 @@ public class PupilPagesNoCandidateChromeTests : BunitContext
     public void Reis_uses_answer_scale_component_without_aria_pressed()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var reis = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Scholen", "PupilLeerlingSsrParts.cs"));
-        Assert.Contains("data-ll-answer-scale", reis, StringComparison.Ordinal);
-        Assert.Contains("role=\"radio\"", reis, StringComparison.Ordinal);
-        Assert.DoesNotContain("aria-pressed", reis, StringComparison.Ordinal);
+        var reisDir = Path.Combine(root, "Jobsy.Web", "Scholen");
+        var leerling = File.ReadAllText(Path.Combine(reisDir, "PupilLeerlingSsrParts.cs"));
+        var groep78 = File.ReadAllText(Path.Combine(reisDir, "PupilGroep78SsrParts.cs"));
+        Assert.Contains("data-ll-answer-scale", leerling, StringComparison.Ordinal);
+        Assert.Contains("data-ll-answer-scale", groep78, StringComparison.Ordinal);
+        Assert.Contains("role=\\\"radio\\\"", leerling + groep78, StringComparison.Ordinal);
+        Assert.DoesNotContain("aria-pressed", SliceMethod(leerling, "AnswerScaleForm"), StringComparison.Ordinal);
+        Assert.DoesNotContain("aria-pressed", SliceMethod(groep78, "Groep78AnswerScaleForm"), StringComparison.Ordinal);
+    }
+
+    private static string SliceMethod(string source, string methodName)
+    {
+        var start = source.IndexOf($"string {methodName}", StringComparison.Ordinal);
+        Assert.True(start >= 0, $"Missing {methodName} in SSR parts.");
+        var next = source.IndexOf("\n    public static", start + 1, StringComparison.Ordinal);
+        return next < 0 ? source[start..] : source[start..next];
     }
 
     [Fact]

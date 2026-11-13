@@ -1703,6 +1703,15 @@
     font-size: 20px;
   }
 
+  .ll-g78-shell .answers--contrast .ans {
+    white-space: normal;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.25;
+    padding: 10px 14px;
+    min-height: 52px;
+  }
+
   .ll-g78-shell .ans .lvl {
     width: 28px;
     height: 28px;
@@ -3768,4 +3777,50 @@
   margin-top: 10px;
   width: 100%;
   justify-content: center;
+}
+
+.ll-g78-contrast__intro {
+  font-family: Lexend, sans-serif;
+  font-size: 1.05rem;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.ll-g78-contrast__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.ll-g78-contrast__opt {
+  border: 1px solid var(--border, rgba(15, 45, 92, 0.12));
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: var(--surface, #f8f2e7);
+}
+
+.ll-g78-contrast__opt p {
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
+.ll-g78-contrast__tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  font-weight: 700;
+  color: var(--brand, #0f2d5c);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 900px) {
+  .ll-g78-contrast__options {
+    flex-direction: row;
+  }
+
+  .ll-g78-contrast__opt {
+    flex: 1 1 0;
+  }
 }

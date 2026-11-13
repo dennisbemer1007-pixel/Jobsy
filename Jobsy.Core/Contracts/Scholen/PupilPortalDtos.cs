@@ -53,7 +53,9 @@ public sealed record PupilProgressStateDto(
     string NextStep = "question",
     string? NextPuzzleKey = null,
     string? JourneyThemeKey = null,
-    DateTime? JourneyThemeChosenAtUtc = null);
+    DateTime? JourneyThemeChosenAtUtc = null,
+    /// <summary>G78: g78-1 or g78-2; pins which bank rendered/scored for this session.</summary>
+    string? QuestionScoringVersion = null);
 
 public sealed record PupilJourneyThemeRequest(string Key);
 

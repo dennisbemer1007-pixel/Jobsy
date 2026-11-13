@@ -14,12 +14,14 @@ namespace Jobsy.Tests.Scholen;
 public class PupilQuestionBankDocFreshnessTests
 {
     public const string G78RelativeDocPath = "docs/scholen/vragenbank-leerlingen.md";
+    public const string G78V2RelativeDocPath = "docs/scholen/vragenbank-leerlingen-g78-v2.md";
     public const string VoRelativeDocPath = "docs/scholen/vragenbank-leerlingen-vo.md";
 
     [Fact]
     public void Vragenbank_docs_match_catalog_and_strings()
     {
         AssertDoc(G78RelativeDocPath, GenerateG78);
+        AssertDoc(G78V2RelativeDocPath, GenerateG78V2);
         AssertDoc(VoRelativeDocPath, GenerateVo);
     }
 
@@ -54,6 +56,16 @@ public class PupilQuestionBankDocFreshnessTests
             strings => UiStringsLeerlingVragen.MergeNl(strings),
             "# Vragenbank leerlingen groep 7/8 (review)",
             "`PupilQuestionBank` + `UiStringsLeerlingVragen`");
+
+    public static string GenerateG78V2()
+        => GenerateContrast(
+            new PupilQuestionBankG78V2(),
+            strings =>
+            {
+                UiStringsLeerlingVragen.MergeNl(strings);
+            },
+            "# Vragenbank leerlingen groep 7/8 contrast g78-2 (review)",
+            "`PupilQuestionBankG78V2` + `PupilQuestionBankNlStringsG78V2`");
 
     public static string GenerateVo()
         => Generate(
@@ -90,6 +102,49 @@ public class PupilQuestionBankDocFreshnessTests
         sb.AppendLine();
         var report = DutchReadability.Analyze(bank.Questions.SelectMany(q =>
             new[] { strings.GetValueOrDefault(q.TextKey, ""), strings.GetValueOrDefault(q.ExampleKey, "") }));
+        sb.AppendLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"Readability: gemiddelde zinslengte **{report.AverageWordsPerSentence:0.00}** woorden; " +
+            $"aandeel lange woorden (>3 lettergrepen) **{DutchReadability.FormatPercent(report.LongWordShare)}%**."));
+        sb.AppendLine();
+        return sb.ToString();
+    }
+
+    private static string GenerateContrast(
+        PupilQuestionBankG78V2 bank,
+        Action<Dictionary<string, string>> merge,
+        string title,
+        string sources)
+    {
+        var strings = new Dictionary<string, string>(StringComparer.Ordinal);
+        merge(strings);
+        var sb = new StringBuilder();
+        sb.AppendLine(title);
+        sb.AppendLine();
+        sb.AppendLine($"Gegenereerd uit {sources}. Wijzig de bronnen, niet dit bestand met de hand.");
+        sb.AppendLine();
+        sb.AppendLine("| # | Wereld | Model | Categorie A | Categorie B | Optie A | Optie B | Stel je voor… |");
+        sb.AppendLine("|---|---|---|---|---|---|---|---|");
+        var n = 1;
+        foreach (var q in bank.Questions)
+        {
+            var textA = Esc(strings.GetValueOrDefault(q.TextKeyA, ""));
+            var textB = Esc(strings.GetValueOrDefault(q.TextKeyB ?? "", ""));
+            var example = Esc(strings.GetValueOrDefault(q.ExampleKey, ""));
+            var catB = string.IsNullOrEmpty(q.CategoryB) ? "—" : q.CategoryB;
+            sb.AppendLine(
+                $"| {n} | {PupilQuestionBankBase.WorldTitle(q.World)} | {ModelLabel(q.Model)} | {q.Category} | {catB} | {textA} | {textB} | {example} |");
+            n++;
+        }
+
+        sb.AppendLine();
+        var report = DutchReadability.Analyze(bank.Questions.SelectMany(q =>
+            new[]
+            {
+                strings.GetValueOrDefault(q.TextKeyA, ""),
+                strings.GetValueOrDefault(q.TextKeyB ?? "", ""),
+                strings.GetValueOrDefault(q.ExampleKey, ""),
+            }));
         sb.AppendLine(string.Create(
             CultureInfo.InvariantCulture,
             $"Readability: gemiddelde zinslengte **{report.AverageWordsPerSentence:0.00}** woorden; " +

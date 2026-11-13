@@ -343,7 +343,8 @@ public static class PupilG78PageLint
         }
     }
 
-    private static int CountCompetencyIntroLabels(string body)
+    /// <summary>Number of kid labels in the strengths intro sentence (e.g. creativiteit, samenwerken en doorzetten).</summary>
+    public static int CountCompetencyIntroLabels(string body)
     {
         var match = Regex.Match(
             body,
@@ -362,8 +363,9 @@ public static class PupilG78PageLint
     public static string NormalizeSentence(string sentence)
     {
         var s = sentence.Trim().TrimEnd('.').ToLowerInvariant();
+        s = Regex.Replace(s, @"[^\p{L}\s]", "", RegexOptions.CultureInvariant);
         s = Regex.Replace(s, @"\s+", " ");
-        return s;
+        return s.Trim();
     }
 
     private static IEnumerable<string> SplitSentences(string text)

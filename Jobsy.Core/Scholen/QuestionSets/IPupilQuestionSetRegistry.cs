@@ -10,7 +10,10 @@ namespace Jobsy.Core.Scholen.QuestionSets;
 public interface IPupilQuestionSetRegistry
 {
     /// <summary>The ONLY way pupil Infrastructure code reaches a def (= <see cref="Get"/>(schoolClass.QuestionSet)).</summary>
-    PupilQuestionSetDef ForClass(SchoolClass schoolClass);
+    PupilQuestionSetDef ForClass(SchoolClass schoolClass, string? g78ScoringVersion = null);
+
+    /// <summary>Groep 7/8 only: g78-1 (Likert) or g78-2 (contrast).</summary>
+    PupilQuestionSetDef GetGroep78(string scoringVersion);
 
     /// <summary>Throws for unknown values; never falls back to the other test.</summary>
     PupilQuestionSetDef Get(PupilQuestionSet set);

@@ -128,6 +128,7 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilG78MirrorRenderer _g78Mirror;
 #pragma warning restore IDE0052
     private readonly IPlatformFeatureService _features;
+    private readonly IG78ContrastQuestionsGate _g78Contrast;
     private readonly IOccupationDayInLifeReader _occupationDays;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
@@ -147,6 +148,7 @@ public sealed class PupilPortalService : IPupilPortalService
         PupilPassportPdfModelBuilder passportModelBuilder,
         IPupilG78MirrorRenderer g78Mirror,
         IPlatformFeatureService features,
+        IG78ContrastQuestionsGate g78Contrast,
         IOccupationDayInLifeReader occupationDays,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
@@ -165,6 +167,7 @@ public sealed class PupilPortalService : IPupilPortalService
         _passportModelBuilder = passportModelBuilder;
         _g78Mirror = g78Mirror;
         _features = features;
+        _g78Contrast = g78Contrast;
         _occupationDays = occupationDays;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
@@ -328,7 +331,7 @@ public sealed class PupilPortalService : IPupilPortalService
                 PupilCopy.LoginCooldown(schoolClass.QuestionSet)), 429);
         }
 
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         await EnsureResultAsync(code, def, cancellationToken);
 
         var answersAtLogin = ParseAnswers(code.Progress?.AnswersJson);
@@ -420,7 +423,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         await EnsureResultAsync(code, def, cancellationToken);
 
         var answers = ParseAnswers(code.Progress?.AnswersJson);
@@ -474,7 +477,8 @@ public sealed class PupilPortalService : IPupilPortalService
             nextStep,
             step.PuzzleKey,
             code.Progress?.JourneyThemeKey,
-            code.Progress?.JourneyThemeChosenAtUtc), null, 200);
+            code.Progress?.JourneyThemeChosenAtUtc,
+            def.ScoringVersion), null, 200);
     }
 
     public async Task<(PupilJourneyThemeResponse? Ok, PupilErrorDto? Error, int StatusCode)> SaveJourneyThemeAsync(
@@ -576,7 +580,7 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, themeErr, 409);
         }
 
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         var item = def.Bank.GetById(itemId);
         if (item is null)
         {
@@ -789,7 +793,7 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, vakThemeErr, 409);
         }
 
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         if (def.Set != PupilQuestionSet.Groep78)
         {
             return (null, new PupilErrorDto("wrong_set", "De vakkentest hoort niet bij jouw test."), 400);
@@ -940,7 +944,7 @@ public sealed class PupilPortalService : IPupilPortalService
         progress.UpdatedAtUtc = now;
         code.LastSeenAtUtc = now;
 
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         var nextIndex = FirstUnansweredIndex(def, progress.AnswersJson);
         progress.CurrentIndex = nextIndex;
         await _db.SaveChangesAsync(cancellationToken);
@@ -981,7 +985,7 @@ public sealed class PupilPortalService : IPupilPortalService
             return (null, puzzleThemeErr, 409);
         }
 
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         if (def.Set != PupilQuestionSet.Groep78
             || !def.PuzzleSlots.Any(s => string.Equals(s.PuzzleKey, puzzleKey, StringComparison.OrdinalIgnoreCase)))
         {
@@ -1053,7 +1057,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
         var code = ctx.Code!;
         var schoolClass = ctx.Class!;
-        var def = _registry.ForClass(schoolClass);
+        var def = await ResolveDefAsync(schoolClass, code, cancellationToken);
         await EnsureResultAsync(code, def, cancellationToken);
         if (code.Status != PupilCodeStatus.Completed || code.Result is null)
         {
@@ -1784,6 +1788,26 @@ public sealed class PupilPortalService : IPupilPortalService
         }
 
         return map;
+    }
+
+    private async Task<PupilQuestionSetDef> ResolveDefAsync(
+        SchoolClass schoolClass,
+        PupilCode code,
+        CancellationToken cancellationToken)
+    {
+        if (schoolClass.QuestionSet != PupilQuestionSet.Groep78)
+        {
+            return _registry.ForClass(schoolClass);
+        }
+
+        var enabled = await _g78Contrast.IsEnabledAsync(cancellationToken);
+        var version = PupilG78SessionVersions.Resolve(code, enabled);
+        if (code.Progress is not null)
+        {
+            PupilG78SessionVersions.PinIfEmpty(code.Progress, version);
+        }
+
+        return _registry.ForClass(schoolClass, version);
     }
 
     private static string FormatLevel(SchoolLevel level) => level switch

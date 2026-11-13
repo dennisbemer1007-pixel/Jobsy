@@ -97,7 +97,7 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect(redir);
         }
 
-        var def = registry.Get(progress.QuestionSet);
+        var def = PupilQuestionSetResolve.ForProgress(registry, progress);
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
         var body = PupilStartSsrHtml.BuildBody(def, culture, groep78, progress.JourneyThemeKey, registry);
@@ -226,7 +226,7 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect(redir);
         }
 
-        var def = registry.Get(progress.QuestionSet);
+        var def = PupilQuestionSetResolve.ForProgress(registry, progress);
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         if (!progress.WindowOpen && !progress.Completed)
         {
@@ -460,7 +460,7 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect(redir);
         }
 
-        var def = registry.Get(progress.QuestionSet);
+        var def = PupilQuestionSetResolve.ForProgress(registry, progress);
         var groep78 = progress.QuestionSet == PupilQuestionSet.Groep78 && PupilGroep78EntryPaths.HasExplicitJourneyThemeChoice(progress);
         var error = http.Request.Query["error"].ToString() == "save" ? culture["Leerling.Reis.SaveFailed"] : null;
         var afHtml = PupilLeerlingSsrParts.AntiforgeryField(af, http);
@@ -508,7 +508,7 @@ public static class PupilLeerlingJourneyEndpoints
             }
 
             var progress = await LoadProgressAsync(http, api, progressCache, ct);
-            var def = progress is null ? null : registry.Get(progress.QuestionSet);
+            var def = progress is null ? null : PupilQuestionSetResolve.ForProgress(registry, progress);
             if (def?.PartBreakAfterIsland == true)
             {
                 return Results.Redirect("/leerling/eiland?part=1");

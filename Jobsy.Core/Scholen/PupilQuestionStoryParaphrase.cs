@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Scholen;
 
@@ -13,6 +14,39 @@ public static class PupilQuestionStoryParaphrase
 
     public static int EffectiveScore(int answer, bool reverse)
         => reverse ? 6 - answer : answer;
+
+    /// <summary>g78-2: fact clause for the chosen pole (1–2 = A, 4–5 = B). Returns null at 3 (neutral).</summary>
+    public static (string Text, int EffectiveScore, string Category)? ContrastChosenFact(
+        PupilQuestion q,
+        int raw,
+        string language = "nl")
+    {
+        if (!q.IsContrast || raw is < 1 or > 5 || raw == 3)
+        {
+            return null;
+        }
+
+        if (PupilVerhaalLocalized.IsEnglish(language))
+        {
+            return null;
+        }
+
+        var towardB = raw >= 4;
+        var eff = towardB ? PupilG78ContrastLikertScorer.TowardB(raw) : PupilG78ContrastLikertScorer.TowardA(raw);
+        if (eff < 4)
+        {
+            return null;
+        }
+
+        if (!PupilQuestionBankJeFormsG78V2.TryGet(q.Id, towardB, out var je))
+        {
+            return null;
+        }
+
+        var text = PolishJeForm(je);
+        var category = PupilG78ContrastPoleSupport.StrengthCategory(q, towardB) ?? string.Empty;
+        return (text, eff, category);
+    }
 
     /// <summary>Clause when the pupil strongly agreed with the measured trait (effective ≥ 4).</summary>
     public static string? StrongAgreeClause(int itemId, bool reverse, int answer, string language = "nl")
@@ -52,7 +86,7 @@ public static class PupilQuestionStoryParaphrase
 
     private static string? ClauseNl(int itemId, bool reverse, int answer)
     {
-        var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{itemId}");
+        var stem = ResolveStem(itemId);
         if (stem.StartsWith("LeerlingQ.", StringComparison.Ordinal))
         {
             return null;
@@ -75,7 +109,7 @@ public static class PupilQuestionStoryParaphrase
 
     private static string? DisagreeClauseNl(int itemId, bool reverse, int answer)
     {
-        var stem = PupilQuestionBankNlStrings.Get($"LeerlingQ.{itemId}");
+        var stem = ResolveStem(itemId);
         if (stem.StartsWith("LeerlingQ.", StringComparison.Ordinal))
         {
             return null;
@@ -202,6 +236,14 @@ public static class PupilQuestionStoryParaphrase
         [9055] = "Je voelt je op je gemak in een informele sfeer.",
         [9057] = "Je vindt het juist fijn om af en toe iets nieuws te doen.",
     };
+
+    private static string ResolveStem(int itemId)
+    {
+        var contrastKey = $"LeerlingQ.{itemId}.A";
+        return PupilQuestionBankNlStringsG78V2.TryGet(contrastKey, out var contrast)
+            ? contrast
+            : PupilQuestionBankNlStrings.Get($"LeerlingQ.{itemId}");
+    }
 
     public static string PolishJeForm(string text)
     {

@@ -123,7 +123,7 @@ public static class PupilG78JobMatchExplanation
         var unexpected = !JobInLikesOrDream(likes, progress, jobKey);
 
         var work = JobDescriptionSentences(jobKey);
-        var (competencies, evidenceUsedInCompetencies) = CompetencyLines(jobKey, progress?.AnswersJson);
+        var (competencies, evidenceUsedInCompetencies) = CompetencyLines(jobKey, progress);
         var answers = AnswerReflectionParagraphs(
             jobKey,
             result,
@@ -170,7 +170,7 @@ public static class PupilG78JobMatchExplanation
 
     private static (IReadOnlyList<PupilG78JobCompetencyLine> Lines, HashSet<int> UsedEvidenceItemIds) CompetencyLines(
         string jobKey,
-        string? answersJson)
+        PupilProgress? progress)
     {
         var reqs = PupilG78JobCompetencyMapping.ForJob(jobKey);
         if (reqs.Count == 0)
@@ -186,7 +186,8 @@ public static class PupilG78JobMatchExplanation
                 req.SlotKey,
                 jobKey,
                 req.EvidenceItemIds,
-                answersJson);
+                progress?.AnswersJson,
+                progress);
             if (itemId is > 0)
             {
                 usedItems.Add(itemId.Value);
@@ -397,21 +398,49 @@ public static class PupilG78JobMatchExplanation
 
     private static string? SurpriseTopic(PupilProgress? progress, char jobLetter)
     {
-        var answers = ParseAnswers(progress?.AnswersJson);
-        var item = G78Bank.AsCareerItems()
+        var contrastV2 = PupilG78ContrastAnswerPhrases.IsContrastSession(progress);
+        var answers = ParseAnswers(progress?.AnswersJson, contrastV2);
+        var careerItems = contrastV2
+            ? new PupilQuestionBankG78V2().AsCareerItems()
+            : G78Bank.AsCareerItems();
+        var item = careerItems
             .Where(q =>
             {
-                if (!answers.TryGetValue(q.Id, out var value) || value < 4)
+                if (!answers.TryGetValue(q.Id, out var value))
                 {
                     return false;
                 }
 
-                return CategoryToLetter.TryGetValue(q.Category, out var letter) && letter == jobLetter;
+                if (contrastV2)
+                {
+                    var qFull = new PupilQuestionBankG78V2().Questions.First(x => x.Id == q.Id);
+                    return PupilG78ContrastAnswerPhrases.TryGetCareerLetter(qFull, value, out var contrastLetter)
+                           && contrastLetter == jobLetter;
+                }
+
+                return value >= 4
+                       && CategoryToLetter.TryGetValue(q.Category, out var categoryLetter)
+                       && categoryLetter == jobLetter;
             })
             .OrderByDescending(q => answers[q.Id])
             .FirstOrDefault();
 
-        if (item is null || !PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out var sub))
+        if (item is null)
+        {
+            return null;
+        }
+
+        string sub;
+        if (contrastV2)
+        {
+            var qFull = new PupilQuestionBankG78V2().Questions.First(x => x.Id == item.Id);
+            if (!answers.TryGetValue(item.Id, out var raw)
+                || !PupilG78ContrastAnswerPhrases.TryGetSubordinate(qFull, raw, out sub))
+            {
+                return null;
+            }
+        }
+        else if (!PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out sub))
         {
             return null;
         }
@@ -446,9 +475,13 @@ public static class PupilG78JobMatchExplanation
         IReadOnlySet<int> reservedItemIds,
         int max)
     {
-        var answers = ParseAnswers(progress?.AnswersJson);
+        var contrastV2 = PupilG78ContrastAnswerPhrases.IsContrastSession(progress);
+        var answers = ParseAnswers(progress?.AnswersJson, contrastV2);
         var list = new List<AnswerPhrase>();
-        foreach (var item in G78Bank.AsCareerItems()
+        var careerItems = contrastV2
+            ? new PupilQuestionBankG78V2().AsCareerItems()
+            : G78Bank.AsCareerItems();
+        foreach (var item in careerItems
                      .Where(q =>
                      {
                          if (reservedItemIds.Contains(q.Id))
@@ -456,12 +489,21 @@ public static class PupilG78JobMatchExplanation
                              return false;
                          }
 
-                         if (!answers.TryGetValue(q.Id, out var value) || value < 4)
+                         if (!answers.TryGetValue(q.Id, out var value))
                          {
                              return false;
                          }
 
-                         return CategoryToLetter.TryGetValue(q.Category, out var letter) && letter == jobLetter;
+                         if (contrastV2)
+                         {
+                             var qFull = new PupilQuestionBankG78V2().Questions.First(x => x.Id == q.Id);
+                             return PupilG78ContrastAnswerPhrases.TryGetCareerLetter(qFull, value, out var contrastLetter)
+                                    && contrastLetter == jobLetter;
+                         }
+
+                         return value >= 4
+                                && CategoryToLetter.TryGetValue(q.Category, out var categoryLetter)
+                                && categoryLetter == jobLetter;
                      })
                      .OrderByDescending(q => answers[q.Id])
                      .ThenBy(q => q.Id))
@@ -472,7 +514,21 @@ public static class PupilG78JobMatchExplanation
                 continue;
             }
 
-            if (!PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out var sub))
+            if (!answers.TryGetValue(item.Id, out var raw))
+            {
+                continue;
+            }
+
+            string sub;
+            if (contrastV2)
+            {
+                var qFull = new PupilQuestionBankG78V2().Questions.First(x => x.Id == item.Id);
+                if (!PupilG78ContrastAnswerPhrases.TryGetSubordinate(qFull, raw, out sub))
+                {
+                    continue;
+                }
+            }
+            else if (!PupilG78HighAnswerParaphrases.TryGetSubordinateClause(item.Id, out sub))
             {
                 continue;
             }
@@ -588,7 +644,7 @@ public static class PupilG78JobMatchExplanation
         return string.Equals(dream, jobKey, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static Dictionary<int, int> ParseAnswers(string? json)
+    private static Dictionary<int, int> ParseAnswers(string? json, bool contrastV2 = false)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -599,7 +655,8 @@ public static class PupilG78JobMatchExplanation
         {
             var byString = JsonSerializer.Deserialize<Dictionary<string, int>>(json, JsonOpts) ?? [];
             var map = new Dictionary<int, int>();
-            foreach (var item in G78Bank.AllItems)
+            var items = contrastV2 ? new PupilQuestionBankG78V2().AllItems : G78Bank.AllItems;
+            foreach (var item in items)
             {
                 if (byString.TryGetValue(item.Id, out var value) && LikertAnswerJson.IsValidAnswer(value))
                 {

@@ -16,15 +16,18 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
 
     private readonly JobsyDbContext _db;
     private readonly IPupilQuestionSetRegistry _registry;
+    private readonly IG78ContrastQuestionsGate _g78Contrast;
     private readonly TimeProvider _clock;
 
     public PupilResultBuilder(
         JobsyDbContext db,
         IPupilQuestionSetRegistry registry,
+        IG78ContrastQuestionsGate g78Contrast,
         TimeProvider? clock = null)
     {
         _db = db;
         _registry = registry;
+        _g78Contrast = g78Contrast;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -40,7 +43,11 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
             return;
         }
 
-        var def = _registry.ForClass(code.SchoolClass);
+        var contrastOn = await _g78Contrast.IsEnabledAsync(cancellationToken);
+        var g78Version = code.SchoolClass.QuestionSet == PupilQuestionSet.Groep78
+            ? PupilG78SessionVersions.Resolve(code, contrastOn)
+            : null;
+        var def = _registry.ForClass(code.SchoolClass, g78Version);
         if (def.Set == PupilQuestionSet.MboHbo)
         {
             return;
@@ -70,10 +77,26 @@ public sealed class PupilResultBuilder : IPupilResultBuilder
             }
         }
 
-        var competence = CompetencyTestCatalog.Score(answers, bank.AsCompetencyItems());
-        var riasec = CareerTestCatalog.Score(answers, bank.AsCareerItems());
-        var values = SchwartzValuesCatalog.Score(answers, bank.AsValuesItems());
-        var culture = CulturePersonalityCatalog.Score(answers, bank.AsCultureItems());
+        CompetencyScores? competence;
+        RiasecScores? riasec;
+        SchwartzValuesScores? values;
+        CulturePersonalityScores? culture;
+        if (string.Equals(def.ScoringVersion, PupilG78ScoringVersions.V2, StringComparison.Ordinal)
+            && bank is PupilQuestionBankG78V2 g78V2)
+        {
+            var items = g78V2.Questions;
+            competence = PupilG78ContrastLikertScorer.ScoreCompetence(answers, items);
+            riasec = PupilG78ContrastLikertScorer.ScoreCareer(answers, items);
+            values = PupilG78ContrastLikertScorer.ScoreValues(answers, items);
+            culture = PupilG78ContrastLikertScorer.ScoreCulture(answers, items);
+        }
+        else
+        {
+            competence = CompetencyTestCatalog.Score(answers, bank.AsCompetencyItems());
+            riasec = CareerTestCatalog.Score(answers, bank.AsCareerItems());
+            values = SchwartzValuesCatalog.Score(answers, bank.AsValuesItems());
+            culture = CulturePersonalityCatalog.Score(answers, bank.AsCultureItems());
+        }
 
         var holland = CareerTestCatalog.HollandCode(riasec);
         var topValue = TopByCatalogOrder(values, SchwartzValuesCatalog.CategoryCodes, v => v switch

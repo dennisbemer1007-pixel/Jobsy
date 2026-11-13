@@ -217,6 +217,9 @@ public class PlatformFeatureSettings
     /// <summary>Progressive test depth mockup (mini-spiegel, unlock cards). Default true.</summary>
     public bool TestDepthValueMockupEnabled { get; set; } = true;
 
+    /// <summary>G78 contrast questions (g78-2 bank). Default false.</summary>
+    public bool G78ContrastQuestionsEnabled { get; set; }
+
     /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
     public string AdminFlagOverridesJson { get; set; } = "[]";
 

@@ -79,6 +79,8 @@ public sealed record PlatformFeatureSnapshot(
     bool TestEditModeEnabled = false,
     bool SamplePdfEnabled = false,
     bool TestDepthValueMockupEnabled = true,
+    /// <summary>G78 contrast A/B questions (g78-2). Default false.</summary>
+    bool G78ContrastQuestionsEnabled = false,
     IReadOnlyList<string>? AdminOverriddenFlagKeys = null,
     int CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute,
     int CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour,
@@ -165,6 +167,7 @@ public sealed record PlatformFeatureUpdate(
     bool? TestEditModeEnabled = null,
     bool? SamplePdfEnabled = null,
     bool? TestDepthValueMockupEnabled = null,
+    bool? G78ContrastQuestionsEnabled = null,
     IReadOnlyList<string>? ClearAdminFlagOverrideKeys = null,
     int? CandidateApplyPerMinuteLimit = null,
     int? CandidateApplyPerHourLimit = null,

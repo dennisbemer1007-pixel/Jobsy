@@ -117,7 +117,36 @@ public static class PupilG78PageCoherence
         {
             var je = PupilG78QuestionJeForms.ForItem(id);
             if (je is not null
-                && tileExplanation.Contains(je.TrimEnd('.'), StringComparison.Ordinal))
+                && tileExplanation.Contains(je.TrimEnd('.'), StringComparison.OrdinalIgnoreCase))
+            {
+                yield return id;
+            }
+        }
+    }
+
+    /// <summary>Match g78-2 hand-written je-zinnen inside tile copy.</summary>
+    public static IEnumerable<int> ExtractContrastV2ItemIds(string tileExplanation)
+    {
+        if (string.IsNullOrWhiteSpace(tileExplanation))
+        {
+            yield break;
+        }
+
+        var tileNorm = PupilG78PageLint.NormalizeSentence(tileExplanation);
+        for (var id = PupilQuestionBank.MinId; id <= PupilQuestionBank.MaxId; id++)
+        {
+            var matched = false;
+            if (PupilQuestionBankJeFormsG78V2.TryGet(id, towardB: false, out var jeA))
+            {
+                matched |= tileNorm.Contains(PupilG78PageLint.NormalizeSentence(jeA), StringComparison.Ordinal);
+            }
+
+            if (PupilQuestionBankJeFormsG78V2.TryGet(id, towardB: true, out var jeB))
+            {
+                matched |= tileNorm.Contains(PupilG78PageLint.NormalizeSentence(jeB), StringComparison.Ordinal);
+            }
+
+            if (matched)
             {
                 yield return id;
             }

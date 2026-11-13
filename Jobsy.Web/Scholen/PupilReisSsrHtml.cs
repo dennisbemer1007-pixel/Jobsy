@@ -30,7 +30,12 @@ public static class PupilReisSsrHtml
 
         var worldKey = item.WorldKey ?? state.CurrentWorldKey ?? "koraalrif";
         var world = PupilWorldCatalog.Find(worldKey);
+        var contrast = groep78
+            && item.IsContrast
+            && string.Equals(def.ScoringVersion, PupilG78ScoringVersions.V2, StringComparison.Ordinal);
         var qLabel = culture[item.TextKey];
+        var qLabelB = contrast && !string.IsNullOrEmpty(item.TextKeyB) ? culture[item.TextKeyB!] : null;
+        var speakLabel = qLabelB is not null ? $"{qLabel} {culture["Leerling.G78.Contrast.Or"]} {qLabelB}" : qLabel;
         var imagine = culture[item.ImagineKey];
         var imagineLead = culture["Leerling.Reis.Imagine"];
         var imagineBody = SpokenText.CapitalizeFirstSentence(SpokenText.WithoutRepeatedLead(imagineLead, imagine));
@@ -87,8 +92,23 @@ public static class PupilReisSsrHtml
         var hasImagine = PupilLeerlingSsrParts.HasImagineText(imagine);
         var titleClass = groep78 ? "qtitle" : "ll-question__text";
         sb.Append("""<div class="ll-question__head">""");
-        sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(titleClass).Append("\">");
-        sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</h1>");
+        if (contrast && qLabelB is not null)
+        {
+            sb.Append("""<div class="ll-g78-contrast" role="group" aria-labelledby="ll-q-title">""");
+            sb.Append("<p id=\"ll-q-title\" class=\"ll-g78-contrast__intro\">");
+            sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Contrast.Pick"]));
+            sb.Append("</p>");
+            sb.Append("<div class=\"ll-g78-contrast__options\">");
+            sb.Append("<div class=\"ll-g78-contrast__opt ll-g78-contrast__opt--a\"><span class=\"ll-g78-contrast__tag\">A</span><p>");
+            sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</p></div>");
+            sb.Append("<div class=\"ll-g78-contrast__opt ll-g78-contrast__opt--b\"><span class=\"ll-g78-contrast__tag\">B</span><p>");
+            sb.Append(PupilLeerlingSsrParts.E(qLabelB)).Append("</p></div></div></div>");
+        }
+        else
+        {
+            sb.Append("<h1 id=\"ll-q-title\" class=\"").Append(titleClass).Append("\">");
+            sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</h1>");
+        }
         if (hasImagine)
         {
             sb.Append(PupilLeerlingSsrParts.QuestionImagineButton(culture, item.Id));
@@ -97,7 +117,7 @@ public static class PupilReisSsrHtml
         sb.Append("</div>");
         if (groep78)
         {
-            sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(qLabel, $"ll-q-{item.Id}", culture, "Leerling.G78.ReadQuestion"));
+            sb.Append(PupilGroep78SsrParts.Groep78SpeakRow(speakLabel, $"ll-q-{item.Id}", culture, "Leerling.G78.ReadQuestion"));
             if (hasImagine)
             {
                 sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(

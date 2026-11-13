@@ -654,6 +654,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("G78ContrastQuestionsEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "G78ContrastQuestionsEnabled",
+                Group: GroupScholen,
+                TitleKey: "AdminSettings.G78ContrastQuestionsEnabled.Title",
+                DescriptionKey: "AdminSettings.G78ContrastQuestionsEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.G78ContrastQuestionsEnabled,
+                Write: v => new PlatformFeatureUpdate(G78ContrastQuestionsEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "SchoolsEnabled",
             Group: GroupScholen,
@@ -954,6 +967,7 @@ public static class PlatformSettingsCatalog
         bool? testEditModeEnabled = null;
         bool? samplePdfEnabled = null;
         bool? testDepthValueMockupEnabled = null;
+        bool? g78ContrastQuestionsEnabled = null;
         IReadOnlyList<string>? clearAdminFlagOverrideKeys = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
@@ -1099,6 +1113,11 @@ public static class PlatformSettingsCatalog
                 testDepthValueMockupEnabled = p.TestDepthValueMockupEnabled;
             }
 
+            if (p.G78ContrastQuestionsEnabled is not null)
+            {
+                g78ContrastQuestionsEnabled = p.G78ContrastQuestionsEnabled;
+            }
+
             if (p.ClearAdminFlagOverrideKeys is not null)
             {
                 clearAdminFlagOverrideKeys = p.ClearAdminFlagOverrideKeys;
@@ -1173,6 +1192,7 @@ public static class PlatformSettingsCatalog
             TestEditModeEnabled: testEditModeEnabled,
             SamplePdfEnabled: samplePdfEnabled,
             TestDepthValueMockupEnabled: testDepthValueMockupEnabled,
+            G78ContrastQuestionsEnabled: g78ContrastQuestionsEnabled,
             ClearAdminFlagOverrideKeys: clearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,
