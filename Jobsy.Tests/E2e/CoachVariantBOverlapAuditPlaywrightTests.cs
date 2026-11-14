@@ -1,37 +1,25 @@
 using System.Text.Json;
-using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
 
 /// <summary>
-/// Variant-B coach must not overlap clickable controls (390 + 1440). Groep 7/8 pages are excluded.
-/// Run with <c>JOBSY_E2E_BASE_URL</c> and optional <c>JOBSY_COACH_OVERLAP_ARTIFACTS</c>.
+/// Variant-B coach must not overlap clickable controls (390 / 768 / 1440). Groep 7/8 excluded.
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class CoachVariantBOverlapAuditPlaywrightTests
 {
-    private static readonly (string Name, string Path, bool NeedsCandidate)[] Pages =
-    [
-        ("home", "/home", true),
-        ("applications", "/candidate/applications", true),
-        ("onboarding-step-1", "/candidate/start?step=1", true),
-        ("onboarding-step-2", "/candidate/start?step=2", true),
-        ("mbo-overzicht", "/leerling/mbo-hbo/overzicht", false),
-        ("mbo-uitleg", "/leerling/mbo-hbo/uitleg", false),
-    ];
-
-    [Theory]
-    [InlineData(390, 844)]
-    [InlineData(768, 1024)]
-    [InlineData(1440, 900)]
-    public async Task Coach_bbox_does_not_overlap_clickables_on_coach_pages(int width, int height)
+    [Fact(Timeout = 900_000)]
+    public async Task Coach_bbox_does_not_overlap_clickables_on_coach_pages()
     {
-        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
+        _ = TestContext.Current.CancellationToken;
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
         {
             return;
         }
+
+        await CoachVariantBOverlapAuditSupport.EnsureSchoolsEnabledAsync();
 
         var outDir = Environment.GetEnvironmentVariable("JOBSY_COACH_OVERLAP_ARTIFACTS")
                      ?? "/opt/cursor/artifacts/coach-variant-b-overlap";
@@ -40,127 +28,92 @@ public sealed class CoachVariantBOverlapAuditPlaywrightTests
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var context = await browser.NewContextAsync(new()
-        {
-            ViewportSize = new() { Width = width, Height = height },
-            IgnoreHTTPSErrors = true,
-            Locale = "nl-NL",
-        });
-        await PlaywrightCookieConsent.AcceptAsync(context);
-        var page = await context.NewPageAsync();
-        page.SetDefaultTimeout(90_000);
 
-        var rows = new List<object>();
+        var vacancyId = await CandidateJourneyE2e.SeedFreshVacancyFixtureAsync(
+            baseUrl,
+            KbE2e.DefaultCompleteEmail,
+            "coach-overlap-audit");
+        Assert.NotNull(vacancyId);
 
-        foreach (var entry in Pages)
+        var pages = CoachVariantBOverlapAuditSupport.Pages.ToList();
+        pages.Add(new CoachVariantBOverlapAuditSupport.AuditPage(
+            "vacancy-mock-interview",
+            $"/vacancies/{vacancyId:D}",
+            KbE2e.DefaultCompleteEmail));
+
+        var allTableRows = new List<(string Page, int Viewport, bool Pass, string Note)>();
+        var failures = new List<string>();
+
+        foreach (var (width, height) in new[] { (390, 844), (768, 1024), (1440, 900) })
         {
-            if (entry.NeedsCandidate)
+            var mboSeed = await CoachVariantBOverlapAuditSupport.SeedFreshMboPupilAsync(browser, baseUrl);
+            Assert.NotNull(mboSeed);
+
+            await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+
+            var jsonRows = new List<object>();
+
+            string? activeLogin = "__guest__";
+            foreach (var entry in pages)
             {
-                var loggedIn = await KbE2e.TryLoginAsync(page, baseUrl);
-                if (!loggedIn)
+                var sessionKey = entry.Path.StartsWith("/leerling/", StringComparison.Ordinal)
+                    ? "__pupil__"
+                    : entry.LoginEmail ?? "__guest__";
+                if (!string.Equals(activeLogin, sessionKey, StringComparison.Ordinal))
                 {
-                    rows.Add(new { page = entry.Name, viewport = width, pass = true, note = "skip-login-failed" });
-                    continue;
-                }
-            }
-            else if (entry.Path.StartsWith("/leerling/mbo", StringComparison.Ordinal))
-            {
-                rows.Add(new { page = entry.Name, viewport = width, pass = true, note = "skip-needs-pupil-auth" });
-                continue;
-            }
-
-            await page.GotoAsync($"{baseUrl}{entry.Path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.WaitForTimeoutAsync(400);
-
-            var audit = await page.EvaluateAsync<OverlapAuditDto>(
-                """
-                () => {
-                  const coachSel = [
-                    '#lobsy-coach-btn',
-                    '#lobsy-assistant-launcher-btn',
-                    '.lobsy-coach-dock__lobster',
-                    '.lobsy-coach-dock--variant-b',
-                    '.lobsy-coach-cta--variant-b button'
-                  ];
-                  let coach = null;
-                  for (const sel of coachSel) {
-                    const el = document.querySelector(sel);
-                    if (!el) continue;
-                    const st = getComputedStyle(el);
-                    if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') continue;
-                    const r = el.getBoundingClientRect();
-                    if (r.width < 8 || r.height < 8) continue;
-                    coach = { sel, left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
-                    break;
-                  }
-                  if (!coach) return { ok: true, skip: true, reason: 'no-coach' };
-
-                  const hits = [];
-                  const inter = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-                  const coachBox = { left: coach.left, top: coach.top, right: coach.right, bottom: coach.bottom };
-
-                  const isClickable = (el) => {
-                    if (!el || coachSel.some(s => el.closest(s))) return false;
-                    const st = getComputedStyle(el);
-                    if (st.display === 'none' || st.visibility === 'hidden' || st.pointerEvents === 'none') return false;
-                    if (st.opacity === '0') return false;
-                    const r = el.getBoundingClientRect();
-                    if (r.width < 6 || r.height < 6) return false;
-                    if (el.disabled) return false;
-                    const tag = (el.tagName || '').toLowerCase();
-                    if (tag === 'a' || tag === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea') return true;
-                    if (el.getAttribute('role') === 'button' || el.getAttribute('role') === 'link') return true;
-                    if (el.tabIndex >= 0 && el.getAttribute('tabindex') !== '-1') return true;
-                    return false;
-                  };
-
-                  document.querySelectorAll('a,button,input,select,textarea,[role=button],[role=link]').forEach(el => {
-                    if (!isClickable(el)) return;
-                    const r = el.getBoundingClientRect();
-                    const box = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-                    if (inter(coachBox, box)) {
-                      const id = el.id ? '#' + el.id : '';
-                      const testid = el.getAttribute('data-testid');
-                      hits.push((el.tagName || '').toLowerCase() + id + (testid ? '[data-testid=' + testid + ']' : ''));
+                    await context.ClearCookiesAsync();
+                    if (entry.Path.StartsWith("/leerling/", StringComparison.Ordinal))
+                    {
+                        var ok = await CoachVariantBOverlapAuditSupport.PupilLoginAsync(
+                            page, baseUrl, mboSeed.Value.SchoolId, mboSeed.Value.ClassId, mboSeed.Value.Code);
+                        Assert.True(ok, $"MBO pupil login failed (fresh seed code, not 2V3-3RG). class={mboSeed.Value.ClassId}");
                     }
-                  });
+                    else if (!string.IsNullOrEmpty(entry.LoginEmail))
+                    {
+                        var ok = await CoachVariantBOverlapAuditSupport.LoginAsync(page, baseUrl, entry.LoginEmail);
+                        Assert.True(ok, $"Login failed for {entry.LoginEmail}");
+                    }
 
-                  return { ok: hits.length === 0, skip: false, coach, hits, reason: hits.length ? hits.join('; ') : 'ok' };
+                    activeLogin = sessionKey;
                 }
-                """);
 
-            var slug = $"{entry.Name}-{width}";
-            await page.ScreenshotAsync(new()
-            {
-                Path = Path.Combine(outDir, $"coach-overlap-{slug}.png"),
-                FullPage = false,
-            });
+                await page.GotoAsync($"{baseUrl}{entry.Path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                await CoachVariantBOverlapAuditSupport.WaitForCoachChromeAsync(page, entry.Name);
+                await page.WaitForTimeoutAsync(400);
 
-            var pass = audit.Skip || audit.Ok;
-            rows.Add(new
-            {
-                page = entry.Name,
-                viewport = width,
-                pass,
-                note = audit.Skip ? audit.Reason : audit.Reason,
-            });
+                var audit = await CoachVariantBOverlapAuditSupport.EvaluateOverlapAsync(page);
 
-            if (!pass)
-            {
-                Assert.Fail($"{entry.Name}@{width}: coach overlaps {audit.Reason}");
+                var slug = $"{entry.Name}-{width}";
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(outDir, $"coach-overlap-{slug}.png"),
+                    FullPage = false,
+                });
+
+                var pass = !audit.Skip && audit.Ok;
+                var note = audit.Skip ? $"unexpected-skip:{audit.Reason}" : audit.Reason;
+                if (!pass)
+                {
+                    failures.Add($"{entry.Name}@{width}: {note}");
+                }
+
+                allTableRows.Add((entry.Name, width, pass, note));
+                jsonRows.Add(new { page = entry.Name, viewport = width, pass, note, hits = audit.Hits });
             }
+
+            await File.WriteAllTextAsync(
+                Path.Combine(outDir, $"OVERLAP-AUDIT-{width}.json"),
+                JsonSerializer.Serialize(jsonRows, new JsonSerializerOptions { WriteIndented = true }));
         }
 
-        await File.WriteAllTextAsync(
-            Path.Combine(outDir, "OVERLAP-AUDIT.json"),
-            JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }));
-    }
+        await CoachVariantBOverlapAuditSupport.WriteSummaryMarkdownAsync(outDir, allTableRows);
 
-    private sealed class OverlapAuditDto
-    {
-        public bool Ok { get; set; }
-        public bool Skip { get; set; }
-        public string Reason { get; set; } = "";
-        public List<string> Hits { get; set; } = [];
+        if (failures.Count > 0)
+        {
+            Assert.Fail(string.Join(Environment.NewLine, failures));
+        }
     }
 }

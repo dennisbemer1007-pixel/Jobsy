@@ -12,6 +12,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject IFeatureFlags Features
 @inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
 
 <div class="sch-shell" lang="@Culture.Language">
     <header class="sch-topbar">
@@ -150,6 +151,18 @@
         <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
         <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
     </footer>
+
+    @if (!_featureOff)
+    {
+        @if (RendererInfo.IsInteractive)
+        {
+            <LobsyAssistantChat HasBottomNav="_shellKind != SchShellKind.Unknown" UiVariant="AssistantChatUiVariant.Business" />
+        }
+        else if (_ssrBusinessAssistant)
+        {
+            <LobsyAssistantBusinessSsr HasBottomNav="_shellKind != SchShellKind.Unknown" />
+        }
+    }
 </div>
 
 @code {
@@ -171,9 +184,12 @@
     private Guid? _currentClassId;
     private IReadOnlyList<TeacherAssignedClassDto> _assigned = [];
     private IReadOnlyList<EntScopeChip.ScopeOption> _scopeOptions = [];
+    private bool _ssrBusinessAssistant;
 
     protected override async Task OnInitializedAsync()
     {
+        _ssrBusinessAssistant = !RendererInfo.IsInteractive
+                                && AssistantChatHost.IsAvailableFor(HttpContextAccessor.HttpContext?.User);
         await Culture.InitializeAsync();
         _featureOff = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         var state = await AuthState.GetAuthenticationStateAsync();
