@@ -154,7 +154,7 @@
 
     @if (!_featureOff)
     {
-        @if (RendererInfo.IsInteractive)
+        @if (_isInteractive)
         {
             <LobsyAssistantChat HasBottomNav="_shellKind != SchShellKind.Unknown" UiVariant="AssistantChatUiVariant.Business" />
         }
@@ -185,11 +185,21 @@
     private IReadOnlyList<TeacherAssignedClassDto> _assigned = [];
     private IReadOnlyList<EntScopeChip.ScopeOption> _scopeOptions = [];
     private bool _ssrBusinessAssistant;
+    private bool _isInteractive = true;
 
     protected override async Task OnInitializedAsync()
     {
-        _ssrBusinessAssistant = !RendererInfo.IsInteractive
-                                && AssistantChatHost.IsAvailableFor(HttpContextAccessor.HttpContext?.User);
+        try
+        {
+            _isInteractive = RendererInfo.IsInteractive;
+            _ssrBusinessAssistant = !_isInteractive
+                                    && AssistantChatHost.IsAvailableFor(HttpContextAccessor.HttpContext?.User);
+        }
+        catch
+        {
+            _isInteractive = true;
+            _ssrBusinessAssistant = false;
+        }
         await Culture.InitializeAsync();
         _featureOff = !await SchoolsFeatureGate.IsEnabledAsync(Features);
         var state = await AuthState.GetAuthenticationStateAsync();
