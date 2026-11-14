@@ -161,7 +161,7 @@ internal static class OnboardingRustigClickAuditSupport
         try
         {
             var target = locator.First;
-            if (label is "Later doen")
+            if (label is "Later doen" or "Terug" or "account" or "coach")
             {
                 await target.ScrollIntoViewIfNeededAsync();
             }
@@ -224,56 +224,109 @@ internal static class OnboardingRustigClickAuditSupport
         }
     }
 
+    internal static async Task AppendOnboardingHeaderRowsAsync(
+        IPage page,
+        List<(string Control, string Result)> rows,
+        bool mobile)
+    {
+        var header = page.Locator("[data-testid=app-shell-header]");
+        var helpBtn = header.Locator(".page-help__btn").First;
+        if (mobile && (await helpBtn.CountAsync() == 0 || !await helpBtn.IsVisibleAsync()))
+        {
+            rows.Add(("Header help", "n/a (verborgen op mobile)"));
+        }
+        else
+        {
+            rows.Add(("Header help", await TryHitAuditAsync(page, helpBtn, "help")));
+        }
+
+        rows.Add(("Header account", await TryHeaderAccountMenuAsync(page, header)));
+    }
+
+    internal static async Task AppendCoachAuditRowsAsync(IPage page, List<(string Control, string Result)> rows)
+    {
+        var coachBtn = page.Locator(
+            ".lobsy-coach-dock[data-ssr-coach] [data-ssr-coach-open], .lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn").First;
+        rows.Add(("Coach medallion", await TryHitAuditAsync(page, coachBtn, "coach")));
+        if (await coachBtn.CountAsync() == 0)
+        {
+            rows.Add(("Coach open/dicht", "n/a"));
+            return;
+        }
+
+        rows.Add(("Coach open/dicht", await TryCoachOpenCloseAsync(page, coachBtn)));
+    }
+
     internal static async Task AppendHeaderAndCoachRowsAsync(IPage page, List<(string Control, string Result)> rows)
     {
         if (rows.All(r => r.Control != "Header help"))
         {
-            rows.Add(("Header help", await TryHitAuditAsync(
-                page,
-                page.Locator("[data-testid=app-shell-header] .page-help__btn").First,
-                "help")));
-            rows.Add(("Header account", await TryHitAuditAsync(
-                page,
-                page.Locator("[data-testid=app-shell-header] .account-menu__toggle").First,
-                "account")));
-            var coachBtn = page.Locator(
-                ".lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn, .lobsy-coach-dock__btn").First;
-            rows.Add(("Coach medallion", await TryHitAuditAsync(page, coachBtn, "coach")));
+            var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+            await AppendOnboardingHeaderRowsAsync(page, rows, mobile);
+            await AppendCoachAuditRowsAsync(page, rows);
+        }
+    }
 
-            if (await coachBtn.CountAsync() > 0)
-            {
-                try
-                {
-                    await coachBtn.ClickAsync(new() { Force = true, Timeout = 15_000 });
-                    await page.WaitForTimeoutAsync(400);
-                    var panel = page.Locator(".lobsy-coach-dock__panel, [data-ssr-coach-panel]").First;
-                    var openOk = await panel.CountAsync() > 0 && await panel.IsVisibleAsync();
-                    if (openOk)
-                    {
-                        var close = page.Locator(".lobsy-coach-dock__close, [data-ssr-coach-close]").First;
-                        if (await close.CountAsync() > 0)
-                        {
-                            await close.ClickAsync(new() { Force = true, Timeout = 10_000 });
-                        }
-                        else
-                        {
-                            await coachBtn.ClickAsync(new() { Force = true, Timeout = 10_000 });
-                        }
+    private static async Task<string> TryHeaderAccountMenuAsync(IPage page, ILocator header)
+    {
+        var toggle = header.Locator(".account-menu__toggle").First;
+        if (await toggle.CountAsync() == 0)
+        {
+            return "n/a";
+        }
 
-                        await page.WaitForTimeoutAsync(300);
-                    }
+        try
+        {
+            await toggle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, toggle, "account");
+            await toggle.ClickAsync(new() { Timeout = 15_000 });
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-header-menu') === 'account'",
+                null,
+                new() { Timeout = 15_000 });
+            var panel = header.Locator(".account-menu__panel").First;
+            await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            await page.Locator(".account-menu .header-dropdown-backdrop").First.ClickAsync(new() { Force = true, Timeout = 10_000 });
+            await page.WaitForFunctionAsync(
+                "() => !document.documentElement.hasAttribute('data-header-menu')",
+                null,
+                new() { Timeout = 10_000 });
+            return "ok";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
 
-                    rows.Add(("Coach open/dicht", openOk ? "ok" : "panel-missing"));
+    private static async Task<string> TryCoachOpenCloseAsync(IPage page, ILocator coachBtn)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.dataset.ssrCoachBound === '1'",
+                null,
+                new() { Timeout = 30_000 });
+            await coachBtn.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            var panel = page.Locator("#lobsy-assistant-panel, [data-ssr-coach-panel]").First;
+            await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
+            var close = page.Locator("[data-ssr-assistant-close]").First;
+            await close.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            await close.ClickAsync(new() { Force = true, Timeout = 10_000 });
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const shell = document.getElementById('lobsy-assistant-ssr-shell');
+                  return !shell || shell.hidden;
                 }
-                catch (Exception ex)
-                {
-                    rows.Add(("Coach open/dicht", ex.Message));
-                }
-            }
-            else
-            {
-                rows.Add(("Coach open/dicht", "n/a"));
-            }
+                """,
+                null,
+                new() { Timeout = 15_000 });
+            return "ok";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
         }
     }
 

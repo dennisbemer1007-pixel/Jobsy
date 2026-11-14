@@ -447,6 +447,7 @@ public static partial class PageAssetCatalog
                 WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css"),
                 WwwrootAssetCatalog.Url("css/features/onboarding-client-nav.css"),
                 WwwrootAssetCatalog.Url("css/features/lobsy-coach-ssr-chrome.css"),
+                WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
             ];
         }
 

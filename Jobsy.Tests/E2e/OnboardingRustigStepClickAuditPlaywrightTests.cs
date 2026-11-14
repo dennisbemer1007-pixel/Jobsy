@@ -146,9 +146,8 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         }
 
         var rows = new List<(string Control, string Result)>();
-        rows.Add(("Header help", await TryHitAuditAsync(page, page.Locator("[data-testid=app-shell-header] .page-help__btn").First, "help")));
-        rows.Add(("Header account", await TryHitAuditAsync(page, page.Locator("[data-testid=app-shell-header] .account-menu__toggle").First, "account")));
-        rows.Add(("Coach medallion", await TryHitAuditAsync(page, page.Locator(".lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn, .lobsy-coach-dock__btn").First, "coach")));
+        await OnboardingRustigClickAuditSupport.AppendOnboardingHeaderRowsAsync(page, rows, mobile);
+        await OnboardingRustigClickAuditSupport.AppendCoachAuditRowsAsync(page, rows);
 
         if (rustig)
         {
@@ -333,6 +332,18 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
 
         try
         {
+            if (label is "Terug")
+            {
+                var footBack = page.Locator(
+                    ".ob-v3-dfoot [data-testid=onboarding-back], form[data-ob-ssr-form] [data-testid=onboarding-back]").First;
+                if (await footBack.CountAsync() > 0)
+                {
+                    locator = footBack;
+                }
+
+                await locator.First.ScrollIntoViewIfNeededAsync();
+            }
+
             await locator.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
             await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, locator.First, label);
             return "ok";

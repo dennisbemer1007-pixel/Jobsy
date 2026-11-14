@@ -67,12 +67,15 @@ public static class OnboardingStartFormEndpoints
         var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
         var persist = string.Equals(obNav, "save", StringComparison.OrdinalIgnoreCase);
 
-        if (goBack && currentStep is >= 7 and <= 10)
+        if (goBack)
         {
-            var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-            if (q > 1)
+            if (currentStep is >= 7 and <= 10)
             {
-                return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
+                if (q > 1)
+                {
+                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+                }
             }
 
             if (currentStep > 1)

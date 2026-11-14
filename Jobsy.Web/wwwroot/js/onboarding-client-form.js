@@ -1967,6 +1967,16 @@
                     return;
                 }
                 preserveSubmitButtonInForm(form, ev.submitter);
+                var submitter = ev.submitter;
+                if (
+                    submitter
+                    && submitter.getAttribute("name") === "obNav"
+                    && String(submitter.getAttribute("value") || "").toLowerCase() === "back"
+                ) {
+                    var payloadSkip = form.querySelector("[data-ob-ssr-payload]");
+                    if (payloadSkip) payloadSkip.value = "";
+                    return;
+                }
                 form.setAttribute("data-ob-submitting", "1");
                 form.querySelectorAll("button[type=submit]").forEach(function (b) {
                     b.disabled = true;

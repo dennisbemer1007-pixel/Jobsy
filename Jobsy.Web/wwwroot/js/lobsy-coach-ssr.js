@@ -55,7 +55,7 @@
       : '<img class="lobsy-assistant__avatar" src="/brand/svg/lobsy-merkteken.svg" alt="" width="40" height="40" decoding="async" />';
 
     shell.innerHTML =
-      '<div id="lobsy-assistant-panel" class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1">' +
+      '<div id="lobsy-assistant-panel" class="lobsy-assistant__panel" data-ssr-coach-panel role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1">' +
       '<header class="lobsy-assistant__header">' +
       '<div class="lobsy-assistant__brand">' +
       brandHtml +
