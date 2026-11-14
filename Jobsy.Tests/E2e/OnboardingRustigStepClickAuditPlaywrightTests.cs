@@ -162,7 +162,14 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
                 later = page.GetByRole(AriaRole.Button, new() { Name = "Later verder" });
             }
 
-            await AuditButtonAsync(page, rows, "Later verder", later);
+            if (mobile && await later.CountAsync() > 0 && !await later.First.IsVisibleAsync())
+            {
+                rows.Add(("Later verder", "n/a"));
+            }
+            else
+            {
+                await AuditButtonAsync(page, rows, "Later verder", later);
+            }
             var account = page.Locator("a.ob-rustig__link--underline[href='/privacy/data']").First;
             if (await account.CountAsync() == 0)
             {

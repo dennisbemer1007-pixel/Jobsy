@@ -17,6 +17,8 @@ export JOBSY_ONBOARDING_STEP10_CLICK_AUDIT=1
 export JOBSY_ONBOARDING_KOMPAS_CLICK_AUDIT=1
 
 cd "$ROOT"
+dotnet build Jobsy.Web/Jobsy.Web.csproj -c Release -v q
+dotnet build Jobsy.Tests/Jobsy.Tests.csproj -c Release -v q
 dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build --timeout 45m \
   --filter "FullyQualifiedName~ClickAudit&FullyQualifiedName~Onboarding"
 
