@@ -205,6 +205,11 @@ internal static class OnboardingRustigClickAuditSupport
                     }
                     """);
                 rows.Add(("Keyboard (Volgende focus)", focused ? "ok" : "no-focus"));
+                await page.Keyboard.PressAsync("Tab");
+                await page.WaitForTimeoutAsync(100);
+                var enterTarget = await page.EvaluateAsync<string>(
+                    "() => (document.activeElement?.getAttribute('data-testid') || document.activeElement?.tagName || '').toLowerCase()");
+                rows.Add(("Keyboard (Tab cycle)", string.IsNullOrEmpty(enterTarget) ? "no-focus" : "ok"));
             }
             catch (Exception ex)
             {
@@ -225,10 +230,44 @@ internal static class OnboardingRustigClickAuditSupport
                 page,
                 page.Locator("[data-testid=app-shell-header] .account-menu__toggle").First,
                 "account")));
-            rows.Add(("Coach medallion", await TryHitAuditAsync(
-                page,
-                page.Locator(".lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn, .lobsy-coach-dock__btn").First,
-                "coach")));
+            var coachBtn = page.Locator(
+                ".lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn, .lobsy-coach-dock__btn").First;
+            rows.Add(("Coach medallion", await TryHitAuditAsync(page, coachBtn, "coach")));
+
+            if (await coachBtn.CountAsync() > 0)
+            {
+                try
+                {
+                    await coachBtn.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                    await page.WaitForTimeoutAsync(400);
+                    var panel = page.Locator(".lobsy-coach-dock__panel, [data-ssr-coach-panel]").First;
+                    var openOk = await panel.CountAsync() > 0 && await panel.IsVisibleAsync();
+                    if (openOk)
+                    {
+                        var close = page.Locator(".lobsy-coach-dock__close, [data-ssr-coach-close]").First;
+                        if (await close.CountAsync() > 0)
+                        {
+                            await close.ClickAsync(new() { Force = true, Timeout = 10_000 });
+                        }
+                        else
+                        {
+                            await coachBtn.ClickAsync(new() { Force = true, Timeout = 10_000 });
+                        }
+
+                        await page.WaitForTimeoutAsync(300);
+                    }
+
+                    rows.Add(("Coach open/dicht", openOk ? "ok" : "panel-missing"));
+                }
+                catch (Exception ex)
+                {
+                    rows.Add(("Coach open/dicht", ex.Message));
+                }
+            }
+            else
+            {
+                rows.Add(("Coach open/dicht", "n/a"));
+            }
         }
     }
 

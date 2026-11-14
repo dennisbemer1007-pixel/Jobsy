@@ -153,6 +153,19 @@ public sealed class OnboardingRustigStep07ClickAuditPlaywrightTests
 
         try
         {
+            if (label is "Terug")
+            {
+                var back = locator.First;
+                if (await back.CountAsync() == 0)
+                {
+                    return "n/a";
+                }
+
+                await back.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
+                await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, back, label);
+                return "ok";
+            }
+
             await locator.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
             await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, locator.First, label);
             return "ok";

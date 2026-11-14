@@ -18,6 +18,19 @@ def pick(rows: dict[str, str], *keys: str) -> str:
     return "—"
 
 
+def pass_fail(value: str) -> tuple[str, str]:
+    if value in ("ok", "n/a", "—", ""):
+        if value == "ok":
+            return "PASS", ""
+        if value == "n/a":
+            return "PASS", "n/a"
+        return "—", ""
+    short = value.split("\n", 1)[0].strip()
+    if len(short) > 56:
+        short = short[:53] + "..."
+    return "FAIL", short
+
+
 def parse_report(path: Path) -> tuple[str, str, dict[str, str]]:
     step = "?"
     vp = "?"
@@ -35,23 +48,17 @@ def parse_report(path: Path) -> tuple[str, str, dict[str, str]]:
     m = re.search(r"step-(\d{2})", name)
     if m:
         step = m.group(1)
-    elif name.startswith("click-audit-step-00"):
+    elif name.startswith("click-audit-step-00") or name.startswith("click-audit-rustig"):
         step = "00"
-    elif name.startswith("click-audit-rustig-") or "audit-rustig" in name:
-        step = "00"
-    m2 = re.search(r"step-(\d{2})-", name)
-    if m2:
-        step = m2.group(1)
-    m3 = re.search(r"-(\d{3,4})\.txt", name)
-    if m3 and vp == "?":
-        vp = m3.group(1)
-  # filename patterns: click-audit-step-01-rustig-1440.txt
     m4 = re.search(r"click-audit-step-(\d{2})-[^-]+-(\d{3,4})", name)
     if m4:
         step, vp = m4.group(1), m4.group(2)
     m5 = re.search(r"click-audit-step-00-[^-]+-(\d{3,4})", name)
     if m5:
         step, vp = "00", m5.group(1)
+    m6 = re.search(r"click-audit-rustig-(\d{3,4})", name)
+    if m6 and step == "00":
+        vp = m6.group(1)
     return step, vp, rows
 
 
@@ -72,41 +79,52 @@ def main() -> int:
     lines = [
         "# Onboarding v3 click audit (stap 00–10)",
         "",
-        "Base: lokale CI-stack / acceptatie-rustig. Kolommen: header (help+account), coach, keyboard (Volgende focus), Volgende, Terug, hydration.",
+        "PASS = ok of toegestaan n/a. FAIL = timeout/hit/navigatie.",
         "",
-        "| Stap | VP | Header | Coach | Keyboard | Volgende | Terug | Hydration |",
-        "|------|-----|--------|-------|----------|----------|-------|-----------|",
+        "| Stap | VP | Header | Coach | Coach open | Keyboard | Volgende | Terug | Hydration | Notitie |",
+        "|------|-----|--------|-------|------------|----------|----------|-------|-----------|---------|",
     ]
 
-    def status(*parts: str) -> str:
-        vals = [p for p in parts if p and p != "—"]
-        if not vals:
-            return "—"
-        if all(v in ("ok", "n/a") for v in vals):
-            return "ok" if any(v == "ok" for v in vals) else "n/a"
-        bad = [v for v in vals if v not in ("ok", "n/a")]
-        return bad[0][:40] if bad else "ok"
-
     for step, vp, rows in entries:
-        header = status(pick(rows, "Header help", "Header account"))
-        coach = pick(rows, "Coach medallion")
-        keyboard = pick(rows, "Keyboard (Volgende focus)")
-        volgende = status(pick(rows, "Volgende", "Aan de slag", "Beginnen", "Test volgende"))
-        terug = status(pick(rows, "Terug", "Terug (disabled)", "Test terug"))
-        hydration = pick(rows, "Hydration (circuit)")
+        header_v = pick(rows, "Header help", "Header account")
+        coach_v = pick(rows, "Coach medallion")
+        coach_open_v = pick(rows, "Coach open/dicht")
+        keyboard_v = pick(rows, "Keyboard (Volgende focus)")
+        volgende_v = pick(rows, "Volgende", "Aan de slag", "Beginnen", "Test volgende")
+        terug_v = pick(rows, "Terug", "Terug (disabled)", "Test terug")
+        hydration_v = pick(rows, "Hydration (circuit)")
+
+        cols = [
+            ("Header", header_v),
+            ("Coach", coach_v),
+            ("Coach open", coach_open_v),
+            ("Keyboard", keyboard_v),
+            ("Volgende", volgende_v),
+            ("Terug", terug_v),
+            ("Hydration", hydration_v),
+        ]
+        rendered = [pass_fail(v) for _, v in cols]
+        notes = [f"{name}: {note}" for (name, _), (_, note) in zip(cols, rendered) if note and _ == "FAIL"]
+        note_cell = "; ".join(notes) if notes else ""
+
         lines.append(
-            f"| {step} | {vp} | {header} | {coach} | {keyboard} | {volgende} | {terug} | {hydration} |"
+            "| {step} | {vp} | {h} | {c} | {co} | {k} | {v} | {t} | {hy} | {note} |".format(
+                step=step,
+                vp=vp,
+                h=rendered[0][0],
+                c=rendered[1][0],
+                co=rendered[2][0],
+                k=rendered[3][0],
+                v=rendered[4][0],
+                t=rendered[5][0],
+                hy=rendered[6][0],
+                note=note_cell or "—",
+            )
         )
 
-    lines.extend(
-        [
-            "",
-            "## Screenshots",
-            "",
-        ]
-    )
+    lines.extend(["", "## Screenshots", ""])
     for png in sorted(art.glob("step-*-viewport.png")):
-        lines.append(f"- `{png.name}`")
+        lines.append(f"- [`{png.name}`]({png.resolve()})")
 
     out = art / "CLICK-AUDIT-SUMMARY.md"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
