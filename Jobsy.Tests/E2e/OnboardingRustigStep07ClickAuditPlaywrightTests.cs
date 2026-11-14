@@ -85,7 +85,9 @@ public sealed class OnboardingRustigStep07ClickAuditPlaywrightTests
             }
 
             await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
-            await page.Locator("[data-ob-rustig-screen=\"step-08\"], [data-onboarding-step=\"8\"], .test-likert")
+            await page.Locator(
+                    ".ob-rustig__canvas--mini-test .ob-client-mini-q, " +
+                    "[data-ob-rustig-screen=\"step-08\"], [data-onboarding-step=\"8\"]")
                 .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
             rows.Add(("Navigatie naar stap 8", "ok"));
         }
@@ -159,6 +161,11 @@ public sealed class OnboardingRustigStep07ClickAuditPlaywrightTests
                 if (await back.CountAsync() == 0)
                 {
                     return "n/a";
+                }
+
+                if (!await back.IsVisibleAsync())
+                {
+                    return "n/a (verborgen op mobile)";
                 }
 
                 await back.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
