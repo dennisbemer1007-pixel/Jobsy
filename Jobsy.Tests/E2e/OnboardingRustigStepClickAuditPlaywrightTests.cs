@@ -256,6 +256,10 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
             }
         }
 
+        await OnboardingRustigClickAuditSupport.AppendHydrationAndKeyboardRowsAsync(page, rows);
+        await OnboardingRustigClickAuditSupport.CaptureStepScreenshotAsync(
+            page, reportDir, $"step-{step:D2}-{tag}-viewport.png");
+
         var stepSlug = step.ToString("D2");
         var reportPath = Path.Combine(reportDir, $"click-audit-step-{stepSlug}-{mode}-{tag}.txt");
         var sb = new StringBuilder();

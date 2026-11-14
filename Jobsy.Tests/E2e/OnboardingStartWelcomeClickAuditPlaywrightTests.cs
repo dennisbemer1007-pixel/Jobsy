@@ -66,12 +66,18 @@ public sealed class OnboardingStartWelcomeClickAuditPlaywrightTests
         rows.Add(("Mijn gegevens & account", accountHit));
         rows.Add(("Privacy (/privacy/data)", accountHit));
 
+        await OnboardingRustigClickAuditSupport.AppendHeaderAndCoachRowsAsync(page, rows);
+        await OnboardingRustigClickAuditSupport.AppendHydrationAndKeyboardRowsAsync(page, rows);
+        rows.Add(("Terug", "n/a"));
+
         var begin = page.GetByTestId("onboarding-begin");
-        await AuditButtonAsync(page, rows, rustig ? "Aan de slag" : "Beginnen", begin);
+        await AuditButtonAsync(page, rows, "Volgende", begin);
+        await OnboardingRustigClickAuditSupport.CaptureStepScreenshotAsync(
+            page, reportDir, $"step-00-{tag}-viewport.png");
         await FunctionalOnboardingInteractivityHelpers.ClickBeginnenOnWelcomeAsync(page, mobile);
         rows.Add(("Navigatie naar stap 1", "ok"));
 
-        var reportPath = Path.Combine(reportDir, $"click-audit-{mode}-{tag}.txt");
+        var reportPath = Path.Combine(reportDir, $"click-audit-step-00-{mode}-{tag}.txt");
         var sb = new StringBuilder();
         sb.AppendLine($"mode={mode} viewport={tag} rustig={rustig}");
         foreach (var (control, result) in rows)

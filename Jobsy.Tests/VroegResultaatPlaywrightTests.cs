@@ -600,17 +600,10 @@ combo.save(out)
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 15_000);
         await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
+        await FunctionalOnboardingInteractivityHelpers.AdvanceFromStep1ToStep2Async(page);
+        await FunctionalOnboardingInteractivityHelpers.SelectFirstPresetTileAsync(page);
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
-        var preset = page.Locator(".ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile, [data-testid=onboarding-step-2-illustrated] .lobsy-choice-tile").First;
-        await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-        await preset.ClickAsync(new() { Force = true });
-        await ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-step-3-illustrated]").WaitForAsync(new()
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = 90_000,
-        });
+        await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStepShellAsync(page, 3);
         await FunctionalOnboardingInteractivityHelpers.WaitForStepIllustrationLoadedAsync(page, 3);
         await FunctionalOnboardingInteractivityHelpers.WaitForCircuitReadyAsync(page, 15_000);
         var transportTile = page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First;
@@ -786,7 +779,43 @@ combo.save(out)
 
         if (ssr)
         {
-            await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 90_000 });
+            var beforeStep = await page.EvaluateAsync<int>(
+                """
+                () => {
+                  const form = document.querySelector('form[data-ob-ssr-form]');
+                  if (!form) return 0;
+                  return parseInt(
+                    form.getAttribute('data-ob-ssr-step')
+                      || form.getAttribute('data-ob-active-step')
+                      || '0',
+                    10);
+                }
+                """);
+
+            try
+            {
+                await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 20_000 });
+            }
+            catch (TimeoutException)
+            {
+                await page.WaitForFunctionAsync(
+                    """
+                    ({ beforeStep, beforeUrl }) => {
+                      if (location.href !== beforeUrl) return true;
+                      const form = document.querySelector('form[data-ob-ssr-form]');
+                      if (!form) return false;
+                      const step = parseInt(
+                        form.getAttribute('data-ob-ssr-step')
+                          || form.getAttribute('data-ob-active-step')
+                          || '0',
+                        10);
+                      return step > beforeStep;
+                    }
+                    """,
+                    new { beforeStep, beforeUrl },
+                    new() { Timeout = 90_000 });
+            }
+
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         }
         else

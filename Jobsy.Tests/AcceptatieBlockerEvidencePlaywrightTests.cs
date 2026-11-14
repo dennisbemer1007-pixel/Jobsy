@@ -635,9 +635,20 @@ internal static class VroegResultaatPlaywrightTestsHelpers
 
     public static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
     {
+        if (await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0)
+        {
+            await FunctionalOnboardingInteractivityHelpers.AdvanceStepsFourThroughSixToConsentAsync(page);
+            return;
+        }
+
         for (var step = 0; step < 12; step++)
         {
             if (await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).CountAsync() > 0)
+            {
+                return;
+            }
+
+            if (await FunctionalOnboardingInteractivityHelpers.OnboardingConsentScreen(page).CountAsync() > 0)
             {
                 return;
             }

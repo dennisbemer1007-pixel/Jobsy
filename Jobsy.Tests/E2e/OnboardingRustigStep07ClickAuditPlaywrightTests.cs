@@ -94,6 +94,11 @@ public sealed class OnboardingRustigStep07ClickAuditPlaywrightTests
             rows.Add(("Navigatie naar stap 8", ex.Message));
         }
 
+        await OnboardingRustigClickAuditSupport.AppendHeaderAndCoachRowsAsync(page, rows);
+        await OnboardingRustigClickAuditSupport.AppendHydrationAndKeyboardRowsAsync(page, rows);
+        await OnboardingRustigClickAuditSupport.CaptureStepScreenshotAsync(
+            page, reportDir, $"step-07-{tag}-viewport.png");
+
         var reportPath = Path.Combine(reportDir, $"click-audit-step-07-{mode}-{tag}.txt");
         var sb = new StringBuilder();
         sb.AppendLine($"mode={mode} viewport={tag} rustig={rustig}");
