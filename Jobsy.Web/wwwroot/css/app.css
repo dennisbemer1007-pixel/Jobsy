@@ -16923,10 +16923,21 @@ html.cookie-consent-known .cookie-consent {
 .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 
 .header-dropdown-backdrop {
+    display: none;
+    pointer-events: none;
     position: fixed;
     inset: 0;
     z-index: 55;
     background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
+}
+
+.header-dropdown-backdrop--open,
+html[data-header-menu] .header-dropdown-backdrop,
+.account-menu.is-open:not(.is-closed) > .header-dropdown-backdrop,
+.page-help.is-open:not(.is-closed) > .header-dropdown-backdrop,
+.notification-bell.is-open:not(.is-closed) > .header-dropdown-backdrop {
+    display: block;
+    pointer-events: auto;
 }
 
 .notification-dropdown.z-50,
@@ -21467,6 +21478,7 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 .language-selector__menu,
 .page-help__panel,
 .notification-bell__panel,
+.account-menu > .header-dropdown-backdrop,
 .page-help > .header-dropdown-backdrop,
 .notification-bell > .header-dropdown-backdrop {
     display: none;
@@ -21477,7 +21489,10 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 html[data-header-menu="notifications"] .notification-bell > .notification-bell__panel,
 html[data-header-menu="notifications"] .notification-bell > .header-dropdown-backdrop,
 html[data-header-menu="language"] .language-selector > .language-selector__menu,
-html[data-header-menu="account"] .account-menu > .account-menu__panel {
+html[data-header-menu="account"] .account-menu > .account-menu__panel,
+html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
+.account-menu.is-open:not(.is-closed) > .account-menu__panel,
+.account-menu.is-open:not(.is-closed) > .header-dropdown-backdrop {
     display: block;
 }
 
@@ -21744,10 +21759,10 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     background: transparent;
     box-shadow: none;
     cursor: pointer;
-    overflow: visible;
+    overflow: hidden;
 }
 
-.lobsy-coach-dock__btn img {
+.lobsy-coach-dock__btn:not(.lobsy-coach-dock__btn--warm):not(.lobsy-coach-dock__btn--lobster-b) img {
     display: block;
     width: 100%;
     height: 100%;

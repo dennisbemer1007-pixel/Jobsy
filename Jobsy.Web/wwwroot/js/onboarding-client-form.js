@@ -1467,14 +1467,16 @@
         if (box) box.checked = !!initial.consentRequested;
         var host = root.querySelector("[data-ob-client=miniRoot]");
         mountMiniHost(host, initial);
-        return {
-            collect: function () {
-                var payload = { consentRequested: box ? box.checked : false };
-                var answers = readMiniAnswersFromDom(host);
-                if (Object.keys(answers).length) payload.answers = answers;
-                return payload;
-            }
-        };
+        function collectPayload() {
+            var payload = { consentRequested: box ? box.checked : false };
+            var answers = readMiniAnswersFromDom(host);
+            if (Object.keys(answers).length) payload.answers = answers;
+            return payload;
+        }
+        if (!root.closest("form[data-ob-ssr-form]")) {
+            wireObStepBff(root, 7, collectPayload);
+        }
+        return { collect: collectPayload };
     }
 
     function mountMini(root, initial) {
@@ -1498,11 +1500,14 @@
         var host = root.querySelector("[data-ob-client=miniRoot]");
         if (!host) host = root;
         mountMiniHost(host, initial);
-        return {
-            collect: function () {
-                return { answers: readMiniAnswersFromDom(host) };
-            }
-        };
+        var step = parseInt(root.getAttribute("data-ob-client-step") || "0", 10);
+        function collectPayload() {
+            return { answers: readMiniAnswersFromDom(host) };
+        }
+        if (!root.closest("form[data-ob-ssr-form]") && step >= 7 && step <= 10) {
+            wireObStepBff(root, step, collectPayload);
+        }
+        return { collect: collectPayload };
     }
 
     function mountForStep(root, step, initial) {
@@ -1763,6 +1768,73 @@
                 nav.setAttribute("aria-hidden", "true");
             });
         });
+    }
+
+    function bindRustigWizardFooterNav() {
+        if (window.__obRustigFooterNavBound) return;
+        window.__obRustigFooterNavBound = true;
+        document.addEventListener("click", function (ev) {
+            var wiz = ev.target.closest(".ob-wizard--rustig");
+            if (!wiz || wiz.closest("form[data-ob-ssr-form]")) return;
+
+            var skipBtn = ev.target.closest(".ob-rustig__footer-actions [data-testid=onboarding-skip-optional]");
+            if (skipBtn) {
+                if (skipBtn.disabled) return;
+                var rootSkip = resolveClientRoot(skipBtn);
+                var stepSkip = resolveNavStep(rootSkip, skipBtn);
+                if (!rootSkip || !stepSkip) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                skipBtn.disabled = true;
+                var stSkip = roots ? roots.get(rootSkip) : null;
+                runStepAdvance(rootSkip, stepSkip, function () {
+                    return collectForRoot(rootSkip, stepSkip, stSkip);
+                }, true).finally(function () {
+                    skipBtn.disabled = false;
+                });
+                return;
+            }
+
+            var nextBtn = ev.target.closest(".ob-rustig__footer-actions [data-testid=onboarding-next]");
+            if (nextBtn && !nextBtn.hasAttribute("data-ob-nav-next")) {
+                if (nextBtn.disabled) return;
+                var rootNext = resolveClientRoot(nextBtn);
+                var stepNext = resolveNavStep(rootNext, nextBtn);
+                if (!rootNext || !stepNext) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                nextBtn.disabled = true;
+                var stNext = roots ? roots.get(rootNext) : null;
+                if (typeof rootNext.__obRunAdvance === "function") {
+                    rootNext.__obRunAdvance(false);
+                    nextBtn.disabled = false;
+                    return;
+                }
+                runStepAdvance(rootNext, stepNext, function () {
+                    return collectForRoot(rootNext, stepNext, stNext);
+                }, false).finally(function () {
+                    nextBtn.disabled = false;
+                });
+                return;
+            }
+
+            var backBtn = ev.target.closest(".ob-rustig__footer-actions [data-testid=onboarding-back]");
+            if (backBtn && !backBtn.hasAttribute("data-ob-nav-back")) {
+                if (backBtn.disabled) return;
+                var rootBack = resolveClientRoot(backBtn);
+                var stepBack = resolveNavStep(rootBack, backBtn);
+                if (!rootBack || !stepBack || stepBack <= 1) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                backBtn.disabled = true;
+                var stBack = roots ? roots.get(rootBack) : null;
+                runStepBack(rootBack, stepBack, function () {
+                    return collectForRoot(rootBack, stepBack, stBack);
+                }).finally(function () {
+                    backBtn.disabled = false;
+                });
+            }
+        }, true);
     }
 
     function triggerWizardAdvance(skipOptional) {
@@ -2029,6 +2101,7 @@
         bindWelcomeBegin();
         bindKompasComplete();
         reconcileRustigFooterNav();
+        bindRustigWizardFooterNav();
         bindObWizardNav();
     }
 

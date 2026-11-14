@@ -35,7 +35,7 @@
                     }
                     <span class="account-menu__icon" aria-hidden="true">@((MarkupString)NavIcons.Profile)</span>
                 </button>
-                    <div class="header-dropdown-backdrop" aria-hidden="true"></div>
+                    <div class="header-dropdown-backdrop" hidden="@(!_open)" aria-hidden="@(_open ? null : "true")"></div>
                     <div class="account-menu__panel right-0 max-w-[90vw] z-50" role="menu" aria-label="@Culture["Auth.AccountMenu"]">
                         <div class="account-menu__identity" role="presentation">
                             <strong class="account-menu__identity-name">@DisplayName(context.User)</strong>

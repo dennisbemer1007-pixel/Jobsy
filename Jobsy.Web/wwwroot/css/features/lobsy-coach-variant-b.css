@@ -17,6 +17,7 @@
 .app-shell.has-bottom-nav .lobsy-coach-dock--variant-b,
 .app-shell:has(.bottom-nav) .lobsy-coach-dock--variant-b {
   bottom: calc(var(--bottom-nav-h, 64px) + 16px + env(safe-area-inset-bottom, 0px));
+  z-index: 48;
 }
 
 .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b,
@@ -24,7 +25,7 @@
   pointer-events: auto;
   display: inline-flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-end;
   min-width: 44px;
   min-height: 44px;
   padding: 0;
@@ -33,6 +34,8 @@
   cursor: pointer;
   box-shadow: none;
   border-radius: 0;
+  overflow: hidden;
+  contain: layout style paint;
 }
 
 .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
