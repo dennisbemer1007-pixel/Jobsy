@@ -38,8 +38,9 @@
 .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
   display: block;
   width: auto;
+  max-width: none;
   object-fit: contain;
-  object-position: bottom right;
+  object-position: 88% 100%;
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 8px 22px color-mix(in srgb, #0a2044 18%, transparent));
@@ -66,6 +67,14 @@
 }
 
 @media (min-width: 1024px) {
+  .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b {
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
     height: 200px;
     max-width: 140px;
@@ -73,6 +82,12 @@
 }
 
 @media (max-width: 1023px) {
+  .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b {
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+  }
+
   .lobsy-coach-dock--variant-b {
     inset-inline-end: 10px;
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
@@ -87,8 +102,13 @@
   }
 
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
-    height: 104px;
-    max-width: 72px;
+    height: 88px;
+    max-width: 62px;
+  }
+
+  .wg-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 80px;
+    max-width: 56px;
   }
 
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
@@ -142,4 +162,101 @@
 /* Body clearance wanneer kreeft fixed staat (fallback — JS syncClearance blijft primair). */
 .app-shell:has(.lobsy-coach-dock--variant-b) {
   --lobsy-coach-scroll-pad: 5.5rem;
+}
+
+.wg-shell.wg-has-bottom-nav .lobsy-coach-dock--variant-b {
+  bottom: calc(var(--bottom-nav-h, 64px) + 28px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 1023px) {
+  .wg-shell.wg-has-bottom-nav:has(.lobsy-coach-dock--variant-b) .wg-main {
+    padding-inline-end: calc(16px + 72px);
+  }
+}
+
+.wg-shell.wg-has-bottom-nav .wg-main {
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .wg-shell .lobsy-coach-dock--variant-b {
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    top: auto;
+    inset-inline-start: 17.75rem;
+    inset-inline-end: auto;
+    z-index: 52;
+  }
+
+  .wg-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
+    display: none;
+  }
+
+  .wg-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b {
+    width: 40px;
+    height: 40px;
+  }
+
+  .wg-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 120px;
+    max-width: 84px;
+  }
+}
+
+.sch-shell:has(.sch-bottom-nav) .lobsy-coach-dock--variant-b {
+  bottom: calc(3.75rem + 20px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .sch-shell .lobsy-coach-dock--variant-b {
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    inset-inline-end: 22px;
+    inset-inline-start: auto;
+    top: auto;
+  }
+
+  .sch-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
+    display: none;
+  }
+}
+
+.sch-shell:has(.sch-bottom-nav) .sch-main,
+.mhbo-root {
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 1023px) {
+  .sch-shell:has(.lobsy-coach-dock--variant-b) .sch-main {
+    padding-inline-end: calc(16px + 76px);
+  }
+
+  .sch-shell:has(.sch-bottom-nav) .lobsy-coach-dock--variant-b {
+    inset-inline-end: 10px;
+    inset-inline-start: auto;
+    bottom: auto;
+    top: calc(4.25rem + env(safe-area-inset-top, 0px));
+  }
+
+  .sch-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
+    display: none;
+  }
+
+  .sch-shell .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 88px;
+    max-width: 60px;
+  }
+}
+
+.mhbo-root .lobsy-coach-dock--variant-b {
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+.mhbo-root:has(.lobsy-coach-dock) .mhbo-top {
+  padding-inline-end: 5rem;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mhbo-root .lobsy-coach-dock--variant-b {
+    inset-inline-end: 14px;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  }
 }

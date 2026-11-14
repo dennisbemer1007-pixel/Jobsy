@@ -25,14 +25,14 @@ internal static class SchoolPortalRender
         {
             var shellOff = await ScholenPortalShell.BuildAsync(http, culture, api, features, path);
             return Results.Content(
-                ScholenPortalSsrFrame.RenderDocument(pageTitle, "", shellOff, culture, path),
+                ScholenPortalSsrFrame.RenderDocument(pageTitle, "", shellOff, culture, http.User, path),
                 "text/html; charset=utf-8");
         }
 
         var body = await buildBodyAsync();
         var shell = await ScholenPortalShell.BuildAsync(http, culture, api, features, path);
         return Results.Content(
-            ScholenPortalSsrFrame.RenderDocument(pageTitle, body, shell, culture, path),
+            ScholenPortalSsrFrame.RenderDocument(pageTitle, body, shell, culture, http.User, path),
             "text/html; charset=utf-8");
     }
 

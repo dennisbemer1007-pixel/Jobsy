@@ -5,7 +5,7 @@ public static class BrandImages
 {
     public const string Version = "20261018-23";
     public const string MascotVersion = "20261004-13";
-    public const string CoachBVersion = "20261114-1";
+    public const string CoachBVersion = "20261114-2";
 
     public const string BrandRoot = "brand";
 

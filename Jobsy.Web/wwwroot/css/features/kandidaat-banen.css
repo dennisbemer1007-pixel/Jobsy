@@ -2054,33 +2054,24 @@
 }
 
 .lobsy-coach-cta--kb-rail {
-  display: none;
+  display: flex;
   margin: 0.85rem 0 0;
   width: 100%;
 }
 
-.lobsy-coach-cta--kb-mobile {
-  margin: 0.35rem 0 0;
-}
-
-.lobsy-coach-cta--kb-rail .lobsy-coach-cta__btn--warm,
-.lobsy-coach-cta--kb-mobile .lobsy-coach-cta__btn--warm {
+.lobsy-coach-cta--kb-rail .lobsy-coach-cta__btn--warm {
   max-width: 100%;
 }
 
 @media (min-width: 1024px) {
-  .lobsy-coach-cta--kb-mobile {
-    display: none !important;
-  }
-
   .lobsy-coach-cta--kb-rail {
-    display: flex !important;
-  }
-}
-
-@media (max-width: 1023px) {
-  .lobsy-coach-cta--kb-rail {
-    display: none !important;
+    position: fixed;
+    inset-inline-end: 24px;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: min(320px, calc(100vw - 48px));
+    z-index: 48;
+    margin: 0;
   }
 }
 

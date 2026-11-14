@@ -194,9 +194,10 @@ internal static class CoachVariantBOverlapAuditSupport
         {
             try
             {
+                await page.WaitForSelectorAsync("[data-testid=kb-detail]", new() { Timeout = 60_000, State = WaitForSelectorState.Attached });
                 await page.WaitForSelectorAsync(
-                    "[data-testid=vacancy-mock-interview-cta], #lobsy-coach-btn",
-                    new() { Timeout = 45_000, State = WaitForSelectorState.Attached });
+                    "[data-testid=vacancy-mock-interview-cta] .lobsy-coach-cta__btn",
+                    new() { Timeout = 90_000, State = WaitForSelectorState.Visible });
             }
             catch
             {
@@ -210,7 +211,7 @@ internal static class CoachVariantBOverlapAuditSupport
         {
             await page.WaitForSelectorAsync(
                 "#lobsy-coach-btn, #lobsy-assistant-launcher-btn, .lobsy-coach-cta--variant-b",
-                new() { Timeout = 25_000, State = WaitForSelectorState.Attached });
+                new() { Timeout = 45_000, State = WaitForSelectorState.Visible });
         }
         catch
         {
