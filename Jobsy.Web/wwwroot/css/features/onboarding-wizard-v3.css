@@ -32,9 +32,7 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 }
 
 .account-menu > .header-dropdown-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 55;
+  /* chrome only — display/pointer-events come from app.min.css */
   background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
 }
 
@@ -707,6 +705,8 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 
 .ob-onboarding-back,
 .ob-v3-dfoot__back {
+  position: relative;
+  z-index: 41;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -728,6 +728,8 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 }
 
 .ob-v3-dfoot__next {
+  position: relative;
+  z-index: 41;
   margin-inline-start: auto;
   min-width: 120px;
   min-height: 48px;
@@ -738,6 +740,10 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 @media (min-width: 1024px) {
   .ob-v3-dfoot {
     margin-top: 24px;
+    position: relative;
+    z-index: 40;
+    isolation: isolate;
+    pointer-events: auto;
   }
 }
 

@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "3b2da0a22ff8db2ad6e43126ae265a27f48efaccce90956030c3ab9f5f24f4e0",
+    "sha256": "9c1568bd442ef19300eaf82dc1cf7c2377a5722d50fe3c242e3b53902636c0b2",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -40,7 +40,7 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart-auth-chrome.css": {
-    "sha256": "f056133fb95c1562b5458e8df3ac945142e45e0fc1189cb7e28befb431baf1a4",
+    "sha256": "fe3ee4ccf3a24b4a051677870536168980183a71ff661bfc769940024f04131f",
     "v": "20261027-53"
   },
   "css/features/banenkaart-illustrated.css": {
@@ -136,7 +136,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "b60ab442bcee5ea7abb4fb1f8cdb084db71dea7e1462f14ef1ebef61efe873a1",
+    "sha256": "d8a494f75a9e4479b2b466d8ec31b53664ba44307d1ad2a5da1190ad1c0cf217",
     "v": "20261025-59"
   },
   "css/features/kandidaatinzichten.css": {
@@ -176,7 +176,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "37eeed6759450db65943f49862a495abe72f48a81282fd89e446c21e4fc7eff0",
+    "sha256": "1bce826ac92021ba63a64cf21be61143b5db7b396a7d6e034313c0e147695bde",
     "v": "20261114-01"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -188,7 +188,7 @@
     "v": "20261113-01"
   },
   "css/features/lobsy-coach-variant-b.css": {
-    "sha256": "aa7320f0026f481d2924d554946adb8777af1827df205d9c5d85adfbc7bc16fd",
+    "sha256": "bda600e970538091f9d25ceb2b70f5313415319d8a487ddc384cf82940bcbb51",
     "v": "20261114-01"
   },
   "css/features/match-desktop.css": {
@@ -268,7 +268,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "11206f09fc6c8f5fd6c5abbf8d3f897ca835e3c389493d24c517cdff30fd7064",
+    "sha256": "d91f8dcc9e78e29a29ff7e7fb434e975a6b8204854da7c74a0c11446f6f3a202",
     "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -584,7 +584,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "402d617fbb7ef242fe2084aad1cb23de31ab2bfcf72d85a165e5145b8e811fb3",
+    "sha256": "8f865ed63971e644e77c5da6a7ea87a8f1ac9c1b153711f53dd8c5fd4c885ba8",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
