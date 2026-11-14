@@ -2033,27 +2033,23 @@
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
+            form.addEventListener("click", function (ev) {
+                var navBtn = ev.target.closest("[data-ob-nav-value][type=submit]");
+                if (!navBtn || !form.contains(navBtn)) return;
+                var intent = form.querySelector("[data-ob-ssr-nav-intent]");
+                var v = navBtn.getAttribute("data-ob-nav-value");
+                if (intent && v) intent.value = v;
+            }, true);
             form.addEventListener("submit", function (ev) {
                 if (form.getAttribute("data-ob-submitting") === "1") {
                     ev.preventDefault();
                     return;
                 }
-                preserveSubmitButtonInForm(form, ev.submitter);
-                var submitter = ev.submitter;
-                if (
-                    submitter
-                    && submitter.getAttribute("name") === "obNav"
-                    && String(submitter.getAttribute("value") || "").toLowerCase() === "back"
-                ) {
-                    var payloadSkip = form.querySelector("[data-ob-ssr-payload]");
-                    if (payloadSkip) payloadSkip.value = "";
-                    return;
-                }
+                var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
                 form.setAttribute("data-ob-submitting", "1");
                 form.querySelectorAll("button[type=submit]").forEach(function (b) {
                     b.disabled = true;
                 });
-                var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
                 var hidden = form.querySelector("[data-ob-ssr-payload]");
                 if (step === 6) {
                     var dreamInput = form.querySelector('input[name="dream"]');

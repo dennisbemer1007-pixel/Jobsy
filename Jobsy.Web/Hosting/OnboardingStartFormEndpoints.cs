@@ -61,6 +61,16 @@ public static class OnboardingStartFormEndpoints
 
         var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
 
+        if (string.IsNullOrWhiteSpace(obNav) && http.Request.Form.TryGetValue("obNav", out var navValues))
+        {
+            obNav = navValues.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(obNav) && obNav.Contains(',', StringComparison.Ordinal))
+        {
+            obNav = obNav.Split(',')[0].Trim();
+        }
+
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
         var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
@@ -80,7 +90,18 @@ public static class OnboardingStartFormEndpoints
 
             if (currentStep > 1)
             {
-                return SeeOther(OnboardingRoutes.StepUrl(currentStep - 1));
+                var priorStep = currentStep - 1;
+                try
+                {
+                    await OnboardingClientProgressSaver.SaveStickyAsync(api, priorStep, ct: cancellationToken);
+                    api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                }
+                catch (Exception)
+                {
+                    // Best-effort; still honor back navigation.
+                }
+
+                return SeeOther(OnboardingRoutes.StepUrl(priorStep));
             }
 
             return SeeOther(OnboardingRoutes.StepUrl(1));

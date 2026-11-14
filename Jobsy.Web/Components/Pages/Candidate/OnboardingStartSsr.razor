@@ -68,18 +68,19 @@ else if (_step is >= 1 and <= 10)
             <button type="submit" name="obAction" value="noop" hidden tabindex="-1" aria-hidden="true" data-ob-ssr-enter-guard></button>
         }
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
+        <input type="hidden" name="obNav" value="" data-ob-ssr-nav-intent />
         @if (_step == 6)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-ssr-fetch-save.js")}")" defer></script>
         }
         @if (_step == 6)
         {
-            <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
+            <button type="button" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-step6-ssr.js")}")" defer></script>
         }
         @if (_step is >= 7 and <= 10)
         {
-            <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
+            <button type="button" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
         }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -119,56 +120,9 @@ else if (_step is >= 1 and <= 10)
                         </div>
                     </div>
                     </div>
-                    <div class="ob-v3-dfoot @(_step is >= 8 and <= 10 || (_step == 7 && _draft.HasConsent) ? "ob-v3-dfoot--mini" : null)">
-                        @if (_step is >= 8 and <= 10 || (_step == 7 && _draft.HasConsent))
-                        {
-                            <div class="ob-v3-dfoot__start">
-                                <OnboardingV3BackSubmit Step="@_step" />
-                                <a class="ob-v3-dfoot__link"
-                                   href="/candidate/profile"
-                                   data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
-                            </div>
-                            <button type="submit"
-                                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                                    name="obNav"
-                                    value="next"
-                                    data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
-                        }
-                        else
-                        {
-                            @if (_step > 1)
-                            {
-                                <OnboardingV3BackSubmit Step="@_step" />
-                            }
-                            else
-                            {
-                                <span class="ob-v3-dfoot__back-spacer" aria-hidden="true"></span>
-                            }
-                            <div class="ob-v3-dfoot__mid">
-                                @if (_step is 4 or 5)
-                                {
-                                    <button type="submit"
-                                            class="ob-v3-dfoot__link"
-                                            name="obNav"
-                                            value="skip"
-                                            data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
-                                }
-                                @if (_step == 6)
-                                {
-                                    <button type="submit"
-                                            class="ob-v3-dfoot__link"
-                                            name="obNav"
-                                            value="dreamUnknown"
-                                            data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
-                                }
-                            </div>
-                            <button type="submit"
-                                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                                    name="obNav"
-                                    value="next"
-                                    data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
-                        }
-                    </div>
+                    <OnboardingV3SsrFooter Step="@_step"
+                                          Step7ConsentOnly="@step7Consent"
+                                          MiniQuestionQ="@_miniQuestionQ" />
                 </div>
                 @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
                 @if (_showJobsRail && _nearbySignal is not null)

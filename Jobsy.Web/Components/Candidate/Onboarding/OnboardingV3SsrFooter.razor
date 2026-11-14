@@ -1,0 +1,92 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+@inject CultureState Culture
+
+<div class="ob-v3-dfoot @CssModifier">
+    @if (MiniFooterLayout)
+    {
+        <div class="ob-v3-dfoot__start">
+            @BackLink
+            <a class="ob-v3-dfoot__link"
+               href="/candidate/profile"
+               data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
+        </div>
+        <button type="submit"
+                class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                formnovalidate
+                data-ob-nav-value="next"
+                data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
+    }
+    else
+    {
+        @BackLinkOrSpacer
+        <div class="ob-v3-dfoot__mid">
+            @if (Step is 4 or 5)
+            {
+                <button type="submit"
+                        class="ob-v3-dfoot__link"
+                        formnovalidate
+                        data-ob-nav-value="skip"
+                        data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
+            }
+            @if (Step == 6)
+            {
+                <button type="submit"
+                        class="ob-v3-dfoot__link"
+                        formnovalidate
+                        data-ob-nav-value="dreamUnknown"
+                        data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
+            }
+        </div>
+        <button type="submit"
+                class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                formnovalidate
+                data-ob-nav-value="next"
+                data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public int Step { get; set; }
+
+    [Parameter] public bool Step7ConsentOnly { get; set; }
+
+    [Parameter] public int MiniQuestionQ { get; set; } = 1;
+
+    private bool MiniFooterLayout =>
+        Step is >= 8 and <= 10 || (Step == 7 && !Step7ConsentOnly);
+
+    private string? CssModifier => MiniFooterLayout ? "ob-v3-dfoot--mini" : null;
+
+    private string? BackHref => OnboardingV3SsrNav.BackHref(Step, Step7ConsentOnly, MiniQuestionQ);
+
+    private RenderFragment BackLink => __builder =>
+    {
+        if (BackHref is null)
+        {
+            return;
+        }
+
+        __builder.OpenElement(0, "a");
+        __builder.AddAttribute(1, "href", BackHref);
+        __builder.AddAttribute(2, "class", "ob-onboarding-back ob-v3-dfoot__back");
+        __builder.AddAttribute(3, "data-testid", "onboarding-back");
+        __builder.AddContent(4, Culture["Onboarding.Back"]);
+        __builder.CloseElement();
+    };
+
+    private RenderFragment BackLinkOrSpacer => __builder =>
+    {
+        if (BackHref is not null)
+        {
+            BackLink(__builder);
+        }
+        else
+        {
+            __builder.OpenElement(0, "span");
+            __builder.AddAttribute(1, "class", "ob-v3-dfoot__back-spacer");
+            __builder.AddAttribute(2, "aria-hidden", "true");
+            __builder.CloseElement();
+        }
+    };
+}
