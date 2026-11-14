@@ -1,0 +1,145 @@
+/* Coach variant B — vrijstaande kreeft + teaser (app-breed; onboarding overrides in lobsy-coach-onboarding-v3.css). */
+
+.lobsy-coach-dock--variant-b,
+.lobsy-coach-dock[data-ssr-coach="business"]:not(.lobsy-coach-dock--onboarding-b) {
+  position: fixed;
+  z-index: 56;
+  inset-inline-end: 22px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  max-width: min(440px, calc(100vw - 20px));
+}
+
+.app-shell.has-bottom-nav .lobsy-coach-dock--variant-b,
+.app-shell:has(.bottom-nav) .lobsy-coach-dock--variant-b {
+  bottom: calc(var(--bottom-nav-h, 64px) + 16px + env(safe-area-inset-bottom, 0px));
+}
+
+.lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b,
+.lobsy-coach-dock[data-ssr-coach="business"] .lobsy-coach-dock__btn--lobster-b {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+  display: block;
+  width: auto;
+  object-fit: contain;
+  object-position: bottom right;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 8px 22px color-mix(in srgb, #0a2044 18%, transparent));
+}
+
+.lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
+  pointer-events: none;
+  margin: 0;
+  padding: 10px 16px;
+  max-width: 220px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0a2044;
+  background: #fffcfa;
+  border: 1px solid #c9a86a;
+  border-radius: 999px;
+  box-shadow: 0 4px 18px color-mix(in srgb, #0a2044 10%, transparent);
+}
+
+.lobsy-coach-dock--variant-b.lobsy-coach-dock--chat-open .lobsy-coach-dock__teaser,
+.lobsy-coach-dock--variant-b.lobsy-coach-dock--bubble-dismissed .lobsy-coach-dock__teaser {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 200px;
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .lobsy-coach-dock--variant-b {
+    inset-inline-end: 10px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .app-shell.has-bottom-nav .lobsy-coach-dock--variant-b,
+  .app-shell:has(.bottom-nav) .lobsy-coach-dock--variant-b {
+    bottom: calc(var(--bottom-nav-h, 64px) + 10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 120px;
+    max-width: 80px;
+  }
+
+  .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    max-width: min(200px, calc(100vw - 100px));
+  }
+}
+
+/* Sollicitatie inline CTA (vacature-detail). */
+.lobsy-coach-cta--variant-b .lobsy-coach-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid #c9a86a;
+  border-radius: 999px;
+  background: #fffcfa;
+  cursor: pointer;
+  font-weight: 600;
+  color: #0a2044;
+}
+
+.lobsy-coach-cta--variant-b .lobsy-coach-cta__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #c9a86a;
+  object-fit: cover;
+}
+
+.mock-interview-modal__avatar--coach-b,
+.mock-interview-bubble__avatar--coach-b {
+  border-radius: 50%;
+  border: 2px solid #c9a86a;
+  object-fit: cover;
+  background: #fffcfa;
+}
+
+.mock-interview-modal__avatar--coach-b {
+  width: 48px;
+  height: 48px;
+}
+
+.mock-interview-bubble__avatar--coach-b {
+  width: 32px;
+  height: 32px;
+}
+
+/* Body clearance wanneer kreeft fixed staat (fallback — JS syncClearance blijft primair). */
+.app-shell:has(.lobsy-coach-dock--variant-b) {
+  --lobsy-coach-scroll-pad: 5.5rem;
+}

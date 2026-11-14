@@ -945,43 +945,4 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   border-radius: var(--radius-sm);
 }
 
-/* Coach — mobile: dock in footer row beside Volgende */
-@media (max-width: 1023px) {
-  .app-shell--onboarding-v3 .lobsy-coach-dock[data-ssr-coach] {
-    position: fixed;
-    inset-inline-end: 16px;
-    inset-inline-start: auto;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    z-index: 35;
-    pointer-events: none;
-  }
-
-  .app-shell--onboarding-v3 .lobsy-coach-dock__label {
-    display: none !important;
-  }
-
-  .app-shell--onboarding-v3 .lobsy-coach-dock__btn {
-    pointer-events: auto;
-    width: 52px;
-    height: 52px;
-    min-width: 52px;
-    min-height: 52px;
-    padding: 6px;
-    gap: 0;
-    border-radius: 999px;
-    box-shadow: var(--shadow);
-  }
-
-  .app-shell--onboarding-v3 .lobsy-coach-dock__medallion {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .app-shell--onboarding-v3 .lobsy-coach-dock[data-ssr-coach] {
-    position: fixed;
-    inset-inline-end: 24px;
-    bottom: 22px;
-  }
-}
+/* Coach variant B — see lobsy-coach-onboarding-v3.css */

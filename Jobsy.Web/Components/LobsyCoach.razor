@@ -1,5 +1,7 @@
 @namespace Jobsy.Web.Components
 @using Jobsy.Web.Media
+@using Jobsy.Web.Localization
+@inject CultureState Culture
 @using Jobsy.Web.Navigation
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -7,7 +9,10 @@
 @inject AssistantChatHost ChatHost
 @inject IJSRuntime Js
 
-<div @ref="_dock" class="lobsy-coach-dock @(Compact ? "lobsy-coach-dock--compact" : null) @(HasBottomNav ? "lobsy-coach-dock--has-nav" : null) @(ChatHost.IsOpen ? "lobsy-coach-dock--chat-open" : null)" data-lobsy-coach>
+<div @ref="_dock"
+     class="lobsy-coach-dock lobsy-coach-dock--variant-b @(Compact ? "lobsy-coach-dock--compact" : null) @(HasBottomNav ? "lobsy-coach-dock--has-nav" : null) @(ChatHost.IsOpen ? "lobsy-coach-dock--chat-open" : null)"
+     data-lobsy-coach
+     data-ssr-coach="business">
     @if (_showTip && !string.IsNullOrWhiteSpace(_tip))
     {
         <div class="lobsy-coach-dock__tip" role="status">
@@ -16,24 +21,21 @@
             <button type="button" class="lobsy-coach-dock__close" @onclick="DismissTipAsync" aria-label="@CloseLabel">×</button>
         </div>
     }
+    <p class="lobsy-coach-dock__teaser" data-ob-coach-bubble role="status">@Culture["Coach.OnboardingBubble"]</p>
     <button type="button"
             id="lobsy-coach-btn"
-            class="lobsy-coach-dock__btn lobsy-coach-dock__btn--warm"
+            class="lobsy-coach-dock__btn lobsy-coach-dock__btn--lobster-b"
             @onclick="OpenChat"
+            aria-label="@Culture["Coach.OpenOnboarding"]"
             aria-haspopup="dialog"
             aria-expanded="@(ChatHost.IsOpen ? "true" : "false")"
             aria-controls="lobsy-assistant-panel">
-        <span class="lobsy-coach-dock__medallion" aria-hidden="true">
-            <img src="@BrandImages.MarkSvg"
-                 srcset="@BrandImages.SrcSet56"
-                 sizes="56px"
-                 alt=""
-                 width="56"
-                 height="56"
-                 decoding="async" />
-        </span>
-        <span class="lobsy-coach-dock__label">@AskLabel</span>
-        <span class="visually-hidden">@AskLabel</span>
+        <img class="lobsy-coach-dock__lobster"
+             src="@BrandImages.AbsoluteCoachB"
+             alt="@Culture["Coach.LobsterAlt"]"
+             width="165"
+             height="250"
+             decoding="async" />
     </button>
 </div>
 
