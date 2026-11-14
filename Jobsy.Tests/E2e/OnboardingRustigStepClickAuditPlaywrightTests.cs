@@ -176,7 +176,7 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
             var back = page.GetByTestId("onboarding-back");
             if (step == 1)
             {
-                rows.Add(("Terug (disabled)", await back.IsDisabledAsync() ? "ok" : "expected-disabled"));
+                rows.Add(("Terug (disabled)", await DescribeDisabledBackAsync(back)));
             }
             else
             {
@@ -194,7 +194,7 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
             var back = page.GetByTestId("onboarding-back");
             if (step == 1)
             {
-                rows.Add(("Terug (disabled)", await back.IsDisabledAsync() ? "ok" : "expected-disabled"));
+                rows.Add(("Terug (disabled)", await DescribeDisabledBackAsync(back)));
             }
             else
             {
@@ -357,6 +357,23 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
                 }
             }
 
+            return ex.Message;
+        }
+    }
+
+    private static async Task<string> DescribeDisabledBackAsync(ILocator back)
+    {
+        if (await back.CountAsync() == 0)
+        {
+            return "n/a";
+        }
+
+        try
+        {
+            return await back.IsDisabledAsync() ? "ok" : "expected-disabled";
+        }
+        catch (Exception ex)
+        {
             return ex.Message;
         }
     }
