@@ -83,12 +83,12 @@
 
   .app-shell.has-bottom-nav .lobsy-coach-dock--variant-b,
   .app-shell:has(.bottom-nav) .lobsy-coach-dock--variant-b {
-    bottom: calc(var(--bottom-nav-h, 64px) + 10px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-h, 64px) + 18px + env(safe-area-inset-bottom, 0px));
   }
 
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
-    height: 120px;
-    max-width: 80px;
+    height: 104px;
+    max-width: 72px;
   }
 
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {

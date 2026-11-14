@@ -95,7 +95,7 @@
 @media (max-width: 1023px) {
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b {
     inset-inline-end: 10px;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     flex-direction: column-reverse;
     align-items: flex-end;
     gap: 4px;
@@ -115,7 +115,7 @@
 
   .app-shell--onboarding-v3 .ob-v3-dfoot,
   .app-shell--onboarding-v3 .ob-v3-welcome__foot {
-    padding-inline-end: calc(16px + 92px);
+    padding-inline-end: calc(16px + 108px);
   }
 }
 

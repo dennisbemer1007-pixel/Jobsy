@@ -5,6 +5,7 @@
 @inject CultureState Culture
 @inject DeploymentEnvironmentLabel Env
 @inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <div class="admin-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
@@ -50,15 +51,23 @@
         <FeedbackWidget HasBottomNav="false" />
         <ConsentReacceptDialog />
     }
+    else if (_ssrBusinessAssistant)
+    {
+        <LobsyAssistantBusinessSsr HasBottomNav="false" />
+    }
     <CookieConsentBanner />
     <SessionIdleGuard />
 </div>
 
 @code {
     private bool _drawerOpen;
+    private bool _ssrBusinessAssistant;
 
     protected override void OnInitialized()
     {
+        var user = HttpContextAccessor.HttpContext?.User;
+        _ssrBusinessAssistant = !RendererInfo.IsInteractive
+                                && AssistantChatHost.IsAvailableFor(user);
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
     }
