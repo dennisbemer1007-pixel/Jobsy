@@ -92,7 +92,7 @@ def main() -> int:
     ]
 
     for step, vp, rows in entries:
-        header_v = pick(rows, "Header help", "Header account")
+        header_v = pick(rows, "Header account", "Header help")
         coach_v = pick(rows, "Coach medallion")
         coach_open_v = pick(rows, "Coach open/dicht")
         keyboard_v = pick(rows, "Keyboard (Volgende focus)")

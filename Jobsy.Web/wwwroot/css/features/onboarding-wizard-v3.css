@@ -14,6 +14,27 @@
   overflow: visible;
 }
 
+/* Header dropdowns on NoBlazorRuntime onboarding (app.min.css menu rules otherwise missing). */
+.account-menu > .account-menu__panel,
+.account-menu > .header-dropdown-backdrop,
+.page-help > .page-help__panel,
+.page-help > .header-dropdown-backdrop {
+  display: none;
+}
+
+html[data-header-menu="account"] .account-menu > .account-menu__panel,
+html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
+html[data-header-menu="help"] .page-help > .page-help__panel,
+html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
+.account-menu.is-open:not(.is-closed) > .account-menu__panel,
+.page-help.is-open:not(.is-closed) > .page-help__panel {
+  display: block;
+}
+
+.account-menu {
+  position: relative;
+}
+
 /* ---- Top bar (candidate) ---- */
 .admin-topbar--candidate-onboarding {
   display: flex !important;
@@ -412,20 +433,9 @@
     min-height: 44px;
   }
 
-  .ob-v3-chrome__back {
-    width: 44px;
-    height: 44px;
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: transparent;
-    color: var(--brand);
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-  }
-
+  .ob-v3-chrome__back,
   .ob-v3-chrome__back--off {
-    visibility: hidden;
+    display: none !important;
   }
 
   .ob-v3-chrome__phases {
@@ -684,14 +694,22 @@
   margin-inline: auto;
 }
 
+.ob-onboarding-back,
 .ob-v3-dfoot__back {
-  border: 0;
-  background: transparent;
-  color: var(--brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--brand) 30%);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--brand-deep);
   font-weight: 600;
   font-size: var(--text-md);
   cursor: pointer;
-  padding: 8px 0;
+  box-sizing: border-box;
 }
 
 .ob-v3-dfoot__back-spacer {
@@ -737,22 +755,51 @@
     box-sizing: border-box;
   }
 
-  .ob-v3-dfoot__back,
   .ob-v3-dfoot__mid,
-  .ob-v3-dfoot__back-spacer,
+  .ob-v3-dfoot__back-spacer {
+    display: none;
+  }
+
+  .ob-v3-dfoot__back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding: 8px 12px;
+    margin: 0;
+  }
+
   .ob-v3-dfoot--mini .ob-v3-dfoot__start {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .ob-v3-dfoot--mini .ob-v3-dfoot__start .ob-v3-dfoot__link {
     display: none;
   }
 
   .ob-v3-dfoot__next {
     flex: 1 1 auto;
-    width: 100%;
+    width: auto;
+    min-width: 0;
     max-width: 100%;
     margin: 0;
     min-height: 52px;
     font-size: var(--text-md);
     font-weight: 600;
     border-radius: var(--radius-sm);
+  }
+}
+
+/* SSR header: account is the primary chrome on mobile (page-help hidden in admin.css). */
+@media (max-width: 1023px) {
+  .admin-topbar--candidate-onboarding .account-menu__toggle {
+    display: inline-flex !important;
   }
 }
 

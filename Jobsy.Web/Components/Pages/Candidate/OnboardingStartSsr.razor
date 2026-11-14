@@ -123,14 +123,7 @@ else if (_step is >= 1 and <= 10)
                         @if (_step is >= 7 and <= 10)
                         {
                             <div class="ob-v3-dfoot__start">
-                                @if (_step > 1)
-                                {
-                                    <button type="submit"
-                                            class="ob-v3-dfoot__back"
-                                            name="obNav"
-                                            value="back"
-                                            data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
-                                }
+                                <OnboardingV3BackSubmit Step="@_step" />
                                 <a class="ob-v3-dfoot__link"
                                    href="/candidate/profile"
                                    data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
@@ -145,11 +138,7 @@ else if (_step is >= 1 and <= 10)
                         {
                             @if (_step > 1)
                             {
-                                <button type="submit"
-                                        class="ob-v3-dfoot__back"
-                                        name="obNav"
-                                        value="back"
-                                        data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
+                                <OnboardingV3BackSubmit Step="@_step" />
                             }
                             else
                             {
