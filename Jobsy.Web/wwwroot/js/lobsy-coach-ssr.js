@@ -481,7 +481,21 @@
     };
 
     var mobile = window.matchMedia("(max-width: 1023px)").matches;
-    if (!mobile) return;
+    if (!mobile) {
+      document.addEventListener(
+        "pointerdown",
+        function (ev) {
+          if (ev.button !== 0) return;
+          if (ev.target.closest(".ob-v3-dfoot [data-testid=onboarding-back], .ob-v3-dfoot [data-testid=onboarding-next], .ob-wizard__consent")) {
+            dismiss();
+            var shell = document.getElementById("lobsy-assistant-ssr-shell");
+            if (shell) shell.hidden = true;
+          }
+        },
+        true
+      );
+      return;
+    }
 
     window.setTimeout(dismiss, 5000);
     document.addEventListener(

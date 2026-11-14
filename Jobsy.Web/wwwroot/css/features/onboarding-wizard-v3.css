@@ -721,6 +721,13 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   font-size: var(--text-md);
   cursor: pointer;
   box-sizing: border-box;
+  text-decoration: none;
+}
+
+a.ob-onboarding-back:hover,
+a.ob-v3-dfoot__back:hover {
+  text-decoration: none;
+  color: var(--brand-deep);
 }
 
 .ob-v3-dfoot__back-spacer {
@@ -741,9 +748,32 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   .ob-v3-dfoot {
     margin-top: 24px;
     position: relative;
-    z-index: 40;
+    z-index: 50;
     isolation: isolate;
     pointer-events: auto;
+  }
+
+  .ob-wizard--v3 .ob-wizard__consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-height: 44px;
+    padding: 8px 0;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+  }
+
+  .ob-wizard--v3 .ob-wizard__consent input[type="checkbox"] {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .app-shell--onboarding-v3 #lobsy-assistant-ssr-shell.lobsy-assistant--onboarding-v3:not(.is-open) {
+    pointer-events: none !important;
   }
 }
 

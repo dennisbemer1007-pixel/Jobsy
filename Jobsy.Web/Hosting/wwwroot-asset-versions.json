@@ -268,7 +268,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "d91f8dcc9e78e29a29ff7e7fb434e975a6b8204854da7c74a0c11446f6f3a202",
+    "sha256": "87835c3ebf15cac16be84b562552d68c9083114239eeb1cd3ded2a893802913a",
     "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -520,7 +520,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "7ae711ec852de12748174e511e44a87e5a38afb843747e233c4b4abdc1a96dc4",
+    "sha256": "29b76d60accf0c237c86c32ba302be25e80cc7c2f7fe85f3c78c50d07dd68eef",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {
@@ -584,7 +584,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "8f865ed63971e644e77c5da6a7ea87a8f1ac9c1b153711f53dd8c5fd4c885ba8",
+    "sha256": "38dcf99f63b67a36aec20079f1914b466f3024aeebbff6453d7bfbf2ab30d5b6",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
@@ -594,6 +594,10 @@
   "js/onboarding-step6-ssr.js": {
     "sha256": "093726cc1fc825022f9227b398054b8fe9cc8ab2ff7552aa7b54c2f8bac4c040",
     "v": "20261025-87"
+  },
+  "js/onboarding-v3-ssr-footer.js": {
+    "sha256": "d1048f874b0686956f60f4bb673a17ec7436aa7957e92d686f450428f9e1cd33",
+    "v": "20261114-01"
   },
   "js/passport-availability-matrix.js": {
     "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4",
