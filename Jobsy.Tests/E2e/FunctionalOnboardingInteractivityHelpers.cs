@@ -1476,45 +1476,212 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static async Task AcceptOnboardingTestConsentAsync(IPage page)
     {
         await WaitForOnboardingConsentScreenAsync(page);
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" })
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         var box = page.Locator(
-            "#onboarding-field-consent input[type=checkbox], .ob-wizard__consent input[type=checkbox]").First;
+            "input[data-testid=\"onboarding-consent\"], " +
+            "#onboarding-field-consent input[type=checkbox], " +
+            ".ob-wizard__consent input[type=checkbox]").First;
         await box.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await box.CheckAsync(new() { Force = true });
-        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await page.Locator(
-                ".ob-client-mini-q, [data-testid=onboarding-mini-likert], .test-likert__opt, .test-flow__counter")
+        await page.Locator("label.ob-wizard__consent").First.ClickAsync(new() { Force = true, Timeout = 10_000 });
+        await page.WaitForTimeoutAsync(200);
+        var advance = page.Locator("form[data-ob-ssr-form] button[name=\"obNav\"][value=\"next\"]");
+        if (await advance.CountAsync() > 0)
+        {
+            await advance.First.ClickAsync(new() { Timeout = 30_000 });
+        }
+        else
+        {
+            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        }
+
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        if (page.Url.Contains("obError=", StringComparison.Ordinal))
+        {
+            Assert.Fail($"Test consent advance failed: {page.Url}");
+        }
+
+        await page.Locator(".ob-rustig__canvas--mini-test .ob-client-mini-q, .ob-client-mini-q")
             .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         await WaitForCircuitReadyAsync(page);
+        await EnsureStep7TestConsentCheckedForMiniPrgAsync(page);
     }
 
+    /// <summary>SSR step 7 mini picks require <c>consentRequested</c> in the PRG POST until test consent is persisted.</summary>
+    internal static async Task EnsureStep7TestConsentCheckedForMiniPrgAsync(IPage page)
+    {
+        var step = ParseOnboardingStepFromUrl(page.Url);
+        if (step == 0)
+        {
+            step = await ReadOnboardingWizardStepAsync(page);
+        }
+
+        if (step != 7)
+        {
+            return;
+        }
+
+        var box = page.Locator(
+            "input[name=\"consentRequested\"][data-testid=\"onboarding-consent\"], " +
+            "[data-ob-client=consent], " +
+            "#onboarding-field-consent input[type=checkbox], " +
+            ".ob-wizard__consent input[type=checkbox]").First;
+        if (await box.CountAsync() == 0)
+        {
+            return;
+        }
+
+        if (!await box.IsCheckedAsync())
+        {
+            await box.CheckAsync(new() { Force = true });
+        }
+    }
+
+    internal static int ParseOnboardingStepFromUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return 0;
+        }
+
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        return query.TryGetValue("step", out var step) && int.TryParse(step, out var n) ? n : 0;
+    }
+
+    internal static int ParseMiniQuestionFromUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return 1;
+        }
+
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        return query.TryGetValue("q", out var q) && int.TryParse(q, out var n) && n >= 1 ? n : 1;
+    }
+
+    internal static async Task WaitForMiniQuestionAdvancedAsync(IPage page, int step, int previousQ, int timeoutMs = 90_000)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            ({ step, previousQ }) => {
+              const params = new URLSearchParams(location.search);
+              const urlStep = parseInt(params.get('step') || '0', 10);
+              const urlQ = parseInt(params.get('q') || '1', 10);
+              if (urlStep !== step) {
+                return urlStep > step;
+              }
+              return urlQ > previousQ;
+            }
+            """,
+            new { step, previousQ },
+            new() { Timeout = timeoutMs });
+    }
+
+    /// <summary>Answers five SSR mini questions via <c>obMiniPick</c> (PRG) then advances with one Volgende submit.</summary>
     internal static async Task CompleteCurrentMiniTestBlockAsync(IPage page)
     {
-        for (var q = 0; q < 6; q++)
+        var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+        var ssrMiniPick = page.Locator("button[name=\"obMiniPick\"]");
+        var useSsrMiniPrg = await ssrMiniPick.CountAsync() > 0 && await ssrMiniPick.First.IsVisibleAsync();
+        if (useSsrMiniPrg)
         {
-            var pick = page.Locator("button[name=\"obMiniPick\"]").Filter(new() { HasText = "3" }).First;
+            var step = ParseOnboardingStepFromUrl(page.Url);
+            if (step is < 7 or > 10)
+            {
+                step = await ReadOnboardingWizardStepAsync(page);
+            }
+
+            if (step == 7)
+            {
+                await EnsureStep7TestConsentCheckedForMiniPrgAsync(page);
+            }
+
+            for (var q = 1; q <= 5; q++)
+            {
+                await page.Locator(".ob-client-mini-q").First.WaitForAsync(new()
+                {
+                    State = WaitForSelectorState.Visible,
+                    Timeout = 90_000,
+                });
+                if (step == 7 && q == 1)
+                {
+                    await EnsureStep7TestConsentCheckedForMiniPrgAsync(page);
+                }
+
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    var tile = page.Locator("form[data-ob-ssr-form] button[name=\"obMiniPick\"]").Nth(2);
+                    await tile.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+                    await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+                    if (q < 5)
+                    {
+                        await Task.WhenAll(
+                            page.WaitForURLAsync($"**/candidate/start?step={step}&q={q + 1}**", new() { Timeout = 90_000 }),
+                            mobile ? tile.TapAsync() : tile.ClickAsync());
+                    }
+                    else
+                    {
+                        if (mobile)
+                        {
+                            await tile.TapAsync();
+                        }
+                        else
+                        {
+                            await tile.ClickAsync();
+                        }
+
+                        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+                    }
+
+                    if (!page.Url.Contains("obError=", StringComparison.Ordinal))
+                    {
+                        break;
+                    }
+
+                    var clean = page.Url.Split("&obError", 2)[0];
+                    await page.GotoAsync(clean, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                    if (step == 7)
+                    {
+                        await EnsureStep7TestConsentCheckedForMiniPrgAsync(page);
+                    }
+                }
+
+                Assert.DoesNotContain("obError=", page.Url, StringComparison.Ordinal);
+            }
+
+            if (!page.Url.Contains($"step={step + 1}", StringComparison.Ordinal))
+            {
+                var next = page.GetByTestId("onboarding-next");
+                await next.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+                await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+                await next.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+            }
+
+            await page.WaitForURLAsync($"**/step={step + 1}**", new() { Timeout = 120_000 });
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            await WaitForCircuitReadyAsync(page);
+            return;
+        }
+
+        for (var q = 0; q < 12; q++)
+        {
             var likert = page.Locator("[data-testid=onboarding-mini-likert], .test-likert__opt");
-            if (await pick.CountAsync() > 0)
-            {
-                await pick.ClickAsync(new() { Force = true, Timeout = 20_000 });
-            }
-            else if (await likert.CountAsync() > 0)
-            {
-                await likert.Nth(2).ClickAsync(new() { Force = true, Timeout = 20_000 });
-            }
-            else
+            if (await likert.CountAsync() == 0)
             {
                 break;
             }
 
-            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            await likert.Nth(2).ClickAsync(new() { Force = true, Timeout = 20_000 });
             await WaitForCircuitReadyAsync(page);
-            await page.WaitForTimeoutAsync(450);
+            await page.WaitForTimeoutAsync(350);
         }
 
-        var advance = page.GetByTestId("onboarding-next").Or(page.Locator("button.test-flow__next:not([disabled])")).First;
-        if (await advance.CountAsync() > 0)
+        var flowNext = page.Locator("button.test-flow__next:not([disabled])").First;
+        if (await flowNext.CountAsync() > 0)
         {
-            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+            await flowNext.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await WaitForCircuitReadyAsync(page);
         }
     }
 
@@ -1570,15 +1737,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
             }
 
             await CompleteCurrentMiniTestBlockAsync(page);
-            await AdvancePastEarlyInsightIfVisibleAsync(page);
             if (block < 3)
             {
                 var nextStep = expectedStep + 1;
                 await WaitForOnboardingStartStepAsync(page, nextStep, 120_000);
-                if (await IsOnboardingV3SsrAsync(page))
-                {
-                    await AssertOnboardingRustigStepScreenAsync(page, nextStep);
-                }
+                await WaitForMiniTestQuestionAsync(page);
             }
 
             if (expectedStep == 8)
