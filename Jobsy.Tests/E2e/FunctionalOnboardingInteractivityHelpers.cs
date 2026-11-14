@@ -537,12 +537,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     await WaitForStepIllustrationLoadedAsync(page, 2);
                     break;
                 case 2:
-                {
-                    var mobileWalk = (page.ViewportSize?.Width ?? 1440) < 768;
-                    await AdvanceFromStep2ToStep3Async(page, mobileWalk);
-                    await WaitForStepIllustrationLoadedAsync(page, 3);
-                    break;
-                }
+                    {
+                        var mobileWalk = (page.ViewportSize?.Width ?? 1440) < 768;
+                        await AdvanceFromStep2ToStep3Async(page, mobileWalk);
+                        await WaitForStepIllustrationLoadedAsync(page, 3);
+                        break;
+                    }
                 case 3:
                     await SelectTransportAndTravel30Async(page);
                     await ClickWizardNextWhenVisibleAsync(page);
