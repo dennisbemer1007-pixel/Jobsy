@@ -18,7 +18,7 @@ internal static class OnboardingRustigStep03E2eFlow
 
         await CandidateJourneyE2e.PrepareDiscoveryStepForE2eAsync(email, step: 3);
 
-        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.GotoAsync($"{baseUrl}/candidate/start?step=3", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await OnboardingRustigStep04E2eFlow.WaitForOnboardingWizardReadyAsync(page);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
 

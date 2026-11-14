@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ART="${JOBSY_ONBOARDING_RUSTIG_ARTIFACTS:-/opt/cursor/artifacts/onboarding-v3-click-audit}"
+ART="/opt/cursor/artifacts/onboarding-v3-click-audit"
+unset JOBSY_ONBOARDING_RUSTIG_ARTIFACTS
 mkdir -p "$ART"
 export JOBSY_E2E_BASE_URL="${JOBSY_E2E_BASE_URL:-http://127.0.0.1:5201}"
 export JOBSY_WELCOME_AUDIT_MODE=rustig
