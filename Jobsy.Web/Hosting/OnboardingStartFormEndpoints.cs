@@ -209,21 +209,6 @@ public static class OnboardingStartFormEndpoints
         else if (currentStep is >= 7 and <= 10)
         {
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
-            if (advance)
-            {
-                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-                var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
-                    currentStep,
-                    api,
-                    featureFlags,
-                    culture,
-                    cancellationToken);
-                var total = mini.Questions.Count;
-                if (total > 0 && q < total)
-                {
-                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q + 1));
-                }
-            }
         }
         else if (string.IsNullOrWhiteSpace(obPayload) && currentStep is >= 2 and <= 4)
         {

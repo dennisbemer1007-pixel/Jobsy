@@ -364,6 +364,8 @@ internal static class OnboardingClientStepShells
             sb.Append(" /> ");
             sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
             sb.Append("</label>");
+            sb.Append("</div>");
+            return sb.ToString();
         }
 
         AppendMiniQuestionsSsr(sb, culture, 7, seed.MiniQuestions, seed.MiniAnswers, "onboarding-step-7-mini", seed.MiniActiveQuestion);
