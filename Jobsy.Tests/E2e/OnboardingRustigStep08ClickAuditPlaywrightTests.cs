@@ -59,6 +59,11 @@ public sealed class OnboardingRustigStep08ClickAuditPlaywrightTests
         var rows = new List<(string Control, string Result)>();
         await OnboardingRustigClickAuditSupport.AppendMiniTestStepRowsAsync(page, rows);
 
+        await OnboardingRustigClickAuditSupport.AppendHeaderAndCoachRowsAsync(page, rows);
+        await OnboardingRustigClickAuditSupport.AppendHydrationAndKeyboardRowsAsync(page, rows);
+        await OnboardingRustigClickAuditSupport.CaptureStepScreenshotAsync(
+            page, reportDir, $"step-08-{tag}-viewport.png");
+
         var reportPath = Path.Combine(reportDir, $"click-audit-step-08-{mode}-{tag}.txt");
         var sb = new StringBuilder();
         sb.AppendLine($"mode={mode} viewport={tag} rustig={rustig}");

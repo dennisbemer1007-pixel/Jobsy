@@ -169,4 +169,72 @@ internal static class OnboardingRustigClickAuditSupport
             return ex.Message;
         }
     }
+
+    internal static async Task AppendHydrationAndKeyboardRowsAsync(IPage page, List<(string Control, string Result)> rows)
+    {
+        if (rows.All(r => r.Control != "Hydration (circuit)"))
+        {
+            var circuit = await page.EvaluateAsync<string>(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') || 'missing'");
+            var reconnect = await page.Locator(
+                    "#components-reconnect-modal.components-reconnect-show, #components-reconnect-modal.components-reconnect-failed")
+                .CountAsync();
+            var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+            rows.Add(("Hydration (circuit)", (circuit == "ready" || ssr) && reconnect == 0
+                ? "ok"
+                : $"circuit={circuit};ssr={ssr};reconnect={reconnect}"));
+        }
+
+        if (rows.All(r => r.Control != "Keyboard (Volgende focus)"))
+        {
+            var next = page.GetByTestId("onboarding-next");
+            if (await next.CountAsync() == 0)
+            {
+                rows.Add(("Keyboard (Volgende focus)", "n/a"));
+                return;
+            }
+
+            try
+            {
+                await next.First.FocusAsync();
+                var focused = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                      const n = document.querySelector('[data-testid=onboarding-next]');
+                      return !!(n && document.activeElement === n);
+                    }
+                    """);
+                rows.Add(("Keyboard (Volgende focus)", focused ? "ok" : "no-focus"));
+            }
+            catch (Exception ex)
+            {
+                rows.Add(("Keyboard (Volgende focus)", ex.Message));
+            }
+        }
+    }
+
+    internal static async Task AppendHeaderAndCoachRowsAsync(IPage page, List<(string Control, string Result)> rows)
+    {
+        if (rows.All(r => r.Control != "Header help"))
+        {
+            rows.Add(("Header help", await TryHitAuditAsync(
+                page,
+                page.Locator("[data-testid=app-shell-header] .page-help__btn").First,
+                "help")));
+            rows.Add(("Header account", await TryHitAuditAsync(
+                page,
+                page.Locator("[data-testid=app-shell-header] .account-menu__toggle").First,
+                "account")));
+            rows.Add(("Coach medallion", await TryHitAuditAsync(
+                page,
+                page.Locator(".lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn, .lobsy-coach-dock__btn").First,
+                "coach")));
+        }
+    }
+
+    internal static async Task CaptureStepScreenshotAsync(IPage page, string reportDir, string fileName)
+    {
+        Directory.CreateDirectory(reportDir);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(reportDir, fileName), FullPage = false });
+    }
 }
