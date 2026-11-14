@@ -80,7 +80,10 @@ public sealed class CoachVariantBOverlapAuditPlaywrightTests
                     activeLogin = sessionKey;
                 }
 
-                await page.GotoAsync($"{baseUrl}{entry.Path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                var waitUntil = entry.Name is "vacancy-mock-interview" or "candidate-home"
+                    ? WaitUntilState.NetworkIdle
+                    : WaitUntilState.DOMContentLoaded;
+                await page.GotoAsync($"{baseUrl}{entry.Path}", new() { WaitUntil = waitUntil });
                 await CoachVariantBOverlapAuditSupport.WaitForCoachChromeAsync(page, entry.Name);
                 await page.WaitForTimeoutAsync(400);
 

@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
 using Jobsy.Infrastructure.Data;
@@ -108,10 +109,19 @@ public sealed class CoachVariantBEvidencePlaywrightTests
         var g78Page = await g78Ctx.NewPageAsync();
         Assert.True(await CoachVariantBOverlapAuditSupport.PupilLoginAsync(
             g78Page, baseUrl, g78.Value.SchoolId, g78.Value.ClassId, g78.Value.Code));
-        await g78Page.GotoAsync($"{baseUrl}/leerling/reis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await g78Page.WaitForSelectorAsync(
-            "[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile], .ll-g78-coach",
-            new() { Timeout = 120_000 });
+        await g78Page.GotoAsync(
+            $"{baseUrl}/leerling/reis",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+        await g78Page.Locator(
+                "[data-testid=ll-g78-coach], [data-testid=ll-g78-coach-mobile], [data-testid=ll-g78-answers] .ans")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await g78Page.WaitForFunctionAsync(
+            """
+            () => document.querySelector('[data-testid=ll-g78-coach]')
+              || document.querySelector('[data-testid=ll-g78-coach-mobile]')
+            """,
+            null,
+            new() { Timeout = 90_000 });
         await g78Page.ScreenshotAsync(new() { Path = Path.Combine(outDir, "g78-coach-unchanged-1440.png") });
     }
 
@@ -152,7 +162,23 @@ public sealed class CoachVariantBEvidencePlaywrightTests
         var dp = DataProtectionProvider.Create(Path.Combine(contentRoot, "dp-keys-e2e-audit"));
         var codes = new PupilCodeService(db, dp, config, env);
         var created = await codes.GenerateAsync(1, schoolClass);
-        var plain = codes.Unprotect(created[0].CodeProtected);
+        var codeRow = created[0];
+        var now = DateTime.UtcNow;
+        db.PupilProgresses.Add(new PupilProgress
+        {
+            PupilCodeId = codeRow.Id,
+            JourneyThemeKey = PupilJourneyTheme.ZeeExpeditie,
+            JourneyThemeChosenAtUtc = now,
+            CurrentIndex = 0,
+            AnswersJson = "{}",
+            LikesJson = "[]",
+            DislikesJson = "[]",
+            StartedAtUtc = now,
+            UpdatedAtUtc = now,
+            QuestionScoringVersion = "g78-1",
+        });
+        await db.SaveChangesAsync();
+        var plain = codes.Unprotect(codeRow.CodeProtected);
         return string.IsNullOrWhiteSpace(plain)
             ? null
             : (DemoSchoolIds.SchoolId, DemoSchoolIds.ClassGroep78Id, PupilCodeFormat.Display(plain!));

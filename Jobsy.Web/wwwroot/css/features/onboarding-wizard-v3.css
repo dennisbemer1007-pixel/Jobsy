@@ -756,7 +756,7 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
     max-width: none;
     margin: 0;
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-    padding-inline-end: calc(16px + 52px + 10px);
+    padding-inline-end: calc(16px + 128px);
     background: var(--bg);
     border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
     box-shadow: 0 -6px 20px color-mix(in srgb, var(--bg) 55%, transparent);

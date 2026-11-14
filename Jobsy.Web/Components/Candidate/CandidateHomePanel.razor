@@ -12,12 +12,6 @@
 @inject AuthenticationStateProvider AuthState
 @implements IDisposable
 
-@if (_redirecting)
-{
-    <p class="state-message">@Culture["Common.Loading"]</p>
-}
-else
-{
 <div class="panel-page panel-page--dashboard">
     <header class="panel-header panel-header--dashboard">
         <div>
@@ -80,7 +74,6 @@ else
         }
     }
 </div>
-}
 
 @code {
     private const string Period = "week";
@@ -88,7 +81,6 @@ else
     private string? _selectedKey;
     private bool _loading = true;
     private bool _drillLoading;
-    private bool _redirecting;
     private string? _error;
     private List<MetricCount> _metrics = [];
     private List<MetricDrilldownItem> _drilldown = [];
@@ -103,37 +95,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var flags = await FeatureFlags.GetAsync();
-            if (flags.CandidatePassportEnabled)
-            {
-                var auth = await AuthState.GetAuthenticationStateAsync();
-                var onboarding = await Api.GetMyOnboardingAsync();
-                var ready = CandidateLanding.IsPassportReady(onboarding?.CompletedAtUtc);
-                // Fall back to claim when onboarding has not been fetched yet.
-                if (onboarding is null)
-                {
-                    ready = AuthRedirects.PassportReadyFromClaims(auth.User);
-                }
-
-                _redirecting = true;
-                Navigation.NavigateTo(
-                    FeatureRoutes.HomeFor(auth.User, flags, passportReady: ready),
-                    replace: true);
-                return;
-            }
-        }
-        catch
-        {
-            // Continue classic home.
-        }
-
+        // /home stays the kompas dashboard; post-login default landing uses FeatureRoutes.HomeFor elsewhere.
         await TryLoadAsync();
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
-        => firstRender && !_redirecting ? TryLoadAsync() : Task.CompletedTask;
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
 
     private async Task TryLoadAsync()
     {
