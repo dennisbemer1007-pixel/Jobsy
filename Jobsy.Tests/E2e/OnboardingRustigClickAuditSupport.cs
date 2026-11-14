@@ -286,7 +286,7 @@ internal static class OnboardingRustigClickAuditSupport
                 new() { Timeout = 15_000 });
             var panel = header.Locator(".account-menu__panel").First;
             await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
-            await page.Locator(".account-menu .header-dropdown-backdrop").First.ClickAsync(new() { Force = true, Timeout = 10_000 });
+            await page.Keyboard.PressAsync("Escape");
             await page.WaitForFunctionAsync(
                 "() => !document.documentElement.hasAttribute('data-header-menu')",
                 null,

@@ -31,6 +31,17 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   display: block;
 }
 
+.account-menu > .header-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
+}
+
+.account-menu__panel.z-50 {
+  z-index: 60;
+}
+
 .account-menu {
   position: relative;
 }
