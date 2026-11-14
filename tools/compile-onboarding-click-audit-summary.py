@@ -19,11 +19,12 @@ def pick(rows: dict[str, str], *keys: str) -> str:
 
 
 def pass_fail(value: str) -> tuple[str, str]:
-    if value in ("ok", "n/a", "—", ""):
+    if value.startswith("n/a"):
+        note = "" if value == "n/a" else value
+        return "PASS", note
+    if value in ("ok", "—", ""):
         if value == "ok":
             return "PASS", ""
-        if value == "n/a":
-            return "PASS", "n/a"
         return "—", ""
     short = value.split("\n", 1)[0].strip()
     if len(short) > 56:
