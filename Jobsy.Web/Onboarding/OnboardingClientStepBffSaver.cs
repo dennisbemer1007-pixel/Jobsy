@@ -127,7 +127,8 @@ public static class OnboardingClientStepBffSaver
 
         if (step is >= 7 and <= 10)
         {
-            if (step == 7 && !draft.HasConsent)
+            var consentGateEntry = step == 7 && !draft.HasConsent;
+            if (consentGateEntry)
             {
                 draft.ConsentRequested = OnboardingClientStepBridge.ParseStep7Consent(payloadJson);
                 if (advance)
@@ -161,6 +162,18 @@ public static class OnboardingClientStepBffSaver
             var answers = OnboardingClientStepBridge.ParseMiniAnswers(payloadJson);
             var version = await ResolveQuickScanVersionAsync(step, api, testsV2, cancellationToken);
             var merged = await MergeMiniAnswersAsync(step, api, answers, cancellationToken);
+
+            if (consentGateEntry && draft.HasConsent && advance && merged.Count == 0)
+            {
+                api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                return (StatusCodes.Status200OK,
+                    new { redirectUrl = OnboardingSsrMiniNavigation.StepQuestionUrl(7, 1) });
+            }
+
+            if (step == 7 && advance && merged.Count == 0 && !draft.HasConsent)
+            {
+                return (StatusCodes.Status400BadRequest, new { message = culture["Onboarding.Validation.Consent"] });
+            }
 
             if (merged.Count > 0 || draft.HasConsent || step > 7)
             {
