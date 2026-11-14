@@ -67,6 +67,12 @@ internal static class OnboardingRustigClickAuditSupport
             .First;
         if (await fieldset.CountAsync() == 0)
         {
+            var miniPick = page.Locator("form[data-ob-ssr-form] button[name=obMiniPick]").Nth(2);
+            if (await miniPick.CountAsync() > 0)
+            {
+                return await TryHitAuditAsync(page, miniPick, "Likert 1");
+            }
+
             return "n/a";
         }
 

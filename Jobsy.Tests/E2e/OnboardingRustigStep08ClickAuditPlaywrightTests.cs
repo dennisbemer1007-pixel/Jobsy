@@ -53,9 +53,6 @@ public sealed class OnboardingRustigStep08ClickAuditPlaywrightTests
             await page.Locator("[data-onboarding-step=\"8\"]").WaitForAsync(new() { Timeout = 60_000 });
         }
 
-        await page.Locator(".test-likert .test-likert__opt").First
-            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-
         var rows = new List<(string Control, string Result)>();
         await OnboardingRustigClickAuditSupport.AppendMiniTestStepRowsAsync(page, rows);
 

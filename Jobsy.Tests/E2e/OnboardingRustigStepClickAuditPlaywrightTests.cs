@@ -133,13 +133,13 @@ public sealed class OnboardingRustigStepClickAuditPlaywrightTests
         if (rustig)
         {
             var chromeRow = page.Locator(".ob-rustig__chrome-row, .ob-v3-chrome__row").First;
-            if (await chromeRow.CountAsync() > 0)
+            if (await chromeRow.CountAsync() > 0 && await chromeRow.IsVisibleAsync())
             {
                 await chromeRow.ScrollIntoViewIfNeededAsync();
             }
 
             var chrome = page.Locator(".ob-rustig__chrome, .ob-v3-chrome").First;
-            if (!mobile && await chrome.CountAsync() > 0)
+            if (!mobile && await chrome.CountAsync() > 0 && await chrome.IsVisibleAsync())
             {
                 await chrome.ScrollIntoViewIfNeededAsync();
             }
