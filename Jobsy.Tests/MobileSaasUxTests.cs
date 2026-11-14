@@ -474,10 +474,10 @@ public class MobileSaasUxTests
     {
         var assistant = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/LobsyAssistantChat.razor"));
         Assert.DoesNotContain("lobsy-assistant__fab", assistant);
-        Assert.Contains("lobsy-assistant-launcher--business", assistant);
+        Assert.Contains(CoachVariantBGuardSupport.DockComponent, assistant);
         Assert.Contains("AssistantChatHost", assistant);
         Assert.Contains("ChatHost.ToggleRequested", assistant);
-        Assert.Contains("BrandImages.MarkSvg", assistant);
+        Assert.Contains(CoachVariantBGuardSupport.CoachImageAsset, assistant);
         var coach = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/LobsyCoach.razor"));
         Assert.Contains("aria-expanded=\"@(ChatHost.IsOpen ? \"true\" : \"false\")\"", coach);
         Assert.Contains("jobsyComposeEnter", assistant);
@@ -505,8 +505,10 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 52;\n    inset-inline-end: 24px;", css);
-        Assert.Contains(".lobsy-coach-dock__btn {\n    flex: none;\n    width: 56px;\n    height: 56px;", css);
+        var variantCss = CoachVariantBGuardSupport.ReadCoachVariantCss(FindRepoRoot());
+        Assert.Contains(".lobsy-coach-dock--variant-b", variantCss);
+        Assert.Contains("position: fixed;", variantCss);
+        Assert.Contains(CoachVariantBGuardSupport.LobsterBtnClass, variantCss);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
         Assert.Contains("pointer-events: none;", css);
         Assert.Contains(".feedback-widget__btn {\n    pointer-events: auto;", css);

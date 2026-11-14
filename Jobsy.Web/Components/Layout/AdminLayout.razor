@@ -45,7 +45,7 @@
         </main>
     </div>
 
-    @if (RendererInfo.IsInteractive)
+    @if (_isInteractive)
     {
         <LobsyAssistantChat UiVariant="AssistantChatUiVariant.Business" />
         <FeedbackWidget HasBottomNav="false" />
@@ -62,12 +62,22 @@
 @code {
     private bool _drawerOpen;
     private bool _ssrBusinessAssistant;
+    private bool _isInteractive = true;
 
     protected override void OnInitialized()
     {
         var user = HttpContextAccessor.HttpContext?.User;
-        _ssrBusinessAssistant = !RendererInfo.IsInteractive
-                                && AssistantChatHost.IsAvailableFor(user);
+        try
+        {
+            _isInteractive = RendererInfo.IsInteractive;
+            _ssrBusinessAssistant = !_isInteractive
+                                    && AssistantChatHost.IsAvailableFor(user);
+        }
+        catch
+        {
+            _isInteractive = true;
+            _ssrBusinessAssistant = false;
+        }
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
     }
