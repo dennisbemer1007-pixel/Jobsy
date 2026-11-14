@@ -49,6 +49,11 @@ def parse_report(path: Path) -> tuple[str, str, dict[str, str]]:
     m = re.search(r"step-(\d{2})", name)
     if m:
         step = m.group(1)
+    elif name.startswith("click-audit-kompas"):
+        step = "10"
+        m7 = re.search(r"click-audit-kompas-[^-]+-(\d{3,4})", name)
+        if m7:
+            vp = m7.group(1)
     elif name.startswith("click-audit-step-00") or name.startswith("click-audit-rustig"):
         step = "00"
     m4 = re.search(r"click-audit-step-(\d{2})-[^-]+-(\d{3,4})", name)
@@ -69,7 +74,7 @@ def main() -> int:
         print(f"Missing artifacts dir: {art}", file=sys.stderr)
         return 1
 
-    reports = sorted(art.glob("click-audit*.txt"))
+    reports = sorted(p for p in art.glob("click-audit*.txt") if "step-" in p.name)
     entries: list[tuple[str, str, dict[str, str]]] = []
     for p in reports:
         step, vp, rows = parse_report(p)
