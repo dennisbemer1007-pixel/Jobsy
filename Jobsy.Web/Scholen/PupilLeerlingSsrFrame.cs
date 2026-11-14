@@ -121,6 +121,13 @@ public static class PupilLeerlingSsrFrame
             sb.Append("\" defer></script>");
         }
 
+        if (options.UseMboHboShell)
+        {
+            sb.Append("<script src=\"");
+            sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/lobsy-coach-ssr.js"));
+            sb.Append("\" defer></script>");
+        }
+
         sb.Append("</body></html>");
         return sb.ToString();
     }
@@ -149,6 +156,11 @@ public static class PupilLeerlingSsrFrame
 
         sb.Append("</div>");
         sb.Append(options.BodyHtml);
+        if (options.Culture is not null)
+        {
+            PupilMboCoachSsr.AppendDock(sb, options.Culture);
+        }
+
         sb.Append("</div>");
     }
 
@@ -262,4 +274,6 @@ public sealed class PupilLeerlingSsrDocumentOptions
     public bool IncludeJourneyScripts { get; init; } = true;
     public bool ShowPause { get; init; } = true;
     public string PauseFormHtml { get; init; } = """<form method="post" action="/leerling/pauze"><button type="submit" class="btn-pauze"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span>Pauze</span></button></form>""";
+
+    public Jobsy.Web.Localization.CultureState? Culture { get; init; }
 }

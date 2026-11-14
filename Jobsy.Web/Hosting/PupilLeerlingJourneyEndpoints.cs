@@ -1321,6 +1321,7 @@ public static class PupilLeerlingJourneyEndpoints
 
     private static IResult MboHtml(HttpContext http, string title, string body, string route)
     {
+        var culture = http.RequestServices.GetRequiredService<CultureState>();
         var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
         {
             PageTitle = title,
@@ -1329,6 +1330,7 @@ public static class PupilLeerlingJourneyEndpoints
             RoutePath = route,
             UseMboHboShell = true,
             ShowPause = false,
+            Culture = culture,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
     }

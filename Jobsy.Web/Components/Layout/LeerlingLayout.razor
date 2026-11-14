@@ -51,7 +51,10 @@
         <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
         <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
     </footer>
-    <LeerlingCoach />
+    @if (!PageAssetCatalog.IncludesLeerlingGroep78ThemeStyles(routePath))
+    {
+        <LeerlingCoach />
+    }
 </div>
 
 @code {

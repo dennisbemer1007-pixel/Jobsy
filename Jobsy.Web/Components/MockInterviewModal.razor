@@ -10,8 +10,8 @@
     <div class="mock-interview-modal mock-interview-modal--warm lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
         <header class="mock-interview-modal__header">
             <div class="mock-interview-modal__brand">
-                <img class="mock-interview-modal__avatar"
-                     src="@BrandImages.MarkSvg"
+                <img class="mock-interview-modal__avatar mock-interview-modal__avatar--coach-b"
+                     src="@BrandImages.AbsoluteCoachBAvatar"
                      alt=""
                      width="40"
                      height="40"
@@ -48,7 +48,7 @@
                     @if (msg.Role == "assistant")
                     {
                         <div class="mock-interview-bubble__head">
-                            <img class="mock-interview-bubble__avatar" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                            <img class="mock-interview-bubble__avatar mock-interview-bubble__avatar--coach-b" src="@BrandImages.AbsoluteCoachBAvatar" alt="" width="32" height="32" decoding="async" />
                             <span class="mock-interview-bubble__role">@Culture["Assistant.BotName"]</span>
                         </div>
                         var coachBlocks = ParseCoachBlocks(msg.Content)
@@ -87,7 +87,7 @@
             {
                 <div class="mock-interview-bubble mock-interview-bubble--assistant mock-interview-bubble--typing">
                     <div class="mock-interview-bubble__head">
-                        <img class="mock-interview-bubble__avatar" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                        <img class="mock-interview-bubble__avatar mock-interview-bubble__avatar--coach-b" src="@BrandImages.AbsoluteCoachBAvatar" alt="" width="32" height="32" decoding="async" />
                         <span class="mock-interview-bubble__role">@Culture["Assistant.BotName"]</span>
                     </div>
                     <p>@Culture["MockInterview.Typing"]</p>

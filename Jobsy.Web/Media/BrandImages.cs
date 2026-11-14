@@ -5,6 +5,7 @@ public static class BrandImages
 {
     public const string Version = "20261018-23";
     public const string MascotVersion = "20261004-13";
+    public const string CoachBVersion = "20261114-1";
 
     public const string BrandRoot = "brand";
 
@@ -44,6 +45,11 @@ public static class BrandImages
 
     public const string MascotSrcSet56 =
         $"{MascotWebp64} 64w, {MascotWebp128} 128w, {MascotWebp256} 256w";
+
+    public const string CoachB = $"images/brand/lobsy-coach-b.png?v={CoachBVersion}";
+    public const string CoachBAvatar = $"images/brand/lobsy-coach-b-avatar.png?v={CoachBVersion}";
+    public static string AbsoluteCoachB => $"/{CoachB}";
+    public static string AbsoluteCoachBAvatar => $"/{CoachBAvatar}";
 
     public static string ForVariant(LobsyLogoVariant variant) => variant switch
     {

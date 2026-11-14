@@ -55,8 +55,11 @@ public static class UiStringsTests
         Add("DeepPay.PaidTitle", "Betaald. Je kunt beginnen", "Paid. You can start", "Opłacone. Możesz zacząć", "Plătit. Poți începe", "تم الدفع. يمكنك البدء");
         Add("DeepPay.OpenedTitle", "Klaar om te beginnen", "Ready to start", "Możesz zaczynać", "Gata de început", "جاهز للبدء");
         Add("DeepPay.PriceFree", "Prijs: gratis (testaccount)", "Price: free (test account)", "Cena: za darmo (konto testowe)", "Preț: gratuit (cont de test)", "السعر: مجاناً (حساب تجريبي)");
-        Add("Coach.Ask", "Lobsy-hulp", "Lobsy help", "Lobsy help", "Lobsy help", "Lobsy help");
+        Add("Coach.Ask", "Lobsy-hulp", "Lobsy help", "Pomoc Lobsy", "Ajutor Lobsy", "مساعدة Lobsy");
         Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
+        Add("Coach.OpenOnboarding", "Lobsy-hulp openen", "Open Lobsy help", "Otwórz pomoc Lobsy", "Deschide ajutorul Lobsy", "فتح مساعدة Lobsy");
+        Add("Coach.OnboardingBubble", "Waar kan ik je bij helpen?", "How can I help you?", "W czym mogę pomóc?", "Cu ce te pot ajuta?", "كيف يمكنني مساعدتك؟");
+        Add("Coach.LobsterAlt", "Lobsy coach", "Lobsy coach", "Coach Lobsy", "Coach Lobsy", "مدرب Lobsy");
         Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
         Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");
         Add("DeepPay.StartQ1", "Begin met vraag 1", "Start with question 1", "Zacznij od pytania 1", "Începe cu întrebarea 1", "ابدأ بالسؤال 1");

@@ -16,6 +16,14 @@
     return cfg("data-business", "") === "1" || !!document.querySelector('[data-ssr-coach="business"]');
   }
 
+  function isOnboardingV3() {
+    return !!document.querySelector(".lobsy-coach-dock--onboarding-b");
+  }
+
+  function coachAvatarUrl() {
+    return cfg("data-coach-avatar-url", "/images/brand/lobsy-coach-b-avatar.png");
+  }
+
   function warmBootEnabled() {
     return cfg("data-warm", "1") !== "0";
   }
@@ -23,7 +31,7 @@
   function syncClearance() {
     var dock = document.querySelector(".lobsy-coach-dock[data-ssr-coach]");
     if (!dock) return;
-    var btn = dock.querySelector("#lobsy-coach-btn") || dock;
+    var btn = dock.querySelector("#lobsy-coach-btn") || dock.querySelector("[data-ssr-coach-open]") || dock;
     var box = btn.getBoundingClientRect();
     if (!box || box.width < 8) return;
     var gap = 12;
@@ -42,20 +50,46 @@
 
     var shell = document.createElement("div");
     var business = isBusinessCoach();
+    var onboardingV3 = isOnboardingV3();
     shell.className = business
       ? "lobsy-assistant lobsy-assistant--business-panel"
       : "lobsy-assistant lobsy-assistant--coach lobsy-assistant--skin-warm";
+    if (onboardingV3) {
+      shell.classList.add("lobsy-assistant--onboarding-v3");
+    }
+
     shell.id = "lobsy-assistant-ssr-shell";
     shell.hidden = true;
     if (hasBottomNav()) shell.classList.add("has-bottom-nav");
 
-    var brandHtml = business
-      ? '<span class="lobsy-assistant__avatar lobsy-assistant__avatar--business" aria-hidden="true">' +
-        '<img src="/brand/svg/lobsy-monochroom-wit.svg" alt="" width="24" height="24" decoding="async" /></span>'
-      : '<img class="lobsy-assistant__avatar" src="/brand/svg/lobsy-merkteken.svg" alt="" width="40" height="40" decoding="async" />';
+    var brandHtml;
+    if (onboardingV3 || (business && cfg("data-coach-avatar-url", ""))) {
+      brandHtml =
+        '<span class="lobsy-assistant__avatar lobsy-assistant__avatar--coach-b" aria-hidden="true">' +
+        '<img src="' +
+        coachAvatarUrl() +
+        '" alt="" width="48" height="48" decoding="async" /></span>';
+    } else if (business) {
+      brandHtml =
+        '<span class="lobsy-assistant__avatar lobsy-assistant__avatar--business" aria-hidden="true">' +
+        '<img src="/brand/svg/lobsy-monochroom-wit.svg" alt="" width="24" height="24" decoding="async" /></span>';
+    } else {
+      brandHtml =
+        '<img class="lobsy-assistant__avatar" src="/brand/svg/lobsy-merkteken.svg" alt="" width="40" height="40" decoding="async" />';
+    }
+
+    var gripHtml = onboardingV3 ? '<div class="lobsy-assistant__sheet-grip" aria-hidden="true"></div>' : "";
+    var scrimHtml =
+      '<button type="button" class="lobsy-assistant__scrim" data-ssr-assistant-scrim hidden aria-label="' +
+      (cfg("data-close", "Close") || "Close") +
+      '"></button>';
 
     shell.innerHTML =
-      '<div id="lobsy-assistant-panel" class="lobsy-assistant__panel" data-ssr-coach-panel role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1">' +
+      scrimHtml +
+      '<div id="lobsy-assistant-panel" class="lobsy-assistant__panel" data-ssr-coach-panel role="dialog" aria-modal="' +
+      (onboardingV3 ? "true" : "false") +
+      '" aria-labelledby="lobsy-assistant-title" tabindex="-1">' +
+      gripHtml +
       '<header class="lobsy-assistant__header">' +
       '<div class="lobsy-assistant__brand">' +
       brandHtml +
@@ -144,6 +178,11 @@
       if (shell) {
         shell.hidden = false;
         shell.classList.add("is-open");
+        var scrim = shell.querySelector("[data-ssr-assistant-scrim]");
+        if (scrim) scrim.hidden = false;
+      }
+      if (isOnboardingV3()) {
+        document.documentElement.classList.add("lobsy-coach-sheet-open");
       }
       panel.focus();
       return;
@@ -152,6 +191,11 @@
     if (shell) {
       shell.hidden = true;
       shell.classList.remove("is-open");
+      var scrimClose = shell.querySelector("[data-ssr-assistant-scrim]");
+      if (scrimClose) scrimClose.hidden = true;
+    }
+    if (isOnboardingV3()) {
+      document.documentElement.classList.remove("lobsy-coach-sheet-open");
     }
   }
 
@@ -364,6 +408,13 @@
         return;
       }
 
+      var scrim = ev.target.closest("[data-ssr-assistant-scrim]");
+      if (scrim) {
+        ev.preventDefault();
+        setOpen(false);
+        return;
+      }
+
       var close = ev.target.closest("[data-ssr-assistant-close]");
       if (close) {
         ev.preventDefault();
@@ -418,8 +469,41 @@
     window.addEventListener("resize", syncClearance);
   }
 
+  function bindOnboardingBubble() {
+    var dock = document.querySelector(".lobsy-coach-dock--onboarding-b, .lobsy-coach-dock--variant-b");
+    if (!dock || dock.dataset.obBubbleBound === "1") return;
+    dock.dataset.obBubbleBound = "1";
+    var bubble = dock.querySelector("[data-ob-coach-bubble]");
+    if (!bubble) return;
+
+    var dismiss = function () {
+      dock.classList.add("lobsy-coach-dock--bubble-dismissed");
+    };
+
+    var mobile = window.matchMedia("(max-width: 1023px)").matches;
+    if (!mobile) return;
+
+    window.setTimeout(dismiss, 5000);
+    document.addEventListener(
+      "pointerdown",
+      function (ev) {
+        if (ev.target.closest(".lobsy-coach-dock--onboarding-b")) return;
+        dismiss();
+      },
+      { once: true, capture: true }
+    );
+    document.addEventListener(
+      "keydown",
+      function () {
+        dismiss();
+      },
+      { once: true, capture: true }
+    );
+  }
+
   function boot() {
     bind();
+    bindOnboardingBubble();
     if (!document.querySelector("[data-ssr-coach]")) {
       var retry = 0;
       var timer = setInterval(function () {
