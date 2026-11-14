@@ -1,0 +1,35 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+@inject CultureState Culture
+
+<aside class="ob-v3-side" aria-label="@Culture["Onboarding.PageTitle"]">
+    <div class="ob-v3-side__eyebrow">@Culture["Onboarding.PageTitle"]</div>
+    <div class="ob-v3-side__phases">
+        @foreach (var phase in OnboardingStartprofielSidebarCatalog.Phases)
+        {
+            var isCurrent = phase.FirstStep <= CurrentStep && CurrentStep <= phase.LastStep;
+            var isDone = CurrentStep > phase.LastStep && phase.LastStep <= 10;
+            <div class="ob-v3-side__phase @(isCurrent ? "is-current" : isDone ? "is-done" : null)">
+                <em aria-hidden="true">@phase.Index</em>
+                <span class="ob-v3-side__phase-title">@Culture[phase.LabelKey]</span>
+                <small class="ob-v3-side__phase-hint">@Culture[phase.HintKey]</small>
+            </div>
+        }
+    </div>
+    <div class="ob-v3-side__bot">
+        <span class="ob-v3-side__saved" data-testid="onboarding-autosave-status">
+            <span aria-hidden="true">✓</span>
+            @Culture["Onboarding.AllSaved"]
+        </span>
+        @if (!string.IsNullOrWhiteSpace(LaterHref))
+        {
+            <a class="ob-v3-side__later" href="@LaterHref" data-testid="onboarding-later">@Culture["Onboarding.Later"]</a>
+        }
+    </div>
+</aside>
+
+@code {
+    [Parameter] public int CurrentStep { get; set; } = 1;
+    [Parameter] public string? LaterHref { get; set; }
+}

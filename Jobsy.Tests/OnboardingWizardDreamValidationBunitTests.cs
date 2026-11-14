@@ -9,6 +9,7 @@ using Jobsy.Web.Components.Pages.Candidate;
 using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
+        BunitAntiforgery.Register(Services);
     }
 
     [Fact]
@@ -152,7 +154,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
 
     private sealed class FixedRustigGate : IOnboardingRustigGate
     {
-        public bool Enabled => false;
+        public bool Enabled => true;
     }
 
     private sealed class FixedFlags : IFeatureFlags

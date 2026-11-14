@@ -36,6 +36,8 @@ public sealed class AssistantChatHost
         return RoleClaimMatching.HasRole(user, JobsyRoles.Candidate)
             || RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
             || RoleClaimMatching.HasRole(user, JobsyRoles.Admin)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.SchoolAdmin)
+            || RoleClaimMatching.HasRole(user, JobsyRoles.Teacher)
             || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles);
     }
 }

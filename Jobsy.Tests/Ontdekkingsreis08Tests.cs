@@ -137,6 +137,10 @@ public class Ontdekkingsreis08RoutesNavTests
         {
             var rel = Path.GetRelativePath(RepoRoot, file).Replace('\\', '/');
             if (rel is "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"
+                or "Jobsy.Web/Components/Pages/Candidate/OnboardingStartSsr.razor"
+                or "Jobsy.Web/Components/Pages/Candidate/CandidateDiscoverySsr.razor"
+                or "Jobsy.Web/Hosting/OnboardingStartFormEndpoints.cs"
+                or "Jobsy.Web/Navigation/NotificationNavigation.cs"
                 or "Jobsy.Web/Navigation/OnboardingRoutes.cs"
                 or "Jobsy.Web/Auth/AuthRedirects.cs"
                 or "Jobsy.Web/Navigation/RoleNavCatalog.cs"

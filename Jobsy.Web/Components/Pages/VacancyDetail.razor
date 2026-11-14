@@ -4,6 +4,7 @@
 @* Dep B: branche / kernwaarden / engagement available after werkgever-aanmelding 08/09 *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Authorization
 @using Jobsy.Core.Features
 @using System.Net.Http
 @attribute [RequiresFeature(PlatformFeature.Employers)]
@@ -33,6 +34,7 @@
 @using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
+@using System.Security.Claims
 @implements IAsyncDisposable
 
 <PageTitle>@(_vacancy?.Title ?? _closed?.Title ?? Culture["Vacancy.Title"]) · Lobsy</PageTitle>
@@ -52,7 +54,7 @@
     {
         @if (_loading)
         {
-            <article class="detail-card detail-card--pending" aria-busy="true">
+            <article class="detail-card detail-card--pending kb-detail" data-testid="kb-detail" aria-busy="true">
                 <p class="visually-hidden">@Culture["Common.Loading"]</p>
                 <div class="detail-card__header-row">
                     <a class="back-link" href="@KbRoutes.Map">@Culture["Vacancy.BackToMap"]</a>
@@ -63,6 +65,11 @@
                 </div>
                 <div class="detail-card__skeleton-line"></div>
                 <div class="detail-card__skeleton-line detail-card__skeleton-line--short"></div>
+                <AuthorizeView Roles="@JobsyRoles.Candidate">
+                    <Authorized>
+                        <VacancyMockInterviewCta Placement="rail" OnOpen="OpenMockInterview" />
+                    </Authorized>
+                </AuthorizeView>
             </article>
         }
         else
@@ -153,12 +160,6 @@
                         <div class="kb-detail__hero-accent" aria-hidden="true"></div>
                     </div>
 
-                    <AuthorizeView Roles="Candidate">
-                        <Authorized>
-                            <VacancyMockInterviewCta Placement="mobile" OnOpen="OpenMockInterview" />
-                        </Authorized>
-                    </AuthorizeView>
-
                     @* Travel card lives in the rail (one map instance); CSS places the rail after facts on mobile. *@
                 </div>@* kb-detail__main-top *@
 
@@ -187,7 +188,7 @@
                         </div>
                         <p class="kb-detail__passport-hint">@(PassportHintText)</p>
                     </div>
-                    <AuthorizeView Roles="Candidate">
+                    <AuthorizeView Roles="@JobsyRoles.Candidate">
                         <Authorized>
                             <VacancyMockInterviewCta Placement="rail" OnOpen="OpenMockInterview" />
                         </Authorized>
@@ -1127,6 +1128,10 @@
     private string? _safetyNetMessage;
     private int? _safetyNetPercent;
     private bool _hideDnaPercentForCandidate;
+    private bool _showMockInterviewCta;
+    private bool _cachedCandidateCta;
+
+    private bool ShowMockInterviewCta => _showMockInterviewCta || _cachedCandidateCta;
     private bool _confirmSafetyNet;
     private int? _ageYears;
     private bool _mapReady;
@@ -1428,6 +1433,7 @@
 
     protected override void OnInitialized()
     {
+        RefreshCandidateUiFlags();
         Culture.Changed += OnCultureChanged;
         _persistSubscription = Persist.RegisterOnPersisting(PersistVacancyState);
         if (Persist.TryTakeFromJson<VacancyListItem>("vacancyDetail", out var saved)
@@ -1451,6 +1457,11 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _cachedCandidateCta = auth.User.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
+        RefreshCandidateUiFlags(auth.User);
+
         if (_loadedVacancyId == Id)
         {
             if (RendererInfo.IsInteractive && !_applyCircuitReady)
@@ -1464,13 +1475,6 @@
         var keepPrerendered = _vacancy is not null && _vacancy.Id == Id;
         ResetApplyUiState();
         _loadedVacancyId = Id;
-        _hideDnaPercentForCandidate = false;
-        var httpUser = HttpContextAccessor.HttpContext?.User;
-        if (httpUser?.Identity?.IsAuthenticated == true
-            && RoleClaimMatching.HasRole(httpUser, JobsyRoles.Candidate))
-        {
-            _hideDnaPercentForCandidate = true;
-        }
 
         _liked = false;
         _clickRecorded = false;
@@ -1621,6 +1625,7 @@
                         && RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate))
                     {
                         _hideDnaPercentForCandidate = true;
+                        RefreshCandidateUiFlags(auth.User);
                         var profile = await SafeProfileAsync();
                         if (profile?.DateOfBirth is DateOnly dob
                             && AgeRules.AgeYearsFromDateOfBirth(dob) is int fromDob)
@@ -1823,8 +1828,36 @@
         }
     }
 
+    private bool IsSignedInCandidate()
+    {
+        var principal = HttpContextAccessor.HttpContext?.User;
+        return principal?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(principal, JobsyRoles.Candidate);
+    }
+
+    private void RefreshCandidateUiFlags(ClaimsPrincipal? user = null)
+    {
+        var principal = user ?? HttpContextAccessor.HttpContext?.User;
+        if (principal is null)
+        {
+            return;
+        }
+
+        if (principal.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(principal, JobsyRoles.Candidate))
+        {
+            _hideDnaPercentForCandidate = true;
+            _showMockInterviewCta = true;
+            return;
+        }
+
+        _hideDnaPercentForCandidate = false;
+        _showMockInterviewCta = false;
+    }
+
     private async Task LoadAsync(OriginPoint? origin)
     {
+        RefreshCandidateUiFlags();
         try
         {
             // Full vacancy payload without travel — travel uses /travel separately.

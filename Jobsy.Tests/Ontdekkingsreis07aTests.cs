@@ -62,7 +62,7 @@ public class OntdekkingsreisCatalogTests
     {
         Assert.Equal(10, OnboardingWizardCatalog.V3StepCount);
         Assert.Equal(12, OnboardingWizardCatalog.V3TotalMinutesEstimate);
-        Assert.Equal(12, OnboardingWizardCatalog.V3RemainingMinutes(1));
+        Assert.Equal(6, OnboardingWizardCatalog.V3RemainingMinutes(1));
         Assert.Equal(1, OnboardingWizardCatalog.V3RemainingMinutes(10));
     }
 

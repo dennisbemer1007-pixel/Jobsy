@@ -143,6 +143,9 @@ public static partial class PageAssetCatalog
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/enterprise-ui.css"),
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/scholen.css"),
         WwwrootAssetCatalog.UrlLeadingSlash("css/features/leerling-paspoort-g78.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-variant-b.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-ssr-chrome.css"),
+        WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-assistant-panel.css"),
     ];
 
     public static readonly string[] AccountCss =
@@ -437,13 +440,18 @@ public static partial class PageAssetCatalog
             return uwvCss;
         }
 
-        if (path == OnboardingRoutes.ClassicStartPath)
+        if (path == OnboardingRoutes.ClassicStartPath
+            || path.Equals(OnboardingRoutes.WizardStartPath, StringComparison.OrdinalIgnoreCase))
         {
             return
             [
-                WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css"),
+                WwwrootAssetCatalog.Url("css/features/admin.css"),
                 WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css"),
+                WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css"),
                 WwwrootAssetCatalog.Url("css/features/onboarding-client-nav.css"),
+                WwwrootAssetCatalog.Url("css/features/lobsy-coach-ssr-chrome.css"),
+                WwwrootAssetCatalog.Url("css/features/lobsy-coach-onboarding-v3.css"),
+                WwwrootAssetCatalog.Url("css/features/lobsy-assistant-panel.css"),
             ];
         }
 

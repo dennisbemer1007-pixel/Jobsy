@@ -6,7 +6,8 @@
 <div id="lobsy-assistant-ssr-config" hidden
      data-chat-url="/api/assistant-client/chat"
      data-business="1"
-     data-warm="1"
+     data-coach-avatar-url="@BrandImages.AbsoluteCoachBAvatar"
+     data-coach-figure-url="@BrandImages.AbsoluteCoachB"
      data-title="@Culture["Assistant.Title"]"
      data-bot-name="@Culture["Assistant.BotName"]"
      data-subtitle="@Culture["Assistant.SubtitleBusiness"]"
@@ -21,22 +22,11 @@
      data-disclaimer-link="@Culture["Assistant.DisclaimerLink"]"
      data-read-aloud-play="@Culture["ReadAloud.Play"]"
      data-read-aloud-aria="@Culture["ReadAloud.PlayAria"]"
+     data-bubble-text="@Culture["Coach.OnboardingBubble"]"
      data-lang="@Culture.Language"></div>
 
-<div class="lobsy-assistant-launcher lobsy-assistant-launcher--business @(HasBottomNav ? "has-bottom-nav" : null)"
-     data-lobsy-coach
-     data-ssr-coach="business">
-    <button type="button"
-            id="lobsy-assistant-launcher-btn"
-            class="lobsy-assistant-launcher__btn"
-            aria-haspopup="dialog"
-            aria-expanded="false"
-            aria-controls="lobsy-assistant-panel"
-            data-ssr-coach-open>
-        <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="28" height="28" decoding="async" />
-        <span class="visually-hidden">@Culture["Assistant.Open"]</span>
-    </button>
-</div>
+<LobsyCoachVariantBDock ButtonId="lobsy-assistant-launcher-btn"
+                        HasBottomNav="HasBottomNav" />
 
 @code {
     [Parameter] public bool HasBottomNav { get; set; }

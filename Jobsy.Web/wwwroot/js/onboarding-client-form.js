@@ -271,6 +271,7 @@
         var grid = root.querySelector("[data-ob-client=workStatusGrid]");
         var list = root.querySelector(".ob-client-suggest");
         var addressWrap = root.querySelector(".ob-fields__address");
+        var form = root.closest("form[data-ob-ssr-form]");
 
         function bindDirty(input, key) {
             if (!input || input.__obDirtyBound) return;
@@ -350,7 +351,19 @@
             }
         }
 
+        function syncStep1FormFields() {
+            var workField = root.querySelector("[data-ob-ssr-work-statuses]");
+            if (workField) {
+                workField.value = readWorkStatusesFromDom().join(",");
+            }
+            var latField = form.querySelector('[name="homeLat"][data-ob-client="homeLat"]');
+            var lngField = form.querySelector('[name="homeLng"][data-ob-client="homeLng"]');
+            if (latField && state.homeLat != null) latField.value = String(state.homeLat);
+            if (lngField && state.homeLng != null) lngField.value = String(state.homeLng);
+        }
+
         function saveWorkStatusNow() {
+            syncStep1FormFields();
             putOnboardingStep(root, 1, collectPayload, false, false, false).catch(function () { });
         }
 
@@ -362,6 +375,7 @@
                 ev.stopPropagation();
                 var selected = btn.getAttribute("aria-pressed") === "true";
                 setWorkStatusPressed(btn, !selected);
+                syncStep1FormFields();
                 saveWorkStatusNow();
             }, true);
         }
@@ -497,6 +511,7 @@
                             address.value = pick.label;
                             state.homeLat = pick.latitude;
                             state.homeLng = pick.longitude;
+                            syncStep1FormFields();
                             hideSuggest();
                             scheduleSave();
                         });
@@ -510,6 +525,7 @@
         }
 
         state.collect = collectPayload;
+        root.__obSyncStep1FormFields = syncStep1FormFields;
 
         return state;
     }
@@ -671,6 +687,13 @@
             presetGrid.addEventListener("click", function (ev) {
                 var btn = ev.target.closest(".lobsy-choice-tile[data-ob-code]");
                 if (!btn || !presetGrid.contains(btn)) return;
+                if (
+                    ssrForm
+                    && btn.getAttribute("type") === "submit"
+                    && btn.getAttribute("name") === "obPreset"
+                ) {
+                    return;
+                }
                 ev.preventDefault();
                 ev.stopPropagation();
                 togglePresetCode(btn.getAttribute("data-ob-code"));
@@ -709,6 +732,9 @@
             matrix.addEventListener("click", function (ev) {
                 var btn = ev.target.closest(".availability-matrix__cell--btn[data-ob-key]");
                 if (!btn || !matrix.contains(btn)) return;
+                if (ssrForm && btn.getAttribute("type") === "submit" && btn.getAttribute("name") === "obMatrix") {
+                    return;
+                }
                 ev.preventDefault();
                 ev.stopPropagation();
                 var key = btn.getAttribute("data-ob-key");
@@ -1441,14 +1467,16 @@
         if (box) box.checked = !!initial.consentRequested;
         var host = root.querySelector("[data-ob-client=miniRoot]");
         mountMiniHost(host, initial);
-        return {
-            collect: function () {
-                var payload = { consentRequested: box ? box.checked : false };
-                var answers = readMiniAnswersFromDom(host);
-                if (Object.keys(answers).length) payload.answers = answers;
-                return payload;
-            }
-        };
+        function collectPayload() {
+            var payload = { consentRequested: box ? box.checked : false };
+            var answers = readMiniAnswersFromDom(host);
+            if (Object.keys(answers).length) payload.answers = answers;
+            return payload;
+        }
+        if (!root.closest("form[data-ob-ssr-form]")) {
+            wireObStepBff(root, 7, collectPayload);
+        }
+        return { collect: collectPayload };
     }
 
     function mountMini(root, initial) {
@@ -1472,11 +1500,14 @@
         var host = root.querySelector("[data-ob-client=miniRoot]");
         if (!host) host = root;
         mountMiniHost(host, initial);
-        return {
-            collect: function () {
-                return { answers: readMiniAnswersFromDom(host) };
-            }
-        };
+        var step = parseInt(root.getAttribute("data-ob-client-step") || "0", 10);
+        function collectPayload() {
+            return { answers: readMiniAnswersFromDom(host) };
+        }
+        if (!root.closest("form[data-ob-ssr-form]") && step >= 7 && step <= 10) {
+            wireObStepBff(root, step, collectPayload);
+        }
+        return { collect: collectPayload };
     }
 
     function mountForStep(root, step, initial) {
@@ -1739,6 +1770,73 @@
         });
     }
 
+    function bindRustigWizardFooterNav() {
+        if (window.__obRustigFooterNavBound) return;
+        window.__obRustigFooterNavBound = true;
+        document.addEventListener("click", function (ev) {
+            var wiz = ev.target.closest(".ob-wizard--rustig");
+            if (!wiz || wiz.closest("form[data-ob-ssr-form]")) return;
+
+            var skipBtn = ev.target.closest(".ob-rustig__footer-actions [data-testid=onboarding-skip-optional]");
+            if (skipBtn) {
+                if (skipBtn.disabled) return;
+                var rootSkip = resolveClientRoot(skipBtn);
+                var stepSkip = resolveNavStep(rootSkip, skipBtn);
+                if (!rootSkip || !stepSkip) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                skipBtn.disabled = true;
+                var stSkip = roots ? roots.get(rootSkip) : null;
+                runStepAdvance(rootSkip, stepSkip, function () {
+                    return collectForRoot(rootSkip, stepSkip, stSkip);
+                }, true).finally(function () {
+                    skipBtn.disabled = false;
+                });
+                return;
+            }
+
+            var nextBtn = ev.target.closest(".ob-rustig__footer-actions [data-testid=onboarding-next]");
+            if (nextBtn && !nextBtn.hasAttribute("data-ob-nav-next")) {
+                if (nextBtn.disabled) return;
+                var rootNext = resolveClientRoot(nextBtn);
+                var stepNext = resolveNavStep(rootNext, nextBtn);
+                if (!rootNext || !stepNext) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                nextBtn.disabled = true;
+                var stNext = roots ? roots.get(rootNext) : null;
+                if (typeof rootNext.__obRunAdvance === "function") {
+                    rootNext.__obRunAdvance(false);
+                    nextBtn.disabled = false;
+                    return;
+                }
+                runStepAdvance(rootNext, stepNext, function () {
+                    return collectForRoot(rootNext, stepNext, stNext);
+                }, false).finally(function () {
+                    nextBtn.disabled = false;
+                });
+                return;
+            }
+
+            var backBtn = ev.target.closest(".ob-rustig__footer-actions [data-testid=onboarding-back]");
+            if (backBtn && !backBtn.hasAttribute("data-ob-nav-back")) {
+                if (backBtn.disabled) return;
+                var rootBack = resolveClientRoot(backBtn);
+                var stepBack = resolveNavStep(rootBack, backBtn);
+                if (!rootBack || !stepBack || stepBack <= 1) return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                backBtn.disabled = true;
+                var stBack = roots ? roots.get(rootBack) : null;
+                runStepBack(rootBack, stepBack, function () {
+                    return collectForRoot(rootBack, stepBack, stBack);
+                }).finally(function () {
+                    backBtn.disabled = false;
+                });
+            }
+        }, true);
+    }
+
     function triggerWizardAdvance(skipOptional) {
         var root = activeClientStepRoot();
         var step = resolveNavStep(root, null);
@@ -1935,17 +2033,23 @@
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
+            form.addEventListener("click", function (ev) {
+                var navBtn = ev.target.closest("[data-ob-nav-value][type=submit]");
+                if (!navBtn || !form.contains(navBtn)) return;
+                var intent = form.querySelector("[data-ob-ssr-nav-intent]");
+                var v = navBtn.getAttribute("data-ob-nav-value");
+                if (intent && v) intent.value = v;
+            }, true);
             form.addEventListener("submit", function (ev) {
                 if (form.getAttribute("data-ob-submitting") === "1") {
                     ev.preventDefault();
                     return;
                 }
-                preserveSubmitButtonInForm(form, ev.submitter);
+                var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
                 form.setAttribute("data-ob-submitting", "1");
                 form.querySelectorAll("button[type=submit]").forEach(function (b) {
                     b.disabled = true;
                 });
-                var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
                 var hidden = form.querySelector("[data-ob-ssr-payload]");
                 if (step === 6) {
                     var dreamInput = form.querySelector('input[name="dream"]');
@@ -1968,6 +2072,9 @@
                 }
                 var root = form.querySelector("[data-ob-client-step]");
                 if (!root || !step) return;
+                if (step === 1 && typeof root.__obSyncStep1FormFields === "function") {
+                    root.__obSyncStep1FormFields();
+                }
                 if (form.getAttribute("data-ob-ssr-post-tiles") === "1" && step >= 2 && step <= 4) {
                     if (hidden) {
                         hidden.value = JSON.stringify(collectSsrPostStepFromDom(root, step));
@@ -1982,11 +2089,15 @@
     }
 
     function bootOnboardingClient() {
+        try {
+            document.documentElement.setAttribute("data-lobsy-circuit", "ready");
+        } catch (eCircuit) { }
         bindSsrOnboardingForm();
         autoMountClientSteps();
         bindWelcomeBegin();
         bindKompasComplete();
         reconcileRustigFooterNav();
+        bindRustigWizardFooterNav();
         bindObWizardNav();
     }
 

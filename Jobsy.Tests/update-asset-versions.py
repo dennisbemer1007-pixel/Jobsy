@@ -88,7 +88,7 @@ def main() -> int:
             if not version:
                 import datetime
 
-                version = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d") + "-catalog"
+                version = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d") + "-01"
                 print(
                     f"assigned catalog version {version} for {path_part} (from {src.name})",
                     file=sys.stderr,

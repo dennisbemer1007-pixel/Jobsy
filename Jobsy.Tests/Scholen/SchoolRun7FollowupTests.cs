@@ -7,9 +7,13 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Web.Components.Layout;
+using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Navigation;
+using Microsoft.Extensions.Configuration;
 using Jobsy.Web.Scholen;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +38,11 @@ public class SchoolRun7LayoutTests : BunitContext
         {
             BaseAddress = new Uri("http://api.test/")
         }));
+        Services.AddSingleton<IChatContextGreetingGate>(new ChatContextGreetingGate(new ConfigurationBuilder().Build()));
+        Services.AddScoped<AssistantChatHost>();
+        Services.AddScoped<FeedbackHost>();
+        Services.AddAuthorizationCore();
+        AddAuthorization().SetAuthorized("school-test");
     }
 
     [Fact]

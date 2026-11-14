@@ -26,10 +26,8 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-journey.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-kreeft-mockup.css")" />
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-start-strand.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css")" />
 </HeadContent>
 
 @if (_loading)
@@ -45,17 +43,17 @@ else if (_step is >= 1 and <= 10)
     var step7Consent = _step == 7 && !_draft.HasConsent;
     var pageTitle = step7Consent ? Culture["Onboarding.Consent.Title"] : Culture[$"Onboarding.Step{_step}.Title"];
     var pageLead = step7Consent ? Culture["Onboarding.Consent.Lead"] : Culture[$"Onboarding.Step{_step}.Lead"];
-    var canvasClass = _step is >= 7 and <= 10
+    var canvasClass = _step is >= 8 and <= 10 || (_step == 7 && _draft.HasConsent)
         ? "ob-rustig__canvas ob-rustig__canvas--mini-test"
         : step7Consent ? "ob-rustig__canvas ob-rustig__canvas--consent" : "ob-rustig__canvas";
-    var formAction = _step is >= 7 and <= 10
+    var formAction = _step is >= 8 and <= 10 || (_step == 7 && _draft.HasConsent)
         ? OnboardingSsrMiniNavigation.StepQuestionUrl(_step, _miniQuestionQ)
         : $"/candidate/start?step={_step}";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
-    var zoneTag = OnboardingKreeftRailCatalog.ZoneTag(_step, Culture);
+    var phaseLabel = Culture[OnboardingWizardCatalog.PhaseForStep(_step).NameKey];
     <form method="post"
           action="@formAction"
-          class="ob-wizard ob-wizard--richting-a ob-wizard--rustig"
+          class="ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3"
           data-enhance="false"
           data-enhance-nav="false"
           data-ob-ssr-form="1"
@@ -70,18 +68,19 @@ else if (_step is >= 1 and <= 10)
             <button type="submit" name="obAction" value="noop" hidden tabindex="-1" aria-hidden="true" data-ob-ssr-enter-guard></button>
         }
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
+        <input type="hidden" name="obNav" value="" data-ob-ssr-nav-intent />
         @if (_step == 6)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-ssr-fetch-save.js")}")" defer></script>
         }
         @if (_step == 6)
         {
-            <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
+            <button type="button" hidden tabindex="-1" aria-hidden="true" data-ob-step6-save></button>
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-step6-ssr.js")}")" defer></script>
         }
         @if (_step is >= 7 and <= 10)
         {
-            <button type="submit" name="obNav" value="save" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
+            <button type="button" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
         }
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -91,87 +90,40 @@ else if (_step is >= 1 and <= 10)
         {
             <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
         }
-        <div class="ob-rustig ob-rustig--kreeft-steps" data-ob-rustig-screen="@($"step-{_step:D2}")">
-            <div class="ob-kreeft-ob @(_showJobsRail ? "ob-rustig__layout--with-rail" : null)">
-                <OnboardingKreeftRail Zones="@OnboardingKreeftRailCatalog.ForOnboardingStep(_step, Culture)" />
+        <div class="ob-rustig ob-v3-layout" data-ob-rustig-screen="@($"step-{_step:D2}")">
+            <div class="ob-v3-desktop @(_showJobsRail ? "ob-v3-desktop--with-rail" : null)">
+                <OnboardingStartprofielSidebar CurrentStep="@_step" LaterHref="/home" />
 
-                <section class="ob-kreeft-qcard" data-testid="@canvasTestId">
-                    <p class="ob-kreeft-zonetag"><b>@zoneTag.Primary</b>@zoneTag.Secondary</p>
-                    @if (_step is 4 or 5)
-                    {
-                        <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                    }
-                    <h1 tabindex="-1">@pageTitle</h1>
-                    <p class="ob-rustig__lead">@pageLead</p>
-                        <div class="@canvasClass">
+                <div class="ob-v3-main-col">
+                    <div class="ob-v3-main">
+                    <OnboardingV3StepChrome Step="@_step"
+                                           PhaseLabel="@phaseLabel"
+                                           LaterHref="/home" />
+
+                    <div class="ob-v3-step-wrap">
+                        @if (_step is 4 or 5)
+                        {
+                            <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                        }
+                        <h1 class="ob-v3-step__title" tabindex="-1">@pageTitle</h1>
+                        <p class="ob-v3-step__lead">@pageLead</p>
+                        <div class="@canvasClass ob-v3-step__fields">
                             <div class="ob-rustig__form-grid">
                                 <div class="ob-client-step ob-fields ob-fields--illustrated"
                                      data-ob-client-step="@_step"
                                      data-initial="@_initialJson"
                                      data-ob-ssr-values="1"
-                                     data-testid="@($"onboarding-step-{_step}-illustrated")">
+                                     data-testid="@canvasTestId">
                                     @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles, _seed))
                                 </div>
                             </div>
                         </div>
-                        @if (_step is >= 7 and <= 10)
-                        {
-                            <div class="ob-rustig__footer-actions ob-rustig__footer-actions--mini-ssr">
-                                <div class="ob-rustig__footer-start">
-                                    @if (_step > 1)
-                                    {
-                                        <button type="submit"
-                                                class="ob-rustig__btn"
-                                                name="obNav"
-                                                value="back"
-                                                data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
-                                    }
-                                    <a class="ob-rustig__btn"
-                                       href="/candidate/profile"
-                                       data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
-                                </div>
-                                <button type="submit"
-                                        class="ob-rustig__btn ob-rustig__btn--primary"
-                                        name="obNav"
-                                        value="next"
-                                        data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="ob-rustig__footer-actions">
-                                @if (_step > 1)
-                                {
-                                    <button type="submit"
-                                            class="ob-rustig__btn"
-                                            name="obNav"
-                                            value="back"
-                                            data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
-                                }
-                                @if (_step is 4 or 5)
-                                {
-                                    <button type="submit"
-                                            class="ob-rustig__btn"
-                                            name="obNav"
-                                            value="skip"
-                                            data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
-                                }
-                                @if (_step == 6)
-                                {
-                                    <button type="submit"
-                                            class="ob-rustig__btn"
-                                            name="obNav"
-                                            value="dreamUnknown"
-                                            data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
-                                }
-                                <button type="submit"
-                                        class="ob-rustig__btn ob-rustig__btn--primary"
-                                        name="obNav"
-                                        value="next"
-                                        data-testid="onboarding-next">@Culture["Onboarding.Next"]</button>
-                            </div>
-                        }
-                </section>
+                    </div>
+                    </div>
+                    <OnboardingV3SsrFooter Step="@_step"
+                                          Step7ConsentOnly="@step7Consent"
+                                          MiniQuestionQ="@_miniQuestionQ" />
+                </div>
                 @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
                 @if (_showJobsRail && _nearbySignal is not null)
                 {

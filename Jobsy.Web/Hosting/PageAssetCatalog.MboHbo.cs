@@ -16,6 +16,13 @@ public static partial class PageAssetCatalog
 
     public static IReadOnlyList<string> LeerlingMboHboStylesheets(string? rawPath)
         => IncludesLeerlingMboHboStyles(rawPath)
-            ? [WwwrootAssetCatalog.UrlLeadingSlash(LeerlingMboHboStylesheetPath)]
+            ?
+            [
+                WwwrootAssetCatalog.UrlLeadingSlash(LeerlingMboHboStylesheetPath),
+                WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-variant-b.css"),
+                WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-onboarding-v3.css"),
+                WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-ssr-chrome.css"),
+                WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-assistant-panel.css"),
+            ]
             : [];
 }

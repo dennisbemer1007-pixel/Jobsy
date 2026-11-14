@@ -21,6 +21,7 @@ namespace Jobsy.Tests;
 /// <summary>Kestrel host for illustrated page captures with stubbed API and optional test sign-in.</summary>
 public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
 {
+    private readonly object _startLock = new();
     public string ServerAddress { get; private set; } = "";
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
@@ -38,7 +39,46 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         _minimalPassportProfile = minimalPassportProfile;
         _companyMapInitiativeEnabled = companyMapInitiativeEnabled;
         _plainSkin = plainSkin;
-        _ = CreateClient();
+        EnsureServerAddress();
+    }
+
+    public string EnsureServerAddress()
+    {
+        if (!string.IsNullOrEmpty(ServerAddress))
+        {
+            return ServerAddress;
+        }
+
+        lock (_startLock)
+        {
+            if (!string.IsNullOrEmpty(ServerAddress))
+            {
+                return ServerAddress;
+            }
+
+            InvalidOperationException? last = null;
+            for (var attempt = 0; attempt < 4; attempt++)
+            {
+                try
+                {
+                    _ = CreateClient();
+                    return ServerAddress;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    last = ex;
+                    Thread.Sleep(50 * (attempt + 1));
+                }
+            }
+
+            if (last is not null)
+            {
+                throw last;
+            }
+
+            _ = CreateClient();
+            return ServerAddress;
+        }
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

@@ -3,20 +3,17 @@
 @using Jobsy.Web.Media
 @inherits CultureAwareComponentBase
 
-<div class="lobsy-coach-cta @PlacementClass" data-testid="vacancy-mock-interview-cta">
+<div class="lobsy-coach-cta lobsy-coach-cta--variant-b @PlacementClass" data-testid="vacancy-mock-interview-cta">
     <button type="button"
-            class="lobsy-coach-cta__btn lobsy-coach-cta__btn--warm"
+            class="lobsy-coach-cta__btn"
             @onclick="OnOpen"
             aria-label="@Culture["MockInterview.CtaAria"]">
-        <span class="lobsy-coach-cta__medallion" aria-hidden="true">
-            <img src="@BrandImages.MarkSvg"
-                 srcset="@BrandImages.SrcSet56"
-                 sizes="40px"
-                 alt=""
-                 width="40"
-                 height="40"
-                 decoding="async" />
-        </span>
+        <img class="lobsy-coach-cta__avatar"
+             src="@BrandImages.AbsoluteCoachBAvatar"
+             alt=""
+             width="40"
+             height="40"
+             decoding="async" />
         <span class="lobsy-coach-cta__label">@Culture["MockInterview.CtaBubble"]</span>
     </button>
 </div>

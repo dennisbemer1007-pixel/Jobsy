@@ -108,25 +108,25 @@ public sealed class FunctionalOnboardingPlaywrightTests
             if (step == 1)
             {
                 await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
-                await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStepShellAsync(page, 2);
                 continue;
             }
 
             if (step == 2)
             {
-                await page.Locator(".ob-wizard__presets .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
+                await FunctionalOnboardingInteractivityHelpers.AdvanceFromStep2ToStep3Async(page, mobile);
+                continue;
             }
 
             if (step == 3)
             {
-                await page.Locator("#onboarding-field-transport .lobsy-choice-tile").First.ClickAsync(new() { Force = true });
-                await page.Locator(".ob-wizard__transport .lobsy-choice-tile").Filter(new() { HasText = "30" }).First.ClickAsync(new() { Force = true });
+                await FunctionalOnboardingInteractivityHelpers.SelectTransportAndTravel30Async(page);
             }
 
             await FunctionalOnboardingInteractivityHelpers.ClickWizardNextWhenVisibleAsync(page);
-            if (step < 5)
+            if (step < 5 && step != 2)
             {
-                await page.Locator($"[data-testid=onboarding-step-{step + 1}-illustrated]").WaitForAsync(new() { Timeout = 90_000 });
+                await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStepShellAsync(page, step + 1);
             }
         }
 

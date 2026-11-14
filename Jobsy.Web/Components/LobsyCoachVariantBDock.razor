@@ -1,0 +1,72 @@
+@namespace Jobsy.Web.Components
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<div class="@CssClass"
+     data-lobsy-coach
+     data-ssr-coach="business">
+    @if (ShowTeaser)
+    {
+        <p class="lobsy-coach-dock__teaser"
+           data-ob-coach-bubble
+           role="status">@TeaserText</p>
+    }
+    <button type="button"
+            id="@ButtonId"
+            class="lobsy-coach-dock__btn lobsy-coach-dock__btn--lobster-b"
+            aria-label="@OpenLabel"
+            aria-haspopup="dialog"
+            aria-expanded="@AriaExpanded"
+            aria-controls="lobsy-assistant-panel"
+            data-ssr-coach-open
+            @onclick="OnClickHandler">
+        <img class="lobsy-coach-dock__lobster"
+             src="@BrandImages.AbsoluteCoachB"
+             alt="@Culture["Coach.LobsterAlt"]"
+             width="165"
+             height="250"
+             decoding="async" />
+    </button>
+</div>
+
+@code {
+    [Parameter] public string ButtonId { get; set; } = "lobsy-coach-btn";
+
+    [Parameter] public string ModeClass { get; set; } = "lobsy-coach-dock--variant-b";
+
+    [Parameter] public string? AdditionalClass { get; set; }
+
+    [Parameter] public bool HasBottomNav { get; set; }
+
+    [Parameter] public bool ChatOpen { get; set; }
+
+    [Parameter] public bool ShowTeaser { get; set; } = true;
+
+    [Parameter] public string? TeaserText { get; set; }
+
+    [Parameter] public string? OpenLabel { get; set; }
+
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private string CssClass =>
+        string.Join(
+            " ",
+            new[]
+            {
+                "lobsy-coach-dock",
+                ModeClass,
+                HasBottomNav ? "lobsy-coach-dock--has-nav" : null,
+                ChatOpen ? "lobsy-coach-dock--chat-open" : null,
+                AdditionalClass
+            }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private string TeaserTextResolved => TeaserText ?? Culture["Coach.OnboardingBubble"];
+
+    private string OpenLabelResolved => OpenLabel ?? Culture["Coach.OpenOnboarding"];
+
+    private string AriaExpanded => ChatOpen ? "true" : "false";
+
+    private Task OnClickHandler(MouseEventArgs args)
+        => OnClick.HasDelegate ? OnClick.InvokeAsync(args) : Task.CompletedTask;
+}

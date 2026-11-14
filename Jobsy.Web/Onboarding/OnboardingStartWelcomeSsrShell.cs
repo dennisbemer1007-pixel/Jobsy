@@ -1,20 +1,28 @@
 using System.Net;
 using System.Text;
 using Jobsy.Web.Localization;
-using Jobsy.Web.Media;
 
 namespace Jobsy.Web.Onboarding;
 
 internal static class OnboardingStartWelcomeSsrShell
 {
+    private static readonly (string TitleKey, string LeadKey, string TimeKey)[] WelcomeSteps =
+    [
+        ("Onboarding.Phase.OverJou", "Onboarding.Welcome.OverJou", "Onboarding.Welcome.Time2"),
+        ("Onboarding.Welcome.Background", "Onboarding.Welcome.BackgroundLead", "Onboarding.Welcome.Time1"),
+        ("Onboarding.Welcome.Dream", "Onboarding.Welcome.DreamLead", "Onboarding.Welcome.TimeHalf"),
+        ("Onboarding.Phase.WieBenJij", "Onboarding.Welcome.TestsLead", "Onboarding.Welcome.Time2"),
+    ];
+
     internal static string Build(CultureState culture, string? firstName, string antiforgeryToken, string? errorMessage)
     {
         var title = string.IsNullOrWhiteSpace(firstName)
-            ? culture["Onboarding.Welcome.JourneyTitleNoName"]
-            : culture.Format("Onboarding.Welcome.JourneyTitle", firstName.Trim());
+            ? culture["Onboarding.Welcome.TitleNoName"]
+            : culture.Format("Onboarding.Welcome.Title", firstName.Trim());
 
         var sb = new StringBuilder();
-        sb.Append("<section class=\"ob-wizard__welcome\" data-testid=\"onboarding-start-screen\"><form method=\"post\" action=\"/candidate/start\" class=\"ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-rustig--start-strand\" data-enhance=\"false\" data-enhance-nav=\"false\">");
+        sb.Append("<section class=\"ob-wizard__welcome ob-v3-welcome\" data-ob-rustig-screen=\"start\" data-testid=\"onboarding-start-screen\">");
+        sb.Append("<form method=\"post\" action=\"/candidate/start\" class=\"ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3\" data-enhance=\"false\" data-enhance-nav=\"false\">");
         sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
         sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
         sb.Append("\" />");
@@ -25,43 +33,40 @@ internal static class OnboardingStartWelcomeSsrShell
             sb.Append("</p>");
         }
 
-        sb.Append("<div class=\"ob-rustig\" data-ob-rustig-screen=\"start\">");
-        sb.Append("<div class=\"ob-kreeft-start-grid\">");
-        sb.Append("<div class=\"ob-kreeft-start-main\"><p class=\"ob-kreeft-zonetag\"><b>");
-        sb.Append(WebUtility.HtmlEncode(culture["Reiskaart.Zone.Strand"]));
-        sb.Append("</b>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ZoneTagSub"]));
-        sb.Append("</p><h1 tabindex=\"-1\">");
+        sb.Append("<div class=\"ob-v3-welcome__content\">");
+        sb.Append("<h1 tabindex=\"-1\">");
         sb.Append(WebUtility.HtmlEncode(title));
-        sb.Append("</h1><p class=\"ob-rustig__lead\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.Lead"]));
-        sb.Append("</p><ol class=\"ob-kreeft-zone-list\">");
-        foreach (var item in OnboardingKreeftWelcomeContent.ZoneCards)
+        sb.Append("</h1><p class=\"ob-v3-welcome__lead\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.Lead"]));
+        sb.Append("</p><div class=\"ob-v3-welcome__steps\">");
+        for (var i = 0; i < WelcomeSteps.Length; i++)
         {
-            sb.Append("<li><b>");
-            sb.Append(WebUtility.HtmlEncode(culture[item.TitleKey]));
-            sb.Append("</b><span>");
-            sb.Append(WebUtility.HtmlEncode(culture[item.BodyKey]));
-            sb.Append("</span></li>");
+            var (titleKey, leadKey, timeKey) = WelcomeSteps[i];
+            sb.Append("<div class=\"ob-v3-welcome__step-card\"><em aria-hidden=\"true\">");
+            sb.Append(i + 1);
+            sb.Append("</em><div><b>");
+            sb.Append(WebUtility.HtmlEncode(culture[titleKey]));
+            sb.Append("</b><small>");
+            sb.Append(WebUtility.HtmlEncode(culture[leadKey]));
+            sb.Append("</small></div><span class=\"ob-v3-welcome__time\">");
+            sb.Append(WebUtility.HtmlEncode(culture[timeKey]));
+            sb.Append("</span></div>");
         }
 
-        sb.Append("</ol><div class=\"ob-kreeft-before-card\"><h3>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.BeforeStartTitle"]));
-        sb.Append("</h3><div class=\"ob-kreeft-consent-opt ob-kreeft-consent-opt--on\"><i aria-hidden=\"true\"></i><div><strong>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentRequired"]));
-        sb.Append("</strong><small>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentRequiredSub"]));
-        sb.Append("</small></div></div><div class=\"ob-kreeft-consent-opt\"><i aria-hidden=\"true\"></i><div><strong>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentEmail"]));
-        sb.Append("</strong><small>");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.ConsentEmailSub"]));
-        sb.Append("</small></div></div><div class=\"ob-rustig__footer-actions ob-kreeft-before-actions\"><a class=\"ob-rustig__link ob-rustig__link--underline\" href=\"/privacy/data\" data-enhance-nav=\"false\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.PrivacyLink"]));
-        sb.Append("</a><button type=\"submit\" name=\"obNav\" value=\"begin\" class=\"ob-rustig__btn ob-rustig__btn--primary\" data-testid=\"onboarding-begin\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Kreeft.Welcome.CtaCoast"]));
-        sb.Append("</button></div></div></div>");
-        KreeftReiskaartHtml.Append(sb, culture, KreeftReiskaartCatalog.ForScreen(3));
-        sb.Append("</div></div></form></section>");
+        sb.Append("</div><p class=\"ob-v3-welcome__hint\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.Hint"]));
+        sb.Append("</p><div class=\"ob-v3-welcome__actions ob-rustig__actions\">");
+        sb.Append("<button type=\"button\" class=\"ob-rustig__link ob-v3-welcome__later\" onclick=\"window.location.assign('/home')\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Later"]));
+        sb.Append("</button><a class=\"ob-rustig__link ob-rustig__link--underline\" href=\"/privacy/data\" title=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AccountPrivacyLink"]));
+        sb.Append("\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.AccountPrivacyLink"]));
+        sb.Append("</a></div></div><div class=\"ob-v3-welcome__foot\">");
+        sb.Append("<button type=\"submit\" name=\"obNav\" value=\"begin\" class=\"ob-v3-welcome__cta ob-rustig__btn ob-rustig__btn--primary\" data-testid=\"onboarding-begin\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Welcome.Cta"]));
+        sb.Append("</button></div></form></section>");
+        sb.Append(KreeftReiskaartMarkup.ForScreen(culture, 3));
         return sb.ToString();
     }
 }

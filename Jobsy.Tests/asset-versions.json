@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "3b2da0a22ff8db2ad6e43126ae265a27f48efaccce90956030c3ab9f5f24f4e0",
+    "sha256": "9c1568bd442ef19300eaf82dc1cf7c2377a5722d50fe3c242e3b53902636c0b2",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -40,7 +40,7 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart-auth-chrome.css": {
-    "sha256": "f056133fb95c1562b5458e8df3ac945142e45e0fc1189cb7e28befb431baf1a4",
+    "sha256": "fe3ee4ccf3a24b4a051677870536168980183a71ff661bfc769940024f04131f",
     "v": "20261027-53"
   },
   "css/features/banenkaart-illustrated.css": {
@@ -136,7 +136,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "b60ab442bcee5ea7abb4fb1f8cdb084db71dea7e1462f14ef1ebef61efe873a1",
+    "sha256": "d8a494f75a9e4479b2b466d8ec31b53664ba44307d1ad2a5da1190ad1c0cf217",
     "v": "20261025-59"
   },
   "css/features/kandidaatinzichten.css": {
@@ -175,9 +175,21 @@
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"
   },
+  "css/features/lobsy-coach-onboarding-v3.css": {
+    "sha256": "1bce826ac92021ba63a64cf21be61143b5db7b396a7d6e034313c0e147695bde",
+    "v": "20261114-01"
+  },
   "css/features/lobsy-coach-pill.css": {
     "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a",
     "v": "20261026-08"
+  },
+  "css/features/lobsy-coach-ssr-chrome.css": {
+    "sha256": "7e155bd5270a49470620f6722d49c90839683f5876c64f2b9fcebb61e0ee0841",
+    "v": "20261113-01"
+  },
+  "css/features/lobsy-coach-variant-b.css": {
+    "sha256": "bda600e970538091f9d25ceb2b70f5313415319d8a487ddc384cf82940bcbb51",
+    "v": "20261114-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "46fae2596ab48130ab952c5b1d92e7f1afc0d0052180dcde879c5a5c4b47aa0a",
@@ -208,7 +220,7 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-client-nav.css": {
-    "sha256": "7d4d69517c5309f9357c16a5f1da21a242091293f1af43423623d9cb63584dbc",
+    "sha256": "16fd733110591a423b78806d72bffd40ce065ca8a93310a2063a69db953a32c7",
     "v": "20261025-87"
   },
   "css/features/onboarding-finale-v2.css": {
@@ -254,6 +266,10 @@
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
     "v": "20261018-07"
+  },
+  "css/features/onboarding-wizard-v3.css": {
+    "sha256": "87835c3ebf15cac16be84b562552d68c9083114239eeb1cd3ded2a893802913a",
+    "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
     "sha256": "c314b1f49152bd4af5e8e9d769ee6e8006aea2d0e187869ba1b724d721aa3dda",
@@ -496,7 +512,7 @@
     "v": "20261018-02"
   },
   "js/leerling-journey-ssr.js": {
-    "sha256": "3c43d3ef35f494d30e700584366a5b48e43432c46269c1ad92966a3f552d5ccd",
+    "sha256": "f021296a9813f81c792868a42ae556cd0e9c4b3f5289b926f2a46f42bd2900d8",
     "v": "20261103-01"
   },
   "js/leerling-login.js": {
@@ -504,7 +520,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "6d8ba04f4b1ac5f80c16a058c09d67e17a0e287ce622c42410b928539b4172a0",
+    "sha256": "29b76d60accf0c237c86c32ba302be25e80cc7c2f7fe85f3c78c50d07dd68eef",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {
@@ -568,7 +584,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "e9996e30a6c6c7d0962ec9dffc7c20a4b7c3ef833f45530d2eca33fbd013e98c",
+    "sha256": "38dcf99f63b67a36aec20079f1914b466f3024aeebbff6453d7bfbf2ab30d5b6",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
@@ -576,7 +592,7 @@
     "v": "20261025-87"
   },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "6ed308de3acb5a77a229b053fadb27696563f5d4a3f023013b760cb60908d59c",
+    "sha256": "093726cc1fc825022f9227b398054b8fe9cc8ab2ff7552aa7b54c2f8bac4c040",
     "v": "20261025-87"
   },
   "js/passport-availability-matrix.js": {

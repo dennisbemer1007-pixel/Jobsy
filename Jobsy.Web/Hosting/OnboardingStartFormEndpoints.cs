@@ -61,23 +61,47 @@ public static class OnboardingStartFormEndpoints
 
         var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
 
+        if (string.IsNullOrWhiteSpace(obNav) && http.Request.Form.TryGetValue("obNav", out var navValues))
+        {
+            obNav = navValues.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(obNav) && obNav.Contains(',', StringComparison.Ordinal))
+        {
+            obNav = obNav.Split(',')[0].Trim();
+        }
+
         var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
         var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
         var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
         var persist = string.Equals(obNav, "save", StringComparison.OrdinalIgnoreCase);
 
-        if (goBack && currentStep is >= 7 and <= 10)
+        if (goBack)
         {
-            var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-            if (q > 1)
+            if (currentStep is >= 7 and <= 10)
             {
-                return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
+                if (q > 1)
+                {
+                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+                }
             }
 
             if (currentStep > 1)
             {
-                return SeeOther(OnboardingRoutes.StepUrl(currentStep - 1));
+                var priorStep = currentStep - 1;
+                try
+                {
+                    await OnboardingClientProgressSaver.SaveStickyAsync(api, priorStep, ct: cancellationToken);
+                    api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                }
+                catch (Exception)
+                {
+                    // Best-effort; still honor back navigation.
+                }
+
+                return SeeOther(OnboardingRoutes.StepUrl(priorStep));
             }
 
             return SeeOther(OnboardingRoutes.StepUrl(1));
@@ -209,21 +233,6 @@ public static class OnboardingStartFormEndpoints
         else if (currentStep is >= 7 and <= 10)
         {
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
-            if (advance)
-            {
-                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-                var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
-                    currentStep,
-                    api,
-                    featureFlags,
-                    culture,
-                    cancellationToken);
-                var total = mini.Questions.Count;
-                if (total > 0 && q < total)
-                {
-                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q + 1));
-                }
-            }
         }
         else if (string.IsNullOrWhiteSpace(obPayload) && currentStep is >= 2 and <= 4)
         {
@@ -255,6 +264,32 @@ public static class OnboardingStartFormEndpoints
                 draftFromStore,
                 culture);
             body = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draftFromStore);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep == 1)
+        {
+            var req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance);
+            var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+                req,
+                api,
+                geocoder,
+                culture,
+                cancellationToken);
+            return ToRedirect(step1Status, step1Payload, currentStep, advance, goBack, culture);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep == 5)
+        {
+            MeProfile profileStep5;
+            try
+            {
+                profileStep5 = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            }
+            catch (Exception)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Common.Error.TryAgain"]));
+            }
+
+            var draftStep5 = OnboardingProfileDraftHydrator.FromProfile(profileStep5);
+            body = OnboardingSsrStepFormInteract.BuildPersistBody(5, draftStep5);
         }
         else if (string.IsNullOrWhiteSpace(obPayload))
         {

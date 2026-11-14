@@ -46,6 +46,7 @@ public static class TeacherPortalEntryEndpoints
                         ScopeLabel = culture["Leraar.RoleChip"],
                     },
                     culture,
+                    http.User,
                     PagePath),
                 "text/html; charset=utf-8");
         }
@@ -70,6 +71,7 @@ public static class TeacherPortalEntryEndpoints
                     $"""<p class="state-message error">{System.Net.WebUtility.HtmlEncode(culture["Leraar.LoadFailed"])}</p>""",
                     await ScholenPortalShell.BuildAsync(http, culture, api, features, PagePath),
                     culture,
+                    http.User,
                     PagePath),
                 "text/html; charset=utf-8");
         }
@@ -85,7 +87,7 @@ public static class TeacherPortalEntryEndpoints
             """;
         var shell = await ScholenPortalShell.BuildAsync(http, culture, api, features, PagePath);
         return Results.Content(
-            ScholenPortalSsrFrame.RenderDocument(culture["Leraar.DashboardTitle"], body, shell, culture, PagePath),
+            ScholenPortalSsrFrame.RenderDocument(culture["Leraar.DashboardTitle"], body, shell, culture, http.User, PagePath),
             "text/html; charset=utf-8");
     }
 }

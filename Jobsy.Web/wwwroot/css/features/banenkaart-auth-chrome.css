@@ -470,12 +470,7 @@
     color: var(--muted);
 }
 
-.header-dropdown-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 55;
-    background: color-mix(in srgb, var(--brand-deep) 28%, transparent);
-}
+/* Backdrop visibility is owned by app.min.css (banenkaart must not resurrect a full-screen hit target). */
 
 @media (max-width: 900px) {
     .app-shell--banenkaart-shell .app-header .brand__tagline,
