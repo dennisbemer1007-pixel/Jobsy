@@ -301,7 +301,55 @@ internal static class OnboardingClientStepShells
         activeDream = activeDream?.Trim() ?? "";
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-dream\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
-        sb.Append("<div class=\"ob-rustig__dream-grid\" data-ob-ssr-dream-grid role=\"listbox\" style=\"display:flex;flex-wrap:wrap;gap:8px;width:100%;max-width:100%;box-sizing:border-box\">");
+        sb.Append("<div class=\"ob-rustig__field ob-rustig__field--dream ob-v3-dream-search\" style=\"width:100%;max-width:none;box-sizing:border-box\">");
+        sb.Append("<label for=\"onboarding-rustig-dream-input\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
+        sb.Append("</label>");
+        sb.Append("<input id=\"onboarding-rustig-dream-input\" name=\"dream\" type=\"search\" autocomplete=\"off\" data-testid=\"onboarding-dream-input\" placeholder=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
+        sb.Append("\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(activeDream));
+        sb.Append("\" style=\"width:100%;min-height:44px;box-sizing:border-box\" /></div>");
+
+        var tiles = ResolveDreamTiles(dreamTitles);
+        sb.Append("<div class=\"ob-wizard__dream-grid ob-v3-dream-grid\" data-ob-ssr-dream-grid role=\"listbox\" aria-label=\"");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Step6.Title"]));
+        sb.Append("\">");
+        foreach (var (title, iconSvg) in tiles)
+        {
+            var on = !string.IsNullOrEmpty(activeDream)
+                && string.Equals(title, activeDream, StringComparison.OrdinalIgnoreCase);
+            sb.Append("<button type=\"button\" class=\"ob-rustig__dream");
+            if (on)
+            {
+                sb.Append(" is-on is-selected");
+            }
+
+            sb.Append("\" data-ob-dream-title=\"");
+            sb.Append(WebUtility.HtmlEncode(title));
+            sb.Append("\" data-testid=\"onboarding-dream-tile\" aria-pressed=\"");
+            sb.Append(on ? "true" : "false");
+            sb.Append("\"><span aria-hidden=\"true\">");
+            if (!string.IsNullOrEmpty(iconSvg))
+            {
+                sb.Append(iconSvg);
+            }
+
+            sb.Append("</span><small>");
+            sb.Append(WebUtility.HtmlEncode(title));
+            sb.Append("</small></button>");
+        }
+
+        sb.Append("</div>");
+        sb.Append("<button type=\"submit\" class=\"ob-v3-dream-unknown-mobile\" name=\"obNav\" value=\"dreamUnknown\" formnovalidate data-testid=\"onboarding-dream-unknown-mobile\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamUnknown"]));
+        sb.Append("</button></div>");
+        return sb.ToString();
+    }
+
+    private static IReadOnlyList<(string Title, string? IconSvg)> ResolveDreamTiles(IReadOnlyList<string>? dreamTitles)
+    {
+        var list = new List<(string Title, string? IconSvg)>();
         foreach (var title in dreamTitles ?? [])
         {
             if (string.IsNullOrWhiteSpace(title))
@@ -310,40 +358,39 @@ internal static class OnboardingClientStepShells
             }
 
             var trimmed = title.Trim();
-            var on = !string.IsNullOrEmpty(activeDream)
-                && string.Equals(trimmed, activeDream, StringComparison.OrdinalIgnoreCase);
-            sb.Append("<button type=\"button\" class=\"ob-rustig__dream");
-            if (on)
+            if (list.Any(t => string.Equals(t.Title, trimmed, StringComparison.OrdinalIgnoreCase)))
             {
-                sb.Append(" is-on is-selected");
+                continue;
             }
 
-            sb.Append("\" style=\"width:auto;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;max-width:none;min-height:48px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font:inherit;font-weight:600;text-align:center;box-sizing:border-box");
-            if (on)
+            var job = DreamJobCatalog.All.FirstOrDefault(j =>
+                string.Equals(j.TitleNl, trimmed, StringComparison.OrdinalIgnoreCase));
+            list.Add((trimmed, job is null ? null : Jobsy.Web.Navigation.DreamJobIcons.TryGet(job.IconKey)));
+            if (list.Count >= 9)
             {
-                sb.Append(";border-color:var(--brand);background:color-mix(in srgb, var(--brand) 12%, var(--surface));color:var(--brand)");
+                break;
             }
-
-            sb.Append("\" data-ob-dream-title=\"");
-            sb.Append(WebUtility.HtmlEncode(trimmed));
-            sb.Append("\" data-testid=\"onboarding-dream-tile\" aria-pressed=\"");
-            sb.Append(on ? "true" : "false");
-            sb.Append("\">");
-            sb.Append(WebUtility.HtmlEncode(trimmed));
-            sb.Append("</button>");
         }
 
-        sb.Append("</div>");
-        sb.Append("<div class=\"ob-rustig__field ob-rustig__field--dream\" style=\"margin-top:1rem;width:100%;max-width:none;box-sizing:border-box\">");
-        sb.Append("<label for=\"onboarding-rustig-dream-input\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Rustig.DreamOwnLabel"]));
-        sb.Append("</label>");
-        sb.Append("<input id=\"onboarding-rustig-dream-input\" name=\"dream\" type=\"text\" autocomplete=\"off\" data-testid=\"onboarding-dream-input\" placeholder=\"");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamSearch"]));
-        sb.Append("\" value=\"");
-        sb.Append(WebUtility.HtmlEncode(activeDream));
-        sb.Append("\" style=\"width:100%;min-height:44px;box-sizing:border-box\" /></div></div>");
-        return sb.ToString();
+        if (list.Count < 9)
+        {
+            foreach (var job in DreamJobCatalog.All)
+            {
+                if (list.Count >= 9)
+                {
+                    break;
+                }
+
+                if (list.Any(t => string.Equals(t.Title, job.TitleNl, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                list.Add((job.TitleNl, Jobsy.Web.Navigation.DreamJobIcons.TryGet(job.IconKey)));
+            }
+        }
+
+        return list;
     }
 
     private static string BuildStep7Ssr(CultureState culture, OnboardingProfileDraft? draft, OnboardingClientStepSeed? seed)
@@ -354,16 +401,7 @@ internal static class OnboardingClientStepShells
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-consent\">");
         if (!draft.HasConsent)
         {
-            var consentOn = draft.ConsentRequested;
-            sb.Append("<label class=\"ob-wizard__consent\"><input type=\"checkbox\" name=\"consentRequested\" value=\"true\" data-testid=\"onboarding-consent\"");
-            if (consentOn)
-            {
-                sb.Append(" checked");
-            }
-
-            sb.Append(" /> ");
-            sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Consent.Check"]));
-            sb.Append("</label>");
+            sb.Append(OnboardingJourneyConsentSsrMarkup.Build(culture, draft.ConsentRequested));
             sb.Append("</div>");
             return sb.ToString();
         }

@@ -18,14 +18,10 @@
         }
     </div>
     <div class="ob-v3-side__bot">
-        <span class="ob-v3-side__saved" data-testid="onboarding-autosave-status">
-            <span aria-hidden="true">✓</span>
-            @Culture["Onboarding.AllSaved"]
-        </span>
-        @if (!string.IsNullOrWhiteSpace(LaterHref))
-        {
-            <a class="ob-v3-side__later" href="@LaterHref" data-testid="onboarding-later">@Culture["Onboarding.Later"]</a>
-        }
+        <div class="ob-v3-side__save-card" data-testid="onboarding-autosave-status">
+            <span class="ob-v3-side__save-card-mark" aria-hidden="true">✓</span>
+            <p class="ob-v3-side__save-card-text">@Culture["Onboarding.V3.AllSavedCard"]</p>
+        </div>
     </div>
 </aside>
 

@@ -413,6 +413,19 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.WieBenJijQuestions"] = english ? "4 × 5 questions" : "4 × 5 vragen"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         map["Onboarding.StepOf"] = english ? "Step {0} of {1}" : "Stap {0} van {1}";
         map["Onboarding.MinutesLeft"] = english ? "about {0} min left" : "nog ± {0} min";
+        map["Onboarding.V3.AllSavedCard"] = english
+            ? "Everything is saved — you can stop and continue later where you left off."
+            : "Alles is bewaard – stoppen mag, je gaat later verder waar je was";
+        map["Onboarding.V3.ProgressTitle"] = english ? "Progress" : "Voortgang";
+        map["Onboarding.V3.Status.Later"] = english ? "Up next" : "Daarna";
+        map["Onboarding.V3.Status.Todo"] = english ? "To do" : "Nog te doen";
+        map["Onboarding.V3.Status.Fraction"] = english ? "{0}/{1}" : "{0}/{1}";
+        map["Onboarding.V3.Tip.Step7"] = english
+            ? "Four short tests (about a minute each). You can pause anytime — answers are saved."
+            : "Vier korte tests (ongeveer een minuut per stuk). Pauzeren mag — antwoorden worden bewaard.";
+        map["Onboarding.V3.Tip.Step8"] = english ? "Pick what feels true now — there are no right or wrong answers." : "Kies wat nu bij je past — er zijn geen goede of foute antwoorden.";
+        map["Onboarding.V3.Tip.Step9"] = english ? "Think about the atmosphere where you work best." : "Denk aan de sfeer waarin jij het beste functioneert.";
+        map["Onboarding.V3.Tip.Step10"] = english ? "What matters to you at work? That guides your matches." : "Wat vind jij belangrijk op werk? Dat stuurt je matches.";
         AddPresets(map, english);
         AddWorkStatuses(map, english);
         AddDreamJobs(map, language);

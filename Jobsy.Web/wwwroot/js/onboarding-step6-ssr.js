@@ -10,7 +10,7 @@
 
         function deselectTiles() {
             if (!grid) return;
-            grid.querySelectorAll(".ob-rustig__dream").forEach(function (btn) {
+            grid.querySelectorAll(".ob-rustig__dream, .ob-wizard__dream-grid button").forEach(function (btn) {
                 btn.classList.remove("is-on", "is-selected");
                 btn.setAttribute("aria-pressed", "false");
             });
@@ -41,7 +41,7 @@
 
         if (grid) {
             grid.addEventListener("click", function (ev) {
-                var btn = ev.target.closest("[data-ob-dream-title]");
+                var btn = ev.target.closest(".ob-rustig__dream[data-ob-dream-title], .ob-wizard__dream-grid button[data-ob-dream-title]");
                 if (!btn || !grid.contains(btn)) return;
                 ev.preventDefault();
                 selectDreamTile(btn);

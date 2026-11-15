@@ -20,17 +20,13 @@
             <a class="ob-v3-chrome__later" href="@LaterHref" data-testid="onboarding-later-mobile">@Culture["Onboarding.Later"]</a>
         </div>
         <div class="ob-v3-chrome__meta">
-            <span>
-                <b>@PhaseLabel</b>
-                · @Culture.Format("Onboarding.StepLine", Step, OnboardingWizardCatalog.V3RemainingMinutes(Step))
-            </span>
+            <span class="ob-v3-chrome__step-line">@Culture.Format("Onboarding.StepLine", Step, OnboardingWizardCatalog.V3RemainingMinutes(Step))</span>
             <span class="ob-v3-chrome__saved">✓ @Culture["Onboarding.AllSaved"]</span>
         </div>
     </div>
     <div class="ob-v3-chrome__desktop-top">
-        <span>@Culture.Format("Onboarding.StepOf", Step, 10)</span>
-        <span class="ob-v3-chrome__progress"><i style="width:@($"{Step * 10}%")"></i></span>
-        <span>@Culture.Format("Onboarding.MinutesLeft", OnboardingWizardCatalog.V3RemainingMinutes(Step))</span>
+        <span class="ob-v3-chrome__step-line">@Culture.Format("Onboarding.StepLine", Step, OnboardingWizardCatalog.V3RemainingMinutes(Step))</span>
+        <span class="ob-v3-chrome__progress" aria-hidden="true"><i style="width:@($"{Step * 10}%")"></i></span>
     </div>
 </div>
 

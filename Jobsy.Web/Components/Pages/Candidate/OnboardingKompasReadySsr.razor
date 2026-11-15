@@ -21,7 +21,7 @@
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
-    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-rustig.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-wizard-v3.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/onboarding-finale-v2.css")" />
     <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/kreeft-reiskaart.css")" />
 </HeadContent>
@@ -34,88 +34,30 @@ else
 {
     var pageTitle = Culture.Format("Onboarding.Finish.Title", _firstName);
     var pageLead = Culture["Onboarding.FinaleV2.Lead"];
-    <div class="ob-wizard ob-wizard--richting-a ob-wizard--rustig">
-        <div class="ob-rustig" data-ob-rustig-screen="kompas">
-            <div class="ob-rustig__layout">
-                <aside class="ob-rustig__sidebar ob-wizard__sidebar" aria-label="Stappen">
-                    <img class="ob-rustig__logo-e"
-                         src="@BrandImages.MarkSvg"
-                         width="56"
-                         height="56"
-                         alt="Lobsy"
-                         decoding="async"
-                         data-logo-fallback="off"
-                         draggable="false" />
-                    @foreach (var item in OnboardingRustigSidebarNav.Items(10, activeSectionOverride: 5))
-                    {
-                        var section = int.Parse(item.Number, System.Globalization.CultureInfo.InvariantCulture);
-                        <a class="ob-wizard__side-item @(item.Current ? "is-current" : null)"
-                           href="@OnboardingRustigSidebarNav.LinkHref(section)">
-                            <span>@item.Number</span>
-                            <div>
-                                <strong>@item.Title</strong>
-                                @if (!string.IsNullOrWhiteSpace(item.Sub))
-                                {
-                                    <small>@item.Sub</small>
-                                }
-                            </div>
-                        </a>
-                    }
-                </aside>
-
-                <div class="ob-rustig__main">
-                    <header class="ob-rustig__chrome">
-                        <div class="ob-rustig__mobile-brand">
-                            <img class="ob-rustig__logo-e"
-                                 src="@BrandImages.MarkSvg"
-                                 width="40"
-                                 height="40"
-                                 alt=""
-                                 decoding="async"
-                                 data-logo-fallback="off"
-                                 draggable="false" />
-                        </div>
-                        <div class="ob-rustig__chrome-row">
-                            <span class="ob-rustig__link ob-rustig__link--spacer" aria-hidden="true">‹</span>
-                            <div class="ob-rustig__segments"
-                                 role="progressbar"
-                                 aria-valuemin="1"
-                                 aria-valuemax="10"
-                                 aria-valuenow="10"
-                                 aria-label="@Culture.Format("Onboarding.ProgressAria", 10, 10)">
-                                @foreach (var phase in OnboardingWizardCatalog.Phases)
-                                {
-                                    <span><i style="--w:@(OnboardingWizardCatalog.PhaseFill(phase, 10) * 100)%"></i></span>
-                                }
-                            </div>
-                            <div class="ob-rustig__actions">
-                                <a class="ob-rustig__link" href="/candidate/profile">@Culture["Onboarding.Later"]</a>
-                                <a class="ob-rustig__link ob-rustig__link--underline"
-                                   href="/privacy/data"
-                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
-                            </div>
-                        </div>
-                        <div class="ob-rustig__meta">
-                            <span>
-                                <strong>@Culture["Onboarding.Rustig.Phase.Kompas"]</strong>
-                                <text> · @Culture.Format("Onboarding.StepLine", 10, OnboardingWizardCatalog.V3RemainingMinutes(10))</text>
-                            </span>
-                            <span class="ob-rustig__saved" aria-live="polite">@Culture["Onboarding.Rustig.Saved"]</span>
-                        </div>
-                    </header>
-
-                    <div class="ob-rustig__page-head">
-                        <h1 tabindex="-1">@pageTitle</h1>
-                        <p class="ob-rustig__lead">@pageLead</p>
-                    </div>
-
-                    <div class="ob-rustig__body ob-rustig__body--with-reiskaart">
-                        @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 15))
-                        <div class="ob-rustig__body-main">
-                            @((MarkupString)_bodyHtml)
+    var phaseTag = Culture[OnboardingV3LayoutCatalog.PhaseTagKey(11)];
+    <div class="ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3" data-ob-rustig-screen="kompas">
+        <div class="ob-rustig ob-v3-layout">
+            <div class="ob-v3-desktop ob-v3-desktop--with-rail">
+                <OnboardingStartprofielSidebar CurrentStep="11" LaterHref="/home" />
+                <div class="ob-v3-main-col">
+                    <div class="ob-v3-main">
+                        <OnboardingV3StepChrome Step="10"
+                                               PhaseLabel="@phaseTag"
+                                               LaterHref="/home" />
+                        <OnboardingV3InfoBanner Text="@pageLead" />
+                        <div class="ob-v3-step-wrap">
+                            <article class="ob-v3-step-card ob-v3-step-card--kompas-ready">
+                                <p class="ob-v3-step-card__tag">@phaseTag</p>
+                                <h1 class="ob-v3-step__title" tabindex="-1">@pageTitle</h1>
+                                <div class="ob-v3-step__fields">
+                                    @((MarkupString)_bodyHtml)
+                                </div>
+                            </article>
                         </div>
                     </div>
                 </div>
+                <OnboardingV3RightRail Step="10" />
+                @((MarkupString)KreeftReiskaartMarkup.ForScreen(Culture, 15))
             </div>
         </div>
     </div>

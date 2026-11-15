@@ -1,0 +1,56 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+@inject CultureState Culture
+
+<aside class="ob-v3-rail" aria-label="@Culture["Onboarding.V3.ProgressTitle"]">
+    <div class="ob-v3-rail__card ob-v3-rail__card--tip">
+        <h2 class="ob-v3-rail__title">@Culture["Onboarding.IllustratedSidebarTitle"]</h2>
+        <p class="ob-v3-rail__tip">@TipText</p>
+    </div>
+    <div class="ob-v3-rail__card ob-v3-rail__card--progress">
+        <h2 class="ob-v3-rail__title">@Culture["Onboarding.V3.ProgressTitle"]</h2>
+        <ul class="ob-v3-rail__progress">
+            @foreach (var phase in OnboardingStartprofielSidebarCatalog.Phases)
+            {
+                var chip = OnboardingV3LayoutCatalog.ProgressChip(phase, Step);
+                <li class="ob-v3-rail__phase @(Step >= phase.FirstStep && Step <= phase.LastStep ? "is-current" : Step > phase.LastStep ? "is-done" : null)">
+                    <span class="ob-v3-rail__phase-label">@Culture[phase.LabelKey]</span>
+                    <span class="ob-v3-rail__chip ob-v3-rail__chip--@ChipModifier(chip.Kind)">@FormatChip(chip)</span>
+                </li>
+            }
+        </ul>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public int Step { get; set; } = 1;
+
+    private string TipText
+    {
+        get
+        {
+            var key = OnboardingV3LayoutCatalog.TipKeyForStep(Step);
+            return key is null ? "" : Culture[key];
+        }
+    }
+
+    private static string ChipModifier(OnboardingV3LayoutCatalog.ProgressChipKind kind) => kind switch
+    {
+        OnboardingV3LayoutCatalog.ProgressChipKind.Optional => "optional",
+        OnboardingV3LayoutCatalog.ProgressChipKind.Later => "later",
+        OnboardingV3LayoutCatalog.ProgressChipKind.Todo => "todo",
+        OnboardingV3LayoutCatalog.ProgressChipKind.Done => "done",
+        _ => "fraction",
+    };
+
+    private string FormatChip((OnboardingV3LayoutCatalog.ProgressChipKind Kind, int A, int B) chip) => chip.Kind switch
+    {
+        OnboardingV3LayoutCatalog.ProgressChipKind.Later => Culture["Onboarding.V3.Status.Later"],
+        OnboardingV3LayoutCatalog.ProgressChipKind.Todo => Culture["Onboarding.V3.Status.Todo"],
+        OnboardingV3LayoutCatalog.ProgressChipKind.Optional => Culture["Onboarding.Optional"],
+        OnboardingV3LayoutCatalog.ProgressChipKind.Done => "✓",
+        OnboardingV3LayoutCatalog.ProgressChipKind.Fraction => Culture.Format("Onboarding.V3.Status.Fraction", chip.A, chip.B),
+        _ => "",
+    };
+}

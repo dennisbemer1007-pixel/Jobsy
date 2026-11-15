@@ -1,0 +1,13 @@
+@using Jobsy.Web.Localization
+
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <div class="ob-v3-info-banner" role="note">
+        <span class="ob-v3-info-banner__icon" aria-hidden="true">i</span>
+        <p class="ob-v3-info-banner__text">@Text</p>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Text { get; set; }
+}

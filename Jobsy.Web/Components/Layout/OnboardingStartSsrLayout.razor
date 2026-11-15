@@ -30,6 +30,13 @@
     }
 </div>
 
+<HeadContent>
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-coach-onboarding-v3.css")" />
+    <link rel="stylesheet" href="@WwwrootAssetCatalog.Url("css/features/lobsy-coach-variant-b.css")" />
+</HeadContent>
+<script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-client-form.js")}")" defer></script>
+<script src="@($"/{WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" defer></script>
+
 @code {
     private string _homeHref = FeatureRoutes.CandidateProfilePath;
     private bool _ssrCoachAvailable;

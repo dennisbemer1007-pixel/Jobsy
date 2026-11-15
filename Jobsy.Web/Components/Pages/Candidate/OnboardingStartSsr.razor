@@ -50,7 +50,7 @@ else if (_step is >= 1 and <= 10)
         ? OnboardingSsrMiniNavigation.StepQuestionUrl(_step, _miniQuestionQ)
         : $"/candidate/start?step={_step}";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
-    var phaseLabel = Culture[OnboardingWizardCatalog.PhaseForStep(_step).NameKey];
+    var phaseTag = Culture[OnboardingV3LayoutCatalog.PhaseTagKey(_step)];
     <form method="post"
           action="@formAction"
           class="ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3"
@@ -90,48 +90,46 @@ else if (_step is >= 1 and <= 10)
             <p class="state-message error ob-wizard__nav-error" data-ob-wizard-nav-error hidden aria-live="polite"></p>
         }
         <div class="ob-rustig ob-v3-layout" data-ob-rustig-screen="@($"step-{_step:D2}")">
-            <div class="ob-v3-desktop @(_showJobsRail ? "ob-v3-desktop--with-rail" : null)">
+            <div class="ob-v3-desktop ob-v3-desktop--with-rail">
                 <OnboardingStartprofielSidebar CurrentStep="@_step" LaterHref="/home" />
 
                 <div class="ob-v3-main-col">
                     <div class="ob-v3-main">
-                    <OnboardingV3StepChrome Step="@_step"
-                                           PhaseLabel="@phaseLabel"
-                                           LaterHref="/home" />
+                        <OnboardingV3StepChrome Step="@_step"
+                                               PhaseLabel="@phaseTag"
+                                               LaterHref="/home" />
 
-                    <div class="ob-v3-step-wrap">
-                        @if (_step is 4 or 5)
-                        {
-                            <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
-                        }
-                        <h1 class="ob-v3-step__title" tabindex="-1">@pageTitle</h1>
-                        <p class="ob-v3-step__lead">@pageLead</p>
-                        <div class="@canvasClass ob-v3-step__fields">
-                            <div class="ob-rustig__form-grid">
-                                <div class="ob-client-step ob-fields ob-fields--illustrated"
-                                     data-ob-client-step="@_step"
-                                     data-initial="@_initialJson"
-                                     data-ob-ssr-values="1"
-                                     data-testid="@canvasTestId">
-                                    @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles, _seed))
+                        <OnboardingV3InfoBanner Text="@pageLead" />
+
+                        <div class="ob-v3-step-wrap">
+                            <article class="ob-v3-step-card @(step7Consent ? "ob-v3-step-card--consent" : null)">
+                                <p class="ob-v3-step-card__tag">@phaseTag</p>
+                                @if (_step is 4 or 5)
+                                {
+                                    <span class="ob-wizard__badge ob-v3-step-card__optional">@Culture["Onboarding.Optional"]</span>
+                                }
+                                <h1 class="ob-v3-step__title" tabindex="-1">@pageTitle</h1>
+                                <div class="@canvasClass ob-v3-step__fields">
+                                    <div class="ob-rustig__form-grid">
+                                        <div class="ob-client-step ob-fields ob-fields--illustrated"
+                                             data-ob-client-step="@_step"
+                                             data-initial="@_initialJson"
+                                             data-ob-ssr-values="1"
+                                             data-testid="@canvasTestId">
+                                            @((MarkupString)OnboardingClientStepShells.Build(_step, Culture, _draft, _dreamTitles, _seed))
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </article>
                         </div>
-                    </div>
                     </div>
                     <OnboardingV3SsrFooter Step="@_step"
                                           Step7ConsentOnly="@step7Consent"
                                           MiniQuestionQ="@_miniQuestionQ" />
                 </div>
+
+                <OnboardingV3RightRail Step="@_step" />
                 @((MarkupString)KreeftReiskaartMarkup.ForOnboardingStep(Culture, _step))
-                @if (_showJobsRail && _nearbySignal is not null)
-                {
-                    <aside class="ob-rustig__rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">
-                        <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Desktop"
-                                               Signal="_nearbySignal"
-                                               RefinedHeadline="_step >= 3" />
-                    </aside>
-                }
             </div>
         </div>
     </form>

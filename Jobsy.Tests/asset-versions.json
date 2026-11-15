@@ -176,7 +176,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "1bce826ac92021ba63a64cf21be61143b5db7b396a7d6e034313c0e147695bde",
+    "sha256": "79270713907ef71a01ea480b09f3b5358518c5611f0d21f9026c037048dd264e",
     "v": "20261114-01"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -268,7 +268,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "87835c3ebf15cac16be84b562552d68c9083114239eeb1cd3ded2a893802913a",
+    "sha256": "4d6a0519ad5fccb7225da1286c43509c7c4d739876e7bb4ec49406f36c67a479",
     "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -592,7 +592,7 @@
     "v": "20261025-87"
   },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "093726cc1fc825022f9227b398054b8fe9cc8ab2ff7552aa7b54c2f8bac4c040",
+    "sha256": "355382b2723ceef31b4fd9516dffab93c9c3966d398232a191b0f8912530b571",
     "v": "20261025-87"
   },
   "js/passport-availability-matrix.js": {

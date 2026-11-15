@@ -81,7 +81,11 @@
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
-    display: none;
+    display: block;
+    pointer-events: none;
+    margin-inline-end: 4px;
+    margin-block-end: 8px;
+    max-width: 240px;
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__btn--lobster-b {
@@ -153,7 +157,11 @@
     max-width: 68px;
   }
 
-  .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
+  .app-shell--onboarding-v3 form.ob-wizard--v3[data-ob-active-step="1"] .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
+    display: block;
+  }
+
+  .app-shell--onboarding-v3 form.ob-wizard--v3:not([data-ob-active-step="1"]) .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
     display: none;
   }
 }
