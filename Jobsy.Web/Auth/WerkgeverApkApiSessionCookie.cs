@@ -23,16 +23,33 @@ public static class WerkgeverApkApiSessionCookie
     public static void Clear(HttpContext http)
         => http.Response.Cookies.Delete(Name, new CookieOptions { Path = "/" });
 
-    public static bool TryReadTicket(string headerValue, out string ticket)
+    public static bool TryReadTicket(string setCookieHeader, out string ticket)
     {
         ticket = "";
-        const string prefix = "WerkgeverApkApiSession=";
-        if (!headerValue.StartsWith(prefix, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(setCookieHeader))
         {
             return false;
         }
 
-        ticket = headerValue[prefix.Length..].Trim();
-        return !string.IsNullOrEmpty(ticket);
+        var pair = setCookieHeader.Split(';', 2)[0].Trim();
+        var eq = pair.IndexOf('=');
+        if (eq <= 0)
+        {
+            return false;
+        }
+
+        var name = pair[..eq].Trim();
+        if (!string.Equals(name, WerkgeverApkAuthDefaults.CookieName, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        ticket = pair[(eq + 1)..].Trim();
+        if (ticket.Length >= 2 && ticket[0] == '"' && ticket[^1] == '"')
+        {
+            ticket = ticket[1..^1];
+        }
+
+        return ticket.Length > 0;
     }
 }

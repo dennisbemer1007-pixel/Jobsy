@@ -104,6 +104,12 @@ public sealed record WerkgeverApkShareWithManagerResponse(
     bool SharedWithManager,
     DateTime? SharedAtUtc);
 
+public sealed record WerkgeverApkSharePreviewDto(
+    bool SharedWithManager,
+    bool EmployeeCompleted,
+    string ManagerLabel,
+    IReadOnlyList<string> ManagerSeesBullets);
+
 public sealed record WerkgeverApkManagerQuestionDto(
     string Id,
     string Label,

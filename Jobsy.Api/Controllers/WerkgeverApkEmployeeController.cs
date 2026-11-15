@@ -103,6 +103,15 @@ public sealed class WerkgeverApkEmployeeController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpGet("share-preview")]
+    [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
+    public async Task<IActionResult> SharePreview(CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var (ok, error, status) = await _portal.GetSharePreviewAsync(User, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpPost("share")]
     [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
     public async Task<IActionResult> Share([FromBody] WerkgeverApkShareWithManagerRequest request, CancellationToken ct)

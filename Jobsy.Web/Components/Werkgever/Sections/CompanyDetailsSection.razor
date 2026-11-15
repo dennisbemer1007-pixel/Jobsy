@@ -293,7 +293,7 @@
             </section>
             }
 
-            @if (_org.ParentCompanyId is null && Show("csv", "api"))
+            @if (_org.ParentCompanyId is null && Show("csv", "loopbaan-apk", "api"))
             {
             @if (Show("csv"))
             {
@@ -324,6 +324,39 @@
                 }
 
                 @if (_feedbackSection == FeedbackSection.Csv && !string.IsNullOrEmpty(_message))
+                {
+                    <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
+                }
+            </section>
+            }
+
+            @if (Show("loopbaan-apk"))
+            {
+            <section class="panel-section company-details__card">
+                <h2>Loopbaan-APK</h2>
+                <p class="muted company-details__lead">
+                    Laat medewerkers de Loopbaan-APK invullen met teamcodes. Jij ziet alleen wat iemand zelf deelt.
+                </p>
+
+                <label class="company-details__toggle">
+                    <input type="checkbox"
+                           checked="@_org.LoopbaanApkEnabled"
+                           disabled="@_busy"
+                           @onchange="OnLoopbaanApkToggleAsync" />
+                    <span>
+                        <strong>Loopbaan-APK inschakelen</strong>
+                        <span class="muted">Toont Loopbaan-APK in het werkgeversmenu</span>
+                    </span>
+                </label>
+
+                @if (_org.LoopbaanApkEnabled)
+                {
+                    <p class="company-details__callout">
+                        <a href="/werkgever/loopbaan-apk">Ga naar Loopbaan-APK</a>
+                    </p>
+                }
+
+                @if (_feedbackSection == FeedbackSection.LoopbaanApk && !string.IsNullOrEmpty(_message))
                 {
                     <p class="state-message @(_messageIsError ? "error" : null)">@_message</p>
                 }
@@ -576,6 +609,7 @@
         None,
         Contact,
         Csv,
+        LoopbaanApk,
         Api,
         EmailVerification
     }
@@ -1109,6 +1143,44 @@
         catch (Exception ex)
         {
             SetFeedback(FeedbackSection.Csv, ex.Message, isError: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnLoopbaanApkToggleAsync(ChangeEventArgs e)
+    {
+        if (_org is null || _busy)
+        {
+            return;
+        }
+
+        var enabled = e.Value is bool b && b || e.Value?.ToString() == "on";
+        _busy = true;
+        ClearFeedback();
+        try
+        {
+            await Api.UpdateCompanyLoopbaanApkAsync(_org.Id, enabled);
+            _org.LoopbaanApkEnabled = enabled;
+            var idx = _organizations.FindIndex(o => o.Id == _org.Id);
+            if (idx >= 0)
+            {
+                _organizations[idx].LoopbaanApkEnabled = enabled;
+            }
+
+            await NavRefresh.RequestRefreshAsync();
+
+            SetFeedback(
+                FeedbackSection.LoopbaanApk,
+                enabled
+                    ? "Loopbaan-APK staat aan voor deze organisatie."
+                    : "Loopbaan-APK staat uit.");
+        }
+        catch (Exception ex)
+        {
+            SetFeedback(FeedbackSection.LoopbaanApk, ex.Message, isError: true);
         }
         finally
         {

@@ -1,9 +1,9 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.WerkgeverApk;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Jobsy.Web.Hosting;
 
@@ -12,19 +12,17 @@ public static class WerkgeverApkEmployeeEndpoints
     public static IEndpointRouteBuilder MapWerkgeverApkEmployeeEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/loopbaan-apk", LoginPage).AllowAnonymous();
-        app.MapGet("/loopbaan-apk/welkom", (HttpContext http) => Template(http, "01-welkom.html"))
-            .RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapGet("/loopbaan-apk/test/{block}", (HttpContext http, string block) => Template(http, "02-vraag.html", new Dictionary<string, string> { ["block"] = block }))
-            .RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapGet("/loopbaan-apk/delen", (HttpContext http) => Template(http, "03-delen.html"))
-            .RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapGet("/loopbaan-apk/vergelijking", (HttpContext http) => Template(http, "06-vergelijking.html"))
-            .RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapGet("/loopbaan-apk/welkom", WelkomPage).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapGet("/loopbaan-apk/test/{block}", GetTestAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapPost("/loopbaan-apk/test/{block}/answer", PostTestAnswerAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapGet("/loopbaan-apk/delen", GetDelenAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapPost("/loopbaan-apk/delen", PostDelenAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapGet("/loopbaan-apk/vergelijking", GetVergelijkingAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
         app.MapPost("/loopbaan-apk/welkom", WelcomePost).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
         return app;
     }
 
-    private static async Task<IResult> LoginPage(HttpContext http, IAntiforgery antiforgery)
+    private static async Task<IResult> LoginPage(HttpContext http, JobsyApiClient api, IAntiforgery antiforgery)
     {
         http.Response.Headers.CacheControl = "no-store";
         var auth = await http.AuthenticateAsync(WerkgeverApkAuthDefaults.Scheme);
@@ -42,7 +40,33 @@ public static class WerkgeverApkEmployeeEndpoints
             "retry" => "Even opnieuw proberen.",
             _ => null
         };
-        return Results.Content(WerkgeverApkSsrHtml.RenderLoginPage(error, af), "text/html; charset=utf-8");
+        _ = Guid.TryParse(http.Request.Query["companyId"], out var companyId);
+        _ = Guid.TryParse(http.Request.Query["teamId"], out var teamId);
+        Guid? co = companyId == Guid.Empty ? null : companyId;
+        Guid? te = teamId == Guid.Empty ? null : teamId;
+        var options = await api.GetWerkgeverApkLoginOptionsAsync(http.RequestAborted);
+        return Results.Content(
+            WerkgeverApkSsrHtml.RenderLoginPage(options, co, te, error, af),
+            "text/html; charset=utf-8");
+    }
+
+    private static Task<IResult> WelkomPage(HttpContext http, IAntiforgery antiforgery)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var tokens = Chrome(http);
+        var html = WerkgeverApkSsrHtml.RenderTemplate("01-welkom.html", tokens);
+        var af = antiforgery.GetAndStoreTokens(http);
+        var formAf = $"""<input type="hidden" name="{af.FormFieldName}" value="{af.RequestToken}">""";
+        html = html.Replace(
+            """<button class="btn primary" type="button">Start de interessetest →</button>""",
+            $"""<form method="post" action="/loopbaan-apk/welkom">{formAf}<button class="btn primary" type="submit">Start de interessetest →</button></form>""",
+            StringComparison.Ordinal);
+        html = html.Replace(
+            "<div class=\"coach\">",
+            "<button type=\"button\" class=\"coach\" data-ssr-coach-open>",
+            StringComparison.Ordinal);
+        html = html.Replace("</div>\n<div class=\"wm\">", "</button>\n<script src=\"/js/lobsy-coach-ssr.js\" defer></script>\n<div class=\"wm\">", StringComparison.Ordinal);
+        return Task.FromResult<IResult>(Results.Content(html, "text/html; charset=utf-8"));
     }
 
     private static async Task<IResult> WelcomePost(HttpContext http, JobsyApiClient api)
@@ -51,27 +75,152 @@ public static class WerkgeverApkEmployeeEndpoints
         return Results.Redirect(WerkgeverApkEntryPaths.Test("interesse"));
     }
 
-    private static IResult Template(
+    private static async Task<IResult> GetTestAsync(
         HttpContext http,
-        string template,
-        IReadOnlyDictionary<string, string>? extra = null)
+        JobsyApiClient api,
+        string block,
+        IAntiforgery antiforgery,
+        CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
-        var tokens = new Dictionary<string, string>(StringComparer.Ordinal)
+        var blockKey = NormalizeBlock(block);
+        if (blockKey is null)
+        {
+            return Results.Redirect(WerkgeverApkEntryPaths.Welkom);
+        }
+
+        var itemId = http.Request.Query["itemId"].ToString();
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            itemId = null;
+        }
+
+        var q = await api.GetWerkgeverApkQuestionAsync(blockKey, itemId, ct);
+        if (q is null)
+        {
+            return Results.Redirect($"/loopbaan-apk/test/{blockKey}?error=load");
+        }
+
+        var tokens = antiforgery.GetAndStoreTokens(http);
+        var af = $"""<input type="hidden" name="{tokens.FormFieldName}" value="{tokens.RequestToken}">""";
+        var body = WerkgeverApkEmployeeSsrHtml.TestQuestion(
+            q,
+            af,
+            $"/loopbaan-apk/test/{Uri.EscapeDataString(blockKey)}/answer",
+            http.Request.Query["error"] == "save" ? "Kon niet opslaan. Probeer opnieuw." : null);
+        var html = WerkgeverApkEmployeeSsrHtml.RenderDocument($"Test · {blockKey}", body, Chrome(http));
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
+    private static async Task<IResult> PostTestAnswerAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        string block,
+        IAntiforgery antiforgery,
+        CancellationToken ct)
+    {
+        var blockKey = NormalizeBlock(block);
+        if (blockKey is null || !http.Request.HasFormContentType || !await antiforgery.IsRequestValidAsync(http))
+        {
+            return Results.Redirect($"/loopbaan-apk/test/{block}?error=save");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var itemId = form["ItemId"].ToString();
+        if (!int.TryParse(form["Value"], out var value) || string.IsNullOrWhiteSpace(itemId))
+        {
+            return Results.Redirect($"/loopbaan-apk/test/{blockKey}?error=save");
+        }
+
+        var (ok, _, _) = await api.SaveWerkgeverApkAnswerAsync(blockKey, itemId, value, ct);
+        if (ok is null)
+        {
+            return Results.Redirect($"/loopbaan-apk/test/{blockKey}?error=save&itemId={Uri.EscapeDataString(itemId)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(ok.NextPath))
+        {
+            return Results.Redirect(ok.NextPath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(ok.NextItemId))
+        {
+            return Results.Redirect($"/loopbaan-apk/test/{blockKey}?itemId={Uri.EscapeDataString(ok.NextItemId)}");
+        }
+
+        return Results.Redirect(WerkgeverApkEntryPaths.Delen);
+    }
+
+    private static async Task<IResult> GetDelenAsync(HttpContext http, JobsyApiClient api, IAntiforgery antiforgery, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var preview = await api.GetWerkgeverApkSharePreviewAsync(ct);
+        if (preview is null)
+        {
+            return Results.Redirect(WerkgeverApkEntryPaths.Test("interesse"));
+        }
+
+        var tokens = antiforgery.GetAndStoreTokens(http);
+        var af = $"""<input type="hidden" name="{tokens.FormFieldName}" value="{tokens.RequestToken}">""";
+        var body = WerkgeverApkEmployeeSsrHtml.DelenPage(preview, af, "/loopbaan-apk/delen");
+        var html = WerkgeverApkEmployeeSsrHtml.RenderDocument("Delen", body, Chrome(http));
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
+    private static async Task<IResult> PostDelenAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        IAntiforgery antiforgery,
+        CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType || !await antiforgery.IsRequestValidAsync(http))
+        {
+            return Results.Redirect("/loopbaan-apk/delen");
+        }
+
+        var form = await http.Request.ReadFormAsync(ct);
+        var share = form.ContainsKey("share");
+        var (ok, _, _) = await api.SetWerkgeverApkShareAsync(share, ct);
+        if (ok is null)
+        {
+            return Results.Redirect("/loopbaan-apk/delen");
+        }
+
+        return Results.Redirect(share ? WerkgeverApkEntryPaths.Vergelijking : WerkgeverApkEntryPaths.Delen);
+    }
+
+    private static async Task<IResult> GetVergelijkingAsync(HttpContext http, JobsyApiClient api, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var comparison = await api.GetWerkgeverApkComparisonAsync(ct);
+        if (comparison is null)
+        {
+            return Results.Redirect(WerkgeverApkEntryPaths.Delen);
+        }
+
+        var body = WerkgeverApkEmployeeSsrHtml.ComparisonPage(comparison);
+        var html = WerkgeverApkEmployeeSsrHtml.RenderDocument("Vergelijking", body, Chrome(http));
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
+    private static string? NormalizeBlock(string block)
+    {
+        if (PupilMboHboEntryPaths.TryParseBlockRoute(block, out var parsed))
+        {
+            return PupilMboHboProgressState.BlockKey(parsed);
+        }
+
+        return WerkgeverApkEntryPaths.EmployeeBlocks.Any(b =>
+                   string.Equals(PupilMboHboProgressState.BlockKey(b), block, StringComparison.OrdinalIgnoreCase))
+               ? block.ToLowerInvariant()
+               : null;
+    }
+
+    private static Dictionary<string, string> Chrome(HttpContext http)
+        => new(StringComparer.Ordinal)
         {
             ["company"] = http.User.FindFirst(WerkgeverApkClaimTypes.CompanyName)?.Value ?? "",
             ["team"] = http.User.FindFirst(WerkgeverApkClaimTypes.TeamName)?.Value ?? "",
             ["code"] = http.User.FindFirst(WerkgeverApkClaimTypes.CodeDisplay)?.Value ?? "",
         };
-        if (extra is not null)
-        {
-            foreach (var (k, v) in extra)
-            {
-                tokens[k] = v;
-            }
-        }
-
-        var html = WerkgeverApkSsrHtml.RenderTemplate(template, tokens);
-        return Results.Content(html, "text/html; charset=utf-8");
-    }
 }

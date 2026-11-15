@@ -54,6 +54,10 @@ public interface IWerkgeverApkEmployeePortalService
     Task<(WerkgeverApkEmployeeComparisonResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> GetComparisonAsync(
         ClaimsPrincipal employee,
         CancellationToken ct = default);
+
+    Task<(WerkgeverApkSharePreviewDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetSharePreviewAsync(
+        ClaimsPrincipal employee,
+        CancellationToken ct = default);
 }
 
 public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePortalService
@@ -140,21 +144,44 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
             return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
         }
 
-        var team = await _db.WerkgeverApkTeams
-            .Include(t => t.Company)
-            .FirstOrDefaultAsync(t => t.Id == request.TeamId && t.CompanyId == request.CompanyId, ct);
-        if (team is null
-            || team.Company is null
-            || !WerkgeverApkFeatureGate.IsCompanyEnabled(team.Company))
-        {
-            return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
-        }
-
         var hash = _codes.LookupHash(normalized);
-        var code = await _db.WerkgeverApkEmployeeCodes
-            .Include(c => c.Progress)
-            .Include(c => c.ManagerSheet)
-            .FirstOrDefaultAsync(c => c.TeamId == request.TeamId && c.CodeLookupHash == hash, ct);
+        WerkgeverApkTeam? team;
+        WerkgeverApkEmployeeCode? code;
+        if (request.CompanyId == Guid.Empty || request.TeamId == Guid.Empty)
+        {
+            code = await _db.WerkgeverApkEmployeeCodes
+                .Include(c => c.Progress)
+                .Include(c => c.ManagerSheet)
+                .Include(c => c.Team)!.ThenInclude(t => t!.Company)
+                .FirstOrDefaultAsync(c => c.CodeLookupHash == hash, ct);
+            if (code?.Team is null || code.Team.Company is null)
+            {
+                return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
+            }
+
+            team = code.Team;
+            if (!WerkgeverApkFeatureGate.IsCompanyEnabled(team.Company))
+            {
+                return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
+            }
+        }
+        else
+        {
+            team = await _db.WerkgeverApkTeams
+                .Include(t => t.Company)
+                .FirstOrDefaultAsync(t => t.Id == request.TeamId && t.CompanyId == request.CompanyId, ct);
+            if (team is null
+                || team.Company is null
+                || !WerkgeverApkFeatureGate.IsCompanyEnabled(team.Company))
+            {
+                return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
+            }
+
+            code = await _db.WerkgeverApkEmployeeCodes
+                .Include(c => c.Progress)
+                .Include(c => c.ManagerSheet)
+                .FirstOrDefaultAsync(c => c.TeamId == request.TeamId && c.CodeLookupHash == hash, ct);
+        }
         if (code is null || code.Status == WerkgeverApkEmployeeCodeStatus.Revoked)
         {
             return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
@@ -448,6 +475,44 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         var managerAnswers = WerkgeverApkComparisonEngine.ParseManagerAnswers(sheet.AnswersJson);
         var comparison = WerkgeverApkComparisonEngine.BuildComparison(ctx.State!, managerAnswers, Level);
         return (new WerkgeverApkEmployeeComparisonResponse(comparison), null, 200);
+    }
+
+    public async Task<(WerkgeverApkSharePreviewDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetSharePreviewAsync(
+        ClaimsPrincipal employee,
+        CancellationToken ct = default)
+    {
+        var ctx = await ResolveEmployeeAsync(employee, ct);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.Status);
+        }
+
+        var code = ctx.Code!;
+        var completed = IsEmployeeCompleted(code, ctx.State!);
+        if (!completed)
+        {
+            return (null, new WerkgeverApkErrorDto("not_complete", "Maak eerst de tests af."), 400);
+        }
+
+        var catalog = PupilMboHboCatalog.Default;
+        var bullets = new List<string>
+        {
+            "Een kort overzicht van je interesses (geen losse antwoorden).",
+            "Je sterkste kanten uit de competentietest.",
+            "Wat je belangrijk vindt in je werk."
+        };
+        var interesse = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Interesse, ctx.State!, Level, catalog);
+        if (!string.IsNullOrWhiteSpace(interesse.Summary))
+        {
+            bullets.Add(interesse.Summary);
+        }
+
+        var dto = new WerkgeverApkSharePreviewDto(
+            code.SharedWithManager,
+            completed,
+            "je leidinggevende",
+            bullets);
+        return (dto, null, 200);
     }
 
     private async Task<WerkgeverApkEmployeeProgress> EnsureProgressAsync(

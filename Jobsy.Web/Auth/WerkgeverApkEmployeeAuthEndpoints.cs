@@ -36,13 +36,14 @@ public static class WerkgeverApkEmployeeAuthEndpoints
             }
 
             var form = await http.Request.ReadFormAsync();
-            if (!Guid.TryParse(form["companyId"], out var companyId)
-                || !Guid.TryParse(form["teamId"], out var teamId))
+            _ = Guid.TryParse(form["companyId"], out var companyId);
+            _ = Guid.TryParse(form["teamId"], out var teamId);
+            var code = form["code"].ToString();
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Results.Redirect("/loopbaan-apk?error=invalid");
             }
 
-            var code = form["code"].ToString();
             var apiBase = JobsyPublicUrl.NormalizeBaseUrl(configuration["ApiBaseUrl"], "http://localhost:5200/");
             var client = httpClientFactory.CreateClient("JobsyAuthProvision");
             client.BaseAddress = new Uri(apiBase);
@@ -53,7 +54,10 @@ public static class WerkgeverApkEmployeeAuthEndpoints
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
-                return Results.Redirect("/loopbaan-apk?error=invalid");
+                var qs = companyId != Guid.Empty && teamId != Guid.Empty
+                    ? $"&companyId={companyId:D}&teamId={teamId:D}"
+                    : "";
+                return Results.Redirect($"/loopbaan-apk?error=invalid{qs}");
             }
 
             var login = JsonSerializer.Deserialize<WerkgeverApkEmployeeLoginResponse>(body, JobsyApiClient.ApiJson);
@@ -105,13 +109,10 @@ public static class WerkgeverApkEmployeeAuthEndpoints
 
         foreach (var header in values)
         {
-            if (!header.StartsWith(WerkgeverApkAuthDefaults.CookieName + "=", StringComparison.Ordinal))
+            if (WerkgeverApkApiSessionCookie.TryReadTicket(header, out var ticket))
             {
-                continue;
+                return ticket;
             }
-
-            var part = header.Split(';')[0];
-            return part[(WerkgeverApkAuthDefaults.CookieName.Length + 1)..];
         }
 
         return null;
