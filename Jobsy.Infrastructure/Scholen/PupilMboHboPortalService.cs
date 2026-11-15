@@ -98,6 +98,10 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
         var blocks = BuildBlockStatuses(state, schoolClass.Level);
         var completed = blocks.Count(b => b.Status == PupilMboHboTileStatus.Completed);
         var passport = state.AllBlocksComplete();
+        var schoolName = await _db.Schools.AsNoTracking()
+            .Where(s => s.Id == schoolClass.SchoolId)
+            .Select(s => s.Name)
+            .FirstOrDefaultAsync(ct) ?? "";
 
         return (new PupilMboHboOverviewDto(
             schoolClass.Name,
@@ -105,7 +109,8 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
             state.IntroSeen,
             passport,
             completed,
-            blocks), null, 200);
+            blocks,
+            schoolName), null, 200);
     }
 
     public async Task<(PupilMboHboIntroResponse? Ok, PupilErrorDto? Error, int Status)> MarkIntroSeenAsync(
@@ -359,12 +364,7 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
             try
             {
                 var o = PupilMboHboScoring.BuildOutcome(block, state, schoolClass.Level);
-                var body = $"<p>{System.Net.WebUtility.HtmlEncode(o.Summary)}</p>";
-                if (o.Highlights.Count > 0)
-                {
-                    body += "<p>" + string.Join(" · ", o.Highlights.Select(System.Net.WebUtility.HtmlEncode)) + "</p>";
-                }
-
+                var body = PupilMboHboPassportSectionHtml.Build(block, o);
                 sections.Add(new PupilMboHboPassportSectionDto(meta.Title, body));
             }
             catch (Exception ex)

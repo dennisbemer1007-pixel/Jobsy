@@ -909,7 +909,8 @@ public static class PupilLeerlingJourneyEndpoints
             PupilLeerlingSsrParts.AntiforgeryField(af, http),
             MboIntroPath,
             blocks);
-        return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg");
+        var school = await MboSchoolFromOverviewAsync(api, ct);
+        return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg", school);
     }
 
     private static async Task<IResult> PostMboIntroAsync(HttpContext http, JobsyApiClient api, IAntiforgery af, CancellationToken ct)
@@ -929,7 +930,7 @@ public static class PupilLeerlingJourneyEndpoints
         culture.InitializeFromRequest(http);
         var model = await api.GetMboHboOverviewAsync(ct);
         var body = model is null ? "<div class=\"mhbo-wrap\"><p>Kon niet laden.</p></div>" : PupilMboHboSsrHtml.Overzicht(model);
-        return MboHtml(http, "Jouw testen", body, "/leerling/mbo-hbo/overzicht");
+        return MboHtml(http, "Jouw testen", body, "/leerling/mbo-hbo/overzicht", model?.SchoolName);
     }
 
     private static async Task<IResult> GetMboTestAsync(
@@ -1011,7 +1012,7 @@ public static class PupilLeerlingJourneyEndpoints
             PupilLeerlingSsrParts.AntiforgeryField(af, http),
             $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}/answer",
             error);
-        return MboHtml(http, "Test", body, route);
+        return MboHtml(http, "Test", body, route, overview?.SchoolName);
     }
 
     private static async Task<IResult> PostMboTestAsync(
@@ -1246,7 +1247,7 @@ public static class PupilLeerlingJourneyEndpoints
         var body = model is null
             ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>"
             : PupilMboHboSsrHtml.Uitkomst(model, overview?.Blocks ?? Array.Empty<PupilMboHboBlockStatusDto>());
-        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}");
+        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}", overview?.SchoolName);
     }
 
     private static Task<PupilLoadOutcome<PupilProgressStateDto>> FetchProgressAsync(
@@ -1359,6 +1360,19 @@ public static class PupilLeerlingJourneyEndpoints
             PauseFormHtml = pauseHtml,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
+    }
+
+    private static async Task<string?> MboSchoolFromOverviewAsync(JobsyApiClient api, CancellationToken ct)
+    {
+        try
+        {
+            var overview = await api.GetMboHboOverviewAsync(ct);
+            return string.IsNullOrWhiteSpace(overview?.SchoolName) ? null : overview.SchoolName;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
     }
 
     private static IResult MboHtml(HttpContext http, string title, string body, string route, string? schoolLabel = null)

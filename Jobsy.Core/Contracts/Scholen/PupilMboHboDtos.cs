@@ -9,7 +9,8 @@ public sealed record PupilMboHboOverviewDto(
     bool IntroSeen,
     bool PassportUnlocked,
     int CompletedBlocks,
-    IReadOnlyList<PupilMboHboBlockStatusDto> Blocks);
+    IReadOnlyList<PupilMboHboBlockStatusDto> Blocks,
+    string SchoolName = "");
 
 public sealed record PupilMboHboBlockStatusDto(
     PupilMboHboBlock Block,

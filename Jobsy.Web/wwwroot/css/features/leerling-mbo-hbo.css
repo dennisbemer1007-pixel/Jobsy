@@ -726,7 +726,8 @@
 }
 
 .mhbo-paspoort-sections {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .mhbo-paspoort-actions {
@@ -759,9 +760,332 @@
   text-decoration: none;
 }
 
-.mhbo-transition-done,
-.mhbo-transition-next {
-  margin-bottom: 16px;
+.mhbo-part.is-done .mhbo-part__no {
+  background: #e3f3e9;
+  color: #1f6b41;
+  font-size: 14px;
+}
+
+.mhbo-layout--transition .mhbo-main {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.mhbo-transition-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.mhbo-transition-check {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  background: #22a558;
+  box-shadow: 0 2px 8px rgb(34 165 88 / 35%);
+}
+
+.mhbo-transition-volgende {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mhbo-transition-next-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  border: 2px solid #e8d5a6;
+  background: #fff;
+  padding: 18px 20px;
+}
+
+.mhbo-transition-next-card h2 {
+  margin: 6px 0 8px;
+  font-size: 1.35rem;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-transition-next-card__body .mhbo-eyebrow {
+  margin-bottom: 2px;
+}
+
+.mhbo-btn--next-card {
+  white-space: nowrap;
+}
+
+.mhbo-transition-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mhbo-transition-tile {
+  border-radius: 14px;
+  border: 1px solid var(--mhbo-line);
+  padding: 12px;
+  background: #fff;
+  min-height: 128px;
+}
+
+.mhbo-transition-tile__tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.mhbo-transition-tile.is-af {
+  border-color: #9fd5b2;
+  background: #f6fcf8;
+}
+
+.mhbo-transition-tile.is-af .mhbo-transition-tile__tag {
+  background: #e3f3e9;
+  color: #1f6b41;
+}
+
+.mhbo-transition-tile.is-now {
+  border-color: #e8d5a6;
+  background: #fffdf7;
+}
+
+.mhbo-transition-tile.is-now .mhbo-transition-tile__tag {
+  background: #faf0d6;
+  color: #8a6411;
+}
+
+.mhbo-transition-tile.is-later .mhbo-transition-tile__tag {
+  background: #eef1f5;
+  color: var(--mhbo-muted);
+}
+
+.mhbo-transition-tile h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-transition-tile p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--mhbo-muted);
+  line-height: 1.4;
+}
+
+.mhbo-transition-meta {
+  font-size: 14px;
+  color: var(--mhbo-muted);
+  margin: 0;
+}
+
+.mhbo-transition-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 8px;
+  border-top: 1px solid var(--mhbo-line);
+}
+
+.mhbo-wrap--paspoort {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px clamp(12px, 2.5vw, 28px) 24px;
+}
+
+.mhbo-paspoort-head__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.mhbo-btn--head {
+  flex-shrink: 0;
+}
+
+.mhbo-paspoort-sections {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mhbo-pass-section h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-pass-bars {
+  display: grid;
+  gap: 10px;
+}
+
+.mhbo-pass-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(80px, 1fr) 28px;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.mhbo-pass-bar-track {
+  display: block;
+  height: 8px;
+  border-radius: 6px;
+  background: var(--mhbo-cream-dark);
+  overflow: hidden;
+}
+
+.mhbo-pass-bar-track i {
+  display: block;
+  height: 100%;
+  background: var(--mhbo-navy);
+  border-radius: inherit;
+}
+
+.mhbo-pass-bar-val {
+  font-weight: 700;
+  color: var(--mhbo-navy);
+  text-align: right;
+}
+
+.mhbo-pass-pills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mhbo-pass-pills li {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef3f9;
+  color: var(--mhbo-navy);
+  border: 1px solid #d5e0ed;
+}
+
+.mhbo-pass-rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.mhbo-pass-rank li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-pass-rank__no {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--mhbo-gold-light);
+  color: var(--mhbo-navy);
+}
+
+.mhbo-pass-footnote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--mhbo-muted);
+}
+
+.mhbo-pass-todo__label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mhbo-muted);
+  margin: 0 0 8px;
+}
+
+.mhbo-pass-todo__text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--mhbo-muted);
+}
+
+.mhbo-paspoort-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mhbo-line);
+}
+
+.mhbo-paspoort-disclaimer {
+  text-align: center;
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mhbo-mobile-progress__seg.is-done {
+  background: #22a558;
+}
+
+.mhbo-root:has(.mhbo-layout--transition),
+.mhbo-root:has(.mhbo-wrap--paspoort) {
+  --mhbo-coach-pad: 190px;
+  padding-bottom: calc(var(--mhbo-coach-pad) + env(safe-area-inset-bottom, 0px));
+}
+
+.mhbo-root:has(.mhbo-layout--transition) .mhbo-main,
+.mhbo-wrap--paspoort {
+  padding-right: min(200px, 16vw);
+}
+
+.mhbo-root:has(.mhbo-layout--transition) .mhbo-coach-dock .lobsy-coach-dock__teaser,
+.mhbo-root:has(.mhbo-wrap--paspoort) .mhbo-coach-dock .lobsy-coach-dock__teaser {
+  margin-bottom: 13.25rem;
+  max-width: 188px;
+  transform: translateX(-8px);
+}
+
+.mhbo-root:has(.mhbo-layout--transition) .mhbo-coach-dock .lobsy-coach-dock__lobster,
+.mhbo-root:has(.mhbo-wrap--paspoort) .mhbo-coach-dock .lobsy-coach-dock__lobster {
+  height: 180px;
+  max-width: 128px;
+}
+
+.mhbo-root:has(.mhbo-layout--transition) .mhbo-coach-dock,
+.mhbo-root:has(.mhbo-wrap--paspoort) .mhbo-coach-dock {
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 }
 
 .mhbo-root .mhbo-coach-dock {
@@ -905,10 +1229,67 @@
   }
 }
 
+@media (max-width: 1199px) {
+  .mhbo-transition-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mhbo-paspoort-sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 959px) {
   .mhbo-aside--left,
   .mhbo-aside--right {
     display: none;
+  }
+
+  .mhbo-mobile-progress--transition {
+    display: block;
+  }
+
+  .mhbo-transition-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .mhbo-transition-next-card {
+    grid-template-columns: 1fr;
+  }
+
+  .mhbo-btn--next-card {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mhbo-root:has(.mhbo-layout--transition) .mhbo-coach-dock,
+  .mhbo-root:has(.mhbo-wrap--paspoort) .mhbo-coach-dock {
+    display: none !important;
+  }
+
+  .mhbo-transition-foot.mhbo-pagefoot--in-form {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    border-top: 1px solid var(--mhbo-line);
+  }
+
+  .mhbo-paspoort-foot.mhbo-pagefoot--in-form {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .mhbo-root:has(.mhbo-layout--transition) .mhbo-main,
+  .mhbo-wrap--paspoort {
+    padding-right: 0;
+    padding-bottom: 16px;
+  }
+
+  .mhbo-paspoort-sections {
+    grid-template-columns: 1fr;
   }
 
   .mhbo-layout {

@@ -87,7 +87,8 @@ public sealed class MboHboCoachOverlapPlaywrightTests
     {
         if (width < 960)
         {
-            return pageName.StartsWith("mbo-test-", StringComparison.Ordinal);
+            return pageName.StartsWith("mbo-test-", StringComparison.Ordinal)
+                   || pageName is "mbo-uitkomst-vakken" or "mbo-paspoort";
         }
 
         return pageName.StartsWith("mbo-", StringComparison.Ordinal);
