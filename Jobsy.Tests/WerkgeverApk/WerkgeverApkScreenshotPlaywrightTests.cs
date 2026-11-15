@@ -1,12 +1,42 @@
-using Jobsy.Core.Contracts.WerkgeverApk;
-using Jobsy.Tests.Uat;
+using System.Security.Claims;
+using System.Text.Json;
+using Jobsy.Core.Authorization;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.WerkgeverApk;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
+using Jobsy.Core.Scholen.MboHbo;
+using Jobsy.Core.ValueObjects;
+using Jobsy.Core.Privacy;
+using Jobsy.Core.WerkgeverApk;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.WerkgeverApk;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Hosting;
+using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.WerkgeverApk;
 
 [Collection("PlaywrightSmoke")]
-public sealed class WerkgeverApkScreenshotPlaywrightTests : IAsyncLifetime
+public sealed class WerkgeverApkScreenshotPlaywrightTests
+    : IClassFixture<RoleFunctionalWebAppFactory>, IAsyncLifetime
 {
     private const string EnvRun = "JOBSY_WERKGEVER_APK_SCREENSHOTS";
 
@@ -15,8 +45,15 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests : IAsyncLifetime
 
     private static string OutDir => "/opt/cursor/artifacts/werkgever-apk";
 
+    private static readonly Guid DemoCompanyId = Guid.Parse("d1000000-0000-0000-0000-000000000099");
+
+    private readonly RoleFunctionalWebAppFactory _api;
+    private WerkgeverApkWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
+    private WerkgeverApkSeed? _seed;
+
+    public WerkgeverApkScreenshotPlaywrightTests(RoleFunctionalWebAppFactory api) => _api = api;
 
     public async ValueTask InitializeAsync()
     {
@@ -25,9 +62,13 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests : IAsyncLifetime
             return;
         }
 
-        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        Assert.Equal(0, Microsoft.Playwright.Program.Main(["install", "chromium"]));
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await EnableLoopbaanApkFeaturesAsync();
+        _seed = await SeedDemoTeamAsync();
+        _web = new WerkgeverApkWebFactory(_api.Server.CreateHandler());
+        _ = _web.ServerAddress;
     }
 
     public async ValueTask DisposeAsync()
@@ -38,6 +79,7 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests : IAsyncLifetime
         }
 
         _playwright?.Dispose();
+        _web?.Dispose();
     }
 
     [Fact]
@@ -50,107 +92,587 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests : IAsyncLifetime
         Assert.Contains("data-ssr-coach-open", html, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task Capture_static_login_mock_html()
+    [Fact(Timeout = 600_000)]
+    public async Task Capture_e2e_loopbaan_apk_screens_when_env_set()
     {
-        if (!ShouldRun || _browser is null)
+        _ = TestContext.Current.CancellationToken;
+        if (!ShouldRun || _browser is null || _web is null || _seed is null)
         {
             return;
         }
 
         Directory.CreateDirectory(OutDir);
-        var html = WerkgeverApkSsrHtml.RenderLoginPage(
-            [
-                new WerkgeverApkEmployeeCompanyOptionDto(
-                    Guid.NewGuid(),
-                    "Demo Logistiek B.V.",
-                    [new WerkgeverApkEmployeeTeamOptionDto(Guid.NewGuid(), "Team Logistiek", 3)])
-            ],
-            null,
-            null,
-            error: null,
-            antiforgery: "");
-        var path = Path.Combine(OutDir, "login-preview.html");
-        await File.WriteAllTextAsync(path, html);
+        var baseUrl = _web.ServerAddress.TrimEnd('/');
 
-        await using var context = await _browser.NewContextAsync();
-        var page = await context.NewPageAsync();
-        await page.GotoAsync(new Uri(new Uri("file://"), path).AbsoluteUri);
-        await page.SetViewportSizeAsync(1440, 900);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "01-login-1440x900.png"), FullPage = true });
-        await page.SetViewportSizeAsync(390, 844);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "01-login-390x844.png"), FullPage = true });
+        // 01 — login (code only)
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            await page.GotoAsync($"{baseUrl}/loopbaan-apk", DomReady);
+            await CapturePairAsync(page, "01-login");
+        }
+
+        // 02 — welkom (invited, not started)
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            await EmployeeLoginAsync(page, baseUrl, _seed.InvitedPlainCode);
+            await page.WaitForURLAsync("**/loopbaan-apk/welkom**", DomReadyUrl);
+            await CapturePairAsync(page, "02-welkom");
+        }
+
+        // 03 — test (invited, welcome already seen)
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            await EmployeeLoginAsync(page, baseUrl, _seed.TestPlainCode);
+            await page.WaitForURLAsync("**/loopbaan-apk/test/**", DomReadyUrl);
+            await CapturePairAsync(page, "03-test");
+        }
+
+        // 04 — delen + 05 — vergelijking (shared employee, manager sheet complete)
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            await EmployeeLoginAsync(page, baseUrl, _seed.ComparisonPlainCode);
+            await page.GotoAsync($"{baseUrl}/loopbaan-apk/delen", DomReady);
+            await CapturePairAsync(page, "04-delen");
+            await page.GotoAsync($"{baseUrl}/loopbaan-apk/vergelijking", DomReady);
+            await CapturePairAsync(page, "05-vergelijking");
+        }
+
+        // 06 — team overview (enterprise manager, Employers off)
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            var teamPath = $"/werkgever/loopbaan-apk/teams/{_seed.TeamId:D}";
+            await page.GotoAsync(
+                $"{baseUrl}/__test/staff?user={_api.EnterpriseId:D}&role=EnterpriseManager&return={Uri.EscapeDataString(teamPath)}",
+                DomReady);
+            await page.GotoAsync(baseUrl + teamPath, DomReady);
+            await CapturePairAsync(page, "06-team");
+        }
+
+        // 07 — manager vragen
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            var vragen = $"/werkgever/loopbaan-apk/codes/{_seed.ComparisonCodeId:D}/vragen";
+            await page.GotoAsync(
+                $"{baseUrl}/__test/staff?user={_api.EnterpriseId:D}&role=EnterpriseManager&return={Uri.EscapeDataString(vragen)}",
+                DomReady);
+            await page.GotoAsync(baseUrl + vragen, DomReady);
+            await CapturePairAsync(page, "07-vragen");
+        }
+
+        // 08 — groepsbeeld (7 shared)
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            var groep = $"/werkgever/loopbaan-apk/teams/{_seed.TeamId:D}/groep";
+            await page.GotoAsync(
+                $"{baseUrl}/__test/staff?user={_api.EnterpriseId:D}&role=EnterpriseManager&return={Uri.EscapeDataString(groep)}",
+                DomReady);
+            await page.GotoAsync(baseUrl + groep, DomReady);
+            await CapturePairAsync(page, "08-groep");
+        }
+
+        // 09 — admin organisatie detail + Loopbaan-APK toggle
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            await page.GotoAsync(
+                $"{baseUrl}/__test/staff?user={_api.AdminId:D}&role=Admin&return={Uri.EscapeDataString("/admin/organisaties")}",
+                DomReady);
+            await page.GotoAsync($"{baseUrl}/admin/organisaties", new()
+            {
+                WaitUntil = WaitUntilState.NetworkIdle,
+                Timeout = 120_000
+            });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await DismissConsentReacceptIfPresentAsync(page);
+            await page.WaitForSelectorAsync(".admin-orgs", new() { Timeout = 60_000 });
+            var demoRow = page.Locator("tr.admin-org-row").Filter(new() { HasText = "Demo Logistiek B.V." });
+            await demoRow.First.ClickAsync();
+            await page.GetByText("Loopbaan-APK aan", new() { Exact = true }).WaitForAsync(new() { Timeout = 30_000 });
+            await CapturePairAsync(page, "09-admin-loopbaan-toggle");
+        }
     }
 
-    [Fact]
-    public async Task Capture_all_mockup_templates_with_coach_overlap_audit()
+    private async Task<IBrowserContext> NewContextAsync(int width, int height)
+        => await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = height },
+            Locale = "nl-NL"
+        });
+
+    private static async Task EmployeeLoginAsync(IPage page, string baseUrl, string plainCode)
     {
-        if (!ShouldRun || _browser is null)
+        await page.Context.ClearCookiesAsync();
+        await page.GotoAsync($"{baseUrl}/loopbaan-apk", DomReady);
+        await page.Locator("input[name=code]").FillAsync(plainCode);
+        await page.Locator("button[type=submit]").ClickAsync();
+        await page.WaitForURLAsync(
+            url => url.Contains("/loopbaan-apk/", StringComparison.OrdinalIgnoreCase)
+                   && !url.Contains("/loopbaan-apk?", StringComparison.OrdinalIgnoreCase),
+            DomReadyUrl);
+    }
+
+    private async Task CapturePairAsync(IPage page, string slug)
+    {
+        await CaptureViewportAsync(page, slug, 1440, 900);
+        await CaptureViewportAsync(page, slug, 390, 844);
+    }
+
+    private async Task CaptureViewportAsync(IPage page, string slug, int width, int height)
+    {
+        await page.SetViewportSizeAsync(width, height);
+        for (var pass = 0; pass < 3; pass++)
+        {
+            var scrollY = pass switch
+            {
+                0 => 0,
+                1 => await page.EvaluateAsync<int>("() => Math.max(0, Math.floor((document.body.scrollHeight - window.innerHeight) / 2))"),
+                _ => await page.EvaluateAsync<int>("() => Math.max(0, document.body.scrollHeight - window.innerHeight)")
+            };
+            await page.EvaluateAsync("y => window.scrollTo(0, y)", scrollY);
+            await AssertNoCoachOverlapAsync(page, $"{slug}@{width} scroll={scrollY}");
+        }
+
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(OutDir, $"e2e-{slug}-{width}.png"),
+            FullPage = true
+        });
+    }
+
+    private static async Task DismissConsentReacceptIfPresentAsync(IPage page)
+    {
+        var modal = page.Locator(".consent-reaccept-modal");
+        if (await modal.CountAsync() == 0)
         {
             return;
         }
 
-        Directory.CreateDirectory(OutDir);
-        var repo = RepoRoot.Find();
-        var templatesDir = Path.Combine(repo, "Jobsy.Web/wwwroot/werkgever-apk/templates");
-        var tokens = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["company"] = "Demo Logistiek B.V.",
-            ["team"] = "Team Logistiek",
-            ["code"] = "VOOR-BEELD",
-            ["block"] = "competentie",
-        };
+        await modal.Locator(".consent-reaccept__check input").CheckAsync();
+        await modal.Locator(".btn-compact--primary").ClickAsync();
+        await modal.WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 30_000 });
+    }
 
-        var files =
-            new[]
+    private static async Task AssertNoCoachOverlapAsync(IPage page, string context)
+    {
+        var overlap = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const coach = document.querySelector('[data-ssr-coach-open], .coach-fab, #lobsy-coach-btn, .ll-g78-coach, button.coach, .coach');
+              if (!coach) return false;
+              const bubble = coach.querySelector('.bubble');
+              if (!bubble) return false;
+              const br = bubble.getBoundingClientRect();
+              if (br.width < 2 || br.height < 2) return false;
+              const targets = document.querySelectorAll('button, a, .btn, .btn-primary, .card, h1, .next');
+              for (const el of targets) {
+                if (el === coach || coach.contains(el)) continue;
+                if (!el.offsetParent) continue;
+                const st = window.getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') continue;
+                const r = el.getBoundingClientRect();
+                if (r.width < 2 || r.height < 2) continue;
+                const pad = 4;
+                const hitBubble = !(r.right < br.left + pad || r.left > br.right - pad || r.bottom < br.top + pad || r.top > br.bottom - pad);
+                if (hitBubble) return true;
+              }
+              return false;
+            }
+            """);
+        Assert.False(overlap, $"Coach overlaps primary UI on {context} (url: {page.Url})");
+    }
+
+    private async Task EnableLoopbaanApkFeaturesAsync()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var row = await db.PlatformFeatureSettings.FirstOrDefaultAsync();
+        if (row is null)
+        {
+            row = new PlatformFeatureSettings
             {
-                ("01", "01-welkom.html"),
-                ("02", "02-vraag.html"),
-                ("03", "03-delen.html"),
-                ("04", "04-team.html"),
-                ("05", "05-vragen.html"),
-                ("06", "06-vergelijking.html"),
-                ("07", "07-groepsbeeld.html"),
+                Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
             };
+            db.PlatformFeatureSettings.Add(row);
+        }
 
-        await using var context = await _browser.NewContextAsync();
-        var page = await context.NewPageAsync();
+        row.EmployersEnabled = false;
+        row.EmployerLoopbaanApkEnabled = true;
 
-        foreach (var (prefix, file) in files)
+        var admin = await db.Users.FirstOrDefaultAsync(u => u.Id == _api.AdminId);
+        if (admin is not null)
         {
-            if (!File.Exists(Path.Combine(templatesDir, file)))
+            admin.TermsAcceptedAt = DateTime.UtcNow;
+            admin.ConsentVersion = PrivacyConstants.CurrentConsentVersion;
+        }
+
+        await db.SaveChangesAsync();
+        scope.ServiceProvider.GetRequiredService<IFeatureFlags>().Invalidate();
+    }
+
+    private async Task<WerkgeverApkSeed> SeedDemoTeamAsync()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IWerkgeverApkEmployeeCodeService>();
+
+        var company = await db.Companies.FirstOrDefaultAsync(c => c.Id == DemoCompanyId);
+        if (company is null)
+        {
+            company = new Company
             {
-                continue;
+                Id = DemoCompanyId,
+                Name = "Demo Logistiek B.V.",
+                KvkNumber = "99887766",
+                Address = "Magazijnweg 1",
+                Location = new GeoPoint(52.07, 4.30),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow,
+                LoopbaanApkEnabled = true
+            };
+            db.Companies.Add(company);
+        }
+        else
+        {
+            company.LoopbaanApkEnabled = true;
+            company.Name = "Demo Logistiek B.V.";
+        }
+
+        if (!await db.UserCompanies.AnyAsync(uc =>
+                uc.UserId == _api.EnterpriseId && uc.CompanyId == DemoCompanyId))
+        {
+            db.UserCompanies.Add(new UserCompany
+            {
+                UserId = _api.EnterpriseId,
+                CompanyId = DemoCompanyId
+            });
+        }
+
+        var team = await db.WerkgeverApkTeams.FirstOrDefaultAsync(t =>
+            t.CompanyId == DemoCompanyId && t.Name == "Team Logistiek");
+        if (team is null)
+        {
+            team = new WerkgeverApkTeam
+            {
+                Id = Guid.Parse("d1000000-0000-0000-0000-0000000000a1"),
+                CompanyId = DemoCompanyId,
+                Name = "Team Logistiek",
+                CreatedAtUtc = DateTime.UtcNow,
+                CreatedByUserId = _api.EnterpriseId
+            };
+            db.WerkgeverApkTeams.Add(team);
+            await db.SaveChangesAsync();
+        }
+
+        var existing = await db.WerkgeverApkEmployeeCodes.CountAsync(c => c.TeamId == team.Id);
+        if (existing < 9)
+        {
+            await codes.GenerateAsync(9 - existing, team);
+            await db.SaveChangesAsync();
+        }
+
+        var allCodes = await db.WerkgeverApkEmployeeCodes
+            .Include(c => c.Progress)
+            .Include(c => c.ManagerSheet)
+            .Where(c => c.TeamId == team.Id)
+            .OrderBy(c => c.Number)
+            .ToListAsync();
+
+        var plainCodes = allCodes.Select(c => codes.Unprotect(c.CodeProtected)!).ToList();
+        var progressJson = CompleteProgressJson();
+        var managerAnswers = JsonSerializer.Serialize(
+            WerkgeverApkManagerQuestionCatalog.All.ToDictionary(q => q.Id, _ => 4));
+
+        for (var i = 0; i < allCodes.Count; i++)
+        {
+            var code = allCodes[i];
+            if (i < 7)
+            {
+                code.Status = WerkgeverApkEmployeeCodeStatus.Completed;
+                code.SharedWithManager = true;
+                code.SharedAtUtc = DateTime.UtcNow;
+                EnsureProgress(code, progressJson, welcomeSeen: true);
+                EnsureManagerSheet(code, i == 0 ? managerAnswers : "{}", completed: i == 0);
+            }
+            else if (i == 7)
+            {
+                code.Status = WerkgeverApkEmployeeCodeStatus.NotStarted;
+                code.SharedWithManager = false;
+            }
+            else
+            {
+                code.Status = WerkgeverApkEmployeeCodeStatus.InProgress;
+                code.SharedWithManager = false;
+                EnsureProgress(code, """{"answers":{}}""", welcomeSeen: true);
+            }
+        }
+
+        await db.SaveChangesAsync();
+
+        return new WerkgeverApkSeed(
+            team.Id,
+            allCodes[0].Id,
+            plainCodes[0],
+            plainCodes[7],
+            plainCodes[8]);
+    }
+
+    private static void EnsureProgress(WerkgeverApkEmployeeCode code, string json, bool welcomeSeen)
+    {
+        code.Progress ??= new WerkgeverApkEmployeeProgress { EmployeeCodeId = code.Id };
+        code.Progress.ProgressJson = json;
+        code.Progress.WelcomeSeen = welcomeSeen;
+        code.Progress.UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    private static void EnsureManagerSheet(WerkgeverApkEmployeeCode code, string answersJson, bool completed)
+    {
+        code.ManagerSheet ??= new WerkgeverApkManagerSheet { EmployeeCodeId = code.Id };
+        code.ManagerSheet.AnswersJson = answersJson;
+        code.ManagerSheet.Completed = completed;
+        code.ManagerSheet.UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    private static string CompleteProgressJson()
+    {
+        var catalog = PupilMboHboCatalog.Default;
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        {
+            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
+            {
+                answers[q.Id] = 3;
+            }
+        }
+
+        return JsonSerializer.Serialize(new { answers });
+    }
+
+    private static readonly PageGotoOptions DomReady = new()
+    {
+        WaitUntil = WaitUntilState.DOMContentLoaded,
+        Timeout = 90_000
+    };
+
+    private static readonly PageWaitForURLOptions DomReadyUrl = new()
+    {
+        WaitUntil = WaitUntilState.DOMContentLoaded,
+        Timeout = 90_000
+    };
+
+    private sealed record WerkgeverApkSeed(
+        Guid TeamId,
+        Guid ComparisonCodeId,
+        string ComparisonPlainCode,
+        string InvitedPlainCode,
+        string TestPlainCode);
+
+    private sealed class WerkgeverApkWebFactory : WebWebApplicationFactory
+    {
+        private readonly HttpMessageHandler _api;
+        private IHost? _kestrel;
+
+        public string ServerAddress { get; private set; } = "";
+
+        public WerkgeverApkWebFactory(HttpMessageHandler api)
+        {
+            _api = api;
+            _ = CreateClient();
+        }
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseEnvironment("Development");
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ApiBaseUrl"] = "http://api.test/",
+                    ["CLOUDFLARE_ORIGIN_SECRET"] = "",
+                    ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                });
+            });
+            builder.ConfigureTestServices(services =>
+            {
+                services.Configure<HostOptions>(o =>
+                    o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
+                services.AddSingleton<IStartupFilter, StaffTestSignInFilter>();
+                services.RemoveAll<IFeatureFlags>();
+                services.AddSingleton<IFeatureFlags>(new LoopbaanApkOnFlags());
+                services.RemoveAll<IHttpClientFactory>();
+                services.AddSingleton<IHttpClientFactory>(new ForwardFactory(_api));
+                services.RemoveAll<JobsyApiClient>();
+                services.AddScoped(sp =>
+                {
+                    var auth = new JobsyApiAuthHandler(
+                        sp.GetRequiredService<IHttpContextAccessor>(),
+                        sp.GetRequiredService<AuthenticationStateProvider>(),
+                        sp,
+                        sp.GetRequiredService<IConfiguration>(),
+                        sp.GetRequiredService<JobsyAccessTokenIssuer>())
+                    {
+                        InnerHandler = new ForwardHandler(_api)
+                    };
+                    return new JobsyApiClient(new HttpClient(auth, disposeHandler: false)
+                    {
+                        BaseAddress = new Uri("http://api.test/")
+                    });
+                });
+            });
+        }
+
+        protected override IHost CreateHost(IHostBuilder builder)
+        {
+            var testHost = builder.Build();
+            builder.ConfigureWebHost(webHostBuilder =>
+            {
+                webHostBuilder.UseKestrel();
+                webHostBuilder.UseUrls("http://127.0.0.1:0");
+            });
+            _kestrel = builder.Build();
+            _kestrel.Start();
+            ServerAddress = _kestrel.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!
+                .Addresses.First(a => a.StartsWith("http://", StringComparison.Ordinal));
+            testHost.Start();
+            return testHost;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _kestrel?.Dispose();
             }
 
-            var html = WerkgeverApkSsrHtml.RenderTemplate(file, tokens);
-            var path = Path.Combine(OutDir, $"{prefix}-preview.html");
-            await File.WriteAllTextAsync(path, html);
-            await page.GotoAsync(new Uri(new Uri("file://"), path).AbsoluteUri);
+            base.Dispose(disposing);
+        }
+    }
 
-            await page.SetViewportSizeAsync(1440, 900);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"{prefix}-1440x900.png"), FullPage = true });
+    private sealed class LoopbaanApkOnFlags : IFeatureFlags
+    {
+        private static readonly FeatureFlagSnapshot Snap = new(
+            EmployersEnabled: false,
+            CandidatePassportEnabled: true,
+            EmployerLoopbaanApkEnabled: true);
 
-            await page.SetViewportSizeAsync(390, 844);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"{prefix}-390x844.png"), FullPage = true });
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap);
 
-            var overlap = await page.EvaluateAsync<bool>(
-                """
-                () => {
-                  const coach = document.querySelector('[data-ssr-coach-open], .coach-fab, #lobsy-coach-btn, .ll-g78-coach');
-                  if (!coach) return false;
-                  const cr = coach.getBoundingClientRect();
-                  const hits = document.querySelectorAll('button, a.btn, .btn-primary, .next');
-                  for (const el of hits) {
-                    if (!el.offsetParent) continue;
-                    const r = el.getBoundingClientRect();
-                    const overlap = !(r.right < cr.left || r.left > cr.right || r.bottom < cr.top || r.top > cr.bottom);
-                    if (overlap) return true;
-                  }
-                  return false;
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(Snap.IsEnabled(feature));
+
+        public void Invalidate()
+        {
+        }
+    }
+
+    private sealed class StaffTestSignInFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+            => app =>
+            {
+                app.Use(async (ctx, nxt) =>
+                {
+                    if (!ctx.Request.Path.Equals("/__test/staff", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await nxt();
+                        return;
+                    }
+
+                    var user = ctx.Request.Query["user"].ToString();
+                    var role = ctx.Request.Query["role"].ToString();
+                    if (string.IsNullOrWhiteSpace(role))
+                    {
+                        role = JobsyRoles.EnterpriseManager;
+                    }
+
+                    var claims = new List<Claim>
+                    {
+                        new(ClaimTypes.NameIdentifier, user),
+                        new(ClaimTypes.Role, role),
+                        new(JobsyClaimTypes.SessionVersion, "0"),
+                        new(JobsyClaimTypes.MfaVerified, "1")
+                    };
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    await ctx.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(identity));
+                    var ret = ctx.Request.Query["return"].ToString();
+                    if (string.IsNullOrWhiteSpace(ret) || !ret.StartsWith('/') || ret.StartsWith("//", StringComparison.Ordinal))
+                    {
+                        ret = "/werkgever/loopbaan-apk";
+                    }
+
+                    ctx.Response.Redirect(ret);
+                });
+                next(app);
+            };
+    }
+
+    private sealed class ForwardFactory(HttpMessageHandler api) : IHttpClientFactory, IDisposable
+    {
+        private readonly ForwardHandler _handler = new(api);
+
+        public HttpClient CreateClient(string name) => new(_handler, disposeHandler: false)
+        {
+            BaseAddress = new Uri("http://api.test/")
+        };
+
+        public void Dispose() => _handler.Dispose();
+    }
+
+    private sealed class ForwardHandler(HttpMessageHandler api) : HttpMessageHandler
+    {
+        private readonly HttpMessageInvoker _invoker = new(api, disposeHandler: false);
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var path = request.RequestUri?.PathAndQuery ?? "/";
+            if (!path.StartsWith('/'))
+            {
+                path = "/" + path;
+            }
+
+            using var clone = new HttpRequestMessage(request.Method, new Uri("http://localhost" + path));
+            foreach (var header in request.Headers)
+            {
+                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            if (request.Content is not null)
+            {
+                clone.Content = new ByteArrayContent(await request.Content.ReadAsByteArrayAsync(cancellationToken));
+                foreach (var header in request.Content.Headers)
+                {
+                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
-                """);
-            Assert.False(overlap, $"Coach overlapped a primary control on {file}");
+            }
+
+            return await _invoker.SendAsync(clone, cancellationToken);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _invoker.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

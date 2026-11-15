@@ -11,7 +11,7 @@ public sealed class WerkgeverApkAccessTests
     [Fact]
     public async Task Login_fails_when_global_feature_off()
     {
-        var (db, team, code, plain) = await WerkgeverApkTestSupport.SeedTeamWithCodeAsync();
+        var (db, _, code, plain) = await WerkgeverApkTestSupport.SeedTeamWithCodeAsync();
         var sut = new WerkgeverApkEmployeePortalService(
             db,
             new StubCodes(code.CodeLookupHash),
@@ -19,7 +19,7 @@ public sealed class WerkgeverApkAccessTests
             new MemoryCache(new MemoryCacheOptions()));
 
         var (ok, error, status) = await sut.LoginAsync(
-            new WerkgeverApkEmployeeLoginRequest(team.CompanyId, team.Id, plain));
+            new WerkgeverApkEmployeeLoginRequest(plain));
         Assert.Null(ok);
         Assert.Equal(404, status);
         Assert.Equal(WerkgeverApkEmployeePortalService.FeatureOff, error?.Error);
@@ -37,7 +37,7 @@ public sealed class WerkgeverApkAccessTests
             new MemoryCache(new MemoryCacheOptions()));
 
         var (ok, error, status) = await sut.LoginAsync(
-            new WerkgeverApkEmployeeLoginRequest(Guid.Empty, Guid.Empty, plain));
+            new WerkgeverApkEmployeeLoginRequest(plain));
         Assert.Null(error);
         Assert.Equal(200, status);
         Assert.NotNull(ok);
@@ -56,7 +56,7 @@ public sealed class WerkgeverApkAccessTests
             new MemoryCache(new MemoryCacheOptions()));
 
         var (ok, _, status) = await sut.LoginAsync(
-            new WerkgeverApkEmployeeLoginRequest(Guid.Empty, Guid.Empty, plain));
+            new WerkgeverApkEmployeeLoginRequest(plain));
         Assert.Null(ok);
         Assert.Equal(401, status);
     }
