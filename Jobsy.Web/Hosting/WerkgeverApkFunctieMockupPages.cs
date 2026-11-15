@@ -44,13 +44,14 @@ public static class WerkgeverApkFunctieMockupPages
                 $"""<form method="post" action="{E(postPath)}" class="sug{on}" style="margin:0"><input type="hidden" name="escoOccupationId" value="{E(hit.EscoOccupationId)}" />{antiforgery}<button type="submit" style="all:unset;display:flex;align-items:center;gap:10px;width:100%;cursor:pointer"><span class="mark"></span><b>{E(hit.Name)}</b></button></form>""");
         }
 
+        const string suggestThroughChosen = "</div>\n            <div class=\"chosen\">";
         html = ReplaceBetween(
             html,
             "<div class=\"suggest\">",
-            "<div class=\"chosen\">",
-            sugHtml + "</div>\n            ",
+            suggestThroughChosen,
+            sugHtml.ToString(),
             keepOpen: true,
-            keepClose: false);
+            keepClose: true);
 
         if (!string.IsNullOrWhiteSpace(pick.SelectedOccupationName))
         {
@@ -177,7 +178,13 @@ public static class WerkgeverApkFunctieMockupPages
                 $"""<div class="comp-row"><div class="lab">{E(bar.Label)}</div><div class="split"><i class="sterk" style="width:{sPct:0.###}%"></i><i class="groei" style="width:{gPct:0.###}%"></i></div><div class="counts"><span class="s">{bar.StrongCount} van {bar.Total} al sterk</span><span class="g">{bar.GrowthCount} van {bar.Total} groei</span></div></div>""");
         }
 
-        html = ReplaceBetween(html, "<section class=\"card gold-top comp-card\">", "</section>", bars.ToString(), keepOpen: true, keepClose: true);
+        html = ReplaceBetween(
+            html,
+            "<section class=\"card gold-top comp-card\">",
+            "</section>\n          <aside>",
+            bars.ToString(),
+            keepOpen: true,
+            keepClose: false);
 
         var train = new StringBuilder();
         train.Append(

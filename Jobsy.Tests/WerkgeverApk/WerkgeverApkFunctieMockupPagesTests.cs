@@ -33,6 +33,12 @@ public sealed class WerkgeverApkFunctieMockupPagesTests
         Assert.DoesNotContain("""<div class="sug"><span class="mark"></span><b>Magazijnmedewerker</b></div>""", html, StringComparison.Ordinal);
         Assert.Equal(1, CountOccurrences(html, "<b>Orderpicker</b>"));
         Assert.Contains("Gekozen:", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"fn-layout\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"side-tips\"", html, StringComparison.Ordinal);
+        var layoutIdx = html.IndexOf("class=\"fn-layout\"", StringComparison.Ordinal);
+        var asideIdx = html.IndexOf("class=\"side-tips\"", StringComparison.Ordinal);
+        var formIdx = html.IndexOf("form-card", StringComparison.Ordinal);
+        Assert.True(layoutIdx >= 0 && asideIdx > layoutIdx && formIdx < asideIdx);
         Assert.Contains("?v=", html, StringComparison.Ordinal);
         Assert.Contains("lobsy-64.png", html, StringComparison.Ordinal);
     }

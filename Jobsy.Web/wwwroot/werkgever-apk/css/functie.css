@@ -2,7 +2,11 @@
 
 body.fn08,body.fn09,body.fn10,body.fn10b{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
 body.fn08 .app,body.fn09 .app,body.fn10 .app,body.fn10b .app{min-height:100vh;height:auto}
-body.fn08 .shell,body.fn09 .shell,body.fn10 .shell,body.fn10b .shell{overflow:visible}
+body.fn08 .shell,body.fn09 .shell,body.fn10 .shell,body.fn10b .shell{overflow:visible;align-items:stretch;background:var(--bg)}
+body.fn10 .foot,body.fn10b .foot{
+  left:var(--rail);right:var(--coach-w);
+  background:linear-gradient(rgba(245,242,238,0),var(--bg) 32%);
+}
 body.fn08 .main,body.fn09 .main,body.fn10 .main,body.fn10b .main{overflow:visible}
 
 body.fn08 button.coach,body.fn09 button.coach,body.fn10 button.coach,body.fn10b button.coach{
@@ -129,7 +133,8 @@ body.fn10b .later-grid{gap:12px}
   body.fn08 .main,
   body.fn09 .main,
   body.fn10 .main,
-  body.fn10b .main{padding-bottom:126px;padding-right:16px;padding-top:20px}
+  body.fn10b .main{padding-bottom:176px;padding-right:16px;padding-top:20px}
+  body.fn08 .main{padding-bottom:200px}
   body.fn08 .fn-wrap,
   body.fn09 .fn-wrap,
   body.fn10 .fn-wrap,
@@ -257,11 +262,6 @@ body.fn10b .later-grid{gap:12px}
   body.fn10 .slim-body{display:none;}
   body.fn10 .slim-note{padding:6px 10px;}
   body.fn10 .main{padding-bottom:220px;}
-}
-
-body.fn10b .foot{
-  left:var(--rail);right:0;padding-right:calc(var(--coach-w) + 20px);
-  background:linear-gradient(rgba(245,242,238,0),var(--bg) 40%);
 }
 
 @media (max-width:800px){

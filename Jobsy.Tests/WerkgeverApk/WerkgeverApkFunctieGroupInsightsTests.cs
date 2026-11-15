@@ -43,6 +43,19 @@ public sealed class WerkgeverApkFunctieGroupInsightsTests
         Assert.Equal(WerkgeverApkAnonymity.MinGroupSize, dto.SharedCompletedCount);
     }
 
+    [Fact]
+    public void Aggregate_bars_are_unique_by_label()
+    {
+        var shared = Enumerable.Range(0, WerkgeverApkAnonymity.MinGroupSize)
+            .Select(i => ((string?)OrderpickerEsco, State(i)))
+            .ToList();
+        var dto = WerkgeverApkFunctieGroupInsights.Aggregate(shared, OrderpickerEsco, SchoolLevel.Mbo3);
+        Assert.True(dto.Visible);
+        var labels = dto.Bars.Select(b => b.Label).ToList();
+        Assert.Equal(labels.Count, labels.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Equal(1, labels.Count(l => l.Contains("Duidelijk doorgeven", StringComparison.OrdinalIgnoreCase)));
+    }
+
     private static PupilMboHboProgressState State(int i)
     {
         var catalog = WerkgeverApkEmployeeCatalog.Default;

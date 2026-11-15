@@ -57,9 +57,14 @@ public static class WerkgeverApkFunctieGroupInsights
         var profile = WerkgeverApkFunctieProfileCatalog.Resolve(selected);
         var catalog = WerkgeverApkEmployeeCatalog.Default;
         var bars = new List<WerkgeverApkFunctieBar>();
+        var seenBarLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var point in profile.Points)
         {
+            if (!seenBarLabels.Add(point.Label))
+            {
+                continue;
+            }
             var strong = 0;
             var growth = 0;
             var scored = 0;
