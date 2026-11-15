@@ -89,7 +89,17 @@ def main() -> int:
             if not version:
                 import datetime
 
-                version = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d") + "-catalog"
+                day = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d")
+                suffix = 1
+                while True:
+                    version = f"{day}-{suffix:02d}"
+                    if not any(
+                        e.get("v") == version
+                        for e in existing.values()
+                        if isinstance(e, dict)
+                    ) and version not in found.values():
+                        break
+                    suffix += 1
                 print(
                     f"assigned catalog version {version} for {path_part} (from {src.name})",
                     file=sys.stderr,

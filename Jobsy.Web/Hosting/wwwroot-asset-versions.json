@@ -165,7 +165,7 @@
   },
   "css/features/leerling-mbo-hbo.css": {
     "sha256": "4f1ef7917a5c4cb6592b8b67bc70772e9c5966c1cdb2c4a693e319801a56a8ed",
-    "v": "20261115-catalog"
+    "v": "20261115-01"
   },
   "css/features/leerling-paspoort-g78.css": {
     "sha256": "d2598ceadc1c3a473bc1ca633c8c8dd710adefaddfa1867b78fb4b95c85d1578",
@@ -181,7 +181,7 @@
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
     "sha256": "1bce826ac92021ba63a64cf21be61143b5db7b396a7d6e034313c0e147695bde",
-    "v": "20261115-catalog"
+    "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {
     "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a",
@@ -189,11 +189,11 @@
   },
   "css/features/lobsy-coach-ssr-chrome.css": {
     "sha256": "7e155bd5270a49470620f6722d49c90839683f5876c64f2b9fcebb61e0ee0841",
-    "v": "20261115-catalog"
+    "v": "20261115-03"
   },
   "css/features/lobsy-coach-variant-b.css": {
     "sha256": "bda600e970538091f9d25ceb2b70f5313415319d8a487ddc384cf82940bcbb51",
-    "v": "20261115-catalog"
+    "v": "20261115-04"
   },
   "css/features/match-desktop.css": {
     "sha256": "46fae2596ab48130ab952c5b1d92e7f1afc0d0052180dcde879c5a5c4b47aa0a",
