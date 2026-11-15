@@ -230,6 +230,27 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.EmployerLoopbaanApkEnabled = employerLoopbaanApk;
         }
 
+        if (update.LoopbaanApkBasisPrice is not null)
+        {
+            row.LoopbaanApkBasisPrice = string.IsNullOrWhiteSpace(update.LoopbaanApkBasisPrice)
+                ? null
+                : update.LoopbaanApkBasisPrice.Trim();
+        }
+
+        if (update.LoopbaanApkUitgebreidPrice is not null)
+        {
+            row.LoopbaanApkUitgebreidPrice = string.IsNullOrWhiteSpace(update.LoopbaanApkUitgebreidPrice)
+                ? null
+                : update.LoopbaanApkUitgebreidPrice.Trim();
+        }
+
+        if (update.LoopbaanApkPriceUnit is not null)
+        {
+            row.LoopbaanApkPriceUnit = string.IsNullOrWhiteSpace(update.LoopbaanApkPriceUnit)
+                ? null
+                : update.LoopbaanApkPriceUnit.Trim();
+        }
+
         if (update.KandidatenkaartEnabled is bool kandidatenkaartEnabled)
         {
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;

@@ -196,6 +196,19 @@ public sealed class WerkgeverApkManagerController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpPost("package/uitgebreid-aanvraag")]
+    public async Task<IActionResult> RequestUitgebreidPackage(CancellationToken ct)
+    {
+        var gate = await EnsureEnterpriseManagerAsync(ct);
+        if (gate is not null)
+        {
+            return gate;
+        }
+
+        var (ok, error, status) = await _portal.RequestUitgebreidPackageAsync(User, ct);
+        return ok ? Ok(new { requested = true }) : StatusCode(status, error);
+    }
+
     [HttpGet("teams/{teamId:guid}/insights")]
     public async Task<IActionResult> Insights(Guid teamId, CancellationToken ct)
     {

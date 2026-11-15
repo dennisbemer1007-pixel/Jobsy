@@ -528,6 +528,37 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("LoopbaanApkBasisPrice"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "LoopbaanApkBasisPrice",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.LoopbaanApk.BasisPrice.Title",
+                DescriptionKey: "AdminSettings.LoopbaanApk.BasisPrice.Desc",
+                Kind: PlatformSettingKind.String,
+                Read: s => s.LoopbaanApkBasisPrice ?? "",
+                Write: v => new PlatformFeatureUpdate(LoopbaanApkBasisPrice: v),
+                ShowOnDashboard: false));
+            list.Add(new PlatformSettingDescriptor(
+                Key: "LoopbaanApkUitgebreidPrice",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.LoopbaanApk.UitgebreidPrice.Title",
+                DescriptionKey: "AdminSettings.LoopbaanApk.UitgebreidPrice.Desc",
+                Kind: PlatformSettingKind.String,
+                Read: s => s.LoopbaanApkUitgebreidPrice ?? "",
+                Write: v => new PlatformFeatureUpdate(LoopbaanApkUitgebreidPrice: v),
+                ShowOnDashboard: false));
+            list.Add(new PlatformSettingDescriptor(
+                Key: "LoopbaanApkPriceUnit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.LoopbaanApk.PriceUnit.Title",
+                DescriptionKey: "AdminSettings.LoopbaanApk.PriceUnit.Desc",
+                Kind: PlatformSettingKind.String,
+                Read: s => s.LoopbaanApkPriceUnit ?? "",
+                Write: v => new PlatformFeatureUpdate(LoopbaanApkPriceUnit: v),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("KandidatenkaartEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(

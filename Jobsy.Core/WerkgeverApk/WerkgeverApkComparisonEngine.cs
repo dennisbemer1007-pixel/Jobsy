@@ -26,11 +26,13 @@ public static class WerkgeverApkComparisonEngine
     public static WerkgeverApkComparisonDto BuildComparison(
         PupilMboHboProgressState employee,
         IReadOnlyDictionary<string, int> managerAnswers,
+        WerkgeverApkEmployeeAbCatalog catalog,
         SchoolLevel level = SchoolLevel.Mbo3,
         string managerDisplayName = "je leidinggevende")
     {
         ArgumentNullException.ThrowIfNull(employee);
         ArgumentNullException.ThrowIfNull(managerAnswers);
+        ArgumentNullException.ThrowIfNull(catalog);
 
         var agree = new List<WerkgeverApkComparisonTopic>();
         var differ = new List<WerkgeverApkComparisonTopic>();
@@ -42,7 +44,7 @@ public static class WerkgeverApkComparisonEngine
                 continue;
             }
 
-            var self = WerkgeverApkEmployeeDimensionScores.SelfScore(q, employee, level);
+            var self = WerkgeverApkEmployeeDimensionScores.SelfScore(q, employee, catalog, level);
             if (self is null)
             {
                 continue;

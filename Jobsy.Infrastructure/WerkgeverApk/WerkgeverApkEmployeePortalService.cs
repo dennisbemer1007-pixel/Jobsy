@@ -60,9 +60,25 @@ public interface IWerkgeverApkEmployeePortalService
     Task<(WerkgeverApkEmployeeFunctieResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctieComparisonAsync(
         ClaimsPrincipal employee,
         CancellationToken ct = default);
+
+    Task<(WerkgeverApkEmployeeQuestionDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetAbQuestionAsync(
+        ClaimsPrincipal employee,
+        string? itemId,
+        CancellationToken ct = default);
+
+    Task<(WerkgeverApkEmployeeAnswerResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> SaveAbAnswerAsync(
+        ClaimsPrincipal employee,
+        string itemId,
+        int value,
+        CancellationToken ct = default);
+
+    Task<(WerkgeverApkPauseDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetPauseAsync(
+        ClaimsPrincipal employee,
+        int afterDisplayBlock,
+        CancellationToken ct = default);
 }
 
-public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePortalService
+public sealed partial class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePortalService
 {
     public const string InvalidCode = "invalid_code";
     public const string SessionInvalid = "session_invalid";
@@ -135,7 +151,8 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
 
         var progress = await EnsureProgressAsync(code, ct);
         var state = LoadState(progress);
-        var completed = IsEmployeeCompleted(code, state);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(team.Company.LoopbaanApkPackage);
+        var completed = IsEmployeeCompleted(code, state, catalog);
         if (completed && code.Status != WerkgeverApkEmployeeCodeStatus.Completed)
         {
             code.Status = WerkgeverApkEmployeeCodeStatus.Completed;
@@ -150,6 +167,7 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
             state,
             completed,
             code.SharedWithManager,
+            catalog,
             !string.IsNullOrWhiteSpace(code.EscoOccupationId));
         var display = PupilCodeFormat.Display(normalized);
         var response = new WerkgeverApkEmployeeLoginResponse(
@@ -194,16 +212,16 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var (code, progress, state) = (ctx.Code!, ctx.Progress!, ctx.State!);
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
-        var total = WerkgeverApkEntryPaths.EmployeeBlocks.Sum(b => catalog.QuestionCount(b, Level));
-        var answered = WerkgeverApkEntryPaths.EmployeeBlocks.Sum(b => state.AnsweredInBlock(b, catalog, Level));
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(code.Team!.Company!.LoopbaanApkPackage);
+        var total = catalog.QuestionCount;
+        var answered = WerkgeverApkAbProgress.AnsweredCount(state, catalog);
         var dto = new WerkgeverApkEmployeeProgressDto(
             code.Id,
             employee.FindFirst(WerkgeverApkClaimTypes.CodeDisplay)?.Value ?? "",
             employee.FindFirst(WerkgeverApkClaimTypes.TeamName)?.Value ?? "",
             code.Status,
             progress.WelcomeSeen,
-            IsEmployeeCompleted(code, state),
+            IsEmployeeCompleted(code, state, catalog),
             progress.ProgressJson,
             answered,
             total);
@@ -319,7 +337,8 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
 
         progress.ProgressJson = state.ToJson();
         progress.UpdatedAtUtc = _clock.GetUtcNow().UtcDateTime;
-        if (IsEmployeeCompleted(code, state))
+        var abCatalog = WerkgeverApkEmployeeAbCatalog.ForPackage(code.Team!.Company!.LoopbaanApkPackage);
+        if (IsEmployeeCompleted(code, state, abCatalog))
         {
             code.Status = WerkgeverApkEmployeeCodeStatus.Completed;
         }
@@ -349,7 +368,7 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
                 }
             }
 
-            if (nextPath is null && IsEmployeeCompleted(code, state))
+            if (nextPath is null && IsEmployeeCompleted(code, state, abCatalog))
             {
                 nextPath = !string.IsNullOrWhiteSpace(code.EscoOccupationId)
                     ? WerkgeverApkEntryPaths.Functie
@@ -372,7 +391,8 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var code = ctx.Code!;
-        if (!IsEmployeeCompleted(code, ctx.State!))
+        var catalogShare = WerkgeverApkEmployeeAbCatalog.ForPackage(code.Team!.Company!.LoopbaanApkPackage);
+        if (!IsEmployeeCompleted(code, ctx.State!, catalogShare))
         {
             return (null, new WerkgeverApkErrorDto("not_complete", "Maak eerst de tests af."), 400);
         }
@@ -418,7 +438,8 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var managerAnswers = WerkgeverApkComparisonEngine.ParseManagerAnswers(sheet.AnswersJson);
-        var comparison = WerkgeverApkComparisonEngine.BuildComparison(ctx.State!, managerAnswers, Level);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(code.Team!.Company!.LoopbaanApkPackage);
+        var comparison = WerkgeverApkComparisonEngine.BuildComparison(ctx.State!, managerAnswers, catalog, Level);
         return (new WerkgeverApkEmployeeComparisonResponse(comparison), null, 200);
     }
 
@@ -433,7 +454,8 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var code = ctx.Code!;
-        var completed = IsEmployeeCompleted(code, ctx.State!);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(code.Team!.Company!.LoopbaanApkPackage);
+        var completed = IsEmployeeCompleted(code, ctx.State!, catalog);
         if (!completed)
         {
             return (null, new WerkgeverApkErrorDto("not_complete", "Maak eerst de tests af."), 400);
@@ -445,7 +467,7 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
             "Je sterkste kanten uit de competentietest.",
             "Wat je belangrijk vindt in je werk."
         };
-        var interesse = WerkgeverApkEmployeeScoring.BuildInteresseOutcome(ctx.State!, Level);
+        var interesse = WerkgeverApkEmployeeScoring.BuildInteresseOutcome(ctx.State!, catalog, Level);
         var top = interesse.Bars.Take(2).Select(b => b.Label).ToList();
         if (top.Count == 2)
         {
@@ -514,10 +536,6 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
 
     private static PupilMboHboProgressState LoadState(WerkgeverApkEmployeeProgress progress)
         => PupilMboHboProgressState.Parse(progress.ProgressJson);
-
-    private static bool IsEmployeeCompleted(WerkgeverApkEmployeeCode code, PupilMboHboProgressState state)
-        => code.Status == WerkgeverApkEmployeeCodeStatus.Completed
-           || WerkgeverApkEntryPaths.AllEmployeeBlocksComplete(state);
 
     private static PupilMboHboQuestion? ResolveQuestion(
         IReadOnlyList<PupilMboHboQuestion> questions,
