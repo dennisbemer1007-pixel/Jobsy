@@ -44,7 +44,9 @@ public sealed class OnboardingRustigStep06PlaywrightTests
         var next = page.GetByTestId("onboarding-next");
         await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, next, "volgende");
         await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
-        await page.Locator(".ob-wizard__consent, [data-ob-rustig-screen=\"step-07\"], .test-likert").First
+        await page.Locator(
+                ".ob-wizard__consent, .ob-v3-consent, [data-testid=onboarding-step-7-consent], [data-ob-rustig-screen=\"step-07\"], .test-likert")
+            .First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
         if (mobile)

@@ -11,12 +11,35 @@
                href="/candidate/profile"
                data-testid="onboarding-tests-later">@Culture["Onboarding.Tests.LaterDoen"]</a>
         </div>
-        <button type="submit"
-                class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                name="obNav"
-                value="next"
-                formnovalidate
-                data-testid="onboarding-next">@NextLabel</button>
+        @if (Step7ConsentOnly)
+        {
+            <input type="submit"
+                   class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                   formaction="/candidate/start/step-7/consent-volgende"
+                   name="volgende"
+                   value="@NextLabel"
+                   formnovalidate
+                   data-testid="onboarding-next" />
+        }
+        else if (Step == 6)
+        {
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    formaction="/candidate/start/step-6/volgende"
+                    name="volgende"
+                    value="1"
+                    formnovalidate
+                    data-testid="onboarding-next">@NextLabel</button>
+        }
+        else
+        {
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    name="onboarding-advance"
+                    value="1"
+                    formnovalidate
+                    data-testid="onboarding-next">@NextLabel</button>
+        }
     }
     else
     {
@@ -26,8 +49,8 @@
             {
                 <button type="submit"
                         class="ob-v3-dfoot__link"
-                        name="obNav"
-                        value="skip"
+                        name="onboarding-skip"
+                        value="1"
                         formnovalidate
                         data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
             }
@@ -35,18 +58,41 @@
             {
                 <button type="submit"
                         class="ob-v3-dfoot__link ob-v3-dfoot__dream-unknown--desktop"
-                        name="obNav"
-                        value="dreamUnknown"
+                        name="onboarding-dream-unknown"
+                        value="1"
                         formnovalidate
                         data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
             }
         </div>
-        <button type="submit"
-                class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                name="obNav"
-                value="next"
-                formnovalidate
-                data-testid="onboarding-next">@NextLabel</button>
+        @if (Step7ConsentOnly)
+        {
+            <input type="submit"
+                   class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                   formaction="/candidate/start/step-7/consent-volgende"
+                   name="volgende"
+                   value="@NextLabel"
+                   formnovalidate
+                   data-testid="onboarding-next" />
+        }
+        else if (Step == 6)
+        {
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    formaction="/candidate/start/step-6/volgende"
+                    name="volgende"
+                    value="1"
+                    formnovalidate
+                    data-testid="onboarding-next">@NextLabel</button>
+        }
+        else
+        {
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    name="onboarding-advance"
+                    value="1"
+                    formnovalidate
+                    data-testid="onboarding-next">@NextLabel</button>
+        }
     }
 </div>
 

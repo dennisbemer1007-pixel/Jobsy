@@ -1749,6 +1749,21 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await next.ScrollIntoViewIfNeededAsync();
         await WaitForCircuitReadyAsync(page, 15_000);
         var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+        if (ssr)
+        {
+            var ssrStep = await page.Locator("form[data-ob-ssr-form]").GetAttributeAsync("data-ob-ssr-step");
+            if (string.Equals(ssrStep, "6", StringComparison.Ordinal))
+            {
+                await page.WaitForFunctionAsync(
+                    @"() => {
+                        var n = document.querySelector('[data-testid=onboarding-next]');
+                        return n && String(n.getAttribute('formaction') || '').includes('step-6/volgende');
+                    }",
+                    null,
+                    new() { Timeout = 30_000 });
+            }
+        }
+
         var beforeUrl = page.Url;
         await next.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
         if (ssr)

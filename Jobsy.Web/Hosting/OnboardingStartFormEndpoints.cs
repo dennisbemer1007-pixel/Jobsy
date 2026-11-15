@@ -20,10 +20,84 @@ public static class OnboardingStartFormEndpoints
 
     public static IEndpointRouteBuilder MapOnboardingStartFormEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/candidate/start", PostAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+        var auth = new AuthorizeAttribute { Roles = "Candidate" };
+        app.MapPost("/candidate/start", PostAsync).RequireAuthorization(auth);
+        app.MapPost("/candidate/start/step-6/volgende", Step6VolgendeAsync).RequireAuthorization(auth);
+        app.MapPost("/candidate/start/step-7/consent-volgende", Step7ConsentVolgendeAsync).RequireAuthorization(auth);
 
         return app;
+    }
+
+    private static async Task<IResult> Step6VolgendeAsync(
+        HttpContext http,
+        [FromForm] string? dream,
+        [FromForm] string? obPayload,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Common.Error.TryAgain"]));
+        }
+
+        var form = http.Request.Form;
+        dream = ResolveDreamFromRequest(form, dream, obPayload);
+        if (string.IsNullOrWhiteSpace(dream))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Onboarding.NotSaved"]));
+        }
+
+        var body = BuildStep6Body(dream, obPayload);
+        var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: false);
+        var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+            6,
+            merged,
+            api,
+            geocoder,
+            featureFlags,
+            culture,
+            cancellationToken);
+        return ToRedirect(stepStatus, stepPayload, 6, advance: true, goBack: false, culture);
+    }
+
+    private static async Task<IResult> Step7ConsentVolgendeAsync(
+        HttpContext http,
+        [FromForm] string? consentRequested,
+        [FromForm] string? obPayload,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(7), culture["Common.Error.TryAgain"]));
+        }
+
+        var form = http.Request.Form;
+        if (!form.ContainsKey("consentRequested")
+            && !string.Equals(consentRequested, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(7), culture["Onboarding.Validation.Consent"]));
+        }
+
+        var body = BuildMiniBlockBody(http, 7, consentRequested ?? "true", null, obPayload);
+        var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: false);
+        var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+            7,
+            merged,
+            api,
+            geocoder,
+            featureFlags,
+            culture,
+            cancellationToken);
+        return ToRedirect(stepStatus, stepPayload, 7, advance: true, goBack: false, culture);
     }
 
     private static async Task<IResult> PostAsync(
@@ -59,9 +133,20 @@ public static class OnboardingStartFormEndpoints
             return ToRedirect(beginStatus, beginPayload, 1, advance: true, goBack: false, culture);
         }
 
-        var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
+        var form = http.Request.Form;
 
-        if (string.IsNullOrWhiteSpace(obNav) && http.Request.Form.TryGetValue("obNav", out var navValues))
+        var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
+        if (form.TryGetValue("step", out var stepField)
+            && int.TryParse(stepField.ToString(), out var stepFromBody)
+            && stepFromBody is >= 1 and <= 10)
+        {
+            currentStep = stepFromBody;
+        }
+        var advance = form.ContainsKey("onboarding-advance");
+        var skipOptional = form.ContainsKey("onboarding-skip");
+        var dreamUnknown = form.ContainsKey("onboarding-dream-unknown");
+
+        if (string.IsNullOrWhiteSpace(obNav) && form.TryGetValue("obNav", out var navValues))
         {
             obNav = navValues.ToString();
         }
@@ -71,10 +156,22 @@ public static class OnboardingStartFormEndpoints
             obNav = obNav.Split(',')[0].Trim();
         }
 
-        var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
+        if (!advance)
+        {
+            advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!skipOptional)
+        {
+            skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!dreamUnknown)
+        {
+            dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
+        }
+
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
-        var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
-        var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
         var persist = string.Equals(obNav, "save", StringComparison.OrdinalIgnoreCase);
 
         if (goBack)
@@ -158,10 +255,29 @@ public static class OnboardingStartFormEndpoints
             goBack = false;
         }
 
-        if (skipOptional || dreamUnknown)
+        if (dreamUnknown)
         {
             advance = true;
-            skipOptional = true;
+        }
+
+        if (skipOptional)
+        {
+            advance = true;
+        }
+
+        if (!advance
+            && !goBack
+            && !persist
+            && !dreamUnknown
+            && currentStep == 6
+            && string.IsNullOrWhiteSpace(obDreamPick))
+        {
+            var resolvedDream = ResolveDreamFromRequest(form, dream, obPayload);
+            if (!string.IsNullOrWhiteSpace(resolvedDream))
+            {
+                dream = resolvedDream;
+                advance = true;
+            }
         }
 
         if (IsSilentNoop(http.Request.Form, advance, goBack, persist, skipOptional, dreamUnknown))
@@ -218,6 +334,11 @@ public static class OnboardingStartFormEndpoints
                 goBack: false,
                 culture,
                 scrollAnchor);
+        }
+
+        if (!advance && currentStep == 7 && form.ContainsKey("consentRequested"))
+        {
+            advance = true;
         }
 
         if (!advance && !goBack && !persist)
@@ -455,9 +576,14 @@ public static class OnboardingStartFormEndpoints
         return answers;
     }
 
-    private static JsonElement BuildStep6Body(string? dream, string? obPayload)
+    private static string? ResolveDreamFromRequest(IFormCollection? form, string? dream, string? obPayload)
     {
         var trimmed = dream?.Trim() ?? "";
+        if (string.IsNullOrEmpty(trimmed) && form is not null && form.TryGetValue("dream", out var dreamValues))
+        {
+            trimmed = dreamValues.ToString().Trim();
+        }
+
         if (string.IsNullOrEmpty(trimmed) && !string.IsNullOrWhiteSpace(obPayload))
         {
             try
@@ -478,9 +604,16 @@ public static class OnboardingStartFormEndpoints
             }
             catch (JsonException)
             {
-                // fall through with empty dream
+                // fall through
             }
         }
+
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+    }
+
+    private static JsonElement BuildStep6Body(string? dream, string? obPayload)
+    {
+        var trimmed = ResolveDreamFromRequest(null, dream, obPayload) ?? "";
 
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
@@ -607,7 +740,14 @@ public static class OnboardingStartFormEndpoints
         bool skipOptional,
         bool dreamUnknown)
     {
-        if (advance || goBack || persist || skipOptional || dreamUnknown)
+        if (advance
+            || goBack
+            || persist
+            || skipOptional
+            || dreamUnknown
+            || form.ContainsKey("onboarding-advance")
+            || form.ContainsKey("onboarding-skip")
+            || form.ContainsKey("onboarding-dream-unknown"))
         {
             return false;
         }
