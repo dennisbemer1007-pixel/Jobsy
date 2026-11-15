@@ -17,6 +17,9 @@ public class WerkgeverApkEmployeeCode
     /// <summary>Manager-only nickname (never shown on the employee session).</summary>
     public string? Label { get; set; }
 
+    /// <summary>Official ESCO occupation id for functie comparison (manager-assigned, no codes in UI).</summary>
+    public string? EscoOccupationId { get; set; }
+
     /// <summary>HMAC-SHA256 of the normalized code (lookup key).</summary>
     public string CodeLookupHash { get; set; } = string.Empty;
 

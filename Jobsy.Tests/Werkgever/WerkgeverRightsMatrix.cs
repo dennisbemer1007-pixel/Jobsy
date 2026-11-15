@@ -125,6 +125,7 @@ public static class WerkgeverRightsMatrix
         new("api/werkgever-apk/manager/codes/{codeId}", true, false, false),
         new("api/werkgever-apk/manager/codes/{codeId}/label", true, false, false),
         new("api/werkgever-apk/manager/codes/{codeId}/answers", true, false, false),
+        new("api/werkgever-apk/manager/codes/{codeId}/occupation", true, false, false),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

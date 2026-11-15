@@ -41,6 +41,7 @@ def collect_sources() -> list[Path]:
             ROOT / "Jobsy.Web" / "Hosting" / "PageAssetCatalog.cs",
             ROOT / "Jobsy.Web" / "Scholen" / "PupilLeerlingSsrFrame.cs",
             ROOT / "Jobsy.Web" / "Scholen" / "ScholenPortalSsrFrame.cs",
+            ROOT / "Jobsy.Web" / "Hosting" / "WerkgeverApkSsrHtml.cs",
             WWW / "service-worker.js",
             WWW / "service-worker.published.js",
         ]

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Contracts.WerkgeverApk;
 using Jobsy.Core.Entities.WerkgeverApk;
 using Jobsy.Core.Enums;
@@ -84,6 +85,30 @@ public interface IWerkgeverApkManagerPortalService
     Task<(WerkgeverApkGroupInsightsDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetGroupInsightsAsync(
         ClaimsPrincipal user,
         Guid teamId,
+        CancellationToken ct = default);
+
+    Task<(IReadOnlyList<WerkgeverApkOccupationSearchHitDto>? Ok, WerkgeverApkErrorDto? Error, int Status)> SearchOccupationsAsync(
+        ClaimsPrincipal user,
+        string? query,
+        CancellationToken ct = default);
+
+    Task<(bool Ok, WerkgeverApkErrorDto? Error, int Status)> SetEmployeeOccupationAsync(
+        ClaimsPrincipal user,
+        Guid codeId,
+        WerkgeverApkSetEmployeeOccupationRequest request,
+        CancellationToken ct = default);
+
+    Task<(WerkgeverApkFunctiePickDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctiePickAsync(
+        ClaimsPrincipal user,
+        Guid teamId,
+        Guid codeId,
+        string? query,
+        CancellationToken ct = default);
+
+    Task<(WerkgeverApkFunctieGroupInsightsDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctieGroupInsightsAsync(
+        ClaimsPrincipal user,
+        Guid teamId,
+        string? escoOccupationId,
         CancellationToken ct = default);
 }
 
@@ -364,6 +389,7 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
                 c.CodeProtected,
                 c.Status,
                 c.SharedWithManager,
+                c.EscoOccupationId,
                 ProgressJson = c.Progress != null ? c.Progress.ProgressJson : "{}",
                 ManagerCompleted = c.ManagerSheet != null && c.ManagerSheet.Completed
             })
@@ -383,7 +409,9 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
                 c.Status,
                 completed,
                 c.SharedWithManager,
-                c.ManagerCompleted);
+                c.ManagerCompleted,
+                c.EscoOccupationId,
+                WerkgeverApkFunctieProfileCatalog.DisplayName(c.EscoOccupationId));
         }).ToList();
 
         return (new WerkgeverApkTeamOverviewDto(teamId, team.Name, rows), null, 200);
@@ -540,6 +568,137 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
 
         var insights = WerkgeverApkGroupInsights.Aggregate(employeeStates, managerSheets, Level);
         return (insights, null, 200);
+    }
+
+    public Task<(IReadOnlyList<WerkgeverApkOccupationSearchHitDto>? Ok, WerkgeverApkErrorDto? Error, int Status)> SearchOccupationsAsync(
+        ClaimsPrincipal user,
+        string? query,
+        CancellationToken ct = default)
+        => SearchOccupationsCoreAsync(user, query, ct);
+
+    public async Task<(bool Ok, WerkgeverApkErrorDto? Error, int Status)> SetEmployeeOccupationAsync(
+        ClaimsPrincipal user,
+        Guid codeId,
+        WerkgeverApkSetEmployeeOccupationRequest request,
+        CancellationToken ct = default)
+    {
+        var gate = await EnsureManagerGateAsync(user, ct);
+        if (gate.Error is not null)
+        {
+            return (false, gate.Error, gate.Status);
+        }
+
+        if (string.IsNullOrWhiteSpace(request.EscoOccupationId)
+            || OccupationCatalog.Shared.Get(request.EscoOccupationId.Trim()) is null)
+        {
+            return (false, new WerkgeverApkErrorDto("invalid_occupation", "Kies een functie uit de officiële lijst."), 400);
+        }
+
+        var code = await _db.WerkgeverApkEmployeeCodes
+            .Include(c => c.Team)
+            .FirstOrDefaultAsync(c => c.Id == codeId, ct);
+        if (code?.Team is null || code.Team.CompanyId != gate.CompanyId)
+        {
+            return (false, new WerkgeverApkErrorDto("not_found", "Code niet gevonden."), 404);
+        }
+
+        code.EscoOccupationId = request.EscoOccupationId.Trim();
+        await _db.SaveChangesAsync(ct);
+        return (true, null, 200);
+    }
+
+    public async Task<(WerkgeverApkFunctiePickDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctiePickAsync(
+        ClaimsPrincipal user,
+        Guid teamId,
+        Guid codeId,
+        string? query,
+        CancellationToken ct = default)
+    {
+        var gate = await EnsureManagerGateAsync(user, ct);
+        if (gate.Error is not null)
+        {
+            return (null, gate.Error, gate.Status);
+        }
+
+        var team = await _db.WerkgeverApkTeams.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == teamId && t.CompanyId == gate.CompanyId, ct);
+        if (team is null)
+        {
+            return (null, new WerkgeverApkErrorDto("not_found", "Team niet gevonden."), 404);
+        }
+
+        var code = await _db.WerkgeverApkEmployeeCodes.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == codeId && c.TeamId == teamId, ct);
+        if (code is null)
+        {
+            return (null, new WerkgeverApkErrorDto("not_found", "Medewerker niet gevonden."), 404);
+        }
+
+        var overview = await GetTeamOverviewAsync(user, teamId, ct);
+        if (overview.Ok is null)
+        {
+            return (null, overview.Error, overview.Status);
+        }
+
+        var suggestions = WerkgeverApkOccupationSearch.ForManager(query);
+        var dto = new WerkgeverApkFunctiePickDto(
+            code.Id,
+            code.Label,
+            code.EscoOccupationId,
+            WerkgeverApkFunctieProfileCatalog.DisplayName(code.EscoOccupationId),
+            suggestions,
+            query?.Trim(),
+            overview.Ok.Codes);
+        return (dto, null, 200);
+    }
+
+    public async Task<(WerkgeverApkFunctieGroupInsightsDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctieGroupInsightsAsync(
+        ClaimsPrincipal user,
+        Guid teamId,
+        string? escoOccupationId,
+        CancellationToken ct = default)
+    {
+        var gate = await EnsureManagerGateAsync(user, ct);
+        if (gate.Error is not null)
+        {
+            return (null, gate.Error, gate.Status);
+        }
+
+        var team = await _db.WerkgeverApkTeams.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == teamId && t.CompanyId == gate.CompanyId, ct);
+        if (team is null)
+        {
+            return (null, new WerkgeverApkErrorDto("not_found", "Team niet gevonden."), 404);
+        }
+
+        var rows = await _db.WerkgeverApkEmployeeCodes.AsNoTracking()
+            .Where(c => c.TeamId == teamId
+                        && c.SharedWithManager
+                        && c.Status == WerkgeverApkEmployeeCodeStatus.Completed
+                        && c.EscoOccupationId != null)
+            .Select(c => new { c.EscoOccupationId, ProgressJson = c.Progress!.ProgressJson })
+            .ToListAsync(ct);
+
+        var cohort = rows
+            .Select(r => (r.EscoOccupationId, PupilMboHboProgressState.Parse(r.ProgressJson)))
+            .ToList();
+
+        var insights = WerkgeverApkFunctieGroupInsights.Aggregate(cohort, escoOccupationId, Level);
+        return (insights, null, 200);
+    }
+
+    private async Task<(IReadOnlyList<WerkgeverApkOccupationSearchHitDto>? Ok, WerkgeverApkErrorDto? Error, int Status)> SearchOccupationsCoreAsync(
+        ClaimsPrincipal user,
+        string? query,
+        CancellationToken ct)
+    {
+        var gate = await EnsureManagerGateAsync(user, ct);
+        if (gate.Error is not null)
+        {
+            return (null, gate.Error, gate.Status);
+        }
+
+        return (WerkgeverApkOccupationSearch.ForManager(query), null, 200);
     }
 
     private async Task<WerkgeverApkManagerSheet> EnsureManagerSheetAsync(

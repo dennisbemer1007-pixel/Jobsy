@@ -106,10 +106,7 @@ public static class WerkgeverApkSsrHtml
     {
         var path = WerkgeverApkTemplateLocator.PathFor(templateFileName);
         var html = File.Exists(path) ? File.ReadAllText(path) : "<html><body><p>Pagina niet beschikbaar.</p></body></html>";
-        html = html
-            .Replace("shared.css", "/werkgever-apk/css/shared.css", StringComparison.Ordinal)
-            .Replace("extra.css", "/werkgever-apk/css/extra.css", StringComparison.Ordinal)
-            .Replace("img/", "/werkgever-apk/img/", StringComparison.Ordinal);
+        html = ApplyStaticAssets(html);
 
         var sb = new StringBuilder(html);
         foreach (var (key, value) in tokens)
@@ -118,5 +115,34 @@ public static class WerkgeverApkSsrHtml
         }
 
         return sb.ToString();
+    }
+
+    internal static string ApplyStaticAssets(string html)
+    {
+        var shared = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/shared.css");
+        var extra = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/extra.css");
+        var functie = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/functie.css");
+        var logo64 = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/img/lobsy-64.png");
+        var coachB2 = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/img/lobsy-coach-b2.png");
+        var coachJs = WwwrootAssetCatalog.UrlLeadingSlash("js/lobsy-coach-ssr.js");
+
+        html = html
+            .Replace("href=\"shared.css\"", $"href=\"{shared}\"", StringComparison.Ordinal)
+            .Replace("href=\"extra.css\"", $"href=\"{extra}\"", StringComparison.Ordinal)
+            .Replace("href=\"functie.css\"", $"href=\"{functie}\"", StringComparison.Ordinal)
+            .Replace("/werkgever-apk/shared.css", shared, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/extra.css", extra, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/css/shared.css", shared, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/css/extra.css", extra, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/css/functie.css", functie, StringComparison.Ordinal)
+            .Replace("src=\"img/lobsy-64.png\"", $"src=\"{logo64}\"", StringComparison.Ordinal)
+            .Replace("src=\"img/lobsy-coach-b2.png\"", $"src=\"{coachB2}\"", StringComparison.Ordinal)
+            .Replace("src=\"/werkgever-apk/img/lobsy-64.png\"", $"src=\"{logo64}\"", StringComparison.Ordinal)
+            .Replace("src=\"/werkgever-apk/img/lobsy-coach-b2.png\"", $"src=\"{coachB2}\"", StringComparison.Ordinal)
+            .Replace("src=\"/js/lobsy-coach-ssr.js\"", $"src=\"{coachJs}\"", StringComparison.Ordinal)
+            .Replace("/js/lobsy-coach-ssr.js", coachJs, StringComparison.Ordinal)
+            .Replace("src=\"img/", "src=\"/werkgever-apk/img/", StringComparison.Ordinal);
+
+        return html;
     }
 }

@@ -18,6 +18,7 @@ public static class WerkgeverApkEmployeeEndpoints
         app.MapGet("/loopbaan-apk/delen", GetDelenAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
         app.MapPost("/loopbaan-apk/delen", PostDelenAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
         app.MapGet("/loopbaan-apk/vergelijking", GetVergelijkingAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapGet("/loopbaan-apk/functie", GetFunctieAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
         app.MapPost("/loopbaan-apk/welkom", WelcomePost).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
         return app;
     }
@@ -196,6 +197,21 @@ public static class WerkgeverApkEmployeeEndpoints
         var manager = http.User.FindFirst(WerkgeverApkClaimTypes.TeamName)?.Value ?? "je leidinggevende";
         var html = WerkgeverApkMockupPages.Vergelijking(comparison, manager);
         ApplyChromeTokens(ref html, Chrome(http));
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
+    private static async Task<IResult> GetFunctieAsync(HttpContext http, JobsyApiClient api, CancellationToken ct)
+    {
+        http.Response.Headers.CacheControl = "no-store";
+        var functie = await api.GetWerkgeverApkFunctieAsync(ct);
+        if (functie is null)
+        {
+            return Results.Redirect(WerkgeverApkEntryPaths.Delen);
+        }
+
+        var chrome = Chrome(http);
+        var html = WerkgeverApkFunctieMockupPages.MijnFunctie(functie.Comparison, chrome);
+        ApplyChromeTokens(ref html, chrome);
         return Results.Content(html, "text/html; charset=utf-8");
     }
 

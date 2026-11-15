@@ -3457,6 +3457,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.CodeLookupHash).HasMaxLength(64).IsRequired();
             entity.Property(e => e.CodeProtected).HasMaxLength(512).IsRequired();
             entity.Property(e => e.Label).HasMaxLength(40);
+            entity.Property(e => e.EscoOccupationId).HasMaxLength(36);
             entity.Property(e => e.Status).HasConversion<int>();
             entity.HasIndex(e => new { e.TeamId, e.CodeLookupHash }).IsUnique();
             entity.HasOne(e => e.Team)

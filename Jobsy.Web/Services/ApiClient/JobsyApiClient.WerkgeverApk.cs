@@ -101,6 +101,51 @@ public sealed partial class JobsyApiClient
         => await _http.GetFromJsonAsync<WerkgeverApkManagerSheetDto>(
             $"api/werkgever-apk/manager/codes/{codeId:D}/sheet", ApiJson, ct);
 
+    public async Task<WerkgeverApkEmployeeFunctieResponse?> GetWerkgeverApkFunctieAsync(CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<WerkgeverApkEmployeeFunctieResponse>(
+            "api/werkgever-apk/employee/functie", ApiJson, ct);
+
+    public async Task<WerkgeverApkFunctiePickDto?> GetWerkgeverApkFunctiePickAsync(
+        Guid teamId,
+        Guid codeId,
+        string? query,
+        CancellationToken ct = default)
+    {
+        var path = $"api/werkgever-apk/manager/teams/{teamId:D}/codes/{codeId:D}/functie-pick";
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            path += $"?q={Uri.EscapeDataString(query)}";
+        }
+
+        return await _http.GetFromJsonAsync<WerkgeverApkFunctiePickDto>(path, ApiJson, ct);
+    }
+
+    public async Task<WerkgeverApkFunctieGroupInsightsDto?> GetWerkgeverApkFunctieInsightsAsync(
+        Guid teamId,
+        string? escoOccupationId,
+        CancellationToken ct = default)
+    {
+        var path = $"api/werkgever-apk/manager/teams/{teamId:D}/functie-insights";
+        if (!string.IsNullOrWhiteSpace(escoOccupationId))
+        {
+            path += $"?esco={Uri.EscapeDataString(escoOccupationId)}";
+        }
+
+        return await _http.GetFromJsonAsync<WerkgeverApkFunctieGroupInsightsDto>(path, ApiJson, ct);
+    }
+
+    public async Task<(bool Ok, int StatusCode)> SetWerkgeverApkOccupationAsync(
+        Guid codeId,
+        string escoOccupationId,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/werkgever-apk/manager/codes/{codeId:D}/occupation",
+            new WerkgeverApkSetEmployeeOccupationRequest(escoOccupationId),
+            ct);
+        return (response.IsSuccessStatusCode, (int)response.StatusCode);
+    }
+
     private static async Task<T?> JsonSerializerTry<T>(HttpContent content)
     {
         try

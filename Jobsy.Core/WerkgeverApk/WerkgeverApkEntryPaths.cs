@@ -8,6 +8,7 @@ public static class WerkgeverApkEntryPaths
     public const string Login = "/loopbaan-apk";
     public const string Welkom = "/loopbaan-apk/welkom";
     public const string Delen = "/loopbaan-apk/delen";
+    public const string Functie = "/loopbaan-apk/functie";
     public const string Vergelijking = "/loopbaan-apk/vergelijking";
 
     public static readonly PupilMboHboBlock[] EmployeeBlocks =
@@ -25,11 +26,21 @@ public static class WerkgeverApkEntryPaths
     public static bool AllEmployeeBlocksComplete(PupilMboHboProgressState state)
         => EmployeeBlocks.All(state.IsBlockComplete);
 
-    public static string AfterLogin(bool welcomeSeen, PupilMboHboProgressState state, bool completed, bool sharedWithManager = false)
+    public static string AfterLogin(
+        bool welcomeSeen,
+        PupilMboHboProgressState state,
+        bool completed,
+        bool sharedWithManager = false,
+        bool hasOfficialOccupation = false)
     {
         if (completed)
         {
-            return sharedWithManager ? Vergelijking : Delen;
+            if (sharedWithManager)
+            {
+                return Vergelijking;
+            }
+
+            return hasOfficialOccupation ? Functie : Delen;
         }
 
         if (!welcomeSeen)
