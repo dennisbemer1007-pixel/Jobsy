@@ -170,6 +170,8 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `api/companies/{companyId}/api-keys/{apiKeyId}/deactivate` | yes | no | no |
 | `api/companies/{companyId}/api-keys/email-credentials` | yes | no | no |
 | `api/companies/{companyId}/loopbaan-apk` | no | no | no |
+| `api/companies/{companyId}/loopbaan-apk/package` | no | no | no |
+| `api/werkgever-apk/manager/package/uitgebreid-aanvraag` | yes | no | no |
 | `api/werkgever-apk/manager/teams` | yes | no | no |
 | `api/werkgever-apk/manager/teams/{teamId}` | yes | no | no |
 | `api/werkgever-apk/manager/teams/{teamId}/codes` | yes | no | no |
