@@ -3818,9 +3818,9 @@
   justify-content: center;
   text-align: center;
   width: 100%;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  hyphens: none;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .ll-g78-contrast__tag {
@@ -3832,6 +3832,13 @@
   color: var(--brand, #0f2d5c);
   font-size: 0.9rem;
   flex: none;
+}
+
+@media (max-width: 767px) {
+  .ll-g78-contrast__opt p {
+    font-size: 12.5px;
+    line-height: 1.32;
+  }
 }
 
 @media (min-width: 768px) {
