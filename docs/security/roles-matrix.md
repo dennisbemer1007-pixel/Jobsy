@@ -176,4 +176,5 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `api/werkgever-apk/manager/codes/{codeId}` | yes | no | no |
 | `api/werkgever-apk/manager/codes/{codeId}/label` | yes | no | no |
 | `api/werkgever-apk/manager/codes/{codeId}/answers` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}/occupation` | yes | no | no |
 
