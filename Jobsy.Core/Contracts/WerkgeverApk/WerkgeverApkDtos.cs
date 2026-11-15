@@ -41,7 +41,9 @@ public sealed record WerkgeverApkTeamOverviewCodeDto(
     WerkgeverApkEmployeeCodeStatus Status,
     bool EmployeeCompleted,
     bool SharedWithManager,
-    bool ManagerCompleted);
+    bool ManagerCompleted,
+    string? EscoOccupationId,
+    string? OfficialOccupationName);
 
 public sealed record WerkgeverApkTeamOverviewDto(
     Guid TeamId,
@@ -125,3 +127,20 @@ public sealed record WerkgeverApkManagerSheetDto(
 public sealed record WerkgeverApkManagerAnswerRequest(string QuestionId, int Value);
 
 public sealed record WerkgeverApkManagerSheetSubmitResponse(bool Completed);
+
+public sealed record WerkgeverApkOccupationSearchHitDto(string EscoOccupationId, string Name);
+
+public sealed record WerkgeverApkSetEmployeeOccupationRequest(string EscoOccupationId);
+
+public sealed record WerkgeverApkEmployeeFunctieResponse(WerkgeverApkFunctieComparisonDto Comparison);
+
+public sealed record WerkgeverApkFunctiePickDto(
+    Guid EmployeeCodeId,
+    string? EmployeeLabel,
+    string? SelectedEscoOccupationId,
+    string? SelectedOccupationName,
+    IReadOnlyList<WerkgeverApkOccupationSearchHitDto> Suggestions,
+    string? Query,
+    IReadOnlyList<WerkgeverApkTeamOverviewCodeDto> TeamRows);
+
+public sealed record WerkgeverApkFunctieGroupInsightsResponse(WerkgeverApkFunctieGroupInsightsDto Insights);

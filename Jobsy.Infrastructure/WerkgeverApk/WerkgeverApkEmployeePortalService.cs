@@ -56,6 +56,10 @@ public interface IWerkgeverApkEmployeePortalService
     Task<(WerkgeverApkSharePreviewDto? Ok, WerkgeverApkErrorDto? Error, int Status)> GetSharePreviewAsync(
         ClaimsPrincipal employee,
         CancellationToken ct = default);
+
+    Task<(WerkgeverApkEmployeeFunctieResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctieComparisonAsync(
+        ClaimsPrincipal employee,
+        CancellationToken ct = default);
 }
 
 public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePortalService
@@ -141,7 +145,12 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         _cache.Remove($"werkgever-apk-session:{code.Id:D}");
 
         var welcomeSeen = progress.WelcomeSeen;
-        var redirect = WerkgeverApkEntryPaths.AfterLogin(welcomeSeen, state, completed, code.SharedWithManager);
+        var redirect = WerkgeverApkEntryPaths.AfterLogin(
+            welcomeSeen,
+            state,
+            completed,
+            code.SharedWithManager,
+            !string.IsNullOrWhiteSpace(code.EscoOccupationId));
         var display = PupilCodeFormat.Display(normalized);
         var response = new WerkgeverApkEmployeeLoginResponse(
             redirect,
@@ -342,7 +351,9 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
 
             if (nextPath is null && IsEmployeeCompleted(code, state))
             {
-                nextPath = WerkgeverApkEntryPaths.Delen;
+                nextPath = !string.IsNullOrWhiteSpace(code.EscoOccupationId)
+                    ? WerkgeverApkEntryPaths.Functie
+                    : WerkgeverApkEntryPaths.Delen;
             }
         }
 
@@ -447,6 +458,36 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
             "je leidinggevende",
             bullets);
         return (dto, null, 200);
+    }
+
+    public async Task<(WerkgeverApkEmployeeFunctieResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> GetFunctieComparisonAsync(
+        ClaimsPrincipal employee,
+        CancellationToken ct = default)
+    {
+        var ctx = await ResolveEmployeeAsync(employee, ct);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.Status);
+        }
+
+        var code = ctx.Code!;
+        if (!IsEmployeeCompleted(code, ctx.State!))
+        {
+            return (null, new WerkgeverApkErrorDto("not_complete", "Maak eerst de tests af."), 400);
+        }
+
+        if (string.IsNullOrWhiteSpace(code.EscoOccupationId))
+        {
+            return (null, new WerkgeverApkErrorDto("no_occupation", "Er is nog geen officiële functienaam gekozen."), 404);
+        }
+
+        var comparison = WerkgeverApkFunctieComparisonEngine.Build(code.EscoOccupationId, ctx.State!, Level);
+        if (comparison is null)
+        {
+            return (null, new WerkgeverApkErrorDto("no_profile", "Geen profiel beschikbaar voor deze functie."), 404);
+        }
+
+        return (new WerkgeverApkEmployeeFunctieResponse(comparison), null, 200);
     }
 
     private async Task<WerkgeverApkEmployeeProgress> EnsureProgressAsync(

@@ -2,6 +2,7 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.WerkgeverApk;
 using Jobsy.Web.Services;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Jobsy.Web.Hosting;
@@ -22,6 +23,9 @@ public static class WerkgeverApkManagerEndpoints
         group.MapGet("/codes/{codeId:guid}/vragen", ManagerVragenPage);
         group.MapGet("/codes/{codeId:guid}/vergelijking", () => Page("06-vergelijking.html", new Dictionary<string, string>()));
         group.MapGet("/teams/{teamId:guid}/groep", GroupInsightsPage);
+        group.MapGet("/teams/{teamId:guid}/codes/{codeId:guid}/functie", FunctieKiezenPage);
+        group.MapPost("/teams/{teamId:guid}/codes/{codeId:guid}/functie", FunctieKiezenPost);
+        group.MapGet("/teams/{teamId:guid}/functie-totaal", FunctieTotaalPage);
         return app;
     }
 
@@ -118,6 +122,95 @@ public static class WerkgeverApkManagerEndpoints
     private static IResult Page(string template, IReadOnlyDictionary<string, string> tokens)
     {
         var html = WerkgeverApkSsrHtml.RenderTemplate(template, tokens);
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
+    private static async Task<IResult> FunctieKiezenPage(
+        HttpContext http,
+        JobsyApiClient api,
+        Guid teamId,
+        Guid codeId,
+        IAntiforgery antiforgery,
+        CancellationToken ct)
+    {
+        var q = http.Request.Query["q"].ToString();
+        var pick = await api.GetWerkgeverApkFunctiePickAsync(teamId, codeId, string.IsNullOrWhiteSpace(q) ? null : q, ct);
+        if (pick is null)
+        {
+            return Results.Redirect($"/werkgever/loopbaan-apk/teams/{teamId:D}");
+        }
+
+        var teams = await api.GetWerkgeverApkTeamsAsync(ct);
+        var team = teams.FirstOrDefault(t => t.Id == teamId);
+        var tokens = antiforgery.GetAndStoreTokens(http);
+        var af = $"""<input type="hidden" name="{tokens.FormFieldName}" value="{tokens.RequestToken}">""";
+        var searchPath = $"/werkgever/loopbaan-apk/teams/{teamId:D}/codes/{codeId:D}/functie";
+        var postPath = searchPath;
+        var html = WerkgeverApkFunctieMockupPages.FunctieKiezen(
+            pick,
+            team?.Name ?? "Team",
+            "Demo Logistiek B.V.",
+            postPath,
+            searchPath,
+            af);
+        return Results.Content(html, "text/html; charset=utf-8");
+    }
+
+    private static async Task<IResult> FunctieKiezenPost(
+        HttpContext http,
+        JobsyApiClient api,
+        Guid teamId,
+        Guid codeId,
+        IAntiforgery antiforgery,
+        CancellationToken ct)
+    {
+        if (!http.Request.HasFormContentType || !await antiforgery.IsRequestValidAsync(http))
+        {
+            return Results.Redirect($"/werkgever/loopbaan-apk/teams/{teamId:D}/codes/{codeId:D}/functie?error=save");
+        }
+
+        var esco = http.Request.Form["escoOccupationId"].ToString();
+        if (!string.IsNullOrWhiteSpace(esco))
+        {
+            await api.SetWerkgeverApkOccupationAsync(codeId, esco, ct);
+        }
+
+        var q = http.Request.Form["q"].ToString();
+        var redirect = $"/werkgever/loopbaan-apk/teams/{teamId:D}/codes/{codeId:D}/functie";
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            redirect += $"?q={Uri.EscapeDataString(q)}";
+        }
+
+        return Results.Redirect(redirect);
+    }
+
+    private static async Task<IResult> FunctieTotaalPage(
+        HttpContext http,
+        JobsyApiClient api,
+        Guid teamId,
+        CancellationToken ct)
+    {
+        var esco = http.Request.Query["esco"].ToString();
+        var insights = await api.GetWerkgeverApkFunctieInsightsAsync(
+            teamId,
+            string.IsNullOrWhiteSpace(esco) ? null : esco,
+            ct);
+        if (insights is null)
+        {
+            return Results.Redirect($"/werkgever/loopbaan-apk/teams/{teamId:D}");
+        }
+
+        string html;
+        if (insights.Visible)
+        {
+            html = WerkgeverApkFunctieMockupPages.Totaalbeeld(insights, "Demo Logistiek B.V.", "Team Logistiek");
+        }
+        else
+        {
+            html = WerkgeverApkFunctieMockupPages.TeWeinig(insights, "Demo Logistiek B.V.", "Team Logistiek", teamId);
+        }
+
         return Results.Content(html, "text/html; charset=utf-8");
     }
 }

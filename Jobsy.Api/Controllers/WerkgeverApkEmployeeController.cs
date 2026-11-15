@@ -121,4 +121,13 @@ public sealed class WerkgeverApkEmployeeController : ControllerBase
         var (ok, error, status) = await _portal.GetComparisonAsync(User, ct);
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
+
+    [HttpGet("functie")]
+    [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
+    public async Task<IActionResult> Functie(CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var (ok, error, status) = await _portal.GetFunctieComparisonAsync(User, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
 }

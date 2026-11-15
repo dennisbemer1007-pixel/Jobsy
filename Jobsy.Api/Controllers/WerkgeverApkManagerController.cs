@@ -208,4 +208,66 @@ public sealed class WerkgeverApkManagerController : ControllerBase
         var (ok, error, status) = await _portal.GetGroupInsightsAsync(User, teamId, ct);
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
+
+    [HttpGet("occupations/search")]
+    public async Task<IActionResult> SearchOccupations([FromQuery] string? q, CancellationToken ct)
+    {
+        var gate = await EnsureEnterpriseManagerAsync(ct);
+        if (gate is not null)
+        {
+            return gate;
+        }
+
+        var (ok, error, status) = await _portal.SearchOccupationsAsync(User, q, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpPut("codes/{codeId:guid}/occupation")]
+    public async Task<IActionResult> SetOccupation(
+        Guid codeId,
+        [FromBody] WerkgeverApkSetEmployeeOccupationRequest request,
+        CancellationToken ct)
+    {
+        var gate = await EnsureEnterpriseManagerAsync(ct);
+        if (gate is not null)
+        {
+            return gate;
+        }
+
+        var (ok, error, status) = await _portal.SetEmployeeOccupationAsync(User, codeId, request, ct);
+        return ok ? Ok() : StatusCode(status, error);
+    }
+
+    [HttpGet("teams/{teamId:guid}/codes/{codeId:guid}/functie-pick")]
+    public async Task<IActionResult> FunctiePick(
+        Guid teamId,
+        Guid codeId,
+        [FromQuery] string? q,
+        CancellationToken ct)
+    {
+        var gate = await EnsureEnterpriseManagerAsync(ct);
+        if (gate is not null)
+        {
+            return gate;
+        }
+
+        var (ok, error, status) = await _portal.GetFunctiePickAsync(User, teamId, codeId, q, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("teams/{teamId:guid}/functie-insights")]
+    public async Task<IActionResult> FunctieInsights(
+        Guid teamId,
+        [FromQuery] string? esco,
+        CancellationToken ct)
+    {
+        var gate = await EnsureEnterpriseManagerAsync(ct);
+        if (gate is not null)
+        {
+            return gate;
+        }
+
+        var (ok, error, status) = await _portal.GetFunctieGroupInsightsAsync(User, teamId, esco, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
 }
