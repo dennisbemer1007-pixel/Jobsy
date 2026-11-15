@@ -104,6 +104,8 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/wervingsmateriaal` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Admin` |
 | `/werkgever/partner` | ● | — | — | `EnterpriseManager,Intermediary` |
 | `/werkgever/partner/uitbetalen` | ● | — | — | `EnterpriseManager,Intermediary` |
+| `/werkgever/loopbaan-apk` | ● | — | — | `EnterpriseManager,Admin` |
+| `/werkgever/loopbaan-apk/teams/{TeamId:guid}` | ● | — | — | `EnterpriseManager,Admin` |
 
 | Mutating / employer API | BM | RM | VM |
 |---|---|---|---|
@@ -159,4 +161,11 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `api/companies/{companyId}/api-keys` | yes | no | no |
 | `api/companies/{companyId}/api-keys/{apiKeyId}/deactivate` | yes | no | no |
 | `api/companies/{companyId}/api-keys/email-credentials` | yes | no | no |
+| `api/companies/{companyId}/loopbaan-apk` | no | no | no |
+| `api/werkgever-apk/manager/teams` | yes | no | no |
+| `api/werkgever-apk/manager/teams/{teamId}` | yes | no | no |
+| `api/werkgever-apk/manager/teams/{teamId}/codes` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}/label` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}/answers` | yes | no | no |
 

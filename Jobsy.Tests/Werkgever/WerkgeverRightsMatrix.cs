@@ -44,6 +44,8 @@ public static class WerkgeverRightsMatrix
         new("/werkgever/wervingsmateriaal", "BranchManager,RegionalManager,EnterpriseManager,Admin", true, true, true),
         new("/werkgever/partner", "EnterpriseManager,Intermediary", true, false, false),
         new("/werkgever/partner/uitbetalen", "EnterpriseManager,Intermediary", true, false, false),
+        new("/werkgever/loopbaan-apk", "EnterpriseManager,Admin", true, false, false),
+        new("/werkgever/loopbaan-apk/teams/{TeamId:guid}", "EnterpriseManager,Admin", true, false, false),
     ];
 
     public static readonly IReadOnlyList<ApiRow> Apis =
@@ -106,6 +108,15 @@ public static class WerkgeverRightsMatrix
         new("api/companies/{companyId}/api-keys", true, false, false),
         new("api/companies/{companyId}/api-keys/{apiKeyId}/deactivate", true, false, false),
         new("api/companies/{companyId}/api-keys/email-credentials", true, false, false),
+        // Admin-only feature toggle (BM → 403; see WerkgeverApkCompanyToggleApiTests)
+        new("api/companies/{companyId}/loopbaan-apk", false, false, false),
+        // Loopbaan-APK manager (EnterpriseManager only)
+        new("api/werkgever-apk/manager/teams", true, false, false),
+        new("api/werkgever-apk/manager/teams/{teamId}", true, false, false),
+        new("api/werkgever-apk/manager/teams/{teamId}/codes", true, false, false),
+        new("api/werkgever-apk/manager/codes/{codeId}", true, false, false),
+        new("api/werkgever-apk/manager/codes/{codeId}/label", true, false, false),
+        new("api/werkgever-apk/manager/codes/{codeId}/answers", true, false, false),
     ];
 
     public static bool RoleAllowed(PageRow row, EmployerRole role) => role switch

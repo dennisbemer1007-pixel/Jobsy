@@ -32,6 +32,7 @@ public class WerkgeverRightsMatrixCompletenessTests
         "CompanyCultureController.cs",
         "CompanyApiKeysController.cs",
         "VacancyCsvImportController.cs",
+        "WerkgeverApkManagerController.cs",
     ];
 
     [Fact]
