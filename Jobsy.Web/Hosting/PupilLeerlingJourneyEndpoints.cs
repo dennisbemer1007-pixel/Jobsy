@@ -885,12 +885,30 @@ public static class PupilLeerlingJourneyEndpoints
         return Results.Redirect(ok is null ? "/leerling/vo-paspoort?error=save" : "/leerling/droombaan");
     }
 
-    private static async Task<IResult> GetMboUitlegAsync(HttpContext http, CultureState culture, IAntiforgery af)
+    private static async Task<IResult> GetMboUitlegAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        IAntiforgery af,
+        CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var classLabel = http.User.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
-        var body = PupilMboHboSsrHtml.Uitleg(PupilLeerlingSsrParts.AntiforgeryField(af, http), MboIntroPath, classLabel);
+        IReadOnlyList<PupilMboHboBlockStatusDto> blocks;
+        try
+        {
+            var overview = await api.GetMboHboOverviewAsync(ct);
+            blocks = overview?.Blocks ?? PupilMboHboSsrHtml.DefaultWelcomeBlocks();
+        }
+        catch (HttpRequestException)
+        {
+            blocks = PupilMboHboSsrHtml.DefaultWelcomeBlocks();
+        }
+
+        var body = PupilMboHboSsrHtml.Uitleg(
+            PupilLeerlingSsrParts.AntiforgeryField(af, http),
+            MboIntroPath,
+            blocks);
         return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg");
     }
 

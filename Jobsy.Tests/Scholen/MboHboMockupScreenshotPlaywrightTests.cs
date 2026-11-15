@@ -33,7 +33,7 @@ public sealed class MboHboMockupScreenshotPlaywrightTests
         var routes = new (string Slug, string Path)[]
         {
             ("welkom", "/leerling/mbo-hbo/uitleg"),
-            ("vraag", "/leerling/mbo-hbo/test/werkwaarden"),
+            ("vraag", "/leerling/mbo-hbo/test/vakken"),
             ("overgang", "/leerling/mbo-hbo/uitkomst/vakken"),
             ("paspoort", "/leerling/mbo-hbo/paspoort"),
         };

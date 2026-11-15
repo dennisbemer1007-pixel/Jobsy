@@ -11,16 +11,33 @@ public static class PupilMboHboSsrHtml
 {
     private static readonly IReadOnlyList<PupilMboHboBlock> BlockOrder = PupilMboHboCatalog.AllBlocks;
 
-    public static string Uitleg(string antiforgery, string postPath, string? classLabel)
+    public static IReadOnlyList<PupilMboHboBlockStatusDto> DefaultWelcomeBlocks()
     {
-        var sb = new StringBuilder();
-        sb.Append("""<div class="mhbo-wrap mhbo-wrap--welcome" data-testid="mhbo-welcome"><div class="mhbo-hero"><span class="mhbo-eyebrow">Welkom</span><h1>Ontdek wat bij je past</h1>""");
-        if (!string.IsNullOrWhiteSpace(classLabel))
+        var list = new List<PupilMboHboBlockStatusDto>();
+        foreach (var block in BlockOrder)
         {
-            sb.Append("<p class=\"mhbo-sub\">").Append(PupilLeerlingSsrParts.E(classLabel)).Append("</p>");
+            var meta = PupilMboHboCopy.BlockMeta(block);
+            list.Add(new PupilMboHboBlockStatusDto(
+                block,
+                PupilMboHboProgressState.BlockKey(block),
+                meta.Title,
+                meta.Description,
+                meta.QuestionCount,
+                0,
+                PupilMboHboTileStatus.NotStarted));
         }
 
-        sb.Append("<p class=\"mhbo-sub\">").Append(PupilLeerlingSsrParts.E(PupilSessionDuration.MboHbo)).Append("</p>");
+        return list;
+    }
+
+    public static string Uitleg(string antiforgery, string postPath, IReadOnlyList<PupilMboHboBlockStatusDto> blocks)
+    {
+        var sb = new StringBuilder();
+        sb.Append("""<div class="mhbo-layout mhbo-layout--welcome" data-testid="mhbo-welcome">""");
+        sb.Append(RenderLeftAside(blocks, PupilMboHboBlock.Vakken, welcomeMode: true));
+        sb.Append("""<div class="mhbo-main mhbo-main--welcome">""");
+        sb.Append("""<div class="mhbo-hero"><span class="mhbo-eyebrow">Welkom</span><h1>Ontdek wat bij je past</h1>""");
+        sb.Append("<p class=\"mhbo-sub mhbo-intro\">Met Lobsy kijk je stap voor stap naar je interesses, sterke kanten en wat je belangrijk vindt. Er zijn geen goede of foute antwoorden.</p>");
         sb.Append("</div><div class=\"mhbo-grid mhbo-welcome-blocks\">");
 
         var n = 1;
@@ -28,20 +45,27 @@ public static class PupilMboHboSsrHtml
         {
             var meta = PupilMboHboCopy.BlockMeta(block);
             var minutes = EstimatedMinutes(meta.QuestionCount);
-            sb.Append("<div class=\"mhbo-card mhbo-welcome-block\"><span class=\"mhbo-part-no\">").Append(n.ToString(CultureInfo.InvariantCulture));
+            var isFirst = block == PupilMboHboBlock.Vakken;
+            sb.Append("<div class=\"mhbo-card mhbo-welcome-block");
+            if (isFirst) sb.Append(" is-featured");
+            sb.Append("\"><span class=\"mhbo-part-no\">").Append(n.ToString(CultureInfo.InvariantCulture));
             sb.Append("</span><h2>").Append(PupilLeerlingSsrParts.E(meta.Title)).Append("</h2>");
-            sb.Append("<p>").Append(meta.QuestionCount.ToString(CultureInfo.InvariantCulture)).Append(" vragen · ± ");
-            sb.Append(minutes.ToString(CultureInfo.InvariantCulture)).Append(" min</p></div>");
+            sb.Append("<p class=\"mhbo-welcome-block__desc\">").Append(PupilLeerlingSsrParts.E(meta.Description)).Append("</p>");
+            sb.Append("<p class=\"mhbo-meta\">").Append(meta.QuestionCount.ToString(CultureInfo.InvariantCulture));
+            sb.Append(" vragen · ± ").Append(minutes.ToString(CultureInfo.InvariantCulture)).Append(" min</p></div>");
             n++;
         }
 
         sb.Append("</div><div class=\"mhbo-grid mhbo-welcome-hints\">");
-        sb.Append("""<div class="mhbo-card mhbo-hint"><h3>Geen goed of fout</h3><p>Er is geen goed of fout antwoord. Het gaat om wat bij jou past.</p></div>""");
-        sb.Append("""<div class="mhbo-card mhbo-hint"><h3>Pauzeren mag</h3><p>Je kunt altijd pauzeren en later verder. Je voortgang blijft bewaard.</p></div>""");
-        sb.Append("""<div class="mhbo-card mhbo-hint"><h3>Daarna je paspoort</h3><p>Na de vijf onderdelen maak je je Lobsy-paspoort met jouw uitslagen.</p></div>""");
-        sb.Append("</div><form method=\"post\" action=\"").Append(PupilLeerlingSsrParts.E(postPath)).Append("\" class=\"mhbo-start-form\">");
+        sb.Append("""<div class="mhbo-card mhbo-hint"><h3>Geen goed of fout</h3><p>Kies steeds wat het beste bij je past. Er is geen goed of fout antwoord.</p></div>""");
+        sb.Append("""<div class="mhbo-card mhbo-hint"><h3>Pauzeren mag</h3><p>Stop wanneer je wilt. Je voortgang blijft bewaard en je gaat later verder.</p></div>""");
+        sb.Append("""<div class="mhbo-card mhbo-hint"><h3>Daarna je paspoort</h3><p>Als alle vijf onderdelen af zijn, maak je je Lobsy-paspoort met jouw uitslagen.</p></div>""");
+        sb.Append("</div>");
+        sb.Append("<footer class=\"mhbo-welcome-foot\">");
+        sb.Append("<p class=\"mhbo-welcome-foot__note\">Je doet mee met alleen je code. We vragen geen naam of andere gegevens.</p>");
+        sb.Append("<form method=\"post\" action=\"").Append(PupilLeerlingSsrParts.E(postPath)).Append("\" class=\"mhbo-start-form\">");
         sb.Append(antiforgery);
-        sb.Append("""<button type="submit" class="mhbo-btn mhbo-btn--gold" data-testid="mhbo-start-vakken">Start met vakkenpakket</button></form></div>""");
+        sb.Append("""<button type="submit" class="mhbo-btn" data-testid="mhbo-start-vakken">Start met vakkenpakket →</button></form></footer></div></div>""");
         return sb.ToString();
     }
 
@@ -95,36 +119,20 @@ public static class PupilMboHboSsrHtml
         var blockMeta = PupilMboHboCopy.BlockMeta(q.Block);
         var pct = q.Total > 0 ? Math.Clamp(q.Index * 100 / q.Total, 0, 100) : 0;
         var sb = new StringBuilder();
-        sb.Append("""<div class="mhbo-layout" data-testid="mhbo-test-question"><aside class="mhbo-aside mhbo-aside--left" aria-label="Jouw onderdelen">""");
-        sb.Append("<h2 class=\"mhbo-aside__title\">Jouw onderdelen</h2><ol class=\"mhbo-parts\">");
-        var idx = 1;
-        foreach (var block in blocks)
+        sb.Append("""<div class="mhbo-layout" data-testid="mhbo-test-question">""");
+        sb.Append(RenderMobileProgress(blockMeta.Title, q.Index, q.Total, blocks));
+        sb.Append(RenderLeftAside(blocks, q.Block, welcomeMode: false, questionIndex: q.Index, questionTotal: q.Total));
+        sb.Append("<div class=\"mhbo-main\"><div class=\"mhbo-banner\" role=\"note\"><span class=\"mhbo-banner__icon\" aria-hidden=\"true\">i</span><p>");
+        if (q.Scale == PupilMboHboScaleKind.SubjectLeukGoed)
         {
-            var active = string.Equals(block.Key, blockKey, StringComparison.OrdinalIgnoreCase);
-            sb.Append("<li class=\"mhbo-part");
-            if (active) sb.Append(" is-active");
-            if (block.Status == PupilMboHboTileStatus.Completed) sb.Append(" is-done");
-            sb.Append("\"><span class=\"mhbo-part__no\">").Append(idx.ToString(CultureInfo.InvariantCulture)).Append("</span>");
-            sb.Append("<div class=\"mhbo-part__body\"><strong>").Append(PupilLeerlingSsrParts.E(block.Title)).Append("</strong>");
-            sb.Append("<span class=\"mhbo-part__st\">");
-            if (active)
-            {
-                sb.Append("Vraag ").Append(q.Index.ToString(CultureInfo.InvariantCulture)).Append(" van ")
-                    .Append(q.Total.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                sb.Append(PartSideStatus(block));
-            }
-
-            sb.Append("</span></div></li>");
-            idx++;
+            sb.Append("Bij elk vak geef je twee dingen aan: hoe leuk je het vindt, en hoe goed je erin bent. De vakjes zijn steeds even groot. 1 is weinig, 5 is veel.");
+        }
+        else
+        {
+            sb.Append(PupilLeerlingSsrParts.E(blockMeta.Description));
         }
 
-        sb.Append("</ol><div class=\"mhbo-card mhbo-tip\"><h3>Tip</h3><p>");
-        sb.Append(PupilLeerlingSsrParts.E(blockMeta.Description)).Append("</p></div></aside>");
-        sb.Append("<div class=\"mhbo-main\"><div class=\"mhbo-banner\" role=\"note\"><p>");
-        sb.Append(PupilLeerlingSsrParts.E(blockMeta.Description)).Append("</p></div>");
+        sb.Append("</p></div>");
         sb.Append("<article class=\"mhbo-qcard\"><header class=\"mhbo-qcard__head\"><span class=\"mhbo-qcard__block\">");
         sb.Append(PupilLeerlingSsrParts.E(blockMeta.Title)).Append("</span><span class=\"mhbo-qcard__prog\">Vraag ");
         sb.Append(q.Index.ToString(CultureInfo.InvariantCulture)).Append(" van ").Append(q.Total.ToString(CultureInfo.InvariantCulture));
@@ -145,8 +153,8 @@ public static class PupilMboHboSsrHtml
             sb.Append("<input type=\"hidden\" name=\"Leuk\" value=\"").Append(q.CurrentLeuk ?? 0).Append("\" />");
             sb.Append("<input type=\"hidden\" name=\"Goed\" value=\"").Append(q.CurrentGoed ?? 0).Append("\" />");
             sb.Append("<div class=\"mhbo-vak-scales\">");
-            sb.Append("<div class=\"mhbo-vak-row\"><span class=\"mhbo-vak-label\">Leuk</span>").Append(ScaleRow("Leuk", q.CurrentLeuk)).Append("</div>");
-            sb.Append("<div class=\"mhbo-vak-row\"><span class=\"mhbo-vak-label\">Goed in</span>").Append(ScaleRow("Goed", q.CurrentGoed)).Append("</div>");
+            sb.Append("<div class=\"mhbo-vak-row\">").Append(VakScaleRow("Leuk", "Hoe leuk lijkt dit vak je?", "Niet leuk", "Heel leuk", q.CurrentLeuk)).Append("</div>");
+            sb.Append("<div class=\"mhbo-vak-row\">").Append(VakScaleRow("Goed", "Hoe goed ben je hierin, denk je?", "Nog weinig", "Hier ben ik goed in", q.CurrentGoed)).Append("</div>");
             sb.Append("</div>");
         }
         else
@@ -163,11 +171,11 @@ public static class PupilMboHboSsrHtml
             sb.Append("\">").Append(PupilLeerlingSsrParts.E(culture["Leerling.Reis.Retry"])).Append("</a></p>");
         }
 
-        var nextLabel = q.Index >= q.Total ? "Afronden" : "Volgende";
+        var nextLabel = q.Index >= q.Total ? "Afronden →" : "Volgende →";
         sb.Append("<footer class=\"mhbo-pagefoot mhbo-pagefoot--in-form\" data-testid=\"mhbo-test-nav\">");
         sb.Append(PrevControl(blockKey, q, culture));
-        sb.Append("""<a class="mhbo-btn mhbo-btn--ghost" href="/leerling/mbo-hbo/overzicht" data-testid="mhbo-pause">Pauzeren en naar overzicht</a>""");
-        sb.Append("<button type=\"submit\" class=\"mhbo-btn mhbo-btn--gold\" data-testid=\"mhbo-next\" disabled>")
+        sb.Append("""<a class="mhbo-btn mhbo-btn--ghost mhbo-btn--pause" href="/leerling/mbo-hbo/overzicht" data-testid="mhbo-pause">Pauzeren en naar overzicht</a>""");
+        sb.Append("<button type=\"submit\" class=\"mhbo-btn mhbo-btn--next\" data-testid=\"mhbo-next\" disabled>")
             .Append(nextLabel).Append("</button></footer>");
         sb.Append("</form></article></div>");
         sb.Append("<aside class=\"mhbo-aside mhbo-aside--right\" aria-label=\"Uitleg en voortgang\">");
@@ -284,52 +292,131 @@ public static class PupilMboHboSsrHtml
         return sb.ToString();
     }
 
+    private static string RenderLeftAside(
+        IReadOnlyList<PupilMboHboBlockStatusDto> blocks,
+        PupilMboHboBlock activeBlock,
+        bool welcomeMode,
+        int? questionIndex = null,
+        int? questionTotal = null)
+    {
+        var sb = new StringBuilder("""<aside class="mhbo-aside mhbo-aside--left" aria-label="Jouw onderdelen">""");
+        sb.Append("<h2 class=\"mhbo-aside__title\">Jouw onderdelen</h2><ol class=\"mhbo-parts\">");
+        var idx = 1;
+        foreach (var block in blocks)
+        {
+            var active = block.Block == activeBlock;
+            sb.Append("<li class=\"mhbo-part");
+            if (active) sb.Append(" is-active");
+            if (BlockDisplayComplete(block)) sb.Append(" is-done");
+            sb.Append("\"><span class=\"mhbo-part__no\">").Append(idx.ToString(CultureInfo.InvariantCulture)).Append("</span>");
+            sb.Append("<div class=\"mhbo-part__body\"><strong>").Append(PupilLeerlingSsrParts.E(block.Title)).Append("</strong>");
+            sb.Append("<span class=\"mhbo-part__st\">");
+            if (welcomeMode && active)
+            {
+                sb.Append("Eerst dit · ").Append(block.QuestionCount.ToString(CultureInfo.InvariantCulture)).Append(" vragen");
+            }
+            else if (active && questionIndex is not null && questionTotal is not null)
+            {
+                sb.Append("Vraag ").Append(questionIndex.Value.ToString(CultureInfo.InvariantCulture)).Append(" van ")
+                    .Append(questionTotal.Value.ToString(CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                sb.Append(PartSideStatus(block));
+            }
+
+            sb.Append("</span></div></li>");
+            idx++;
+        }
+
+        sb.Append("</ol>");
+        if (welcomeMode)
+        {
+            sb.Append("""<div class="mhbo-card mhbo-pause-card"><h3>Je mag pauzeren</h3><p>Je antwoorden worden bewaard. Je gaat later verder waar je was.</p></div>""");
+        }
+        else
+        {
+            sb.Append("<div class=\"mhbo-card mhbo-tip\"><h3>Tip</h3><p>1 is weinig, 5 is veel. Kies wat het beste bij je past.</p></div>");
+        }
+
+        sb.Append("</aside>");
+        return sb.ToString();
+    }
+
+    private static string RenderMobileProgress(
+        string blockTitle,
+        int index,
+        int total,
+        IReadOnlyList<PupilMboHboBlockStatusDto> blocks)
+    {
+        var sb = new StringBuilder("""<div class="mhbo-mobile-progress" aria-hidden="true"><div class="mhbo-mobile-progress__segments">""");
+        var i = 0;
+        foreach (var _ in blocks)
+        {
+            sb.Append("<span class=\"mhbo-mobile-progress__seg");
+            if (i == 0) sb.Append(" is-on");
+            sb.Append("\"></span>");
+            i++;
+        }
+
+        sb.Append("</div><p class=\"mhbo-mobile-progress__label\">");
+        sb.Append(PupilLeerlingSsrParts.E(blockTitle)).Append(" · ").Append(index.ToString(CultureInfo.InvariantCulture));
+        sb.Append(" / ").Append(total.ToString(CultureInfo.InvariantCulture)).Append("</p></div>");
+        return sb.ToString();
+    }
+
     private static string ScaleLegendCard(PupilMboHboScaleKind kind)
     {
         var labels = kind switch
         {
             PupilMboHboScaleKind.Appeal => PupilMboHboScaleLabels.Appeal,
-            PupilMboHboScaleKind.SubjectLeukGoed => null,
+            PupilMboHboScaleKind.SubjectLeukGoed => PupilMboHboScaleLabels.Agreement,
             _ => PupilMboHboScaleLabels.Agreement,
         };
 
-        var sb = new StringBuilder("""<div class="mhbo-card mhbo-legend"><h2>Wat betekenen de cijfers?</h2>""");
-        if (labels is null)
+        var sb = new StringBuilder("""<div class="mhbo-card mhbo-legend"><h2>Wat betekenen de cijfers?</h2><ol class="mhbo-legend-boxes">""");
+        for (var i = 0; i < labels.Length; i++)
         {
-            sb.Append("<p>1 = helemaal niet · 5 = heel erg. Geef bij elk vak twee scores: hoe leuk je het vindt en hoe goed je erin bent.</p>");
-        }
-        else
-        {
-            sb.Append("<ol class=\"mhbo-legend-list\">");
-            for (var i = 0; i < labels.Length; i++)
-            {
-                sb.Append("<li><span>").Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append("</span> ");
-                sb.Append(PupilLeerlingSsrParts.E(labels[i])).Append("</li>");
-            }
-
-            sb.Append("</ol>");
+            sb.Append("<li><span class=\"mhbo-legend-box\">").Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append("</span> ");
+            sb.Append(PupilLeerlingSsrParts.E(labels[i])).Append("</li>");
         }
 
-        sb.Append("</div>");
+        sb.Append("</ol></div>");
         return sb.ToString();
     }
 
     private static string ProgressAsideCard(IReadOnlyList<PupilMboHboBlockStatusDto> blocks)
     {
-        var sb = new StringBuilder("""<div class="mhbo-card mhbo-progress-card"><h2>Voortgang</h2>""");
+        var sb = new StringBuilder("""<div class="mhbo-card mhbo-progress-card"><h2>Voortgang</h2><ul class="mhbo-progress-badges">""");
         foreach (var block in blocks)
         {
-            var pct = block.QuestionCount > 0
-                ? Math.Clamp(block.AnsweredCount * 100 / block.QuestionCount, 0, 100)
-                : 0;
-            sb.Append("<div class=\"mhbo-hb\"><span>").Append(PupilLeerlingSsrParts.E(block.Title)).Append("</span>");
-            sb.Append("<div class=\"mhbo-bar\"><i style=\"width:").Append(pct.ToString(CultureInfo.InvariantCulture)).Append("%\"></i></div>");
-            sb.Append("<b>").Append(pct.ToString(CultureInfo.InvariantCulture)).Append("%</b></div>");
+            sb.Append("<li><span class=\"mhbo-progress-badges__title\">").Append(PupilLeerlingSsrParts.E(block.Title)).Append("</span>");
+            sb.Append("<span class=\"mhbo-badge\">").Append(ProgressBadge(block)).Append("</span></li>");
         }
 
-        sb.Append("</div>");
+        sb.Append("</ul></div>");
         return sb.ToString();
     }
+
+    private static string ProgressBadge(PupilMboHboBlockStatusDto block)
+    {
+        if (BlockDisplayComplete(block))
+        {
+            return $"{block.QuestionCount} / {block.QuestionCount}";
+        }
+
+        if (block.AnsweredCount > 0)
+        {
+            return $"{block.AnsweredCount} / {block.QuestionCount}";
+        }
+
+        return "Nog te doen";
+    }
+
+    private static bool BlockDisplayComplete(PupilMboHboBlockStatusDto block)
+        => block.Status == PupilMboHboTileStatus.Completed
+           && block.AnsweredCount >= block.QuestionCount
+           && block.QuestionCount > 0;
 
     private static string SpeakRow(string text, string speechKey, CultureState culture)
         => $"""
@@ -382,17 +469,33 @@ public static class PupilMboHboSsrHtml
 
     private static string PartSideStatus(PupilMboHboBlockStatusDto block)
     {
-        if (block.Status == PupilMboHboTileStatus.Completed)
+        if (BlockDisplayComplete(block))
         {
             return "Afgerond";
         }
 
-        if (block.Status == PupilMboHboTileStatus.InProgress && block.AnsweredCount > 0)
+        if (block.AnsweredCount > 0)
         {
-            return $"Vraag {block.AnsweredCount + 1} van {block.QuestionCount}";
+            return $"{block.AnsweredCount} / {block.QuestionCount} vragen";
         }
 
-        return "Nog te doen";
+        if (block.Status == PupilMboHboTileStatus.InProgress)
+        {
+            return "Bezig";
+        }
+
+        return $"{block.QuestionCount} vragen";
+    }
+
+    private static string VakScaleRow(string field, string hint, string low, string high, int? selected)
+    {
+        var sb = new StringBuilder("<div class=\"mhbo-vak-scale-head\"><span class=\"mhbo-vak-label\">");
+        sb.Append(field == "Goed" ? "Goed in" : "Leuk").Append("</span><span class=\"mhbo-vak-hint\">");
+        sb.Append(PupilLeerlingSsrParts.E(hint)).Append("</span></div>");
+        sb.Append(ScaleRow(field, selected));
+        sb.Append("<div class=\"mhbo-scale-ends\"><span>").Append(PupilLeerlingSsrParts.E(low));
+        sb.Append("</span><span>").Append(PupilLeerlingSsrParts.E(high)).Append("</span></div>");
+        return sb.ToString();
     }
 
     private static PupilMboHboBlock? NextBlock(PupilMboHboBlock completed)

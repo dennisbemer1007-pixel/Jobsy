@@ -4,6 +4,7 @@ using System.Text;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Scholen;
 using Jobsy.Web.Hosting;
+using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Seo;
 
@@ -134,7 +135,6 @@ public static class PupilLeerlingSsrFrame
 
     private static void RenderMboHboShell(StringBuilder sb, PupilLeerlingSsrDocumentOptions options, string lang)
     {
-        var path = PageSeoCatalog.Normalize(options.RoutePath);
         var classLabel = options.Pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
         var code = options.Pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
         var schoolLine = string.IsNullOrWhiteSpace(options.MboSchoolLabel)
@@ -143,12 +143,14 @@ public static class PupilLeerlingSsrFrame
                 ? options.MboSchoolLabel
                 : $"{options.MboSchoolLabel} · {classLabel}";
 
-        var showCoachTeaser = string.Equals(path, "/leerling/mbo-hbo/uitleg", StringComparison.OrdinalIgnoreCase);
+        var showCoachTeaser = true;
 
         sb.Append("<div class=\"mhbo-root\" lang=\"");
         sb.Append(WebUtility.HtmlEncode(lang));
         sb.Append("\"><header class=\"mhbo-top\"><a class=\"mhbo-top__brand\" href=\"/leerling/mbo-hbo/overzicht\">");
-        sb.Append("<img src=\"/brand/svg/lobsy-logo-horizontaal.svg\" alt=\"Lobsy\" width=\"120\" height=\"28\" decoding=\"async\" /></a>");
+        sb.Append("<span class=\"mhbo-top__logo-tile\" aria-hidden=\"true\">");
+        sb.Append("<img src=\"").Append(BrandImages.AbsoluteWebp128).Append("\" alt=\"\" width=\"28\" height=\"28\" decoding=\"async\" />");
+        sb.Append("</span><span class=\"mhbo-top__wordmark\">Lobsy</span></a>");
         if (!string.IsNullOrWhiteSpace(schoolLine))
         {
             sb.Append("<span class=\"mhbo-top__school\">");

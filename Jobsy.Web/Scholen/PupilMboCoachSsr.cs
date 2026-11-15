@@ -31,10 +31,9 @@ public static class PupilMboCoachSsr
             .Append("\" data-lang=\"")
             .Append(WebUtility.HtmlEncode(culture.Language))
             .Append("\"></div>");
+        _ = showTeaser;
         sb.Append(
-                "<div class=\"lobsy-coach-dock lobsy-coach-dock--variant-b mhbo-coach-dock\" data-lobsy-coach data-ssr-coach=\"business\"" +
-                (showTeaser ? "" : " data-mhbo-coach-no-teaser=\"1\"") +
-                ">");
+                "<div class=\"lobsy-coach-dock lobsy-coach-dock--variant-b mhbo-coach-dock\" data-lobsy-coach data-ssr-coach=\"business\">");
         if (showTeaser)
         {
             sb.Append("<p class=\"lobsy-coach-dock__teaser\" data-ob-coach-bubble role=\"status\">")
@@ -48,6 +47,6 @@ public static class PupilMboCoachSsr
             .Append(WebUtility.HtmlEncode(BrandImages.AbsoluteCoachB))
             .Append("\" alt=\"")
             .Append(WebUtility.HtmlEncode(culture["Coach.LobsterAlt"]))
-            .Append("\" width=\"165\" height=\"250\" decoding=\"async\" /></button></div>");
+            .Append("\" decoding=\"async\" /></button></div>");
     }
 }

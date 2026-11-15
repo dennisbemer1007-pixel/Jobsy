@@ -38,11 +38,34 @@
   border-bottom: 1px solid rgb(255 255 255 / 12%);
 }
 
-.mhbo-top__brand img {
+.mhbo-top__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.mhbo-top__logo-tile {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mhbo-top__logo-tile img {
   display: block;
+  width: 28px;
   height: 28px;
-  width: auto;
-  filter: brightness(0) invert(1);
+}
+
+.mhbo-top__wordmark {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
 }
 
 .mhbo-top__school {
@@ -207,6 +230,9 @@
 }
 
 .mhbo-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
   margin-bottom: 14px;
   padding: 14px 16px;
   border-radius: 12px;
@@ -214,6 +240,24 @@
   border: 1px solid #e8d5a6;
   color: var(--mhbo-navy);
   font-size: 14px;
+}
+
+.mhbo-banner__icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  background: #fff;
+  border: 1px solid #c9a86a;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-banner p {
+  margin: 0;
 }
 
 .mhbo-layout {
@@ -356,7 +400,13 @@
 
 .mhbo-scale-opt.is-on {
   border: 2px solid var(--mhbo-navy);
-  background: #eef2f8;
+  background: var(--mhbo-navy);
+  color: #fff;
+}
+
+.mhbo-scale-opt {
+  aspect-ratio: 1;
+  min-height: 52px;
 }
 
 .mhbo-vak-scales {
@@ -422,9 +472,173 @@
   color: #8b1a1a;
 }
 
+.mhbo-layout--welcome {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .mhbo-welcome-blocks {
   margin-top: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.mhbo-welcome-block.is-featured {
+  border: 2px solid color-mix(in srgb, var(--mhbo-navy) 55%, var(--mhbo-line));
+  box-shadow: 0 4px 16px rgb(10 32 68 / 8%);
+}
+
+.mhbo-welcome-block__desc {
+  font-size: 13px;
+  color: var(--mhbo-muted);
+  margin: 6px 0 8px;
+  line-height: 1.4;
+}
+
+.mhbo-welcome-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--mhbo-line);
+}
+
+.mhbo-welcome-foot__note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mhbo-muted);
+  max-width: 32rem;
+}
+
+.mhbo-start-form {
+  margin: 0;
+}
+
+.mhbo-pause-card h3,
+.mhbo-pause-card p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.mhbo-pause-card p {
+  margin-top: 6px;
+  color: var(--mhbo-muted);
+}
+
+.mhbo-pause-card {
+  background: #faf6e8;
+  border-color: #e8d5a6;
+}
+
+.mhbo-legend-boxes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.mhbo-legend-boxes li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.mhbo-legend-box {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--mhbo-line);
+  background: #fff;
+  font-weight: 700;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-progress-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.mhbo-progress-badges li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mhbo-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--mhbo-cream-dark);
+  color: var(--mhbo-navy);
+}
+
+.mhbo-part.is-active .mhbo-badge,
+.mhbo-badge.is-active {
+  background: #e8f0ff;
+}
+
+.mhbo-vak-scale-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mhbo-vak-hint {
+  font-size: 13px;
+  color: var(--mhbo-muted);
+}
+
+.mhbo-scale-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--mhbo-muted);
+  margin-top: 6px;
+}
+
+.mhbo-mobile-progress {
+  display: none;
+  padding: 8px 16px 0;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.mhbo-mobile-progress__segments {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.mhbo-mobile-progress__seg {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--mhbo-line);
+}
+
+.mhbo-mobile-progress__seg.is-on {
+  background: var(--mhbo-gold);
+}
+
+.mhbo-mobile-progress__label {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mhbo-muted);
 }
 
 .mhbo-welcome-block h2 {
@@ -530,8 +744,32 @@
   z-index: 40;
 }
 
-.mhbo-root .mhbo-coach-dock[data-mhbo-coach-no-teaser] .lobsy-coach-dock__teaser {
-  display: none;
+.mhbo-root .mhbo-coach-dock .lobsy-coach-dock__btn--lobster-b {
+  width: auto;
+  height: auto;
+  min-width: unset;
+  min-height: unset;
+  overflow: visible;
+  background: transparent;
+}
+
+.mhbo-root .mhbo-coach-dock .lobsy-coach-dock__lobster {
+  display: block;
+  width: auto;
+  height: 220px;
+  max-width: 165px;
+  object-fit: contain;
+  object-position: bottom right;
+}
+
+.mhbo-root .mhbo-coach-dock {
+  align-items: flex-end;
+  flex-direction: column-reverse;
+}
+
+.mhbo-root .mhbo-coach-dock .lobsy-coach-dock__teaser {
+  display: block;
+  max-width: 240px;
 }
 
 @media (min-width: 960px) {
@@ -540,8 +778,29 @@
     align-items: start;
   }
 
+  .mhbo-layout--welcome {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .mhbo-layout--welcome .mhbo-welcome-foot {
+    padding-right: min(220px, 22vw);
+  }
+
+  .mhbo-layout--welcome .mhbo-start-form .mhbo-btn {
+    min-width: 220px;
+  }
+
   .mhbo-aside--right {
     display: block;
+  }
+
+  .mhbo-root {
+    --mhbo-coach-pad: 200px;
+  }
+
+  .mhbo-root .mhbo-coach-dock .lobsy-coach-dock__lobster {
+    height: 250px;
+    max-width: 180px;
   }
 }
 
@@ -564,12 +823,57 @@
   }
 
   .mhbo-root {
-    --mhbo-coach-pad: 112px;
+    --mhbo-coach-pad: 150px;
+  }
+
+  .mhbo-mobile-progress {
+    display: block;
+  }
+
+  .mhbo-welcome-blocks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mhbo-pagefoot--in-form {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: calc(100% - 78px);
+  }
+
+  .mhbo-btn--pause {
+    grid-column: 1 / -1;
+    justify-self: center;
+    background: transparent;
+    border: none;
+    color: var(--mhbo-navy);
+    font-weight: 600;
+    text-decoration: underline;
+    padding: 6px;
+  }
+
+  .mhbo-btn--next {
+    grid-column: 2;
+    justify-self: end;
   }
 
   .mhbo-root .mhbo-coach-dock {
-    transform: scale(0.72);
-    transform-origin: bottom right;
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    inset-inline-end: 6px;
+    transform: none;
+    z-index: 30;
+  }
+
+  .mhbo-root .mhbo-coach-dock .lobsy-coach-dock__lobster {
+    height: 72px;
+    max-width: 52px;
+  }
+
+  .mhbo-root .mhbo-coach-dock .lobsy-coach-dock__teaser {
+    display: none;
   }
 
   .mhbo-wrap--overview .mhbo-tile .mhbo-btn {
