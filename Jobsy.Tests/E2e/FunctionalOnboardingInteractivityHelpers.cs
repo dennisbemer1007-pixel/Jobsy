@@ -493,15 +493,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AcceptTestConsentIfPresentAsync(IPage page)
     {
-        var box = page.Locator(".ob-wizard__consent input[type=checkbox], .ob-wizard__card input[type=checkbox]").First;
-        if (await box.CountAsync() == 0)
+        if (!await OnboardingConsentScreen(page).First.IsVisibleAsync())
         {
             return;
         }
 
-        await box.CheckAsync(new() { Force = true });
-        await ClickWizardNextWhenVisibleAsync(page);
-        await page.WaitForTimeoutAsync(600);
+        await AcceptOnboardingTestConsentAsync(page);
     }
 
     internal static async Task AdvanceThroughMiniBlockIfPresentAsync(IPage page, int maxAnswers = 16)
@@ -559,13 +556,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
                     break;
                 case 7:
                     await AcceptTestConsentIfPresentAsync(page);
-                    await AdvanceThroughMiniBlockIfPresentAsync(page);
-                    await ClickWizardNextWhenVisibleAsync(page);
+                    await CompleteCurrentMiniTestBlockAsync(page);
                     await page.WaitForTimeoutAsync(600);
                     break;
                 default:
-                    await AdvanceThroughMiniBlockIfPresentAsync(page);
-                    await ClickWizardNextWhenVisibleAsync(page);
+                    await CompleteCurrentMiniTestBlockAsync(page);
                     await page.WaitForTimeoutAsync(600);
                     break;
             }
@@ -1065,7 +1060,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
                         break;
                     }
 
-                    await AdvanceStep6ToStep7Async(page, preferDreamUnknown: true);
+                    await ClickDreamUnknownOrNextAsync(page);
                     await page.WaitForTimeoutAsync(mobileAdv ? 700 : 400);
                     if (await OnboardingConsentScreen(page).First.IsVisibleAsync())
                     {
@@ -1952,62 +1947,29 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
     }
 
-    internal static async Task AdvanceStep6ToStep7Async(IPage page, bool preferDreamUnknown = false)
-    {
-        if (preferDreamUnknown)
-        {
-            var unknown = page.GetByTestId("onboarding-dream-unknown");
-            if (await unknown.CountAsync() == 0)
-            {
-                unknown = page.GetByTestId("onboarding-dream-unknown-mobile");
-            }
-
-            if (await unknown.CountAsync() > 0 && await unknown.First.IsVisibleAsync())
-            {
-                try
-                {
-                    await unknown.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
-                    await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 15_000 });
-                    await WaitForOnboardingConsentScreenAsync(page, 90_000);
-                    return;
-                }
-                catch (TimeoutException)
-                {
-                    // Fall through: pick a dream tile and use the dedicated Volgende POST (same as a filled dream).
-                }
-            }
-        }
-
-        var tile = page.GetByTestId("onboarding-dream-tile");
-        if (await tile.CountAsync() > 0)
-        {
-            await tile.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
-            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-            await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
-            await WaitForOnboardingConsentScreenAsync(page, 90_000);
-            return;
-        }
-
-        await ClickDreamUnknownOrNextAsync(page);
-    }
-
     internal static async Task ClickDreamUnknownOrNextAsync(IPage page)
     {
-        var unknown = page.GetByTestId("onboarding-dream-unknown");
-        if (await unknown.CountAsync() == 0)
+        ILocator? unknown = null;
+        var desktop = page.GetByTestId("onboarding-dream-unknown");
+        var mobileBtn = page.GetByTestId("onboarding-dream-unknown-mobile");
+        if (await desktop.CountAsync() > 0 && await desktop.First.IsVisibleAsync())
         {
-            unknown = page.GetByTestId("onboarding-dream-unknown-mobile");
+            unknown = desktop.First;
+        }
+        else if (await mobileBtn.CountAsync() > 0 && await mobileBtn.First.IsVisibleAsync())
+        {
+            unknown = mobileBtn.First;
         }
 
-        if (await unknown.CountAsync() > 0 && await unknown.First.IsVisibleAsync())
+        if (unknown is not null)
         {
             try
             {
-                await unknown.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                await unknown.ClickAsync(new() { Force = true, Timeout = 20_000 });
             }
             catch (PlaywrightException)
             {
-                await unknown.First.EvaluateAsync("el => el.click()");
+                await unknown.EvaluateAsync("el => el.click()");
             }
 
             await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
@@ -2027,10 +1989,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
         if (await legacy.CountAsync() > 0)
         {
             await legacy.First.ClickAsync(new() { Timeout = 8_000, Force = true });
+            await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
             return;
         }
 
-        await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+        throw new InvalidOperationException(
+            "Expected «Weet ik nog niet» (onboarding-dream-unknown) to submit a classic POST to step 7.");
     }
 
     private static async Task<string> TargetSelectorAsync(ILocator target)

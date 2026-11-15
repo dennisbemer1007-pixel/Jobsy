@@ -29,8 +29,10 @@ public static class OnboardingStartFormEndpoints
         return app;
     }
 
-    private static async Task<IResult> Step6DreamUnknownGetAsync(
+    private static async Task<IResult> Step6DreamUnknownAsync(
         JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
         CultureState culture,
         CancellationToken cancellationToken)
     {
@@ -45,14 +47,19 @@ public static class OnboardingStartFormEndpoints
                 // Dream clear is best-effort when the candidate picks "Weet ik nog niet".
             }
 
-            await OnboardingClientProgressSaver.SaveStickyAsync(
+            using var emptyDoc = JsonDocument.Parse("""{"advance":true,"skipOptional":true}""");
+            var body = ForceEmptyDreamPayload(emptyDoc.RootElement);
+            var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: true);
+            var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+                6,
+                merged,
                 api,
-                7,
-                stepCompleted: false,
-                stepSkipped: true,
-                ct: cancellationToken);
+                geocoder,
+                featureFlags,
+                culture,
+                cancellationToken);
             api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
-            return SeeOther(OnboardingRoutes.StepUrl(7));
+            return ToRedirect(stepStatus, stepPayload, 6, advance: true, goBack: false, culture);
         }
         catch (Exception)
         {
@@ -103,7 +110,7 @@ public static class OnboardingStartFormEndpoints
         var obNav = form["obNav"].ToString();
         if (string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase))
         {
-            return await Step6DreamUnknownGetAsync(api, culture, cancellationToken);
+            return await Step6DreamUnknownAsync(api, geocoder, featureFlags, culture, cancellationToken);
         }
 
         dream = ResolveDreamFromRequest(form, dream, obPayload);
@@ -324,7 +331,7 @@ public static class OnboardingStartFormEndpoints
 
         if (dreamUnknown && currentStep == 6)
         {
-            return await Step6DreamUnknownGetAsync(api, culture, cancellationToken);
+            return await Step6DreamUnknownAsync(api, geocoder, featureFlags, culture, cancellationToken);
         }
 
         if (skipOptional)

@@ -341,7 +341,7 @@ internal static class OnboardingClientStepShells
         }
 
         sb.Append("</div>");
-        sb.Append("<button type=\"submit\" class=\"ob-v3-dream-unknown-mobile\" formaction=\"/candidate/start/step-6/volgende\" name=\"obNav\" value=\"dreamUnknown\" formnovalidate onclick=\"this.formaction='/candidate/start/step-6/volgende';this.name='obNav';this.value='dreamUnknown';\" data-testid=\"onboarding-dream-unknown-mobile\">");
+        sb.Append("<button type=\"submit\" class=\"ob-v3-dream-unknown-mobile\" form=\"ob-step6-dream-unknown-form\" formnovalidate data-testid=\"onboarding-dream-unknown-mobile\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.DreamUnknown"]));
         sb.Append("</button></div>");
         return sb.ToString();

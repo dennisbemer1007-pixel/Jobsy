@@ -51,6 +51,18 @@ else if (_step is >= 1 and <= 10)
         : $"/candidate/start?step={_step}";
     var canvasTestId = _step == 7 && step7Consent ? "onboarding-step-7-consent" : $"onboarding-step-{_step}-illustrated";
     var phaseTag = Culture[OnboardingV3LayoutCatalog.PhaseTagKey(_step)];
+    @if (_step == 6)
+    {
+        <form id="ob-step6-dream-unknown-form"
+              method="post"
+              action="/candidate/start/step-6/volgende"
+              class="ob-v3-dream-unknown-post"
+              hidden
+              aria-hidden="true">
+            <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
+            <input type="hidden" name="obNav" value="dreamUnknown" />
+        </form>
+    }
     <form method="post"
           action="@formAction"
           class="ob-wizard ob-wizard--richting-a ob-wizard--rustig ob-wizard--v3"

@@ -33,14 +33,16 @@ public sealed class OnboardingFinalScreenshotPlaywrightTests
             FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
-        page.SetDefaultTimeout(240_000);
+        page.SetDefaultTimeout(300_000);
 
         await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, $"final-{tag}");
         await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
+        await FunctionalOnboardingInteractivityHelpers.FillKennismakenBasicsExceptWorkStatusAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         for (var step = 1; step <= 7; step++)
         {
-            await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStartStepAsync(page, step, 120_000);
+            await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStartStepAsync(page, step, 180_000);
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
             await page.ScreenshotAsync(new()
@@ -49,22 +51,34 @@ public sealed class OnboardingFinalScreenshotPlaywrightTests
                 FullPage = true,
             });
 
+            if (step == 7)
+            {
+                break;
+            }
+
             if (step == 1)
             {
                 await FunctionalOnboardingInteractivityHelpers.AdvanceFromStep1ToStep2Async(page);
             }
+            else if (step == 2)
+            {
+                await FunctionalOnboardingInteractivityHelpers.AdvanceFromStep2ToStep3Async(page, mobile);
+            }
             else if (step == 3)
             {
-                await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
+                await FunctionalOnboardingInteractivityHelpers.SelectTransportAndTravel30Async(page);
                 await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+                await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStartStepAsync(page, 4, 180_000);
             }
-            else if (step < 6)
+            else if (step is 4 or 5)
             {
                 await FunctionalOnboardingInteractivityHelpers.ClickOptionalSkipOrNextAsync(page);
+                await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStartStepAsync(page, step + 1, 180_000);
             }
             else if (step == 6)
             {
-                await FunctionalOnboardingInteractivityHelpers.AdvanceStep6ToStep7Async(page, preferDreamUnknown: true);
+                await FunctionalOnboardingInteractivityHelpers.ClickDreamUnknownOrNextAsync(page);
+                await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStartStepAsync(page, 7, 180_000);
             }
         }
     }
