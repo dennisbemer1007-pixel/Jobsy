@@ -45,7 +45,6 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
     private static string OutDir => "/opt/cursor/artifacts/werkgever-apk";
 
-    private static readonly Guid DemoCompanyId = Guid.Parse("d1000000-0000-0000-0000-000000000099");
 
     private readonly RoleFunctionalWebAppFactory _api;
     private WerkgeverApkWebFactory? _web;
@@ -67,6 +66,12 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
         await EnableLoopbaanApkFeaturesAsync();
         _seed = await SeedDemoTeamAsync();
+        var webRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Web"));
+        if (Directory.Exists(webRoot))
+        {
+            WerkgeverApkTemplateLocator.SetWebContentRoot(webRoot);
+        }
+
         _web = new WerkgeverApkWebFactory(_api.Server.CreateHandler());
         _ = _web.ServerAddress;
     }
@@ -104,82 +109,89 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
         Directory.CreateDirectory(OutDir);
         var baseUrl = _web.ServerAddress.TrimEnd('/');
 
-        // 01 — login (code only)
+        // 01 — login (code only, no navigation)
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
             await page.GotoAsync($"{baseUrl}/loopbaan-apk", DomReady);
+            await AssertBodyContainsAsync(page, "Jouw Loopbaan-APK");
             await CapturePairAsync(page, "01-login");
         }
 
-        // 02 — welkom (invited, not started)
+        // 02–03 — employee: invite → welkom → start → beantwoord 1 vraag
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
             page.SetDefaultTimeout(90_000);
             await EmployeeLoginAsync(page, baseUrl, _seed.InvitedPlainCode);
-            await page.WaitForURLAsync("**/loopbaan-apk/welkom**", DomReadyUrl);
+            await AssertUrlContainsAsync(page, "/loopbaan-apk/welkom");
+            await AssertBodyContainsAsync(page, "Dit is jouw ontwikkelgesprek, niet een beoordeling");
             await CapturePairAsync(page, "02-welkom");
-        }
-
-        // 03 — test (invited, welcome already seen)
-        await using (var context = await NewContextAsync(1440, 900))
-        {
-            var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(90_000);
-            await EmployeeLoginAsync(page, baseUrl, _seed.TestPlainCode);
+            await page.Locator("button:has-text('Start de interessetest')").ClickAsync();
             await page.WaitForURLAsync("**/loopbaan-apk/test/**", DomReadyUrl);
+            await AssertBodyContainsAsync(page, "Hoe goed past dit bij jou");
+            await page.Locator("input[type=radio][value=\"3\"]").First.CheckAsync(new() { Force = true });
+            await page.Locator("form button[type=submit]").ClickAsync(new() { Force = true });
+            await AssertBodyContainsAsync(page, "Hoe goed past dit bij jou");
             await CapturePairAsync(page, "03-test");
         }
 
-        // 04 — delen + 05 — vergelijking (shared employee, manager sheet complete)
+        // 04 — delen (klaar, nog niet gedeeld) met voorbeeld
+        await using (var context = await NewContextAsync(1440, 900))
+        {
+            var page = await context.NewPageAsync();
+            await EmployeeLoginAsync(page, baseUrl, _seed.DelenPlainCode);
+            await AssertUrlContainsAsync(page, "/loopbaan-apk/delen");
+            await AssertBodyContainsAsync(page, "Wil je jouw beeld delen met je leidinggevende?");
+            await AssertBodyContainsAsync(page, "te zien krijgt");
+            await CapturePairAsync(page, "04-delen");
+        }
+
+        // 05 — vergelijking (gedeeld + manager ingevuld)
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
             await EmployeeLoginAsync(page, baseUrl, _seed.ComparisonPlainCode);
-            await page.GotoAsync($"{baseUrl}/loopbaan-apk/delen", DomReady);
-            await CapturePairAsync(page, "04-delen");
-            await page.GotoAsync($"{baseUrl}/loopbaan-apk/vergelijking", DomReady);
+            await AssertUrlContainsAsync(page, "/loopbaan-apk/vergelijking");
+            await AssertBodyContainsAsync(page, "Hier zijn jullie het over eens");
             await CapturePairAsync(page, "05-vergelijking");
         }
 
-        // 06 — team overview (enterprise manager, Employers off)
+        // 06 — teamoverzicht bedrijfsmanager
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
             var teamPath = $"/werkgever/loopbaan-apk/teams/{_seed.TeamId:D}";
-            await page.GotoAsync(
-                $"{baseUrl}/__test/staff?user={_api.EnterpriseId:D}&role=EnterpriseManager&return={Uri.EscapeDataString(teamPath)}",
-                DomReady);
-            await page.GotoAsync(baseUrl + teamPath, DomReady);
+            await ManagerGotoAsync(page, baseUrl, _api.EnterpriseId, _api.CompanyId, teamPath);
+            await AssertBodyContainsAsync(page, "Wie is uitgenodigd, bezig of heeft gedeeld?");
+            await AssertBodyContainsAsync(page, "Gedeeld");
             await CapturePairAsync(page, "06-team");
         }
 
-        // 07 — manager vragen
+        // 07 — 10 vragen voor Sara (manager-sheet deels ingevuld)
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
-            var vragen = $"/werkgever/loopbaan-apk/codes/{_seed.ComparisonCodeId:D}/vragen";
-            await page.GotoAsync(
-                $"{baseUrl}/__test/staff?user={_api.EnterpriseId:D}&role=EnterpriseManager&return={Uri.EscapeDataString(vragen)}",
-                DomReady);
-            await page.GotoAsync(baseUrl + vragen, DomReady);
+            var vragen = $"/werkgever/loopbaan-apk/codes/{_seed.ManagerVragenCodeId:D}/vragen";
+            await ManagerGotoAsync(page, baseUrl, _api.EnterpriseId, _api.CompanyId, vragen);
+            await AssertBodyContainsAsync(page, "Hoe herken jij dit bij");
+            await AssertBodyContainsAsync(page, "Vraag 4 van 10");
+            await AssertBodyContainsAsync(page, "Dit is geen beoordeling");
             await CapturePairAsync(page, "07-vragen");
         }
 
-        // 08 — groepsbeeld (7 shared)
+        // 08 — groepsbeeld (7 gedeeld, mockup-grafieken)
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
             var groep = $"/werkgever/loopbaan-apk/teams/{_seed.TeamId:D}/groep";
-            await page.GotoAsync(
-                $"{baseUrl}/__test/staff?user={_api.EnterpriseId:D}&role=EnterpriseManager&return={Uri.EscapeDataString(groep)}",
-                DomReady);
-            await page.GotoAsync(baseUrl + groep, DomReady);
+            await ManagerGotoAsync(page, baseUrl, _api.EnterpriseId, _api.CompanyId, groep);
+            await AssertBodyContainsAsync(page, "Team Logistiek · 7 deelnemers");
+            await AssertBodyContainsAsync(page, "Interesses in de groep");
             await CapturePairAsync(page, "08-groep");
         }
 
-        // 09 — admin organisatie detail + Loopbaan-APK toggle
+        // 09 — admin schakelaar
         await using (var context = await NewContextAsync(1440, 900))
         {
             var page = await context.NewPageAsync();
@@ -219,6 +231,42 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
             url => url.Contains("/loopbaan-apk/", StringComparison.OrdinalIgnoreCase)
                    && !url.Contains("/loopbaan-apk?", StringComparison.OrdinalIgnoreCase),
             DomReadyUrl);
+    }
+
+    private static async Task ManagerGotoAsync(
+        IPage page,
+        string baseUrl,
+        Guid enterpriseUserId,
+        Guid companyId,
+        string returnPath)
+    {
+        await page.GotoAsync(
+            $"{baseUrl}/__test/staff?user={enterpriseUserId:D}&role=EnterpriseManager&company={companyId:D}&return={Uri.EscapeDataString(returnPath)}",
+            DomReady);
+        await page.GotoAsync(baseUrl + returnPath, DomReady);
+    }
+
+    private static async Task AssertBodyContainsAsync(IPage page, string text)
+    {
+        var body = await page.ContentAsync();
+        if (!body.Contains(text, StringComparison.Ordinal))
+        {
+            var debug = Path.Combine(OutDir, "debug-last-page.html");
+            await File.WriteAllTextAsync(debug, body);
+        }
+
+        Assert.True(
+            body.Contains(text, StringComparison.Ordinal),
+            $"Expected “{text}” on {page.Url}. Wrote HTML to {Path.Combine(OutDir, "debug-last-page.html")}");
+    }
+
+    private static void AssertUrlContains(IPage page, string fragment)
+        => Assert.Contains(fragment, page.Url, StringComparison.OrdinalIgnoreCase);
+
+    private static Task AssertUrlContainsAsync(IPage page, string fragment)
+    {
+        AssertUrlContains(page, fragment);
+        return Task.CompletedTask;
     }
 
     private async Task CapturePairAsync(IPage page, string slug)
@@ -326,48 +374,20 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var codes = scope.ServiceProvider.GetRequiredService<IWerkgeverApkEmployeeCodeService>();
 
-        var company = await db.Companies.FirstOrDefaultAsync(c => c.Id == DemoCompanyId);
-        if (company is null)
-        {
-            company = new Company
-            {
-                Id = DemoCompanyId,
-                Name = "Demo Logistiek B.V.",
-                KvkNumber = "99887766",
-                Address = "Magazijnweg 1",
-                Location = new GeoPoint(52.07, 4.30),
-                VerificationStatus = CompanyVerificationStatus.Verified,
-                VerificationMethod = CompanyVerificationMethod.AdminCreated,
-                VerifiedAtUtc = DateTime.UtcNow,
-                VerificationUpdatedAtUtc = DateTime.UtcNow,
-                LoopbaanApkEnabled = true
-            };
-            db.Companies.Add(company);
-        }
-        else
-        {
-            company.LoopbaanApkEnabled = true;
-            company.Name = "Demo Logistiek B.V.";
-        }
-
-        if (!await db.UserCompanies.AnyAsync(uc =>
-                uc.UserId == _api.EnterpriseId && uc.CompanyId == DemoCompanyId))
-        {
-            db.UserCompanies.Add(new UserCompany
-            {
-                UserId = _api.EnterpriseId,
-                CompanyId = DemoCompanyId
-            });
-        }
+        var companyId = _api.CompanyId;
+        var company = await db.Companies.FirstAsync(c => c.Id == companyId);
+        company.LoopbaanApkEnabled = true;
+        company.Name = "Demo Logistiek B.V.";
+        company.ParentCompanyId = null;
 
         var team = await db.WerkgeverApkTeams.FirstOrDefaultAsync(t =>
-            t.CompanyId == DemoCompanyId && t.Name == "Team Logistiek");
+            t.CompanyId == companyId && t.Name == "Team Logistiek");
         if (team is null)
         {
             team = new WerkgeverApkTeam
             {
                 Id = Guid.Parse("d1000000-0000-0000-0000-0000000000a1"),
-                CompanyId = DemoCompanyId,
+                CompanyId = companyId,
                 Name = "Team Logistiek",
                 CreatedAtUtc = DateTime.UtcNow,
                 CreatedByUserId = _api.EnterpriseId
@@ -392,8 +412,12 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
         var plainCodes = allCodes.Select(c => codes.Unprotect(c.CodeProtected)!).ToList();
         var progressJson = CompleteProgressJson();
+        var managerPartial = WerkgeverApkManagerQuestionCatalog.All
+            .Take(3)
+            .ToDictionary(q => q.Id, _ => 4);
         var managerAnswers = JsonSerializer.Serialize(
             WerkgeverApkManagerQuestionCatalog.All.ToDictionary(q => q.Id, _ => 4));
+        var managerPartialJson = JsonSerializer.Serialize(managerPartial);
 
         for (var i = 0; i < allCodes.Count; i++)
         {
@@ -404,26 +428,42 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
                 code.SharedWithManager = true;
                 code.SharedAtUtc = DateTime.UtcNow;
                 EnsureProgress(code, progressJson, welcomeSeen: true);
-                EnsureManagerSheet(code, i == 0 ? managerAnswers : "{}", completed: i == 0);
+                if (i == 0)
+                {
+                    EnsureManagerSheet(code, managerAnswers, completed: true);
+                }
+                else if (i == 1)
+                {
+                    EnsureManagerSheet(code, managerPartialJson, completed: false);
+                }
+                else
+                {
+                    EnsureManagerSheet(code, "{}", completed: false);
+                }
             }
             else if (i == 7)
             {
                 code.Status = WerkgeverApkEmployeeCodeStatus.NotStarted;
                 code.SharedWithManager = false;
+                code.Label = null;
             }
             else
             {
-                code.Status = WerkgeverApkEmployeeCodeStatus.InProgress;
+                code.Status = WerkgeverApkEmployeeCodeStatus.Completed;
                 code.SharedWithManager = false;
-                EnsureProgress(code, """{"answers":{}}""", welcomeSeen: true);
+                EnsureProgress(code, progressJson, welcomeSeen: true);
+                EnsureManagerSheet(code, "{}", completed: false);
             }
         }
 
+        allCodes[0].Label = "Sara de Wit";
+        allCodes[1].Label = "Sara de Wit";
         await db.SaveChangesAsync();
 
         return new WerkgeverApkSeed(
             team.Id,
             allCodes[0].Id,
+            allCodes[1].Id,
             plainCodes[0],
             plainCodes[7],
             plainCodes[8]);
@@ -475,9 +515,10 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
     private sealed record WerkgeverApkSeed(
         Guid TeamId,
         Guid ComparisonCodeId,
+        Guid ManagerVragenCodeId,
         string ComparisonPlainCode,
         string InvitedPlainCode,
-        string TestPlainCode);
+        string DelenPlainCode);
 
     private sealed class WerkgeverApkWebFactory : WebWebApplicationFactory
     {
@@ -605,6 +646,11 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
                         new(JobsyClaimTypes.SessionVersion, "0"),
                         new(JobsyClaimTypes.MfaVerified, "1")
                     };
+                    var company = ctx.Request.Query["company"].ToString();
+                    if (Guid.TryParse(company, out var companyId))
+                    {
+                        claims.Add(new Claim(JobsyClaimTypes.CompanyId, companyId.ToString("D")));
+                    }
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     await ctx.SignInAsync(
                         CookieAuthenticationDefaults.AuthenticationScheme,

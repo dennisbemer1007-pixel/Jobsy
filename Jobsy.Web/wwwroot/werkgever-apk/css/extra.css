@@ -1,4 +1,10 @@
 /* Lobsy Loopbaan-APK — extra patterns on top of the shared MBO house style */
+@media (min-width: 900px) {
+  body.share .coach{bottom:8px}
+  body.share .coach .bubble,
+  body.team .coach .bubble,
+  body.groep .coach .bubble{display:none}
+}
 
 .promises{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 18px}
 .promise{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 14px;min-height:148px;box-shadow:var(--shadow);display:flex;flex-direction:column}

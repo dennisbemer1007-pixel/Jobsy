@@ -27,7 +27,7 @@ public sealed partial class JobsyApiClient
             return null;
         }
 
-        return await response.Content.ReadFromJsonAsync<WerkgeverApkEmployeeQuestionDto>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<WerkgeverApkEmployeeQuestionDto>(ApiJson, ct);
     }
 
     public async Task<(WerkgeverApkEmployeeAnswerResponse? Ok, int StatusCode, string? ErrorBody)> SaveWerkgeverApkAnswerAsync(
@@ -51,7 +51,7 @@ public sealed partial class JobsyApiClient
     }
 
     public async Task<WerkgeverApkSharePreviewDto?> GetWerkgeverApkSharePreviewAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<WerkgeverApkSharePreviewDto>("api/werkgever-apk/employee/share-preview", ct);
+        => await _http.GetFromJsonAsync<WerkgeverApkSharePreviewDto>("api/werkgever-apk/employee/share-preview", ApiJson, ct);
 
     public async Task<(WerkgeverApkShareWithManagerResponse? Ok, int StatusCode, string? ErrorBody)> SetWerkgeverApkShareAsync(
         bool share,
@@ -73,39 +73,39 @@ public sealed partial class JobsyApiClient
 
     public async Task<WerkgeverApkEmployeeComparisonResponse?> GetWerkgeverApkComparisonAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<WerkgeverApkEmployeeComparisonResponse>(
-            "api/werkgever-apk/employee/comparison", ct);
+            "api/werkgever-apk/employee/comparison", ApiJson, ct);
 
     public async Task<WerkgeverApkEmployeeProgressDto?> GetWerkgeverApkProgressAsync(CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<WerkgeverApkEmployeeProgressDto>("api/werkgever-apk/employee/progress", ct);
+        => await _http.GetFromJsonAsync<WerkgeverApkEmployeeProgressDto>("api/werkgever-apk/employee/progress", ApiJson, ct);
 
     public async Task<IReadOnlyList<WerkgeverApkTeamDto>> GetWerkgeverApkTeamsAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<IReadOnlyList<WerkgeverApkTeamDto>>(
-               "api/werkgever-apk/manager/teams", ct)
+               "api/werkgever-apk/manager/teams", ApiJson, ct)
            ?? [];
 
     public async Task<WerkgeverApkTeamOverviewDto?> GetWerkgeverApkTeamOverviewAsync(Guid teamId, CancellationToken ct = default)
         => await _http.GetFromJsonAsync<WerkgeverApkTeamOverviewDto>(
-            $"api/werkgever-apk/manager/teams/{teamId:D}/overview", ct);
+            $"api/werkgever-apk/manager/teams/{teamId:D}/overview", ApiJson, ct);
 
     public async Task<WerkgeverApkGroupInsightsDto?> GetWerkgeverApkGroupInsightsAsync(Guid teamId, CancellationToken ct = default)
         => await _http.GetFromJsonAsync<WerkgeverApkGroupInsightsDto>(
-            $"api/werkgever-apk/manager/teams/{teamId:D}/insights", ct);
+            $"api/werkgever-apk/manager/teams/{teamId:D}/insights", ApiJson, ct);
 
     public async Task<IReadOnlyList<WerkgeverApkManagerQuestionDto>> GetWerkgeverApkManagerQuestionsAsync(
         CancellationToken ct = default)
         => await _http.GetFromJsonAsync<IReadOnlyList<WerkgeverApkManagerQuestionDto>>(
-               "api/werkgever-apk/manager/questions", ct)
+               "api/werkgever-apk/manager/questions", ApiJson, ct)
            ?? [];
 
     public async Task<WerkgeverApkManagerSheetDto?> GetWerkgeverApkManagerSheetAsync(Guid codeId, CancellationToken ct = default)
         => await _http.GetFromJsonAsync<WerkgeverApkManagerSheetDto>(
-            $"api/werkgever-apk/manager/codes/{codeId:D}/sheet", ct);
+            $"api/werkgever-apk/manager/codes/{codeId:D}/sheet", ApiJson, ct);
 
     private static async Task<T?> JsonSerializerTry<T>(HttpContent content)
     {
         try
         {
-            return await content.ReadFromJsonAsync<T>();
+            return await content.ReadFromJsonAsync<T>(ApiJson);
         }
         catch
         {

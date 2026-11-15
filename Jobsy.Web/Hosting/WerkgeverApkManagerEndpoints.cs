@@ -19,7 +19,7 @@ public static class WerkgeverApkManagerEndpoints
 
         group.MapGet("", ListTeamsPage);
         group.MapGet("/teams/{teamId:guid}", TeamOverviewPage);
-        group.MapGet("/codes/{codeId:guid}/vragen", () => Page("05-vragen.html", new Dictionary<string, string>()));
+        group.MapGet("/codes/{codeId:guid}/vragen", ManagerVragenPage);
         group.MapGet("/codes/{codeId:guid}/vergelijking", () => Page("06-vergelijking.html", new Dictionary<string, string>()));
         group.MapGet("/teams/{teamId:guid}/groep", GroupInsightsPage);
         return app;
@@ -76,15 +76,43 @@ public static class WerkgeverApkManagerEndpoints
         CancellationToken ct)
     {
         var insights = await api.GetWerkgeverApkGroupInsightsAsync(teamId, ct);
+        var shared = insights?.SharedCompletedCount ?? 0;
         var tokens = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["sharedCount"] = insights?.SharedCompletedCount.ToString() ?? "0",
+            ["sharedCount"] = shared.ToString(),
+            ["teamTitle"] = $"Team Logistiek · {shared} deelnemers",
             ["groepVisible"] = insights is { Visible: true } ? "true" : "false",
             ["groepMessage"] = insights is { Visible: false }
                 ? $"Nog te weinig deelnemers ({insights.SharedCompletedCount}), vanaf {WerkgeverApkAnonymity.MinGroupSize} zie je het groepsbeeld."
                 : "Anoniem groepsbeeld op basis van wie zelf deelde.",
         };
         return Page("07-groepsbeeld.html", tokens);
+    }
+
+    private static async Task<IResult> ManagerVragenPage(
+        HttpContext http,
+        JobsyApiClient api,
+        Guid codeId,
+        CancellationToken ct)
+    {
+        var sheet = await api.GetWerkgeverApkManagerSheetAsync(codeId, ct);
+        var questions = await api.GetWerkgeverApkManagerQuestionsAsync(ct);
+        if (sheet is null || questions.Count == 0)
+        {
+            return Results.Redirect("/werkgever/loopbaan-apk");
+        }
+
+        var displayIndex = questions.Count;
+        for (var i = 0; i < questions.Count; i++)
+        {
+            if (!sheet.Answers.ContainsKey(questions[i].Id))
+            {
+                displayIndex = i + 1;
+                break;
+            }
+        }
+        var html = WerkgeverApkMockupPages.ManagerVragen(sheet, questions, displayIndex);
+        return Results.Content(html, "text/html; charset=utf-8");
     }
 
     private static IResult Page(string template, IReadOnlyDictionary<string, string> tokens)

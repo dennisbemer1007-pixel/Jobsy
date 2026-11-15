@@ -104,18 +104,7 @@ public static class WerkgeverApkSsrHtml
 
     public static string RenderTemplate(string templateFileName, IReadOnlyDictionary<string, string> tokens)
     {
-        var path = Path.Combine(
-            AppContext.BaseDirectory,
-            "wwwroot",
-            "werkgever-apk",
-            "templates",
-            templateFileName);
-        if (!File.Exists(path))
-        {
-            var fallback = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "werkgever-apk", "templates", templateFileName);
-            path = File.Exists(fallback) ? fallback : path;
-        }
-
+        var path = WerkgeverApkTemplateLocator.PathFor(templateFileName);
         var html = File.Exists(path) ? File.ReadAllText(path) : "<html><body><p>Pagina niet beschikbaar.</p></body></html>";
         html = html
             .Replace("shared.css", "/werkgever-apk/css/shared.css", StringComparison.Ordinal)

@@ -12,13 +12,13 @@ public static class WerkgeverApkEmployeeEndpoints
     public static IEndpointRouteBuilder MapWerkgeverApkEmployeeEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/loopbaan-apk", LoginPage).AllowAnonymous();
-        app.MapGet("/loopbaan-apk/welkom", WelkomPage).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapGet("/loopbaan-apk/test/{block}", GetTestAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapPost("/loopbaan-apk/test/{block}/answer", PostTestAnswerAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapGet("/loopbaan-apk/delen", GetDelenAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapPost("/loopbaan-apk/delen", PostDelenAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapGet("/loopbaan-apk/vergelijking", GetVergelijkingAsync).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
-        app.MapPost("/loopbaan-apk/welkom", WelcomePost).RequireAuthorization(WerkgeverApkAuthDefaults.Scheme);
+        app.MapGet("/loopbaan-apk/welkom", WelkomPage).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapGet("/loopbaan-apk/test/{block}", GetTestAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapPost("/loopbaan-apk/test/{block}/answer", PostTestAnswerAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapGet("/loopbaan-apk/delen", GetDelenAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapPost("/loopbaan-apk/delen", PostDelenAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapGet("/loopbaan-apk/vergelijking", GetVergelijkingAsync).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
+        app.MapPost("/loopbaan-apk/welkom", WelcomePost).RequireAuthorization(JobsyPolicies.WerkgeverApkEmployeeSession);
         return app;
     }
 
@@ -98,12 +98,12 @@ public static class WerkgeverApkEmployeeEndpoints
 
         var tokens = antiforgery.GetAndStoreTokens(http);
         var af = $"""<input type="hidden" name="{tokens.FormFieldName}" value="{tokens.RequestToken}">""";
-        var body = WerkgeverApkEmployeeSsrHtml.TestQuestion(
+        var html = WerkgeverApkMockupPages.TestQuestion(
             q,
             af,
             $"/loopbaan-apk/test/{Uri.EscapeDataString(blockKey)}/answer",
             http.Request.Query["error"] == "save" ? "Kon niet opslaan. Probeer opnieuw." : null);
-        var html = WerkgeverApkEmployeeSsrHtml.RenderDocument($"Test · {blockKey}", body, Chrome(http));
+        ApplyChromeTokens(ref html, Chrome(http));
         return Results.Content(html, "text/html; charset=utf-8");
     }
 
@@ -157,8 +157,8 @@ public static class WerkgeverApkEmployeeEndpoints
 
         var tokens = antiforgery.GetAndStoreTokens(http);
         var af = $"""<input type="hidden" name="{tokens.FormFieldName}" value="{tokens.RequestToken}">""";
-        var body = WerkgeverApkEmployeeSsrHtml.DelenPage(preview, af, "/loopbaan-apk/delen");
-        var html = WerkgeverApkEmployeeSsrHtml.RenderDocument("Delen", body, Chrome(http));
+        var html = WerkgeverApkMockupPages.Delen(preview, af, "/loopbaan-apk/delen");
+        ApplyChromeTokens(ref html, Chrome(http));
         return Results.Content(html, "text/html; charset=utf-8");
     }
 
@@ -193,8 +193,9 @@ public static class WerkgeverApkEmployeeEndpoints
             return Results.Redirect(WerkgeverApkEntryPaths.Delen);
         }
 
-        var body = WerkgeverApkEmployeeSsrHtml.ComparisonPage(comparison);
-        var html = WerkgeverApkEmployeeSsrHtml.RenderDocument("Vergelijking", body, Chrome(http));
+        var manager = http.User.FindFirst(WerkgeverApkClaimTypes.TeamName)?.Value ?? "je leidinggevende";
+        var html = WerkgeverApkMockupPages.Vergelijking(comparison, manager);
+        ApplyChromeTokens(ref html, Chrome(http));
         return Results.Content(html, "text/html; charset=utf-8");
     }
 
@@ -218,4 +219,18 @@ public static class WerkgeverApkEmployeeEndpoints
             ["team"] = http.User.FindFirst(WerkgeverApkClaimTypes.TeamName)?.Value ?? "",
             ["code"] = http.User.FindFirst(WerkgeverApkClaimTypes.CodeDisplay)?.Value ?? "",
         };
+
+    private static void ApplyChromeTokens(ref string html, IReadOnlyDictionary<string, string> chrome)
+    {
+        html = html.Replace("Demo Logistiek B.V.", E(chrome.GetValueOrDefault("company")), StringComparison.Ordinal);
+        html = html.Replace("Team Logistiek", E(chrome.GetValueOrDefault("team")), StringComparison.Ordinal);
+        html = html.Replace("Code VOOR-BEELD", E(chrome.GetValueOrDefault("code")), StringComparison.Ordinal);
+        html = html.Replace("chip-ex", "chip-code", StringComparison.Ordinal);
+        html = html.Replace(
+            ">Voorbeeld</span>",
+            $">{E(chrome.GetValueOrDefault("code"))}</span>",
+            StringComparison.Ordinal);
+    }
+
+    private static string E(string? value) => System.Net.WebUtility.HtmlEncode(value ?? "");
 }
