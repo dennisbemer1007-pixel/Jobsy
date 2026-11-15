@@ -121,6 +121,11 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         Assert.Contains(mustContain, body, StringComparison.Ordinal);
         await AssertTopbarBrandColorAsync(page);
         await AssertBrandAssetsLoadedAsync(page);
+        if (slug is "10-totaalbeeld-functie" or "10b-te-weinig")
+        {
+            await AssertTotaalLayoutAndFooterZoneAsync(page, slug);
+        }
+
         await CapturePairAsync(page, slug);
     }
 
@@ -170,9 +175,58 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         await page.SetViewportSizeAsync(width, height);
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(150);
+        if (slug is "10-totaalbeeld-functie" or "10b-te-weinig")
+        {
+            await AssertNoStrayNavyInFooterZoneAsync(page, width);
+        }
+
         var path = Path.Combine(OutDir, $"{slug}-{width}.png");
         await page.ScreenshotAsync(new() { Path = path, FullPage = true });
         Assert.True(new FileInfo(path).Length > 10_000, $"Screenshot too small: {path}");
+    }
+
+    private static async Task AssertTotaalLayoutAndFooterZoneAsync(IPage page, string slug)
+    {
+        if (string.Equals(slug, "10-totaalbeeld-functie", StringComparison.Ordinal))
+        {
+            var layoutOk = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const comp = document.querySelector('section.comp-card');
+                  const aside = document.querySelector('div.fn-layout.wide-side > aside');
+                  return !!(comp && aside && comp.nextElementSibling === aside);
+                }
+                """);
+            Assert.True(layoutOk, "Scholingskansen aside must be a sibling of the competence card.");
+        }
+    }
+
+    private static async Task AssertNoStrayNavyInFooterZoneAsync(IPage page, int viewportWidth)
+    {
+        var strayCount = await page.EvaluateAsync<int>(
+            """
+            (viewportWidth) => {
+              const navy = 'rgb(10, 32, 68)';
+              const h = window.innerHeight;
+              const foot = document.querySelector('footer.foot');
+              const sidebarW = viewportWidth <= 800 ? 0 : 248;
+              let stray = 0;
+              for (const el of document.querySelectorAll('body *')) {
+                if (foot && foot.contains(el)) continue;
+                if (el.closest('header.topbar')) continue;
+                if (el.classList.contains('btn') && el.classList.contains('primary')) continue;
+                if (el.classList.contains('fn-chip') && el.classList.contains('on')) continue;
+                const r = el.getBoundingClientRect();
+                if (r.width < 4 || r.height < 4) continue;
+                if (r.bottom < h - 120 || r.top > h) continue;
+                if (r.left > sidebarW + 8) continue;
+                if (getComputedStyle(el).backgroundColor === navy) stray++;
+              }
+              return stray;
+            }
+            """,
+            viewportWidth);
+        Assert.Equal(0, strayCount);
     }
 
     private async Task EnableLoopbaanApkFeaturesAsync()

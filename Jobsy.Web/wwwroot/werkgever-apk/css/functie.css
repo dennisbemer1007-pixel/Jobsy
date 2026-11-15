@@ -265,10 +265,32 @@ body.fn10b .later-grid{gap:12px}
 }
 
 @media (max-width:800px){
-  body.fn08 button.coach,body.fn09 button.coach,body.fn10 button.coach,body.fn10b button.coach{
+  body.fn10 .foot,body.fn10b .foot{
+    position:absolute;left:0!important;right:0!important;
+    padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))!important;
+    flex-direction:column;align-items:stretch;gap:8px;
+    background:var(--bg)!important;box-shadow:none;z-index:14
+  }
+  body.fn10 .foot .sp,body.fn10b .foot .sp{display:none}
+  body.fn10 .foot .btn,body.fn10b .foot .btn{
+    width:100%;flex:1 1 auto;min-width:0;max-width:none;height:48px;font-size:14px;padding:0 14px
+  }
+  body.fn10 .full-label,body.fn10b .full-label{display:inline!important}
+  body.fn10 .short-label,body.fn10b .short-label{display:none!important}
+  body.fn10 .main,body.fn10b .main{padding-bottom:200px}
+  body.fn10 button.coach,body.fn10b button.coach{
+    left:50%;right:auto;transform:translateX(-50%);
+    width:72px;max-width:72px;max-height:72px;bottom:132px
+  }
+  body.fn10 button.coach img.full,body.fn10b button.coach img.full{
+    width:72px;max-height:72px;margin:0 auto
+  }
+  body.fn10 button.coach .bubble,body.fn10b button.coach .bubble{display:none!important}
+
+  body.fn08 button.coach,body.fn09 button.coach{
     width:56px;right:6px;bottom:64px;max-width:56px;max-height:56px
   }
-  body.fn08 button.coach img.full,body.fn09 button.coach img.full,body.fn10 button.coach img.full,body.fn10b button.coach img.full{
+  body.fn08 button.coach img.full,body.fn09 button.coach img.full{
     width:56px;max-height:56px;object-position:100% 100%
   }
   body.fn10 .slim-note{

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts.WerkgeverApk;
 using Jobsy.Core.WerkgeverApk;
 
@@ -181,10 +182,10 @@ public static class WerkgeverApkFunctieMockupPages
         html = ReplaceBetween(
             html,
             "<section class=\"card gold-top comp-card\">",
-            "</section>\n          <aside>",
+            "</section>",
             bars.ToString(),
             keepOpen: true,
-            keepClose: false);
+            keepClose: true);
 
         var train = new StringBuilder();
         train.Append(
@@ -251,8 +252,19 @@ public static class WerkgeverApkFunctieMockupPages
     }
 
     private static string InjectCoach(string html)
-        => html.Replace("<div class=\"coach\">", "<button type=\"button\" class=\"coach\" data-ssr-coach-open>", StringComparison.Ordinal)
-            .Replace("</div>\n<div class=\"wm\">", "</button>\n<script src=\"/js/lobsy-coach-ssr.js\" defer></script>\n<div class=\"wm\">", StringComparison.Ordinal);
+    {
+        html = html.Replace("<div class=\"coach\">", "<button type=\"button\" class=\"coach\" data-ssr-coach-open>", StringComparison.Ordinal);
+        html = Regex.Replace(
+            html,
+            "(<button type=\"button\" class=\"coach\"[^>]*>[\\s\\S]*?<img class=\"full\"[^>]*>)\\s*</div>",
+            "$1</button>",
+            RegexOptions.Singleline);
+        html = html.Replace(
+            "</div>\n<div class=\"wm\">",
+            "</div>\n<script src=\"/js/lobsy-coach-ssr.js\" defer></script>\n<div class=\"wm\">",
+            StringComparison.Ordinal);
+        return html;
+    }
 
     private static string ReplaceFirst(string html, string old, string @new)
     {
