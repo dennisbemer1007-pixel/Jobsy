@@ -1248,7 +1248,8 @@ public static class PupilLeerlingJourneyEndpoints
         var body = model is null
             ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>"
             : PupilMboHboSsrHtml.Uitkomst(model, overview?.Blocks ?? Array.Empty<PupilMboHboBlockStatusDto>());
-        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}", overview?.SchoolName, overview?.ClassLabel);
+        var (school, classLabel) = await MboShellLabelsAsync(api, overview, ct);
+        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}", school, classLabel);
     }
 
     private static Task<PupilLoadOutcome<PupilProgressStateDto>> FetchProgressAsync(
@@ -1361,6 +1362,37 @@ public static class PupilLeerlingJourneyEndpoints
             PauseFormHtml = pauseHtml,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
+    }
+
+    private static async Task<(string? School, string? ClassLabel)> MboShellLabelsAsync(
+        JobsyApiClient api,
+        PupilMboHboOverviewDto? overview,
+        CancellationToken ct)
+    {
+        var school = overview?.SchoolName;
+        var classLabel = overview?.ClassLabel;
+        if (!string.IsNullOrWhiteSpace(school))
+        {
+            return (school, classLabel);
+        }
+
+        try
+        {
+            var passport = await api.GetMboHboPassportAsync(ct);
+            if (passport is null)
+            {
+                return (school, classLabel);
+            }
+
+            school = string.IsNullOrWhiteSpace(passport.SchoolName) ? school : passport.SchoolName;
+            classLabel ??= passport.ClassLabel;
+        }
+        catch (HttpRequestException)
+        {
+            // claims fallback in shell
+        }
+
+        return (school, classLabel);
     }
 
     private static IResult MboHtml(

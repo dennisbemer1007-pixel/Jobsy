@@ -929,6 +929,14 @@
   border-top: 1px solid var(--mhbo-line);
 }
 
+.mhbo-btn__label-short {
+  display: none;
+}
+
+.mhbo-transition-foot .mhbo-transition-start {
+  margin-left: auto;
+}
+
 .mhbo-wrap--paspoort {
   max-width: 1120px;
   margin: 0 auto;
@@ -1291,11 +1299,41 @@
   }
 
   .mhbo-transition-foot.mhbo-pagefoot--in-form {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    gap: 8px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
     border-top: 1px solid var(--mhbo-line);
+  }
+
+  .mhbo-transition-foot .mhbo-transition-start {
+    order: 1;
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .mhbo-transition-foot .mhbo-transition-back {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .mhbo-transition-foot .mhbo-btn__label-full {
+    display: none;
+  }
+
+  .mhbo-transition-foot .mhbo-btn__label-short {
+    display: inline;
+  }
+
+  .mhbo-transition-foot .mhbo-foot-coach {
+    order: 3;
+    align-self: flex-end;
+    margin-top: 2px;
   }
 
   .mhbo-paspoort-foot.mhbo-pagefoot--in-form {

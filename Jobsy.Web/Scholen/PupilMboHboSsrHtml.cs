@@ -45,7 +45,7 @@ public static class PupilMboHboSsrHtml
         foreach (var block in BlockOrder)
         {
             var meta = PupilMboHboCopy.BlockMeta(block);
-            var minutes = EstimatedMinutes(meta.QuestionCount);
+            var minutes = PupilMboHboMockupCopy.EstimatedMinutes(meta.QuestionCount);
             var isFirst = block == PupilMboHboBlock.Vakken;
             sb.Append("<div class=\"mhbo-card mhbo-welcome-block");
             if (isFirst) sb.Append(" is-featured");
@@ -213,7 +213,7 @@ public static class PupilMboHboSsrHtml
         if (next is not null)
         {
             var meta = PupilMboHboCopy.BlockMeta(next.Value);
-            var mins = EstimatedMinutes(meta.QuestionCount);
+            var mins = PupilMboHboMockupCopy.EstimatedMinutes(meta.QuestionCount);
             var shortTitle = PupilMboHboMockupCopy.ShortBlockTitle(next.Value);
             var nextKey = PupilMboHboProgressState.BlockKey(next.Value);
             sb.Append("<h2 class=\"mhbo-transition-volgende\">Volgende</h2>");
@@ -246,18 +246,19 @@ public static class PupilMboHboSsrHtml
         }
 
         sb.Append("<footer class=\"mhbo-transition-foot mhbo-pagefoot--in-form\">");
-        sb.Append("""<a class="mhbo-btn mhbo-btn--ghost" href="/leerling/mbo-hbo/overzicht">Terug naar overzicht</a>""");
         if (next is not null)
         {
             var shortTitle = PupilMboHboMockupCopy.ShortBlockTitle(next.Value);
-            sb.Append("<a class=\"mhbo-btn\" href=\"/leerling/mbo-hbo/test/");
-            sb.Append(PupilLeerlingSsrParts.E(PupilMboHboProgressState.BlockKey(next.Value))).Append("\">Start ");
-            sb.Append(PupilLeerlingSsrParts.E(shortTitle)).Append(" →</a>");
+            sb.Append("<a class=\"mhbo-btn mhbo-transition-start\" href=\"/leerling/mbo-hbo/test/");
+            sb.Append(PupilLeerlingSsrParts.E(PupilMboHboProgressState.BlockKey(next.Value))).Append("\"><span class=\"mhbo-btn__label-full\">Start ");
+            sb.Append(PupilLeerlingSsrParts.E(shortTitle)).Append(" →</span><span class=\"mhbo-btn__label-short\">Start →</span></a>");
         }
         else
         {
-            sb.Append("""<a class="mhbo-btn" href="/leerling/mbo-hbo/paspoort">Naar je paspoort →</a>""");
+            sb.Append("""<a class="mhbo-btn mhbo-transition-start" href="/leerling/mbo-hbo/paspoort"><span class="mhbo-btn__label-full">Naar je paspoort →</span><span class="mhbo-btn__label-short">Start →</span></a>""");
         }
+
+        sb.Append("""<a class="mhbo-btn mhbo-btn--ghost mhbo-transition-back" href="/leerling/mbo-hbo/overzicht">Terug naar overzicht</a>""");
 
         sb.Append(MobileFootCoachChip()).Append("</footer></div></div>");
         return sb.ToString();
@@ -611,9 +612,6 @@ public static class PupilMboHboSsrHtml
 
         return null;
     }
-
-    private static int EstimatedMinutes(int questionCount)
-        => Math.Max(5, (int)Math.Round(questionCount * 0.75, MidpointRounding.AwayFromZero));
 
     private static string TransitionTopicSlug(PupilMboHboBlock block)
         => block == PupilMboHboBlock.Vakken ? "vakken" : PupilMboHboMockupCopy.ShortBlockTitle(block).ToLowerInvariant();
