@@ -1,8 +1,10 @@
 # Loopbaan-APK A/B question banks — dekking (CONCEPT)
 
+Handmatig geschreven items (geen sjabloon-combinaties). Export via `tools/werkgever-apk/export_handcrafted_banks.py`.
+
 # Dekking Basis (~40) (CONCEPT)
 
-Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py`.
+Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export_handcrafted_banks.py`.
 
 ## Samenvatting
 
@@ -60,10 +62,9 @@ Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py
 | 1 | 12 |
 | 2 | 18 |
 | 3 | 10 |
-
 # Dekking Uitgebreid (~200) (CONCEPT)
 
-Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py`.
+Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export_handcrafted_banks.py`.
 
 ## Samenvatting
 
@@ -106,12 +107,12 @@ Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py
 
 | Dimensie | Aantal meetpunten |
 | --- | ---: |
-| Communiceren | 13 |
+| Communiceren | 12 |
 | Contact maken | 12 |
-| Creativiteit / vernieuwen | 12 |
-| Flexibel aanpassen | 12 |
+| Creativiteit / vernieuwen | 13 |
+| Flexibel aanpassen | 13 |
 | Klantgerichtheid | 13 |
-| Leren & ontwikkelen | 13 |
+| Leren & ontwikkelen | 12 |
 | Nauwkeurig werken | 13 |
 | Plannen & organiseren | 13 |
 | Resultaatgerichtheid | 13 |
@@ -135,7 +136,7 @@ Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py
 | ---: | ---: |
 | 1 | 45 |
 | 2 | 45 |
-| 3 | 45 |
-| 4 | 35 |
+| 3 | 40 |
+| 4 | 40 |
 | 5 | 15 |
 | 6 | 15 |
