@@ -99,9 +99,9 @@ public static class PupilReisSsrHtml
             sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.G78.Contrast.Pick"]));
             sb.Append("</p>");
             sb.Append("<div class=\"ll-g78-contrast__options\">");
-            sb.Append("<div class=\"ll-g78-contrast__opt ll-g78-contrast__opt--a\"><span class=\"ll-g78-contrast__tag\">A</span><p>");
+            sb.Append("<div class=\"ll-g78-contrast__opt ll-g78-contrast__opt--a\" data-testid=\"ll-g78-contrast-a\"><span class=\"ll-g78-contrast__tag\" aria-hidden=\"true\">A</span><p>");
             sb.Append(PupilLeerlingSsrParts.E(qLabel)).Append("</p></div>");
-            sb.Append("<div class=\"ll-g78-contrast__opt ll-g78-contrast__opt--b\"><span class=\"ll-g78-contrast__tag\">B</span><p>");
+            sb.Append("<div class=\"ll-g78-contrast__opt ll-g78-contrast__opt--b\" data-testid=\"ll-g78-contrast-b\"><span class=\"ll-g78-contrast__tag\" aria-hidden=\"true\">B</span><p>");
             sb.Append(PupilLeerlingSsrParts.E(qLabelB)).Append("</p></div></div></div>");
         }
         else
