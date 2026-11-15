@@ -1,11 +1,14 @@
 using System;
+using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(JobsyDbContext))]
+    [Migration("20261115213000_AddLoopbaanApkPakketAb")]
     public partial class AddLoopbaanApkPakketAb : Migration
     {
         /// <inheritdoc />

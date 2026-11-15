@@ -118,6 +118,8 @@ public static class WerkgeverRightsMatrix
         new("api/companies/{companyId}/api-keys/email-credentials", true, false, false),
         // Admin-only feature toggle (BM → 403; see WerkgeverApkCompanyToggleApiTests)
         new("api/companies/{companyId}/loopbaan-apk", false, false, false),
+        new("api/companies/{companyId}/loopbaan-apk/package", false, false, false),
+        new("api/werkgever-apk/manager/package/uitgebreid-aanvraag", true, false, false),
         // Loopbaan-APK manager (EnterpriseManager only)
         new("api/werkgever-apk/manager/teams", true, false, false),
         new("api/werkgever-apk/manager/teams/{teamId}", true, false, false),
