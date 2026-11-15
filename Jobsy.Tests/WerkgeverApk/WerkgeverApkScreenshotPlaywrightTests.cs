@@ -129,7 +129,7 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
             await CapturePairAsync(page, "02-welkom");
             await page.Locator("button:has-text('Start de interessetest')").ClickAsync();
             await page.WaitForURLAsync("**/loopbaan-apk/test/**", DomReadyUrl);
-            await AssertBodyContainsAsync(page, "vak leren waarin ik met mijn handen werk");
+            await AssertBodyContainsAsync(page, "met mijn handen aan iets wat je kunt zien");
             await AssertBodyContainsAsync(page, "Vraag 1 van 48");
             var progressLabels = await page.Locator(".q-progress, .step.on .s, .mob-progress").AllInnerTextsAsync();
             Assert.All(progressLabels, t => Assert.Contains("1", t, StringComparison.Ordinal));
@@ -498,7 +498,7 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
     private static string CompleteProgressJson()
     {
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
         {
@@ -513,7 +513,7 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
     private static string ComparisonProgressJson()
     {
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
         {

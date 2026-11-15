@@ -38,7 +38,7 @@ public sealed class WerkgeverApkComparisonTests
 
     private static PupilMboHboProgressState StateForQuestion(WerkgeverApkManagerQuestion q, int selfValue)
     {
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var block = q.Category == WerkgeverApkManagerQuestionCategory.Competence
             ? PupilMboHboBlock.Competentie
             : PupilMboHboBlock.Werkwaarden;

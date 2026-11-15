@@ -73,7 +73,7 @@ public sealed class WerkgeverApkShareTests
 
     private static string CompleteProgressJson()
     {
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
         {

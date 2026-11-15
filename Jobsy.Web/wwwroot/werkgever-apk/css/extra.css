@@ -11,12 +11,36 @@ body.welcome.login button.coach{
   position:fixed;right:12px;bottom:12px;width:120px;max-height:min(36vh,260px);z-index:20
 }
 body.welcome.login .coach img.full{width:120px;max-height:min(36vh,260px)}
-body.welcome.login .coach .bubble{right:108px;bottom:132px;font-size:13px;max-width:min(52vw,220px);white-space:normal}
+body.welcome.login .coach .bubble{
+  right:108px;bottom:132px;font-size:14px;padding:8px 16px;
+  white-space:nowrap;max-width:none;min-width:12.5rem;line-height:1.25
+}
 .app .main,.app .shell,.q-layout{position:relative;z-index:1}
 .qcard .bar{margin-bottom:14px}
 .qcard form .scale-block{margin-bottom:8px}
 .qcard h1{font-size:28px;line-height:1.2;margin-bottom:10px}
 .chip-ex{display:none!important}
+
+@media (max-width: 800px) {
+  :root{--coach-w:68px}
+  body:not(.welcome) .coach,body:not(.welcome) button.coach{
+    width:56px;right:6px;bottom:64px;z-index:11;max-width:56px;max-height:56px
+  }
+  body:not(.welcome) .coach img.full{width:56px;max-height:56px;object-position:100% 100%}
+  body:not(.welcome) .bubble{display:none!important}
+  .foot{right:0!important;padding-right:70px!important;gap:6px}
+  .foot .btn.primary{
+    white-space:nowrap;font-size:13px;padding:0 12px;flex:1 1 auto;min-width:0
+  }
+  .foot .btn.primary svg{display:none}
+  body.welcome.login .coach,body.welcome.login button.coach{
+    width:72px;bottom:10px;max-height:72px
+  }
+  body.welcome.login .coach img.full{width:72px;max-height:72px}
+  body.welcome.login .coach .bubble{
+    display:block;white-space:nowrap;min-width:10.5rem;right:78px;bottom:58px;font-size:12px
+  }
+}
 
 @media (min-width: 900px) {
   body.share .coach{bottom:8px}

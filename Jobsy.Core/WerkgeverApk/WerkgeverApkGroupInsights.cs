@@ -49,7 +49,6 @@ public static class WerkgeverApkGroupInsights
                 ManagerVsEmployeeBars: []);
         }
 
-        var catalog = PupilMboHboCatalog.Default;
         var riasec = RiasecOrder.ToDictionary(l => l, _ => 0, StringComparer.OrdinalIgnoreCase);
         var strengths = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var values = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -60,7 +59,7 @@ public static class WerkgeverApkGroupInsights
         for (var i = 0; i < count; i++)
         {
             var state = sharedEmployeeProgress[i];
-            CountHollandLetters(state, level, catalog, riasec);
+            CountHollandLetters(state, level, riasec);
 
             foreach (var q in WerkgeverApkManagerQuestionCatalog.All)
             {
@@ -144,10 +143,9 @@ public static class WerkgeverApkGroupInsights
     private static void CountHollandLetters(
         PupilMboHboProgressState state,
         SchoolLevel level,
-        PupilMboHboCatalog catalog,
         Dictionary<string, int> riasec)
     {
-        var interesse = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Interesse, state, level, catalog);
+        var interesse = WerkgeverApkEmployeeScoring.BuildInteresseOutcome(state, level);
         var holland = PupilMboHboScoring.HollandCodeFromInteresse(interesse.Bars);
         foreach (var ch in holland)
         {

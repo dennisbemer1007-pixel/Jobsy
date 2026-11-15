@@ -185,7 +185,7 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var (code, progress, state) = (ctx.Code!, ctx.Progress!, ctx.State!);
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var total = WerkgeverApkEntryPaths.EmployeeBlocks.Sum(b => catalog.QuestionCount(b, Level));
         var answered = WerkgeverApkEntryPaths.EmployeeBlocks.Sum(b => state.AnsweredInBlock(b, catalog, Level));
         var dto = new WerkgeverApkEmployeeProgressDto(
@@ -236,7 +236,7 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var state = ctx.State!;
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var questions = catalog.QuestionsFor(block, Level);
         if (questions.Count == 0)
         {
@@ -293,7 +293,7 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var (code, progress, state) = (ctx.Code!, ctx.Progress!, ctx.State!);
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         var questions = catalog.QuestionsFor(block, Level);
         if (questions.All(q => q.Id != itemId))
         {
@@ -428,17 +428,17 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
             return (null, new WerkgeverApkErrorDto("not_complete", "Maak eerst de tests af."), 400);
         }
 
-        var catalog = PupilMboHboCatalog.Default;
         var bullets = new List<string>
         {
             "Een kort overzicht van je interesses (geen losse antwoorden).",
             "Je sterkste kanten uit de competentietest.",
             "Wat je belangrijk vindt in je werk."
         };
-        var interesse = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Interesse, ctx.State!, Level, catalog);
-        if (!string.IsNullOrWhiteSpace(interesse.Summary))
+        var interesse = WerkgeverApkEmployeeScoring.BuildInteresseOutcome(ctx.State!, Level);
+        var top = interesse.Bars.Take(2).Select(b => b.Label).ToList();
+        if (top.Count == 2)
         {
-            bullets.Add(interesse.Summary);
+            bullets.Add($"Op je werk herken je jezelf vooral in {top[0]} en {top[1]}.");
         }
 
         var dto = new WerkgeverApkSharePreviewDto(

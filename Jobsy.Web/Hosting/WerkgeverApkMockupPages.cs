@@ -127,11 +127,6 @@ public static class WerkgeverApkMockupPages
         var pct = q.Total > 0 ? (int)Math.Round(100.0 * q.Index / q.Total) : 0;
         var sb = new StringBuilder();
         sb.Append("<div class=\"q-progress\"><span>").Append(E(blockTitle));
-        if (!string.IsNullOrWhiteSpace(q.Dimension))
-        {
-            sb.Append(" · ").Append(E(q.Dimension));
-        }
-
         sb.Append("</span> Vraag ").Append(q.Index).Append(" van ").Append(q.Total).Append("</div>");
         sb.Append("<div class=\"bar\"><i style=\"width:").Append(pct).Append("%\"></i></div>");
         sb.Append("<form id=\"").Append(AnswerFormId).Append("\" method=\"post\" action=\"").Append(E(postPath)).Append("\">");

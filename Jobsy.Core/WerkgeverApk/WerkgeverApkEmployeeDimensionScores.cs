@@ -11,7 +11,7 @@ internal static class WerkgeverApkEmployeeDimensionScores
         PupilMboHboProgressState progress,
         SchoolLevel level = SchoolLevel.Mbo3)
     {
-        var catalog = PupilMboHboCatalog.Default;
+        var catalog = WerkgeverApkEmployeeCatalog.Default;
         if (!string.IsNullOrWhiteSpace(question.EmployeeCompetenceDimension))
         {
             return AverageForDimension(
@@ -34,7 +34,7 @@ internal static class WerkgeverApkEmployeeDimensionScores
         PupilMboHboBlock block,
         PupilMboHboProgressState progress,
         SchoolLevel level,
-        PupilMboHboCatalog catalog,
+        WerkgeverApkEmployeeCatalog catalog,
         string dimension)
     {
         var values = new List<int>();
@@ -57,7 +57,7 @@ internal static class WerkgeverApkEmployeeDimensionScores
     private static int? AverageForValueBarKey(
         PupilMboHboProgressState progress,
         SchoolLevel level,
-        PupilMboHboCatalog catalog,
+        WerkgeverApkEmployeeCatalog catalog,
         string barKey)
     {
         var values = new List<int>();
