@@ -93,71 +93,71 @@ public sealed class G78ResultPagePlaywrightTests : BunitContext
         });
     }
 
-  private static IReadOnlyList<string> ParseLikes(string? likesJson)
-  {
-      if (string.IsNullOrWhiteSpace(likesJson))
-      {
-          return [];
-      }
+    private static IReadOnlyList<string> ParseLikes(string? likesJson)
+    {
+        if (string.IsNullOrWhiteSpace(likesJson))
+        {
+            return [];
+        }
 
-      try
-      {
-          return System.Text.Json.JsonSerializer.Deserialize<List<string>>(likesJson) ?? [];
-      }
-      catch
-      {
-          return [];
-      }
-  }
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(likesJson) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
 
-  private static (PupilResult Result, PupilProgress Progress) FixtureFor(string profile) => profile switch
-  {
-      "helpt-anderen" => PupilG78RealisticFixtures.HelpsOthers(),
-      "neemt-voortouw" => PupilG78RealisticFixtures.LeadsGroup(),
-      "maker" => PupilG78RealisticFixtures.Maker(),
-      _ => PupilG78RealisticFixtures.LeadsGroup(),
-  };
+    private static (PupilResult Result, PupilProgress Progress) FixtureFor(string profile) => profile switch
+    {
+        "helpt-anderen" => PupilG78RealisticFixtures.HelpsOthers(),
+        "neemt-voortouw" => PupilG78RealisticFixtures.LeadsGroup(),
+        "maker" => PupilG78RealisticFixtures.Maker(),
+        _ => PupilG78RealisticFixtures.LeadsGroup(),
+    };
 
-  private string BuildHtml((PupilResult Result, PupilProgress Progress) fixture)
-  {
-      var renderer = new PupilStoryRenderer();
-      var story = renderer.Render(fixture.Result, fixture.Progress, "nl");
-      var culture = Services.GetRequiredService<CultureState>();
-      culture.SetLanguageAsync("nl").GetAwaiter().GetResult();
-      var likeKeys = ParseLikes(fixture.Progress.LikesJson);
-      var dto = new PupilResultPageDto(
-          "8B",
-          "DEMO-CODE",
-          "Demo OBS",
-          story,
-          likeKeys,
-          [],
-          null,
-          null,
-          QuestionSet: PupilQuestionSet.Groep78);
-      var registry = Services.GetRequiredService<IPupilQuestionSetRegistry>();
-      return WrapHtml(PupilDitBenJijSsrHtml.BuildBody(
-          dto, culture, groep78: true, "koraalrif", registry, passportV2: true, "/leerling/pdf"));
-  }
+    private string BuildHtml((PupilResult Result, PupilProgress Progress) fixture)
+    {
+        var renderer = new PupilStoryRenderer();
+        var story = renderer.Render(fixture.Result, fixture.Progress, "nl");
+        var culture = Services.GetRequiredService<CultureState>();
+        culture.SetLanguageAsync("nl").GetAwaiter().GetResult();
+        var likeKeys = ParseLikes(fixture.Progress.LikesJson);
+        var dto = new PupilResultPageDto(
+            "8B",
+            "DEMO-CODE",
+            "Demo OBS",
+            story,
+            likeKeys,
+            [],
+            null,
+            null,
+            QuestionSet: PupilQuestionSet.Groep78);
+        var registry = Services.GetRequiredService<IPupilQuestionSetRegistry>();
+        return WrapHtml(PupilDitBenJijSsrHtml.BuildBody(
+            dto, culture, groep78: true, "koraalrif", registry, passportV2: true, "/leerling/pdf"));
+    }
 
-  private static string WrapHtml(string body)
-  {
-      var webRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Web", "wwwroot"));
-      var cssPath = Path.Combine(webRoot, "css", "features", "leerling-werelden-kies.css");
-      var css = File.Exists(cssPath) ? File.ReadAllText(cssPath) : "";
-      var jsPath = Path.Combine(webRoot, "js", "leerling-journey-ssr.js");
-      var js = File.Exists(jsPath) ? File.ReadAllText(jsPath) : "";
-      return $"""
+    private static string WrapHtml(string body)
+    {
+        var webRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Web", "wwwroot"));
+        var cssPath = Path.Combine(webRoot, "css", "features", "leerling-werelden-kies.css");
+        var css = File.Exists(cssPath) ? File.ReadAllText(cssPath) : "";
+        var jsPath = Path.Combine(webRoot, "js", "leerling-journey-ssr.js");
+        var js = File.Exists(jsPath) ? File.ReadAllText(jsPath) : "";
+        return $"""
           <!DOCTYPE html>
           <html lang="nl"><head><meta charset="utf-8"/><style>{css}</style></head>
           <body class="ll-g78-shell"><main>{body}</main>
           <script>{js}</script></body></html>
           """;
-  }
+    }
 
-  private sealed class AnonymousAuth : AuthenticationStateProvider
-  {
-      public override Task<AuthenticationState> GetAuthenticationStateAsync()
-          => Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
-  }
+    private sealed class AnonymousAuth : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync()
+            => Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
+    }
 }

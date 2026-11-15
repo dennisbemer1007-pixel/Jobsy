@@ -1510,6 +1510,18 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateReminderPreferences.Remove(reminderPreference);
         }
 
+        var activityAgreement = await _db.ActivityAgreements
+            .FirstOrDefaultAsync(p => p.CandidateUserId == user.Id, cancellationToken);
+        if (activityAgreement is not null)
+        {
+            _db.ActivityAgreements.Remove(activityAgreement);
+        }
+
+        _db.JobSearchActivityAttachments.RemoveRange(
+            await _db.JobSearchActivityAttachments.Where(a => a.CandidateUserId == user.Id).ToListAsync(cancellationToken));
+        _db.JobSearchActivities.RemoveRange(
+            await _db.JobSearchActivities.Where(a => a.CandidateUserId == user.Id).ToListAsync(cancellationToken));
+
         var afterMatchReminder = await _db.AfterMatchReminderPreferences
             .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
         if (afterMatchReminder is not null)
@@ -1519,6 +1531,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         _db.InterviewReminders.RemoveRange(
             await _db.InterviewReminders.Where(r => r.UserId == user.Id).ToListAsync(cancellationToken));
+
+        _db.NotificationPreferences.RemoveRange(
+            await _db.NotificationPreferences.Where(p => p.UserId == user.Id).ToListAsync(cancellationToken));
 
         var reminderLogs = await _db.ComebackReminderLogs
             .Where(l => l.UserId == user.Id)

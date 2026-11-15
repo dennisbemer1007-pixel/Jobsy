@@ -60,11 +60,11 @@ public interface IWerkgeverApkEmployeePortalService
 
 public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePortalService
 {
-  public const string InvalidCode = "invalid_code";
-  public const string SessionInvalid = "session_invalid";
-  public const string FeatureOff = "feature_disabled";
+    public const string InvalidCode = "invalid_code";
+    public const string SessionInvalid = "session_invalid";
+    public const string FeatureOff = "feature_disabled";
 
-  private static readonly SchoolLevel Level = SchoolLevel.Mbo3;
+    private static readonly SchoolLevel Level = SchoolLevel.Mbo3;
 
     private readonly JobsyDbContext _db;
     private readonly IWerkgeverApkEmployeeCodeService _codes;

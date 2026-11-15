@@ -306,6 +306,18 @@ internal static class CandidateOwnedDataCleanup
             db.CandidateReminderPreferences.Remove(reminderPreference);
         }
 
+        var activityAgreement = await db.ActivityAgreements
+            .FirstOrDefaultAsync(p => p.CandidateUserId == user.Id, cancellationToken);
+        if (activityAgreement is not null)
+        {
+            db.ActivityAgreements.Remove(activityAgreement);
+        }
+
+        db.JobSearchActivityAttachments.RemoveRange(
+            await db.JobSearchActivityAttachments.Where(a => a.CandidateUserId == user.Id).ToListAsync(cancellationToken));
+        db.JobSearchActivities.RemoveRange(
+            await db.JobSearchActivities.Where(a => a.CandidateUserId == user.Id).ToListAsync(cancellationToken));
+
         var afterMatchReminder = await db.AfterMatchReminderPreferences
             .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
         if (afterMatchReminder is not null)
@@ -315,6 +327,9 @@ internal static class CandidateOwnedDataCleanup
 
         db.InterviewReminders.RemoveRange(
             await db.InterviewReminders.Where(r => r.UserId == user.Id).ToListAsync(cancellationToken));
+
+        db.NotificationPreferences.RemoveRange(
+            await db.NotificationPreferences.Where(p => p.UserId == user.Id).ToListAsync(cancellationToken));
 
         var reminderLogs = await db.ComebackReminderLogs
             .Where(l => l.UserId == user.Id)

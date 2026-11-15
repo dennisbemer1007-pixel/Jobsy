@@ -61,7 +61,7 @@ public sealed class WerkgeverApkAccessTests
         Assert.Equal(401, status);
     }
 
-  [Fact]
+    [Fact]
     public async Task Manager_team_overview_denies_other_company()
     {
         var (dbA, teamA, _, _) = await WerkgeverApkTestSupport.SeedTeamWithCodeAsync();
