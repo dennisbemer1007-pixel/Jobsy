@@ -31,7 +31,7 @@ public sealed class WerkgeverApkEmployeeCatalog
         _ = level;
         return QuestionsFor(block);
     }
-    
+
     public IReadOnlyList<PupilMboHboQuestion> QuestionsFor(PupilMboHboBlock block)
         => block switch
         {
