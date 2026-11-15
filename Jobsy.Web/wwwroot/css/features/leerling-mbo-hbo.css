@@ -564,12 +564,17 @@
   }
 
   .mhbo-root {
-    --mhbo-coach-pad: 88px;
+    --mhbo-coach-pad: 112px;
   }
 
   .mhbo-root .mhbo-coach-dock {
     transform: scale(0.72);
     transform-origin: bottom right;
+  }
+
+  .mhbo-wrap--overview .mhbo-tile .mhbo-btn {
+    align-self: flex-start;
+    max-width: calc(100% - 76px);
   }
 }
 

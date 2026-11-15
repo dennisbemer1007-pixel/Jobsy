@@ -4,6 +4,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.DataProtection;
@@ -145,7 +146,42 @@ internal static class CoachVariantBOverlapAuditSupport
             return null;
         }
 
-        return (DemoSchoolIds.SchoolId, DemoSchoolIds.ClassMbo2Id, PupilCodeFormat.Display(plain));
+        var display = PupilCodeFormat.Display(plain);
+        await EnsureVakkenBlockCompletedAsync(created[0].Id);
+        return (DemoSchoolIds.SchoolId, DemoSchoolIds.ClassMbo2Id, display);
+    }
+
+    internal static async Task EnsureVakkenBlockCompletedAsync(Guid pupilCodeId)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var progress = await db.PupilProgresses.FirstOrDefaultAsync(p => p.PupilCodeId == pupilCodeId);
+        if (progress is null)
+        {
+            progress = new PupilProgress
+            {
+                PupilCodeId = pupilCodeId,
+                MboHboProgressJson = new PupilMboHboProgressState().ToJson(),
+                StartedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            };
+            db.PupilProgresses.Add(progress);
+        }
+
+        var state = PupilMboHboProgressState.Parse(progress.MboHboProgressJson);
+        state.IntroSeen = true;
+        state.BlocksCompleted[PupilMboHboProgressState.BlockKey(PupilMboHboBlock.Vakken)] =
+            DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        progress.MboHboProgressJson = state.ToJson();
+        await db.SaveChangesAsync();
     }
 
     internal static async Task<bool> PupilLoginAsync(IPage page, string baseUrl, Guid schoolId, Guid classId, string plainCode)

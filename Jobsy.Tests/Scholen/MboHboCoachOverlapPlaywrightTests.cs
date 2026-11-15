@@ -27,11 +27,9 @@ public sealed class MboHboCoachOverlapPlaywrightTests
     public async Task Mbo_coach_bbox_does_not_overlap_clickables(int width, int height)
     {
         _ = TestContext.Current.CancellationToken;
-        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
-        if (baseUrl is null)
-        {
-            return;
-        }
+        var baseUrl = KbE2e.TryBaseUrl();
+        Assert.False(string.IsNullOrWhiteSpace(baseUrl), "Zet JOBSY_E2E_BASE_URL (bijv. http://127.0.0.1:5201) en start de CI-stack.");
+        Assert.True(await KbE2e.IsReachableAsync(baseUrl!), $"JOBSY_E2E_BASE_URL niet bereikbaar: {baseUrl}");
 
         await CoachVariantBOverlapAuditSupport.EnsureSchoolsEnabledAsync();
 
@@ -61,7 +59,11 @@ public sealed class MboHboCoachOverlapPlaywrightTests
             await page.WaitForTimeoutAsync(350);
 
             var audit = await CoachVariantBOverlapAuditSupport.EvaluateOverlapAsync(page);
-            if (audit.Skip || !audit.Ok)
+            if (audit.Skip)
+            {
+                failures.Add($"{entry.Name}@{width}: skip={audit.Reason}");
+            }
+            else if (!audit.Ok)
             {
                 failures.Add($"{entry.Name}@{width}: {audit.Reason}; hits={string.Join(", ", audit.Hits)}");
             }
