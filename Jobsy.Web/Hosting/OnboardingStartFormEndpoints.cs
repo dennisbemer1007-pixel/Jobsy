@@ -22,10 +22,34 @@ public static class OnboardingStartFormEndpoints
     {
         var auth = new AuthorizeAttribute { Roles = "Candidate" };
         app.MapPost("/candidate/start", PostAsync).RequireAuthorization(auth);
+        app.MapPost("/candidate/start/step-1/volgende", Step1VolgendeAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-6/volgende", Step6VolgendeAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-7/consent-volgende", Step7ConsentVolgendeAsync).RequireAuthorization(auth);
 
         return app;
+    }
+
+    private static async Task<IResult> Step1VolgendeAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(1), culture["Common.Error.TryAgain"]));
+        }
+
+        var req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance: true);
+        var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+            req,
+            api,
+            geocoder,
+            culture,
+            cancellationToken);
+        return ToRedirect(step1Status, step1Payload, 1, advance: true, goBack: false, culture);
     }
 
     private static async Task<IResult> Step6VolgendeAsync(
@@ -339,6 +363,18 @@ public static class OnboardingStartFormEndpoints
         if (!advance && currentStep == 7 && form.ContainsKey("consentRequested"))
         {
             advance = true;
+        }
+
+        if (advance && currentStep == 1)
+        {
+            var step1Req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance: true);
+            var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+                step1Req,
+                api,
+                geocoder,
+                culture,
+                cancellationToken);
+            return ToRedirect(step1Status, step1Payload, 1, advance: true, goBack: false, culture);
         }
 
         if (!advance && !goBack && !persist)

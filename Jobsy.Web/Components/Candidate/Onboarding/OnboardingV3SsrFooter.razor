@@ -16,29 +16,43 @@
             <input type="submit"
                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
                    formaction="/candidate/start/step-7/consent-volgende"
-                   name="volgende"
-                   value="@NextLabel"
+                   name="obNav"
+                   value="next"
                    formnovalidate
-                   data-testid="onboarding-next" />
+                   data-testid="onboarding-next"
+                   data-ob-ssr-nav-next="1" />
         }
         else if (Step == 6)
         {
             <button type="submit"
                     class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
                     formaction="/candidate/start/step-6/volgende"
-                    name="volgende"
-                    value="1"
+                    name="obNav"
+                    value="next"
                     formnovalidate
-                    data-testid="onboarding-next">@NextLabel</button>
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
+        }
+        else if (Step == 1)
+        {
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    formaction="/candidate/start/step-1/volgende"
+                    name="obNav"
+                    value="next"
+                    formnovalidate
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
         }
         else
         {
             <button type="submit"
                     class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                    name="onboarding-advance"
-                    value="1"
+                    name="obNav"
+                    value="next"
                     formnovalidate
-                    data-testid="onboarding-next">@NextLabel</button>
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
         }
     }
     else
@@ -49,8 +63,8 @@
             {
                 <button type="submit"
                         class="ob-v3-dfoot__link"
-                        name="onboarding-skip"
-                        value="1"
+                        name="obNav"
+                        value="skip"
                         formnovalidate
                         data-testid="onboarding-skip">@Culture["Onboarding.Skip"]</button>
             }
@@ -58,8 +72,8 @@
             {
                 <button type="submit"
                         class="ob-v3-dfoot__link ob-v3-dfoot__dream-unknown--desktop"
-                        name="onboarding-dream-unknown"
-                        value="1"
+                        name="obNav"
+                        value="dreamUnknown"
                         formnovalidate
                         data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
             }
@@ -69,29 +83,43 @@
             <input type="submit"
                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
                    formaction="/candidate/start/step-7/consent-volgende"
-                   name="volgende"
-                   value="@NextLabel"
+                   name="obNav"
+                   value="next"
                    formnovalidate
-                   data-testid="onboarding-next" />
+                   data-testid="onboarding-next"
+                   data-ob-ssr-nav-next="1" />
         }
         else if (Step == 6)
         {
             <button type="submit"
                     class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
                     formaction="/candidate/start/step-6/volgende"
-                    name="volgende"
-                    value="1"
+                    name="obNav"
+                    value="next"
                     formnovalidate
-                    data-testid="onboarding-next">@NextLabel</button>
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
+        }
+        else if (Step == 1)
+        {
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    formaction="/candidate/start/step-1/volgende"
+                    name="obNav"
+                    value="next"
+                    formnovalidate
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
         }
         else
         {
             <button type="submit"
                     class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                    name="onboarding-advance"
-                    value="1"
+                    name="obNav"
+                    value="next"
                     formnovalidate
-                    data-testid="onboarding-next">@NextLabel</button>
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
         }
     }
 </div>

@@ -32,6 +32,14 @@ public static class OnboardingClientStep1Saver
         OnboardingClientStepBridge.ApplyStep1(draft, request);
 
         await CandidateHomeAddressLookup.TryResolveTypedAddressAsync(draft, geocoder, cancellationToken);
+        if (draft.HomeLat is null || draft.HomeLng is null)
+        {
+            _ = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
+                draft,
+                geocoder,
+                cancellationToken,
+                debounce: false);
+        }
 
         if (request.Advance)
         {
@@ -73,6 +81,7 @@ public static class OnboardingClientStep1Saver
 
         try
         {
+            _ = await api.GetMyOnboardingAsync(cancellationToken);
             await OnboardingClientProgressSaver.SaveStickyAsync(
                 api,
                 2,

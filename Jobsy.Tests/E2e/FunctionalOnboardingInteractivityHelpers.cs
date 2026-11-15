@@ -1745,30 +1745,73 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task ClickOnboardingNextAsync(IPage page, bool mobile)
     {
-        var next = page.GetByTestId("onboarding-next");
+        var form = page.Locator("form[data-ob-ssr-form]");
+        var ssr = await form.CountAsync() > 0;
+        var next = ssr
+            ? form.GetByTestId("onboarding-next")
+            : page.GetByTestId("onboarding-next");
         await next.ScrollIntoViewIfNeededAsync();
         await WaitForCircuitReadyAsync(page, 15_000);
-        var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
         if (ssr)
         {
-            var ssrStep = await page.Locator("form[data-ob-ssr-form]").GetAttributeAsync("data-ob-ssr-step");
-            if (string.Equals(ssrStep, "6", StringComparison.Ordinal))
-            {
-                await page.WaitForFunctionAsync(
-                    @"() => {
-                        var n = document.querySelector('[data-testid=onboarding-next]');
-                        return n && String(n.getAttribute('formaction') || '').includes('step-6/volgende');
-                    }",
-                    null,
-                    new() { Timeout = 30_000 });
-            }
+            await page.EvaluateAsync(
+                """
+                () => {
+                  const form = document.querySelector('form[data-ob-ssr-form]');
+                  if (!form) return;
+                  const step = parseInt(form.getAttribute('data-ob-ssr-step') || '0', 10);
+                  const root = form.querySelector('[data-ob-client-step="1"]');
+                  if (step === 1 && root) {
+                    const workField = root.querySelector('[data-ob-ssr-work-statuses]');
+                    if (workField) {
+                      const codes = [];
+                      root.querySelectorAll('.work-status-chip[data-ob-code]').forEach((btn) => {
+                        if (btn.getAttribute('aria-pressed') === 'true') codes.push(btn.getAttribute('data-ob-code'));
+                      });
+                      workField.value = codes.join(',');
+                    }
+                    if (typeof root.__obSyncStep1FormFields === 'function') root.__obSyncStep1FormFields();
+                  }
+                }
+                """);
         }
 
         var beforeUrl = page.Url;
+        var beforeStep = ssr
+            ? await page.EvaluateAsync<int>(
+                """
+                () => {
+                  const form = document.querySelector('form[data-ob-ssr-form]');
+                  if (!form) return 0;
+                  return parseInt(
+                    form.getAttribute('data-ob-ssr-step')
+                      || form.getAttribute('data-ob-active-step')
+                      || '0',
+                    10);
+                }
+                """)
+            : 0;
         await next.ClickAsync(new() { Force = mobile, Timeout = 30_000 });
+
         if (ssr)
         {
-            await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 90_000 });
+            await page.WaitForFunctionAsync(
+                """
+                ({ beforeStep, beforeUrl }) => {
+                  if (location.href.includes('obError=')) return false;
+                  if (location.href.includes(`step=${beforeStep + 1}`)) return true;
+                  const form = document.querySelector('form[data-ob-ssr-form]');
+                  if (!form) return false;
+                  const step = parseInt(
+                    form.getAttribute('data-ob-ssr-step')
+                      || form.getAttribute('data-ob-active-step')
+                      || '0',
+                    10);
+                  return step > beforeStep;
+                }
+                """,
+                new { beforeStep, beforeUrl },
+                new() { Timeout = 90_000 });
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             await WaitForCircuitReadyAsync(page, 90_000);
         }

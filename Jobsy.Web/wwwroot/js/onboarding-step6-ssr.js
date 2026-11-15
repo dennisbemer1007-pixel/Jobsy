@@ -64,8 +64,9 @@
         if (next) {
             next.removeAttribute("data-ob-nav-value");
             next.setAttribute("formaction", "/candidate/start/step-6/volgende");
-            next.setAttribute("name", "volgende");
-            next.setAttribute("value", "1");
+            next.setAttribute("name", "obNav");
+            next.setAttribute("value", "next");
+            next.setAttribute("data-ob-ssr-nav-next", "1");
         }
 
         var stepField = form.querySelector('input[name="step"]');

@@ -306,11 +306,13 @@ public sealed class FunctionalOnboardingPlaywrightTests
         }
 
         await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, "2671GB");
-        await FunctionalOnboardingInteractivityHelpers.AssertGeolocateButtonRespondsAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.FillBirthDateAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.DismissAddressSuggestionsAsync(page);
 
         var next = page.GetByTestId("onboarding-next");
         await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 20_000 });
-        await next.ClickAsync(new() { Timeout = 15_000, Force = mobile });
+        await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
         await page.Locator("[data-testid=onboarding-step-2-illustrated], .ob-wizard__presets, .ob-illustrated-step").First
             .WaitForAsync(new() { Timeout = 90_000 });
 

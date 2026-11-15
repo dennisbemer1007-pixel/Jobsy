@@ -762,11 +762,36 @@ combo.save(out)
     internal static async Task ClickNextAsync(IPage page)
     {
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-        var next = page.Locator("[data-testid=onboarding-next]").First;
+        var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+        var next = ssr
+            ? page.Locator("form[data-ob-ssr-form] [data-testid=onboarding-next]").First
+            : page.Locator("[data-testid=onboarding-next]").First;
         await next.ScrollIntoViewIfNeededAsync();
         await page.WaitForTimeoutAsync(150);
         var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
-        var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+        if (ssr)
+        {
+            await page.EvaluateAsync(
+                """
+                () => {
+                  const form = document.querySelector('form[data-ob-ssr-form]');
+                  if (!form) return;
+                  const step = parseInt(form.getAttribute('data-ob-ssr-step') || '0', 10);
+                  const root = form.querySelector('[data-ob-client-step="1"]');
+                  if (step === 1 && root) {
+                    const workField = root.querySelector('[data-ob-ssr-work-statuses]');
+                    if (workField) {
+                      const codes = [];
+                      root.querySelectorAll('.work-status-chip[data-ob-code]').forEach((btn) => {
+                        if (btn.getAttribute('aria-pressed') === 'true') codes.push(btn.getAttribute('data-ob-code'));
+                      });
+                      workField.value = codes.join(',');
+                    }
+                    if (typeof root.__obSyncStep1FormFields === 'function') root.__obSyncStep1FormFields();
+                  }
+                }
+                """);
+        }
         var beforeUrl = page.Url;
         if (mobile)
         {
@@ -794,13 +819,16 @@ combo.save(out)
 
             try
             {
-                await page.WaitForURLAsync(u => u.ToString() != beforeUrl, new() { Timeout = 20_000 });
+                await page.WaitForURLAsync(
+                    u => u.ToString() != beforeUrl && !u.ToString().Contains("obError=", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 20_000 });
             }
             catch (TimeoutException)
             {
                 await page.WaitForFunctionAsync(
                     """
                     ({ beforeStep, beforeUrl }) => {
+                      if (location.href.includes('obError=')) return false;
                       if (location.href !== beforeUrl) return true;
                       const form = document.querySelector('form[data-ob-ssr-form]');
                       if (!form) return false;

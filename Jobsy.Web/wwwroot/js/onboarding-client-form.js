@@ -1853,7 +1853,7 @@
 
     function bindObWizardNav() {
         if (window.__obWizardNavBound) return;
-        if (document.querySelector("form[data-ob-ssr-form]")) return;
+        if (document.querySelector("form[data-ob-ssr-form], .ob-wizard--rustig")) return;
         window.__obWizardNavBound = true;
         document.addEventListener("keydown", function (ev) {
             if (ev.key !== "Enter" || ev.defaultPrevented || ev.isComposing) return;
@@ -1873,6 +1873,7 @@
 
             var backBtn = ev.target.closest("[data-ob-nav-back]");
             if (backBtn) {
+                if (backBtn.closest("form[data-ob-ssr-form]")) return;
                 if (backBtn.disabled) return;
                 var rootBack = resolveClientRoot(backBtn);
                 var stepBack = resolveNavStep(rootBack, backBtn);
@@ -1892,6 +1893,7 @@
 
             var nextBtn = ev.target.closest("[data-ob-nav-next]");
             if (!nextBtn) return;
+            if (nextBtn.closest("form[data-ob-ssr-form]")) return;
             if (nextBtn.disabled) return;
 
             var root = resolveClientRoot(nextBtn);
@@ -2025,6 +2027,22 @@
                     return;
                 }
                 var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
+                if (step === 1) {
+                    var root = form.querySelector('[data-ob-client-step="1"]');
+                    var workField = root && root.querySelector("[data-ob-ssr-work-statuses]");
+                    if (workField && root) {
+                        var codes = [];
+                        root.querySelectorAll(".work-status-chip[data-ob-code]").forEach(function (btn) {
+                            if (btn.getAttribute("aria-pressed") === "true") {
+                                codes.push(btn.getAttribute("data-ob-code"));
+                            }
+                        });
+                        workField.value = codes.join(",");
+                    }
+                    if (root && typeof root.__obSyncStep1FormFields === "function") {
+                        root.__obSyncStep1FormFields();
+                    }
+                }
                 form.setAttribute("data-ob-submitting", "1");
                 form.querySelectorAll("button[type=submit]").forEach(function (b) {
                     b.disabled = true;

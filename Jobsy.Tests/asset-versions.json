@@ -584,19 +584,23 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "d8661c222f95b44dd441bd79cf0af2e64694f81e94f57cedbaa61fe69438369b",
+    "sha256": "5d21e3e4ce80af3bf795fa27e40e8cab2874c628b27f48e189362e471d4a20fd",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
     "sha256": "a0576d5c44918fd9336c4ea495a5d476ab6f54a48e3bc3b6bb4a67831ec221a1",
     "v": "20261025-87"
   },
+  "js/onboarding-step1-ssr.js": {
+    "sha256": "a12116bd5c495cf3d3464b7e4efa7ac73ffa660924d9b56268ee6aec04e57164",
+    "v": "20261115-01"
+  },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "46b529c24c4fb1dfab3c7f08809e659755ef940df87f64487e1b44a9c56f5e22",
+    "sha256": "a06b20c7d6bdbb40fb46b3601cc46859e0fa6c16d1d31c9b9bbccdae2ace047b",
     "v": "20261025-87"
   },
   "js/onboarding-step7-consent-ssr.js": {
-    "sha256": "2ce5767df6a0fe44cd8ca57b71f8cfd026681631247c57368c2b691137a42380",
+    "sha256": "27f5f690a69f301c9f54a40a576d3cd1089ca47c831db5bfe1d755e793cf8638",
     "v": "20261115-01"
   },
   "js/passport-availability-matrix.js": {
