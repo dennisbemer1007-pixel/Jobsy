@@ -213,6 +213,12 @@ public static class RoleNavCatalog
                 return CandidateItems(flags);
             }
 
+            if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager)
+                && flags.EmployerLoopbaanApkEnabled)
+            {
+                return [LoopbaanApk];
+            }
+
             if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)
                 || RoleClaimMatching.HasRole(user, JobsyRoles.Ambassadeur)
                 || RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles))

@@ -40,13 +40,8 @@ public static class WerkgeverApkEmployeeEndpoints
             "retry" => "Even opnieuw proberen.",
             _ => null
         };
-        _ = Guid.TryParse(http.Request.Query["companyId"], out var companyId);
-        _ = Guid.TryParse(http.Request.Query["teamId"], out var teamId);
-        Guid? co = companyId == Guid.Empty ? null : companyId;
-        Guid? te = teamId == Guid.Empty ? null : teamId;
-        var options = await api.GetWerkgeverApkLoginOptionsAsync(http.RequestAborted);
         return Results.Content(
-            WerkgeverApkSsrHtml.RenderLoginPage(options, co, te, error, af),
+            WerkgeverApkLoginSsrHtml.RenderDocument(error, af),
             "text/html; charset=utf-8");
     }
 

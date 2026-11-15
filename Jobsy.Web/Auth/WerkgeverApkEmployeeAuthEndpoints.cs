@@ -36,8 +36,6 @@ public static class WerkgeverApkEmployeeAuthEndpoints
             }
 
             var form = await http.Request.ReadFormAsync();
-            _ = Guid.TryParse(form["companyId"], out var companyId);
-            _ = Guid.TryParse(form["teamId"], out var teamId);
             var code = form["code"].ToString();
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -50,14 +48,11 @@ public static class WerkgeverApkEmployeeAuthEndpoints
 
             using var response = await client.PostAsJsonAsync(
                 "api/werkgever-apk/employee/login",
-                new WerkgeverApkEmployeeLoginRequest(companyId, teamId, code));
+                new WerkgeverApkEmployeeLoginRequest(code));
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
-                var qs = companyId != Guid.Empty && teamId != Guid.Empty
-                    ? $"&companyId={companyId:D}&teamId={teamId:D}"
-                    : "";
-                return Results.Redirect($"/loopbaan-apk?error=invalid{qs}");
+                return Results.Redirect("/loopbaan-apk?error=invalid");
             }
 
             var login = JsonSerializer.Deserialize<WerkgeverApkEmployeeLoginResponse>(body, JobsyApiClient.ApiJson);

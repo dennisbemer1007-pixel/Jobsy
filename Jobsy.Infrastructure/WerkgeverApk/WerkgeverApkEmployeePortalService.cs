@@ -17,8 +17,6 @@ namespace Jobsy.Infrastructure.WerkgeverApk;
 
 public interface IWerkgeverApkEmployeePortalService
 {
-    Task<IReadOnlyList<WerkgeverApkEmployeeCompanyOptionDto>> ListLoginCompaniesAsync(CancellationToken ct = default);
-
     Task<(WerkgeverApkEmployeeLoginResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> LoginAsync(
         WerkgeverApkEmployeeLoginRequest request,
         CancellationToken ct = default);
@@ -88,48 +86,6 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         _clock = clock ?? TimeProvider.System;
     }
 
-    public async Task<IReadOnlyList<WerkgeverApkEmployeeCompanyOptionDto>> ListLoginCompaniesAsync(
-        CancellationToken ct = default)
-    {
-        if (!await WerkgeverApkFeatureGate.IsGlobalEnabledAsync(_features, ct))
-        {
-            return [];
-        }
-
-        var companies = await _db.Companies.AsNoTracking()
-            .Where(c => c.ParentCompanyId == null && c.LoopbaanApkEnabled)
-            .OrderBy(c => c.Name)
-            .Select(c => new { c.Id, c.Name })
-            .ToListAsync(ct);
-        if (companies.Count == 0)
-        {
-            return [];
-        }
-
-        var companyIds = companies.Select(c => c.Id).ToList();
-        var teams = await _db.WerkgeverApkTeams.AsNoTracking()
-            .Where(t => companyIds.Contains(t.CompanyId))
-            .Select(t => new { t.Id, t.CompanyId, t.Name })
-            .ToListAsync(ct);
-        var teamIds = teams.Select(t => t.Id).ToList();
-        var codeCounts = await _db.WerkgeverApkEmployeeCodes.AsNoTracking()
-            .Where(c => teamIds.Contains(c.TeamId))
-            .GroupBy(c => c.TeamId)
-            .Select(g => new { TeamId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.TeamId, x => x.Count, ct);
-
-        return companies.Select(c =>
-        {
-            var teamRows = teams.Where(t => t.CompanyId == c.Id)
-                .Select(t => new WerkgeverApkEmployeeTeamOptionDto(
-                    t.Id,
-                    t.Name,
-                    codeCounts.GetValueOrDefault(t.Id)))
-                .ToList();
-            return new WerkgeverApkEmployeeCompanyOptionDto(c.Id, c.Name, teamRows);
-        }).ToList();
-    }
-
     public async Task<(WerkgeverApkEmployeeLoginResponse? Ok, WerkgeverApkErrorDto? Error, int Status)> LoginAsync(
         WerkgeverApkEmployeeLoginRequest request,
         CancellationToken ct = default)
@@ -145,42 +101,20 @@ public sealed class WerkgeverApkEmployeePortalService : IWerkgeverApkEmployeePor
         }
 
         var hash = _codes.LookupHash(normalized);
-        WerkgeverApkTeam? team;
-        WerkgeverApkEmployeeCode? code;
-        if (request.CompanyId == Guid.Empty || request.TeamId == Guid.Empty)
+        var code = await _db.WerkgeverApkEmployeeCodes
+            .Include(c => c.Progress)
+            .Include(c => c.ManagerSheet)
+            .Include(c => c.Team)!.ThenInclude(t => t!.Company)
+            .FirstOrDefaultAsync(c => c.CodeLookupHash == hash, ct);
+        if (code?.Team is null || code.Team.Company is null)
         {
-            code = await _db.WerkgeverApkEmployeeCodes
-                .Include(c => c.Progress)
-                .Include(c => c.ManagerSheet)
-                .Include(c => c.Team)!.ThenInclude(t => t!.Company)
-                .FirstOrDefaultAsync(c => c.CodeLookupHash == hash, ct);
-            if (code?.Team is null || code.Team.Company is null)
-            {
-                return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
-            }
-
-            team = code.Team;
-            if (!WerkgeverApkFeatureGate.IsCompanyEnabled(team.Company))
-            {
-                return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
-            }
+            return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
         }
-        else
-        {
-            team = await _db.WerkgeverApkTeams
-                .Include(t => t.Company)
-                .FirstOrDefaultAsync(t => t.Id == request.TeamId && t.CompanyId == request.CompanyId, ct);
-            if (team is null
-                || team.Company is null
-                || !WerkgeverApkFeatureGate.IsCompanyEnabled(team.Company))
-            {
-                return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
-            }
 
-            code = await _db.WerkgeverApkEmployeeCodes
-                .Include(c => c.Progress)
-                .Include(c => c.ManagerSheet)
-                .FirstOrDefaultAsync(c => c.TeamId == request.TeamId && c.CodeLookupHash == hash, ct);
+        var team = code.Team;
+        if (!WerkgeverApkFeatureGate.IsCompanyEnabled(team.Company))
+        {
+            return (null, new WerkgeverApkErrorDto(InvalidCode, "Controleer je code en probeer het opnieuw."), 401);
         }
         if (code is null || code.Status == WerkgeverApkEmployeeCodeStatus.Revoked)
         {

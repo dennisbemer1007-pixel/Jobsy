@@ -10,12 +10,6 @@ public sealed partial class JobsyApiClient
     public async Task WerkgeverApkEmployeeWelcomeAsync(CancellationToken ct = default)
         => await _http.PostAsync("api/werkgever-apk/employee/welcome", null, ct);
 
-    public async Task<IReadOnlyList<WerkgeverApkEmployeeCompanyOptionDto>> GetWerkgeverApkLoginOptionsAsync(
-        CancellationToken ct = default)
-        => await _http.GetFromJsonAsync<IReadOnlyList<WerkgeverApkEmployeeCompanyOptionDto>>(
-               "api/werkgever-apk/employee/login-options", ct)
-           ?? [];
-
     public async Task<WerkgeverApkEmployeeQuestionDto?> GetWerkgeverApkQuestionAsync(
         string blockKey,
         string? itemId = null,
@@ -106,15 +100,6 @@ public sealed partial class JobsyApiClient
     public async Task<WerkgeverApkManagerSheetDto?> GetWerkgeverApkManagerSheetAsync(Guid codeId, CancellationToken ct = default)
         => await _http.GetFromJsonAsync<WerkgeverApkManagerSheetDto>(
             $"api/werkgever-apk/manager/codes/{codeId:D}/sheet", ct);
-
-    public async Task UpdateCompanyLoopbaanApkAsync(Guid companyId, bool enabled, CancellationToken ct = default)
-    {
-        var response = await _http.PutAsJsonAsync(
-            $"api/companies/{companyId:D}/loopbaan-apk",
-            new UpdateLoopbaanApkRequest(enabled),
-            ct);
-        response.EnsureSuccessStatusCode();
-    }
 
     private static async Task<T?> JsonSerializerTry<T>(HttpContent content)
     {

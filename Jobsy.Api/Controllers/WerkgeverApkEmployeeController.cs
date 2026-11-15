@@ -20,14 +20,6 @@ public sealed class WerkgeverApkEmployeeController : ControllerBase
 
     public WerkgeverApkEmployeeController(IWerkgeverApkEmployeePortalService portal) => _portal = portal;
 
-    [HttpGet("login-options")]
-    [AllowAnonymous]
-    public async Task<IActionResult> LoginOptions(CancellationToken ct)
-    {
-        Response.Headers.CacheControl = "no-store";
-        return Ok(await _portal.ListLoginCompaniesAsync(ct));
-    }
-
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] WerkgeverApkEmployeeLoginRequest request, CancellationToken ct)

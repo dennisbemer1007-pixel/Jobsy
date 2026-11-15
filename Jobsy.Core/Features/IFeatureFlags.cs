@@ -85,7 +85,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.UwvFeatures => UwvFeaturesEnabled,
         PlatformFeature.ActivityLog => ActivityLogEnabled,
         PlatformFeature.CandidateCoachTonePreferences => CandidateCoachTonePreferencesEnabled,
-        PlatformFeature.EmployerLoopbaanApk => EmployersEnabled && EmployerLoopbaanApkEnabled,
+        PlatformFeature.EmployerLoopbaanApk => EmployerLoopbaanApkEnabled,
         _ => false
     };
 }

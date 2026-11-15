@@ -52,7 +52,7 @@ public sealed record WerkgeverApkUpdateEmployeeLabelRequest(string? Label);
 
 public sealed record UpdateLoopbaanApkRequest(bool LoopbaanApkEnabled);
 
-public sealed record WerkgeverApkEmployeeLoginRequest(Guid CompanyId, Guid TeamId, string Code);
+public sealed record WerkgeverApkEmployeeLoginRequest(string Code);
 
 public sealed record WerkgeverApkEmployeeLoginResponse(
     string RedirectPath,

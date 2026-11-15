@@ -32,7 +32,8 @@ public record AdminCompanyDetailDto(
     DateTime? PendingTakeoverAtUtc = null,
     Guid? PendingTakeoverTargetCompanyId = null,
     int KvkVerificationAttempts = 0,
-    DateTime? KvkLastVerificationAttemptAtUtc = null);
+    DateTime? KvkLastVerificationAttemptAtUtc = null,
+    bool LoopbaanApkEnabled = false);
 
 /// <summary>Paged admin companies response (only when page/pageSize query params are set).</summary>
 public record AdminCompaniesPageDto(
