@@ -1203,7 +1203,7 @@ public static class UiStrings
             ["Coach.CloseTip"] = "Close tip",
             ["Coach.OpenOnboarding"] = "Open Lobsy help",
             ["Coach.OnboardingBubble"] = "How can I help you?",
-            ["Coach.LobsterAlt"] = "Lobsy coach",
+            ["Coach.LobsterAlt"] = "Lobsy coach mascot",
             ["Assistant.Open"] = "Open Lobsy assistant",
             ["Assistant.BotName"] = "Lobsy",
             ["Assistant.You"] = "You",

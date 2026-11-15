@@ -59,7 +59,7 @@ public static class UiStringsTests
         Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
         Add("Coach.OpenOnboarding", "Lobsy-hulp openen", "Open Lobsy help", "Otwórz pomoc Lobsy", "Deschide ajutorul Lobsy", "فتح مساعدة Lobsy");
         Add("Coach.OnboardingBubble", "Waar kan ik je bij helpen?", "How can I help you?", "W czym mogę pomóc?", "Cu ce te pot ajuta?", "كيف يمكنني مساعدتك؟");
-        Add("Coach.LobsterAlt", "Lobsy coach", "Lobsy coach", "Coach Lobsy", "Coach Lobsy", "مدرب Lobsy");
+        Add("Coach.LobsterAlt", "Lobsy coach", "Lobsy coach mascot", "Coach Lobsy", "Coach Lobsy", "مدرب Lobsy");
         Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
         Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");
         Add("DeepPay.StartQ1", "Begin met vraag 1", "Start with question 1", "Zacznij od pytania 1", "Începe cu întrebarea 1", "ابدأ بالسؤال 1");

@@ -21762,6 +21762,7 @@ html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
     overflow: hidden;
 }
 
+.lobsy-coach-dock__btn img,
 .lobsy-coach-dock__btn:not(.lobsy-coach-dock__btn--warm):not(.lobsy-coach-dock__btn--lobster-b) img {
     display: block;
     width: 100%;
