@@ -694,5 +694,17 @@
   "service-worker.published.js": {
     "sha256": "2b5980c5b3acc80f7c3cd84d0c70a2d286c870cfb94fe69a9f2bcf72fa27bb5f",
     "v": "20261024-52"
+  },
+  "werkgever-apk/css/extra.css": {
+    "sha256": "4d4eaf6dadb58c5e9a799f88328d7574ec898e42db6396692499e6a0003090d3",
+    "v": "20261115-catalog"
+  },
+  "werkgever-apk/css/functie.css": {
+    "sha256": "a78c55e9e39967a2bcbe2318ecef4ca557c2e0a6119b0a9cc4e36e0586d4d6a8",
+    "v": "20261115-catalog"
+  },
+  "werkgever-apk/css/shared.css": {
+    "sha256": "edb9065857811316c4d4b238fa38528b8140d8c33887c190cee074192e27483e",
+    "v": "20261115-catalog"
   }
 }

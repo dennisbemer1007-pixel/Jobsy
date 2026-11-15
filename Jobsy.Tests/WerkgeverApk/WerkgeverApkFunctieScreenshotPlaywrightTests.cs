@@ -26,6 +26,24 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
     private const string EnvRun = "JOBSY_WERKGEVER_APK_FUNCTIE_SCREENSHOTS";
     private const string OrderpickerEsco = "cd94def5-3442-4c2e-ae3d-0761a3008bcb";
     private const string MagazijnEsco = "040fcfa5-24be-43eb-afd5-828297175b16";
+    private const string VrachtwagenEsco = "45037d43-a8f5-4f46-b332-b2935bc305f4";
+    private const string LogistiekEsco = "c8b296be-54ae-48cf-be21-031fa8457937";
+
+    private static readonly string[] DemoNames =
+    [
+        "Sara de Wit",
+        "Tom Bakker",
+        "Fatima El Amrani",
+        "Joost Vermeer",
+        "Noah de Groot",
+        "Lieke van Dam",
+        "Emre Yilmaz",
+        "Anna Bos",
+        "Chris de Vries",
+        "Samira Hussain",
+        "Peter Kuipers",
+        "Eva Jansen"
+    ];
 
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
@@ -101,6 +119,7 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         var body = await page.ContentAsync();
         Assert.Contains(mustContain, body, StringComparison.Ordinal);
+        await AssertTopbarBrandColorAsync(page);
         await CapturePairAsync(page, slug);
     }
 
@@ -114,7 +133,15 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         var body = await page.ContentAsync();
         Assert.Contains(mustContain, body, StringComparison.Ordinal);
+        await AssertTopbarBrandColorAsync(page);
         await CapturePairAsync(page, slug);
+    }
+
+    private static async Task AssertTopbarBrandColorAsync(IPage page)
+    {
+        var rgb = await page.Locator("header.topbar").EvaluateAsync<string>(
+            "el => getComputedStyle(el).backgroundColor");
+        Assert.Equal("rgb(10, 32, 68)", rgb);
     }
 
     private async Task CapturePairAsync(IPage page, string slug)
@@ -185,89 +212,84 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
             .OrderBy(c => c.Number)
             .ToListAsync();
 
-        var progressJson = CompleteProgressJson();
-        var lowFlexJson = LowFlexProgressJson();
-
         for (var i = 0; i < all.Count; i++)
         {
             var code = all[i];
+            code.Label = i < DemoNames.Length ? DemoNames[i] : $"Medewerker {code.Number}";
             code.EscoOccupationId = i switch
             {
                 < 6 => OrderpickerEsco,
                 < 9 => MagazijnEsco,
-                _ => OrderpickerEsco
+                < 11 => VrachtwagenEsco,
+                _ => LogistiekEsco
             };
-            code.Label ??= $"Demo {code.Number}";
-            if (i == 0)
-            {
-                code.Label = "Sara de Wit";
-            }
 
             code.Status = WerkgeverApkEmployeeCodeStatus.Completed;
-            code.SharedWithManager = i < 9;
-            code.SharedAtUtc = DateTime.UtcNow;
+            code.SharedWithManager = i <= 10;
+            code.SharedAtUtc = code.SharedWithManager ? DateTime.UtcNow : null;
             code.Progress ??= new WerkgeverApkEmployeeProgress { EmployeeCodeId = code.Id };
-            code.Progress.ProgressJson = i == 0 ? lowFlexJson : progressJson;
+            code.Progress.ProgressJson = i switch
+            {
+                0 => SaraEmployeeProgressJson(),
+                < 6 => OrderpickerCohortProgressJson(i),
+                _ => BaselineProgressJson(),
+            };
             code.Progress.WelcomeSeen = true;
             code.Progress.UpdatedAtUtc = DateTime.UtcNow;
         }
 
         await db.SaveChangesAsync();
         var pick = all[0];
-        var functie = all.First(c => codes.Unprotect(c.CodeProtected) is not null);
-        return new FunctieSeed(team.Id, pick.Id, codes.Unprotect(functie.CodeProtected)!);
+        return new FunctieSeed(team.Id, pick.Id, codes.Unprotect(pick.CodeProtected)!);
     }
 
-    private static string CompleteProgressJson()
-    {
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
-        var answers = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
-        {
-            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
-            {
-                answers[q.Id] = 4;
-            }
-        }
+    private static string BaselineProgressJson()
+        => JsonSerializer.Serialize(new { answers = BaselineAnswers() });
 
-        return JsonSerializer.Serialize(new { answers });
-    }
-
-    private static string LowFlexProgressJson()
-    {
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
-        var answers = CompleteProgressJsonDictionary(catalog);
-        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, SchoolLevel.Mbo3))
-        {
-            if (q.Dimension.StartsWith("Creativiteit", StringComparison.Ordinal))
-            {
-                answers[q.Id] = 1;
-            }
-            if (string.Equals(q.Dimension, "Resultaatgerichtheid", StringComparison.Ordinal))
-            {
-                answers[q.Id] = 5;
-            }
-            if (string.Equals(q.Dimension, "Samenwerken", StringComparison.Ordinal))
-            {
-                answers[q.Id] = 5;
-            }
-        }
-
-        return JsonSerializer.Serialize(new { answers });
-    }
-
-    private static Dictionary<string, int> CompleteProgressJsonDictionary(WerkgeverApkEmployeeCatalog catalog)
+    private static Dictionary<string, int> BaselineAnswers()
     {
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
         foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
         {
-            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
+            foreach (var q in WerkgeverApkEmployeeCatalog.Default.QuestionsFor(block, SchoolLevel.Mbo3))
             {
-                answers[q.Id] = 4;
+                answers[q.Id] = 3;
             }
         }
 
         return answers;
+    }
+
+    private static string SaraEmployeeProgressJson()
+    {
+        var answers = BaselineAnswers();
+        answers["c07"] = 5;
+        answers["c02"] = 5;
+        answers["c09"] = 5;
+        answers["c29"] = 5;
+        answers["c27"] = 5;
+        answers["c13"] = 1;
+        answers["c37"] = 2;
+        answers["c30"] = 2;
+        answers["c34"] = 3;
+        answers["c21"] = 3;
+        return JsonSerializer.Serialize(new { answers });
+    }
+
+    private static string OrderpickerCohortProgressJson(int slot)
+    {
+        var answers = BaselineAnswers();
+        answers["c13"] = slot == 5 ? 5 : 1;
+        answers["c07"] = slot <= 4 ? 5 : 3;
+        answers["c02"] = 5;
+        answers["c09"] = slot <= 3 ? 5 : 3;
+        answers["c29"] = slot <= 3 ? 5 : 3;
+        answers["c27"] = slot <= 2 ? 5 : 3;
+        answers["c37"] = slot <= 1 ? 5 : 2;
+        answers["c30"] = slot <= 1 ? 5 : 2;
+        answers["c34"] = 3;
+        answers["c21"] = 3;
+        return JsonSerializer.Serialize(new { answers });
     }
 
     private sealed record FunctieSeed(Guid TeamId, Guid PickCodeId, string FunctiePlainCode);

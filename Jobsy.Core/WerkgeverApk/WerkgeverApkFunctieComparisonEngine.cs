@@ -41,9 +41,15 @@ public static class WerkgeverApkFunctieComparisonEngine
                 continue;
             }
 
+            var question = ResolveEvidenceQuestion(point, catalog, level);
+            if (question is null || !progress.Answers.ContainsKey(question.Id))
+            {
+                continue;
+            }
+
             if (score >= StrongThreshold)
             {
-                var sentence = StrongSentence(point, progress, catalog, level);
+                var sentence = StrongSentence(question);
                 if (sentence is not null)
                 {
                     strengths.Add(new WerkgeverApkFunctieStrength(point.Label, sentence));
@@ -51,7 +57,7 @@ public static class WerkgeverApkFunctieComparisonEngine
             }
             else
             {
-                var tip = GrowthTooltip(point, profile.DisplayTitle, progress, catalog, level);
+                var tip = GrowthTooltip(point, profile.DisplayTitle, question);
                 if (tip is not null)
                 {
                     growth.Add((score.Value, new WerkgeverApkFunctieGrowth(point.Label, tip)));
@@ -70,108 +76,47 @@ public static class WerkgeverApkFunctieComparisonEngine
         return new WerkgeverApkFunctieComparisonDto(profile.DisplayTitle, orderedStrengths, orderedGrowth);
     }
 
-    private static int? ScoreForPoint(
+    internal static int? ScoreForPoint(
         WerkgeverApkFunctieProfilePoint point,
         PupilMboHboProgressState progress,
         WerkgeverApkEmployeeCatalog catalog,
         SchoolLevel level)
     {
-        if (string.IsNullOrWhiteSpace(point.CompetenceDimension))
+        var question = ResolveEvidenceQuestion(point, catalog, level);
+        if (question is null)
         {
             return null;
         }
 
-        var values = new List<int>();
-        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, level))
-        {
-            if (!string.Equals(q.Dimension, point.CompetenceDimension, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (progress.Answers.TryGetValue(q.Id, out var v))
-            {
-                values.Add(v);
-            }
-        }
-
-        if (values.Count == 0)
-        {
-            return null;
-        }
-
-        return (int)Math.Round(values.Average(), MidpointRounding.AwayFromZero);
+        return progress.Answers.TryGetValue(question.Id, out var v) ? v : null;
     }
 
-    private static string? StrongSentence(
+    private static PupilMboHboQuestion? ResolveEvidenceQuestion(
         WerkgeverApkFunctieProfilePoint point,
-        PupilMboHboProgressState progress,
         WerkgeverApkEmployeeCatalog catalog,
         SchoolLevel level)
     {
-        var best = BestQuestion(point, progress, catalog, level, highest: true);
-        if (best is null)
+        if (string.IsNullOrWhiteSpace(point.EvidenceQuestionId))
         {
             return null;
         }
 
-        return $"Jij gaf aan dat {LowerFirst(best.Question)}";
+        return catalog.Find(PupilMboHboBlock.Competentie, level, point.EvidenceQuestionId);
     }
+
+    private static string? StrongSentence(PupilMboHboQuestion question)
+        => $"Jij gaf aan dat {LowerFirst(question.Question)}";
 
     private static string? GrowthTooltip(
         WerkgeverApkFunctieProfilePoint point,
         string occupationTitle,
-        PupilMboHboProgressState progress,
-        WerkgeverApkEmployeeCatalog catalog,
-        SchoolLevel level)
+        PupilMboHboQuestion question)
     {
-        var lowest = BestQuestion(point, progress, catalog, level, highest: false);
-        if (lowest is null)
-        {
-            return null;
-        }
-
         var occ = string.IsNullOrWhiteSpace(occupationTitle) ? "jouw functie" : occupationTitle.ToLowerInvariant();
         return
-            $"In je antwoorden gaf je aan dat {LowerFirst(lowest.Question)} " +
+            $"In je antwoorden gaf je aan dat {LowerFirst(question.Question)} " +
             $"In het profiel van {occ} hoort ook {point.Label.ToLowerInvariant()}. " +
             "Dit is geen oordeel, alleen een punt waarop jij nog kunt groeien.";
-    }
-
-    private static PupilMboHboQuestion? BestQuestion(
-        WerkgeverApkFunctieProfilePoint point,
-        PupilMboHboProgressState progress,
-        WerkgeverApkEmployeeCatalog catalog,
-        SchoolLevel level,
-        bool highest)
-    {
-        PupilMboHboQuestion? pick = null;
-        var pickScore = highest ? -1 : 6;
-        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, level))
-        {
-            if (!string.Equals(q.Dimension, point.CompetenceDimension, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (!progress.Answers.TryGetValue(q.Id, out var v))
-            {
-                continue;
-            }
-
-            if (highest && v > pickScore)
-            {
-                pickScore = v;
-                pick = q;
-            }
-            else if (!highest && v < pickScore)
-            {
-                pickScore = v;
-                pick = q;
-            }
-        }
-
-        return pick;
     }
 
     private static string LowerFirst(string text)

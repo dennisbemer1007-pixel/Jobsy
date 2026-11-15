@@ -44,7 +44,7 @@ public static class WerkgeverApkFunctieMockupPages
                 $"""<form method="post" action="{E(postPath)}" class="sug{on}" style="margin:0"><input type="hidden" name="escoOccupationId" value="{E(hit.EscoOccupationId)}" />{antiforgery}<button type="submit" style="all:unset;display:flex;align-items:center;gap:10px;width:100%;cursor:pointer"><span class="mark"></span><b>{E(hit.Name)}</b></button></form>""");
         }
 
-        html = ReplaceBetween(html, "<div class=\"suggest\">", "</div>", sugHtml.ToString(), keepOpen: true, keepClose: true);
+        html = ReplaceBetween(html, "<div class=\"suggest\">", "<div class=\"chosen\">", sugHtml.ToString(), keepOpen: true, keepClose: false);
 
         if (!string.IsNullOrWhiteSpace(pick.SelectedOccupationName))
         {
@@ -136,7 +136,7 @@ public static class WerkgeverApkFunctieMockupPages
         var html = WerkgeverApkSsrHtml.RenderTemplate("10-totaalbeeld-functie.html", new Dictionary<string, string>(StringComparer.Ordinal));
         html = InjectCoach(html);
         html = html.Replace("Demo Logistiek B.V. · Team Logistiek", E($"{companyName} · {teamName}"), StringComparison.Ordinal);
-        var title = $"{insights.SelectedTitle}s · {insights.SharedCompletedCount} deelnemers";
+        var title = $"{insights.SelectedTitle} · {insights.SharedCompletedCount} deelnemers";
         html = html.Replace("Orderpickers · 6 deelnemers", E(title), StringComparison.Ordinal);
 
         var chips = new StringBuilder();
@@ -147,7 +147,7 @@ public static class WerkgeverApkFunctieMockupPages
                 : tab.Visible ? "" : " lock";
             var label = tab.Visible ? $"{tab.SharedCount} · zichtbaar" : $"{tab.SharedCount} · vanaf 5";
             chips.Append(
-                $"""<a class="fn-chip{on}" href="?esco={Uri.EscapeDataString(tab.EscoOccupationId)}">{E(tab.TitlePlural)} <small>{E(label)}</small></a>""");
+                $"""<a class="fn-chip{on}" href="?esco={Uri.EscapeDataString(tab.EscoOccupationId)}">{E(tab.TabTitle)} <small>{E(label)}</small></a>""");
         }
 
         html = ReplaceBetween(html, "<div class=\"fn-switch\">", "</div>", chips.ToString(), keepOpen: true, keepClose: true);
@@ -187,7 +187,7 @@ public static class WerkgeverApkFunctieMockupPages
         var html = WerkgeverApkSsrHtml.RenderTemplate("10b-te-weinig.html", new Dictionary<string, string>(StringComparer.Ordinal));
         html = InjectCoach(html);
         html = html.Replace("Demo Logistiek B.V. · Team Logistiek", E($"{companyName} · {teamName}"), StringComparison.Ordinal);
-        var title = $"{insights.SelectedTitle}s · {insights.SharedCompletedCount} deelnemers";
+        var title = $"{insights.SelectedTitle} · {insights.SharedCompletedCount} deelnemers";
         html = html.Replace("Magazijnmedewerkers · 3 deelnemers", E(title), StringComparison.Ordinal);
 
         var chips = new StringBuilder();
@@ -198,7 +198,7 @@ public static class WerkgeverApkFunctieMockupPages
                 : tab.Visible ? "" : " lock";
             var label = tab.Visible ? $"{tab.SharedCount} · zichtbaar" : $"{tab.SharedCount} · vanaf 5";
             chips.Append(
-                $"""<a class="fn-chip{on}" href="?esco={Uri.EscapeDataString(tab.EscoOccupationId)}">{E(tab.TitlePlural)} <small>{E(label)}</small></a>""");
+                $"""<a class="fn-chip{on}" href="?esco={Uri.EscapeDataString(tab.EscoOccupationId)}">{E(tab.TabTitle)} <small>{E(label)}</small></a>""");
         }
 
         html = ReplaceBetween(html, "<div class=\"fn-switch\">", "</div>", chips.ToString(), keepOpen: true, keepClose: true);
@@ -213,7 +213,7 @@ public static class WerkgeverApkFunctieMockupPages
         {
             html = html.Replace(
                 """<button class="btn primary" type="button"><span class="full-label">Naar Orderpickers</span>""",
-                $"""<a class="btn primary" href="/werkgever/loopbaan-apk/teams/{teamId:D}/functie-totaal?esco={Uri.EscapeDataString(visible.EscoOccupationId)}"><span class="full-label">Naar {E(visible.TitlePlural)}</span>""",
+                $"""<a class="btn primary" href="/werkgever/loopbaan-apk/teams/{teamId:D}/functie-totaal?esco={Uri.EscapeDataString(visible.EscoOccupationId)}"><span class="full-label">Naar {E(visible.TabTitle)}</span>""",
                 StringComparison.Ordinal);
             html = html.Replace("""<span class="short-label">Groep</span></button>""", """<span class="short-label">Groep</span></a>""", StringComparison.Ordinal);
         }

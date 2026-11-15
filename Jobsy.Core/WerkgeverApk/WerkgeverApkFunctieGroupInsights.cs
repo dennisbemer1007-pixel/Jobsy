@@ -9,7 +9,7 @@ public sealed record WerkgeverApkFunctieTrainingHint(string Label, string Hint);
 
 public sealed record WerkgeverApkFunctieGroupTab(
     string EscoOccupationId,
-    string TitlePlural,
+    string TabTitle,
     int SharedCount,
     bool Visible);
 
@@ -115,28 +115,7 @@ public static class WerkgeverApkFunctieGroupInsights
         PupilMboHboProgressState progress,
         WerkgeverApkEmployeeCatalog catalog,
         SchoolLevel level)
-    {
-        if (string.IsNullOrWhiteSpace(point.CompetenceDimension))
-        {
-            return null;
-        }
-
-        var values = new List<int>();
-        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, level))
-        {
-            if (!string.Equals(q.Dimension, point.CompetenceDimension, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (progress.Answers.TryGetValue(q.Id, out var v))
-            {
-                values.Add(v);
-            }
-        }
-
-        return values.Count == 0 ? null : (int)Math.Round(values.Average(), MidpointRounding.AwayFromZero);
-    }
+        => WerkgeverApkFunctieComparisonEngine.ScoreForPoint(point, progress, catalog, level);
 
     private static IReadOnlyList<WerkgeverApkFunctieGroupTab> BuildTabs(
         IReadOnlyList<(string? EscoOccupationId, PupilMboHboProgressState Progress)> sharedCompleted)
@@ -147,15 +126,14 @@ public static class WerkgeverApkFunctieGroupInsights
             .Select(g =>
             {
                 var title = WerkgeverApkFunctieProfileCatalog.DisplayName(g.Key);
-                var plural = Pluralize(title);
                 return new WerkgeverApkFunctieGroupTab(
                     g.Key,
-                    plural,
+                    title,
                     g.Count(),
                     g.Count() >= WerkgeverApkAnonymity.MinGroupSize);
             })
             .OrderByDescending(t => t.SharedCount)
-            .ThenBy(t => t.TitlePlural, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(t => t.TabTitle, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -170,18 +148,4 @@ public static class WerkgeverApkFunctieGroupInsights
         return tabs.Count == 0 ? null : tabs[0].EscoOccupationId;
     }
 
-    private static string Pluralize(string title)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return title;
-        }
-
-        if (title.EndsWith('r') || title.EndsWith('R'))
-        {
-            return title + "s";
-        }
-
-        return title;
-    }
 }

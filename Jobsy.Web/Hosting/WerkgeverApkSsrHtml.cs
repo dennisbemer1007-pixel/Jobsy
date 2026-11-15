@@ -106,10 +106,7 @@ public static class WerkgeverApkSsrHtml
     {
         var path = WerkgeverApkTemplateLocator.PathFor(templateFileName);
         var html = File.Exists(path) ? File.ReadAllText(path) : "<html><body><p>Pagina niet beschikbaar.</p></body></html>";
-        html = html
-            .Replace("shared.css", "/werkgever-apk/css/shared.css", StringComparison.Ordinal)
-            .Replace("extra.css", "/werkgever-apk/css/extra.css", StringComparison.Ordinal)
-            .Replace("img/", "/werkgever-apk/img/", StringComparison.Ordinal);
+        html = ApplyStaticAssets(html);
 
         var sb = new StringBuilder(html);
         foreach (var (key, value) in tokens)
@@ -118,5 +115,23 @@ public static class WerkgeverApkSsrHtml
         }
 
         return sb.ToString();
+    }
+
+    internal static string ApplyStaticAssets(string html)
+    {
+        var shared = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/shared.css");
+        var extra = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/extra.css");
+        var functie = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/functie.css");
+
+        return html
+            .Replace("href=\"shared.css\"", $"href=\"{shared}\"", StringComparison.Ordinal)
+            .Replace("href=\"extra.css\"", $"href=\"{extra}\"", StringComparison.Ordinal)
+            .Replace("href=\"functie.css\"", $"href=\"{functie}\"", StringComparison.Ordinal)
+            .Replace("/werkgever-apk/shared.css", shared, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/extra.css", extra, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/css/shared.css", shared, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/css/extra.css", extra, StringComparison.Ordinal)
+            .Replace("/werkgever-apk/css/functie.css", functie, StringComparison.Ordinal)
+            .Replace("img/", "/werkgever-apk/img/", StringComparison.Ordinal);
     }
 }

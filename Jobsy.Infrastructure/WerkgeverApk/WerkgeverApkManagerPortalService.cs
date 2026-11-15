@@ -640,7 +640,7 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
             return (null, overview.Error, overview.Status);
         }
 
-        var suggestions = SearchHits(query);
+        var suggestions = WerkgeverApkOccupationSearch.ForManager(query);
         var dto = new WerkgeverApkFunctiePickDto(
             code.Id,
             code.Label,
@@ -698,29 +698,7 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
             return (null, gate.Error, gate.Status);
         }
 
-        return (SearchHits(query), null, 200);
-    }
-
-    private static IReadOnlyList<WerkgeverApkOccupationSearchHitDto> SearchHits(string? query)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            return [];
-        }
-
-        return OccupationCatalog.Shared.Search(query.Trim(), 8)
-            .Select(hit =>
-            {
-                var occ = OccupationCatalog.Shared.Get(hit.EscoId);
-                var name = occ?.Nl ?? hit.Title;
-                if (name.Length > 0)
-                {
-                    name = char.ToUpper(name[0]) + name[1..];
-                }
-
-                return new WerkgeverApkOccupationSearchHitDto(hit.EscoId, name);
-            })
-            .ToList();
+        return (WerkgeverApkOccupationSearch.ForManager(query), null, 200);
     }
 
     private async Task<WerkgeverApkManagerSheet> EnsureManagerSheetAsync(

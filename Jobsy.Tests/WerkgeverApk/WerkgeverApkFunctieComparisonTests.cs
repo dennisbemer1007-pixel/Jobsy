@@ -26,6 +26,34 @@ public sealed class WerkgeverApkFunctieComparisonTests
     }
 
     [Fact]
+    public void Tempo_and_veilig_strengths_use_distinct_evidence_questions()
+    {
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["c27"] = 5,
+            ["c29"] = 5,
+        };
+        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        {
+            foreach (var q in WerkgeverApkEmployeeCatalog.Default.QuestionsFor(block, SchoolLevel.Mbo3))
+            {
+                answers.TryAdd(q.Id, 3);
+            }
+        }
+
+        var state = PupilMboHboProgressState.Parse(System.Text.Json.JsonSerializer.Serialize(new { answers }));
+        var dto = WerkgeverApkFunctieComparisonEngine.Build(OrderpickerEsco, state, SchoolLevel.Mbo3);
+        Assert.NotNull(dto);
+        var tempo = dto!.Strengths.FirstOrDefault(s => s.Label.Contains("Tempo", StringComparison.Ordinal));
+        var veilig = dto.Strengths.FirstOrDefault(s => s.Label.Contains("Veilig", StringComparison.Ordinal));
+        Assert.NotNull(tempo);
+        Assert.NotNull(veilig);
+        Assert.Contains("afspraken en deadlines", tempo.Sentence, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("spullen klaar", veilig.Sentence, StringComparison.OrdinalIgnoreCase);
+        Assert.NotEqual(tempo.Sentence, veilig.Sentence);
+    }
+
+    [Fact]
     public void Growth_tooltips_quote_only_employee_answer_text()
     {
         var state = StateWithDimension("Creativiteit / vernieuwen (Innovatie)", 1);
