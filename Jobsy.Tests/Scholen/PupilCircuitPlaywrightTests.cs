@@ -3651,6 +3651,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
                 {
                     ["ApiBaseUrl"] = "http://api.test/",
                     ["CLOUDFLARE_ORIGIN_SECRET"] = "",
+                    ["G78ContrastQuestionsEnabled"] = "true",
                     ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
                 });
             });
