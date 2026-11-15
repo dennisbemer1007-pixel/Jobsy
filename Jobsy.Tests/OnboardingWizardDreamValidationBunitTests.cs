@@ -53,7 +53,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         BunitAntiforgery.Register(Services);
     }
 
-    [Fact]
+    [Fact(Skip = "V3 SSR: OnboardingWizard.NextAsync is a no-op for steps 1–10; dream step is SSR (OnboardingDreamValidationScreenshotTests / OnboardingStartFormPostTests).")]
     public void Dream_validation_clears_when_leaving_step_6_via_unknown()
     {
         _handler.CurrentStep = 6;
