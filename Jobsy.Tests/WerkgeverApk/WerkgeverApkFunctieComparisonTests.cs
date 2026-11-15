@@ -26,7 +26,7 @@ public sealed class WerkgeverApkFunctieComparisonTests
     }
 
     [Fact]
-    public void Tempo_and_veilig_strengths_use_distinct_evidence_questions()
+    public void Tempo_and_veilig_strengths_omit_mismatched_evidence_sentences()
     {
         var answers = new Dictionary<string, int>(StringComparer.Ordinal)
         {
@@ -44,13 +44,29 @@ public sealed class WerkgeverApkFunctieComparisonTests
         var state = PupilMboHboProgressState.Parse(System.Text.Json.JsonSerializer.Serialize(new { answers }));
         var dto = WerkgeverApkFunctieComparisonEngine.Build(OrderpickerEsco, state, SchoolLevel.Mbo3);
         Assert.NotNull(dto);
-        var tempo = dto!.Strengths.FirstOrDefault(s => s.Label.Contains("Tempo", StringComparison.Ordinal));
-        var veilig = dto.Strengths.FirstOrDefault(s => s.Label.Contains("Veilig", StringComparison.Ordinal));
-        Assert.NotNull(tempo);
-        Assert.NotNull(veilig);
-        Assert.Contains("afspraken en deadlines", tempo.Sentence, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("spullen klaar", veilig.Sentence, StringComparison.OrdinalIgnoreCase);
-        Assert.NotEqual(tempo.Sentence, veilig.Sentence);
+        Assert.DoesNotContain(dto!.Strengths, s => s.Label.Contains("Tempo", StringComparison.Ordinal));
+        Assert.DoesNotContain(dto.Strengths, s => s.Label.Contains("Veilig", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Strength_sentences_use_quoted_first_person_answer()
+    {
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal) { ["c07"] = 5 };
+        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        {
+            foreach (var q in WerkgeverApkEmployeeCatalog.Default.QuestionsFor(block, SchoolLevel.Mbo3))
+            {
+                answers.TryAdd(q.Id, 3);
+            }
+        }
+
+        var state = PupilMboHboProgressState.Parse(System.Text.Json.JsonSerializer.Serialize(new { answers }));
+        var dto = WerkgeverApkFunctieComparisonEngine.Build(OrderpickerEsco, state, SchoolLevel.Mbo3);
+        Assert.NotNull(dto);
+        var nauw = dto!.Strengths.FirstOrDefault(s => s.Label.Contains("Nauwkeurig", StringComparison.Ordinal));
+        Assert.NotNull(nauw);
+        Assert.StartsWith("Jij gaf aan: \"Ik controleer", nauw.Sentence, StringComparison.Ordinal);
+        Assert.DoesNotContain("Jij gaf aan dat", nauw.Sentence, StringComparison.Ordinal);
     }
 
     [Fact]

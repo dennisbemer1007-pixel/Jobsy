@@ -83,12 +83,12 @@ public static class WerkgeverApkFunctieComparisonEngine
         SchoolLevel level)
     {
         var question = ResolveEvidenceQuestion(point, catalog, level);
-        if (question is null)
+        if (question is not null)
         {
-            return null;
+            return progress.Answers.TryGetValue(question.Id, out var v) ? v : null;
         }
 
-        return progress.Answers.TryGetValue(question.Id, out var v) ? v : null;
+        return AverageDimensionScore(point.CompetenceDimension, progress, catalog, level);
     }
 
     private static PupilMboHboQuestion? ResolveEvidenceQuestion(
@@ -105,7 +105,7 @@ public static class WerkgeverApkFunctieComparisonEngine
     }
 
     private static string? StrongSentence(PupilMboHboQuestion question)
-        => $"Jij gaf aan dat {LowerFirst(question.Question)}";
+        => $"Jij gaf aan: \"{QuestionQuote(question)}.\"";
 
     private static string? GrowthTooltip(
         WerkgeverApkFunctieProfilePoint point,
@@ -114,19 +114,47 @@ public static class WerkgeverApkFunctieComparisonEngine
     {
         var occ = string.IsNullOrWhiteSpace(occupationTitle) ? "jouw functie" : occupationTitle.ToLowerInvariant();
         return
-            $"In je antwoorden gaf je aan dat {LowerFirst(question.Question)} " +
+            $"In je antwoorden gaf je aan: \"{QuestionQuote(question)}.\" " +
             $"In het profiel van {occ} hoort ook {point.Label.ToLowerInvariant()}. " +
             "Dit is geen oordeel, alleen een punt waarop jij nog kunt groeien.";
     }
 
-    private static string LowerFirst(string text)
+    private static string QuestionQuote(PupilMboHboQuestion question)
     {
-        if (string.IsNullOrEmpty(text))
+        var t = question.Question.Trim();
+        return t.TrimEnd('.');
+    }
+
+    private static int? AverageDimensionScore(
+        string? dimension,
+        PupilMboHboProgressState progress,
+        WerkgeverApkEmployeeCatalog catalog,
+        SchoolLevel level)
+    {
+        if (string.IsNullOrWhiteSpace(dimension))
         {
-            return text;
+            return null;
         }
 
-        var t = text.TrimEnd('.');
-        return char.ToLowerInvariant(t[0]) + t[1..] + ".";
+        var values = new List<int>();
+        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, level))
+        {
+            if (!string.Equals(q.Dimension, dimension, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (progress.Answers.TryGetValue(q.Id, out var v))
+            {
+                values.Add(v);
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            return null;
+        }
+
+        return (int)Math.Round(values.Average());
     }
 }

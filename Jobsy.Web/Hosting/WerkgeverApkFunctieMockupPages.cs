@@ -44,7 +44,13 @@ public static class WerkgeverApkFunctieMockupPages
                 $"""<form method="post" action="{E(postPath)}" class="sug{on}" style="margin:0"><input type="hidden" name="escoOccupationId" value="{E(hit.EscoOccupationId)}" />{antiforgery}<button type="submit" style="all:unset;display:flex;align-items:center;gap:10px;width:100%;cursor:pointer"><span class="mark"></span><b>{E(hit.Name)}</b></button></form>""");
         }
 
-        html = ReplaceBetween(html, "<div class=\"suggest\">", "<div class=\"chosen\">", sugHtml.ToString(), keepOpen: true, keepClose: false);
+        html = ReplaceBetween(
+            html,
+            "<div class=\"suggest\">",
+            "<div class=\"chosen\">",
+            sugHtml + "</div>\n            ",
+            keepOpen: true,
+            keepClose: false);
 
         if (!string.IsNullOrWhiteSpace(pick.SelectedOccupationName))
         {
@@ -63,6 +69,12 @@ public static class WerkgeverApkFunctieMockupPages
                 ? """<span class="fn empty">Nog kiezen</span>"""
                 : $"""<span class="fn">{E(row.OfficialOccupationName)}</span>""";
             rows.Append($"""<div class="frow"><span class="who">{E(name)}</span>{fn}</div>""");
+        }
+
+        if (pick.TeamRows.Count > 5)
+        {
+            rows.Append(
+                $"""<p class="list-more" role="note">Alle {pick.TeamRows.Count} medewerkers in dit team (scroll in de lijst).</p>""");
         }
 
         html = ReplaceBetween(html, "<section class=\"card list-card\">", "</section>", rows.ToString(), keepOpen: true, keepClose: true);
@@ -211,6 +223,10 @@ public static class WerkgeverApkFunctieMockupPages
         var visible = insights.Tabs.FirstOrDefault(t => t.Visible);
         if (visible is not null)
         {
+            html = html.Replace(
+                """<b>Orderpicker is al zichtbaar</b>""",
+                $"""<b>{E(visible.TabTitle)} is al zichtbaar</b>""",
+                StringComparison.Ordinal);
             html = html.Replace(
                 """<button class="btn primary" type="button"><span class="full-label">Naar Orderpickers</span>""",
                 $"""<a class="btn primary" href="/werkgever/loopbaan-apk/teams/{teamId:D}/functie-totaal?esco={Uri.EscapeDataString(visible.EscoOccupationId)}"><span class="full-label">Naar {E(visible.TabTitle)}</span>""",

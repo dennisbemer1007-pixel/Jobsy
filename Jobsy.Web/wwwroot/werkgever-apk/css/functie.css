@@ -1,5 +1,18 @@
 /* Loopbaan-APK — uitbreiding officiële functie (mockups 08–10b) */
 
+body.fn08,body.fn09,body.fn10,body.fn10b{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
+body.fn08 .app,body.fn09 .app,body.fn10 .app,body.fn10b .app{min-height:100vh;height:auto}
+body.fn08 .shell,body.fn09 .shell,body.fn10 .shell,body.fn10b .shell{overflow:visible}
+body.fn08 .main,body.fn09 .main,body.fn10 .main,body.fn10b .main{overflow:visible}
+
+body.fn08 button.coach,body.fn09 button.coach,body.fn10 button.coach,body.fn10b button.coach{
+  position:absolute;right:8px;bottom:8px;z-index:12;width:156px;max-height:min(42vh,320px);
+  background:transparent;border:none;padding:0;line-height:0
+}
+body.fn08 button.coach img.full,body.fn09 button.coach img.full,body.fn10 button.coach img.full,body.fn10b button.coach img.full{
+  display:block;width:156px;height:auto;max-height:min(42vh,320px);object-fit:contain;object-position:88% 100%
+}
+
 .fn-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
 .fn-layout.wide-side{grid-template-columns:minmax(0,1fr) 300px}
 .fn-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
@@ -23,7 +36,8 @@
 .chosen{margin-top:10px;padding:9px 12px;border-radius:10px;background:var(--gold-soft);border:1px solid var(--gold-line);font-size:13px;color:var(--brand)}
 .chosen b{font-weight:700}
 
-.list-card{padding:4px 0 2px;overflow:hidden}
+.list-card{padding:4px 0 2px;overflow:auto;max-height:min(360px,48vh)}
+.list-more{margin:0;padding:8px 14px 10px;font-size:12px;color:var(--muted);border-top:1px solid var(--pearl)}
 .frow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:baseline;padding:7px 14px;border-bottom:1px solid var(--pearl)}
 .frow:last-child{border-bottom:0}
 .frow.head{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:10px;padding-bottom:6px}
@@ -31,7 +45,7 @@
 .frow .fn{font-size:12px;color:var(--muted);text-align:right}
 .frow .fn.empty{font-weight:400}
 
-.comp-card{padding:14px 16px 12px}
+.comp-card{padding:14px 16px 12px;overflow:visible;max-height:none}
 .comp-card h2{font-size:16px;margin-bottom:4px}
 .comp-card .sub{font-size:13px;color:var(--muted);margin:0 0 10px;line-height:1.4}
 .comp-item{padding:8px 0;border-bottom:1px solid var(--pearl)}
@@ -92,7 +106,8 @@
 .prog .bar{height:8px;border-radius:8px;background:var(--pearl);overflow:hidden;margin:0}
 .prog .bar i{display:block;height:100%;width:60%;background:linear-gradient(90deg,var(--gold-deep),var(--gold));border-radius:8px}
 .later{padding:16px 18px 14px}
-.later-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+.later-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
+body.fn10b .later-grid{gap:12px}
 .later-item{border:1px dashed var(--gold-line);background:var(--gold-soft);border-radius:10px;padding:12px 12px 10px;min-height:108px}
 .later-item b{display:block;font-size:13px;color:var(--brand);margin-bottom:4px}
 .later-item p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
@@ -167,7 +182,8 @@
 
   body.fn08 .lead{display:none}
   body.fn08 .side-tips .tip{display:none}
-  body.fn08 .side-tips .list-card{display:none}
+  body.fn08 .side-tips .list-card{display:block;max-height:220px}
+  body.fn08 .list-more{font-size:11px;padding:6px 12px}
   body.fn08 .person span{display:none}
   body.fn08 .field-hint{font-size:12px}
   body.fn08 .main{padding-bottom:176px}
@@ -243,7 +259,18 @@
   body.fn10 .main{padding-bottom:220px;}
 }
 
+body.fn10b .foot{
+  left:var(--rail);right:0;padding-right:calc(var(--coach-w) + 20px);
+  background:linear-gradient(rgba(245,242,238,0),var(--bg) 40%);
+}
+
 @media (max-width:800px){
+  body.fn08 button.coach,body.fn09 button.coach,body.fn10 button.coach,body.fn10b button.coach{
+    width:56px;right:6px;bottom:64px;max-width:56px;max-height:56px
+  }
+  body.fn08 button.coach img.full,body.fn09 button.coach img.full,body.fn10 button.coach img.full,body.fn10b button.coach img.full{
+    width:56px;max-height:56px;object-position:100% 100%
+  }
   body.fn10 .slim-note{
     display:inline-flex;
     width:auto;

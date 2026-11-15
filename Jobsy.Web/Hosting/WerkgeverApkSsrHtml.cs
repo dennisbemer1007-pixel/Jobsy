@@ -122,8 +122,11 @@ public static class WerkgeverApkSsrHtml
         var shared = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/shared.css");
         var extra = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/extra.css");
         var functie = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/css/functie.css");
+        var logo64 = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/img/lobsy-64.png");
+        var coachB2 = WwwrootAssetCatalog.UrlLeadingSlash("werkgever-apk/img/lobsy-coach-b2.png");
+        var coachJs = WwwrootAssetCatalog.UrlLeadingSlash("js/lobsy-coach-ssr.js");
 
-        return html
+        html = html
             .Replace("href=\"shared.css\"", $"href=\"{shared}\"", StringComparison.Ordinal)
             .Replace("href=\"extra.css\"", $"href=\"{extra}\"", StringComparison.Ordinal)
             .Replace("href=\"functie.css\"", $"href=\"{functie}\"", StringComparison.Ordinal)
@@ -132,6 +135,14 @@ public static class WerkgeverApkSsrHtml
             .Replace("/werkgever-apk/css/shared.css", shared, StringComparison.Ordinal)
             .Replace("/werkgever-apk/css/extra.css", extra, StringComparison.Ordinal)
             .Replace("/werkgever-apk/css/functie.css", functie, StringComparison.Ordinal)
-            .Replace("img/", "/werkgever-apk/img/", StringComparison.Ordinal);
+            .Replace("src=\"img/lobsy-64.png\"", $"src=\"{logo64}\"", StringComparison.Ordinal)
+            .Replace("src=\"img/lobsy-coach-b2.png\"", $"src=\"{coachB2}\"", StringComparison.Ordinal)
+            .Replace("src=\"/werkgever-apk/img/lobsy-64.png\"", $"src=\"{logo64}\"", StringComparison.Ordinal)
+            .Replace("src=\"/werkgever-apk/img/lobsy-coach-b2.png\"", $"src=\"{coachB2}\"", StringComparison.Ordinal)
+            .Replace("src=\"/js/lobsy-coach-ssr.js\"", $"src=\"{coachJs}\"", StringComparison.Ordinal)
+            .Replace("/js/lobsy-coach-ssr.js", coachJs, StringComparison.Ordinal)
+            .Replace("src=\"img/", "src=\"/werkgever-apk/img/", StringComparison.Ordinal);
+
+        return html;
     }
 }

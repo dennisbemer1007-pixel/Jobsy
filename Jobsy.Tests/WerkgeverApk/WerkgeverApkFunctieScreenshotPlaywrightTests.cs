@@ -120,6 +120,7 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         var body = await page.ContentAsync();
         Assert.Contains(mustContain, body, StringComparison.Ordinal);
         await AssertTopbarBrandColorAsync(page);
+        await AssertBrandAssetsLoadedAsync(page);
         await CapturePairAsync(page, slug);
     }
 
@@ -134,6 +135,7 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         var body = await page.ContentAsync();
         Assert.Contains(mustContain, body, StringComparison.Ordinal);
         await AssertTopbarBrandColorAsync(page);
+        await AssertBrandAssetsLoadedAsync(page);
         await CapturePairAsync(page, slug);
     }
 
@@ -142,6 +144,18 @@ public sealed class WerkgeverApkFunctieScreenshotPlaywrightTests
         var rgb = await page.Locator("header.topbar").EvaluateAsync<string>(
             "el => getComputedStyle(el).backgroundColor");
         Assert.Equal("rgb(10, 32, 68)", rgb);
+    }
+
+    private static async Task AssertBrandAssetsLoadedAsync(IPage page)
+    {
+        await page.Locator(".logo-tile img").WaitForAsync();
+        await page.Locator("button.coach img.full").WaitForAsync();
+        var logoOk = await page.Locator(".logo-tile img").EvaluateAsync<bool>(
+            "img => img.complete && img.naturalWidth > 0");
+        var coachOk = await page.Locator("button.coach img.full").EvaluateAsync<bool>(
+            "img => img.complete && img.naturalWidth > 0");
+        Assert.True(logoOk, "Lobsy logo image did not load.");
+        Assert.True(coachOk, "B2 coach image did not load.");
     }
 
     private async Task CapturePairAsync(IPage page, string slug)
