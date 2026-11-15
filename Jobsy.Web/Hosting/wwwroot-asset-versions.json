@@ -592,8 +592,12 @@
     "v": "20261025-87"
   },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "355382b2723ceef31b4fd9516dffab93c9c3966d398232a191b0f8912530b571",
+    "sha256": "46b529c24c4fb1dfab3c7f08809e659755ef940df87f64487e1b44a9c56f5e22",
     "v": "20261025-87"
+  },
+  "js/onboarding-step7-consent-ssr.js": {
+    "sha256": "2ce5767df6a0fe44cd8ca57b71f8cfd026681631247c57368c2b691137a42380",
+    "v": "20261115-01"
   },
   "js/passport-availability-matrix.js": {
     "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4",
