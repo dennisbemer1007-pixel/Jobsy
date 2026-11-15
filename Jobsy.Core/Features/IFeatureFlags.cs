@@ -44,7 +44,8 @@ public sealed record FeatureFlagSnapshot(
     bool TestDepthValueMockupEnabled = true,
     bool UwvFeaturesEnabled = true,
     bool ActivityLogEnabled = false,
-    bool CandidateCoachTonePreferencesEnabled = false)
+    bool CandidateCoachTonePreferencesEnabled = false,
+    bool EmployerLoopbaanApkEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(
         EmployersEnabled: false,
@@ -84,6 +85,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.UwvFeatures => UwvFeaturesEnabled,
         PlatformFeature.ActivityLog => ActivityLogEnabled,
         PlatformFeature.CandidateCoachTonePreferences => CandidateCoachTonePreferencesEnabled,
+        PlatformFeature.EmployerLoopbaanApk => EmployersEnabled && EmployerLoopbaanApkEnabled,
         _ => false
     };
 }

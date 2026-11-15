@@ -107,6 +107,12 @@ public class Company
     public bool CsvBatchImportEnabled { get; set; }
 
     /// <summary>
+    /// When true, this company may use Lobsy Loopbaan-APK (teams, employee codes, manager sheet).
+    /// Requires the platform <c>EmployerLoopbaanApk</c> feature.
+    /// </summary>
+    public bool LoopbaanApkEnabled { get; set; }
+
+    /// <summary>
     /// Preferred Mollie payment method for token top-ups (<c>ideal</c> or <c>creditcard</c>).
     /// Used as the default at checkout; managers can override per purchase.
     /// </summary>

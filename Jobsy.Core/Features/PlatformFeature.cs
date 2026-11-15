@@ -104,5 +104,11 @@ public enum PlatformFeature
     ActivityLog,
 
     /// <summary>Hoe wil je tips van mij? coach-voorkeuren op paspoort Gegevens. Default off.</summary>
-    CandidateCoachTonePreferences
+    CandidateCoachTonePreferences,
+
+    /// <summary>
+    /// Employer Loopbaan-APK for teams (employee codes, manager sheet, comparison). Default false.
+    /// Requires <see cref="Employers"/> when enabled.
+    /// </summary>
+    EmployerLoopbaanApk
 }
