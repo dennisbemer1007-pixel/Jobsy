@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts.WerkgeverApk;
@@ -21,7 +22,7 @@ public static class WerkgeverApkPakketMockupPages
         html = ReplaceBetweenMarkers(
             html,
             "<section class=\"card gold-top qcard\">",
-            "<div class=\"ab-grid\"",
+            "<div class=\"wa-ab-contrast__options\"",
             BuildAbCardInner(q, blockLabel, progress, pct, antiforgery, postPath, error));
 
         html = html.Replace("Vraag 48 van ongeveer 200", progress, StringComparison.Ordinal);
@@ -50,7 +51,7 @@ public static class WerkgeverApkPakketMockupPages
 
     public static string Preview(string template) => WerkgeverApkSsrHtml.RenderTemplate(template, new Dictionary<string, string>(StringComparer.Ordinal));
 
-    private static Dictionary<string, string> ChromeTokens(WerkgeverApkEmployeeQuestionDto q)
+    private static Dictionary<string, string> ChromeTokens(WerkgeverApkEmployeeQuestionDto _)
         => new(StringComparer.Ordinal)
         {
             ["company"] = "",
@@ -71,9 +72,16 @@ public static class WerkgeverApkPakketMockupPages
         sb.Append("<div class=\"q-progress\"><span class=\"q-part\">").Append(E(blockLabel));
         sb.Append("</span><span>").Append(E(progress)).Append("</span></div>");
         sb.Append("<div class=\"bar\"><i style=\"width:").Append(pct).Append("%\"></i></div>");
-        sb.Append("<form id=\"").Append(AbFormId).Append("\" method=\"post\" action=\"").Append(E(postPath)).Append("\">");
+        sb.Append("<form id=\"").Append(AbFormId).Append("\" method=\"post\" action=\"").Append(E(postPath)).Append("\" data-wa-ab-scale=\"1\">");
         sb.Append(antiforgery);
         sb.Append("<input type=\"hidden\" name=\"ItemId\" value=\"").Append(E(q.ItemId)).Append("\" />");
+        sb.Append("<input type=\"hidden\" name=\"Value\" value=\"");
+        if (q.Value is int existing)
+        {
+            sb.Append(existing.ToString(CultureInfo.InvariantCulture));
+        }
+
+        sb.Append("\" />");
         sb.Append("<h1>").Append(E(q.Heading ?? q.Question)).Append("</h1>");
         if (!string.IsNullOrWhiteSpace(q.Scenario))
         {
@@ -97,26 +105,8 @@ public static class WerkgeverApkPakketMockupPages
         }
         else
         {
-            sb.Append("<div class=\"ab-grid\" role=\"group\" aria-label=\"Kies A of B\">");
-            var aOn = q.Value == WerkgeverApkAnswerValidation.AbChoiceA ? " on" : "";
-            var bOn = q.Value == WerkgeverApkAnswerValidation.AbChoiceB ? " on" : "";
-            sb.Append("<label class=\"ab-card").Append(aOn).Append("\"><input type=\"radio\" name=\"Value\" value=\"1\"");
-            if (q.Value == 1)
-            {
-                sb.Append(" checked");
-            }
-
-            sb.Append(" required><span class=\"letter\">A</span><p class=\"txt\">").Append(E(q.OptionA)).Append("</p>");
-            sb.Append(q.Value == 1 ? "<div class=\"pick\">Jouw keuze</div>" : "<div class=\"pick\">&nbsp;</div></label>");
-            sb.Append("<label class=\"ab-card").Append(bOn).Append("\"><input type=\"radio\" name=\"Value\" value=\"2\"");
-            if (q.Value == 2)
-            {
-                sb.Append(" checked");
-            }
-
-            sb.Append("><span class=\"letter\">B</span><p class=\"txt\">").Append(E(q.OptionB)).Append("</p>");
-            sb.Append(q.Value == 2 ? "<div class=\"pick\">Jouw keuze</div>" : "<div class=\"pick\">&nbsp;</div></label>");
-            sb.Append("</div>");
+            sb.Append(WerkgeverApkAbAnswerScaleHtml.RenderContrastCards(q.OptionA ?? "", q.OptionB ?? ""));
+            sb.Append(WerkgeverApkAbAnswerScaleHtml.RenderScale(q.Value));
         }
 
         if (!string.IsNullOrWhiteSpace(error))
@@ -179,7 +169,7 @@ public static class WerkgeverApkPakketMockupPages
             StringComparison.Ordinal)
             .Replace(
                 "</div>\n<div class=\"wm\">",
-                "</button>\n<script src=\"/js/lobsy-coach-ssr.js\" defer></script>\n<div class=\"wm\">",
+                "</button>\n<script src=\"/js/lobsy-coach-ssr.js\" defer></script>\n<script src=\"/werkgever-apk/js/wa-ab-scale.js\" defer></script>\n<div class=\"wm\">",
                 StringComparison.Ordinal);
 
     private static string E(string? value) => WebUtility.HtmlEncode(value ?? "");

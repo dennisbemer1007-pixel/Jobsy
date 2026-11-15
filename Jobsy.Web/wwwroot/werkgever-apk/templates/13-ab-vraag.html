@@ -36,32 +36,34 @@
         <div>
           <div class="explain">
             <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg></span>
-            <p><b>Kies de zin die het meest bij je past.</b> De twee vakken zijn even groot. Er is geen goed of fout antwoord, en er komt geen cijfer.</p>
+            <p><b>Lees beide zinnen.</b> Daarna kies je op de schaal: veel meer A t/m veel meer B. Geen cijfer, geen goed of fout.</p>
           </div>
           <section class="card gold-top qcard">
             <div class="q-progress"><span class="q-part">Sterke kanten · Blok 2 van 6</span><span>Vraag 48 van ongeveer 200</span></div>
             <div class="bar"><i style="width:24%"></i></div>
             <h1>Wat past het best bij jou?</h1>
-            <p class="scene">Denk aan een gewone werkdag in het magazijn of op de vloer. Kies de zin die het meest bij je past.</p>
-            <div class="ab-grid" role="group" aria-label="Kies A of B">
-              <div class="ab-card on">
-                <span class="letter">A</span>
-                <p class="txt">Ik werk het liefst volgens<span class="mob-br"></span> een vast plan.</p>
-                <div class="pick">Jouw keuze</div>
-              </div>
-              <div class="ab-card">
-                <span class="letter">B</span>
-                <p class="txt">Ik pas mijn werk graag aan als er iets verandert.</p>
-                <div class="pick">&nbsp;</div>
+            <p class="scene">Een vrachtwagen komt een uur te laat. Je ploeg staat stil.</p>
+            <div class="wa-ab-contrast" role="group" aria-labelledby="wa-ab-q-title">
+              <p id="wa-ab-q-title" class="wa-ab-contrast__intro">Wat past het beste bij jou?</p>
+              <div class="wa-ab-contrast__options">
+                <div class="wa-ab-contrast__opt wa-ab-contrast__opt--a" data-testid="wa-ab-contrast-a"><span class="wa-ab-contrast__tag" aria-hidden="true">A</span><p>Ik kijk eerst wat we nú nog kunnen doen.</p></div>
+                <div class="wa-ab-contrast__opt wa-ab-contrast__opt--b" data-testid="wa-ab-contrast-b"><span class="wa-ab-contrast__tag" aria-hidden="true">B</span><p>Ik bel meteen de planner voor een nieuwe tijd.</p></div>
               </div>
             </div>
-            <p class="ab-hint"><b>Weet ik niet zeker? Kies wat het meest bij je past.</b> Je kunt later pauzeren en verdergaan.</p>
+            <div class="wa-ab-scale answers answers--contrast" role="radiogroup" aria-label="Jouw keuze op de schaal" data-testid="wa-ab-scale">
+              <button type="button" class="ans" role="radio" data-wa-ab-value="1" aria-checked="false" aria-label="Veel meer A, optie 1 van 5" tabindex="-1"><span class="lvl" aria-hidden="true"><i style="height:0%"></i></span>Veel meer A</button>
+              <button type="button" class="ans sel" role="radio" data-wa-ab-value="2" aria-checked="true" aria-label="Een beetje meer A, optie 2 van 5" tabindex="0"><span class="lvl" aria-hidden="true"><i style="height:25%"></i></span>Een beetje meer A</button>
+              <button type="button" class="ans" role="radio" data-wa-ab-value="3" aria-checked="false" aria-label="Allebei even, optie 3 van 5" tabindex="-1"><span class="lvl" aria-hidden="true"><i style="height:50%"></i></span>Allebei even</button>
+              <button type="button" class="ans" role="radio" data-wa-ab-value="4" aria-checked="false" aria-label="Een beetje meer B, optie 4 van 5" tabindex="-1"><span class="lvl" aria-hidden="true"><i style="height:75%"></i></span>Een beetje meer B</button>
+              <button type="button" class="ans" role="radio" data-wa-ab-value="5" aria-checked="false" aria-label="Veel meer B, optie 5 van 5" tabindex="-1"><span class="lvl" aria-hidden="true"><i style="height:100%"></i></span>Veel meer B</button>
+            </div>
+            <p class="ab-hint"><b>Twijfel je?</b> Kies wat nu het dichtst bij je past. Je kunt later pauzeren.</p>
           </section>
         </div>
         <aside class="side">
           <div class="card">
             <h2>Hoe kies je?</h2>
-            <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.4">Je ziet steeds twee zinnen. Allebei zijn prima. Kies de zin die het dichtst bij jou ligt, ook als allebei een beetje passen.</p>
+            <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.4">Je ziet twee zinnen en daarna vijf keuzes op de schaal, net als bij groep 7/8: van veel meer A tot veel meer B.</p>
           </div>
           <div class="card">
             <h2>Voortgang</h2>
@@ -87,5 +89,6 @@
   </div>
 </div>
 <div class="wm">Voorbeelddata</div>
+<script src="/werkgever-apk/js/wa-ab-scale.js" defer></script>
 </body>
 </html>

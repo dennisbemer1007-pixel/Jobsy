@@ -70,6 +70,12 @@ public sealed class WerkgeverApkComparisonTests
                         ? WerkgeverApkAnswerValidation.AbChoiceA
                         : WerkgeverApkAnswerValidation.AbChoiceB;
                 }
+                else if (item.DimensionB?.Contains(q.EmployeeValueBarKey, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceB
+                        : WerkgeverApkAnswerValidation.AbChoiceA;
+                }
             }
         }
 

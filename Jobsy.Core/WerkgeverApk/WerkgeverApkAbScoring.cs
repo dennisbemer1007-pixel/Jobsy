@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen.MboHbo;
 
 namespace Jobsy.Core.WerkgeverApk;
@@ -22,11 +23,7 @@ public static class WerkgeverApkAbScoring
 
             if (item.Kind == WerkgeverApkAbItemKind.Ab)
             {
-                var dim = value == WerkgeverApkAnswerValidation.AbChoiceA ? item.DimensionA : item.DimensionB;
-                if (!string.IsNullOrWhiteSpace(dim))
-                {
-                    counts[dim] = counts.GetValueOrDefault(dim) + 1;
-                }
+                ApplyAbContrastAnswer(counts, item, value);
             }
             else if (item.Kind == WerkgeverApkAbItemKind.Check && !string.IsNullOrWhiteSpace(item.DimensionA))
             {
@@ -52,7 +49,7 @@ public static class WerkgeverApkAbScoring
             .Max();
         if (match == 0)
         {
-            return null;
+            return 1;
         }
 
         var max = counts.Counts.Values.Max();
@@ -126,14 +123,38 @@ public static class WerkgeverApkAbScoring
         return issues;
     }
 
-    private static void Bump(Dictionary<string, int> counts, string? dim)
+    /// <summary>Weighted poles like <see cref="PupilG78ContrastLikertScorer"/> (1–5).</summary>
+    public static void ApplyAbContrastAnswer(IDictionary<string, int> counts, WerkgeverApkAbItem item, int value)
     {
-        if (string.IsNullOrWhiteSpace(dim))
+        if (!WerkgeverApkAnswerValidation.IsValidAbContrast(value))
         {
             return;
         }
 
-        counts[dim] = counts.GetValueOrDefault(dim) + 1;
+        switch (value)
+        {
+            case WerkgeverApkAbContrastScale.FullA or WerkgeverApkAbContrastScale.LeanA:
+                Bump(counts, item.DimensionA, PupilG78ContrastLikertScorer.TowardA(value));
+                break;
+            case WerkgeverApkAbContrastScale.LeanB or WerkgeverApkAbContrastScale.FullB:
+                Bump(counts, item.DimensionB, PupilG78ContrastLikertScorer.TowardB(value));
+                break;
+            case WerkgeverApkAbContrastScale.Both:
+                Bump(counts, item.DimensionA, 3);
+                Bump(counts, item.DimensionB, 3);
+                break;
+        }
+    }
+
+    private static void Bump(IDictionary<string, int> counts, string? dim, int weight = 1)
+    {
+        if (string.IsNullOrWhiteSpace(dim) || weight <= 0)
+        {
+            return;
+        }
+
+        counts.TryGetValue(dim, out var cur);
+        counts[dim] = cur + weight;
     }
 
     private static bool DimensionKeyMatches(string haystack, string needle)

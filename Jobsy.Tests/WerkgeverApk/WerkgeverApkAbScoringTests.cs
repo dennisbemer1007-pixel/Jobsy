@@ -18,15 +18,53 @@ public sealed class WerkgeverApkAbScoringTests
     }
 
     [Fact]
-    public void Ab_choice_scores_interesse_dimension()
+    public void Ab_full_a_scores_dimension_a_with_g78_weight()
     {
         var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
         var item = catalog.Items.First(i => i.Kind == WerkgeverApkAbItemKind.Ab);
         var state = new PupilMboHboProgressState();
         state.Answers[item.Id] = WerkgeverApkAnswerValidation.AbChoiceA;
         var counts = WerkgeverApkAbScoring.CountDimensions(state, catalog);
-        Assert.Contains(item.DimensionA, counts.Counts.Keys, StringComparer.OrdinalIgnoreCase);
-        Assert.True(counts.Counts[item.DimensionA] >= 1);
+        Assert.Equal(5, counts.Counts[item.DimensionA]);
+        if (item.DimensionB is not null)
+        {
+            Assert.False(counts.Counts.ContainsKey(item.DimensionB));
+        }
+    }
+
+    [Theory]
+    [InlineData(1, 5, 0)]
+    [InlineData(2, 4, 0)]
+    [InlineData(5, 0, 5)]
+    [InlineData(3, 3, 3)]
+    public void Ab_contrast_scale_weights_match_g78(int answer, int weightA, int weightB)
+    {
+        var item = new WerkgeverApkAbItem(
+            "t1",
+            1,
+            Jobsy.Core.Scholen.MboHbo.PupilMboHboBlock.Competentie,
+            2,
+            WerkgeverApkAbItemKind.Ab,
+            "scene",
+            "kop",
+            "A text",
+            "Dim A",
+            "B text",
+            "Dim B");
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        WerkgeverApkAbScoring.ApplyAbContrastAnswer(counts, item, answer);
+        Assert.Equal(weightA, counts.GetValueOrDefault("Dim A"));
+        Assert.Equal(weightB, counts.GetValueOrDefault("Dim B"));
+    }
+
+    [Fact]
+    public void Ab_rejects_binary_only_values_for_validation()
+    {
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
+        var item = catalog.Items.First(i => i.Kind == WerkgeverApkAbItemKind.Ab);
+        Assert.True(WerkgeverApkAnswerValidation.IsValidForItem(item, 3));
+        Assert.False(WerkgeverApkAnswerValidation.IsValidForItem(item, 0));
+        Assert.False(WerkgeverApkAnswerValidation.IsValidForItem(item, 6));
     }
 
     [Fact]

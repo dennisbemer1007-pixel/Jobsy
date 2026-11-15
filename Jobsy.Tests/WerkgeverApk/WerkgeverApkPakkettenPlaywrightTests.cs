@@ -94,9 +94,13 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests
 
                 if (slug == "13-ab-vraag")
                 {
-                    var cards = page.Locator(".ab-card");
-                    var count = await cards.CountAsync();
-                    Assert.Equal(2, count);
+                    var scale = page.Locator("[data-testid='wa-ab-scale'] [data-wa-ab-value]");
+                    Assert.Equal(5, await scale.CountAsync());
+                    Assert.Contains("Veel meer A", await scale.First.TextContentAsync() ?? "");
+                    Assert.Contains("Veel meer B", await scale.Last.TextContentAsync() ?? "");
+
+                    var cards = page.Locator(".wa-ab-contrast__opt");
+                    Assert.Equal(2, await cards.CountAsync());
                     var boxA = await cards.Nth(0).BoundingBoxAsync();
                     var boxB = await cards.Nth(1).BoundingBoxAsync();
                     Assert.NotNull(boxA);
