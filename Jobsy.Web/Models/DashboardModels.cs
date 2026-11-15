@@ -15,6 +15,7 @@ public class CompanySummary
     public Guid? ParentCompanyId { get; set; }
     public bool TokensManagedByEnterprise { get; set; }
     public bool CsvBatchImportEnabled { get; set; }
+    public bool LoopbaanApkEnabled { get; set; }
     public bool DirectContactEnabled { get; set; }
     public bool ContactPreferMail { get; set; }
     public bool ContactPreferPhone { get; set; }

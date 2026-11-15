@@ -263,6 +263,7 @@ public sealed class PlatformFeatureItem
     public bool ProactiveMatchingEnabled { get; set; }
     public bool MatchCalibrationV1Enabled { get; set; }
     public bool EmployerFitQuestionnairesEnabled { get; set; }
+    public bool EmployerLoopbaanApkEnabled { get; set; }
     public bool KandidatenkaartEnabled { get; set; }
     public bool CompanyMapInitiativeEnabled { get; set; } = true;
     public bool AfterMatchEnabled { get; set; }
@@ -329,6 +330,7 @@ public sealed class PlatformFeaturePatch
     public bool? ProactiveMatchingEnabled { get; set; }
     public bool? MatchCalibrationV1Enabled { get; set; }
     public bool? EmployerFitQuestionnairesEnabled { get; set; }
+    public bool? EmployerLoopbaanApkEnabled { get; set; }
     public bool? KandidatenkaartEnabled { get; set; }
     public bool? CompanyMapInitiativeEnabled { get; set; }
     public bool? AfterMatchEnabled { get; set; }

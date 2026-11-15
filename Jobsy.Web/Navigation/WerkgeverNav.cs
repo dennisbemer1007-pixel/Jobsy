@@ -79,6 +79,7 @@ public sealed record WerkgeverNavContext(
     bool HasCandidateApplications = false,
     bool HasMultipleBranches = false,
     bool HasMaqqieHours = false,
+    bool LoopbaanApkEnabled = false,
     IReadOnlyDictionary<string, int>? Counts = null);
 
 /// <summary>
@@ -145,6 +146,8 @@ public static class WerkgeverNav
                 ["/employer/branches", "/regional/branches", "/employer/regions", "/employer/organization"], BmRm),
             new("team", "WgNav.TeamRights", "/werkgever/organisatie/team", NavIcons.Users,
                 ["/employer/users"], BmOnly),
+            new("loopbaan-apk", "WgNav.LoopbaanApk", "/werkgever/loopbaan-apk", NavIcons.List,
+                [], BmOnly, AvailabilityKey: "loopbaan-apk"),
             new("profile", "WgNav.CompanyProfile", "/werkgever/organisatie/profiel", NavIcons.Companies,
                 ["/employer/company", "/employer/culture", "/branch/culture"], BmVm,
                 LabelOverrides: new Dictionary<EmployerRole, string>
@@ -433,6 +436,7 @@ public static class WerkgeverNav
             "my-applications" => ctx.HasCandidateApplications,
             "regions-tab" => ctx.HasMultipleBranches,
             "maqqie-hours" => ctx.HasMaqqieHours,
+            "loopbaan-apk" => ctx.LoopbaanApkEnabled,
             _ => item.IsAvailable
         };
     }

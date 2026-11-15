@@ -152,9 +152,9 @@ public static class WerkgeverApkGroupInsights
         foreach (var ch in holland)
         {
             var letter = ch.ToString();
-            if (riasec.ContainsKey(letter))
+            if (riasec.TryGetValue(letter, out var count))
             {
-                riasec[letter]++;
+                riasec[letter] = count + 1;
             }
         }
     }

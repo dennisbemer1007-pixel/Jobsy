@@ -258,6 +258,36 @@ public static class AuthorizationExtensions
             };
         });
 
+        authBuilder.AddCookie(WerkgeverApkAuthDefaults.Scheme, options =>
+        {
+            options.Cookie.Name = WerkgeverApkAuthDefaults.CookieName;
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SameSite = SameSiteMode.Strict;
+            options.Cookie.SecurePolicy = secureAlways
+                ? CookieSecurePolicy.Always
+                : CookieSecurePolicy.SameAsRequest;
+            options.Cookie.Path = "/";
+            options.SlidingExpiration = true;
+            options.ExpireTimeSpan = WerkgeverApkAuthDefaults.IdleTimeout;
+            options.Events.OnSigningIn = context =>
+            {
+                context.Properties.IsPersistent = false;
+                context.Properties.AllowRefresh = true;
+                context.Properties.ExpiresUtc = null;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            };
+        });
+
         authBuilder.AddCookie(ParentPassportAuthDefaults.Scheme, options =>
         {
             options.Cookie.Name = ParentPassportAuthDefaults.CookieName;
@@ -388,6 +418,12 @@ public static class AuthorizationExtensions
             {
                 policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);
                 policy.Requirements.Add(new Jobsy.Infrastructure.Scholen.PupilSessionRequirement());
+            });
+
+            options.AddPolicy(JobsyPolicies.WerkgeverApkEmployeeSession, policy =>
+            {
+                policy.AddAuthenticationSchemes(WerkgeverApkAuthDefaults.Scheme);
+                policy.Requirements.Add(new Jobsy.Infrastructure.WerkgeverApk.WerkgeverApkEmployeeSessionRequirement());
             });
 
             options.AddPolicy(JobsyPolicies.ParentPassportSession, policy =>

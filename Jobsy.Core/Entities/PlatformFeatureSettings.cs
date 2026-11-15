@@ -172,6 +172,9 @@ public class PlatformFeatureSettings
     /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
     public bool EmployerFitQuestionnairesEnabled { get; set; }
 
+    /// <summary>Lobsy Loopbaan-APK for employers (MBO-style employee flow). Default false.</summary>
+    public bool EmployerLoopbaanApkEnabled { get; set; }
+
     /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
     public bool KandidatenkaartEnabled { get; set; }
 

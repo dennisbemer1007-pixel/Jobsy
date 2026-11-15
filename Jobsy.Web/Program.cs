@@ -644,6 +644,7 @@ app.UseAdminProviderGuard();
 // Before authorization: with schools off, teacher (/school) and school admin (/leraar)
 // both get the friendly page instead of 403 vs raw JSON.
 app.UseMiddleware<SchoolsFeatureMiddleware>();
+app.UseMiddleware<WerkgeverApkFeatureMiddleware>();
 // Before authorization so pupil cookie challenges (302) still get Cache-Control: no-store.
 // Authentication has already run, so the pupil principal is available.
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
@@ -681,6 +682,9 @@ app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();
 app.MapPupilAuthEndpoints();
 app.MapPupilLoginPageEndpoints();
+app.MapWerkgeverApkEmployeeAuthEndpoints();
+app.MapWerkgeverApkEmployeeEndpoints();
+app.MapWerkgeverApkManagerEndpoints();
 app.MapTeacherPortalEntryEndpoints();
 app.MapTeacherPortalReadOnlyEndpoints();
 app.MapTeacherPortalOverviewEndpoints();

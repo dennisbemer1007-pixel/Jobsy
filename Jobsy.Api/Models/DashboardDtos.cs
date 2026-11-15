@@ -13,6 +13,7 @@ public record CompanySummaryDto(
     Guid? ParentCompanyId = null,
     bool TokensManagedByEnterprise = false,
     bool CsvBatchImportEnabled = false,
+    bool LoopbaanApkEnabled = false,
     bool DirectContactEnabled = false,
     bool ContactPreferMail = false,
     bool ContactPreferPhone = false,
@@ -53,6 +54,8 @@ public record TokenBalanceDto(
 public record UpdateTokenManagementRequest(bool TokensManagedByEnterprise);
 
 public record UpdateCsvBatchImportRequest(bool CsvBatchImportEnabled);
+
+public record UpdateLoopbaanApkCompanyRequest(bool LoopbaanApkEnabled);
 
 public record UpdateEmailVerificationPreferenceRequest(bool RequireEmailVerificationForApplications);
 
