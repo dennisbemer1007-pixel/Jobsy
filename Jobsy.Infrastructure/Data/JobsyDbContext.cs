@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.WerkgeverApk;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
@@ -161,6 +162,10 @@ public class JobsyDbContext : DbContext
     public DbSet<PupilCode> PupilCodes => Set<PupilCode>();
     public DbSet<PupilProgress> PupilProgresses => Set<PupilProgress>();
     public DbSet<PupilResult> PupilResults => Set<PupilResult>();
+    public DbSet<WerkgeverApkTeam> WerkgeverApkTeams => Set<WerkgeverApkTeam>();
+    public DbSet<WerkgeverApkEmployeeCode> WerkgeverApkEmployeeCodes => Set<WerkgeverApkEmployeeCode>();
+    public DbSet<WerkgeverApkEmployeeProgress> WerkgeverApkEmployeeProgress => Set<WerkgeverApkEmployeeProgress>();
+    public DbSet<WerkgeverApkManagerSheet> WerkgeverApkManagerSheets => Set<WerkgeverApkManagerSheet>();
     public DbSet<SchoolClassAggregate> SchoolClassAggregates => Set<SchoolClassAggregate>();
     public DbSet<SchoolYearAggregate> SchoolYearAggregates => Set<SchoolYearAggregate>();
     public DbSet<SchoolRetentionRun> SchoolRetentionRuns => Set<SchoolRetentionRun>();
@@ -3430,6 +3435,55 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.Campaign)
                 .WithMany()
                 .HasForeignKey(e => e.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WerkgeverApkTeam>(entity =>
+        {
+            entity.ToTable("WerkgeverApkTeams");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(80).IsRequired();
+            entity.HasIndex(e => new { e.CompanyId, e.Name });
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WerkgeverApkEmployeeCode>(entity =>
+        {
+            entity.ToTable("WerkgeverApkEmployeeCodes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CodeLookupHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CodeProtected).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Label).HasMaxLength(40);
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.HasIndex(e => new { e.TeamId, e.CodeLookupHash }).IsUnique();
+            entity.HasOne(e => e.Team)
+                .WithMany(t => t.Codes)
+                .HasForeignKey(e => e.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WerkgeverApkEmployeeProgress>(entity =>
+        {
+            entity.ToTable("WerkgeverApkEmployeeProgress");
+            entity.HasKey(e => e.EmployeeCodeId);
+            entity.Property(e => e.ProgressJson).IsRequired();
+            entity.HasOne(e => e.EmployeeCode)
+                .WithOne(c => c.Progress)
+                .HasForeignKey<WerkgeverApkEmployeeProgress>(e => e.EmployeeCodeId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WerkgeverApkManagerSheet>(entity =>
+        {
+            entity.ToTable("WerkgeverApkManagerSheets");
+            entity.HasKey(e => e.EmployeeCodeId);
+            entity.Property(e => e.AnswersJson).IsRequired();
+            entity.HasOne(e => e.EmployeeCode)
+                .WithOne(c => c.ManagerSheet)
+                .HasForeignKey<WerkgeverApkManagerSheet>(e => e.EmployeeCodeId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

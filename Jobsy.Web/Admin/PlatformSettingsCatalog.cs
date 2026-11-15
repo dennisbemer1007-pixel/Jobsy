@@ -515,6 +515,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("EmployerLoopbaanApkEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "EmployerLoopbaanApkEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.EmployerLoopbaanApk.Enabled.Title",
+                DescriptionKey: "AdminSettings.EmployerLoopbaanApk.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.EmployerLoopbaanApkEnabled,
+                Write: v => new PlatformFeatureUpdate(EmployerLoopbaanApkEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("KandidatenkaartEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -952,6 +965,7 @@ public static class PlatformSettingsCatalog
         bool? proactiveMatchingEnabled = null;
         bool? matchCalibrationV1Enabled = null;
         bool? employerFitQuestionnairesEnabled = null;
+        bool? employerLoopbaanApkEnabled = null;
         bool? kandidatenkaartEnabled = null;
         bool? companyMapInitiativeEnabled = null;
         bool? afterMatchEnabled = null;
@@ -1036,6 +1050,11 @@ public static class PlatformSettingsCatalog
             if (p.EmployerFitQuestionnairesEnabled is not null)
             {
                 employerFitQuestionnairesEnabled = p.EmployerFitQuestionnairesEnabled;
+            }
+
+            if (p.EmployerLoopbaanApkEnabled is not null)
+            {
+                employerLoopbaanApkEnabled = p.EmployerLoopbaanApkEnabled;
             }
 
             if (p.KandidatenkaartEnabled is not null)
@@ -1177,6 +1196,7 @@ public static class PlatformSettingsCatalog
             ProactiveMatchingEnabled: proactiveMatchingEnabled,
             MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
+            EmployerLoopbaanApkEnabled: employerLoopbaanApkEnabled,
             KandidatenkaartEnabled: kandidatenkaartEnabled,
             CompanyMapInitiativeEnabled: companyMapInitiativeEnabled,
             AfterMatchEnabled: afterMatchEnabled,

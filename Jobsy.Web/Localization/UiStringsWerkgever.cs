@@ -83,6 +83,7 @@ public static class UiStringsWerkgever
         Add("WgNav.CandidateInsights", "Kandidaatinzichten", "Candidate insights", "Wnioski o kandydatach", "Perspective candidați", "رؤى المرشحين");
         Add("WgNav.BranchesRegions", "Vestigingen & regio's", "Branches & regions", "Placówki i regiony", "Filiale și regiuni", "الفروع والمناطق");
         Add("WgNav.TeamRights", "Team & rechten", "Team & rights", "Zespół i uprawnienia", "Echipă și drepturi", "الفريق والصلاحيات");
+        Add("WgNav.LoopbaanApk", "Loopbaan-APK", "Career APK", "Loopbaan-APK", "Loopbaan-APK", "Loopbaan-APK");
         Add("WgNav.CompanyProfile", "Bedrijfsprofiel", "Company profile", "Profil firmy", "Profil firmă", "ملف الشركة");
         Add("WgNav.BranchProfile", "Vestigingsprofiel", "Branch profile", "Profil placówki", "Profil filială", "ملف الفرع");
         Add("WgNav.SalaryTables", "Salaristabellen", "Salary tables", "Tabele wynagrodzeń", "Tabele salariale", "جداول الرواتب");

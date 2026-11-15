@@ -76,7 +76,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.TestDepthValueMockupEnabled,
                 snap.UwvFeaturesEnabled,
                 ActivityLogEnabled: snap.ActivityLogEnabled,
-                CandidateCoachTonePreferencesEnabled: snap.CandidateCoachTonePreferencesEnabled);
+                CandidateCoachTonePreferencesEnabled: snap.CandidateCoachTonePreferencesEnabled,
+                EmployerLoopbaanApkEnabled: snap.EmployerLoopbaanApkEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

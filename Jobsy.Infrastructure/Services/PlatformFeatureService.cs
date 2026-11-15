@@ -225,6 +225,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.EmployerFitQuestionnairesEnabled = employerFitQuestionnaires;
         }
 
+        if (update.EmployerLoopbaanApkEnabled is bool employerLoopbaanApk)
+        {
+            row.EmployerLoopbaanApkEnabled = employerLoopbaanApk;
+        }
+
         if (update.KandidatenkaartEnabled is bool kandidatenkaartEnabled)
         {
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
@@ -595,6 +600,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.TestProgressInsightEnabled ?? _options.TestProgressInsightEnabled,
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
+            row?.EmployerLoopbaanApkEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
             row?.CompanyMapInitiativeEnabled ?? true,
             row?.AfterMatchEnabled ?? _options.NaDeMatchEnabled,

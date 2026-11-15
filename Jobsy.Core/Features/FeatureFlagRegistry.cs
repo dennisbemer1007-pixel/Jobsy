@@ -73,6 +73,7 @@ public static class FeatureFlagRegistry
             Def("KandidatenkaartEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.Kandidatenkaart, pub, false),
             Def("CompanyMapInitiativeEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.CompanyMapInitiative, pub, true),
             Def("EmployerFitQuestionnairesEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.EmployerFitQuestionnaires, pub, false),
+            Def("EmployerLoopbaanApkEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.EmployerLoopbaanApk, pub, false),
             Def("MatchCalibrationV1Enabled", FeatureFlagAdminGroup.Werkgever, null, exposedOnPublicEndpoint: false, defaultValue: false),
             Def("TrainingPartnersEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.TrainingPartners, pub, false, "Jobsy:TrainingPartnersEnabled"),
             Def("VacancyContentModerationEnabled", FeatureFlagAdminGroup.Werkgever, null, exposedOnPublicEndpoint: false, defaultValue: true),

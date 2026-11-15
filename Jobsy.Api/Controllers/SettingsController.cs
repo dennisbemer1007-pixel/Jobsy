@@ -504,6 +504,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
                     MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled,
                     EmployerFitQuestionnairesEnabled: request.EmployerFitQuestionnairesEnabled,
+                    EmployerLoopbaanApkEnabled: request.EmployerLoopbaanApkEnabled,
                     KandidatenkaartEnabled: request.KandidatenkaartEnabled,
                     CompanyMapInitiativeEnabled: request.CompanyMapInitiativeEnabled,
                     AfterMatchEnabled: request.AfterMatchEnabled,
@@ -645,6 +646,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
+        Add("EmployerLoopbaanApkEnabled", before.EmployerLoopbaanApkEnabled.ToString(), after.EmployerLoopbaanApkEnabled.ToString());
         Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
         Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
@@ -682,6 +684,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             testItemExamplesEnabled = snap.TestItemExamplesEnabled,
             testProgressInsightEnabled = snap.TestProgressInsightEnabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
+            employerLoopbaanApkEnabled = snap.EmployerLoopbaanApkEnabled,
             kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
             companyMapInitiativeEnabled = snap.CompanyMapInitiativeEnabled,
             afterMatchEnabled = snap.AfterMatchEnabled,
@@ -1022,6 +1025,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.ProactiveMatchingEnabled,
             snap.MatchCalibrationV1Enabled,
             snap.EmployerFitQuestionnairesEnabled,
+            snap.EmployerLoopbaanApkEnabled,
             snap.KandidatenkaartEnabled,
             snap.SensitiveExperienceEnabled,
             snap.TrainingPartnersEnabled,

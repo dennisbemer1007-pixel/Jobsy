@@ -84,6 +84,14 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/sollicitaties` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/{ApplicationId:guid}` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/{ApplicationId:guid}/after-match` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/blazor` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/cancel-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/messages-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/outcome-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/panel-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/propose-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/{ApplicationId:guid}/after-match/reschedule-ssr` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/pipeline` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/initiatieven` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/open-voor-initiatief` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/uren` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
@@ -104,6 +112,8 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/wervingsmateriaal` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Admin` |
 | `/werkgever/partner` | ● | — | — | `EnterpriseManager,Intermediary` |
 | `/werkgever/partner/uitbetalen` | ● | — | — | `EnterpriseManager,Intermediary` |
+| `/werkgever/loopbaan-apk` | ● | — | — | `EnterpriseManager,Admin` |
+| `/werkgever/loopbaan-apk/teams/{TeamId:guid}` | ● | — | — | `EnterpriseManager,Admin` |
 
 | Mutating / employer API | BM | RM | VM |
 |---|---|---|---|
@@ -159,4 +169,11 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `api/companies/{companyId}/api-keys` | yes | no | no |
 | `api/companies/{companyId}/api-keys/{apiKeyId}/deactivate` | yes | no | no |
 | `api/companies/{companyId}/api-keys/email-credentials` | yes | no | no |
+| `api/companies/{companyId}/loopbaan-apk` | no | no | no |
+| `api/werkgever-apk/manager/teams` | yes | no | no |
+| `api/werkgever-apk/manager/teams/{teamId}` | yes | no | no |
+| `api/werkgever-apk/manager/teams/{teamId}/codes` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}/label` | yes | no | no |
+| `api/werkgever-apk/manager/codes/{codeId}/answers` | yes | no | no |
 

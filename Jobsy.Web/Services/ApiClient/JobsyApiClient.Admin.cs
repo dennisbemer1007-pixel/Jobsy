@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
+using Jobsy.Core.Contracts.WerkgeverApk;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -295,6 +296,15 @@ public sealed partial class JobsyApiClient
 
     public async Task<IReadOnlyList<AdminKvkIssueItem>> GetAdminKvkIssuesAsync(CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<AdminKvkIssueItem>>("api/admin/companies/kvk-issues", ct) ?? [];
+
+    public async Task UpdateCompanyLoopbaanApkAsync(Guid companyId, bool enabled, CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/companies/{companyId:D}/loopbaan-apk",
+            new UpdateLoopbaanApkRequest(enabled),
+            ct);
+        response.EnsureSuccessStatusCode();
+    }
 
     public async Task RetryCompanyKvkAsync(Guid companyId, CancellationToken ct = default)
     {

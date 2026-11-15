@@ -164,6 +164,26 @@ public static class AuthServiceCollectionExtensions
                     return Task.CompletedTask;
                 };
             })
+            .AddCookie(WerkgeverApkAuthDefaults.Scheme, options =>
+            {
+                options.Cookie.Name = WerkgeverApkAuthDefaults.CookieName;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SecurePolicy = secureAlways
+                    ? CookieSecurePolicy.Always
+                    : CookieSecurePolicy.SameAsRequest;
+                options.Cookie.Path = "/";
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = WerkgeverApkAuthDefaults.IdleTimeout;
+                options.LoginPath = "/loopbaan-apk";
+                options.Events.OnSigningIn = context =>
+                {
+                    context.Properties.IsPersistent = false;
+                    context.Properties.AllowRefresh = true;
+                    context.Properties.ExpiresUtc = null;
+                    return Task.CompletedTask;
+                };
+            })
             .AddCookie(ParentPassportAuthDefaults.Scheme, options =>
             {
                 options.Cookie.Name = ParentPassportAuthDefaults.CookieName;
@@ -444,6 +464,17 @@ public static class AuthServiceCollectionExtensions
             policy.RequireClaim(PupilClaimTypes.SchoolId);
             policy.RequireClaim(PupilClaimTypes.SessionVersion);
             policy.RequireClaim(PupilClaimTypes.IssuedAt);
+        });
+
+        options.AddPolicy(JobsyPolicies.WerkgeverApkEmployeeSession, policy =>
+        {
+            policy.AddAuthenticationSchemes(WerkgeverApkAuthDefaults.Scheme);
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim(WerkgeverApkClaimTypes.EmployeeCodeId);
+            policy.RequireClaim(WerkgeverApkClaimTypes.TeamId);
+            policy.RequireClaim(WerkgeverApkClaimTypes.CompanyId);
+            policy.RequireClaim(WerkgeverApkClaimTypes.SessionVersion);
+            policy.RequireClaim(WerkgeverApkClaimTypes.IssuedAt);
         });
 
         options.AddPolicy(JobsyPolicies.ParentPassportSession, policy =>

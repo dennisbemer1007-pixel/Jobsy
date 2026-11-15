@@ -21,6 +21,9 @@ public static class JobsyPolicies
     /// <summary>Parent read-only passport session (scheme <c>ParentPassport</c> only).</summary>
     public const string ParentPassportSession = "ParentPassportSession";
 
+    /// <summary>Employer Loopbaan-APK employee code session (scheme <c>WerkgeverApkEmployee</c> only).</summary>
+    public const string WerkgeverApkEmployeeSession = "WerkgeverApkEmployeeSession";
+
     /// <summary>Admin, employer, sales manager and ambassadeur dashboards (manual cache refresh).</summary>
     public const string RequireDashboardAccess = "RequireDashboardAccess";
 }

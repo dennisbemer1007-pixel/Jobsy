@@ -22,6 +22,7 @@ using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Reminders;
 using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
+using Jobsy.Infrastructure.WerkgeverApk;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Infrastructure.Services.AfterMatch;
@@ -538,6 +539,10 @@ public static class DependencyInjection
         });
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddSingleton<IAuthorizationHandler, ParentPassportSessionAuthorizationHandler>();
+        services.AddScoped<IWerkgeverApkEmployeeCodeService, WerkgeverApkEmployeeCodeService>();
+        services.AddScoped<IWerkgeverApkEmployeePortalService, WerkgeverApkEmployeePortalService>();
+        services.AddScoped<IWerkgeverApkManagerPortalService, WerkgeverApkManagerPortalService>();
+        services.AddSingleton<IAuthorizationHandler, WerkgeverApkEmployeeSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
         services.AddHostedService<SchoolRetentionHostedService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
