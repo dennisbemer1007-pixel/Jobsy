@@ -2034,6 +2034,13 @@
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
             form.querySelectorAll('button[name="obNav"], input[type="submit"][name="obNav"]').forEach(function (btn) {
+                var testId = btn.getAttribute("data-testid") || "";
+                var navVal = btn.value || btn.getAttribute("value") || "";
+                if (navVal === "dreamUnknown"
+                    || testId === "onboarding-dream-unknown"
+                    || testId === "onboarding-dream-unknown-mobile") {
+                    return;
+                }
                 btn.removeAttribute("name");
             });
             form.addEventListener("click", function (ev) {

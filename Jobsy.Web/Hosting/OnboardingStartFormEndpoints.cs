@@ -23,7 +23,6 @@ public static class OnboardingStartFormEndpoints
         var auth = new AuthorizeAttribute { Roles = "Candidate" };
         app.MapPost("/candidate/start", PostAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-1/volgende", Step1VolgendeAsync).RequireAuthorization(auth);
-        app.MapGet("/candidate/start/step-6/droom-onbekend", Step6DreamUnknownGetAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-6/volgende", Step6VolgendeAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-7/consent-volgende", Step7ConsentVolgendeAsync).RequireAuthorization(auth);
 
@@ -32,23 +31,33 @@ public static class OnboardingStartFormEndpoints
 
     private static async Task<IResult> Step6DreamUnknownGetAsync(
         JobsyApiClient api,
-        IGeocodingClient geocoder,
-        IFeatureFlags featureFlags,
         CultureState culture,
         CancellationToken cancellationToken)
     {
-        using var empty = JsonDocument.Parse("{}");
-        var body = ForceEmptyDreamPayload(empty.RootElement);
-        var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: true);
-        var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
-            6,
-            merged,
-            api,
-            geocoder,
-            featureFlags,
-            culture,
-            cancellationToken);
-        return ToRedirect(stepStatus, stepPayload, 6, advance: true, goBack: false, culture);
+        try
+        {
+            try
+            {
+                await api.SaveOnboardingDreamJobAsync(null, cancellationToken);
+            }
+            catch
+            {
+                // Dream clear is best-effort when the candidate picks "Weet ik nog niet".
+            }
+
+            await OnboardingClientProgressSaver.SaveStickyAsync(
+                api,
+                7,
+                stepCompleted: false,
+                stepSkipped: true,
+                ct: cancellationToken);
+            api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+            return SeeOther(OnboardingRoutes.StepUrl(7));
+        }
+        catch (Exception)
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Common.Error.TryAgain"]));
+        }
     }
 
     private static async Task<IResult> Step1VolgendeAsync(
@@ -91,10 +100,16 @@ public static class OnboardingStartFormEndpoints
         }
 
         var form = http.Request.Form;
+        var obNav = form["obNav"].ToString();
+        if (string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase))
+        {
+            return await Step6DreamUnknownGetAsync(api, culture, cancellationToken);
+        }
+
         dream = ResolveDreamFromRequest(form, dream, obPayload);
         if (string.IsNullOrWhiteSpace(dream))
         {
-            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Onboarding.NotSaved"]));
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Onboarding.Validation.Dream"]));
         }
 
         var body = BuildStep6Body(dream, obPayload);
@@ -305,6 +320,11 @@ public static class OnboardingStartFormEndpoints
         {
             advance = true;
             skipOptional = true;
+        }
+
+        if (dreamUnknown && currentStep == 6)
+        {
+            return await Step6DreamUnknownGetAsync(api, culture, cancellationToken);
         }
 
         if (skipOptional)

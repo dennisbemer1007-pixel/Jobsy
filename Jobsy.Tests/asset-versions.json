@@ -584,7 +584,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "7beb0fb111333058bdd5db5593d8c6a6f390db39f6799d64833a08c4d528bf67",
+    "sha256": "351a8be10ac6a86643939d30f997211753eab6751979a3d09195176b802fa04c",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
@@ -596,7 +596,7 @@
     "v": "20261115-01"
   },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "a06b20c7d6bdbb40fb46b3601cc46859e0fa6c16d1d31c9b9bbccdae2ace047b",
+    "sha256": "068155891c84168bbf544de9ce9c03564413873ca4e714b7f7fa14d8d12ff8a9",
     "v": "20261025-87"
   },
   "js/onboarding-step7-consent-ssr.js": {

@@ -80,7 +80,7 @@ public sealed class OnboardingStartFormPostTests
     }
 
     [Fact]
-    public async Task Get_step6_droom_onbekend_redirects_to_step7()
+    public async Task Post_step6_advance_without_dream_redirects_with_validation()
     {
         await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
         factory.WelcomeDismissed = true;
@@ -88,12 +88,78 @@ public sealed class OnboardingStartFormPostTests
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=6"));
 
-        var get = await client.GetAsync("/candidate/start/step-6/droom-onbekend");
-        Assert.True(get.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.SeeOther,
-            $"Expected redirect, got {(int)get.StatusCode}");
-        var location = get.Headers.Location?.ToString() ?? "";
+        var get = await client.GetAsync("/candidate/start?step=6");
+        var html = await get.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgery(html);
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token!,
+            ["obNav"] = "next",
+            ["dream"] = "",
+        };
+
+        var post = await client.PostAsync("/candidate/start?step=6", new FormUrlEncodedContent(form));
+        Assert.True(post.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.SeeOther);
+        var location = post.Headers.Location?.ToString() ?? "";
+        Assert.Contains("step=6", location, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("obError=", location, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(Uri.EscapeDataString("droombaan"), location, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Post_step6_volgende_dreamUnknown_redirects_to_step7()
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        factory.EnsureServerAddress();
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=6"));
+
+        var get = await client.GetAsync("/candidate/start?step=6");
+        var html = await get.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgery(html);
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token!,
+            ["obNav"] = "dreamUnknown",
+        };
+
+        var post = await client.PostAsync("/candidate/start/step-6/volgende", new FormUrlEncodedContent(form));
+        Assert.True(post.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.SeeOther,
+            $"Expected redirect, got {(int)post.StatusCode} {await post.Content.ReadAsStringAsync()}");
+        var location = post.Headers.Location?.ToString() ?? "";
         Assert.Contains("step=7", location, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task Post_step6_obNav_dreamUnknown_redirects_to_step7()
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory();
+        factory.WelcomeDismissed = true;
+        factory.EnsureServerAddress();
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        _ = await client.GetAsync("/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=6"));
+
+        var get = await client.GetAsync("/candidate/start?step=6");
+        var html = await get.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgery(html);
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token!,
+            ["obNav"] = "dreamUnknown",
+            ["dream"] = "",
+        };
+
+        var post = await client.PostAsync("/candidate/start?step=6", new FormUrlEncodedContent(form));
+        Assert.True(post.StatusCode is HttpStatusCode.Redirect or HttpStatusCode.SeeOther);
+        var location = post.Headers.Location?.ToString() ?? "";
+        Assert.Contains("step=7", location, StringComparison.OrdinalIgnoreCase);
+    }
+
 
     [Fact]
     public async Task Post_step1_volgende_endpoint_redirects_to_step2()

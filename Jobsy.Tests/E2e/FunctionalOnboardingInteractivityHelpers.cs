@@ -1065,7 +1065,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
                         break;
                     }
 
-                    await ClickDreamUnknownOrNextAsync(page);
+                    await AdvanceStep6ToStep7Async(page, preferDreamUnknown: true);
                     await page.WaitForTimeoutAsync(mobileAdv ? 700 : 400);
                     if (await OnboardingConsentScreen(page).First.IsVisibleAsync())
                     {
@@ -1085,6 +1085,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             }
         }
 
+        await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
         await page.Locator(
                 "[data-testid=onboarding-step-7-consent], [data-testid=onboarding-step-7-illustrated], .ob-wizard__consent, [data-ob-rustig-screen=step-07]")
             .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
@@ -1951,26 +1952,65 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
     }
 
+    internal static async Task AdvanceStep6ToStep7Async(IPage page, bool preferDreamUnknown = false)
+    {
+        if (preferDreamUnknown)
+        {
+            var unknown = page.GetByTestId("onboarding-dream-unknown");
+            if (await unknown.CountAsync() == 0)
+            {
+                unknown = page.GetByTestId("onboarding-dream-unknown-mobile");
+            }
+
+            if (await unknown.CountAsync() > 0 && await unknown.First.IsVisibleAsync())
+            {
+                try
+                {
+                    await unknown.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                    await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 15_000 });
+                    await WaitForOnboardingConsentScreenAsync(page, 90_000);
+                    return;
+                }
+                catch (TimeoutException)
+                {
+                    // Fall through: pick a dream tile and use the dedicated Volgende POST (same as a filled dream).
+                }
+            }
+        }
+
+        var tile = page.GetByTestId("onboarding-dream-tile");
+        if (await tile.CountAsync() > 0)
+        {
+            await tile.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
+            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+            await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
+            await WaitForOnboardingConsentScreenAsync(page, 90_000);
+            return;
+        }
+
+        await ClickDreamUnknownOrNextAsync(page);
+    }
+
     internal static async Task ClickDreamUnknownOrNextAsync(IPage page)
     {
         var unknown = page.GetByTestId("onboarding-dream-unknown");
-        if (await unknown.CountAsync() > 0)
+        if (await unknown.CountAsync() == 0)
         {
-            var href = await unknown.GetAttributeAsync("href");
+            unknown = page.GetByTestId("onboarding-dream-unknown-mobile");
+        }
+
+        if (await unknown.CountAsync() > 0 && await unknown.First.IsVisibleAsync())
+        {
             try
             {
-                await unknown.ClickAsync(new() { Force = true, Timeout = 20_000 });
+                await unknown.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
             }
             catch (PlaywrightException)
             {
-                await unknown.EvaluateAsync("el => el.click()");
+                await unknown.First.EvaluateAsync("el => el.click()");
             }
 
-            if (!string.IsNullOrWhiteSpace(href))
-            {
-                await page.WaitForURLAsync("**/step=7**", new() { Timeout = 120_000 });
-            }
-
+            await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             if (await OnboardingConsentScreen(page).First.IsVisibleAsync())
             {
