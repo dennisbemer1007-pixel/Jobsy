@@ -889,7 +889,8 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var body = PupilMboHboSsrHtml.Uitleg(PupilLeerlingSsrParts.AntiforgeryField(af, http), MboIntroPath);
+        var classLabel = http.User.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+        var body = PupilMboHboSsrHtml.Uitleg(PupilLeerlingSsrParts.AntiforgeryField(af, http), MboIntroPath, classLabel);
         return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg");
     }
 
@@ -900,8 +901,8 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect("/leerling/mbo-hbo/uitleg");
         }
 
-        var res = await api.MarkMboHboIntroSeenAsync(ct);
-        return Results.Redirect(res?.RedirectPath ?? PupilMboHboEntryPaths.Overzicht);
+        _ = await api.MarkMboHboIntroSeenAsync(ct);
+        return Results.Redirect("/leerling/mbo-hbo/test/vakken");
     }
 
     private static async Task<IResult> GetMboOverzichtAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
@@ -973,9 +974,21 @@ public static class PupilLeerlingJourneyEndpoints
             q = ApplyPendingAnswer(q, pending);
         }
 
+        PupilMboHboOverviewDto? overview = null;
+        try
+        {
+            overview = await api.GetMboHboOverviewAsync(ct);
+        }
+        catch (HttpRequestException)
+        {
+            // Sidebar optional when overview cannot load.
+        }
+
+        var blocks = overview?.Blocks ?? Array.Empty<PupilMboHboBlockStatusDto>();
         var body = PupilMboHboSsrHtml.TestQuestion(
             q,
             blockKey,
+            blocks,
             culture,
             PupilLeerlingSsrParts.AntiforgeryField(af, http),
             $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}/answer",
@@ -1106,7 +1119,7 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var body = PupilMboHboSsrHtml.Paspoort(model, culture, pdfHref, pdfNotice);
-        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort");
+        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort", model.SchoolName);
     }
 
     private static Task<PupilLoadOutcome<PupilMboHboQuestionDto>> LoadMboQuestionAsync(
@@ -1203,7 +1216,18 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         var model = await api.GetMboHboOutcomeAsync(blockKey, ct);
-        var body = model is null ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>" : PupilMboHboSsrHtml.Uitkomst(model);
+        PupilMboHboOverviewDto? overview = null;
+        try
+        {
+            overview = await api.GetMboHboOverviewAsync(ct);
+        }
+        catch (HttpRequestException)
+        {
+        }
+
+        var body = model is null
+            ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>"
+            : PupilMboHboSsrHtml.Uitkomst(model, overview?.Blocks ?? Array.Empty<PupilMboHboBlockStatusDto>());
         return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}");
     }
 
@@ -1319,8 +1343,9 @@ public static class PupilLeerlingJourneyEndpoints
         return Results.Content(doc, "text/html; charset=utf-8");
     }
 
-    private static IResult MboHtml(HttpContext http, string title, string body, string route)
+    private static IResult MboHtml(HttpContext http, string title, string body, string route, string? schoolLabel = null)
     {
+        var culture = http.RequestServices.GetRequiredService<CultureState>();
         var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
         {
             PageTitle = title,
@@ -1329,6 +1354,8 @@ public static class PupilLeerlingJourneyEndpoints
             RoutePath = route,
             UseMboHboShell = true,
             ShowPause = false,
+            Culture = culture,
+            MboSchoolLabel = schoolLabel,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
     }

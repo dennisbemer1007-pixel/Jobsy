@@ -2833,11 +2833,11 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         foreach (var (path, marker, interact) in new[]
                  {
-                     ("/leerling/mbo-hbo/uitleg", ".mhbo-wrap", (Func<IPage, Task>)InteractNoOpAsync),
-                     ("/leerling/mbo-hbo/overzicht", ".mhbo-overview-grid, .mhbo-wrap h1", (Func<IPage, Task>)InteractNoOpAsync),
+                     ("/leerling/mbo-hbo/uitleg", "[data-testid=mhbo-welcome]", (Func<IPage, Task>)InteractNoOpAsync),
+                     ("/leerling/mbo-hbo/overzicht", ".mhbo-overview-grid", (Func<IPage, Task>)InteractNoOpAsync),
                      ("/leerling/mbo-hbo/test/interesse", "[data-testid=mhbo-test-question]", (Func<IPage, Task>)InteractMboQuestionAsync),
                      ("/leerling/mbo-hbo/test/beroepen", "[data-testid=mhbo-test-question]", (Func<IPage, Task>)InteractMboQuestionAsync),
-                     ("/leerling/mbo-hbo/paspoort", "[data-testid=mhbo-paspoort], .mhbo-wrap", (Func<IPage, Task>)InteractNoOpAsync),
+                     ("/leerling/mbo-hbo/paspoort", "[data-testid=mhbo-paspoort]", (Func<IPage, Task>)InteractNoOpAsync),
                  })
         {
             var consoleErrors = new List<string>();
@@ -2891,25 +2891,25 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
         var layout = await page.EvaluateAsync<HeaderLayout>(@"() => {
           const top = document.querySelector('.mhbo-top');
-          const link = top && top.querySelector('.mhbo-lnk');
-          const chip = top && top.querySelector('.mhbo-chip');
-          if (!link || !chip) return null;
-          const linkStyle = getComputedStyle(link);
+          const school = top && top.querySelector('.mhbo-top__school');
+          const chip = top && top.querySelector('.mhbo-chip, .mhbo-top__code');
+          if (!school || !chip) return null;
+          const schoolStyle = getComputedStyle(school);
           const chipStyle = getComputedStyle(chip);
-          const linkLine = parseFloat(linkStyle.lineHeight) || 16;
+          const schoolLine = parseFloat(schoolStyle.lineHeight) || 16;
           const chipLine = parseFloat(chipStyle.lineHeight) || 16;
-          const lr = link.getBoundingClientRect();
+          const sr = school.getBoundingClientRect();
           const cr = chip.getBoundingClientRect();
-          const overlap = lr.left < cr.right && cr.left < lr.right && lr.top < cr.bottom && cr.top < lr.bottom;
+          const overlap = sr.left < cr.right && cr.left < sr.right && sr.top < cr.bottom && cr.top < sr.bottom;
           return {
-            linkLines: Math.max(1, Math.round(lr.height / linkLine)),
+            linkLines: Math.max(1, Math.round(sr.height / schoolLine)),
             chipLines: Math.max(1, Math.round(cr.height / chipLine)),
             overlap
           };
         }");
 
         Assert.NotNull(layout);
-        Assert.True(layout!.LinkLines <= 1, $"Overzicht link wrapped ({layout.LinkLines} lines)");
+        Assert.True(layout!.LinkLines <= 1, $"School/klas line wrapped ({layout.LinkLines} lines)");
         Assert.True(layout.ChipLines <= 1, $"Code chip wrapped ({layout.ChipLines} lines)");
         Assert.False(layout.Overlap, "Header controls overlap");
         await page.CloseAsync();

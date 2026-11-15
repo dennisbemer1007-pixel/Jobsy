@@ -60,7 +60,7 @@ public static class PupilLeerlingSsrFrame
 
         if (options.UseMboHboShell)
         {
-            RenderMboHboShell(sb, options, chip, lang);
+            RenderMboHboShell(sb, options, lang);
         }
         else if (options.UseGroep78Shell)
         {
@@ -121,34 +121,55 @@ public static class PupilLeerlingSsrFrame
             sb.Append("\" defer></script>");
         }
 
+        if (options.UseMboHboShell)
+        {
+            sb.Append("<script src=\"");
+            sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/lobsy-coach-ssr.js"));
+            sb.Append("\" defer></script>");
+        }
+
         sb.Append("</body></html>");
         return sb.ToString();
     }
 
-    private static void RenderMboHboShell(StringBuilder sb, PupilLeerlingSsrDocumentOptions options, string chip, string lang)
+    private static void RenderMboHboShell(StringBuilder sb, PupilLeerlingSsrDocumentOptions options, string lang)
     {
         var path = PageSeoCatalog.Normalize(options.RoutePath);
-        var showOverview = !string.Equals(path, "/leerling/mbo-hbo/overzicht", StringComparison.OrdinalIgnoreCase)
-                           && !string.Equals(path, "/leerling/mbo-hbo/uitleg", StringComparison.OrdinalIgnoreCase);
+        var classLabel = options.Pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+        var code = options.Pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+        var schoolLine = string.IsNullOrWhiteSpace(options.MboSchoolLabel)
+            ? classLabel
+            : string.IsNullOrWhiteSpace(classLabel)
+                ? options.MboSchoolLabel
+                : $"{options.MboSchoolLabel} · {classLabel}";
+
+        var showCoachTeaser = string.Equals(path, "/leerling/mbo-hbo/uitleg", StringComparison.OrdinalIgnoreCase);
+
         sb.Append("<div class=\"mhbo-root\" lang=\"");
         sb.Append(WebUtility.HtmlEncode(lang));
-        sb.Append("\"><div class=\"mhbo-top\"><a href=\"/leerling/mbo-hbo/overzicht\">");
-        sb.Append("<img src=\"/brand/svg/lobsy-logo-horizontaal.svg\" alt=\"Lobsy\" /></a><span class=\"sp\"></span>");
-        if (showOverview)
+        sb.Append("\"><header class=\"mhbo-top\"><a class=\"mhbo-top__brand\" href=\"/leerling/mbo-hbo/overzicht\">");
+        sb.Append("<img src=\"/brand/svg/lobsy-logo-horizontaal.svg\" alt=\"Lobsy\" width=\"120\" height=\"28\" decoding=\"async\" /></a>");
+        if (!string.IsNullOrWhiteSpace(schoolLine))
         {
-            sb.Append("<a class=\"mhbo-lnk\" href=\"/leerling/mbo-hbo/overzicht\">Overzicht</a>");
+            sb.Append("<span class=\"mhbo-top__school\">");
+            sb.Append(WebUtility.HtmlEncode(schoolLine));
+            sb.Append("</span>");
         }
 
-        if (!string.IsNullOrEmpty(chip))
+        if (!string.IsNullOrWhiteSpace(code))
         {
-            var code = options.Pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
-            sb.Append("<span class=\"mhbo-chip\">Code ");
+            sb.Append("<span class=\"mhbo-chip mhbo-top__code\">");
             sb.Append(WebUtility.HtmlEncode(code));
             sb.Append("</span>");
         }
 
-        sb.Append("</div>");
+        sb.Append("</header>");
         sb.Append(options.BodyHtml);
+        if (options.Culture is not null)
+        {
+            PupilMboCoachSsr.AppendDock(sb, options.Culture, showCoachTeaser);
+        }
+
         sb.Append("</div>");
     }
 
@@ -262,4 +283,8 @@ public sealed class PupilLeerlingSsrDocumentOptions
     public bool IncludeJourneyScripts { get; init; } = true;
     public bool ShowPause { get; init; } = true;
     public string PauseFormHtml { get; init; } = """<form method="post" action="/leerling/pauze"><button type="submit" class="btn-pauze"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span>Pauze</span></button></form>""";
+
+    public Jobsy.Web.Localization.CultureState? Culture { get; init; }
+
+    public string? MboSchoolLabel { get; init; }
 }
