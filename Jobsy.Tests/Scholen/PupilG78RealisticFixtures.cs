@@ -22,7 +22,7 @@ internal static class PupilG78RealisticFixtures
             """{"natuur-techniek":{"leuk":5,"goed":5},"rekenen":{"leuk":4,"goed":5},"techniek":{"leuk":5,"goed":4}}""",
             BuildMakerAnswers());
 
-    /** SC: growth communiceren + creativiteit; story strengths samenwerken + doorzetten. */
+  /** SC: growth communiceren + creativiteit; story strengths samenwerken + doorzetten. */
     private static Dictionary<string, int> BuildHelpsOthersAnswers()
     {
         var d = BaselineThrees();
@@ -42,7 +42,7 @@ internal static class PupilG78RealisticFixtures
         return d;
     }
 
-    /** ES: growth doorzetten + plannen; strengths communiceren/creativiteit. */
+  /** ES: growth doorzetten + plannen; strengths communiceren/creativiteit. */
     private static Dictionary<string, int> BuildLeadsGroupAnswers()
     {
         var d = BaselineThrees();
@@ -59,7 +59,7 @@ internal static class PupilG78RealisticFixtures
         return d;
     }
 
-    /** IR: growth samenwerken + communiceren; strengths plannen/creativiteit/doorzetten. */
+  /** IR: growth samenwerken + communiceren; strengths plannen/creativiteit/doorzetten. */
     private static Dictionary<string, int> BuildMakerAnswers()
     {
         var d = BaselineThrees();
