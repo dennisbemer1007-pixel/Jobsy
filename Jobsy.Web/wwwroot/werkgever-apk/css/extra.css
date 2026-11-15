@@ -1,4 +1,23 @@
 /* Lobsy Loopbaan-APK — extra patterns on top of the shared MBO house style */
+button.coach,
+.coach[data-ssr-coach-open]{
+  border:none;background:transparent;padding:0;margin:0;font:inherit;color:inherit;
+  appearance:none;-webkit-appearance:none;box-shadow:none;cursor:pointer;
+  pointer-events:auto;overflow:visible;line-height:0;max-width:min(42vw,156px)
+}
+body.welcome.login .app{position:relative;overflow-x:hidden}
+body.welcome.login .coach,
+body.welcome.login button.coach{
+  position:fixed;right:12px;bottom:12px;width:120px;max-height:min(36vh,260px);z-index:20
+}
+body.welcome.login .coach img.full{width:120px;max-height:min(36vh,260px)}
+body.welcome.login .coach .bubble{right:108px;bottom:132px;font-size:13px;max-width:min(52vw,220px);white-space:normal}
+.app .main,.app .shell,.q-layout{position:relative;z-index:1}
+.qcard .bar{margin-bottom:14px}
+.qcard form .scale-block{margin-bottom:8px}
+.qcard h1{font-size:28px;line-height:1.2;margin-bottom:10px}
+.chip-ex{display:none!important}
+
 @media (min-width: 900px) {
   body.share .coach{bottom:8px}
   body.share .coach .bubble,

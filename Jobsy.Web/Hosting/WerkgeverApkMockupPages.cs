@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts.WerkgeverApk;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.WerkgeverApk;
 
 namespace Jobsy.Web.Hosting;
@@ -8,6 +9,8 @@ namespace Jobsy.Web.Hosting;
 /// <summary>Fill static mockup HTML (templates 02–07) with live SSR data.</summary>
 public static class WerkgeverApkMockupPages
 {
+    private const string AnswerFormId = "wa-answer-form";
+
     public static string TestQuestion(WerkgeverApkEmployeeQuestionDto q, string antiforgery, string postPath, string? error)
     {
         var html = WerkgeverApkSsrHtml.RenderTemplate(
@@ -18,43 +21,22 @@ public static class WerkgeverApkMockupPages
                 ["company"] = "",
                 ["team"] = "",
             });
-        html = html.Replace("Code VOOR-BEELD", "", StringComparison.Ordinal);
         html = InjectCoachButton(html);
-        var pct = q.Total > 0 ? (int)Math.Round(100.0 * q.Index / q.Total) : 0;
-        html = ReplaceFirst(html, "<h1>Ik help collega’s ook als het niet bij mijn taak hoort</h1>",
-            $"<h1>{E(q.Question)}</h1>");
-        if (!string.IsNullOrWhiteSpace(q.Scenario))
-        {
-            html = ReplaceFirst(html,
-                "<p class=\"scene\">Denk aan een gewone werkdag in het magazijn of op de vloer. Hoe goed past deze zin bij jou?</p>",
-                $"<p class=\"scene\">{E(q.Scenario)}</p>");
-        }
+        var blockTitle = BlockTitle(q.Block);
+        var progress = $"Vraag {q.Index} van {q.Total}";
+        var mob = $"{blockTitle} · {q.Index} / {q.Total}";
+        var sideNow = $"{q.Index} / {q.Total}";
 
-        html = ReplaceFirst(html, "Vraag 12 van 40", $"Vraag {q.Index} van {q.Total}");
-        html = ReplaceFirst(html, "style=\"width:30%\"", $"style=\"width:{pct}%\"");
-        var form = new StringBuilder();
-        form.Append("<form method=\"post\" action=\"").Append(E(postPath)).Append("\">");
-        form.Append(antiforgery);
-        form.Append("<input type=\"hidden\" name=\"ItemId\" value=\"").Append(E(q.ItemId)).Append("\" />");
-        form.Append("<div class=\"scale-block\"><div class=\"lab\"><b>Hoe goed past dit bij jou?</b><small>1 is bijna niet, 5 is heel duidelijk</small></div>");
-        form.Append("<div class=\"scale\" role=\"radiogroup\" aria-label=\"Past bij mij, 1 tot 5\">");
-        for (var v = 1; v <= 5; v++)
-        {
-            var chk = q.Value == v ? " checked" : "";
-            form.Append("<label class=\"scale-opt\"><input type=\"radio\" name=\"Value\" value=\"").Append(v);
-            form.Append('"').Append(chk).Append(" required><span>").Append(v).Append("</span></label>");
-        }
-
-        form.Append("</div><div class=\"ends\"><span>Past bijna niet</span><span>Past heel duidelijk</span></div></div>");
-        if (!string.IsNullOrWhiteSpace(error))
-        {
-            form.Append("<p class=\"notice warn\" role=\"alert\">").Append(E(error)).Append("</p>");
-        }
-
-        form.Append("<div class=\"foot\"><button class=\"btn primary\" type=\"submit\">");
-        form.Append(q.Index >= q.Total ? "Volgende →" : "Volgende →");
-        form.Append("</button></div></form>");
-        html = ReplaceScaleBlock(html, form.ToString());
+        html = ApplyBlockRail(html, q.Block, progress, mob, sideNow, blockTitle);
+        html = ReplaceBetweenMarkers(
+            html,
+            "<section class=\"card gold-top qcard\">",
+            "<div class=\"speak\">",
+            BuildQuestionCardInner(q, blockTitle, antiforgery, postPath, error));
+        html = html.Replace(
+            """<button class="btn primary" type="button">Volgende →</button>""",
+            $"""<button class="btn primary" type="submit" form="{AnswerFormId}">Volgende →</button>""",
+            StringComparison.Ordinal);
         return html;
     }
 
@@ -135,6 +117,143 @@ public static class WerkgeverApkMockupPages
         return html;
     }
 
+    private static string BuildQuestionCardInner(
+        WerkgeverApkEmployeeQuestionDto q,
+        string blockTitle,
+        string antiforgery,
+        string postPath,
+        string? error)
+    {
+        var pct = q.Total > 0 ? (int)Math.Round(100.0 * q.Index / q.Total) : 0;
+        var sb = new StringBuilder();
+        sb.Append("<div class=\"q-progress\"><span>").Append(E(blockTitle));
+        if (!string.IsNullOrWhiteSpace(q.Dimension))
+        {
+            sb.Append(" · ").Append(E(q.Dimension));
+        }
+
+        sb.Append("</span> Vraag ").Append(q.Index).Append(" van ").Append(q.Total).Append("</div>");
+        sb.Append("<div class=\"bar\"><i style=\"width:").Append(pct).Append("%\"></i></div>");
+        sb.Append("<form id=\"").Append(AnswerFormId).Append("\" method=\"post\" action=\"").Append(E(postPath)).Append("\">");
+        sb.Append(antiforgery);
+        sb.Append("<input type=\"hidden\" name=\"ItemId\" value=\"").Append(E(q.ItemId)).Append("\" />");
+        sb.Append("<h1>").Append(E(q.Question)).Append("</h1>");
+        if (!string.IsNullOrWhiteSpace(q.Scenario))
+        {
+            sb.Append("<p class=\"scene\">").Append(E(q.Scenario)).Append("</p>");
+        }
+
+        sb.Append("<div class=\"scale-block\"><div class=\"lab\"><b>Hoe goed past dit bij jou?</b><small>1 is bijna niet, 5 is heel duidelijk</small></div>");
+        sb.Append("<div class=\"scale\" role=\"radiogroup\" aria-label=\"Past bij mij, 1 tot 5\">");
+        for (var v = 1; v <= 5; v++)
+        {
+            var chk = q.Value == v ? " checked" : "";
+            var on = q.Value == v ? " on" : "";
+            sb.Append("<label class=\"scale-opt").Append(on).Append("\"><input type=\"radio\" name=\"Value\" value=\"").Append(v);
+            sb.Append('"').Append(chk).Append(" required><span>").Append(v).Append("</span></label>");
+        }
+
+        sb.Append("</div><div class=\"ends\"><span>Past bijna niet</span><span>Past heel duidelijk</span></div></div>");
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            sb.Append("<p class=\"notice warn\" role=\"alert\">").Append(E(error)).Append("</p>");
+        }
+
+        sb.Append("</form>");
+        return sb.ToString();
+    }
+
+    private static string ApplyBlockRail(
+        string html,
+        PupilMboHboBlock block,
+        string progress,
+        string mob,
+        string sideNow,
+        string blockTitle)
+    {
+        const string interesseDone =
+            """<div class="step done"><span class="num">2</span><div><div class="t">Interessetest</div><div class="s">Af</div></div></div>""";
+        const string competentieOn =
+            """<div class="step on"><span class="num">3</span><div><div class="t">Competentietest</div><div class="s">Vraag 12 van 40</div></div></div>""";
+
+        var interesseOn =
+            $"""<div class="step on"><span class="num">2</span><div><div class="t">Interessetest</div><div class="s">{E(progress)}</div></div></div>""";
+        var competentiePending =
+            """<div class="step"><span class="num">3</span><div><div class="t">Competentietest</div><div class="s">Nog te doen</div></div></div>""";
+        var competentieOnLive =
+            $"""<div class="step on"><span class="num">3</span><div><div class="t">Competentietest</div><div class="s">{E(progress)}</div></div></div>""";
+        var interesseDoneLive =
+            """<div class="step done"><span class="num">2</span><div><div class="t">Interessetest</div><div class="s">Af</div></div></div>""";
+        var werkOnLive =
+            $"""<div class="step on"><span class="num">4</span><div><div class="t">Wat je belangrijk vindt</div><div class="s">{E(progress)}</div></div></div>""";
+
+        if (block == PupilMboHboBlock.Interesse)
+        {
+            html = html.Replace(interesseDone, interesseOn, StringComparison.Ordinal);
+            html = html.Replace(competentieOn, competentiePending, StringComparison.Ordinal);
+            html = html.Replace(
+                """<div class="m"><b>Interessetest</b><span class="pill shared">Af</span></div>""",
+                $"""<div class="m"><b>Interessetest</b><span class="pill now">{E(sideNow)}</span></div>""",
+                StringComparison.Ordinal);
+            html = html.Replace(
+                """<div class="m"><b>Competentietest</b><span class="pill now">12 / 40</span></div>""",
+                """<div class="m"><b>Competentietest</b><span class="pill">Nog te doen</span></div>""",
+                StringComparison.Ordinal);
+        }
+        else if (block == PupilMboHboBlock.Competentie)
+        {
+            html = html.Replace(competentieOn, competentieOnLive, StringComparison.Ordinal);
+            html = html.Replace(
+                """<div class="m"><b>Competentietest</b><span class="pill now">12 / 40</span></div>""",
+                $"""<div class="m"><b>Competentietest</b><span class="pill now">{E(sideNow)}</span></div>""",
+                StringComparison.Ordinal);
+        }
+        else if (block == PupilMboHboBlock.Werkwaarden)
+        {
+            html = html.Replace(interesseDone, interesseDoneLive, StringComparison.Ordinal);
+            html = html.Replace(competentieOn, """<div class="step done"><span class="num">3</span><div><div class="t">Competentietest</div><div class="s">Af</div></div></div>""", StringComparison.Ordinal);
+            html = html.Replace(
+                """<div class="step"><span class="num">4</span><div><div class="t">Wat je belangrijk vindt</div><div class="s">Nog te doen</div></div></div>""",
+                werkOnLive,
+                StringComparison.Ordinal);
+            html = html.Replace(
+                """<div class="m"><b>Wat je belangrijk vindt</b><span class="pill">Nog te doen</span></div>""",
+                $"""<div class="m"><b>Wat je belangrijk vindt</b><span class="pill now">{E(sideNow)}</span></div>""",
+                StringComparison.Ordinal);
+        }
+
+        // mob dots: mark first blocks done when past interesse
+        if (block != PupilMboHboBlock.Interesse)
+        {
+            html = html.Replace(
+                """<div class="mob-progress"><div class="dots"><i class="done"></i><i class="done"></i><i class="on"></i>""",
+                """<div class="mob-progress"><div class="dots"><i class="done"></i><i class="done"></i><i class="on"></i>""",
+                StringComparison.Ordinal);
+        }
+        else
+        {
+            html = html.Replace(
+                """<div class="mob-progress"><div class="dots"><i class="done"></i><i class="done"></i><i class="on"></i>""",
+                """<div class="mob-progress"><div class="dots"><i class="done"></i><i class="on"></i><i></i>""",
+                StringComparison.Ordinal);
+        }
+
+        html = html.Replace("Competentietest · 12 / 40", mob, StringComparison.Ordinal);
+        html = html.Replace($"{blockTitle} · 12 / 40", mob, StringComparison.Ordinal);
+        html = html.Replace("Vraag 12 van 40", progress, StringComparison.Ordinal);
+        html = html.Replace("<span class=\"pill now\">12 / 40</span>", $"<span class=\"pill now\">{sideNow}</span>", StringComparison.Ordinal);
+
+        return html;
+    }
+
+    private static string BlockTitle(PupilMboHboBlock block) => block switch
+    {
+        PupilMboHboBlock.Interesse => "Interessetest",
+        PupilMboHboBlock.Competentie => "Competentietest",
+        PupilMboHboBlock.Werkwaarden => "Wat je belangrijk vindt",
+        _ => "Test"
+    };
+
     private static string InjectCoachButton(string html)
         => html.Replace(
             "<div class=\"coach\">",
@@ -145,23 +264,22 @@ public static class WerkgeverApkMockupPages
                 "</button>\n<script src=\"/js/lobsy-coach-ssr.js\" defer></script>\n<div class=\"wm\">",
                 StringComparison.Ordinal);
 
-    private static string ReplaceScaleBlock(string html, string formInner)
+    private static string ReplaceBetweenMarkers(string html, string sectionOpen, string nextMarker, string inner)
     {
-        const string start = "<div class=\"scale-block\">";
-        var i0 = html.IndexOf(start, StringComparison.Ordinal);
+        var i0 = html.IndexOf(sectionOpen, StringComparison.Ordinal);
         if (i0 < 0)
         {
             return html;
         }
 
-        var i1 = html.IndexOf("</section>", i0, StringComparison.Ordinal);
+        var openEnd = html.IndexOf('>', i0) + 1;
+        var i1 = html.IndexOf(nextMarker, openEnd, StringComparison.Ordinal);
         if (i1 < 0)
         {
             return html;
         }
 
-        var sectionStart = html.LastIndexOf("<section", i0, StringComparison.Ordinal);
-        return html[..sectionStart] + "<section class=\"card gold-top qcard\">" + formInner + "</section>" + html[(i1 + "</section>".Length)..];
+        return html[..openEnd] + inner + html[i1..];
     }
 
     private static string ReplaceFirst(string html, string old, string @new)

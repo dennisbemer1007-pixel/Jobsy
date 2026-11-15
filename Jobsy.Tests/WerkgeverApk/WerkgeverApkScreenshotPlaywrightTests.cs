@@ -5,32 +5,32 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.WerkgeverApk;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.ValueObjects;
-using Jobsy.Core.Privacy;
 using Jobsy.Core.WerkgeverApk;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.WerkgeverApk;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
-using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests.WerkgeverApk;
 
@@ -129,11 +129,15 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
             await CapturePairAsync(page, "02-welkom");
             await page.Locator("button:has-text('Start de interessetest')").ClickAsync();
             await page.WaitForURLAsync("**/loopbaan-apk/test/**", DomReadyUrl);
-            await AssertBodyContainsAsync(page, "Hoe goed past dit bij jou");
+            await AssertBodyContainsAsync(page, "vak leren waarin ik met mijn handen werk");
+            await AssertBodyContainsAsync(page, "Vraag 1 van 48");
+            var progressLabels = await page.Locator(".q-progress, .step.on .s, .mob-progress").AllInnerTextsAsync();
+            Assert.All(progressLabels, t => Assert.Contains("1", t, StringComparison.Ordinal));
+            Assert.All(progressLabels, t => Assert.DoesNotContain("12 / 40", t, StringComparison.Ordinal));
             await page.Locator("input[type=radio][value=\"3\"]").First.CheckAsync(new() { Force = true });
-            await page.Locator("form button[type=submit]").ClickAsync(new() { Force = true });
             await AssertBodyContainsAsync(page, "Hoe goed past dit bij jou");
             await CapturePairAsync(page, "03-test");
+            await page.Locator("footer.foot button[type=submit]").ClickAsync(new() { Force = true });
         }
 
         // 04 — delen (klaar, nog niet gedeeld) met voorbeeld
@@ -154,6 +158,11 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
             await EmployeeLoginAsync(page, baseUrl, _seed.ComparisonPlainCode);
             await AssertUrlContainsAsync(page, "/loopbaan-apk/vergelijking");
             await AssertBodyContainsAsync(page, "Hier zijn jullie het over eens");
+            await AssertBodyContainsAsync(page, "prettig samenwerkt en rekening houdt");
+            await AssertBodyContainsAsync(page, "Hier kijken jullie anders");
+            await AssertBodyContainsAsync(page, "Nieuwe dingen proberen");
+            var codeChips = await page.Locator(".topbar .chip-code").CountAsync();
+            Assert.Equal(1, codeChips);
             await CapturePairAsync(page, "05-vergelijking");
         }
 
@@ -412,11 +421,13 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
         var plainCodes = allCodes.Select(c => codes.Unprotect(c.CodeProtected)!).ToList();
         var progressJson = CompleteProgressJson();
+        var comparisonProgressJson = ComparisonProgressJson();
         var managerPartial = WerkgeverApkManagerQuestionCatalog.All
             .Take(3)
             .ToDictionary(q => q.Id, _ => 4);
         var managerAnswers = JsonSerializer.Serialize(
             WerkgeverApkManagerQuestionCatalog.All.ToDictionary(q => q.Id, _ => 4));
+        var comparisonManagerAnswers = ComparisonManagerAnswersJson();
         var managerPartialJson = JsonSerializer.Serialize(managerPartial);
 
         for (var i = 0; i < allCodes.Count; i++)
@@ -427,10 +438,10 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
                 code.Status = WerkgeverApkEmployeeCodeStatus.Completed;
                 code.SharedWithManager = true;
                 code.SharedAtUtc = DateTime.UtcNow;
-                EnsureProgress(code, progressJson, welcomeSeen: true);
+                EnsureProgress(code, i == 0 ? comparisonProgressJson : progressJson, welcomeSeen: true);
                 if (i == 0)
                 {
-                    EnsureManagerSheet(code, managerAnswers, completed: true);
+                    EnsureManagerSheet(code, comparisonManagerAnswers, completed: true);
                 }
                 else if (i == 1)
                 {
@@ -498,6 +509,43 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
         }
 
         return JsonSerializer.Serialize(new { answers });
+    }
+
+    private static string ComparisonProgressJson()
+    {
+        var catalog = PupilMboHboCatalog.Default;
+        var answers = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        {
+            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
+            {
+                answers[q.Id] = 3;
+            }
+        }
+
+        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, SchoolLevel.Mbo3))
+        {
+            if (string.Equals(q.Dimension, "Samenwerken", StringComparison.Ordinal))
+            {
+                answers[q.Id] = 5;
+            }
+            else if (q.Dimension.StartsWith("Creativiteit", StringComparison.Ordinal))
+            {
+                answers[q.Id] = 1;
+            }
+            else if (string.Equals(q.Dimension, "Contact maken (Extraversie)", StringComparison.Ordinal))
+            {
+                answers[q.Id] = 5;
+            }
+        }
+
+        return JsonSerializer.Serialize(new { answers });
+    }
+
+    private static string ComparisonManagerAnswersJson()
+    {
+        var dict = WerkgeverApkManagerQuestionCatalog.All.ToDictionary(q => q.Id, _ => 4);
+        return JsonSerializer.Serialize(dict);
     }
 
     private static readonly PageGotoOptions DomReady = new()

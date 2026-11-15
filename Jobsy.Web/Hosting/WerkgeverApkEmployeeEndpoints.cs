@@ -2,8 +2,8 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.WerkgeverApk;
 using Jobsy.Web.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Jobsy.Web.Hosting;
 
@@ -225,10 +225,9 @@ public static class WerkgeverApkEmployeeEndpoints
         html = html.Replace("Demo Logistiek B.V.", E(chrome.GetValueOrDefault("company")), StringComparison.Ordinal);
         html = html.Replace("Team Logistiek", E(chrome.GetValueOrDefault("team")), StringComparison.Ordinal);
         html = html.Replace("Code VOOR-BEELD", E(chrome.GetValueOrDefault("code")), StringComparison.Ordinal);
-        html = html.Replace("chip-ex", "chip-code", StringComparison.Ordinal);
         html = html.Replace(
-            ">Voorbeeld</span>",
-            $">{E(chrome.GetValueOrDefault("code"))}</span>",
+            """<span class="chip chip-ex">Voorbeeld</span>""",
+            "",
             StringComparison.Ordinal);
     }
 

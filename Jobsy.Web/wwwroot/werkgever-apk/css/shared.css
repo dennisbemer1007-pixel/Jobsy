@@ -28,7 +28,7 @@
   --shadow:0 1px 2px rgba(15,45,92,.06);
   --shadow-lg:0 12px 32px rgba(15,45,92,.12);
   --rail:248px;
-  --coach-w:250px;
+  --coach-w:168px;
 }
 
 *{box-sizing:border-box}
@@ -79,10 +79,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 .btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* Coach B2 */
-.coach{position:absolute;right:4px;bottom:0;z-index:20;pointer-events:none;width:240px}
-.coach img.full{display:block;width:240px;height:auto;object-fit:contain;object-position:88% 100%;filter:drop-shadow(0 10px 18px rgba(15,45,92,.16))}
+.coach{position:absolute;right:8px;bottom:0;z-index:12;pointer-events:none;width:156px;max-height:min(42vh,320px)}
+.coach img.full{display:block;width:156px;height:auto;max-height:min(42vh,320px);object-fit:contain;object-position:88% 100%;filter:drop-shadow(0 8px 14px rgba(15,45,92,.14))}
 .coach img.av{display:none}
-.bubble{position:absolute;right:198px;bottom:258px;background:var(--surface);border:1px solid var(--gold-line);border-radius:16px 16px 4px 16px;padding:8px 14px;font-weight:600;font-size:14px;color:var(--brand);white-space:nowrap;box-shadow:var(--shadow-lg);line-height:1.2}
+.bubble{position:absolute;right:132px;bottom:168px;background:var(--surface);border:1px solid var(--gold-line);border-radius:16px 16px 4px 16px;padding:8px 14px;font-weight:600;font-size:14px;color:var(--brand);white-space:nowrap;box-shadow:var(--shadow-lg);line-height:1.2;pointer-events:none}
 .bubble::after{content:"";position:absolute;right:-6px;bottom:8px;width:12px;height:12px;background:var(--surface);border-right:1px solid var(--gold-line);border-bottom:1px solid var(--gold-line);transform:rotate(-45deg)}
 
 /* Type */
@@ -111,7 +111,7 @@ h2{font-size:16px;font-weight:700;color:var(--brand);margin:0 0 6px}
 .welcome-foot-note{font-size:13px;color:var(--muted)}
 
 /* Question */
-.q-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start;height:100%}
+.q-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start}
 .explain{padding:14px 16px;border-radius:var(--radius);background:var(--gold-soft);border:1px solid var(--gold-line);margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}
 .explain .ic{width:32px;height:32px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;flex:none;color:var(--gold-deep);border:1px solid var(--gold-line)}
 .explain .ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -132,6 +132,10 @@ h2{font-size:16px;font-weight:700;color:var(--brand);margin:0 0 6px}
 .scale button{flex:1;height:62px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff;font-family:inherit;font-size:16px;font-weight:600;color:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:default}
 .scale button small{display:none}
 .scale button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.scale label.scale-opt{flex:1;margin:0;cursor:pointer;position:relative}
+.scale label.scale-opt input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.scale label.scale-opt span{height:62px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff;font-family:inherit;font-size:16px;font-weight:600;color:var(--brand);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.scale label.scale-opt.on span,.scale label.scale-opt:has(input:checked) span{background:var(--brand);border-color:var(--brand);color:#fff}
 .ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
 .speak{display:inline-flex;align-items:center;gap:8px;margin-top:4px;font-size:13px;font-weight:600;color:var(--brand);background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--brand) 18%,var(--border));border-radius:var(--radius-pill);padding:6px 12px}
 .speak svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -232,7 +236,7 @@ h2{font-size:16px;font-weight:700;color:var(--brand);margin:0 0 6px}
   .qcard h1{font-size:20px}
   .scene{font-size:13px;margin-bottom:14px}
   .scale{gap:6px}
-  .scale button{height:48px;font-size:15px}
+  .scale button,.scale label.scale-opt span{height:48px;font-size:15px}
   .bar{margin-bottom:12px}
 
   .done-hero{gap:12px;margin-bottom:12px}
