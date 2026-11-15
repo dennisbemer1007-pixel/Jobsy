@@ -68,7 +68,6 @@ else if (_step is >= 1 and <= 10)
             <button type="submit" name="obAction" value="noop" hidden tabindex="-1" aria-hidden="true" data-ob-ssr-enter-guard></button>
         }
         <input type="hidden" name="obPayload" value="" data-ob-ssr-payload />
-        <input type="hidden" name="obNav" value="" data-ob-ssr-nav-intent />
         @if (_step == 6)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-ssr-fetch-save.js")}")" defer></script>

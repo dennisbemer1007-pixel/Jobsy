@@ -2015,31 +2015,10 @@
         bindKompasComplete();
     }
 
-    function preserveSubmitButtonInForm(form, submitter) {
-        if (!submitter || !submitter.name) return;
-        var marker = "data-ob-ssr-submit-clone";
-        var hidden = form.querySelector('input[type="hidden"][' + marker + '="' + submitter.name + '"]');
-        if (!hidden) {
-            hidden = document.createElement("input");
-            hidden.type = "hidden";
-            hidden.setAttribute(marker, submitter.name);
-            hidden.name = submitter.name;
-            form.appendChild(hidden);
-        }
-        hidden.value = submitter.value || "";
-    }
-
     function bindSsrOnboardingForm() {
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
-            form.addEventListener("click", function (ev) {
-                var navBtn = ev.target.closest("[data-ob-nav-value][type=submit]");
-                if (!navBtn || !form.contains(navBtn)) return;
-                var intent = form.querySelector("[data-ob-ssr-nav-intent]");
-                var v = navBtn.getAttribute("data-ob-nav-value");
-                if (intent && v) intent.value = v;
-            }, true);
             form.addEventListener("submit", function (ev) {
                 if (form.getAttribute("data-ob-submitting") === "1") {
                     ev.preventDefault();
