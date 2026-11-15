@@ -2017,10 +2017,38 @@
         bindKompasComplete();
     }
 
+    function ensureSsrObNavField(form) {
+        var field = form.querySelector("input[data-ob-ssr-ob-nav-field]");
+        if (!field) {
+            field = document.createElement("input");
+            field.type = "hidden";
+            field.name = "obNav";
+            field.setAttribute("data-ob-ssr-ob-nav-field", "1");
+            form.appendChild(field);
+        }
+        return field;
+    }
+
     function bindSsrOnboardingForm() {
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
+            form.querySelectorAll('button[name="obNav"], input[type="submit"][name="obNav"]').forEach(function (btn) {
+                btn.removeAttribute("name");
+            });
+            form.addEventListener("click", function (ev) {
+                var navBtn = ev.target.closest(
+                    '[data-testid="onboarding-next"],[data-testid="onboarding-dream-unknown"],[data-testid="onboarding-skip"],[data-testid="onboarding-back"]'
+                );
+                if (!navBtn || !form.contains(navBtn)) return;
+                var val = navBtn.value || navBtn.getAttribute("value") || "";
+                if (!val && navBtn.getAttribute("data-testid") === "onboarding-next") {
+                    val = "next";
+                }
+                if (val) {
+                    ensureSsrObNavField(form).value = val;
+                }
+            }, true);
             form.addEventListener("submit", function (ev) {
                 if (form.getAttribute("data-ob-submitting") === "1") {
                     ev.preventDefault();
@@ -2028,24 +2056,34 @@
                 }
                 var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
                 if (step === 1) {
-                    var root = form.querySelector('[data-ob-client-step="1"]');
-                    var workField = root && root.querySelector("[data-ob-ssr-work-statuses]");
-                    if (workField && root) {
+                    var rootStep1 = form.querySelector('[data-ob-client-step="1"]');
+                    var workField = rootStep1 && rootStep1.querySelector("[data-ob-ssr-work-statuses]");
+                    if (workField && rootStep1) {
                         var codes = [];
-                        root.querySelectorAll(".work-status-chip[data-ob-code]").forEach(function (btn) {
+                        rootStep1.querySelectorAll(".work-status-chip[data-ob-code]").forEach(function (btn) {
                             if (btn.getAttribute("aria-pressed") === "true") {
                                 codes.push(btn.getAttribute("data-ob-code"));
                             }
                         });
                         workField.value = codes.join(",");
                     }
-                    if (root && typeof root.__obSyncStep1FormFields === "function") {
-                        root.__obSyncStep1FormFields();
+                    if (rootStep1 && typeof rootStep1.__obSyncStep1FormFields === "function") {
+                        rootStep1.__obSyncStep1FormFields();
                     }
+                    var hiddenStep1 = form.querySelector("[data-ob-ssr-payload]");
+                    if (hiddenStep1) {
+                        hiddenStep1.value = "";
+                    }
+                    form.setAttribute("data-ob-submitting", "1");
+                    // Do not disable submit buttons here (capture phase): that drops obNav from the POST.
+                    return;
                 }
                 form.setAttribute("data-ob-submitting", "1");
-                form.querySelectorAll("button[type=submit]").forEach(function (b) {
-                    b.disabled = true;
+                // Defer disable: in capture phase, disabling the clicked submit drops obNav from POST.
+                requestAnimationFrame(function () {
+                    form.querySelectorAll("button[type=submit]").forEach(function (b) {
+                        b.disabled = true;
+                    });
                 });
                 var hidden = form.querySelector("[data-ob-ssr-payload]");
                 if (step === 6) {
@@ -2069,9 +2107,6 @@
                 }
                 var root = form.querySelector("[data-ob-client-step]");
                 if (!root || !step) return;
-                if (step === 1 && typeof root.__obSyncStep1FormFields === "function") {
-                    root.__obSyncStep1FormFields();
-                }
                 if (form.getAttribute("data-ob-ssr-post-tiles") === "1" && step >= 2 && step <= 4) {
                     if (hidden) {
                         hidden.value = JSON.stringify(collectSsrPostStepFromDom(root, step));

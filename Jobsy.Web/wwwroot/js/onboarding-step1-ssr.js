@@ -8,7 +8,7 @@
         var next = form.querySelector('[data-testid="onboarding-next"]');
         if (next) {
             next.removeAttribute("data-ob-nav-value");
-            next.setAttribute("formaction", "/candidate/start/step-1/volgende");
+            next.removeAttribute("formaction");
             next.setAttribute("name", "obNav");
             next.setAttribute("value", "next");
             next.setAttribute("data-ob-ssr-nav-next", "1");

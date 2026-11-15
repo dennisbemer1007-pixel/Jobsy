@@ -33,17 +33,6 @@
                     data-testid="onboarding-next"
                     data-ob-ssr-nav-next="1">@NextLabel</button>
         }
-        else if (Step == 1)
-        {
-            <button type="submit"
-                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                    formaction="/candidate/start/step-1/volgende"
-                    name="obNav"
-                    value="next"
-                    formnovalidate
-                    data-testid="onboarding-next"
-                    data-ob-ssr-nav-next="1">@NextLabel</button>
-        }
         else
         {
             <button type="submit"
@@ -70,12 +59,9 @@
             }
             @if (Step == 6)
             {
-                <button type="submit"
-                        class="ob-v3-dfoot__link ob-v3-dfoot__dream-unknown--desktop"
-                        name="obNav"
-                        value="dreamUnknown"
-                        formnovalidate
-                        data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</button>
+                <a class="ob-v3-dfoot__link ob-v3-dfoot__dream-unknown--desktop"
+                   href="/candidate/start/step-6/droom-onbekend"
+                   data-testid="onboarding-dream-unknown">@Culture["Onboarding.DreamUnknown"]</a>
             }
         </div>
         @if (Step7ConsentOnly)
@@ -94,17 +80,6 @@
             <button type="submit"
                     class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
                     formaction="/candidate/start/step-6/volgende"
-                    name="obNav"
-                    value="next"
-                    formnovalidate
-                    data-testid="onboarding-next"
-                    data-ob-ssr-nav-next="1">@NextLabel</button>
-        }
-        else if (Step == 1)
-        {
-            <button type="submit"
-                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                    formaction="/candidate/start/step-1/volgende"
                     name="obNav"
                     value="next"
                     formnovalidate

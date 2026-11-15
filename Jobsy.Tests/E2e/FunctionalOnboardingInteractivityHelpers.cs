@@ -1085,7 +1085,9 @@ internal static class FunctionalOnboardingInteractivityHelpers
             }
         }
 
-        await WaitForOnboardingConsentScreenAsync(page);
+        await page.Locator(
+                "[data-testid=onboarding-step-7-consent], [data-testid=onboarding-step-7-illustrated], .ob-wizard__consent, [data-ob-rustig-screen=step-07]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
     }
 
     internal static async Task AdvanceFromStep1ToStep2Async(IPage page)
@@ -1954,6 +1956,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
         var unknown = page.GetByTestId("onboarding-dream-unknown");
         if (await unknown.CountAsync() > 0)
         {
+            var href = await unknown.GetAttributeAsync("href");
             try
             {
                 await unknown.ClickAsync(new() { Force = true, Timeout = 20_000 });
@@ -1963,15 +1966,15 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 await unknown.EvaluateAsync("el => el.click()");
             }
 
+            if (!string.IsNullOrWhiteSpace(href))
+            {
+                await page.WaitForURLAsync("**/step=7**", new() { Timeout = 120_000 });
+            }
+
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-            try
+            if (await OnboardingConsentScreen(page).First.IsVisibleAsync())
             {
                 await WaitForOnboardingConsentScreenAsync(page, 120_000);
-            }
-            catch (TimeoutException)
-            {
-                await WaitForOnboardingStartStepAsync(page, 7, 90_000);
-                await WaitForOnboardingConsentScreenAsync(page, 90_000);
             }
 
             return;

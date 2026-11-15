@@ -81,7 +81,6 @@ public static class OnboardingClientStep1Saver
 
         try
         {
-            _ = await api.GetMyOnboardingAsync(cancellationToken);
             await OnboardingClientProgressSaver.SaveStickyAsync(
                 api,
                 2,

@@ -23,10 +23,32 @@ public static class OnboardingStartFormEndpoints
         var auth = new AuthorizeAttribute { Roles = "Candidate" };
         app.MapPost("/candidate/start", PostAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-1/volgende", Step1VolgendeAsync).RequireAuthorization(auth);
+        app.MapGet("/candidate/start/step-6/droom-onbekend", Step6DreamUnknownGetAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-6/volgende", Step6VolgendeAsync).RequireAuthorization(auth);
         app.MapPost("/candidate/start/step-7/consent-volgende", Step7ConsentVolgendeAsync).RequireAuthorization(auth);
 
         return app;
+    }
+
+    private static async Task<IResult> Step6DreamUnknownGetAsync(
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        using var empty = JsonDocument.Parse("{}");
+        var body = ForceEmptyDreamPayload(empty.RootElement);
+        var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: true);
+        var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+            6,
+            merged,
+            api,
+            geocoder,
+            featureFlags,
+            culture,
+            cancellationToken);
+        return ToRedirect(stepStatus, stepPayload, 6, advance: true, goBack: false, culture);
     }
 
     private static async Task<IResult> Step1VolgendeAsync(
@@ -282,6 +304,7 @@ public static class OnboardingStartFormEndpoints
         if (dreamUnknown)
         {
             advance = true;
+            skipOptional = true;
         }
 
         if (skipOptional)
@@ -365,7 +388,7 @@ public static class OnboardingStartFormEndpoints
             advance = true;
         }
 
-        if (advance && currentStep == 1)
+        if (advance && currentStep == 1 && string.IsNullOrWhiteSpace(obPayload))
         {
             var step1Req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance: true);
             var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(

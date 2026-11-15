@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "9c1568bd442ef19300eaf82dc1cf7c2377a5722d50fe3c242e3b53902636c0b2",
+    "sha256": "f3a2855aa733cdf5580a41c66d25da9a37f0ef46fd31a81603cfa93745e1a88f",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -584,7 +584,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "5d21e3e4ce80af3bf795fa27e40e8cab2874c628b27f48e189362e471d4a20fd",
+    "sha256": "7beb0fb111333058bdd5db5593d8c6a6f390db39f6799d64833a08c4d528bf67",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
@@ -592,7 +592,7 @@
     "v": "20261025-87"
   },
   "js/onboarding-step1-ssr.js": {
-    "sha256": "a12116bd5c495cf3d3464b7e4efa7ac73ffa660924d9b56268ee6aec04e57164",
+    "sha256": "89e2d4a1552614a020322e79ffd2ffb55807712108c56c6d6644c4293321c4c4",
     "v": "20261115-01"
   },
   "js/onboarding-step6-ssr.js": {
