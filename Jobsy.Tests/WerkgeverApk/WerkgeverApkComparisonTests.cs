@@ -50,11 +50,15 @@ public sealed class WerkgeverApkComparisonTests
             {
                 if (item.DimensionA.Contains(q.EmployeeCompetenceDimension, StringComparison.OrdinalIgnoreCase))
                 {
-                    answers[item.Id] = WerkgeverApkAnswerValidation.AbChoiceA;
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceA
+                        : WerkgeverApkAnswerValidation.AbChoiceB;
                 }
                 else if (item.DimensionB?.Contains(q.EmployeeCompetenceDimension, StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    answers[item.Id] = WerkgeverApkAnswerValidation.AbChoiceB;
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceB
+                        : WerkgeverApkAnswerValidation.AbChoiceA;
                 }
             }
 

@@ -570,7 +570,11 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
             .Select(r => WerkgeverApkComparisonEngine.ParseManagerAnswers(r.AnswersJson))
             .ToList();
 
-        var insights = WerkgeverApkGroupInsights.Aggregate(employeeStates, managerSheets, Level);
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == gate.CompanyId, ct);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(
+            company?.LoopbaanApkPackage ?? WerkgeverApkPackageKind.Basis);
+        var insights = WerkgeverApkGroupInsights.Aggregate(employeeStates, managerSheets, catalog, Level);
         return (insights, null, 200);
     }
 

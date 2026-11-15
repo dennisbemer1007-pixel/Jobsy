@@ -75,32 +75,32 @@ Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py
 
 | Dimensie | Aantal meetpunten |
 | --- | ---: |
-| A (Creatief) | 35 |
-| C (Geordend) | 32 |
-| E (Ondernemend) | 32 |
-| I (Onderzoekend) | 35 |
-| R (Praktisch) | 35 |
-| S (Sociaal) | 35 |
+| A (Creatief) | 30 |
+| C (Geordend) | 30 |
+| E (Ondernemend) | 30 |
+| I (Onderzoekend) | 30 |
+| R (Praktisch) | 30 |
+| S (Sociaal) | 30 |
 
 ## RIASEC-paren (forced choice)
 
 | Paar | Aantal |
 | --- | ---: |
-| A – C | 7 |
-| A – E | 7 |
-| A – I | 7 |
-| A – R | 7 |
-| A – S | 7 |
-| C – E | 4 |
-| C – I | 7 |
-| C – R | 7 |
-| C – S | 7 |
-| E – I | 7 |
-| E – R | 7 |
-| E – S | 7 |
-| I – R | 7 |
-| I – S | 7 |
-| R – S | 7 |
+| A – C | 6 |
+| A – E | 6 |
+| A – I | 6 |
+| A – R | 6 |
+| A – S | 6 |
+| C – E | 6 |
+| C – I | 6 |
+| C – R | 6 |
+| C – S | 6 |
+| E – I | 6 |
+| E – R | 6 |
+| E – S | 6 |
+| I – R | 6 |
+| I – S | 6 |
+| R – S | 6 |
 
 ## Competenties
 
@@ -108,10 +108,11 @@ Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py
 | --- | ---: |
 | Communiceren | 13 |
 | Contact maken | 12 |
-| Creativiteit / vernieuwen | 13 |
+| Creativiteit / vernieuwen | 12 |
+| Flexibel aanpassen | 12 |
 | Klantgerichtheid | 13 |
-| Leren & ontwikkelen | 12 |
-| Nauwkeurig werken | 1 |
+| Leren & ontwikkelen | 13 |
+| Nauwkeurig werken | 13 |
 | Plannen & organiseren | 13 |
 | Resultaatgerichtheid | 13 |
 | Samenwerken | 13 |
@@ -132,9 +133,9 @@ Gegenereerd op 2026-11-15 door `tools/werkgever-apk/generate_ab_question_bank.py
 
 | display_blok | Aantal |
 | ---: | ---: |
-| 1 | 51 |
-| 2 | 51 |
-| 3 | 37 |
-| 4 | 31 |
+| 1 | 45 |
+| 2 | 45 |
+| 3 | 45 |
+| 4 | 35 |
 | 5 | 15 |
 | 6 | 15 |

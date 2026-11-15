@@ -684,7 +684,7 @@ def build_uitgebreid() -> list[Item]:
     items: list[Item] = []
     variant = 0
 
-    interesse_count = 102
+    interesse_count = 90
     ri_plan = []
     per_pair = (interesse_count + len(RIASEC_PAIRS) - 1) // len(RIASEC_PAIRS)
     for pair in RIASEC_PAIRS:
@@ -697,8 +697,8 @@ def build_uitgebreid() -> list[Item]:
         )
         variant += 1
 
-    comp_ab = 60
-    comp_plan = balanced_competence_plan(comp_ab, active=10, min_per_dim=12)
+    comp_ab = 72
+    comp_plan = balanced_competence_plan(comp_ab, active=12, min_per_dim=12)
     for i, pair in enumerate(comp_plan):
         items.append(
             comp_pair_item(pair, variant, display_for("competentie", "uitgebreid", i, comp_ab + 8))

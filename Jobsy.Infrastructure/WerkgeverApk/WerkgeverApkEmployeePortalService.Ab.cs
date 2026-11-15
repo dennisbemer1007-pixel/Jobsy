@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Jobsy.Core.Contracts.WerkgeverApk;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Entities.WerkgeverApk;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Core.WerkgeverApk;
 
@@ -42,7 +44,7 @@ public sealed partial class WerkgeverApkEmployeePortalService
             item.DimensionA,
             item.Kind == WerkgeverApkAbItemKind.Check ? item.OptionA ?? item.Heading : item.Heading,
             item.Situation,
-            PupilMboHboScaleKind.Likert5,
+            PupilMboHboScaleLabels.ForBlock(item.Block),
             val,
             previousItemId,
             item.Kind,

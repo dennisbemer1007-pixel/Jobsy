@@ -566,7 +566,7 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
         string InvitedPlainCode,
         string DelenPlainCode);
 
-    private sealed class WerkgeverApkWebFactory : WebWebApplicationFactory
+    internal sealed class WerkgeverApkWebFactory : WebWebApplicationFactory
     {
         private readonly HttpMessageHandler _api;
         private IHost? _kestrel;

@@ -5,7 +5,8 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests.WerkgeverApk;
 
 [Collection("PlaywrightSmoke")]
-public sealed class WerkgeverApkPakkettenPlaywrightTests : IAsyncLifetime
+public sealed class WerkgeverApkPakkettenPlaywrightTests
+    : IClassFixture<RoleFunctionalWebAppFactory>, IAsyncLifetime
 {
     private const string EnvRun = "JOBSY_WERKGEVER_APK_SCREENSHOTS";
     private static bool ShouldRun =>
@@ -21,7 +22,7 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests : IAsyncLifetime
     ];
 
     private readonly RoleFunctionalWebAppFactory _api;
-    private WerkgeverApkWebFactory? _web;
+    private WerkgeverApkScreenshotPlaywrightTests.WerkgeverApkWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -43,7 +44,7 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests : IAsyncLifetime
             WerkgeverApkTemplateLocator.SetWebContentRoot(webRoot);
         }
 
-        _web = new WerkgeverApkWebFactory(_api.Server.CreateHandler());
+        _web = new WerkgeverApkScreenshotPlaywrightTests.WerkgeverApkWebFactory(_api.Server.CreateHandler());
         _ = _web.ServerAddress;
         Directory.CreateDirectory(OutDir);
         var dekking = Path.GetFullPath(Path.Combine(webRoot, "..", "docs", "werkgever-apk", "ab-dekking-CONCEPT.md"));
@@ -67,6 +68,7 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests : IAsyncLifetime
     [Fact(Timeout = 600_000)]
     public async Task Mockups_11_12_13_13b_layout_and_header_when_env_set()
     {
+        _ = TestContext.Current.CancellationToken;
         if (!ShouldRun || _browser is null || _web is null)
         {
             return;

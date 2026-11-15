@@ -86,7 +86,7 @@ public static class WerkgeverApkAbScoring
             {
                 var label = labels[letter];
                 var score = counts.Counts
-                    .Where(kv => kv.Key.TrimStart().StartsWith(letter, StringComparison.Ordinal))
+                    .Where(kv => kv.Key.TrimStart().StartsWith(letter.ToString(), StringComparison.Ordinal))
                     .Sum(kv => kv.Value);
                 var pct = counts.Counts.Values.DefaultIfEmpty(1).Max();
                 var percent = pct > 0 ? (int)Math.Round(100.0 * score / pct, MidpointRounding.AwayFromZero) : 0;

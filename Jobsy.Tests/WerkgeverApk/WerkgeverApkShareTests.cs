@@ -73,14 +73,13 @@ public sealed class WerkgeverApkShareTests
 
     private static string CompleteProgressJson()
     {
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        foreach (var item in catalog.Items)
         {
-            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
-            {
-                answers[q.Id] = 3;
-            }
+            answers[item.Id] = item.Kind == WerkgeverApkAbItemKind.Check
+                ? WerkgeverApkAnswerValidation.CheckJa
+                : WerkgeverApkAnswerValidation.AbChoiceA;
         }
 
         return System.Text.Json.JsonSerializer.Serialize(new { answers });
