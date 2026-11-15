@@ -778,6 +778,26 @@
   align-items: flex-start;
 }
 
+.mhbo-transition-hero__copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.mhbo-transition-hero__copy .mhbo-eyebrow {
+  margin: 0 0 2px;
+}
+
+.mhbo-transition-hero__copy h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  line-height: 1.2;
+  color: var(--mhbo-navy);
+}
+
+.mhbo-transition-hero__copy .mhbo-sub {
+  margin: 8px 0 0;
+}
+
 .mhbo-transition-check {
   flex-shrink: 0;
   width: 52px;
@@ -880,8 +900,10 @@
 
 .mhbo-transition-tile h3 {
   margin: 0 0 6px;
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.25;
   color: var(--mhbo-navy);
+  overflow-wrap: anywhere;
 }
 
 .mhbo-transition-tile p {
@@ -1129,7 +1151,8 @@
     align-items: start;
   }
 
-  .mhbo-layout--welcome {
+  .mhbo-layout--welcome,
+  .mhbo-layout--transition {
     grid-template-columns: 240px minmax(0, 1fr);
   }
 

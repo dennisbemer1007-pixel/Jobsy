@@ -135,7 +135,8 @@ public static class PupilLeerlingSsrFrame
 
     private static void RenderMboHboShell(StringBuilder sb, PupilLeerlingSsrDocumentOptions options, string lang)
     {
-        var classLabel = options.Pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+        var classLabel = options.MboClassLabel
+            ?? options.Pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
         var code = options.Pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
         var schoolLine = string.IsNullOrWhiteSpace(options.MboSchoolLabel)
             ? classLabel
@@ -289,4 +290,6 @@ public sealed class PupilLeerlingSsrDocumentOptions
     public Jobsy.Web.Localization.CultureState? Culture { get; init; }
 
     public string? MboSchoolLabel { get; init; }
+
+    public string? MboClassLabel { get; init; }
 }

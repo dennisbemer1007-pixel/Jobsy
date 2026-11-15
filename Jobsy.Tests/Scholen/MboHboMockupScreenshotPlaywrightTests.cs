@@ -37,6 +37,12 @@ public sealed class MboHboMockupScreenshotPlaywrightTests
             ("overgang", "/leerling/mbo-hbo/uitkomst/vakken"),
             ("paspoort", "/leerling/mbo-hbo/paspoort"),
         };
+        var onlySlug = Environment.GetEnvironmentVariable("JOBSY_MBO_SCREENSHOT_SLUG");
+        if (!string.IsNullOrWhiteSpace(onlySlug))
+        {
+            routes = routes.Where(r => string.Equals(r.Slug, onlySlug, StringComparison.OrdinalIgnoreCase)).ToArray();
+            Assert.NotEmpty(routes);
+        }
 
         foreach (var (w, h, tag) in new[] { (390, 844, "390"), (1440, 900, "1440") })
         {

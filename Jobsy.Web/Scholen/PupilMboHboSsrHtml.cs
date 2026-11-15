@@ -192,6 +192,10 @@ public static class PupilMboHboSsrHtml
     {
         var next = NextBlock(model.Block);
         var completedCount = blocks.Count(BlockDisplayComplete);
+        var finishedRow = blocks.FirstOrDefault(b => b.Block == model.Block);
+        var answeredDisplay = finishedRow is not null
+            ? DisplayAnsweredCount(finishedRow)
+            : Math.Max(model.AnsweredCount, model.QuestionCount);
         var partIndex = BlockOrder.ToList().FindIndex(b => b == model.Block) + 1;
         var sb = new StringBuilder();
         sb.Append("""<div class="mhbo-layout mhbo-layout--transition" data-testid="mhbo-uitkomst">""");
@@ -199,10 +203,10 @@ public static class PupilMboHboSsrHtml
         sb.Append("<div class=\"mhbo-main\">");
         sb.Append(RenderTransitionMobileProgress(blocks, completedCount));
         sb.Append("<div class=\"mhbo-transition-hero\">");
-        sb.Append("""<span class="mhbo-transition-check" aria-hidden="true">✓</span><div>""");
+        sb.Append("""<span class="mhbo-transition-check" aria-hidden="true">✓</span><div class="mhbo-transition-hero__copy">""");
         sb.Append("<p class=\"mhbo-eyebrow\">Onderdeel ").Append(partIndex.ToString(CultureInfo.InvariantCulture)).Append(" van 5</p>");
         sb.Append("<h1>").Append(PupilLeerlingSsrParts.E(PupilMboHboMockupCopy.ShortBlockTitle(model.Block))).Append(" is af</h1>");
-        sb.Append("<p class=\"mhbo-sub\">Je hebt ").Append(model.AnsweredCount.ToString(CultureInfo.InvariantCulture));
+        sb.Append("<p class=\"mhbo-sub\">Je hebt ").Append(answeredDisplay.ToString(CultureInfo.InvariantCulture));
         sb.Append(" vragen over ").Append(PupilLeerlingSsrParts.E(TransitionTopicSlug(model.Block)));
         sb.Append(" ingevuld. Je antwoorden zijn bewaard. Je kunt later nog iets aanpassen.</p></div></div>");
 
@@ -226,7 +230,7 @@ public static class PupilMboHboSsrHtml
         sb.Append("""<div class="mhbo-transition-tiles" aria-label="Status per onderdeel">""");
         foreach (var block in blocks)
         {
-            var tile = TransitionTileState(block, model.Block, next);
+            var tile = TransitionTileState(block, next);
             var shortTitle = PupilMboHboMockupCopy.ShortBlockTitle(block.Block);
             sb.Append("<div class=\"mhbo-transition-tile ").Append(tile.Css).Append("\"><span class=\"mhbo-transition-tile__tag\">");
             sb.Append(PupilLeerlingSsrParts.E(tile.Tag)).Append("</span><h3>").Append(PupilLeerlingSsrParts.E(shortTitle)).Append("</h3><p>");
@@ -497,9 +501,17 @@ public static class PupilMboHboSsrHtml
     }
 
     private static bool BlockDisplayComplete(PupilMboHboBlockStatusDto block)
-        => block.Status == PupilMboHboTileStatus.Completed
-           && block.AnsweredCount >= block.QuestionCount
-           && block.QuestionCount > 0;
+        => block.Status == PupilMboHboTileStatus.Completed;
+
+    private static int DisplayAnsweredCount(PupilMboHboBlockStatusDto block)
+    {
+        if (block.Status == PupilMboHboTileStatus.Completed && block.QuestionCount > 0)
+        {
+            return Math.Max(block.AnsweredCount, block.QuestionCount);
+        }
+
+        return block.AnsweredCount;
+    }
 
     private static string SpeakRow(string text, string speechKey, CultureState culture)
         => $"""
@@ -610,13 +622,13 @@ public static class PupilMboHboSsrHtml
 
     private static TransitionTile TransitionTileState(
         PupilMboHboBlockStatusDto block,
-        PupilMboHboBlock completed,
         PupilMboHboBlock? next)
     {
         var blurb = PupilMboHboMockupCopy.TransitionStatusBlurb(block.Block);
-        if (block.Block == completed)
+        if (BlockDisplayComplete(block))
         {
-            var saved = $"{block.QuestionCount} van {block.QuestionCount} vragen zijn bewaard. Je kunt later nog iets aanpassen.";
+            var answered = DisplayAnsweredCount(block);
+            var saved = $"{answered} van {block.QuestionCount} vragen zijn bewaard. Je kunt later nog iets aanpassen.";
             return new TransitionTile("Af", "is-af", saved);
         }
 
@@ -652,7 +664,8 @@ public static class PupilMboHboSsrHtml
             sb.Append("<span class=\"mhbo-part__st\">");
             if (done)
             {
-                sb.Append("Af · ").Append(block.QuestionCount.ToString(CultureInfo.InvariantCulture)).Append(" van ").Append(block.QuestionCount.ToString(CultureInfo.InvariantCulture));
+                var answered = DisplayAnsweredCount(block);
+                sb.Append("Af · ").Append(answered.ToString(CultureInfo.InvariantCulture)).Append(" van ").Append(block.QuestionCount.ToString(CultureInfo.InvariantCulture));
             }
             else if (isNext)
             {
