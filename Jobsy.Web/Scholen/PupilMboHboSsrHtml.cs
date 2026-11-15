@@ -4,6 +4,7 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Web.Localization;
+using Jobsy.Web.Media;
 
 namespace Jobsy.Web.Scholen;
 
@@ -119,7 +120,7 @@ public static class PupilMboHboSsrHtml
         var blockMeta = PupilMboHboCopy.BlockMeta(q.Block);
         var pct = q.Total > 0 ? Math.Clamp(q.Index * 100 / q.Total, 0, 100) : 0;
         var sb = new StringBuilder();
-        sb.Append("""<div class="mhbo-layout" data-testid="mhbo-test-question">""");
+        sb.Append("""<div class="mhbo-layout mhbo-layout--question" data-testid="mhbo-test-question">""");
         sb.Append(RenderMobileProgress(blockMeta.Title, q.Index, q.Total, blocks));
         sb.Append(RenderLeftAside(blocks, q.Block, welcomeMode: false, questionIndex: q.Index, questionTotal: q.Total));
         sb.Append("<div class=\"mhbo-main\"><div class=\"mhbo-banner\" role=\"note\"><span class=\"mhbo-banner__icon\" aria-hidden=\"true\">i</span><p>");
@@ -176,10 +177,11 @@ public static class PupilMboHboSsrHtml
         sb.Append(PrevControl(blockKey, q, culture));
         sb.Append("""<a class="mhbo-btn mhbo-btn--ghost mhbo-btn--pause" href="/leerling/mbo-hbo/overzicht" data-testid="mhbo-pause">Pauzeren en naar overzicht</a>""");
         sb.Append("<button type=\"submit\" class=\"mhbo-btn mhbo-btn--next\" data-testid=\"mhbo-next\" disabled>")
-            .Append(nextLabel).Append("</button></footer>");
+            .Append(nextLabel).Append("</button>");
+        sb.Append(MobileFootCoachChip()).Append("</footer>");
         sb.Append("</form></article></div>");
         sb.Append("<aside class=\"mhbo-aside mhbo-aside--right\" aria-label=\"Uitleg en voortgang\">");
-        sb.Append(ScaleLegendCard(q.Scale));
+        sb.Append(ScaleLegendCard(q.Scale, q.CurrentLeuk, q.CurrentGoed));
         sb.Append(ProgressAsideCard(blocks));
         sb.Append("</aside></div>");
 
@@ -365,25 +367,37 @@ public static class PupilMboHboSsrHtml
         return sb.ToString();
     }
 
-    private static string ScaleLegendCard(PupilMboHboScaleKind kind)
+    private static string ScaleLegendCard(PupilMboHboScaleKind kind, int? currentLeuk, int? currentGoed)
     {
         var labels = kind switch
         {
             PupilMboHboScaleKind.Appeal => PupilMboHboScaleLabels.Appeal,
-            PupilMboHboScaleKind.SubjectLeukGoed => PupilMboHboScaleLabels.Agreement,
+            PupilMboHboScaleKind.SubjectLeukGoed => PupilMboHboScaleLabels.SubjectVakFit,
             _ => PupilMboHboScaleLabels.Agreement,
         };
+
+        var highlight = kind == PupilMboHboScaleKind.SubjectLeukGoed
+            ? currentGoed ?? currentLeuk
+            : null;
 
         var sb = new StringBuilder("""<div class="mhbo-card mhbo-legend"><h2>Wat betekenen de cijfers?</h2><ol class="mhbo-legend-boxes">""");
         for (var i = 0; i < labels.Length; i++)
         {
-            sb.Append("<li><span class=\"mhbo-legend-box\">").Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append("</span> ");
+            var n = i + 1;
+            sb.Append("<li");
+            if (highlight == n) sb.Append(" class=\"is-active\"");
+            sb.Append("><span class=\"mhbo-legend-box");
+            if (highlight == n) sb.Append(" is-on");
+            sb.Append("\">").Append(n.ToString(CultureInfo.InvariantCulture)).Append("</span> ");
             sb.Append(PupilLeerlingSsrParts.E(labels[i])).Append("</li>");
         }
 
         sb.Append("</ol></div>");
         return sb.ToString();
     }
+
+    private static string MobileFootCoachChip()
+        => $"""<span class="mhbo-foot-coach" aria-hidden="true"><img src="{BrandImages.AbsoluteCoachB}" alt="" width="48" height="72" decoding="async" /></span>""";
 
     private static string ProgressAsideCard(IReadOnlyList<PupilMboHboBlockStatusDto> blocks)
     {

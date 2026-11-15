@@ -35,6 +35,16 @@ public static class PupilMboHboScaleLabels
     public static readonly string[] SubjectLeuk = ["1", "2", "3", "4", "5"];
     public static readonly string[] SubjectGoed = ["1", "2", "3", "4", "5"];
 
+    /// <summary>Legenda bij vakkenpakket (1–5).</summary>
+    public static readonly string[] SubjectVakFit =
+    [
+        "Past bijna niet bij mij",
+        "Past een beetje niet",
+        "Neutraal",
+        "Past redelijk",
+        "Past heel goed",
+    ];
+
     public static string Label(PupilMboHboScaleKind kind, int value)
     {
         if (value is < 1 or > 5)

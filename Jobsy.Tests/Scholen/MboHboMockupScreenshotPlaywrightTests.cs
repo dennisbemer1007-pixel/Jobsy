@@ -73,6 +73,26 @@ public sealed class MboHboMockupScreenshotPlaywrightTests
                     Path = Path.Combine(outDir, $"{slug}-{tag}.png"),
                     FullPage = false,
                 });
+
+                if (tag == "390")
+                {
+                    await page.EvaluateAsync(
+                        """
+                        () => {
+                          const h = Math.max(
+                            document.documentElement.scrollHeight,
+                            document.body.scrollHeight);
+                          window.scrollTo(0, Math.max(0, h - window.innerHeight));
+                        }
+                        """);
+                    await page.WaitForTimeoutAsync(250);
+                    await page.ScreenshotAsync(new()
+                    {
+                        Path = Path.Combine(outDir, $"{slug}-{tag}-foot.png"),
+                        FullPage = false,
+                    });
+                    await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+                }
             }
         }
 

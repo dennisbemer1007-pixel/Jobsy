@@ -14,6 +14,7 @@ public sealed class MboHboCoachOverlapPlaywrightTests
     [
         new("mbo-uitleg", "/leerling/mbo-hbo/uitleg", null),
         new("mbo-overzicht", "/leerling/mbo-hbo/overzicht", null),
+        new("mbo-test-vakken", "/leerling/mbo-hbo/test/vakken", null),
         new("mbo-test-interesse", "/leerling/mbo-hbo/test/interesse", null),
         new("mbo-test-werkwaarden", "/leerling/mbo-hbo/test/werkwaarden", null),
         new("mbo-uitkomst-vakken", "/leerling/mbo-hbo/uitkomst/vakken", null),
@@ -24,7 +25,7 @@ public sealed class MboHboCoachOverlapPlaywrightTests
     [InlineData(390, 844)]
     [InlineData(768, 1024)]
     [InlineData(1440, 900)]
-    public async Task Mbo_coach_bbox_does_not_overlap_clickables(int width, int height)
+    public async Task Mbo_coach_bbox_does_not_overlap_content(int width, int height)
     {
         _ = TestContext.Current.CancellationToken;
         var baseUrl = KbE2e.TryBaseUrl();
@@ -59,16 +60,36 @@ public sealed class MboHboCoachOverlapPlaywrightTests
             await page.WaitForTimeoutAsync(350);
 
             var audit = await CoachVariantBOverlapAuditSupport.EvaluateOverlapAsync(page);
-            if (audit.Skip)
+            if (audit.Skip && MboCoachRequired(entry.Name, width))
             {
                 failures.Add($"{entry.Name}@{width}: skip={audit.Reason}");
             }
-            else if (!audit.Ok)
+            else if (!audit.Skip && !audit.Ok)
             {
                 failures.Add($"{entry.Name}@{width}: {audit.Reason}; hits={string.Join(", ", audit.Hits)}");
+            }
+
+            if (width == 1440 && entry.Name == "mbo-test-vakken")
+            {
+                var fits = await CoachVariantBOverlapAuditSupport.EvaluateVakkenViewportFitAsync(page);
+                if (!fits.Ok)
+                {
+                    failures.Add($"mbo-test-vakken@1440: viewport={fits.Reason}");
+                }
             }
         }
 
         Assert.Empty(failures);
+    }
+
+    /// <summary>Op mobiel staat de kreeft alleen in de vraag-footer; overige pagina's hebben geen dock.</summary>
+    private static bool MboCoachRequired(string pageName, int width)
+    {
+        if (width < 960)
+        {
+            return pageName.StartsWith("mbo-test-", StringComparison.Ordinal);
+        }
+
+        return pageName.StartsWith("mbo-", StringComparison.Ordinal);
     }
 }
