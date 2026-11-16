@@ -486,7 +486,11 @@
         "pointerdown",
         function (ev) {
           if (ev.button !== 0) return;
-          if (ev.target.closest(".ob-v3-dfoot [data-testid=onboarding-back], .ob-v3-dfoot [data-testid=onboarding-next], .ob-wizard__consent")) {
+          if (
+            ev.target.closest(
+              ".ob-wizard--v3, .ob-v3-layout, .ob-v3-welcome, .ob-v3-dfoot [data-testid=onboarding-back], .ob-v3-dfoot [data-testid=onboarding-next], .ob-wizard__consent"
+            )
+          ) {
             dismiss();
             var shell = document.getElementById("lobsy-assistant-ssr-shell");
             if (shell) shell.hidden = true;

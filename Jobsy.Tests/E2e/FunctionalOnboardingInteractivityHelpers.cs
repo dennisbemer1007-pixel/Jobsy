@@ -203,8 +203,21 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 60_000 });
     }
 
+    internal static async Task DismissOnboardingCoachBubbleAsync(IPage page)
+    {
+        await page.EvaluateAsync(
+            """
+            () => {
+              const dock = document.querySelector('.lobsy-coach-dock--onboarding-b');
+              if (dock) dock.classList.add('lobsy-coach-dock--bubble-dismissed');
+            }
+            """);
+        await page.WaitForTimeoutAsync(150);
+    }
+
     internal static async Task TypeBirthDateSlowlyAsync(IPage page, string digits = "15062000")
     {
+        await DismissOnboardingCoachBubbleAsync(page);
         var field = page.Locator("[data-testid=onboarding-birth-date]").First;
         await field.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var text = field.Locator(".jobsy-date-field__text").First;
@@ -649,23 +662,32 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         var email = $"{emailPrefix}.{Guid.NewGuid():N}@jobsy.local";
         await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
-        await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.Locator("input[type=email]").FillAsync(email);
-        await page.Locator("input[name=firstName]").FillAsync("Func");
-        for (var regTry = 0; regTry < 2; regTry++)
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+        for (var attempt = 0; attempt < 3; attempt++)
         {
             try
             {
-                await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
-                await page.WaitForURLAsync("**/code**", new() { Timeout = 120_000 });
+                await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                await page.Locator("input[type=email]").FillAsync(email);
+                await page.Locator("input[name=firstName]").FillAsync("Func");
+                var submit = page.Locator("button.login-submit, button.au-submit[type=submit]").First;
+                await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                await page.WaitForFunctionAsync(
+                    "() => { const b = document.querySelector('button.login-submit, button.au-submit[type=submit]'); return b && !b.disabled; }",
+                    null,
+                    new() { Timeout = 30_000 });
+                await submit.ClickAsync(new() { Timeout = 30_000 });
+                await page.WaitForURLAsync("**/code**", new() { Timeout = 90_000 });
                 break;
             }
-            catch (TimeoutException) when (regTry == 0)
+            catch (TimeoutException) when (attempt < 2)
             {
-                await page.WaitForTimeoutAsync(800);
+                await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+                await page.WaitForTimeoutAsync(1200);
             }
         }
+
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
         Assert.False(string.IsNullOrWhiteSpace(code), "Expected OTP from E2E mail capture.");
         await page.Locator("input[name=code]").FillAsync(code!);
@@ -981,6 +1003,8 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         await page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await DismissOnboardingCoachBubbleAsync(page);
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
     }
 
     internal static async Task FillKennismakenRequiredFieldsAsync(IPage page)

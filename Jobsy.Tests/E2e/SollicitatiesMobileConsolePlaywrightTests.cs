@@ -59,7 +59,11 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         }
         else if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
         {
-            throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+            {
+                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            }
         }
 
         if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
