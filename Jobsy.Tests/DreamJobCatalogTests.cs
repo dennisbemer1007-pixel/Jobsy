@@ -35,6 +35,20 @@ public class DreamJobCatalogTests
             UiStrings.Get("DreamJob.verkoper", "en"));
     }
 
+    [Theory]
+    [InlineData("Monteur", "automonteur")]
+    [InlineData("Magazijnmedewerker", "logistiek-medewerker")]
+    [InlineData("Administratief medewerker", "accountant")]
+    [InlineData("Leerkracht basisonderwijs", "leraar")]
+    [InlineData("Verpleegkundige", "verpleegkundige")]
+    public void ResolveForDisplayTitle_maps_onboarding_sector_suggestions(string title, string expectedKey)
+    {
+        var job = DreamJobCatalog.ResolveForDisplayTitle(title);
+        Assert.NotNull(job);
+        Assert.Equal(expectedKey, job!.Key, StringComparer.OrdinalIgnoreCase);
+        Assert.False(string.IsNullOrWhiteSpace(DreamJobIcons.TryGet(job.IconKey)));
+    }
+
     [Fact]
     public void Search_prioritizes_prefix_and_ignores_case_and_diacritics()
     {

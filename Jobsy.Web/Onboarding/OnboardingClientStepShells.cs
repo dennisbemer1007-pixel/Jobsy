@@ -330,11 +330,7 @@ internal static class OnboardingClientStepShells
             sb.Append("\" data-testid=\"onboarding-dream-tile\" aria-pressed=\"");
             sb.Append(on ? "true" : "false");
             sb.Append("\"><span aria-hidden=\"true\">");
-            if (!string.IsNullOrEmpty(iconSvg))
-            {
-                sb.Append(iconSvg);
-            }
-
+            sb.Append(string.IsNullOrEmpty(iconSvg) ? ResolveDreamIconSvg(null) : iconSvg);
             sb.Append("</span><small>");
             sb.Append(WebUtility.HtmlEncode(title));
             sb.Append("</small></button>");
@@ -363,9 +359,8 @@ internal static class OnboardingClientStepShells
                 continue;
             }
 
-            var job = DreamJobCatalog.All.FirstOrDefault(j =>
-                string.Equals(j.TitleNl, trimmed, StringComparison.OrdinalIgnoreCase));
-            list.Add((trimmed, job is null ? null : Jobsy.Web.Navigation.DreamJobIcons.TryGet(job.IconKey)));
+            var job = DreamJobCatalog.ResolveForDisplayTitle(trimmed);
+            list.Add((trimmed, ResolveDreamIconSvg(job)));
             if (list.Count >= 9)
             {
                 break;
@@ -386,11 +381,19 @@ internal static class OnboardingClientStepShells
                     continue;
                 }
 
-                list.Add((job.TitleNl, Jobsy.Web.Navigation.DreamJobIcons.TryGet(job.IconKey)));
+                list.Add((job.TitleNl, ResolveDreamIconSvg(job)));
             }
         }
 
         return list;
+    }
+
+    private static string ResolveDreamIconSvg(DreamJob? job)
+    {
+        var fromJob = job is null ? null : Jobsy.Web.Navigation.DreamJobIcons.TryGet(job.IconKey);
+        return string.IsNullOrWhiteSpace(fromJob)
+            ? Jobsy.Web.Navigation.DreamJobIcons.TryGet("briefcase") ?? ""
+            : fromJob;
     }
 
     private static string BuildStep7Ssr(CultureState culture, OnboardingProfileDraft? draft, OnboardingClientStepSeed? seed)

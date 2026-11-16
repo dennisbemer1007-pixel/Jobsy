@@ -51,6 +51,13 @@ public sealed class OnboardingV3LayoutPlaywrightTests
                     $"Step {step} @ {width}px: expected onboarding coach dock.");
                 Assert.True(overlap.Ok || overlap.Skip,
                     $"Step {step} @ {width}px: coach overlaps content: {overlap.Reason}");
+                var bubble = page.Locator("[data-ob-coach-bubble]");
+                if (await bubble.CountAsync() > 0)
+                {
+                    var text = (await bubble.InnerTextAsync()).Trim();
+                    Assert.False(string.IsNullOrWhiteSpace(text),
+                        $"Step {step} @ {width}px: coach bubble must not be empty.");
+                }
             }
         }
     }
@@ -78,12 +85,28 @@ public sealed class OnboardingV3LayoutPlaywrightTests
         var tiles = page.GetByTestId("onboarding-dream-tile");
         var count = await tiles.CountAsync();
         Assert.True(count >= 2, "Expected dream job tiles on step 6.");
-        for (var i = 0; i < Math.Min(count, 4); i++)
+        for (var i = 0; i < count; i++)
         {
             var box = await tiles.Nth(i).BoundingBoxAsync();
             Assert.NotNull(box);
             Assert.True(box!.Width >= 140, $"Dream tile {i} width {box.Width:F0}px < 140px.");
         }
+
+        var missingGlyphs = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const tiles = [...document.querySelectorAll('[data-testid=onboarding-dream-tile]')];
+              for (const tile of tiles) {
+                const svg = tile.querySelector('span svg');
+                if (!svg) return tile.querySelector('small')?.textContent?.trim() || 'tile';
+                const marks = svg.querySelectorAll('path,circle,rect,line,polyline');
+                if (marks.length === 0) return tile.querySelector('small')?.textContent?.trim() || 'tile';
+              }
+              return '';
+            }
+            """);
+        Assert.True(string.IsNullOrEmpty(missingGlyphs),
+            $"Dream tile(s) missing icon glyph: {missingGlyphs}");
     }
 
     [Fact]

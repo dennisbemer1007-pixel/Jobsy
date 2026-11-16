@@ -13,7 +13,7 @@ public static class DreamJobCatalog
         new("dierenarts", "Dierenarts", "paw-print", ["dierenartsassistent", "vet"]),
         new("piloot", "Piloot", "plane", ["vliegenier", "cockpit"]),
         new("advocaat", "Advocaat", "scale", ["jurist", "recht"]),
-        new("leraar", "Leraar", "presentation", ["docent", "onderwijzer"]),
+        new("leraar", "Leraar", "presentation", ["docent", "onderwijzer", "leerkracht", "leerkracht basisonderwijs", "basisonderwijs"]),
         new("arts", "Arts", "stethoscope", ["dokter", "huisarts", "chirurg"]),
         new("architect", "Architect", "drafting-compass", ["bouwkunst"]),
         new("kok", "Kok", "chef-hat", ["chef", "keuken"]),
@@ -37,7 +37,7 @@ public static class DreamJobCatalog
         new("notaris", "Notaris", "stamp", []),
         new("ingenieur", "Ingenieur", "cog", ["engineer", "techniek"]),
         new("elektricien", "Elektricien", "plug-zap", ["elektromonteur"]),
-        new("automonteur", "Automonteur", "wrench", ["monteur auto", "APK"]),
+        new("automonteur", "Automonteur", "wrench", ["monteur", "monteur auto", "APK"]),
         new("timmerman", "Timmerman", "hammer", ["timmervrouw", "hout"]),
         new("hovenier", "Hovenier", "trees", ["tuinman", "groenvoorziening"]),
         new("bioloog", "Bioloog", "leaf", ["biologie"]),
@@ -49,7 +49,7 @@ public static class DreamJobCatalog
         new("personal-trainer", "Personal trainer", "dumbbell", ["fitnesscoach", "PT"]),
         new("contentmaker", "Contentmaker", "video", ["influencer", "creator"]),
         new("marketeer", "Marketeer", "megaphone", ["marketing"]),
-        new("accountant", "Accountant", "calculator", ["boekhouder"]),
+        new("accountant", "Accountant", "calculator", ["boekhouder", "administratief medewerker", "administratie"]),
         new("makelaar", "Makelaar", "house", ["vastgoed"]),
         new("cabinepersoneel", "Cabinepersoneel", "luggage", ["stewardess", "purser"]),
         new("militair", "Militair", "medal", ["defensie", "soldaat"]),
@@ -58,7 +58,7 @@ public static class DreamJobCatalog
         new("evenementenorganisator", "Evenementenorganisator", "party-popper", ["event", "organisatie"]),
         new("data-scientist", "Data scientist", "chart-line", ["data", "analist"]),
         new("bakker", "Bakker", "croissant", ["banketbakker"]),
-        new("logistiek-medewerker", "Logistiek medewerker", "truck", ["magazijn", "logistiek", "heftruck"]),
+        new("logistiek-medewerker", "Logistiek medewerker", "truck", ["magazijn", "magazijnmedewerker", "logistiek", "heftruck"]),
         new("verkoper", "Verkoper", "shopping-bag", ["winkelmedewerker", "verkoop", "winkel"]),
         new("beveiliger", "Beveiliger", "shield-check", ["beveiliging", "security"]),
         new("installateur", "Installateur", "cable", ["installatietechniek", "zonnepanelen", "monteur"]),
@@ -105,6 +105,77 @@ public static class DreamJobCatalog
         }
 
         return prefix.Concat(contains).Take(Math.Clamp(take, 1, 24)).ToList();
+    }
+
+    /// <summary>Match onboarding dream tile label (suggestions, sector fallback) to a catalog job.</summary>
+    public static DreamJob? ResolveForDisplayTitle(string? displayTitle)
+    {
+        if (string.IsNullOrWhiteSpace(displayTitle))
+        {
+            return null;
+        }
+
+        if (TryResolveKey(displayTitle, out var exactKey))
+        {
+            return All.First(j => string.Equals(j.Key, exactKey, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var norm = Normalize(displayTitle);
+        if (norm.Length == 0)
+        {
+            return null;
+        }
+
+        DreamJob? containsBest = null;
+        var containsBestLen = 0;
+        foreach (var job in All)
+        {
+            var titleNorm = Normalize(job.TitleNl);
+            if (norm.Contains(titleNorm, StringComparison.Ordinal) || titleNorm.Contains(norm, StringComparison.Ordinal))
+            {
+                var score = Math.Max(titleNorm.Length, norm.Length);
+                if (score > containsBestLen)
+                {
+                    containsBest = job;
+                    containsBestLen = score;
+                }
+            }
+
+            foreach (var synonym in job.Synonyms)
+            {
+                if (string.IsNullOrWhiteSpace(synonym))
+                {
+                    continue;
+                }
+
+                var synNorm = Normalize(synonym);
+                if (synNorm.Length == 0)
+                {
+                    continue;
+                }
+
+                if (norm.Contains(synNorm, StringComparison.Ordinal)
+                    || synNorm.Contains(norm, StringComparison.Ordinal)
+                    || norm.StartsWith(synNorm, StringComparison.Ordinal)
+                    || synNorm.StartsWith(norm, StringComparison.Ordinal))
+                {
+                    var score = synNorm.Length;
+                    if (score > containsBestLen)
+                    {
+                        containsBest = job;
+                        containsBestLen = score;
+                    }
+                }
+            }
+        }
+
+        if (containsBest is not null)
+        {
+            return containsBest;
+        }
+
+        var searchHits = Search(displayTitle, take: 1);
+        return searchHits.Count > 0 ? searchHits[0] : null;
     }
 
     /// <summary>Resolve typed job title to catalog key (exact title or synonym match).</summary>
