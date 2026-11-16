@@ -1103,27 +1103,20 @@
   }
 
   .sollicitaties-segment {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.25rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 0.125rem;
     width: 100%;
-    max-width: 100%;
-    padding: 0.35rem;
-    padding-inline: 0.5rem;
+    padding: 0.25rem;
     border-radius: 18px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-padding-inline: 0.5rem;
-    box-sizing: border-box;
   }
 
   .sollicitaties-segment__tab {
     min-block-size: 44px;
-    flex: 0 0 auto;
-    padding: 0.5rem 0.85rem;
-    font-size: 0.78rem;
+    padding: 0.5625rem 0.125rem;
+    font-size: 0.8rem;
     text-align: center;
-    max-width: 100%;
   }
 
   .sollicitaties-init-banner--inline {

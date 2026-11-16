@@ -362,4 +362,4 @@
         flex-basis: 96px;
         inline-size: 96px;
         block-size: 96px;
-    }}
+    }}/* UAT 16-11 item 12: segment tabs scroll on mobile (avoid clipping) */@media (max-width:900px){.sollicitaties-page-wrap .sollicitaties-segment{display:flex;flex-wrap:nowrap;gap:.25rem;width:100%;max-width:100%;padding:.35rem;padding-inline:.5rem;border-radius:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-padding-inline:.5rem;box-sizing:border-box}.sollicitaties-page-wrap .sollicitaties-segment__tab{min-block-size:44px;flex:0 0 auto;padding:.5rem .85rem;font-size:.78rem;text-align:center;max-width:100%}}
