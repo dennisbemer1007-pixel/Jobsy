@@ -10,6 +10,7 @@ on:
       # Cloud-agent pushes do not always emit pull_request synchronize.
       - cursor/replace-old-lobster-logo-e-bb18
       - cursor/compact-headers-preview-voornaam-4b3d
+      - cursor/onboarding-wizard-v3-admin-header-fe7e
 
 concurrency:
   group: e2e-functional-${{ github.workflow }}-${{ github.ref }}
