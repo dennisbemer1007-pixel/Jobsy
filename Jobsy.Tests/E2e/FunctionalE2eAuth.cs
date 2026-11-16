@@ -95,10 +95,18 @@ public static class FunctionalE2eAuth
 
             await page.GotoAsync(baseUrl.TrimEnd('/') + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             await KbE2e.WaitForStyledAppAsync(page);
-            if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
+            if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase)
+                || !page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException($"Functional E2E: session not established for {email}.");
+                throw new InvalidOperationException($"Functional E2E: session not established for {email} (url={page.Url}).");
             }
+
+            await page.WaitForSelectorAsync(
+                ".jobsy-discovery",
+                new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+            await page.WaitForSelectorAsync(
+                "[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]",
+                new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
             await ctx.StorageStateAsync(new() { Path = path });
             _storageStatePath = path;
             _storageBaseUrl = baseUrl;

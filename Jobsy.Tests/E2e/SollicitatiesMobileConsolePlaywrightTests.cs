@@ -39,89 +39,95 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         }
 
         var errors = new List<string>();
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
-        var page = await context.NewPageAsync();
-        page.SetDefaultTimeout(120_000);
 
-        page.Console += (_, msg) =>
-        {
-            if (msg.Type is "error" && !IsIgnoredConsole(msg.Text))
-            {
-                errors.Add(msg.Text);
-            }
-        };
-        page.PageError += (_, err) => errors.Add(err);
-
+        IBrowserContext context;
         if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
         {
-            await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
+            context = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
         }
-        else if (KbE2e.SupportsTestSignIn(baseUrl))
+        else if (FunctionalE2eGate.IsRequired || KbE2e.SupportsTestSignIn(baseUrl))
         {
-            if (!await FunctionalE2eAuth.EnsureGateCandidatePageLoginAsync(page, baseUrl))
+            context = await FunctionalE2eAuth.NewCandidateContextAsync(browser, baseUrl, KbE2e.ContextFor(390, 844));
+        }
+        else
+        {
+            context = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
+        }
+
+        await using (context)
+        {
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+
+            page.Console += (_, msg) =>
             {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+                if (msg.Type is "error" && !IsIgnoredConsole(msg.Text))
+                {
+                    errors.Add(msg.Text);
+                }
+            };
+            page.PageError += (_, err) => errors.Add(err);
+
+            if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+            {
+                await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
+            }
+            else if (!FunctionalE2eGate.IsRequired && !KbE2e.SupportsTestSignIn(baseUrl))
+            {
+                if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+                {
+                    throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+                }
+
+                if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+                {
+                    await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+                }
             }
 
             await page.GotoAsync(
                 baseUrl + "/candidate/applications",
                 new() { WaitUntil = WaitUntilState.NetworkIdle });
-        }
-        else if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-        {
-            await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-        }
 
-        if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-        {
-            await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-        }
-
-        await page.GotoAsync(
-            baseUrl + "/candidate/applications",
-            new() { WaitUntil = WaitUntilState.NetworkIdle });
-
-        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
-        await page.WaitForTimeoutAsync(1500);
-
-        var berichtenTab = page.Locator(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");
-        if (await berichtenTab.CountAsync() > 0)
-        {
-            await berichtenTab.ClickAsync();
+            await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
             await page.WaitForTimeoutAsync(1500);
 
-            var thread = page.Locator(".sollic-berichten-ti--mob.sollic-berichten-ti__select").First;
-            if (await thread.CountAsync() > 0)
+            var berichtenTab = page.Locator(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");
+            if (await berichtenTab.CountAsync() > 0)
             {
-                await thread.ClickAsync();
-                await page.WaitForTimeoutAsync(1000);
-                var back = page.Locator("[data-sollic-berichten-back]").First;
-                if (await back.CountAsync() > 0)
+                await berichtenTab.ClickAsync();
+                await page.WaitForTimeoutAsync(1500);
+
+                var thread = page.Locator(".sollic-berichten-ti--mob.sollic-berichten-ti__select").First;
+                if (await thread.CountAsync() > 0)
                 {
-                    await back.ClickAsync();
-                    await page.WaitForTimeoutAsync(500);
+                    await thread.ClickAsync();
+                    await page.WaitForTimeoutAsync(1000);
+                    var back = page.Locator("[data-sollic-berichten-back]").First;
+                    if (await back.CountAsync() > 0)
+                    {
+                        await back.ClickAsync();
+                        await page.WaitForTimeoutAsync(500);
+                    }
                 }
             }
-        }
 
-        var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
-        if (await card.CountAsync() > 0)
-        {
-            await card.ClickAsync();
-            await page.WaitForTimeoutAsync(1000);
-        }
+            var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
+            if (await card.CountAsync() > 0)
+            {
+                await card.ClickAsync();
+                await page.WaitForTimeoutAsync(1000);
+            }
 
-        foreach (var e in errors)
-        {
-            output.WriteLine("console.error: " + e);
-        }
+            foreach (var e in errors)
+            {
+                output.WriteLine("console.error: " + e);
+            }
 
-        Assert.Empty(errors);
+            Assert.Empty(errors);
+        }
     }
 
     private static bool IsIgnoredConsole(string text)

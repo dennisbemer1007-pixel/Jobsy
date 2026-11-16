@@ -5,7 +5,7 @@
 
 <div class="@CssClass"
      data-lobsy-coach
-     data-ssr-coach="business">
+     data-ssr-coach="@SsrCoachKind">
     @if (ShowTeaser && !string.IsNullOrWhiteSpace(TeaserTextResolved))
     {
         <p class="lobsy-coach-dock__teaser"
@@ -32,6 +32,8 @@
 
 @code {
     [Parameter] public string ButtonId { get; set; } = "lobsy-coach-btn";
+
+    [Parameter] public string SsrCoachKind { get; set; } = "business";
 
     [Parameter] public string ModeClass { get; set; } = "lobsy-coach-dock--variant-b";
 

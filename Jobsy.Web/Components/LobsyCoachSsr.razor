@@ -5,7 +5,6 @@
 
 <div id="lobsy-assistant-ssr-config" hidden
      data-chat-url="/api/assistant-client/chat"
-     data-business="1"
      data-coach-avatar-url="@BrandImages.AbsoluteCoachBAvatar"
      data-coach-figure-url="@BrandImages.AbsoluteCoachB"
      data-title="@Culture["Assistant.BotName"]"
@@ -20,10 +19,12 @@
      data-disclaimer="@Culture["Assistant.Disclaimer"]"
      data-read-aloud-aria="@Culture["ReadAloud.PlayAria"]"
      data-read-aloud-play="@Culture["ReadAloud.Play"]"
-     data-bubble-text="@Culture["Coach.OnboardingBubble"]"
      data-lang="@Culture.Language"></div>
 
-<LobsyCoachVariantBDock HasBottomNav="HasBottomNav" />
+<LobsyCoachVariantBDock HasBottomNav="HasBottomNav"
+                      ShowTeaser="false"
+                      OpenLabel="@AskLabel"
+                      SsrCoachKind="true" />
 
 @code {
     [Parameter] public bool HasBottomNav { get; set; }

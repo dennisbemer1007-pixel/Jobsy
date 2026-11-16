@@ -470,7 +470,7 @@
   }
 
   function bindOnboardingBubble() {
-    var dock = document.querySelector(".lobsy-coach-dock--onboarding-b, .lobsy-coach-dock--variant-b");
+    var dock = document.querySelector(".lobsy-coach-dock--onboarding-b");
     if (!dock || dock.dataset.obBubbleBound === "1") return;
     dock.dataset.obBubbleBound = "1";
     var bubble = dock.querySelector("[data-ob-coach-bubble]");

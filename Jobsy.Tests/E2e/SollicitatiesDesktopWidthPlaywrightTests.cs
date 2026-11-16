@@ -41,7 +41,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(new()
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, new()
         {
             ViewportSize = new() { Width = 1280, Height = 800 },
             IgnoreHTTPSErrors = true,
@@ -234,7 +234,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, KbE2e.ContextFor(390, 844));
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
@@ -286,7 +286,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.MobileContext());
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, KbE2e.MobileContext());
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
@@ -357,7 +357,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 885));
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, KbE2e.ContextFor(390, 885));
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
@@ -453,6 +453,25 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public bool HasBack { get; set; }
     }
 
+    private async Task<IBrowserContext> NewApplicationsContextAsync(
+        IBrowser browser,
+        string baseUrl,
+        BrowserNewContextOptions options)
+    {
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        {
+            return await browser.NewContextAsync(options);
+        }
+
+        if (FunctionalE2eGate.IsRequired || KbE2e.SupportsTestSignIn(baseUrl))
+        {
+            await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+            return await FunctionalE2eAuth.NewCandidateContextAsync(browser, baseUrl, options);
+        }
+
+        return await browser.NewContextAsync(options);
+    }
+
     private async Task<bool> TrySignInForApplicationsAsync(IPage page, string baseUrl, string returnPath)
     {
         if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
@@ -461,13 +480,8 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             return true;
         }
 
-        if (KbE2e.SupportsTestSignIn(baseUrl))
+        if (KbE2e.SupportsTestSignIn(baseUrl) || FunctionalE2eGate.IsRequired)
         {
-            if (!await FunctionalE2eAuth.EnsureGateCandidatePageLoginAsync(page, baseUrl))
-            {
-                return false;
-            }
-
             await page.GotoAsync(baseUrl + returnPath, new() { WaitUntil = WaitUntilState.NetworkIdle });
             return true;
         }
