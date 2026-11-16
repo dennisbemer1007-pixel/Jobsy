@@ -115,7 +115,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("fitMapToVacancies", js[originStart..originEnd]);
         Assert.Contains("fitToOriginRings", js[originStart..originEnd]);
         Assert.Contains("container.isConnected", js);
-        Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
+        Assert.Contains("\n        isAlive,\n", js, StringComparison.Ordinal);
         Assert.Contains("maplibregl", js);
         Assert.Contains("Bekijk deze baan", js);
         Assert.Contains("map-popup--calm", js);
@@ -194,7 +194,7 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("maplibregl-ctrl-attrib", hideFn);
 
         var createStart = helper.IndexOf("function createMap(container, options)", StringComparison.Ordinal);
-        var createEnd = helper.IndexOf("return {", createStart, StringComparison.Ordinal);
+        var createEnd = helper.IndexOf("return map;", createStart, StringComparison.Ordinal);
         Assert.True(createStart > 0 && createEnd > createStart);
         var createFn = helper[createStart..createEnd];
         Assert.Contains("center: options.center", createFn);
@@ -258,7 +258,16 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
+        if (app.Contains("WwwrootAssetCatalog.Url(\"js/app-core.js\")", StringComparison.Ordinal))
+        {
+            Assert.Equal(
+                AssetVersions.Version("js/app-core.js"),
+                Jobsy.Web.Hosting.WwwrootAssetCatalog.Version("js/app-core.js"));
+        }
+        else
+        {
+            AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
+        }
         Assert.Contains("css/app.min.css", app);
         Assert.Contains("css/critical.css", app);
         Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
