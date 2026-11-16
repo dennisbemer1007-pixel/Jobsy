@@ -20,10 +20,152 @@ public static class OnboardingStartFormEndpoints
 
     public static IEndpointRouteBuilder MapOnboardingStartFormEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/candidate/start", PostAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+        var auth = new AuthorizeAttribute { Roles = "Candidate" };
+        app.MapPost("/candidate/start", PostAsync).RequireAuthorization(auth);
+        app.MapPost("/candidate/start/step-1/volgende", Step1VolgendeAsync).RequireAuthorization(auth);
+        app.MapPost("/candidate/start/step-6/volgende", Step6VolgendeAsync).RequireAuthorization(auth);
+        app.MapPost("/candidate/start/step-7/consent-volgende", Step7ConsentVolgendeAsync).RequireAuthorization(auth);
 
         return app;
+    }
+
+    private static async Task<IResult> Step6DreamUnknownAsync(
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            try
+            {
+                await api.SaveOnboardingDreamJobAsync(null, cancellationToken);
+            }
+            catch
+            {
+                // Dream clear is best-effort when the candidate picks "Weet ik nog niet".
+            }
+
+            using var emptyDoc = JsonDocument.Parse("""{"advance":true,"skipOptional":true}""");
+            var body = ForceEmptyDreamPayload(emptyDoc.RootElement);
+            var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: true);
+            var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+                6,
+                merged,
+                api,
+                geocoder,
+                featureFlags,
+                culture,
+                cancellationToken);
+            api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+            return ToRedirect(stepStatus, stepPayload, 6, advance: true, goBack: false, culture);
+        }
+        catch (Exception)
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Common.Error.TryAgain"]));
+        }
+    }
+
+    private static async Task<IResult> Step1VolgendeAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(1), culture["Common.Error.TryAgain"]));
+        }
+
+        var req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance: true);
+        var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+            req,
+            api,
+            geocoder,
+            culture,
+            cancellationToken);
+        return ToRedirect(step1Status, step1Payload, 1, advance: true, goBack: false, culture);
+    }
+
+    private static async Task<IResult> Step6VolgendeAsync(
+        HttpContext http,
+        [FromForm] string? dream,
+        [FromForm] string? obPayload,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Common.Error.TryAgain"]));
+        }
+
+        var form = http.Request.Form;
+        var obNav = form["obNav"].ToString();
+        if (string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase))
+        {
+            return await Step6DreamUnknownAsync(api, geocoder, featureFlags, culture, cancellationToken);
+        }
+
+        dream = ResolveDreamFromRequest(form, dream, obPayload);
+        if (string.IsNullOrWhiteSpace(dream))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(6), culture["Onboarding.Validation.Dream"]));
+        }
+
+        var body = BuildStep6Body(dream, obPayload);
+        var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: false);
+        var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+            6,
+            merged,
+            api,
+            geocoder,
+            featureFlags,
+            culture,
+            cancellationToken);
+        return ToRedirect(stepStatus, stepPayload, 6, advance: true, goBack: false, culture);
+    }
+
+    private static async Task<IResult> Step7ConsentVolgendeAsync(
+        HttpContext http,
+        [FromForm] string? consentRequested,
+        [FromForm] string? obPayload,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        IGeocodingClient geocoder,
+        IFeatureFlags featureFlags,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(7), culture["Common.Error.TryAgain"]));
+        }
+
+        var form = http.Request.Form;
+        if (!form.ContainsKey("consentRequested")
+            && !string.Equals(consentRequested, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            return SeeOther(WithError(OnboardingRoutes.StepUrl(7), culture["Onboarding.Validation.Consent"]));
+        }
+
+        var body = BuildMiniBlockBody(http, 7, consentRequested ?? "true", null, obPayload);
+        var merged = MergeNavFlags(body, advance: true, goBack: false, skipOptional: false);
+        var (stepStatus, stepPayload) = await OnboardingClientStepBffSaver.SaveStepAsync(
+            7,
+            merged,
+            api,
+            geocoder,
+            featureFlags,
+            culture,
+            cancellationToken);
+        return ToRedirect(stepStatus, stepPayload, 7, advance: true, goBack: false, culture);
     }
 
     private static async Task<IResult> PostAsync(
@@ -59,25 +201,72 @@ public static class OnboardingStartFormEndpoints
             return ToRedirect(beginStatus, beginPayload, 1, advance: true, goBack: false, culture);
         }
 
-        var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
+        var form = http.Request.Form;
 
-        var advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
+        var currentStep = step is >= 1 and <= 10 ? step.Value : 1;
+        if (form.TryGetValue("step", out var stepField)
+            && int.TryParse(stepField.ToString(), out var stepFromBody)
+            && stepFromBody is >= 1 and <= 10)
+        {
+            currentStep = stepFromBody;
+        }
+        var advance = form.ContainsKey("onboarding-advance");
+        var skipOptional = form.ContainsKey("onboarding-skip");
+        var dreamUnknown = form.ContainsKey("onboarding-dream-unknown");
+
+        if (string.IsNullOrWhiteSpace(obNav) && form.TryGetValue("obNav", out var navValues))
+        {
+            obNav = navValues.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(obNav) && obNav.Contains(',', StringComparison.Ordinal))
+        {
+            obNav = obNav.Split(',')[0].Trim();
+        }
+
+        if (!advance)
+        {
+            advance = string.Equals(obNav, "next", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!skipOptional)
+        {
+            skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!dreamUnknown)
+        {
+            dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
+        }
+
         var goBack = string.Equals(obNav, "back", StringComparison.OrdinalIgnoreCase);
-        var skipOptional = string.Equals(obNav, "skip", StringComparison.OrdinalIgnoreCase);
-        var dreamUnknown = string.Equals(obNav, "dreamUnknown", StringComparison.OrdinalIgnoreCase);
         var persist = string.Equals(obNav, "save", StringComparison.OrdinalIgnoreCase);
 
-        if (goBack && currentStep is >= 7 and <= 10)
+        if (goBack)
         {
-            var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-            if (q > 1)
+            if (currentStep is >= 7 and <= 10)
             {
-                return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
+                if (q > 1)
+                {
+                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q - 1));
+                }
             }
 
             if (currentStep > 1)
             {
-                return SeeOther(OnboardingRoutes.StepUrl(currentStep - 1));
+                var priorStep = currentStep - 1;
+                try
+                {
+                    await OnboardingClientProgressSaver.SaveStickyAsync(api, priorStep, ct: cancellationToken);
+                    api.InvalidateMeCache(JobsyApiClient.OnboardingCacheKey);
+                }
+                catch (Exception)
+                {
+                    // Best-effort; still honor back navigation.
+                }
+
+                return SeeOther(OnboardingRoutes.StepUrl(priorStep));
             }
 
             return SeeOther(OnboardingRoutes.StepUrl(1));
@@ -134,10 +323,35 @@ public static class OnboardingStartFormEndpoints
             goBack = false;
         }
 
-        if (skipOptional || dreamUnknown)
+        if (dreamUnknown)
         {
             advance = true;
             skipOptional = true;
+        }
+
+        if (dreamUnknown && currentStep == 6)
+        {
+            return await Step6DreamUnknownAsync(api, geocoder, featureFlags, culture, cancellationToken);
+        }
+
+        if (skipOptional)
+        {
+            advance = true;
+        }
+
+        if (!advance
+            && !goBack
+            && !persist
+            && !dreamUnknown
+            && currentStep == 6
+            && string.IsNullOrWhiteSpace(obDreamPick))
+        {
+            var resolvedDream = ResolveDreamFromRequest(form, dream, obPayload);
+            if (!string.IsNullOrWhiteSpace(resolvedDream))
+            {
+                dream = resolvedDream;
+                advance = true;
+            }
         }
 
         if (IsSilentNoop(http.Request.Form, advance, goBack, persist, skipOptional, dreamUnknown))
@@ -196,6 +410,23 @@ public static class OnboardingStartFormEndpoints
                 scrollAnchor);
         }
 
+        if (!advance && currentStep == 7 && form.ContainsKey("consentRequested"))
+        {
+            advance = true;
+        }
+
+        if (advance && currentStep == 1 && string.IsNullOrWhiteSpace(obPayload))
+        {
+            var step1Req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance: true);
+            var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+                step1Req,
+                api,
+                geocoder,
+                culture,
+                cancellationToken);
+            return ToRedirect(step1Status, step1Payload, 1, advance: true, goBack: false, culture);
+        }
+
         if (!advance && !goBack && !persist)
         {
             return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Onboarding.NotSaved"]));
@@ -209,21 +440,6 @@ public static class OnboardingStartFormEndpoints
         else if (currentStep is >= 7 and <= 10)
         {
             body = BuildMiniBlockBody(http, currentStep, consentRequested, obMiniPick, obPayload);
-            if (advance)
-            {
-                var q = OnboardingSsrMiniNavigation.ReadQuestionFromRequest(http);
-                var mini = await OnboardingSsrMiniStepLoader.LoadAsync(
-                    currentStep,
-                    api,
-                    featureFlags,
-                    culture,
-                    cancellationToken);
-                var total = mini.Questions.Count;
-                if (total > 0 && q < total)
-                {
-                    return SeeOther(OnboardingSsrMiniNavigation.StepQuestionUrl(currentStep, q + 1));
-                }
-            }
         }
         else if (string.IsNullOrWhiteSpace(obPayload) && currentStep is >= 2 and <= 4)
         {
@@ -255,6 +471,32 @@ public static class OnboardingStartFormEndpoints
                 draftFromStore,
                 culture);
             body = OnboardingSsrStepFormInteract.BuildPersistBody(currentStep, draftFromStore);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep == 1)
+        {
+            var req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(http.Request.Form, advance);
+            var (step1Status, step1Payload) = await OnboardingClientStep1Saver.SaveAsync(
+                req,
+                api,
+                geocoder,
+                culture,
+                cancellationToken);
+            return ToRedirect(step1Status, step1Payload, currentStep, advance, goBack, culture);
+        }
+        else if (string.IsNullOrWhiteSpace(obPayload) && currentStep == 5)
+        {
+            MeProfile profileStep5;
+            try
+            {
+                profileStep5 = await api.GetMyProfileAsync(cancellationToken) ?? new MeProfile();
+            }
+            catch (Exception)
+            {
+                return SeeOther(WithError(OnboardingRoutes.StepUrl(currentStep), culture["Common.Error.TryAgain"]));
+            }
+
+            var draftStep5 = OnboardingProfileDraftHydrator.FromProfile(profileStep5);
+            body = OnboardingSsrStepFormInteract.BuildPersistBody(5, draftStep5);
         }
         else if (string.IsNullOrWhiteSpace(obPayload))
         {
@@ -420,9 +662,14 @@ public static class OnboardingStartFormEndpoints
         return answers;
     }
 
-    private static JsonElement BuildStep6Body(string? dream, string? obPayload)
+    private static string? ResolveDreamFromRequest(IFormCollection? form, string? dream, string? obPayload)
     {
         var trimmed = dream?.Trim() ?? "";
+        if (string.IsNullOrEmpty(trimmed) && form is not null && form.TryGetValue("dream", out var dreamValues))
+        {
+            trimmed = dreamValues.ToString().Trim();
+        }
+
         if (string.IsNullOrEmpty(trimmed) && !string.IsNullOrWhiteSpace(obPayload))
         {
             try
@@ -443,9 +690,16 @@ public static class OnboardingStartFormEndpoints
             }
             catch (JsonException)
             {
-                // fall through with empty dream
+                // fall through
             }
         }
+
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+    }
+
+    private static JsonElement BuildStep6Body(string? dream, string? obPayload)
+    {
+        var trimmed = ResolveDreamFromRequest(null, dream, obPayload) ?? "";
 
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
@@ -572,7 +826,14 @@ public static class OnboardingStartFormEndpoints
         bool skipOptional,
         bool dreamUnknown)
     {
-        if (advance || goBack || persist || skipOptional || dreamUnknown)
+        if (advance
+            || goBack
+            || persist
+            || skipOptional
+            || dreamUnknown
+            || form.ContainsKey("onboarding-advance")
+            || form.ContainsKey("onboarding-skip")
+            || form.ContainsKey("onboarding-dream-unknown"))
         {
             return false;
         }

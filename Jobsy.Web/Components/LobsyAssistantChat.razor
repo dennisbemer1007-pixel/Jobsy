@@ -17,19 +17,10 @@
     <Authorized>
         @if (_visible && _uiVariant == AssistantChatUiVariant.Business && !_open)
         {
-            <div class="lobsy-assistant-launcher lobsy-assistant-launcher--business @(_hasBottomNav ? "has-bottom-nav" : null)"
-                 data-lobsy-coach>
-                <button type="button"
-                        id="lobsy-assistant-launcher-btn"
-                        class="lobsy-assistant-launcher__btn"
-                        @onclick="Toggle"
-                        aria-haspopup="dialog"
-                        aria-expanded="@(_open ? "true" : "false")"
-                        aria-controls="lobsy-assistant-panel">
-                    <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="28" height="28" decoding="async" />
-                    <span class="visually-hidden">@Culture["Assistant.Open"]</span>
-                </button>
-            </div>
+            <LobsyCoachVariantBDock ButtonId="lobsy-assistant-launcher-btn"
+                                    HasBottomNav="_hasBottomNav"
+                                    ChatOpen="_open"
+                                    OnClick="ToggleFromDock" />
         }
         @if (_visible && _open)
         {
@@ -39,7 +30,7 @@
                         <div class="lobsy-assistant__brand">
                             @if (_uiVariant == AssistantChatUiVariant.Warm)
                             {
-                                <img class="lobsy-assistant__avatar" src="@BrandImages.MarkSvg" alt="" width="40" height="40" decoding="async" />
+                                <img class="lobsy-assistant__avatar lobsy-assistant__avatar--coach-b" src="@BrandImages.AbsoluteCoachBAvatar" alt="" width="40" height="40" decoding="async" />
                                 <div>
                                     <h2 id="lobsy-assistant-title">@Culture["Assistant.BotName"]</h2>
                                     <p class="lobsy-assistant__lead">@Culture["Assistant.SubtitleWarm"]</p>
@@ -47,8 +38,8 @@
                             }
                             else
                             {
-                                <span class="lobsy-assistant__avatar lobsy-assistant__avatar--business" aria-hidden="true">
-                                    <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="24" height="24" decoding="async" />
+                                <span class="lobsy-assistant__avatar lobsy-assistant__avatar--coach-b" aria-hidden="true">
+                                    <img src="@BrandImages.AbsoluteCoachBAvatar" alt="" width="48" height="48" decoding="async" />
                                 </span>
                                 <div>
                                     <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
@@ -80,7 +71,7 @@
                                     <div class="lobsy-assistant__bubble-head">
                                         @if (_uiVariant == AssistantChatUiVariant.Warm)
                                         {
-                                            <img class="lobsy-assistant__bubble-logo" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                                            <img class="lobsy-assistant__bubble-logo lobsy-assistant__avatar--coach-b" src="@BrandImages.AbsoluteCoachBAvatar" alt="" width="32" height="32" decoding="async" />
                                         }
                                         else
                                         {
@@ -267,6 +258,9 @@
             _visible = false;
         }
     }
+
+    private Task ToggleFromDock(MouseEventArgs _)
+        => Toggle();
 
     private async Task Toggle()
     {

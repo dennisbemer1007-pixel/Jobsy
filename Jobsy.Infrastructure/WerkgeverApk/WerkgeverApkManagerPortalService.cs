@@ -36,6 +36,10 @@ public interface IWerkgeverApkManagerPortalService
         WerkgeverApkTeamCreateRequest request,
         CancellationToken ct = default);
 
+    Task<(bool Ok, WerkgeverApkErrorDto? Error, int Status)> RequestUitgebreidPackageAsync(
+        ClaimsPrincipal user,
+        CancellationToken ct = default);
+
     Task<(bool Ok, WerkgeverApkErrorDto? Error, int Status)> DeleteTeamAsync(
         ClaimsPrincipal user,
         Guid teamId,
@@ -566,7 +570,11 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
             .Select(r => WerkgeverApkComparisonEngine.ParseManagerAnswers(r.AnswersJson))
             .ToList();
 
-        var insights = WerkgeverApkGroupInsights.Aggregate(employeeStates, managerSheets, Level);
+        var company = await _db.Companies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == gate.CompanyId, ct);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(
+            company?.LoopbaanApkPackage ?? WerkgeverApkPackageKind.Basis);
+        var insights = WerkgeverApkGroupInsights.Aggregate(employeeStates, managerSheets, catalog, Level);
         return (insights, null, 200);
     }
 
@@ -779,6 +787,51 @@ public sealed class WerkgeverApkManagerPortalService : IWerkgeverApkManagerPorta
         }
 
         return new ManagerGate(companyId, null, 200);
+    }
+
+    public async Task<(bool Ok, WerkgeverApkErrorDto? Error, int Status)> RequestUitgebreidPackageAsync(
+        ClaimsPrincipal user,
+        CancellationToken ct = default)
+    {
+        var gate = await ResolveManagerCompanyAsync(user, ct);
+        if (gate.Error is not null)
+        {
+            return (false, gate.Error, gate.Status);
+        }
+
+        if (!Guid.TryParse(user.FindFirst("sub")?.Value ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var userId))
+        {
+            return (false, new WerkgeverApkErrorDto("invalid_user", "Sessie ongeldig."), 401);
+        }
+
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == gate.CompanyId, ct);
+        if (company is null)
+        {
+            return (false, new WerkgeverApkErrorDto("invalid_company", "Organisatie niet gevonden."), 404);
+        }
+
+        if (company.LoopbaanApkPackage == WerkgeverApkPackageKind.Uitgebreid)
+        {
+            return (false, new WerkgeverApkErrorDto("already_active", "Uitgebreid is al actief."), 400);
+        }
+
+        var pending = await _db.WerkgeverApkUitgebreidRequests
+            .AnyAsync(r => r.CompanyId == company.Id && !r.Handled, ct);
+        if (pending)
+        {
+            return (true, null, 200);
+        }
+
+        _db.WerkgeverApkUitgebreidRequests.Add(new WerkgeverApkUitgebreidRequest
+        {
+            Id = Guid.NewGuid(),
+            CompanyId = company.Id,
+            RequestedByUserId = userId,
+            RequestedAtUtc = DateTime.UtcNow,
+            Handled = false
+        });
+        await _db.SaveChangesAsync(ct);
+        return (true, null, 200);
     }
 
     private sealed record ManagerGate(Guid CompanyId, WerkgeverApkErrorDto? Error, int Status);

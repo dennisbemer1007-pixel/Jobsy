@@ -8,26 +8,22 @@ internal static class KbDiscoveryE2eHelpers
     {
         await page.GotoAsync($"{baseUrl.TrimEnd('/')}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await KbE2e.WaitForStyledAppAsync(page);
-        await page.WaitForFunctionAsync(
-            """
-            () => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'
-              || !!document.querySelector('.jobsy-discovery')
-            """,
-            null,
-            new() { Timeout = 90_000 });
+        await page.WaitForURLAsync("**/banenkaart**", new() { Timeout = 90_000 });
+        await page.WaitForSelectorAsync(
+            ".jobsy-discovery",
+            new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
         await DismissStartPromptIfPresentAsync(page);
         await page.WaitForFunctionAsync(
             """
             () => {
-              const shell = document.querySelector('.app-shell');
-              if (!shell) return false;
-              if (shell.classList.contains('app-shell--candidate')
-                  || shell.classList.contains('app-shell--banenkaart-shell')) {
-                return true;
+              const search = document.querySelector('[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]');
+              if (!search || !search.checkVisibility()) return false;
+              if (window.innerWidth >= 900) {
+                const toggle = document.querySelector('.app-header .language-selector__toggle');
+                return !!toggle && toggle.checkVisibility();
               }
-              const toggle = document.querySelector('.app-header .language-selector__toggle');
-              return !!toggle && toggle.checkVisibility();
+              return true;
             }
             """,
             null,
@@ -47,12 +43,8 @@ internal static class KbDiscoveryE2eHelpers
 
     internal static ILocator VisibleKeywordSearch(IPage page, int viewportWidth)
     {
-        if (viewportWidth >= 900)
-        {
-            return page.Locator("[data-testid=kb-keyword-search-desktop]").First;
-        }
-
-        return page.Locator("[data-testid=kb-keyword-search]").First;
+        _ = viewportWidth;
+        return page.Locator("[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]").First;
     }
 
     internal static async Task<ILocator> WaitForVisibleKeywordSearchAsync(IPage page, int viewportWidth)

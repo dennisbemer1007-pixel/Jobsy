@@ -70,6 +70,14 @@ public sealed class OnboardingMiniSsrOneQuestionPlaywrightTests : IAsyncLifetime
 
             await page.GotoAsync(root + "/candidate/start?step=7");
             await page.Locator("[data-ob-client-step=\"7\"]").WaitForAsync();
+            var consent = page.Locator("[data-testid=onboarding-consent]");
+            if (await consent.CountAsync() > 0 && await consent.IsVisibleAsync())
+            {
+                await consent.CheckAsync();
+                await page.GetByTestId("onboarding-next").ClickAsync();
+                await page.WaitForURLAsync("**/candidate/start?step=7&q=1**");
+            }
+
             await Assertions.Expect(page.Locator(".ob-client-mini-q")).ToHaveCountAsync(1);
 
             await page.Locator("button[name=\"obMiniPick\"]").Filter(new() { HasText = "3" }).First.ClickAsync();

@@ -9,6 +9,7 @@ using Jobsy.Web.Components.Pages.Candidate;
 using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,9 +50,10 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddScoped<ICandidateHeroCompactPreviewGate>(_ => CandidateHeroCompactPreviewGateStub.None);
         Services.AddSingleton<IOnboardingRustigGate>(new FixedRustigGate());
+        BunitAntiforgery.Register(Services);
     }
 
-    [Fact]
+    [Fact(Skip = "V3 SSR: Blazor OnboardingWizard.NextAsync is a no-op for steps 1–10. Coverage: OnboardingStartFormPostTests (step-6 dream/unknown POST), OnboardingStartSsrStep3PlaywrightTests, OnboardingRustigStep06PlaywrightTests, optional OnboardingDreamValidationScreenshotTests (JOBSY_CAPTURE_DREAM_VALIDATION).")]
     public void Dream_validation_clears_when_leaving_step_6_via_unknown()
     {
         _handler.CurrentStep = 6;
@@ -152,7 +154,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
 
     private sealed class FixedRustigGate : IOnboardingRustigGate
     {
-        public bool Enabled => false;
+        public bool Enabled => true;
     }
 
     private sealed class FixedFlags : IFeatureFlags

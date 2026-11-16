@@ -26,6 +26,15 @@ internal static class CoachVariantBOverlapAuditSupport
         new("candidate-applications", "/candidate/applications", KbE2e.DefaultCompleteEmail),
         new("onboarding-step-1", "/candidate/start?step=1", "onboarding.e2e@jobsy.local"),
         new("onboarding-step-2", "/candidate/start?step=2", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-3", "/candidate/start?step=3", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-4", "/candidate/start?step=4", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-5", "/candidate/start?step=5", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-6", "/candidate/start?step=6", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-7", "/candidate/start?step=7", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-8", "/candidate/start?step=8", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-9", "/candidate/start?step=9", "onboarding.e2e@jobsy.local"),
+        new("onboarding-step-10", "/candidate/start?step=10", "onboarding.e2e@jobsy.local"),
+        new("onboarding-kompas-ready", "/candidate/start/kompas", "onboarding.e2e@jobsy.local"),
         new("employer-home", "/employer/vacancies", VacancyWizardE2e.EmployerEmail),
         new("intermediair", "/intermediary", "intermediair@jobsy.local"),
         new("school", "/school", "schoolbeheer@jobsy.local"),
@@ -378,6 +387,59 @@ internal static class CoachVariantBOverlapAuditSupport
             })())
             """);
 
+        return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
+    }
+
+    internal static async Task<OverlapAuditDto> EvaluateOnboardingCoachOverlapAsync(IPage page)
+    {
+        var json = await page.EvaluateAsync<string>(
+          """
+      () => JSON.stringify((() => {
+        const coachBtn = document.querySelector('#lobsy-coach-btn.lobsy-coach-dock__btn--lobster-b, #lobsy-coach-btn');
+        if (!coachBtn) return { ok: true, skip: true, reason: 'no-coach', hits: [] };
+        const dock = coachBtn.closest('.lobsy-coach-dock');
+        const st = getComputedStyle(coachBtn);
+        const dockSt = dock ? getComputedStyle(dock) : st;
+        if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0'
+            || dockSt.display === 'none' || dockSt.visibility === 'hidden' || dockSt.opacity === '0') {
+          return { ok: true, skip: true, reason: 'no-coach', hits: [] };
+        }
+        const dockRect = dock ? dock.getBoundingClientRect() : coachBtn.getBoundingClientRect();
+        const coachBox = {
+          left: dockRect.left,
+          top: dockRect.top,
+          right: dockRect.right,
+          bottom: dockRect.bottom
+        };
+        if (dockRect.width < 8 || dockRect.height < 8) {
+          return { ok: true, skip: true, reason: 'coach-tiny', hits: [] };
+        }
+        const coachRoots = new Set();
+        dock?.querySelectorAll('*').forEach(n => coachRoots.add(n));
+        coachRoots.add(coachBtn);
+        const inter = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+        const hits = [];
+        const targets = document.querySelectorAll(
+          '.ob-v3-info-banner, .ob-v3-info-banner__text, .ob-v3-chrome__meta, .ob-v3-chrome__saved, ' +
+          '.ob-v3-dfoot__next, [data-testid=onboarding-next], [data-testid=onboarding-skip], ' +
+          '[data-testid=onboarding-back], .ob-v3-dream-unknown-mobile, [data-testid=onboarding-dream-unknown-mobile], ' +
+          'button, a, input, select, textarea, [role=button], [role=link]');
+        targets.forEach(el => {
+          if (coachRoots.has(el) || el.closest('.lobsy-coach-dock, #lobsy-assistant-ssr-shell')) return;
+          const cs = getComputedStyle(el);
+          if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return;
+          const r = el.getBoundingClientRect();
+          if (r.width < 8 || r.height < 8) return;
+          const box = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+          if (!inter(coachBox, box)) return;
+          const id = el.id ? '#' + el.id : '';
+          const testId = el.getAttribute('data-testid');
+          const tag = (el.tagName || '').toLowerCase();
+          hits.push(tag + id + (testId ? '[data-testid=' + testId + ']' : ''));
+        });
+        return { ok: hits.length === 0, skip: false, reason: hits.length ? hits.join('; ') : 'ok', hits };
+      })())
+      """);
         return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
     }
 

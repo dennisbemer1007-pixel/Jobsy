@@ -10,6 +10,45 @@ public sealed partial class JobsyApiClient
     public async Task WerkgeverApkEmployeeWelcomeAsync(CancellationToken ct = default)
         => await _http.PostAsync("api/werkgever-apk/employee/welcome", null, ct);
 
+    public async Task<WerkgeverApkEmployeeQuestionDto?> GetWerkgeverApkAbQuestionAsync(
+        string? itemId = null,
+        CancellationToken ct = default)
+    {
+        var path = "api/werkgever-apk/employee/question";
+        if (!string.IsNullOrWhiteSpace(itemId))
+        {
+            path += $"?itemId={Uri.EscapeDataString(itemId)}";
+        }
+
+        var response = await _http.GetAsync(path, ct);
+        return response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<WerkgeverApkEmployeeQuestionDto>(ApiJson, ct)
+            : null;
+    }
+
+    public async Task<(WerkgeverApkEmployeeAnswerResponse? Ok, int StatusCode, string? ErrorBody)> SaveWerkgeverApkAbAnswerAsync(
+        string itemId,
+        int value,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/werkgever-apk/employee/answers/{Uri.EscapeDataString(itemId)}",
+            new WerkgeverApkEmployeeAnswerRequest(value),
+            ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return (null, (int)response.StatusCode, body);
+        }
+
+        var ok = await JsonSerializerTry<WerkgeverApkEmployeeAnswerResponse>(response.Content);
+        return (ok, (int)response.StatusCode, null);
+    }
+
+    public async Task<WerkgeverApkPauseDto?> GetWerkgeverApkPauseAsync(int afterBlock, CancellationToken ct = default)
+        => await _http.GetFromJsonAsync<WerkgeverApkPauseDto>(
+            $"api/werkgever-apk/employee/pause?after={afterBlock}", ApiJson, ct);
+
     public async Task<WerkgeverApkEmployeeQuestionDto?> GetWerkgeverApkQuestionAsync(
         string blockKey,
         string? itemId = null,

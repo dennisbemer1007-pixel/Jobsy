@@ -1,0 +1,18 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Show)
+{
+    <button type="submit"
+            name="obNav"
+            value="back"
+            formnovalidate
+            class="ob-onboarding-back ob-v3-dfoot__back"
+            data-testid="onboarding-back">@Culture["Onboarding.Back"]</button>
+}
+
+@code {
+  [Parameter] public int Step { get; set; }
+
+    private bool Show => Step > 1;
+}

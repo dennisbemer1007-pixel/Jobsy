@@ -104,7 +104,9 @@ public static class UatScriptRunner
         if (Contains(blob, "Lobsy-assistent", "Assistent"))
         {
             var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyAssistantChat.razor"));
-            Assert.Contains("lobsy-assistant-launcher--business", assistant, StringComparison.Ordinal);
+            Assert.Contains(CoachVariantBGuardSupport.DockComponent, assistant, StringComparison.Ordinal);
+            var dock = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyCoachVariantBDock.razor"));
+            Assert.Contains(CoachVariantBGuardSupport.LobsterBtnClass, dock, StringComparison.Ordinal);
             Assert.DoesNotContain("lobsy-assistant__fab", assistant, StringComparison.Ordinal);
         }
 

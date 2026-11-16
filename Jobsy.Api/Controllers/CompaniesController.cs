@@ -1,6 +1,7 @@
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Models;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts.WerkgeverApk;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -400,6 +401,34 @@ public class CompaniesController : ControllerBase
         }
 
         company.LoopbaanApkEnabled = request.LoopbaanApkEnabled;
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    [HttpPut("{companyId:guid}/loopbaan-apk/package")]
+    [Authorize(Roles = JobsyRoles.Admin)]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateLoopbaanApkPackage(
+        Guid companyId,
+        [FromBody] UpdateLoopbaanApkPackageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.ParentCompanyId is not null)
+        {
+            return BadRequest(new { message = "Kies het pakket op organisatieniveau." });
+        }
+
+        if (!company.LoopbaanApkEnabled)
+        {
+            return BadRequest(new { message = "Zet eerst Loopbaan-APK aan voor dit bedrijf." });
+        }
+
+        company.LoopbaanApkPackage = request.Package;
         await _db.SaveChangesAsync(cancellationToken);
         return Ok(await ToSummaryAsync(company, cancellationToken));
     }

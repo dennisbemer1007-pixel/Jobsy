@@ -5,17 +5,17 @@
 
 <div class="@CssClass"
      data-lobsy-coach
-     data-ssr-coach="business">
-    @if (ShowTeaser)
+     data-ssr-coach="@SsrCoachKind">
+    @if (ShowTeaser && !string.IsNullOrWhiteSpace(TeaserTextResolved))
     {
         <p class="lobsy-coach-dock__teaser"
            data-ob-coach-bubble
-           role="status">@TeaserText</p>
+           role="status">@TeaserTextResolved</p>
     }
     <button type="button"
             id="@ButtonId"
             class="lobsy-coach-dock__btn lobsy-coach-dock__btn--lobster-b"
-            aria-label="@OpenLabel"
+            aria-label="@OpenLabelResolved"
             aria-haspopup="dialog"
             aria-expanded="@AriaExpanded"
             aria-controls="lobsy-assistant-panel"
@@ -32,6 +32,8 @@
 
 @code {
     [Parameter] public string ButtonId { get; set; } = "lobsy-coach-btn";
+
+    [Parameter] public string SsrCoachKind { get; set; } = "business";
 
     [Parameter] public string ModeClass { get; set; } = "lobsy-coach-dock--variant-b";
 

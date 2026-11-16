@@ -67,6 +67,12 @@ internal static class OnboardingRustigClickAuditSupport
             .First;
         if (await fieldset.CountAsync() == 0)
         {
+            var miniPick = page.Locator("form[data-ob-ssr-form] button[name=obMiniPick]").Nth(2);
+            if (await miniPick.CountAsync() > 0)
+            {
+                return await TryHitAuditAsync(page, miniPick, "Likert 1");
+            }
+
             return "n/a";
         }
 
@@ -155,7 +161,7 @@ internal static class OnboardingRustigClickAuditSupport
         try
         {
             var target = locator.First;
-            if (label is "Later doen")
+            if (label is "Later doen" or "Terug" or "account" or "coach")
             {
                 await target.ScrollIntoViewIfNeededAsync();
             }
@@ -168,5 +174,165 @@ internal static class OnboardingRustigClickAuditSupport
         {
             return ex.Message;
         }
+    }
+
+    internal static async Task AppendHydrationAndKeyboardRowsAsync(IPage page, List<(string Control, string Result)> rows)
+    {
+        if (rows.All(r => r.Control != "Hydration (circuit)"))
+        {
+            var circuit = await page.EvaluateAsync<string>(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') || 'missing'");
+            var reconnect = await page.Locator(
+                    "#components-reconnect-modal.components-reconnect-show, #components-reconnect-modal.components-reconnect-failed")
+                .CountAsync();
+            var ssr = await page.Locator("form[data-ob-ssr-form]").CountAsync() > 0;
+            rows.Add(("Hydration (circuit)", (circuit == "ready" || ssr) && reconnect == 0
+                ? "ok"
+                : $"circuit={circuit};ssr={ssr};reconnect={reconnect}"));
+        }
+
+        if (rows.All(r => r.Control != "Keyboard (Volgende focus)"))
+        {
+            var next = page.GetByTestId("onboarding-next");
+            if (await next.CountAsync() == 0)
+            {
+                rows.Add(("Keyboard (Volgende focus)", "n/a"));
+                return;
+            }
+
+            try
+            {
+                await next.First.FocusAsync();
+                var focused = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                      const n = document.querySelector('[data-testid=onboarding-next]');
+                      return !!(n && document.activeElement === n);
+                    }
+                    """);
+                rows.Add(("Keyboard (Volgende focus)", focused ? "ok" : "no-focus"));
+                await page.Keyboard.PressAsync("Tab");
+                await page.WaitForTimeoutAsync(100);
+                var enterTarget = await page.EvaluateAsync<string>(
+                    "() => (document.activeElement?.getAttribute('data-testid') || document.activeElement?.tagName || '').toLowerCase()");
+                rows.Add(("Keyboard (Tab cycle)", string.IsNullOrEmpty(enterTarget) ? "no-focus" : "ok"));
+            }
+            catch (Exception ex)
+            {
+                rows.Add(("Keyboard (Volgende focus)", ex.Message));
+            }
+        }
+    }
+
+    internal static async Task AppendOnboardingHeaderRowsAsync(
+        IPage page,
+        List<(string Control, string Result)> rows,
+        bool mobile)
+    {
+        var header = page.Locator("[data-testid=app-shell-header]");
+        var helpBtn = header.Locator(".page-help__btn").First;
+        if (mobile && (await helpBtn.CountAsync() == 0 || !await helpBtn.IsVisibleAsync()))
+        {
+            rows.Add(("Header help", "n/a (verborgen op mobile)"));
+        }
+        else
+        {
+            rows.Add(("Header help", await TryHitAuditAsync(page, helpBtn, "help")));
+        }
+
+        rows.Add(("Header account", await TryHeaderAccountMenuAsync(page, header)));
+    }
+
+    internal static async Task AppendCoachAuditRowsAsync(IPage page, List<(string Control, string Result)> rows)
+    {
+        var coachBtn = page.Locator(
+            ".lobsy-coach-dock[data-ssr-coach] [data-ssr-coach-open], .lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn").First;
+        rows.Add(("Coach medallion", await TryHitAuditAsync(page, coachBtn, "coach")));
+        if (await coachBtn.CountAsync() == 0)
+        {
+            rows.Add(("Coach open/dicht", "n/a"));
+            return;
+        }
+
+        rows.Add(("Coach open/dicht", await TryCoachOpenCloseAsync(page, coachBtn)));
+    }
+
+    internal static async Task AppendHeaderAndCoachRowsAsync(IPage page, List<(string Control, string Result)> rows)
+    {
+        if (rows.All(r => r.Control != "Header help"))
+        {
+            var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+            await AppendOnboardingHeaderRowsAsync(page, rows, mobile);
+            await AppendCoachAuditRowsAsync(page, rows);
+        }
+    }
+
+    private static async Task<string> TryHeaderAccountMenuAsync(IPage page, ILocator header)
+    {
+        var toggle = header.Locator(".account-menu__toggle").First;
+        if (await toggle.CountAsync() == 0)
+        {
+            return "n/a";
+        }
+
+        try
+        {
+            await toggle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, toggle, "account");
+            await toggle.ClickAsync(new() { Timeout = 15_000 });
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-header-menu') === 'account'",
+                null,
+                new() { Timeout = 15_000 });
+            var panel = header.Locator(".account-menu__panel").First;
+            await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            await page.Keyboard.PressAsync("Escape");
+            await page.WaitForFunctionAsync(
+                "() => !document.documentElement.hasAttribute('data-header-menu')",
+                null,
+                new() { Timeout = 10_000 });
+            return "ok";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    private static async Task<string> TryCoachOpenCloseAsync(IPage page, ILocator coachBtn)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.dataset.ssrCoachBound === '1'",
+                null,
+                new() { Timeout = 30_000 });
+            await coachBtn.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            var panel = page.Locator("#lobsy-assistant-panel, [data-ssr-coach-panel]").First;
+            await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
+            var close = page.Locator("[data-ssr-assistant-close]").First;
+            await close.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            await close.ClickAsync(new() { Force = true, Timeout = 10_000 });
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const shell = document.getElementById('lobsy-assistant-ssr-shell');
+                  return !shell || shell.hidden;
+                }
+                """,
+                null,
+                new() { Timeout = 15_000 });
+            return "ok";
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    internal static async Task CaptureStepScreenshotAsync(IPage page, string reportDir, string fileName)
+    {
+        Directory.CreateDirectory(reportDir);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(reportDir, fileName), FullPage = false });
     }
 }

@@ -11,7 +11,8 @@ public sealed class WerkgeverApkGroupInsightsTests
     {
         var states = Enumerable.Range(0, 4).Select(_ => EmptyState()).ToList();
         var managers = states.Select(_ => new Dictionary<string, int>()).ToList();
-        var dto = WerkgeverApkGroupInsights.Aggregate(states, managers, SchoolLevel.Mbo3);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
+        var dto = WerkgeverApkGroupInsights.Aggregate(states, managers, catalog, SchoolLevel.Mbo3);
         Assert.False(dto.Visible);
         Assert.Equal(4, dto.SharedCompletedCount);
     }
@@ -21,7 +22,8 @@ public sealed class WerkgeverApkGroupInsightsTests
     {
         var states = Enumerable.Range(0, WerkgeverApkAnonymity.MinGroupSize).Select(_ => EmptyState()).ToList();
         var managers = states.Select(_ => new Dictionary<string, int>()).ToList();
-        var dto = WerkgeverApkGroupInsights.Aggregate(states, managers, SchoolLevel.Mbo3);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
+        var dto = WerkgeverApkGroupInsights.Aggregate(states, managers, catalog, SchoolLevel.Mbo3);
         Assert.True(dto.Visible);
         Assert.Equal(WerkgeverApkAnonymity.MinGroupSize, dto.SharedCompletedCount);
     }

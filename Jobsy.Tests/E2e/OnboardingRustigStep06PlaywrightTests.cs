@@ -30,11 +30,11 @@ public sealed class OnboardingRustigStep06PlaywrightTests
         await OnboardingRustigStep06E2eFlow.ReachRustigStep06Async(page, baseUrl, mobile);
         await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
 
-        var dreamChip = page.Locator(".ob-rustig__dream").First;
-        if (await dreamChip.CountAsync() > 0)
+        var dreamTile = page.GetByTestId("onboarding-dream-tile").First;
+        if (await dreamTile.CountAsync() > 0)
         {
-            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, dreamChip, "dream-chip");
-            await dreamChip.ClickAsync(new() { Force = mobile });
+            await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, dreamTile, "dream-tile");
+            await dreamTile.ClickAsync(new() { Force = mobile });
         }
 
         var input = page.Locator("#onboarding-rustig-dream-input");
@@ -44,12 +44,90 @@ public sealed class OnboardingRustigStep06PlaywrightTests
         var next = page.GetByTestId("onboarding-next");
         await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, next, "volgende");
         await FunctionalOnboardingInteractivityHelpers.ClickOnboardingNextAsync(page, mobile);
-        await page.Locator(".ob-wizard__consent, [data-ob-rustig-screen=\"step-07\"], .test-likert").First
+        await page.Locator(
+                ".ob-wizard__consent, .ob-v3-consent, [data-testid=onboarding-step-7-consent], [data-ob-rustig-screen=\"step-07\"], .test-likert")
+            .First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
-        await FunctionalOnboardingInteractivityHelpers.ClickOnboardingBackAsync(page, mobile);
-        await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
-        var value = await input.InputValueAsync();
+        if (mobile)
+        {
+            await page.GotoAsync($"{baseUrl}/candidate/start?step=6", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+        else
+        {
+            await FunctionalOnboardingInteractivityHelpers.ClickOnboardingBackAsync(page, mobile);
+            await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+
+        var value = await page.Locator("#onboarding-rustig-dream-input").InputValueAsync();
         Assert.Contains("Software", value, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(1440, 900, false)]
+    [InlineData(390, 844, true)]
+    public async Task Step06_dream_unknown_submit_advances_to_step_7(int width, int height, bool mobile)
+    {
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(
+            FunctionalOnboardingPlaywrightTestSupport.CreateContextOptions(baseUrl, width, height, mobile));
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await OnboardingRustigStep06E2eFlow.ReachRustigStep06Async(page, baseUrl, mobile);
+        await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+
+        await FunctionalOnboardingInteractivityHelpers.ClickDreamUnknownOrNextAsync(page);
+        await page.Locator(
+                "[data-testid=onboarding-step-7-consent], .ob-wizard__consent, [data-ob-rustig-screen=step-07]")
+            .First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+    }
+
+    [Fact]
+    public async Task Step06_dream_unknown_form_post_reaches_step_7_without_javascript()
+    {
+        var (run, baseUrl) = await FunctionalOnboardingPlaywrightTestSupport.TryBeginAsync();
+        if (!run)
+        {
+            return;
+        }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            Locale = "nl-NL",
+            JavaScriptEnabled = false,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await OnboardingRustigStep06E2eFlow.ReachRustigStep06NoJsAsync(page, baseUrl);
+        await page.Locator("[data-ob-rustig-screen=step-06]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("#ob-step6-dream-unknown-form").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
+
+        var unknown = page.GetByTestId("onboarding-dream-unknown");
+        if (await unknown.CountAsync() == 0 || !await unknown.First.IsVisibleAsync())
+        {
+            unknown = page.GetByTestId("onboarding-dream-unknown-mobile");
+        }
+
+        await unknown.First.ClickAsync(new() { Force = true, Timeout = 20_000 });
+        await page.WaitForURLAsync("**/candidate/start?step=7**", new() { Timeout = 120_000 });
     }
 }

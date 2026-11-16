@@ -26,7 +26,14 @@ public sealed record WerkgeverApkEmployeeQuestionDto(
     string? Scenario,
     PupilMboHboScaleKind Scale,
     int? Value,
-    string? PreviousItemId);
+    string? PreviousItemId,
+    WerkgeverApkAbItemKind ItemKind = WerkgeverApkAbItemKind.Ab,
+    string? OptionA = null,
+    string? OptionB = null,
+    string? Heading = null,
+    int DisplayBlock = 1,
+    int DisplayBlockCount = 3,
+    WerkgeverApkPackageKind Package = WerkgeverApkPackageKind.Basis);
 
 public sealed record WerkgeverApkEmployeeAnswerRequest(int Value);
 
@@ -53,6 +60,26 @@ public sealed record WerkgeverApkTeamOverviewDto(
 public sealed record WerkgeverApkUpdateEmployeeLabelRequest(string? Label);
 
 public sealed record UpdateLoopbaanApkRequest(bool LoopbaanApkEnabled);
+
+public sealed record UpdateLoopbaanApkPackageRequest(WerkgeverApkPackageKind Package);
+
+public sealed record WerkgeverApkPackagePricingDto(
+    string BasisPriceLabel,
+    string UitgebreidPriceLabel,
+    string? PriceUnit);
+
+public sealed record WerkgeverApkManagerPackageDto(
+    WerkgeverApkPackageKind ActivePackage,
+    bool UitgebreidRequestPending,
+    string BasisPriceLabel,
+    string UitgebreidPriceLabel);
+
+public sealed record WerkgeverApkPauseDto(
+    int CompletedDisplayBlock,
+    int DisplayBlockCount,
+    int AnsweredCount,
+    int TotalQuestions,
+    WerkgeverApkPackageKind Package);
 
 public sealed record WerkgeverApkEmployeeLoginRequest(string Code);
 

@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.ValueObjects;
+using Jobsy.Core.WerkgeverApk;
 
 namespace Jobsy.Core.Entities;
 
@@ -111,6 +112,9 @@ public class Company
     /// Requires the platform <c>EmployerLoopbaanApk</c> feature.
     /// </summary>
     public bool LoopbaanApkEnabled { get; set; }
+
+    /// <summary>Chosen question set when Loopbaan-APK is on (Basis or Uitgebreid).</summary>
+    public WerkgeverApkPackageKind LoopbaanApkPackage { get; set; } = WerkgeverApkPackageKind.Basis;
 
     /// <summary>
     /// Preferred Mollie payment method for token top-ups (<c>ideal</c> or <c>creditcard</c>).

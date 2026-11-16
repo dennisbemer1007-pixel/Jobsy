@@ -41,7 +41,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(new()
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, new()
         {
             ViewportSize = new() { Width = 1280, Height = 800 },
             IgnoreHTTPSErrors = true,
@@ -49,30 +49,16 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (await TrySignInForApplicationsAsync(page, baseUrl, "/candidate/applications"))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+            // navigated
         }
         else
         {
-            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                var ensure = await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-                _output.WriteLine($"demo-ensure: {(int)ensure.Status} {ensure.StatusText}");
-            }
-
-            await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
 
-        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
+        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 120_000 });
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         string? selId = null;
@@ -248,27 +234,13 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 844));
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, KbE2e.ContextFor(390, 844));
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (!await TrySignInForApplicationsAsync(page, baseUrl, "/candidate/applications"))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
-        }
-        else
-        {
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-            }
-
-            await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
 
         await page.WaitForSelectorAsync(".sollicitaties-hero-strip", new() { Timeout = 60_000 });
@@ -314,28 +286,15 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.MobileContext());
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, KbE2e.MobileContext());
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (!await TrySignInForApplicationsAsync(page, baseUrl, "/candidate/applications"))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
-        }
-        else
-        {
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-            }
+            throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
 
-        await page.GotoAsync(baseUrl + "/candidate/applications", new() { WaitUntil = WaitUntilState.NetworkIdle });
         try
         {
             await page.WaitForSelectorAsync(".sollic-card", new() { Timeout = 20_000 });
@@ -398,30 +357,14 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         }
 
         await using var browser = await KbE2e.LaunchChromiumAsync();
-        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(390, 885));
+        await using var context = await NewApplicationsContextAsync(browser, baseUrl, KbE2e.ContextFor(390, 885));
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (!await TrySignInForApplicationsAsync(page, baseUrl, "/candidate/applications?tab=berichten"))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications?tab=berichten");
+            throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
-        else
-        {
-            if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
-            {
-                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
-            }
-
-            if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
-            {
-                await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
-            }
-        }
-
-        await page.GotoAsync(
-            baseUrl + "/candidate/applications?tab=berichten",
-            new() { WaitUntil = WaitUntilState.NetworkIdle });
 
         var tab = await page.QuerySelectorAsync("[data-testid=\"sollicitaties-berichten-tab\"]");
         if (tab is null)
@@ -508,6 +451,56 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public double DetailW { get; set; }
         public bool HasVisiblePanel { get; set; }
         public bool HasBack { get; set; }
+    }
+
+    private async Task<IBrowserContext> NewApplicationsContextAsync(
+        IBrowser browser,
+        string baseUrl,
+        BrowserNewContextOptions options)
+    {
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        {
+            return await browser.NewContextAsync(options);
+        }
+
+        if (FunctionalE2eGate.IsRequired || KbE2e.SupportsTestSignIn(baseUrl))
+        {
+            await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+            return await FunctionalE2eAuth.NewCandidateContextAsync(browser, baseUrl, options);
+        }
+
+        return await browser.NewContextAsync(options);
+    }
+
+    private async Task<bool> TrySignInForApplicationsAsync(IPage page, string baseUrl, string returnPath)
+    {
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        {
+            await KbE2e.GotoTestSignInAsync(page, baseUrl, returnPath);
+            return true;
+        }
+
+        if (KbE2e.SupportsTestSignIn(baseUrl) || FunctionalE2eGate.IsRequired)
+        {
+            await page.GotoAsync(baseUrl + returnPath, new() { WaitUntil = WaitUntilState.NetworkIdle });
+            return true;
+        }
+
+        await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
+        {
+            return false;
+        }
+
+        if (baseUrl.Contains("acceptatie.lobsy.nl", StringComparison.OrdinalIgnoreCase))
+        {
+            var ensure = await page.APIRequest.PostAsync(baseUrl + "/api/me/acceptatie-sollicitaties-demo-ensure");
+            _output.WriteLine($"demo-ensure: {(int)ensure.Status} {ensure.StatusText}");
+        }
+
+        await page.GotoAsync(baseUrl + returnPath, new() { WaitUntil = WaitUntilState.NetworkIdle });
+        return true;
     }
 
     private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)

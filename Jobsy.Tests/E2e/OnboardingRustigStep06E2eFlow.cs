@@ -11,19 +11,29 @@ internal static class OnboardingRustigStep06E2eFlow
     internal static Task ReachBaselineStep06Async(IPage page, string baseUrl, bool mobile) =>
         ReachSeededStep06Async(page, baseUrl, mobile, rustig: false);
 
-    private static async Task ReachSeededStep06Async(IPage page, string baseUrl, bool mobile, bool rustig)
+    internal static Task ReachRustigStep06NoJsAsync(IPage page, string baseUrl) =>
+        ReachSeededStep06Async(page, baseUrl, mobile: false, rustig: true, waitForCircuit: false);
+
+    private static async Task ReachSeededStep06Async(
+        IPage page,
+        string baseUrl,
+        bool mobile,
+        bool rustig,
+        bool waitForCircuit = true)
     {
         _ = mobile;
-        _ = rustig;
         var email = await RegisterFreshCandidateEmailAsync(page, baseUrl, "rustig-u6");
         await CandidateJourneyE2e.SetDiscoveryJourneyStepsForE2eAsync(email, completedThrough: 5, currentStep: 6);
 
-        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 120_000 });
-        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        await page.GotoAsync($"{baseUrl}/candidate/start?step=6", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        if (waitForCircuit)
+        {
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+                null,
+                new() { Timeout = 120_000 });
+            await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        }
 
         if (rustig)
         {

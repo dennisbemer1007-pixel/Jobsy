@@ -18,7 +18,7 @@ public static partial class PageAssetCatalog
         => IncludesLeerlingMboHboStyles(rawPath)
             ?
             [
-                WwwrootAssetCatalog.UrlLeadingSlash("css/features/leerling-mbo-hbo.css"),
+                WwwrootAssetCatalog.UrlLeadingSlash(LeerlingMboHboStylesheetPath),
                 WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-variant-b.css"),
                 WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-onboarding-v3.css"),
                 WwwrootAssetCatalog.UrlLeadingSlash("css/features/lobsy-coach-ssr-chrome.css"),

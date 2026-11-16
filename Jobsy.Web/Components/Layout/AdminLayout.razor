@@ -5,6 +5,7 @@
 @inject CultureState Culture
 @inject DeploymentEnvironmentLabel Env
 @inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <div class="admin-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
@@ -44,11 +45,15 @@
         </main>
     </div>
 
-    @if (RendererInfo.IsInteractive)
+    @if (_isInteractive)
     {
         <LobsyAssistantChat UiVariant="AssistantChatUiVariant.Business" />
         <FeedbackWidget HasBottomNav="false" />
         <ConsentReacceptDialog />
+    }
+    else if (_ssrBusinessAssistant)
+    {
+        <LobsyAssistantBusinessSsr HasBottomNav="false" />
     }
     <CookieConsentBanner />
     <SessionIdleGuard />
@@ -56,9 +61,23 @@
 
 @code {
     private bool _drawerOpen;
+    private bool _ssrBusinessAssistant;
+    private bool _isInteractive = true;
 
     protected override void OnInitialized()
     {
+        var user = HttpContextAccessor.HttpContext?.User;
+        try
+        {
+            _isInteractive = RendererInfo.IsInteractive;
+            _ssrBusinessAssistant = !_isInteractive
+                                    && AssistantChatHost.IsAvailableFor(user);
+        }
+        catch
+        {
+            _isInteractive = true;
+            _ssrBusinessAssistant = false;
+        }
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
     }

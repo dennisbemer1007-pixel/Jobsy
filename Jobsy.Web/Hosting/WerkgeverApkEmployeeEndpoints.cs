@@ -68,7 +68,7 @@ public static class WerkgeverApkEmployeeEndpoints
     private static async Task<IResult> WelcomePost(HttpContext http, JobsyApiClient api)
     {
         await api.WerkgeverApkEmployeeWelcomeAsync(http.RequestAborted);
-        return Results.Redirect(WerkgeverApkEntryPaths.Test("interesse"));
+        return Results.Redirect(WerkgeverApkEntryPaths.Vraag);
     }
 
     private static async Task<IResult> GetTestAsync(

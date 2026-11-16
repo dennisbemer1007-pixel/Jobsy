@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
@@ -15,6 +16,7 @@ public static class ScholenPortalSsrFrame
         string bodyHtml,
         ScholenPortalShell shell,
         CultureState culture,
+        ClaimsPrincipal? user = null,
         string? routePath = null)
     {
         var path = PageSeoCatalog.Normalize(routePath ?? shell.CurrentPath);
@@ -73,11 +75,20 @@ public static class ScholenPortalSsrFrame
         sb.Append(PublicRoutes.Accessibility);
         sb.Append("\">");
         sb.Append(WebUtility.HtmlEncode(culture["PublicFooter.Accessibility"]));
-        sb.Append("</a></footer></div>");
+        sb.Append("</a></footer>");
+
+        if (!shell.FeatureDisabled && AssistantChatHost.IsAvailableFor(user))
+        {
+            BusinessCoachSsr.AppendDock(sb, culture, shell.ShellKind != ScholenPortalShell.Kind.Unknown);
+        }
+
+        sb.Append("</div>");
         sb.Append("<script src=\"");
         sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/jobsy-dom-safe.js"));
         sb.Append("\" defer></script><script src=\"");
         sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/scholen-portal-ssr.js"));
+        sb.Append("\" defer></script><script src=\"");
+        sb.Append(WwwrootAssetCatalog.UrlLeadingSlash("js/lobsy-coach-ssr.js"));
         sb.Append("\" defer></script></body></html>");
         return sb.ToString();
     }

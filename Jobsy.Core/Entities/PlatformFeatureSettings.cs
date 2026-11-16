@@ -175,6 +175,15 @@ public class PlatformFeatureSettings
     /// <summary>Lobsy Loopbaan-APK for employers (MBO-style employee flow). Default false.</summary>
     public bool EmployerLoopbaanApkEnabled { get; set; }
 
+    /// <summary>Admin-filled price label for Loopbaan-APK Basis (empty = op aanvraag).</summary>
+    public string? LoopbaanApkBasisPrice { get; set; }
+
+    /// <summary>Admin-filled price label for Loopbaan-APK Uitgebreid (empty = op aanvraag).</summary>
+    public string? LoopbaanApkUitgebreidPrice { get; set; }
+
+    /// <summary>Free-text unit, e.g. &quot;per medewerker&quot;.</summary>
+    public string? LoopbaanApkPriceUnit { get; set; }
+
     /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
     public bool KandidatenkaartEnabled { get; set; }
 

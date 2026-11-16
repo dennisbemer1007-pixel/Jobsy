@@ -98,12 +98,12 @@
   display: none !important;
 }
 
-.app-shell--onboarding-ssr:has(.ob-wizard--richting-a) .lobsy-coach-dock {
+.app-shell--onboarding-ssr:has(.ob-wizard--richting-a) .lobsy-coach-dock:not(.lobsy-coach-dock--onboarding-b) {
   display: flex !important;
   pointer-events: none;
 }
 
-.app-shell--onboarding-ssr:has(.ob-wizard--richting-a) .lobsy-coach-dock__btn {
+.app-shell--onboarding-ssr:has(.ob-wizard--richting-a) .lobsy-coach-dock:not(.lobsy-coach-dock--onboarding-b) .lobsy-coach-dock__btn {
   pointer-events: auto;
 }
 

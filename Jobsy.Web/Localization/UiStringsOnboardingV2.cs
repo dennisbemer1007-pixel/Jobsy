@@ -327,7 +327,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Kreeft.Rail.Licht"] = english ? "Light · Your Compass" : "Licht · Jouw Kompas";
         map["Onboarding.Kreeft.Rail.LichtSubIdle"] = english ? "your result" : "je resultaat";
         map["Onboarding.Kreeft.Rail.StepLine"] = english ? "Step {0} · {1}" : "Stap {0} · {1}";
-        map["Onboarding.Welcome.Lead"] = english ? "In about 12 minutes we make your start profile together. Then your Compass shows who you are and which work fits you." : "In ongeveer 12 minuten maken we samen je startprofiel. Daarna zie je in je Kompas wie je bent en welk werk bij je past.";
+        map["Onboarding.Welcome.Lead"] = english
+            ? "In about 6 minutes we make your start profile together. Then your Compass shows who you are and which work fits you."
+            : "In ± 6 minuten maken we samen je startprofiel. Daarna zie je in je Kompas wie je bent en welk werk bij je past.";
         map["Onboarding.Rustig.WelcomeLead"] = english
             ? "In about 12 minutes we go through ten short steps together. Then your Compass is ready and you see which work fits you."
             : "In ongeveer 12 minuten doorlopen we samen tien korte stappen. Daarna staat je Kompas klaar en zie je welk werk bij je past.";
@@ -408,7 +410,22 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Step6.Suggest.ReasonProfile"] = english ? "Based on your background so far" : "Op basis van wat je tot nu toe invulde";
         map["Onboarding.Step6.Suggest.ReasonPopular"] = english ? "Often chosen in the region" : "Vaak gekozen in de regio";
         map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
-        map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
+        map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.WieBenJijQuestions"] = english ? "4 × 5 questions" : "4 × 5 vragen"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
+        map["Onboarding.StepOf"] = english ? "Step {0} of {1}" : "Stap {0} van {1}";
+        map["Onboarding.MinutesLeft"] = english ? "about {0} min left" : "nog ± {0} min";
+        map["Onboarding.V3.AllSavedCard"] = english
+            ? "Everything is saved — you can stop and continue later where you left off."
+            : "Alles is bewaard – stoppen mag, je gaat later verder waar je was";
+        map["Onboarding.V3.ProgressTitle"] = english ? "Progress" : "Voortgang";
+        map["Onboarding.V3.Status.Later"] = english ? "Up next" : "Daarna";
+        map["Onboarding.V3.Status.Todo"] = english ? "To do" : "Nog te doen";
+        map["Onboarding.V3.Status.Fraction"] = english ? "{0}/{1}" : "{0}/{1}";
+        map["Onboarding.V3.Tip.Step7"] = english
+            ? "Four short tests (about a minute each). You can pause anytime — answers are saved."
+            : "Vier korte tests (ongeveer een minuut per stuk). Pauzeren mag — antwoorden worden bewaard.";
+        map["Onboarding.V3.Tip.Step8"] = english ? "Pick what feels true now — there are no right or wrong answers." : "Kies wat nu bij je past — er zijn geen goede of foute antwoorden.";
+        map["Onboarding.V3.Tip.Step9"] = english ? "Think about the atmosphere where you work best." : "Denk aan de sfeer waarin jij het beste functioneert.";
+        map["Onboarding.V3.Tip.Step10"] = english ? "What matters to you at work? That guides your matches." : "Wat vind jij belangrijk op werk? Dat stuurt je matches.";
         AddPresets(map, english);
         AddWorkStatuses(map, english);
         AddDreamJobs(map, language);

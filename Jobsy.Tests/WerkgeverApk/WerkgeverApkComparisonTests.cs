@@ -9,9 +9,11 @@ public sealed class WerkgeverApkComparisonTests
     [Fact]
     public void BuildComparison_includes_starter_conversation_questions()
     {
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
         var dto = WerkgeverApkComparisonEngine.BuildComparison(
             PupilMboHboProgressState.Parse("{}"),
             new Dictionary<string, int>(),
+            catalog,
             SchoolLevel.Mbo3);
         Assert.True(dto.ConversationQuestions.Count >= 3);
     }
@@ -22,7 +24,8 @@ public sealed class WerkgeverApkComparisonTests
         var q = WerkgeverApkManagerQuestionCatalog.All[0];
         var employee = StateForQuestion(q, selfValue: 5);
         var manager = new Dictionary<string, int> { [q.Id] = 5 };
-        var dto = WerkgeverApkComparisonEngine.BuildComparison(employee, manager, SchoolLevel.Mbo3);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Uitgebreid);
+        var dto = WerkgeverApkComparisonEngine.BuildComparison(employee, manager, catalog, SchoolLevel.Mbo3);
         Assert.Contains(dto.Agree, t => t.Label == q.Label);
     }
 
@@ -32,31 +35,46 @@ public sealed class WerkgeverApkComparisonTests
         var q = WerkgeverApkManagerQuestionCatalog.All[0];
         var employee = StateForQuestion(q, selfValue: 1);
         var manager = new Dictionary<string, int> { [q.Id] = 5 };
-        var dto = WerkgeverApkComparisonEngine.BuildComparison(employee, manager, SchoolLevel.Mbo3);
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Uitgebreid);
+        var dto = WerkgeverApkComparisonEngine.BuildComparison(employee, manager, catalog, SchoolLevel.Mbo3);
         Assert.Contains(dto.Differ, t => t.Label == q.Label);
     }
 
     private static PupilMboHboProgressState StateForQuestion(WerkgeverApkManagerQuestion q, int selfValue)
     {
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
-        var block = q.Category == WerkgeverApkManagerQuestionCategory.Competence
-            ? PupilMboHboBlock.Competentie
-            : PupilMboHboBlock.Werkwaarden;
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Uitgebreid);
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var item in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
+        foreach (var item in catalog.Items)
         {
-            if (!string.IsNullOrWhiteSpace(q.EmployeeCompetenceDimension)
-                && string.Equals(item.Dimension, q.EmployeeCompetenceDimension, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(q.EmployeeCompetenceDimension))
             {
-                answers[item.Id] = selfValue;
+                if (item.DimensionA.Contains(q.EmployeeCompetenceDimension, StringComparison.OrdinalIgnoreCase))
+                {
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceA
+                        : WerkgeverApkAnswerValidation.AbChoiceB;
+                }
+                else if (item.DimensionB?.Contains(q.EmployeeCompetenceDimension, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceB
+                        : WerkgeverApkAnswerValidation.AbChoiceA;
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(q.EmployeeValueBarKey))
             {
-                var key = PupilMboHboDimensionLabels.BarGroupKey(item.Dimension);
-                if (key.Contains(q.EmployeeValueBarKey, StringComparison.OrdinalIgnoreCase))
+                if (item.DimensionA.Contains(q.EmployeeValueBarKey, StringComparison.OrdinalIgnoreCase))
                 {
-                    answers[item.Id] = selfValue;
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceA
+                        : WerkgeverApkAnswerValidation.AbChoiceB;
+                }
+                else if (item.DimensionB?.Contains(q.EmployeeValueBarKey, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    answers[item.Id] = selfValue >= 3
+                        ? WerkgeverApkAnswerValidation.AbChoiceB
+                        : WerkgeverApkAnswerValidation.AbChoiceA;
                 }
             }
         }
