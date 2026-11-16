@@ -82,7 +82,7 @@ public static class WerkgeverApkPakketMockupPages
         }
 
         sb.Append("\" />");
-        sb.Append("<h1>").Append(E(q.Heading ?? q.Question)).Append("</h1>");
+        sb.Append("<h1 id=\"wa-ab-q-title\">").Append(E(q.Heading ?? q.Question)).Append("</h1>");
         if (!string.IsNullOrWhiteSpace(q.Scenario))
         {
             sb.Append("<p class=\"scene\">").Append(E(q.Scenario)).Append("</p>");

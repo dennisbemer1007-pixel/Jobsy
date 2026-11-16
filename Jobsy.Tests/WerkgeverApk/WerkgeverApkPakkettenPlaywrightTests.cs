@@ -94,8 +94,6 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests
 
                 if (slug == "13-ab-vraag")
                 {
-                    var dots = page.Locator("[data-testid='wa-ab-scale'] .wa-ab-dot");
-                    Assert.Equal(5, await dots.CountAsync());
                     var labels = page.Locator(".wa-ab-dots__label");
                     var labelTexts = await labels.AllInnerTextsAsync();
                     Assert.Equal(["Zeker A", "Liever A", "Allebei", "Liever B", "Zeker B"], labelTexts);
@@ -111,13 +109,7 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests
                     Assert.Equal(boxA!.Width, boxB!.Width, 1);
                     Assert.Equal(boxA.Height, boxB.Height, 1);
 
-                    if (w == 390)
-                    {
-                        var dot = await dots.First.BoundingBoxAsync();
-                        Assert.NotNull(dot);
-                        Assert.True(dot!.Height >= 44);
-                        Assert.True(dot.Width >= 44);
-                    }
+                    await WerkgeverApkAbScaleLayoutAssert.AssertDotsClearOfCardsAsync(page, w, slug);
                 }
 
                 await page.ScreenshotAsync(new()

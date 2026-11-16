@@ -11,11 +11,12 @@ public static class WerkgeverApkAbAnswerScaleHtml
     public static string RenderBipolarRow(string optionA, string optionB, int? selected)
     {
         var sb = new StringBuilder();
-        sb.Append("""<div class="wa-ab-bipolar" data-testid="wa-ab-bipolar">""");
-        sb.Append("<p id=\"wa-ab-q-title\" class=\"wa-ab-bipolar__intro\">Wat past het beste bij jou?</p>");
+        sb.Append("""<div class="wa-ab-bipolar" data-testid="wa-ab-bipolar" aria-labelledby="wa-ab-q-title">""");
         sb.Append("<div class=\"wa-ab-bipolar__row\">");
         sb.Append(Card("a", optionA));
+        sb.Append("<div class=\"wa-ab-bipolar__scale\">");
         sb.Append(Scale(selected));
+        sb.Append("</div>");
         sb.Append(Card("b", optionB));
         sb.Append("</div></div>");
         return sb.ToString();
