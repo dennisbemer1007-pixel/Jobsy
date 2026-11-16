@@ -727,6 +727,10 @@
     "sha256": "bc7cee753e9d8df84cc044415b1860915b64764addb458659455f3e276202abe",
     "v": "20261115-catalog"
   },
+  "werkgever-apk/css/pakketten.css": {
+    "sha256": "d4fe14856c4217817a9e5b5b5973d767d8b5ee81c6f81f057489192b1c376d95",
+    "v": "20261116-01"
+  },
   "werkgever-apk/css/shared.css": {
     "sha256": "edb9065857811316c4d4b238fa38528b8140d8c33887c190cee074192e27483e",
     "v": "20261115-catalog"
@@ -738,5 +742,9 @@
   "werkgever-apk/img/lobsy-coach-b2.png": {
     "sha256": "9589875c4401aefdd3be5f2cf802ccaddc779b957441f32c9213b9b7482e3a34",
     "v": "20261115-catalog"
+  },
+  "werkgever-apk/js/wa-ab-scale.js": {
+    "sha256": "20dfe459f8ea1f9c6eb105db89138a28489b9a7de87f95d3f8eab2c8dbebf954",
+    "v": "20261116-01"
   }
 }
