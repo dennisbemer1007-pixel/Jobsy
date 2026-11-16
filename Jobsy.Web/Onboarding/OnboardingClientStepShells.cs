@@ -192,11 +192,8 @@ internal static class OnboardingClientStepShells
 
         var sb = new StringBuilder();
         sb.Append("<div class=\"ob-wizard__card ob-wizard__card--illustrated\" id=\"onboarding-field-transport\">");
-        sb.Append("<div class=\"ob-wizard__section-title ob-illustrated-step__field-label\" id=\"onboarding-transport-label\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Transport"]));
-        sb.Append("</div>");
         sb.Append("<fieldset aria-labelledby=\"onboarding-transport-label\">");
-        sb.Append("<legend class=\"visually-hidden\">");
+        sb.Append("<legend class=\"ob-wizard__section-title ob-illustrated-step__field-label\" id=\"onboarding-transport-label\">");
         sb.Append(WebUtility.HtmlEncode(culture["Onboarding.Transport"]));
         sb.Append("</legend>");
         sb.Append("<p class=\"ob-wizard__hint ob-wizard__section-hint\">");

@@ -156,6 +156,7 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
         if (await addJob.CountAsync() > 0)
         {
             await addJob.ClickAsync();
+            await Assertions.Expect(page.Locator(".ob-client-job")).ToHaveCountAsync(2);
         }
 
         await page.GetByTestId("onboarding-back").ClickAsync();

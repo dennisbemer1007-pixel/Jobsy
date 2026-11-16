@@ -761,6 +761,24 @@
     }
 }
 
+@media (max-width: 1023px) {
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen .strip,
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen .vacancy-list,
+  .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-list-rows {
+    padding-inline-end: max(0.5rem, var(--lobsy-coach-clear-inline, 5.5rem));
+    box-sizing: border-box;
+  }
+
+  .app-shell--banenkaart-shell .lobsy-coach-dock__btn--warm {
+    display: none !important;
+  }
+}
+
+.jobsy-discovery[data-banenkaart-ssr="1"].show-list .kb-lagen-main {
+  min-height: auto;
+  align-content: start;
+}
+
 /* Candidate banenkaart shell: map toggle is a sibling above .jobsy-discovery — give the grid remaining height. */
 @media (max-width: 899px) {
     .app-shell--banenkaart-shell.app-shell.has-bottom-nav {

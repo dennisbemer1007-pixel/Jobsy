@@ -47,6 +47,10 @@
   pointer-events: auto;
 }
 
+.lobsy-coach-dock:has(.lobsy-coach-dock__btn--lobster-b) .lobsy-coach-dock__btn--warm {
+  display: none !important;
+}
+
 .lobsy-coach-dock[data-lobsy-coach] .lobsy-coach-dock__btn--warm,
 .lobsy-coach-dock[data-ssr-coach] .lobsy-coach-dock__btn--warm {
   box-sizing: border-box;

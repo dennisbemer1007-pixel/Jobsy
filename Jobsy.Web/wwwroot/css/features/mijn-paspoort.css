@@ -390,7 +390,15 @@
         padding-inline-end: 5.5rem;
     }.app-shell:has(.passport-page) .app-main__content {
         padding-bottom: 5rem;
-    }}.passport-ssr-back {
+    }}@media (max-width: 1023px) {
+    .passport-page--illustrated .passport-layout,
+    .passport-page--illustrated .passport-tests__layout,
+    .passport-page--illustrated .passport-proof__card,
+    .passport-page--illustrated .passport-career__empty {
+        padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
+        box-sizing: border-box;
+    }
+}.passport-ssr-back {
     margin: 0 0 var(--space-4);
 }
 

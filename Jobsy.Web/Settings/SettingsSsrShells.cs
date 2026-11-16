@@ -25,9 +25,7 @@ internal static class SettingsSsrShells
 
     private static void AppendIntro(StringBuilder sb, CultureState culture)
     {
-        sb.Append("<header class=\"sollicitaties-intro cand-settings-intro\"><span class=\"sollicitaties-intro__eyebrow\">");
-        sb.Append(WebUtility.HtmlEncode(culture["Auth.Settings"]));
-        sb.Append("</span><h1 class=\"sollicitaties-intro__title\" tabindex=\"-1\">");
+        sb.Append("<header class=\"sollicitaties-intro cand-settings-intro\"><h1 class=\"sollicitaties-intro__title\" tabindex=\"-1\">");
         sb.Append(WebUtility.HtmlEncode(culture["CandidateSettings.Title"]));
         sb.Append("</h1><p class=\"sollicitaties-intro__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["CandidateSettings.Lead"]));
@@ -38,9 +36,7 @@ internal static class SettingsSsrShells
     {
         sb.Append("<nav class=\"cand-settings__nav\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["CandidateSettings.Title"]));
-        sb.Append("\"><div class=\"cand-settings__nav-group\"><h2>");
-        sb.Append(WebUtility.HtmlEncode(culture["CandidateSettings.NavSettings"]));
-        sb.Append("</h2>");
+        sb.Append("\"><div class=\"cand-settings__nav-group\">");
         AppendNavLink(sb, data, "mail", culture["CandidateSettings.Mail.Title"], culture["CandidateSettings.Mail.Desc"]);
         if (data.ProactiveOn)
         {

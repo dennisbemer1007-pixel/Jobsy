@@ -1536,10 +1536,6 @@
             if (!root) return;
             if (root.getAttribute("data-ob-client-mounted") === "1") return;
             var ssrForm = root.closest("form[data-ob-ssr-form]");
-            if (ssrForm && step >= 2 && step <= 4) {
-                root.setAttribute("data-ob-client-mounted", "1");
-                return;
-            }
             if (ssrForm && step >= 7 && step <= 10) {
                 root.setAttribute("data-ob-client-mounted", "1");
                 return;
@@ -1549,7 +1545,10 @@
                 initial = JSON.parse(root.getAttribute("data-initial") || "{}");
             } catch (e) { }
             var st = mountForStep(root, step, initial);
-            attachStepBff(root, step, st);
+            var ssrTilesOnly = ssrForm && step >= 2 && step <= 4;
+            if (!ssrTilesOnly) {
+                attachStepBff(root, step, st);
+            }
             if (roots) roots.set(root, st);
             else fallbackMap = fallbackMap || {};
             if (!roots) fallbackMap[root.id || "x"] = st;
@@ -1999,14 +1998,6 @@
             var step = parseInt(root.getAttribute("data-ob-client-step"), 10);
             if (!step) return;
             var ssrForm = root.closest("form[data-ob-ssr-form]");
-            if (ssrForm && step >= 2 && step <= 4) {
-                root.setAttribute("data-ob-client-mounted", "1");
-                return;
-            }
-            if (ssrForm && step >= 2 && step <= 4) {
-                root.setAttribute("data-ob-client-mounted", "1");
-                return;
-            }
             if (ssrForm && step >= 7 && step <= 10) {
                 root.setAttribute("data-ob-client-mounted", "1");
                 return;

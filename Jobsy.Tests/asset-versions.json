@@ -56,7 +56,7 @@
     "v": "20261025-59"
   },
   "css/features/banenkaart.css": {
-    "sha256": "c470f45f38165c833f02c3b3374735edbfd00679aba6da8c3027d0376093afd1",
+    "sha256": "3c3de9b8d7c58cc1150654ef2c4a13208160819790571c4bbde059bbb0f0e062",
     "v": "20261025-59"
   },
   "css/features/bedrijvenkaart.css": {
@@ -152,7 +152,7 @@
     "v": "20261011-03"
   },
   "css/features/kompas-illustrated.css": {
-    "sha256": "23dc6508631854dbb272cf7c7318ef29e534c3a0395b2ca033b3ef0941e79738",
+    "sha256": "22341719a98ef1ceb21f937aabb5f1512423fc1ab44444c37e2d818434273d2e",
     "v": "20261025-87"
   },
   "css/features/kreeft-reiskaart.css": {
@@ -180,11 +180,11 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "e184b4a9005e409a41817ea57007fcafc98d395cefdee517cb0c68d29018ccbd",
+    "sha256": "2ec9acb4d35cb1ef92330d7f34f4dd180071de47ff4f58a894c2a3b43d63b98f",
     "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {
-    "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a",
+    "sha256": "4d0cd7ea25da1a6a4e276303279eac4986cb7c99120fc785ce98e28d59227c0b",
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-ssr-chrome.css": {
@@ -204,7 +204,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "23b7aaf4a43a391a6516d0d86619de0ff2250d7327d7cb00b41b71b4a1d01245",
+    "sha256": "31391c900245f790236fb61958b26aaeb9bb1da48439aa1057161ba8e724a317",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
@@ -272,7 +272,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "14d5b213901d1262733a05dee931fa3b99c32a6b75c434f06bb746317ecd0d12",
+    "sha256": "058dd977e35c53eb1cd6f94d86f7332c865b962180b6e33605a7116ae2b311db",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -288,7 +288,7 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "dd3861943c41c1241b8b01aecb3699936b0024f5b2bbccee2e1216460208faa7",
+    "sha256": "ed7128a53726b26cf4956de0154687465787b6a652221ceb441c81403fe95c4e",
     "v": "20261022-79"
   },
   "css/features/opleidingen.css": {
@@ -340,7 +340,7 @@
     "v": "20261017-02"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "e1f4b5e511ccdad3d13130feac6ed73b62ca2e5e798fce9e0727d04e752f43b1",
+    "sha256": "8dc6734bf1bbfb39fce102a82c1ed60038fe18a6666944c24c57a9848fb5f4e9",
     "v": "20261025-18"
   },
   "css/features/stijl-a.css": {
@@ -588,7 +588,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "f85a1ef98606a2c0dfab4201bb05dc337d3052b884bec3bd7fb59ee285f44de3",
+    "sha256": "7c343474e668330bea39f67bbfd35878e192ec3e329afe39588ccdd201e158be",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
