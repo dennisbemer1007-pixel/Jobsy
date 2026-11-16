@@ -53,9 +53,20 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         };
         page.PageError += (_, err) => errors.Add(err);
 
-        if (KbE2e.SupportsTestSignIn(baseUrl))
+        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
         {
             await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
+        }
+        else if (KbE2e.SupportsTestSignIn(baseUrl))
+        {
+            if (!await FunctionalE2eAuth.EnsureGateCandidatePageLoginAsync(page, baseUrl))
+            {
+                throw new InvalidOperationException($"Could not log in at {baseUrl}.");
+            }
+
+            await page.GotoAsync(
+                baseUrl + "/candidate/applications",
+                new() { WaitUntil = WaitUntilState.NetworkIdle });
         }
         else if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
         {

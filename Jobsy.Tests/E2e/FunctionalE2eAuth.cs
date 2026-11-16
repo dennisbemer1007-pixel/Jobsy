@@ -11,6 +11,37 @@ public static class FunctionalE2eAuth
     private static string? _storageStatePath;
     private static string? _storageBaseUrl;
 
+    public static async Task<bool> EnsureGateCandidatePageLoginAsync(IPage page, string baseUrl)
+    {
+        await WarmupStackAsync(baseUrl);
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            }
+            catch
+            {
+                // retry after warmup
+            }
+
+            if (await TryDemoLoginAsync(page, baseUrl, email)
+                || await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+            {
+                return true;
+            }
+
+            await WarmupStackAsync(baseUrl);
+            await Task.Delay(1000 * (attempt + 1));
+        }
+
+        return false;
+    }
+
     public static async Task WarmupStackAsync(string baseUrl)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
