@@ -4,7 +4,7 @@ Handmatig geschreven items (geen sjabloon-combinaties). Export via `tools/werkge
 
 # Dekking Basis (~40) (CONCEPT)
 
-Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export_handcrafted_banks.py`.
+Handmatig geschreven items; export op 2026-11-16 via `tools/werkgever-apk/export_handcrafted_banks.py`.
 
 ## Samenvatting
 
@@ -27,9 +27,9 @@ Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export
 
 | Paar | Aantal |
 | --- | ---: |
-| A – S | 4 |
-| C – E | 4 |
-| I – R | 4 |
+| A – C | 4 |
+| E – I | 4 |
+| R – S | 4 |
 
 ## Competenties
 
@@ -49,11 +49,11 @@ Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export
 
 | Dimensie | Aantal meetpunten |
 | --- | ---: |
-| Werkwaarde – Betekenis (Impact) | 4 |
+| Werkwaarde – Betekenis (Impact) | 3 |
 | Werkwaarde – Prestatie (Achievement) | 4 |
 | Werkwaarde – Verbinding (Connection) | 4 |
-| Werkwaarde – Zekerheid (Stability) | 4 |
-| Werkwaarde – Zelfstandigheid (Autonomy) | 4 |
+| Werkwaarde – Zekerheid (Stability) | 6 |
+| Werkwaarde – Zelfstandigheid (Autonomy) | 3 |
 
 ## Blokken (display_blok)
 
@@ -64,7 +64,7 @@ Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export
 | 3 | 10 |
 # Dekking Uitgebreid (~200) (CONCEPT)
 
-Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export_handcrafted_banks.py`.
+Handmatig geschreven items; export op 2026-11-16 via `tools/werkgever-apk/export_handcrafted_banks.py`.
 
 ## Samenvatting
 
@@ -87,32 +87,20 @@ Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export
 
 | Paar | Aantal |
 | --- | ---: |
-| A – C | 6 |
-| A – E | 6 |
-| A – I | 6 |
-| A – R | 6 |
-| A – S | 6 |
-| C – E | 6 |
-| C – I | 6 |
-| C – R | 6 |
-| C – S | 6 |
-| E – I | 6 |
-| E – R | 6 |
-| E – S | 6 |
-| I – R | 6 |
-| I – S | 6 |
-| R – S | 6 |
+| A – C | 30 |
+| E – I | 30 |
+| R – S | 30 |
 
 ## Competenties
 
 | Dimensie | Aantal meetpunten |
 | --- | ---: |
 | Communiceren | 12 |
-| Contact maken | 12 |
-| Creativiteit / vernieuwen | 13 |
-| Flexibel aanpassen | 13 |
+| Contact maken | 13 |
+| Creativiteit / vernieuwen | 12 |
+| Flexibel aanpassen | 12 |
 | Klantgerichtheid | 13 |
-| Leren & ontwikkelen | 12 |
+| Leren & ontwikkelen | 13 |
 | Nauwkeurig werken | 13 |
 | Plannen & organiseren | 13 |
 | Resultaatgerichtheid | 13 |
@@ -124,11 +112,11 @@ Handmatig geschreven items; export op 2026-11-15 via `tools/werkgever-apk/export
 
 | Dimensie | Aantal meetpunten |
 | --- | ---: |
-| Werkwaarde – Betekenis (Impact) | 12 |
-| Werkwaarde – Prestatie (Achievement) | 12 |
-| Werkwaarde – Verbinding (Connection) | 12 |
-| Werkwaarde – Zekerheid (Stability) | 12 |
-| Werkwaarde – Zelfstandigheid (Autonomy) | 12 |
+| Werkwaarde – Betekenis (Impact) | 10 |
+| Werkwaarde – Prestatie (Achievement) | 10 |
+| Werkwaarde – Verbinding (Connection) | 10 |
+| Werkwaarde – Zekerheid (Stability) | 20 |
+| Werkwaarde – Zelfstandigheid (Autonomy) | 10 |
 
 ## Blokken (display_blok)
 

@@ -13,6 +13,15 @@ internal static class WerkgeverApkEmployeeDimensionScores
         SchoolLevel level = SchoolLevel.Mbo3)
     {
         _ = level;
+        if (!string.IsNullOrWhiteSpace(question.EmployeeCompetenceDimension))
+        {
+            var bipolar = WerkgeverApkAbScoring.BipolarScore(progress, catalog, question.EmployeeCompetenceDimension);
+            if (bipolar is not null)
+            {
+                return bipolar;
+            }
+        }
+
         var counts = WerkgeverApkAbScoring.CountDimensions(progress, catalog);
         if (!string.IsNullOrWhiteSpace(question.EmployeeCompetenceDimension))
         {

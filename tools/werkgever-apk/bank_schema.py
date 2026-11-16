@@ -12,7 +12,11 @@ BRON = "werkgever-loopbaan-apk-concept"
 KOP_AB = "Wat past het best bij jou?"
 KOP_CHECK = "Hoe goed past deze zin bij jou?"
 GENERIC_SITUATION = re.compile(
-    r"^Denk aan (je |een |uw )",
+    r"^(Denk aan |Plots komt|Even later blijkt)",
+    re.IGNORECASE,
+)
+FORBIDDEN_TEXT = re.compile(
+    r"\bplots|denk aan|wethouder|burgemeester|rampgebied|presentator|tv-programma|tv-show",
     re.IGNORECASE,
 )
 
@@ -33,6 +37,27 @@ SCHWARTZ = {
     "impact": "Werkwaarde – Betekenis (Impact)",
 }
 
+RIASEC_OPPOSITES = {
+    frozenset({"R", "S"}),
+    frozenset({"I", "E"}),
+    frozenset({"A", "C"}),
+}
+
+SCHWARTZ_OPPOSITES = {
+    frozenset({SCHWARTZ["stability"], SCHWARTZ["autonomy"]}),
+    frozenset({SCHWARTZ["achievement"], SCHWARTZ["connection"]}),
+    frozenset({SCHWARTZ["impact"], SCHWARTZ["stability"]}),
+}
+
+ALLOWED_SECTORS = {
+    "magazijn", "zorg", "winkel", "bouw", "schoonmaak", "horeca", "kantoor",
+    "logistiek", "productie", "transport", "techniek", "groen", "onderwijs",
+    "kinderopvang", "agrarisch", "ict", "financiën", "sport", "garage",
+    "beveiliging", "evenementen", "overheid",
+}
+
+MAX_OPTION_WORD_DIFF = 6
+
 BASIS_COMPETENCES = [
     "Samenwerken",
     "Resultaatgerichtheid",
@@ -50,6 +75,8 @@ UITGEBREID_COMPETENCES = BASIS_COMPETENCES + [
     "Nauwkeurig werken",
     "Flexibel aanpassen",
 ]
+
+ALL_COMPETENCES = set(UITGEBREID_COMPETENCES)
 
 
 @dataclass
@@ -75,19 +102,48 @@ def assert_b1(text: str, label: str) -> None:
         raise ValueError(f"{label}: meer dan 15 woorden: {text!r}")
 
 
+def riasec_letter(dim: str) -> str:
+    return dim.strip().split()[0]
+
+
 def validate_item_realism(it: Item, nr: int, bank: str) -> None:
-    assert_b1(it.situatie, f"{bank} nr{nr} situatie")
-    if it.soort == "ab":
-        assert_b1(it.optie_a, f"{bank} nr{nr} optie_a")
-        assert_b1(it.optie_b, f"{bank} nr{nr} optie_b")
-        if it.dimensie_a == it.dimensie_b:
-            raise ValueError(f"{bank} nr{nr}: gelijke dimensies")
-    else:
-        assert_b1(it.optie_a, f"{bank} nr{nr} check")
-    if GENERIC_SITUATION.match(it.situatie.strip()):
-        raise ValueError(f"{bank} nr{nr}: generieke situatie")
+    where = f"{bank} nr{nr}"
+    assert_b1(it.situatie, f"{where} situatie")
+    if it.sector not in ALLOWED_SECTORS:
+        raise ValueError(f"{where}: sector {it.sector!r} niet toegestaan")
+    texts = [it.situatie, it.optie_a, it.optie_b]
+    for text in texts:
+        if FORBIDDEN_TEXT.search(text) or GENERIC_SITUATION.match(text.strip()):
+            raise ValueError(f"{where}: verboden of generieke tekst: {text!r}")
     if not it.situatie.strip().endswith((".", "!", "?")):
-        raise ValueError(f"{bank} nr{nr}: situatie moet eindigen op leesteken")
+        raise ValueError(f"{where}: situatie moet eindigen op leesteken")
+
+    if it.soort == "check":
+        assert_b1(it.optie_a, f"{where} check")
+        if it.blok != "competentie" or it.dimensie_a not in ALL_COMPETENCES:
+            raise ValueError(f"{where}: check hoort bij een competentie: {it.dimensie_a!r}")
+        return
+
+    assert_b1(it.optie_a, f"{where} optie_a")
+    assert_b1(it.optie_b, f"{where} optie_b")
+    if word_count(it.optie_a) < 3 or word_count(it.optie_b) < 3:
+        raise ValueError(f"{where}: opties moeten een volledige handeling zijn")
+    if it.optie_a.strip().lower() == it.optie_b.strip().lower():
+        raise ValueError(f"{where}: gelijke opties")
+    if abs(word_count(it.optie_a) - word_count(it.optie_b)) > MAX_OPTION_WORD_DIFF:
+        raise ValueError(f"{where}: opties niet even zwaar qua lengte: {it.optie_a!r} / {it.optie_b!r}")
+
+    if it.blok == "interesse":
+        if frozenset({riasec_letter(it.dimensie_a), riasec_letter(it.dimensie_b)}) not in RIASEC_OPPOSITES:
+            raise ValueError(f"{where}: RIASEC niet tegengesteld: {it.dimensie_a} / {it.dimensie_b}")
+    elif it.blok == "werkwaarden":
+        if frozenset({it.dimensie_a, it.dimensie_b}) not in SCHWARTZ_OPPOSITES:
+            raise ValueError(f"{where}: Schwartz niet tegengesteld: {it.dimensie_a} / {it.dimensie_b}")
+    elif it.blok == "competentie":
+        if it.dimensie_a != it.dimensie_b or it.dimensie_a not in ALL_COMPETENCES:
+            raise ValueError(f"{where}: competentie-AB moet één dimensie hebben: {it.dimensie_a} / {it.dimensie_b}")
+    else:
+        raise ValueError(f"{where}: onbekend blok {it.blok!r}")
 
 
 def count_coverage(items: list[Item]) -> dict[str, Counter]:
@@ -128,6 +184,13 @@ def count_coverage(items: list[Item]) -> dict[str, Counter]:
 
 
 def validate_bank(name: str, items: list[Item], min_ri: int, min_comp: int, min_sw: int, comp_dims: list[str]) -> None:
+    opties = Counter(
+        o.strip().lower() for it in items if it.soort == "ab" for o in (it.optie_a, it.optie_b)
+    )
+    reused = [o for o, c in opties.items() if c > 1][:5]
+    if reused:
+        raise SystemExit(f"{name}: hergebruikte opties: {reused}")
+
     situaties = [it.situatie.strip().lower() for it in items]
     if len(situaties) != len(set(situaties)):
         dupes = [s for s, c in Counter(situaties).items() if c > 1][:5]

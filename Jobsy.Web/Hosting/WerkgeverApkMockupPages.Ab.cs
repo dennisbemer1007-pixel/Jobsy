@@ -22,7 +22,7 @@ public static class WerkgeverApkPakketMockupPages
         html = ReplaceBetweenMarkers(
             html,
             "<section class=\"card gold-top qcard\">",
-            "<div class=\"wa-ab-contrast__options\"",
+            "<div class=\"wa-ab-bipolar__row\"",
             BuildAbCardInner(q, blockLabel, progress, pct, antiforgery, postPath, error));
 
         html = html.Replace("Vraag 48 van ongeveer 200", progress, StringComparison.Ordinal);
@@ -105,8 +105,7 @@ public static class WerkgeverApkPakketMockupPages
         }
         else
         {
-            sb.Append(WerkgeverApkAbAnswerScaleHtml.RenderContrastCards(q.OptionA ?? "", q.OptionB ?? ""));
-            sb.Append(WerkgeverApkAbAnswerScaleHtml.RenderScale(q.Value));
+            sb.Append(WerkgeverApkAbAnswerScaleHtml.RenderBipolarRow(q.OptionA ?? "", q.OptionB ?? "", q.Value));
         }
 
         if (!string.IsNullOrWhiteSpace(error))

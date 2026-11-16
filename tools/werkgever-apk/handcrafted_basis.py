@@ -1,414 +1,241 @@
-"""Hand-authored Loopbaan-APK Basis items (40); elke situatie is uniek en concreet."""
+"""Hand-authored Loopbaan-APK Basis items (40): bipolaire A/B-keuzes met echte tegenpolen.
+
+Interesse:   alleen R<->S, I<->E, A<->C (12 items, 4 per paar).
+Competentie: één competentie per item; optie_a = sterke pool, optie_b = tegenpool (18 items, 2 per competentie).
+Werkwaarden: alleen Zekerheid<->Zelfstandigheid, Prestatie<->Verbinding, Betekenis<->Zekerheid (10 items).
+"""
 from __future__ import annotations
 
-from bank_schema import KOP_AB, RIASEC, SCHWARTZ, Item
+from bank_schema import BASIS_COMPETENCES, KOP_AB, RIASEC, SCHWARTZ, Item
 
 __all__ = ["load_basis_items"]
 
-INTERESSE: list[tuple[str, str, str, str, str, str]] = [
-    (
-        "logistiek",
-        "Bij het laden schuift een zware pallet scheef op de helling.",
-        "R",
-        "Zet de pallet met de heftruck recht.",
-        "I",
-        "Bekijk eerst het laadplan op papier.",
-    ),
-    (
-        "zorg",
-        "Tijdens de ronde vraagt een cliënt waarom zijn thee zo laat komt.",
-        "S",
-        "Ga even zitten en leg het rustig uit.",
-        "A",
-        "Maak een leuk kaartje op het dienblad.",
-    ),
-    (
-        "horeca",
-        "Het terras loopt vol terwijl de reserveringenlijst vol staat.",
-        "E",
-        "Stel een extra tafel buiten voor en start met serveren.",
-        "C",
-        "Werk de wachtlijst eerst netjes bij.",
-    ),
-    (
-        "retail",
-        "Een klant twijfelt tussen twee jassen in de spiegel.",
-        "I",
-        "Vraag waar hij warm of koud last van heeft.",
-        "R",
-        "Laat hem de dikke jas even aanraken.",
-    ),
-    (
-        "kantoor",
-        "Het team moet een poster maken voor de personeelsdag.",
-        "A",
-        "Schets met kleur een speelse opzet.",
-        "S",
-        "Vraag iedereen welk thema ze leuk vinden.",
-    ),
-    (
-        "bouw",
-        "De opdrachtgever wil de planning voor volgende week alvast.",
-        "C",
-        "Zet de werkzaamheden rij voor rij in de planning.",
-        "E",
-        "Bel meteen twee onderaannemers voor extra manschappen.",
-    ),
-    (
-        "transport",
-        "Onderweg knippert het waarschuwingslampje van de vrachtwagen.",
-        "R",
-        "Stop veilig en controleer het peil van de olie.",
-        "I",
-        "Zoek in de handleiding wat het lampje betekent.",
-    ),
-    (
-        "productie",
-        "Op de lijn blijven kleine krasjes op een metalen onderdeel zichtbaar.",
-        "S",
-        "Overleg met collega's over de acceptatiegrens.",
-        "A",
-        "Bedenk een nieuwe polish-stap aan de band.",
-    ),
-    (
-        "onderwijs",
-        "Voor de excursie moet de klas morgen buiten de deur.",
-        "E",
-        "Regel snel een extra bus bij de vervoerder.",
-        "C",
-        "Controleer de aanwezigheidslijst en groepsindeling.",
-    ),
-    (
-        "logistiek",
-        "In het gangpad ligt een open doos met kleine onderdelen.",
-        "I",
-        "Tel de stukjes en vergelijk met de pakbon.",
-        "R",
-        "Plak de doos dicht en zet hem op een kar.",
-    ),
-    (
-        "zorg",
-        "Een familielid belt boos omdat niemand terugbelt over medicatie.",
-        "A",
-        "Schrijf een korte samenvatting voor op de balie.",
-        "S",
-        "Bel terug en luister eerst naar hun zorgen.",
-    ),
-    (
-        "horeca",
-        "De keuken krijgt een nieuwe allergenenlijst voor het menu.",
-        "C",
-        "Zet alle gerechten opnieuw in het systeem.",
-        "E",
-        "Stel voor het wisselende weekmenu zelf samen te stellen.",
-    ),
-]
-
-COMPETENTIE: list[tuple[str, str, str, str, str, str]] = [
-    (
-        "retail",
-        "Aan de ingang staat een nieuwe stagiair die nog niemand kent.",
-        "con",
-        "Stel jezelf voor en wijs de kluisjes aan.",
-        "kla",
-        "Vraag welke klantenvraag hij als eerste wil doen.",
-    ),
-    (
-        "kantoor",
-        "In de vergaderzaal moet je lastig nieuws aan collega's vertellen.",
-        "com",
-        "Leg rustig uit wat er precies verandert.",
-        "str",
-        "Blijf kalm als er interrupties komen.",
-    ),
-    (
-        "bouw",
-        "Het inschietwerk op de verdieping moet voor donker klaar.",
-        "res",
-        "Rond vandaag dit stuk af voor de controle.",
-        "ler",
-        "Vraag de voorman welke methode hij adviseert.",
-    ),
-    (
-        "transport",
-        "Bij het depot staat een klant te wachten op een pakket.",
-        "kla",
-        "Zoek zijn zending en zet die voorop.",
-        "sam",
-        "Vraag een collega om de route te dekken.",
-    ),
-    (
-        "productie",
-        "De orderpicker loopt achter door storing op de band.",
-        "str",
-        "Houd rustig tempo als collega's gaan roepen.",
-        "ler",
-        "Oefen eerst even met het nieuwe scannertje.",
-    ),
-    (
-        "onderwijs",
-        "Tijdens de toets loopt een leerling steeds op en neer.",
-        "str",
-        "Stuur hem rustig terug zonder de klas te storen.",
-        "sam",
-        "Stap samen met de mentor het gesprek in.",
-    ),
-    (
-        "logistiek",
-        "Drie vrachten moeten tegelijk dezelfde laadklep op.",
-        "sam",
-        "Stem met beide chauffeurs de volgorde af.",
-        "str",
-        "Blijf kalm als de telefoon blijft gaan.",
-    ),
-    (
-        "zorg",
-        "De ochtendronde loopt uit door onverwachte hulpvragen.",
-        "res",
-        "Rond de visites af die nu op de lijst staan.",
-        "con",
-        "Sprek de wachtende cliënt bij de deur even aan.",
-    ),
-    (
-        "horeca",
-        "Een tafel klaagt dat hun bestelling nog steeds niet komt.",
-        "kla",
-        "Vraag door tot je snapt wat er misging.",
-        "ler",
-        "Noteer wat je leert voor de keukenbriefing.",
-    ),
-    (
-        "retail",
-        "De kassafile stroomt door een trage scanner.",
-        "pla",
-        "Zet een wachtlijst en rij-strook neer.",
-        "sam",
-        "Schakel een collega in bij de andere kassa.",
-    ),
-    (
-        "kantoor",
-        "Na een cursus moet je het nieuwe CRM-systeem gaan gebruiken.",
-        "ler",
-        "Vraag een korte demo en probeer meteen.",
-        "com",
-        "Leg teamgenoten uit hoe jij het doet.",
-    ),
-    (
-        "bouw",
-        "Het veiligheidsinspecteur komt onverwacht op de bouwplaats.",
-        "kla",
-        "Wijs hem het veilige pad voor bezoekers aan.",
-        "res",
-        "Pak eerst de open gevaren direct aan.",
-    ),
-    (
-        "transport",
-        "De tablet met ritgegevens toont een adres dat niet klopt.",
-        "pla",
-        "Schrijf het juiste adres en route op.",
-        "cre",
-        "Stel een tijdelijke navigatietruc voor.",
-    ),
-    (
-        "productie",
-        "Voor de audit moeten alle batches traceerbaar zijn.",
-        "pla",
-        "Leg etiketten en tijden per batch vast.",
-        "res",
-        "Zorg dat de serie vandaag af is.",
-    ),
-    (
-        "onderwijs",
-        "Een ouder wil weten hoe haar kind het op stage doet.",
-        "con",
-        "Begroet haar en nodig haar even binnen.",
-        "com",
-        "Leg bondig uit wat de stageleider zei.",
-    ),
-    (
-        "logistiek",
-        "In de scanner pakt de software een verkeerde SKU.",
-        "pla",
-        "Maak een korte lijst met correcte codes.",
-        "cre",
-        "Bedenk een sticker om verkeerde scans te voorkomen.",
-    ),
-    (
-        "zorg",
-        "Twee cliënten willen tegelijk hulp bij aankleden.",
-        "cre",
-        "Bedenk wie eerst met welke trick kan.",
-        "con",
-        "Spreek de ander vriendelijk toe bij de deur.",
-    ),
-    (
-        "horeca",
-        "Het nieuwe dessin op de kaart moet morgen in de vitrine.",
-        "cre",
-        "Maak een proefopstelling met restchocolade.",
-        "com",
-        "Licht kort uit wat er in de vitrine staat.",
-    ),
-]
-
-WAARDEN: list[tuple[str, str, str, str, str, str]] = [
-    (
-        "retail",
-        "Je baas vraagt of je zondag wilt invallen in de winkel.",
-        "sta",
-        "Kies liever voor vaste weekenden zoals afgesproken.",
-        "aut",
-        "Kies zelf of je die zondag wilt draaien.",
-    ),
-    (
-        "kantoor",
-        "Het team viert een grote deal met gebak op kantoor.",
-        "con",
-        "Wil liever samen lachen dan alleen scoren.",
-        "ach",
-        "Wil het resultaat op het bord zien staan.",
-    ),
-    (
-        "bouw",
-        "Er is onduidelijkheid over wie het eindcontroleformulier invult.",
-        "sta",
-        "Houd je aan de vaste stappen op papier.",
-        "imp",
-        "Wil dat de klant veilig naar huis gaat.",
-    ),
-    (
-        "transport",
-        "Collega's appen elkaar buiten werktijd over ritten.",
-        "con",
-        "Wil graag betrokken blijven bij het team.",
-        "ach",
-        "Wil vooral zien dat ritten op tijd zijn.",
-    ),
-    (
-        "productie",
-        "Je mag zelf bedenken hoe je de kwaliteit controleert.",
-        "imp",
-        "Wil dat goede producten de klant bereiken.",
-        "aut",
-        "Wil zelf je controlelijst kunnen kiezen.",
-    ),
-    (
-        "onderwijs",
-        "De school wil dat je vaste mentoruren houdt dit jaar.",
-        "aut",
-        "Plant je mentoruur zelf in de week.",
-        "sta",
-        "Houdt liever vaste spreekuren elke maand.",
-    ),
-    (
-        "logistiek",
-        "Het management deelt een prijs uit voor nul incidenten.",
-        "ach",
-        "Streeft naar de beloning met het team.",
-        "con",
-        "Wil vooral samen veilig werken op de vloer.",
-    ),
-    (
-        "zorg",
-        "Je krijgt ruimte om een cliëntproject te starten.",
-        "imp",
-        "Wil dat de cliënt echt baat heeft.",
-        "sta",
-        "Wil dat alles binnen de regels blijft.",
-    ),
-    (
-        "horeca",
-        "De chef laat je de lunchspecial zelf bedenken.",
-        "aut",
-        "Kiest zelf het gerecht van de dag.",
-        "imp",
-        "Kiest iets waar gasten blij van worden.",
-    ),
-    (
-        "retail",
-        "In de personeelswinkel hangt een wedstrijd voor meeste service.",
-        "ach",
-        "Wil bovenaan het leaderboard komen.",
-        "con",
-        "Wil vooral met het team meedoen.",
-    ),
-]
-
-COMP = {
-    "sam": "Samenwerken",
-    "res": "Resultaatgerichtheid",
-    "str": "Stressbestendigheid",
-    "cre": "Creativiteit / vernieuwen",
-    "con": "Contact maken",
-    "com": "Communiceren",
-    "pla": "Plannen & organiseren",
-    "kla": "Klantgerichtheid",
-    "ler": "Leren & ontwikkelen",
+# (sector, situatie, optie eerste letter, optie tweede letter); richting wisselt per item.
+RIASEC_PAREN: dict[tuple[str, str], list[tuple[str, str, str, str]]] = {
+    ("R", "S"): [
+        ("magazijn", "Een collega in het magazijn heeft last van zijn rug.",
+         "Zet de zware dozen op de onderste stelling.",
+         "Vraag hoe het gaat en regel een rustpauze."),
+        ("horeca", "Een gast op het terras zit aan een wiebelende tafel.",
+         "Pak gereedschap en maak de tafelpoot recht.",
+         "Vraag of hij liever verhuist en praat even bij."),
+        ("zorg", "Een bewoner kan zijn rolstoel niet meer goed besturen.",
+         "Controleer de banden en stel de besturing bij.",
+         "Ga naast hem zitten en vraag wat hij nodig heeft."),
+        ("bouw", "Een nieuwe leerling staat voor het eerst op de bouwplaats.",
+         "Geef hem een hamer en laat hem de eerste plank spijkeren.",
+         "Loop met hem rond en stel hem voor aan het team."),
+    ],
+    ("I", "E"): [
+        ("winkel", "De verkoop van thee in de winkel loopt achter.",
+         "Zoek in de kassadata uit welke soorten niet verkopen.",
+         "Bedenk een actie en overtuig de eigenaar om te starten."),
+        ("logistiek", "Een klant wil sneller geleverd krijgen dan nu kan.",
+         "Reken uit waar in de planning tijd te winnen is.",
+         "Bel de klant en verkoop hem een duurdere snelle levering."),
+        ("kantoor", "De afdeling moet een nieuw telefoonsysteem kiezen.",
+         "Vergelijk drie systemen op prijs, functies en storingen.",
+         "Onderhandel met een leverancier over een flinke korting."),
+        ("productie", "De fabriek houdt veel afval over bij het snijden van plaat.",
+         "Meet na welke machine-instelling het meeste afval geeft.",
+         "Vraag een offerte voor een zuinigere machine en pitch die."),
+    ],
+    ("A", "C"): [
+        ("schoonmaak", "De personeelsruimte van het schoonmaakbedrijf is kaal en rommelig.",
+         "Verf een muur en hang zelfgemaakte posters op.",
+         "Zet alles in genummerde kasten en maak een lijst."),
+        ("horeca", "De menukaart van het restaurant moet vernieuwd worden.",
+         "Teken de kaart zelf met eigen illustraties.",
+         "Zet alle gerechten, prijzen en allergenen in een tabel."),
+        ("kantoor", "Voor de personeelsdag moet de zaal worden ingericht.",
+         "Versier de zaal met bloemen en gekleurd licht.",
+         "Maak een plattegrond en een tijdschema voor de opbouw."),
+        ("winkel", "De nieuwe kerstspullen komen binnen in de winkel.",
+         "Bouw een sfeervolle kerstetalage bij de ingang.",
+         "Boek alles in en zet het per soort in de schappen."),
+    ],
 }
 
-WAARDE = {
-    "aut": SCHWARTZ["autonomy"],
-    "con": SCHWARTZ["connection"],
-    "ach": SCHWARTZ["achievement"],
-    "sta": SCHWARTZ["stability"],
-    "imp": SCHWARTZ["impact"],
+# (sector, situatie, optie sterke pool, optie tegenpool) per competentie
+COMPETENTIE_ITEMS: dict[str, list[tuple[str, str, str, str]]] = {
+    "Samenwerken": [
+        ("magazijn", "Er staan vanochtend tien pallets klaar om uit te laden.",
+         "Verdeel het werk met je collega's en laad samen.",
+         "Pak je eigen pallets en laad alleen door."),
+        ("zorg", "De afdeling moet het weekrooster nog invullen.",
+         "Overleg met het team wie welke dienst wil.",
+         "Maak zelf een voorstel en leg het voor."),
+    ],
+    "Resultaatgerichtheid": [
+        ("bouw", "Het dak moet vandaag dicht zijn voor de regen.",
+         "Werk door tot het dak helemaal dicht is.",
+         "Stop op de afgesproken tijd en maak morgen af."),
+        ("winkel", "Het is koopjesdag en het doel staat op het bord.",
+         "Zet alles op de verkoop en haal het doel.",
+         "Houd de rust en blijf in je gewone tempo."),
+    ],
+    "Stressbestendigheid": [
+        ("horeca", "Op vrijdagavond hangen er twintig bonnen in de keuken.",
+         "Blijf rustig en werk de bonnen een voor een af.",
+         "Zeg dat het te druk is en vraag extra handen."),
+        ("transport", "Je staat in de file en de klant belt steeds.",
+         "Blijf kalm rijden en bel hem later terug.",
+         "Zet de auto aan de kant en regel eerst een nieuwe afspraak."),
+    ],
+    "Creativiteit / vernieuwen": [
+        ("productie", "De verpakking van de lijn past niet meer in de doos.",
+         "Bedenk een nieuwe manier om in te pakken.",
+         "Bestel dezelfde doos in een andere maat."),
+        ("kinderopvang", "Het regent en de kinderen kunnen niet naar buiten.",
+         "Verzin een nieuw spel met wat je hebt.",
+         "Speel het bekende spel dat altijd goed gaat."),
+    ],
+    "Contact maken": [
+        ("kantoor", "Er begint vandaag een nieuwe collega op de afdeling.",
+         "Loop naar hem toe en stel jezelf voor.",
+         "Laat hem eerst rustig op zijn plek aankomen."),
+        ("bouw", "Op de bouwplaats werkt vandaag een ploeg van een ander bedrijf.",
+         "Groet de ploeg en vraag hoe zij werken.",
+         "Werk door en laat iedereen zijn eigen werk doen."),
+    ],
+    "Communiceren": [
+        ("kantoor", "Een collega maakt steeds dezelfde fout in het systeem.",
+         "Bespreek het met haar en leg het rustig uit.",
+         "Leg een korte checklist op haar bureau."),
+        ("zorg", "Een familie wil weten hoe het met vader gaat.",
+         "Nodig hen uit en vertel alles rustig na.",
+         "Geef een kort overzicht en wijs naar het dossier."),
+    ],
+    "Plannen & organiseren": [
+        ("transport", "Morgen moet je veertig pakketten in drie wijken bezorgen.",
+         "Maak vanavond een route met tijden per wijk.",
+         "Begin morgen en kies onderweg de beste volgorde."),
+        ("horeca", "Zaterdag komt er een bruiloft met honderd gasten.",
+         "Schrijf een tijdschema voor keuken en bediening.",
+         "Houd de dag globaal en stuur bij waar nodig."),
+    ],
+    "Klantgerichtheid": [
+        ("winkel", "Een klant wil een jas ruilen zonder bonnetje.",
+         "Zoek een oplossing zodat hij tevreden naar huis gaat.",
+         "Houd je aan de ruilregels van de winkel."),
+        ("schoonmaak", "Een klant vraagt of je ook de ramen wilt zemen.",
+         "Doe het extra, want zij vraagt het zelf.",
+         "Wijs op de afgesproken lijst met taken."),
+    ],
+    "Leren & ontwikkelen": [
+        ("productie", "De fabriek schaft een nieuwe machine aan.",
+         "Meld je aan om als eerste ermee te leren werken.",
+         "Blijf werken met de machine die je goed kent."),
+        ("kantoor", "Het bedrijf stapt over op een nieuw boekhoudprogramma.",
+         "Volg de training en probeer het meteen uit.",
+         "Werk in het oude programma tot de overgang echt komt."),
+    ],
+}
+
+# (sector, situatie, optie eerste waarde, optie tweede waarde); richting wisselt per item.
+WERKWAARDE_PAREN: dict[tuple[str, str], list[tuple[str, str, str, str]]] = {
+    ("stability", "autonomy"): [
+        ("magazijn", "Je mag kiezen hoe je volgend jaar in het magazijn werkt.",
+         "Neem het vaste contract met vaste dagen en uren.",
+         "Neem het flexcontract en kies zelf je werkdagen."),
+        ("schoonmaak", "Je kunt je schoonmaakroute vast laten of zelf plannen.",
+         "Houd je vaste route met vaste tijden per gebouw.",
+         "Bepaal zelf in welke volgorde je de gebouwen doet."),
+        ("kantoor", "Je kunt je werkweek op twee manieren inrichten.",
+         "Werk elke dag van negen tot vijf op kantoor.",
+         "Verdeel je uren zelf en werk deels thuis."),
+    ],
+    ("achievement", "connection"): [
+        ("winkel", "De winkel start een verkoopwedstrijd voor de beste medewerker.",
+         "Ga voor de eerste plaats en de bonus.",
+         "Help collega's zodat het hele team het goed doet."),
+        ("bouw", "Het bouwteam krijgt een bonus als het project eerder klaar is.",
+         "Werk extra uren om de bonus binnen te halen.",
+         "Zorg dat de ploeg samen pauzeert en iedereen meekomt."),
+        ("horeca", "De chef kiest aan het eind van de maand de beste medewerker.",
+         "Werk hard om met je naam op het bord te staan.",
+         "Zet je in voor een goede sfeer in de keuken."),
+        ("transport", "De vervoerder meet welke chauffeur de meeste ritten op tijd rijdt.",
+         "Probeer bovenaan de ranglijst te komen.",
+         "Neem een nieuwe collega mee en leer hem de route."),
+    ],
+    ("impact", "stability"): [
+        ("zorg", "Je kunt kiezen tussen twee werkplekken in de zorg.",
+         "Werk in een nieuw project voor eenzame ouderen.",
+         "Werk op een vaste afdeling met duidelijke taken."),
+        ("groen", "Een hoveniersbedrijf zoekt iemand voor twee soorten klussen.",
+         "Leg schooltuinen aan waar kinderen groenten leren kweken.",
+         "Onderhoud vaste tuinen bij bedrijven met vaste afspraken."),
+        ("winkel", "De winkelketen zoekt een medewerker voor twee taken.",
+         "Zet een inzamelactie op voor de voedselbank.",
+         "Doe de vaste kassataken met duidelijke werktijden."),
+    ],
 }
 
 
-def load_basis_items() -> list[Item]:
+def _flip(idx: int) -> bool:
+    return idx % 2 == 1
+
+
+def _interesse_items() -> list[Item]:
+    rounds: list[list[Item]] = []
+    for k in range(4):
+        rnd: list[Item] = []
+        for (first, second), rows in RIASEC_PAREN.items():
+            sector, sit, o1, o2 = rows[k]
+            d1, d2 = RIASEC[first], RIASEC[second]
+            if _flip(k):
+                o1, o2, d1, d2 = o2, o1, d2, d1
+            rnd.append(
+                Item("interesse", 1, "ab", sit, KOP_AB, o1, d1, o2, d2, sector)
+            )
+        rounds.append(rnd)
+    return [it for rnd in rounds for it in rnd]
+
+
+def _competentie_items() -> list[Item]:
     items: list[Item] = []
-    for sector, situatie, la, oa, lb, ob in INTERESSE:
-        items.append(
-            Item(
-                blok="interesse",
-                display_blok=1,
-                soort="ab",
-                situatie=situatie,
-                kop=KOP_AB,
-                optie_a=oa,
-                dimensie_a=RIASEC[la],
-                optie_b=ob,
-                dimensie_b=RIASEC[lb],
-                sector=sector,
+    for k in range(2):
+        for comp in BASIS_COMPETENCES:
+            sector, sit, hoog, laag = COMPETENTIE_ITEMS[comp][k]
+            items.append(
+                Item("competentie", 2, "ab", sit, KOP_AB, hoog, comp, laag, comp, sector)
             )
-        )
-    for sector, situatie, ka, oa, kb, ob in COMPETENTIE:
-        items.append(
-            Item(
-                blok="competentie",
-                display_blok=2,
-                soort="ab",
-                situatie=situatie,
-                kop=KOP_AB,
-                optie_a=oa,
-                dimensie_a=COMP[ka],
-                optie_b=ob,
-                dimensie_b=COMP[kb],
-                sector=sector,
-            )
-        )
-    for sector, situatie, ka, oa, kb, ob in WAARDEN:
-        items.append(
-            Item(
-                blok="werkwaarden",
-                display_blok=3,
-                soort="ab",
-                situatie=situatie,
-                kop=KOP_AB,
-                optie_a=oa,
-                dimensie_a=WAARDE[ka],
-                optie_b=ob,
-                dimensie_b=WAARDE[kb],
-                sector=sector,
-            )
-        )
     return items
 
 
+def _werkwaarden_items() -> list[Item]:
+    items: list[Item] = []
+    n = 0
+    for k in range(4):
+        for (first, second), rows in WERKWAARDE_PAREN.items():
+            if k >= len(rows):
+                continue
+            sector, sit, o1, o2 = rows[k]
+            d1, d2 = SCHWARTZ[first], SCHWARTZ[second]
+            if _flip(n):
+                o1, o2, d1, d2 = o2, o1, d2, d1
+            n += 1
+            items.append(Item("werkwaarden", 3, "ab", sit, KOP_AB, o1, d1, o2, d2, sector))
+    return items
+
+
+def load_basis_items() -> list[Item]:
+    return _interesse_items() + _competentie_items() + _werkwaarden_items()
+
+
 if __name__ == "__main__":
-    from bank_schema import BASIS_COMPETENCES, count_coverage, validate_bank
+    from collections import Counter
+
+    from bank_schema import count_coverage, validate_bank
 
     data = load_basis_items()
-    validate_bank("handcrafted_basis", data, 4, 4, 4, BASIS_COMPETENCES)
+    validate_bank("handcrafted_basis", data, 4, 4, 3, BASIS_COMPETENCES)
+    counts = Counter(it.blok for it in data)
+    if dict(counts) != {"interesse": 12, "competentie": 18, "werkwaarden": 10}:
+        raise SystemExit(f"handcrafted_basis: onverwachte blokken {dict(counts)}")
     cov = count_coverage(data)
     print("handcrafted_basis ok", len(data), dict(cov["meta"]))
+    print("riasec", dict(sorted(cov["riasec"].items())))
+    print("competentie", dict(sorted(cov["competentie"].items())))
+    print("schwartz", dict(sorted(cov["schwartz"].items())))

@@ -7,29 +7,39 @@ namespace Jobsy.Web.Hosting;
 
 public static class WerkgeverApkAbAnswerScaleHtml
 {
-    public static string RenderContrastCards(string optionA, string optionB)
+    /// <summary>Mockup 13d: A | dot scale | B (stacked op mobiel).</summary>
+    public static string RenderBipolarRow(string optionA, string optionB, int? selected)
     {
         var sb = new StringBuilder();
-        sb.Append("""<div class="wa-ab-contrast" role="group" aria-labelledby="wa-ab-q-title">""");
-        sb.Append("<p id=\"wa-ab-q-title\" class=\"wa-ab-contrast__intro\">Wat past het beste bij jou?</p>");
-        sb.Append("<div class=\"wa-ab-contrast__options\">");
-        sb.Append("""<div class="wa-ab-contrast__opt wa-ab-contrast__opt--a" data-testid="wa-ab-contrast-a"><span class="wa-ab-contrast__tag" aria-hidden="true">A</span><p>""");
-        sb.Append(E(optionA));
-        sb.Append("</p></div>");
-        sb.Append("""<div class="wa-ab-contrast__opt wa-ab-contrast__opt--b" data-testid="wa-ab-contrast-b"><span class="wa-ab-contrast__tag" aria-hidden="true">B</span><p>""");
-        sb.Append(E(optionB));
-        sb.Append("</p></div></div></div>");
+        sb.Append("""<div class="wa-ab-bipolar" data-testid="wa-ab-bipolar">""");
+        sb.Append("<p id=\"wa-ab-q-title\" class=\"wa-ab-bipolar__intro\">Wat past het beste bij jou?</p>");
+        sb.Append("<div class=\"wa-ab-bipolar__row\">");
+        sb.Append(Card("a", optionA));
+        sb.Append(Scale(selected));
+        sb.Append(Card("b", optionB));
+        sb.Append("</div></div>");
         return sb.ToString();
     }
 
-    public static string RenderScale(int? selected)
+    private static string Card(string side, string text)
     {
         var sb = new StringBuilder();
-        sb.Append("""<div class="wa-ab-scale answers answers--contrast" role="radiogroup" aria-label="Jouw keuze op de schaal" data-testid="wa-ab-scale">""");
-        foreach (var (value, label) in WerkgeverApkAbContrastScale.Labels)
+        sb.Append($"<div class=\"wa-ab-contrast__opt wa-ab-contrast__opt--{side}\" data-testid=\"wa-ab-contrast-{side}\">");
+        sb.Append($"<span class=\"wa-ab-contrast__tag\" aria-hidden=\"true\">{side.ToUpperInvariant()}</span>");
+        sb.Append("<p>").Append(E(text)).Append("</p></div>");
+        return sb.ToString();
+    }
+
+    private static string Scale(int? selected)
+    {
+        var sb = new StringBuilder();
+        sb.Append(
+            """<div class="wa-ab-dots" role="radiogroup" aria-label="Jouw keuze op de schaal" data-testid="wa-ab-scale">""");
+        sb.Append("<div class=\"wa-ab-dots__row\" role=\"presentation\">");
+        foreach (var (value, _) in WerkgeverApkAbContrastScale.Labels)
         {
             var isSel = selected == value;
-            sb.Append("<button type=\"button\" class=\"ans");
+            sb.Append("<button type=\"button\" class=\"wa-ab-dot");
             if (isSel)
             {
                 sb.Append(" sel");
@@ -40,19 +50,24 @@ public static class WerkgeverApkAbAnswerScaleHtml
             sb.Append("\" aria-checked=\"");
             sb.Append(isSel ? "true" : "false");
             sb.Append("\" aria-label=\"");
-            sb.Append(E($"{label}, optie {value} van 5"));
+            sb.Append(E(LabelFor(value)));
             sb.Append("\" tabindex=\"");
             sb.Append(TabIndexFor(value, selected));
-            sb.Append("\"><span class=\"lvl\" aria-hidden=\"true\"><i style=\"height:");
-            sb.Append(WerkgeverApkAbContrastScale.FillPercent(value).ToString(CultureInfo.InvariantCulture));
-            sb.Append("%\"></i></span>");
-            sb.Append(E(label));
-            sb.Append("</button>");
+            sb.Append("\"><span class=\"wa-ab-dot__ring\" aria-hidden=\"true\"></span></button>");
         }
 
-        sb.Append("</div>");
+        sb.Append("</div><div class=\"wa-ab-dots__labels\" aria-hidden=\"true\">");
+        foreach (var (_, label) in WerkgeverApkAbContrastScale.Labels)
+        {
+            sb.Append("<span class=\"wa-ab-dots__label\">").Append(E(label)).Append("</span>");
+        }
+
+        sb.Append("</div></div>");
         return sb.ToString();
     }
+
+    private static string LabelFor(int value) =>
+        WerkgeverApkAbContrastScale.Labels.First(l => l.Value == value).LabelNl + $", optie {value} van 5";
 
     private static int TabIndexFor(int value, int? selected)
     {
@@ -61,7 +76,7 @@ public static class WerkgeverApkAbAnswerScaleHtml
             return value == s ? 0 : -1;
         }
 
-        return value == WerkgeverApkAbContrastScale.Labels[0].Value ? 0 : -1;
+        return value == WerkgeverApkAbContrastScale.FullA ? 0 : -1;
     }
 
     private static string E(string? value) => WebUtility.HtmlEncode(value ?? "");

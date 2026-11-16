@@ -1,4 +1,3 @@
-using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen.MboHbo;
 
 namespace Jobsy.Core.WerkgeverApk;
@@ -62,6 +61,36 @@ public static class WerkgeverApkAbScoring
         return (int)Math.Clamp(Math.Round(1 + ratio * 4, MidpointRounding.AwayFromZero), 1, 5);
     }
 
+    /// <summary>
+    /// Absolute 1–5 score from bipolar competentie-items (A = sterke pool, B = tegenpool van dezelfde dimensie).
+    /// Null als er voor deze dimensie nog geen bipolair antwoord is.
+    /// </summary>
+    public static int? BipolarScore(
+        PupilMboHboProgressState progress,
+        WerkgeverApkEmployeeAbCatalog catalog,
+        string dimensionKey)
+    {
+        var weights = new List<int>();
+        foreach (var item in catalog.Items)
+        {
+            if (item.Kind != WerkgeverApkAbItemKind.Ab
+                || string.IsNullOrWhiteSpace(item.DimensionB)
+                || !string.Equals(item.DimensionA, item.DimensionB, StringComparison.OrdinalIgnoreCase)
+                || !DimensionKeyMatches(item.DimensionA, dimensionKey)
+                || !progress.Answers.TryGetValue(item.Id, out var value)
+                || !WerkgeverApkAnswerValidation.IsValidForItem(item, value))
+            {
+                continue;
+            }
+
+            weights.Add(WerkgeverApkAbContrastScale.BipolarLikertFromAnswer(value));
+        }
+
+        return weights.Count == 0
+            ? null
+            : (int)Math.Clamp(Math.Round(weights.Average(), MidpointRounding.AwayFromZero), 1, 5);
+    }
+
     public static PupilMboHboScoring.BlockOutcome BuildInteresseOutcome(
         PupilMboHboProgressState progress,
         WerkgeverApkEmployeeAbCatalog catalog)
@@ -123,7 +152,7 @@ public static class WerkgeverApkAbScoring
         return issues;
     }
 
-    /// <summary>Weighted poles like <see cref="PupilG78ContrastLikertScorer"/> (1–5).</summary>
+    /// <summary>Gewogen tegenpolen: Zeker=2, Liever=1, Allebei=0.</summary>
     public static void ApplyAbContrastAnswer(IDictionary<string, int> counts, WerkgeverApkAbItem item, int value)
     {
         if (!WerkgeverApkAnswerValidation.IsValidAbContrast(value))
@@ -131,18 +160,24 @@ public static class WerkgeverApkAbScoring
             return;
         }
 
-        switch (value)
+        if (!string.IsNullOrWhiteSpace(item.DimensionB)
+            && string.Equals(item.DimensionA, item.DimensionB, StringComparison.OrdinalIgnoreCase))
         {
-            case WerkgeverApkAbContrastScale.FullA or WerkgeverApkAbContrastScale.LeanA:
-                Bump(counts, item.DimensionA, PupilG78ContrastLikertScorer.TowardA(value));
-                break;
-            case WerkgeverApkAbContrastScale.LeanB or WerkgeverApkAbContrastScale.FullB:
-                Bump(counts, item.DimensionB, PupilG78ContrastLikertScorer.TowardB(value));
-                break;
-            case WerkgeverApkAbContrastScale.Both:
-                Bump(counts, item.DimensionA, 3);
-                Bump(counts, item.DimensionB, 3);
-                break;
+            var likert = WerkgeverApkAbContrastScale.BipolarLikertFromAnswer(value);
+            Bump(counts, item.DimensionA, likert);
+            return;
+        }
+
+        var towardA = WerkgeverApkAbContrastScale.WeightTowardA(value);
+        var towardB = WerkgeverApkAbContrastScale.WeightTowardB(value);
+        if (towardA > 0)
+        {
+            Bump(counts, item.DimensionA, towardA);
+        }
+
+        if (towardB > 0)
+        {
+            Bump(counts, item.DimensionB, towardB);
         }
     }
 

@@ -94,10 +94,13 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests
 
                 if (slug == "13-ab-vraag")
                 {
-                    var scale = page.Locator("[data-testid='wa-ab-scale'] [data-wa-ab-value]");
-                    Assert.Equal(5, await scale.CountAsync());
-                    Assert.Contains("Veel meer A", await scale.First.TextContentAsync() ?? "");
-                    Assert.Contains("Veel meer B", await scale.Last.TextContentAsync() ?? "");
+                    var dots = page.Locator("[data-testid='wa-ab-scale'] .wa-ab-dot");
+                    Assert.Equal(5, await dots.CountAsync());
+                    var labels = page.Locator(".wa-ab-dots__label");
+                    var labelTexts = await labels.AllInnerTextsAsync();
+                    Assert.Equal(["Zeker A", "Liever A", "Allebei", "Liever B", "Zeker B"], labelTexts);
+                    await Assertions.Expect(page.Locator("text=Veel meer")).ToHaveCountAsync(0);
+                    await Assertions.Expect(page.Locator("text=Een beetje")).ToHaveCountAsync(0);
 
                     var cards = page.Locator(".wa-ab-contrast__opt");
                     Assert.Equal(2, await cards.CountAsync());
@@ -107,6 +110,14 @@ public sealed class WerkgeverApkPakkettenPlaywrightTests
                     Assert.NotNull(boxB);
                     Assert.Equal(boxA!.Width, boxB!.Width, 1);
                     Assert.Equal(boxA.Height, boxB.Height, 1);
+
+                    if (w == 390)
+                    {
+                        var dot = await dots.First.BoundingBoxAsync();
+                        Assert.NotNull(dot);
+                        Assert.True(dot!.Height >= 44);
+                        Assert.True(dot.Width >= 44);
+                    }
                 }
 
                 await page.ScreenshotAsync(new()

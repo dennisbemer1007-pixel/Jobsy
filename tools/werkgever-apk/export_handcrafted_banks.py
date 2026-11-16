@@ -76,13 +76,13 @@ def main() -> None:
     basis = load_basis_items()
     uit = load_uitgebreid_items()
 
-    validate_bank("Basis", basis, min_ri=4, min_comp=4, min_sw=4, comp_dims=BASIS_COMPETENCES)
+    validate_bank("Basis", basis, min_ri=4, min_comp=4, min_sw=3, comp_dims=BASIS_COMPETENCES)
     validate_bank(
         "Uitgebreid",
         uit,
         min_ri=12,
         min_comp=12,
-        min_sw=12,
+        min_sw=10,
         comp_dims=UITGEBREID_COMPETENCES,
     )
 

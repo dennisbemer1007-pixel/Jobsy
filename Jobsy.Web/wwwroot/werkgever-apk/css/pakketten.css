@@ -40,20 +40,22 @@
 .active-pill{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:var(--radius-pill);background:var(--gold-soft);color:var(--brand);font-size:13px;font-weight:700;margin:0 0 12px;border:1px solid var(--gold-line)}
 .active-pill em{font-style:normal;font-weight:600;color:var(--muted);font-size:12px}
 
-/* G78-style contrast poles (equal cards) + five-point scale */
-.wa-ab-contrast__intro{font-size:15px;font-weight:700;color:var(--brand);margin:0 0 10px}
-.wa-ab-contrast__options{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch;margin:0 0 14px}
+/* Mockup 13d: A — dot scale — B (bipolaire rij) */
+.wa-ab-bipolar{margin:0 0 8px}
+.wa-ab-bipolar__intro{font-size:15px;font-weight:700;color:var(--brand);margin:0 0 10px}
+.wa-ab-bipolar__row{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,168px) minmax(0,1fr);gap:12px;align-items:stretch}
 .wa-ab-contrast__opt{box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 12px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:5.5rem;height:100%;min-width:0;box-shadow:var(--shadow)}
 .wa-ab-contrast__opt p{margin:8px 0 0;line-height:1.35;flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px;font-weight:700;color:var(--brand);width:100%}
 .wa-ab-contrast__tag{display:inline-flex;align-items:center;justify-content:center;min-width:2rem;font-weight:700;color:var(--brand);font-size:14px}
-.wa-ab-scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 4px}
-.wa-ab-scale .ans{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:112px;border-radius:16px;background:#f4efe4;border:2px solid #dccfb6;font-size:13px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;padding:8px 6px;min-width:0;text-align:center;line-height:1.2}
-.wa-ab-scale.answers--contrast .ans{white-space:normal;font-size:12px;line-height:1.25;padding:10px 8px;min-height:72px}
-.wa-ab-scale .ans .lvl{width:30px;height:30px;border-radius:50%;border:3px solid var(--brand);position:relative;overflow:hidden;background:#fff;flex:none}
-.wa-ab-scale .ans .lvl i{position:absolute;left:0;right:0;bottom:0;top:auto;width:100%;display:block;background:var(--brand)}
-.wa-ab-scale .ans.sel{background:var(--brand-deep);border-color:var(--brand-deep);color:#fff;box-shadow:0 0 0 3px rgba(201,162,39,.45)}
-.wa-ab-scale .ans.sel .lvl{border-color:var(--gold)}
-.wa-ab-scale .ans.sel .lvl i{background:var(--gold)}
+.wa-ab-dots{display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0;height:100%}
+.wa-ab-dots__row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-items:center}
+.wa-ab-dot{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:0;margin:0 auto;border:0;background:transparent;cursor:pointer;border-radius:50%;font:inherit}
+.wa-ab-dot__ring{display:block;width:22px;height:22px;border-radius:50%;border:2.5px solid var(--border);background:#fff;box-sizing:border-box;transition:border-color .12s,background .12s,box-shadow .12s}
+.wa-ab-dot:hover .wa-ab-dot__ring{border-color:var(--brand);box-shadow:0 0 0 2px var(--accent-soft)}
+.wa-ab-dot:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.wa-ab-dot.sel .wa-ab-dot__ring{border-color:var(--brand-deep);background:var(--brand-deep);box-shadow:0 0 0 3px rgba(201,162,39,.45)}
+.wa-ab-dots__labels{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center}
+.wa-ab-dots__label{font-size:10px;font-weight:600;color:var(--muted);line-height:1.15;padding:0 1px}
 
 /* Legacy binary card grid (unused) */
 .ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
@@ -118,11 +120,11 @@
   .pk-layout,
   .pk-layout.wide,
   .ab-grid,
-  .wa-ab-contrast__options,
-  .wa-ab-scale,
-  .time-row{grid-template-columns:1fr !important;gap:10px}
-  .wa-ab-scale .ans{min-height:52px;font-size:15px;padding:12px 16px;flex-direction:row;justify-content:flex-start;gap:14px;text-align:left}
-  .wa-ab-scale .ans .lvl{width:28px;height:28px;flex:none}
+  .wa-ab-bipolar__row,
+  .time-row{grid-template-columns:1fr !important;gap:12px}
+  .wa-ab-dots__row{gap:8px;padding:4px 0}
+  .wa-ab-dot{min-width:48px;min-height:48px}
+  .wa-ab-dots__label{font-size:11px}
   .pkg{padding:12px 14px}
   .pkg h2{font-size:16px}
   .pkg li{padding-bottom:6px;font-size:12px}
