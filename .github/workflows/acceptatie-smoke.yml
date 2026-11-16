@@ -18,7 +18,7 @@ jobs:
       JOBSY_E2E_CANDIDATE_EMAIL: ${{ secrets.JOBSY_E2E_CANDIDATE_EMAIL }}
       JOBSY_E2E_CANDIDATE_PASSWORD: ${{ secrets.JOBSY_E2E_CANDIDATE_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Skip when Acc base URL secret is missing
         id: gate
@@ -32,7 +32,7 @@ jobs:
 
       - name: Setup .NET
         if: steps.gate.outputs.skip != 'true'
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload screenshots
         if: always() && steps.gate.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: acceptatie-smoke-screenshots
           path: artifacts/playwright-smoke/**
@@ -84,7 +84,7 @@ jobs:
 
       - name: Open GitHub issue on failure
         if: failure() && steps.gate.outputs.skip != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const title = `Acceptatie smoke FAILED (${new Date().toISOString().slice(0,16)} UTC)`;
