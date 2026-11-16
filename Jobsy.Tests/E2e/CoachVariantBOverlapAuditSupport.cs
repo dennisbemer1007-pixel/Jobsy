@@ -289,10 +289,10 @@ internal static class CoachVariantBOverlapAuditSupport
         return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
     }
 
-  internal static async Task<OverlapAuditDto> EvaluateOnboardingCoachOverlapAsync(IPage page)
-  {
-    var json = await page.EvaluateAsync<string>(
-      """
+    internal static async Task<OverlapAuditDto> EvaluateOnboardingCoachOverlapAsync(IPage page)
+    {
+        var json = await page.EvaluateAsync<string>(
+          """
       () => JSON.stringify((() => {
         const coachBtn = document.querySelector('#lobsy-coach-btn.lobsy-coach-dock__btn--lobster-b, #lobsy-coach-btn');
         if (!coachBtn) return { ok: true, skip: true, reason: 'no-coach', hits: [] };
@@ -339,8 +339,8 @@ internal static class CoachVariantBOverlapAuditSupport
         return { ok: hits.length === 0, skip: false, reason: hits.length ? hits.join('; ') : 'ok', hits };
       })())
       """);
-    return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
-  }
+        return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
+    }
 
     private static JsonSerializerOptions JsonOpts() => new()
     {
