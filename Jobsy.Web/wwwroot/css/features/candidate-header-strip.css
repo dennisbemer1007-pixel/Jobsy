@@ -219,6 +219,37 @@
   margin-top: 0;
 }
 
+@media (max-width: 899px) {
+  .app-shell--candidate:has(.kompas-page-wrap) {
+    overflow-x: clip;
+  }
+
+  .kompas-page-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    box-sizing: border-box;
+  }
+
+  .kompas-page-wrap > .kreeft-header-strip,
+  .kompas-page-wrap > .sollicitaties-hero-strip {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+  }
+
+  .kompas-page-wrap .kompas--ssr-hub,
+  .kompas-page-wrap .kompas-hub-layout,
+  .kompas-page-wrap .kompas-hub-layout__main,
+  .kompas-page-wrap .kompas-tabs,
+  .kompas-page-wrap .kreeft-reiskaart.reis {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
 .kompas-page-wrap > .kreeft-header-strip[data-kreeft-strip="licht-kompas"] .sollicitaties-hero-strip__img.desk {
   object-position: 50% 42%;
 }

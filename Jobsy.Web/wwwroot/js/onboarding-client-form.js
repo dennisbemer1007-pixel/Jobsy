@@ -2020,10 +2020,122 @@
         return field;
     }
 
+    var ssrMiniSaveChains = new WeakMap();
+
+    function ssrMiniSaveChain(form) {
+        if (!ssrMiniSaveChains.has(form)) {
+            ssrMiniSaveChains.set(form, Promise.resolve());
+        }
+        return ssrMiniSaveChains.get(form);
+    }
+
+    function enqueueSsrMiniSave(form, task) {
+        var next = ssrMiniSaveChain(form).then(task).catch(function () { });
+        ssrMiniSaveChains.set(form, next);
+        return next;
+    }
+
+    function miniQuestionUrl(step, q1) {
+        return "/candidate/start?step=" + step + "&q=" + q1;
+    }
+
+    function applyMiniPickUi(btn) {
+        var card = btn.closest(".ob-client-mini-q");
+        if (!card) {
+            return;
+        }
+        card.querySelectorAll('button[name="obMiniPick"]').forEach(function (tile) {
+            var on = tile === btn;
+            tile.classList.toggle("is-selected", on);
+        });
+        var val = btn.value || btn.getAttribute("value") || "";
+        var parts = val.split(":");
+        if (parts.length !== 2) {
+            return;
+        }
+        var qid = parseInt(parts[0], 10);
+        var score = parseInt(parts[1], 10);
+        if (!qid || !(score >= 1 && score <= 5)) {
+            return;
+        }
+        var name = "miniAnswers[" + qid + "]";
+        var input = card.querySelector('input[name="' + name + '"]');
+        if (!input) {
+            input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            card.appendChild(input);
+        }
+        input.value = String(score);
+    }
+
+    function bindSsrMiniPickQueue(form) {
+        var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
+        if (step < 7 || step > 10) {
+            return;
+        }
+        if (form.__obSsrMiniPickBound) {
+            return;
+        }
+        form.__obSsrMiniPickBound = true;
+
+        form.querySelectorAll('button[name="obMiniPick"]').forEach(function (btn) {
+            btn.addEventListener("click", function (ev) {
+                if (!window.jobsyOnboardingSsrSave) {
+                    return;
+                }
+                ev.preventDefault();
+                ev.stopPropagation();
+                applyMiniPickUi(btn);
+                var qField = form.querySelector('input[name="obMiniQ"]');
+                var qNow = qField ? parseInt(qField.value, 10) || 1 : 1;
+                var bar = form.querySelector(".test-flow__bar");
+                var total = bar ? bar.querySelectorAll("span").length : 5;
+                var consentBox = form.querySelector('input[name="consentRequested"]');
+                var payload = { answers: readMiniAnswersFromForm(form) };
+                if (step === 7 && consentBox) {
+                    payload.consentRequested = !!consentBox.checked;
+                }
+                var chromeSaved = document.querySelector(".ob-v3-chrome__saved");
+                enqueueSsrMiniSave(form, function () {
+                    return window.jobsyOnboardingSsrSave.putStep(form, step, payload)
+                        .then(function (res) {
+                            return res.json().then(function (body) {
+                                return { ok: res.ok, body: body };
+                            }).catch(function () {
+                                return { ok: res.ok, body: {} };
+                            });
+                        })
+                        .then(function (result) {
+                            if (!result.ok) {
+                                if (chromeSaved) {
+                                    chromeSaved.textContent = "Niet bewaard · Opnieuw";
+                                }
+                                throw new Error("save-failed");
+                            }
+                            if (chromeSaved) {
+                                chromeSaved.textContent = "✓ Alles is bewaard";
+                            }
+                            if (result.body && result.body.redirectUrl) {
+                                window.location.assign(result.body.redirectUrl);
+                                return;
+                            }
+                            if (qNow < total) {
+                                window.location.assign(miniQuestionUrl(step, qNow + 1));
+                                return;
+                            }
+                            window.location.reload();
+                        });
+                });
+            }, true);
+        });
+    }
+
     function bindSsrOnboardingForm() {
         document.querySelectorAll("form[data-ob-ssr-form]").forEach(function (form) {
             if (form.__obSsrFormBound) return;
             form.__obSsrFormBound = true;
+            bindSsrMiniPickQueue(form);
             form.querySelectorAll('button[name="obNav"], input[type="submit"][name="obNav"]').forEach(function (btn) {
                 if (btn.getAttribute("form") === "ob-step6-dream-unknown-form") {
                     return;

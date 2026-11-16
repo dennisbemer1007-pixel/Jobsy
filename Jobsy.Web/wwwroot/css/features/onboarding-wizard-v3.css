@@ -69,9 +69,18 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 }
 
 .admin-topbar--candidate-onboarding .page-help__btn {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
   font-size: 0;
   line-height: 0;
   color: transparent;
+  overflow: visible;
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
 }
@@ -864,8 +873,15 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 
 @media (max-width: 1023px) {
   .ob-v3-step-wrap {
-    padding: var(--space-3) var(--space-5) 0;
-    max-width: none;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-3) var(--space-4) 0;
+    margin-inline: 0;
+  }
+
+  .ob-v3-step-card {
+    margin-inline: 0;
   }
 }
 
@@ -1397,10 +1413,15 @@ a.ob-v3-dfoot__back:hover {
 
   .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-wrap {
     padding-inline: var(--space-4);
-    margin-inline: auto;
-    max-width: 36rem;
+    margin-inline: 0;
+    max-width: 100%;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-main-col,
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card {
+    padding-inline-end: var(--space-4);
   }
 
   .ob-v3-dfoot--mini .ob-v3-dfoot__start {

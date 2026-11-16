@@ -20,7 +20,7 @@
     "v": "20261028-02"
   },
   "css/critical.css": {
-    "sha256": "b99e52e0e5dbb2031657add041791959403885fadb2bfc9260dcecc56cd5a90a",
+    "sha256": "b9d2e31d51f56f7fad8d277961429f4f4f1bf39282b6e3f021721e104003fab2",
     "v": "20261023-37"
   },
   "css/features/account-mfa.css": {
@@ -64,7 +64,7 @@
     "v": "20261027-10"
   },
   "css/features/candidate-header-strip.css": {
-    "sha256": "772c26b9860f8a3a4ca3ce6291fd230325d19e845fc7760dba62618e3d5e7c60",
+    "sha256": "b5736a099d959aaa409baabf77d70d88fe0bdb3b0ce10321322c4d6f6fb4325a",
     "v": "20261025-36"
   },
   "css/features/candidate-header-tablet.css": {
@@ -180,7 +180,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "2ec9acb4d35cb1ef92330d7f34f4dd180071de47ff4f58a894c2a3b43d63b98f",
+    "sha256": "a682be91325ee586d9e05964c5de2e9a796bbecf64481c23f3027b4f8acb5ef0",
     "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -192,7 +192,7 @@
     "v": "20261115-03"
   },
   "css/features/lobsy-coach-variant-b.css": {
-    "sha256": "bda600e970538091f9d25ceb2b70f5313415319d8a487ddc384cf82940bcbb51",
+    "sha256": "594d9e20d0c48e4dbab4131cd43cdf47589b2d3394f6bfafff4bbcee855db09f",
     "v": "20261115-04"
   },
   "css/features/match-desktop.css": {
@@ -272,7 +272,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "058dd977e35c53eb1cd6f94d86f7332c865b962180b6e33605a7116ae2b311db",
+    "sha256": "1bcecb283bcfe575d194b88e7898bf1acc3aac98944a794c4b03716fa816f8cb",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -340,7 +340,7 @@
     "v": "20261017-02"
   },
   "css/features/sollicitaties-page.css": {
-    "sha256": "e1f4b5e511ccdad3d13130feac6ed73b62ca2e5e798fce9e0727d04e752f43b1",
+    "sha256": "48b4d72e3975778c1a40b03ca80116b36385f19deb05458f9b6dba8001952d61",
     "v": "20261025-18"
   },
   "css/features/stijl-a.css": {
@@ -492,7 +492,7 @@
     "v": "20261104-cluster1"
   },
   "js/jobsy-basemap-warm.js": {
-    "sha256": "27ebc83cec49b06ada74b621180ef8e1fefdf694d4f619c897d07651afe8d040",
+    "sha256": "48aa6e4ea0948e5a40499bb9204614cc03c7b91a2e0da5755a197115fac83677",
     "v": "20261023-19"
   },
   "js/jobsy-dom-safe.js": {
@@ -504,7 +504,7 @@
     "v": "20261025-87"
   },
   "js/jobsyMapLibre.min.js": {
-    "sha256": "cb98ada52fbf88b370df11b4b7f1d4694463477c108918071ad613c699c6dc5a",
+    "sha256": "00d28bffa584daf35d5856ac853291ef06b85774f83b073322e0d48639ce4ced",
     "v": "20261027-54"
   },
   "js/kb-ext-add.js": {
@@ -588,7 +588,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "7c343474e668330bea39f67bbfd35878e192ec3e329afe39588ccdd201e158be",
+    "sha256": "fcc182e5cdabeda3bfa97cfc2ee5b934d2df3e1f9d4f4fcbe7b2bdbde92cb537",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
