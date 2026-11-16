@@ -885,12 +885,33 @@ public static class PupilLeerlingJourneyEndpoints
         return Results.Redirect(ok is null ? "/leerling/vo-paspoort?error=save" : "/leerling/droombaan");
     }
 
-    private static async Task<IResult> GetMboUitlegAsync(HttpContext http, CultureState culture, IAntiforgery af)
+    private static async Task<IResult> GetMboUitlegAsync(
+        HttpContext http,
+        JobsyApiClient api,
+        CultureState culture,
+        IAntiforgery af,
+        CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
         culture.InitializeFromRequest(http);
-        var body = PupilMboHboSsrHtml.Uitleg(PupilLeerlingSsrParts.AntiforgeryField(af, http), MboIntroPath);
-        return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg");
+        PupilMboHboOverviewDto? overview = null;
+        IReadOnlyList<PupilMboHboBlockStatusDto> blocks;
+        try
+        {
+            overview = await api.GetMboHboOverviewAsync(ct);
+            blocks = overview?.Blocks ?? PupilMboHboSsrHtml.DefaultWelcomeBlocks();
+        }
+        catch (HttpRequestException)
+        {
+            blocks = PupilMboHboSsrHtml.DefaultWelcomeBlocks();
+        }
+
+        var body = PupilMboHboSsrHtml.Uitleg(
+            PupilLeerlingSsrParts.AntiforgeryField(af, http),
+            MboIntroPath,
+            blocks);
+
+        return MboHtml(http, "Ontdek wat bij je past", body, "/leerling/mbo-hbo/uitleg", overview?.SchoolName, overview?.ClassLabel);
     }
 
     private static async Task<IResult> PostMboIntroAsync(HttpContext http, JobsyApiClient api, IAntiforgery af, CancellationToken ct)
@@ -900,8 +921,8 @@ public static class PupilLeerlingJourneyEndpoints
             return Results.Redirect("/leerling/mbo-hbo/uitleg");
         }
 
-        var res = await api.MarkMboHboIntroSeenAsync(ct);
-        return Results.Redirect(res?.RedirectPath ?? PupilMboHboEntryPaths.Overzicht);
+        _ = await api.MarkMboHboIntroSeenAsync(ct);
+        return Results.Redirect("/leerling/mbo-hbo/test/vakken");
     }
 
     private static async Task<IResult> GetMboOverzichtAsync(HttpContext http, JobsyApiClient api, CultureState culture, CancellationToken ct)
@@ -910,7 +931,7 @@ public static class PupilLeerlingJourneyEndpoints
         culture.InitializeFromRequest(http);
         var model = await api.GetMboHboOverviewAsync(ct);
         var body = model is null ? "<div class=\"mhbo-wrap\"><p>Kon niet laden.</p></div>" : PupilMboHboSsrHtml.Overzicht(model);
-        return MboHtml(http, "Jouw testen", body, "/leerling/mbo-hbo/overzicht");
+        return MboHtml(http, "Jouw testen", body, "/leerling/mbo-hbo/overzicht", model?.SchoolName, model?.ClassLabel);
     }
 
     private static async Task<IResult> GetMboTestAsync(
@@ -973,14 +994,26 @@ public static class PupilLeerlingJourneyEndpoints
             q = ApplyPendingAnswer(q, pending);
         }
 
+        PupilMboHboOverviewDto? overview = null;
+        try
+        {
+            overview = await api.GetMboHboOverviewAsync(ct);
+        }
+        catch (HttpRequestException)
+        {
+            // Sidebar optional when overview cannot load.
+        }
+
+        var blocks = overview?.Blocks ?? Array.Empty<PupilMboHboBlockStatusDto>();
         var body = PupilMboHboSsrHtml.TestQuestion(
             q,
             blockKey,
+            blocks,
             culture,
             PupilLeerlingSsrParts.AntiforgeryField(af, http),
             $"/leerling/mbo-hbo/test/{Uri.EscapeDataString(blockKey)}/answer",
             error);
-        return MboHtml(http, "Test", body, route);
+        return MboHtml(http, "Test", body, route, overview?.SchoolName, overview?.ClassLabel);
     }
 
     private static async Task<IResult> PostMboTestAsync(
@@ -1106,7 +1139,7 @@ public static class PupilLeerlingJourneyEndpoints
         }
 
         var body = PupilMboHboSsrHtml.Paspoort(model, culture, pdfHref, pdfNotice);
-        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort");
+        return MboHtml(http, "Jouw Lobsy-paspoort", body, "/leerling/mbo-hbo/paspoort", model.SchoolName, model.ClassLabel);
     }
 
     private static Task<PupilLoadOutcome<PupilMboHboQuestionDto>> LoadMboQuestionAsync(
@@ -1203,8 +1236,20 @@ public static class PupilLeerlingJourneyEndpoints
     {
         http.Response.Headers.CacheControl = "no-store";
         var model = await api.GetMboHboOutcomeAsync(blockKey, ct);
-        var body = model is null ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>" : PupilMboHboSsrHtml.Uitkomst(model);
-        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}");
+        PupilMboHboOverviewDto? overview = null;
+        try
+        {
+            overview = await api.GetMboHboOverviewAsync(ct);
+        }
+        catch (HttpRequestException)
+        {
+        }
+
+        var body = model is null
+            ? "<div class=\"mhbo-wrap\"><p>Laden…</p></div>"
+            : PupilMboHboSsrHtml.Uitkomst(model, overview?.Blocks ?? Array.Empty<PupilMboHboBlockStatusDto>());
+        var (school, classLabel) = await MboShellLabelsAsync(api, overview, ct);
+        return MboHtml(http, "Uitkomst", body, $"/leerling/mbo-hbo/uitkomst/{blockKey}", school, classLabel);
     }
 
     private static Task<PupilLoadOutcome<PupilProgressStateDto>> FetchProgressAsync(
@@ -1319,7 +1364,44 @@ public static class PupilLeerlingJourneyEndpoints
         return Results.Content(doc, "text/html; charset=utf-8");
     }
 
-    private static IResult MboHtml(HttpContext http, string title, string body, string route)
+    private static async Task<(string? School, string? ClassLabel)> MboShellLabelsAsync(
+        JobsyApiClient api,
+        PupilMboHboOverviewDto? overview,
+        CancellationToken ct)
+    {
+        var school = overview?.SchoolName;
+        var classLabel = overview?.ClassLabel;
+        if (!string.IsNullOrWhiteSpace(school))
+        {
+            return (school, classLabel);
+        }
+
+        try
+        {
+            var passport = await api.GetMboHboPassportAsync(ct);
+            if (passport is null)
+            {
+                return (school, classLabel);
+            }
+
+            school = string.IsNullOrWhiteSpace(passport.SchoolName) ? school : passport.SchoolName;
+            classLabel ??= passport.ClassLabel;
+        }
+        catch (HttpRequestException)
+        {
+            // claims fallback in shell
+        }
+
+        return (school, classLabel);
+    }
+
+    private static IResult MboHtml(
+        HttpContext http,
+        string title,
+        string body,
+        string route,
+        string? schoolLabel = null,
+        string? classLabel = null)
     {
         var culture = http.RequestServices.GetRequiredService<CultureState>();
         var doc = PupilLeerlingSsrFrame.RenderDocument(new PupilLeerlingSsrDocumentOptions
@@ -1331,6 +1413,8 @@ public static class PupilLeerlingJourneyEndpoints
             UseMboHboShell = true,
             ShowPause = false,
             Culture = culture,
+            MboSchoolLabel = schoolLabel,
+            MboClassLabel = classLabel,
         });
         return Results.Content(doc, "text/html; charset=utf-8");
     }

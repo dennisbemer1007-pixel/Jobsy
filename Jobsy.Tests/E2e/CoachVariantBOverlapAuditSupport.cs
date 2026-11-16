@@ -4,6 +4,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.MboHbo;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Scholen;
 using Microsoft.AspNetCore.DataProtection;
@@ -41,6 +42,11 @@ internal static class CoachVariantBOverlapAuditSupport
         new("leraar", "/leraar", "leraar@jobsy.local"),
         new("mbo-overzicht", "/leerling/mbo-hbo/overzicht", null),
         new("mbo-uitleg", "/leerling/mbo-hbo/uitleg", null),
+        new("mbo-test-vakken", "/leerling/mbo-hbo/test/vakken", null),
+        new("mbo-test-interesse", "/leerling/mbo-hbo/test/interesse", null),
+        new("mbo-test-werkwaarden", "/leerling/mbo-hbo/test/werkwaarden", null),
+        new("mbo-uitkomst-vakken", "/leerling/mbo-hbo/uitkomst/vakken", null),
+        new("mbo-paspoort", "/leerling/mbo-hbo/paspoort", null),
     ];
 
     internal sealed class OverlapAuditDto
@@ -150,7 +156,42 @@ internal static class CoachVariantBOverlapAuditSupport
             return null;
         }
 
-        return (DemoSchoolIds.SchoolId, DemoSchoolIds.ClassMbo2Id, PupilCodeFormat.Display(plain));
+        var display = PupilCodeFormat.Display(plain);
+        await EnsureVakkenBlockCompletedAsync(created[0].Id);
+        return (DemoSchoolIds.SchoolId, DemoSchoolIds.ClassMbo2Id, display);
+    }
+
+    internal static async Task EnsureVakkenBlockCompletedAsync(Guid pupilCodeId)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var progress = await db.PupilProgresses.FirstOrDefaultAsync(p => p.PupilCodeId == pupilCodeId);
+        if (progress is null)
+        {
+            progress = new PupilProgress
+            {
+                PupilCodeId = pupilCodeId,
+                MboHboProgressJson = new PupilMboHboProgressState().ToJson(),
+                StartedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+            };
+            db.PupilProgresses.Add(progress);
+        }
+
+        var state = PupilMboHboProgressState.Parse(progress.MboHboProgressJson);
+        state.IntroSeen = true;
+        state.BlocksCompleted[PupilMboHboProgressState.BlockKey(PupilMboHboBlock.Vakken)] =
+            DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        progress.MboHboProgressJson = state.ToJson();
+        await db.SaveChangesAsync();
     }
 
     internal static async Task<bool> PupilLoginAsync(IPage page, string baseUrl, Guid schoolId, Guid classId, string plainCode)
@@ -199,6 +240,22 @@ internal static class CoachVariantBOverlapAuditSupport
 
     internal static async Task WaitForCoachChromeAsync(IPage page, string pageName)
     {
+        if (pageName.StartsWith("mbo-", StringComparison.Ordinal))
+        {
+            try
+            {
+                await page.WaitForSelectorAsync(
+                    "#lobsy-coach-btn.lobsy-coach-dock__btn--lobster-b, .mhbo-foot-coach img",
+                    new() { Timeout = 45_000, State = WaitForSelectorState.Visible });
+            }
+            catch
+            {
+                // evaluated in overlap audit
+            }
+
+            return;
+        }
+
         if (string.Equals(pageName, "vacancy-mock-interview", StringComparison.Ordinal))
         {
             try
@@ -233,56 +290,100 @@ internal static class CoachVariantBOverlapAuditSupport
         var json = await page.EvaluateAsync<string>(
             """
             () => JSON.stringify((() => {
-              const coachParts = [
+              const coachSelectors = [
+                '.lobsy-coach-dock__teaser',
+                '.lobsy-coach-dock__lobster',
                 '#lobsy-coach-btn.lobsy-coach-dock__btn--lobster-b',
+                '.mhbo-foot-coach img',
                 '#lobsy-coach-btn',
                 '#lobsy-assistant-launcher-btn',
                 '.lobsy-coach-cta--variant-b .lobsy-coach-cta__btn'
               ];
-              const coachRoots = new Set();
-              let coachBox = null;
-              for (const sel of coachParts) {
-                const el = document.querySelector(sel);
-                if (!el) continue;
-                const st = getComputedStyle(el);
-                if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') continue;
-                const r = el.getBoundingClientRect();
-                if (r.width < 8 || r.height < 8) continue;
-                coachBox = { left: r.left, top: r.top, right: r.right, bottom: r.bottom, sel };
-                el.closest('.lobsy-coach-dock, .lobsy-coach-cta, [data-lobsy-coach]')?.querySelectorAll('*').forEach(n => coachRoots.add(n));
-                coachRoots.add(el);
-                break;
-              }
-              if (!coachBox) return { ok: true, skip: true, reason: 'no-coach', hits: [] };
+              const contentSelector = [
+                'h1','h2','h3','p','label',
+                '.mhbo-vak-label','.mhbo-qcard__title','.mhbo-qcard__block','.mhbo-qcard__prog',
+                '.mhbo-scale-opt','.mhbo-btn','.mhbo-lnk','.mhbo-legend-boxes li','.mhbo-scale-ends',
+                'a','button','input','select','textarea','[role=button]','[role=link]'
+              ].join(',');
 
-              const inter = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-              const hits = [];
-              const isClickable = (el) => {
-                if (!el || coachRoots.has(el)) return false;
-                if (el.closest('.lobsy-coach-dock, .lobsy-coach-cta, #lobsy-assistant-ssr-shell')) return false;
-                const st = getComputedStyle(el);
-                if (st.display === 'none' || st.visibility === 'hidden' || st.pointerEvents === 'none' || st.opacity === '0') return false;
-                const r = el.getBoundingClientRect();
-                if (r.width < 8 || r.height < 8) return false;
-                if (el.disabled) return false;
-                const tag = (el.tagName || '').toLowerCase();
-                if (tag === 'a' || tag === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea') return true;
-                if (el.getAttribute('role') === 'button' || el.getAttribute('role') === 'link') return true;
-                return false;
-              };
-
-              document.querySelectorAll('a,button,input,select,textarea,[role=button],[role=link]').forEach(el => {
-                if (!isClickable(el)) return;
-                const r = el.getBoundingClientRect();
-                const box = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-                if (inter(coachBox, box)) {
-                  const id = el.id ? '#' + el.id : '';
-                  const testid = el.getAttribute('data-testid');
-                  hits.push((el.tagName || '').toLowerCase() + id + (testid ? '[data-testid=' + testid + ']' : ''));
-                }
+              const coachRoot = new Set();
+              document.querySelectorAll('.lobsy-coach-dock, .mhbo-foot-coach, .lobsy-coach-cta').forEach(root => {
+                root.querySelectorAll('*').forEach(n => coachRoot.add(n));
+                coachRoot.add(root);
               });
 
-              return { ok: hits.length === 0, skip: false, reason: hits.length ? hits.join('; ') : 'ok', hits };
+              const visibleCoachEls = [];
+              for (const sel of coachSelectors) {
+                document.querySelectorAll(sel).forEach(el => {
+                  const st = getComputedStyle(el);
+                  if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) < 0.05) return;
+                  const r = el.getBoundingClientRect();
+                  if (r.width < 6 || r.height < 6) return;
+                  visibleCoachEls.push({ el, sel, foot: !!el.closest('.mhbo-foot-coach') });
+                });
+              }
+              if (visibleCoachEls.length === 0) {
+                return { ok: true, skip: true, reason: 'no-coach', hits: [] };
+              }
+
+              const interArea = (a, b) => {
+                const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+                const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+                return x > 0 && y > 0 ? x * y : 0;
+              };
+              const boxFrom = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+              const labelFor = (el) => {
+                const tag = (el.tagName || '').toLowerCase();
+                const id = el.id ? '#' + el.id : '';
+                const testid = el.getAttribute('data-testid');
+                const cls = (el.className || '').toString().split(/\s+/).find(c => c && c.startsWith('mhbo-')) || '';
+                return tag + id + (testid ? '[data-testid=' + testid + ']' : (cls ? '.' + cls : ''));
+              };
+              const isContentTarget = (el) => {
+                if (!el || coachRoot.has(el)) return false;
+                if (el.closest('.lobsy-coach-dock, .mhbo-foot-coach, .lobsy-coach-cta, #lobsy-assistant-ssr-shell, #lobsy-assistant-panel')) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) < 0.05) return false;
+                const r = el.getBoundingClientRect();
+                if (r.width < 6 || r.height < 6) return false;
+                return true;
+              };
+
+              const scrollMax = () => Math.max(
+                document.documentElement.scrollHeight - window.innerHeight,
+                document.body.scrollHeight - window.innerHeight,
+                0);
+              const scrollYs = [0];
+              const maxY = scrollMax();
+              if (maxY > 4) {
+                const step = Math.max(80, Math.floor(maxY / 6));
+                for (let y = step; y < maxY; y += step) scrollYs.push(y);
+                scrollYs.push(maxY);
+              }
+
+              const hits = [];
+              const seen = new Set();
+              const savedY = window.scrollY;
+              for (const y of scrollYs) {
+                window.scrollTo(0, y);
+                for (const coach of visibleCoachEls) {
+                  const cr = coach.el.getBoundingClientRect();
+                  const cbox = boxFrom(cr);
+                  document.querySelectorAll(contentSelector).forEach(el => {
+                    if (!isContentTarget(el)) return;
+                    if (coach.foot && el.closest('.mhbo-pagefoot')) return;
+                    const r = el.getBoundingClientRect();
+                    if (interArea(cbox, boxFrom(r)) < 9) return;
+                    const key = coach.sel + '|' + labelFor(el) + '|' + Math.round(y);
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    hits.push(coach.sel + '⨯' + labelFor(el) + '@scroll' + Math.round(y));
+                  });
+                }
+              }
+              window.scrollTo(0, savedY);
+
+              return { ok: hits.length === 0, skip: false, reason: hits.length ? hits.slice(0, 12).join('; ') : 'ok', hits };
             })())
             """);
 
@@ -339,6 +440,27 @@ internal static class CoachVariantBOverlapAuditSupport
         return { ok: hits.length === 0, skip: false, reason: hits.length ? hits.join('; ') : 'ok', hits };
       })())
       """);
+        return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
+    }
+
+    internal static async Task<OverlapAuditDto> EvaluateVakkenViewportFitAsync(IPage page)
+    {
+        var json = await page.EvaluateAsync<string>(
+            """
+            () => JSON.stringify((() => {
+              window.scrollTo(0, 0);
+              const foot = document.querySelector('[data-testid=mhbo-test-nav]');
+              if (!foot) return { ok: false, skip: false, reason: 'no-footer', hits: [] };
+              const fr = foot.getBoundingClientRect();
+              const margin = 2;
+              const ok = fr.bottom <= window.innerHeight - margin;
+              const reason = ok
+                ? 'ok'
+                : 'footer-below-fold:' + Math.round(fr.bottom) + '>' + Math.round(window.innerHeight);
+              return { ok, skip: false, reason, hits: ok ? [] : ['scroll-required'] };
+            })())
+            """);
+
         return JsonSerializer.Deserialize<OverlapAuditDto>(json, JsonOpts()) ?? new OverlapAuditDto();
     }
 

@@ -39,6 +39,7 @@ def collect_sources() -> list[Path]:
             WWW / "js" / "lobsyPush.js",
             WWW / "js" / "banenkaart-maps-boot.js",
             ROOT / "Jobsy.Web" / "Hosting" / "PageAssetCatalog.cs",
+            ROOT / "Jobsy.Web" / "Hosting" / "PageAssetCatalog.MboHbo.cs",
             ROOT / "Jobsy.Web" / "Scholen" / "PupilLeerlingSsrFrame.cs",
             ROOT / "Jobsy.Web" / "Scholen" / "ScholenPortalSsrFrame.cs",
             ROOT / "Jobsy.Web" / "Hosting" / "WerkgeverApkSsrHtml.cs",
@@ -89,7 +90,17 @@ def main() -> int:
             if not version:
                 import datetime
 
-                version = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d") + "-01"
+                day = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d")
+                suffix = 1
+                while True:
+                    version = f"{day}-{suffix:02d}"
+                    if not any(
+                        e.get("v") == version
+                        for e in existing.values()
+                        if isinstance(e, dict)
+                    ) and version not in found.values():
+                        break
+                    suffix += 1
                 print(
                     f"assigned catalog version {version} for {path_part} (from {src.name})",
                     file=sys.stderr,

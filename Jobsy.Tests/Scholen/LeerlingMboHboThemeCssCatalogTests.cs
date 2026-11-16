@@ -29,7 +29,8 @@ public sealed class PupilMboHboSsrHtmlTests
         var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PageAssetCatalog.MboHbo.cs"));
         var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Services/ApiClient/JobsyApiClient.PupilMboHbo.cs"));
 
-        Assert.Contains("UrlLeadingSlash(LeerlingMboHboStylesheetPath)", catalog, StringComparison.Ordinal);
+        Assert.Contains("leerling-mbo-hbo.css", catalog, StringComparison.Ordinal);
+        Assert.Contains("WwwrootAssetCatalog.UrlLeadingSlash", catalog, StringComparison.Ordinal);
         Assert.Contains("Groep78SpeakButton", html, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"mhbo-prev\"", html, StringComparison.Ordinal);
         Assert.Contains("mhbo-download-pdf", html, StringComparison.Ordinal);
