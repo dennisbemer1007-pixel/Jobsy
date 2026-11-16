@@ -49,22 +49,6 @@ public sealed class SollicitatiesAcceptatieCssTests
         Assert.Equal(HttpStatusCode.OK, brResp.StatusCode);
         var decoded = BrotliDecompress(await brResp.Content.ReadAsByteArrayAsync());
         var accSha = Convert.ToHexString(SHA256.HashData(decoded)).ToLowerInvariant();
-        if (!string.Equals(localSha, accSha, StringComparison.Ordinal))
-        {
-            var headRef = Environment.GetEnvironmentVariable("GITHUB_HEAD_REF");
-            if (!string.IsNullOrEmpty(headRef)
-                && !string.Equals(headRef, "acceptatie", StringComparison.OrdinalIgnoreCase))
-            {
-                var localText = await File.ReadAllTextAsync(localPath);
-                Assert.Contains("@media (max-width: 639px)", localText, StringComparison.Ordinal);
-                Assert.Contains(
-                    ".sollicitaties-page-wrap .sollicitaties-hero-strip",
-                    localText,
-                    StringComparison.Ordinal);
-                return;
-            }
-        }
-
         Assert.Equal(localSha, accSha);
         var text = Encoding.UTF8.GetString(decoded);
         Assert.Contains("@media (min-width: 1024px)", text, StringComparison.Ordinal);

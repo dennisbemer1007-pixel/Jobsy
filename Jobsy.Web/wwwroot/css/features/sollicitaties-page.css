@@ -1103,28 +1103,20 @@
   }
 
   .sollicitaties-segment {
-    display: flex;
-    flex-wrap: nowrap;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     gap: 0.125rem;
     width: 100%;
     padding: 0.25rem;
     border-radius: 18px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .sollicitaties-segment::-webkit-scrollbar {
-    display: none;
   }
 
   .sollicitaties-segment__tab {
-    flex: 0 0 auto;
     min-block-size: 44px;
-    min-width: max-content;
-    padding: 0.5625rem 0.75rem;
+    padding: 0.5625rem 0.125rem;
     font-size: 0.8rem;
     text-align: center;
-    white-space: nowrap;
   }
 
   .sollicitaties-init-banner--inline {
@@ -1169,26 +1161,12 @@
   }
 
   .sollicitaties-segment {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: stretch;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     width: 100%;
-    max-width: 100%;
+    max-width: none;
     box-sizing: border-box;
-    overflow-x: auto;
-  }
-
-  .sollicitaties-segment__tab {
-    flex: 0 0 auto;
-    min-width: max-content;
-    padding-inline: 0.75rem;
-    white-space: nowrap;
-  }
-
-  .sollicitaties-tabs-row {
-    overflow: hidden;
-    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 1.25rem), transparent 100%);
-    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 1.25rem), transparent 100%);
   }
 
   .sollicitaties-intro__title {
