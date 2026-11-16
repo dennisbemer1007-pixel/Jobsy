@@ -2874,6 +2874,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("LoopbaanApkEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("LoopbaanApkPackage")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("ManualVerificationClosedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -6147,6 +6150,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("EmployerLoopbaanApkEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LoopbaanApkBasisPrice")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoopbaanApkPriceUnit")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoopbaanApkUitgebreidPrice")
+                        .HasColumnType("text");
 
                     b.Property<bool>("EmployerPhase2Enabled")
                         .HasColumnType("boolean");
@@ -10392,6 +10404,34 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasKey("EmployeeCodeId");
 
                     b.ToTable("WerkgeverApkManagerSheets", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkUitgebreidRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Handled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("HandledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Handled");
+
+                    b.ToTable("WerkgeverApkUitgebreidRequests", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", b =>

@@ -32,6 +32,7 @@ public static class WerkgeverApkGroupInsights
     public static WerkgeverApkGroupInsightsDto Aggregate(
         IReadOnlyList<PupilMboHboProgressState> sharedEmployeeProgress,
         IReadOnlyList<IReadOnlyDictionary<string, int>> managerSheets,
+        WerkgeverApkEmployeeAbCatalog catalog,
         SchoolLevel level = SchoolLevel.Mbo3)
     {
         ArgumentNullException.ThrowIfNull(sharedEmployeeProgress);
@@ -59,13 +60,13 @@ public static class WerkgeverApkGroupInsights
         for (var i = 0; i < count; i++)
         {
             var state = sharedEmployeeProgress[i];
-            CountHollandLetters(state, level, riasec);
+            CountHollandLetters(state, catalog, riasec);
 
             foreach (var q in WerkgeverApkManagerQuestionCatalog.All)
             {
                 if (q.Category == WerkgeverApkManagerQuestionCategory.Competence)
                 {
-                    var self = WerkgeverApkEmployeeDimensionScores.SelfScore(q, state, level);
+                    var self = WerkgeverApkEmployeeDimensionScores.SelfScore(q, state, catalog, level);
                     if (self >= 4)
                     {
                         strengths[q.Label] = strengths.GetValueOrDefault(q.Label) + 1;
@@ -73,14 +74,14 @@ public static class WerkgeverApkGroupInsights
                 }
                 else
                 {
-                    var self = WerkgeverApkEmployeeDimensionScores.SelfScore(q, state, level);
+                    var self = WerkgeverApkEmployeeDimensionScores.SelfScore(q, state, catalog, level);
                     if (self >= 4)
                     {
                         values[q.Label] = values.GetValueOrDefault(q.Label) + 1;
                     }
                 }
 
-                var selfScore = WerkgeverApkEmployeeDimensionScores.SelfScore(q, state, level);
+                var selfScore = WerkgeverApkEmployeeDimensionScores.SelfScore(q, state, catalog, level);
                 if (selfScore is not null)
                 {
                     employeeTotals[q.Label].Add(selfScore.Value);
@@ -142,10 +143,10 @@ public static class WerkgeverApkGroupInsights
 
     private static void CountHollandLetters(
         PupilMboHboProgressState state,
-        SchoolLevel level,
+        WerkgeverApkEmployeeAbCatalog catalog,
         Dictionary<string, int> riasec)
     {
-        var interesse = WerkgeverApkEmployeeScoring.BuildInteresseOutcome(state, level);
+        var interesse = WerkgeverApkEmployeeScoring.BuildInteresseOutcome(state, catalog);
         var holland = PupilMboHboScoring.HollandCodeFromInteresse(interesse.Bars);
         foreach (var ch in holland)
         {

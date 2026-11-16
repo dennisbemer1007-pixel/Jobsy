@@ -685,6 +685,7 @@ app.MapPupilLoginPageEndpoints();
 app.MapWerkgeverApkEmployeeAuthEndpoints();
 app.MapWerkgeverApkEmployeeEndpoints();
 app.MapWerkgeverApkManagerEndpoints();
+app.MapWerkgeverApkPakketEndpoints();
 app.MapTeacherPortalEntryEndpoints();
 app.MapTeacherPortalReadOnlyEndpoints();
 app.MapTeacherPortalOverviewEndpoints();

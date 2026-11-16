@@ -647,6 +647,9 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
         Add("EmployerLoopbaanApkEnabled", before.EmployerLoopbaanApkEnabled.ToString(), after.EmployerLoopbaanApkEnabled.ToString());
+        Add("LoopbaanApkBasisPrice", before.LoopbaanApkBasisPrice, after.LoopbaanApkBasisPrice);
+        Add("LoopbaanApkUitgebreidPrice", before.LoopbaanApkUitgebreidPrice, after.LoopbaanApkUitgebreidPrice);
+        Add("LoopbaanApkPriceUnit", before.LoopbaanApkPriceUnit, after.LoopbaanApkPriceUnit);
         Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
         Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());

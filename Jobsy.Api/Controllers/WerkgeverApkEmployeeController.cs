@@ -113,6 +113,33 @@ public sealed class WerkgeverApkEmployeeController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
+    [HttpGet("question")]
+    [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
+    public async Task<IActionResult> AbQuestion([FromQuery] string? itemId, CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var (ok, error, status) = await _portal.GetAbQuestionAsync(User, itemId, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpPut("answers/{itemId}")]
+    [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
+    public async Task<IActionResult> AbAnswer(string itemId, [FromBody] WerkgeverApkEmployeeAnswerRequest request, CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var (ok, error, status) = await _portal.SaveAbAnswerAsync(User, itemId, request.Value, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("pause")]
+    [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
+    public async Task<IActionResult> Pause([FromQuery] int after, CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store";
+        var (ok, error, status) = await _portal.GetPauseAsync(User, after, ct);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
     [HttpGet("comparison")]
     [Authorize(Policy = JobsyPolicies.WerkgeverApkEmployeeSession)]
     public async Task<IActionResult> Comparison(CancellationToken ct)

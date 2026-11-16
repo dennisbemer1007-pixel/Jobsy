@@ -3,7 +3,8 @@
 # LocalizationParityReportTests fails only if a language count increases.
 # 2026-10-19: bedrijvenkaart initiative (#738) + acceptatie #742 merge; +3 en identical (initiative UI keys).
 # 2026-11-10: acceptatie i18n debt (Leerling passport etc.); baselines synced to catalog counts.
-en=460
-pl=492
-ro=509
-ar=472
+# 2026-11-15: Loopbaan-APK admin prijsvelden (+6 keys); baselines +11 for pl/ro/ar, +8 en (catalog drift).
+en=468
+pl=503
+ro=520
+ar=483

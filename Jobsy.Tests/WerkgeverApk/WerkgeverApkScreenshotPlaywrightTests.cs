@@ -498,14 +498,13 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
     private static string CompleteProgressJson()
     {
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Basis);
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        foreach (var item in catalog.Items)
         {
-            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
-            {
-                answers[q.Id] = 3;
-            }
+            answers[item.Id] = item.Kind == WerkgeverApkAbItemKind.Check
+                ? WerkgeverApkAnswerValidation.CheckJa
+                : WerkgeverApkAnswerValidation.AbChoiceA;
         }
 
         return JsonSerializer.Serialize(new { answers });
@@ -513,29 +512,28 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
 
     private static string ComparisonProgressJson()
     {
-        var catalog = WerkgeverApkEmployeeCatalog.Default;
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(WerkgeverApkPackageKind.Uitgebreid);
         var answers = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var block in WerkgeverApkEntryPaths.EmployeeBlocks)
+        foreach (var item in catalog.Items)
         {
-            foreach (var q in catalog.QuestionsFor(block, SchoolLevel.Mbo3))
-            {
-                answers[q.Id] = 3;
-            }
+            answers[item.Id] = item.Kind == WerkgeverApkAbItemKind.Check
+                ? WerkgeverApkAnswerValidation.CheckJa
+                : WerkgeverApkAnswerValidation.AbChoiceA;
         }
 
-        foreach (var q in catalog.QuestionsFor(PupilMboHboBlock.Competentie, SchoolLevel.Mbo3))
+        foreach (var item in catalog.Items)
         {
-            if (string.Equals(q.Dimension, "Samenwerken", StringComparison.Ordinal))
+            if (item.DimensionA.Contains("Samenwerken", StringComparison.OrdinalIgnoreCase))
             {
-                answers[q.Id] = 5;
+                answers[item.Id] = WerkgeverApkAnswerValidation.AbChoiceA;
             }
-            else if (q.Dimension.StartsWith("Creativiteit", StringComparison.Ordinal))
+            else if (item.DimensionA.StartsWith("Creativiteit", StringComparison.Ordinal))
             {
-                answers[q.Id] = 1;
+                answers[item.Id] = WerkgeverApkAnswerValidation.AbChoiceB;
             }
-            else if (string.Equals(q.Dimension, "Contact maken (Extraversie)", StringComparison.Ordinal))
+            else if (item.DimensionA.Contains("Contact maken", StringComparison.OrdinalIgnoreCase))
             {
-                answers[q.Id] = 5;
+                answers[item.Id] = WerkgeverApkAnswerValidation.AbChoiceA;
             }
         }
 
@@ -568,7 +566,7 @@ public sealed class WerkgeverApkScreenshotPlaywrightTests
         string InvitedPlainCode,
         string DelenPlainCode);
 
-    private sealed class WerkgeverApkWebFactory : WebWebApplicationFactory
+    internal sealed class WerkgeverApkWebFactory : WebWebApplicationFactory
     {
         private readonly HttpMessageHandler _api;
         private IHost? _kestrel;

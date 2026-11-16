@@ -166,6 +166,7 @@ public class JobsyDbContext : DbContext
     public DbSet<WerkgeverApkEmployeeCode> WerkgeverApkEmployeeCodes => Set<WerkgeverApkEmployeeCode>();
     public DbSet<WerkgeverApkEmployeeProgress> WerkgeverApkEmployeeProgress => Set<WerkgeverApkEmployeeProgress>();
     public DbSet<WerkgeverApkManagerSheet> WerkgeverApkManagerSheets => Set<WerkgeverApkManagerSheet>();
+    public DbSet<WerkgeverApkUitgebreidRequest> WerkgeverApkUitgebreidRequests => Set<WerkgeverApkUitgebreidRequest>();
     public DbSet<SchoolClassAggregate> SchoolClassAggregates => Set<SchoolClassAggregate>();
     public DbSet<SchoolYearAggregate> SchoolYearAggregates => Set<SchoolYearAggregate>();
     public DbSet<SchoolRetentionRun> SchoolRetentionRuns => Set<SchoolRetentionRun>();
@@ -3486,6 +3487,13 @@ public class JobsyDbContext : DbContext
                 .WithOne(c => c.ManagerSheet)
                 .HasForeignKey<WerkgeverApkManagerSheet>(e => e.EmployeeCodeId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WerkgeverApkUitgebreidRequest>(entity =>
+        {
+            entity.ToTable("WerkgeverApkUitgebreidRequests");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CompanyId, e.Handled });
         });
     }
 
