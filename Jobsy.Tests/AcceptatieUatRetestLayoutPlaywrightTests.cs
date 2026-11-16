@@ -93,15 +93,9 @@ public sealed class AcceptatieUatRetestLayoutPlaywrightTests
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.WaitForTimeoutAsync(800);
 
-        OverlapAuditDto audit;
-        if (path.Contains("/start/kompas", StringComparison.Ordinal))
-        {
-            audit = await CoachVariantBOverlapAuditSupport.EvaluateOnboardingCoachOverlapAsync(page);
-        }
-        else
-        {
-            audit = await CoachVariantBOverlapAuditSupport.EvaluateOverlapAsync(page);
-        }
+        var audit = path.Contains("/start/kompas", StringComparison.Ordinal)
+            ? await CoachVariantBOverlapAuditSupport.EvaluateOnboardingCoachOverlapAsync(page)
+            : await CoachVariantBOverlapAuditSupport.EvaluateOverlapAsync(page);
 
         Assert.True(audit.Ok, audit.Reason);
     }
