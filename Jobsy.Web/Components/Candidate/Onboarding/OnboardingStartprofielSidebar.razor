@@ -1,0 +1,31 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
+@inject CultureState Culture
+
+<aside class="ob-v3-side" aria-label="@Culture["Onboarding.PageTitle"]">
+    <div class="ob-v3-side__eyebrow">@Culture["Onboarding.PageTitle"]</div>
+    <div class="ob-v3-side__phases">
+        @foreach (var phase in OnboardingStartprofielSidebarCatalog.Phases)
+        {
+            var isCurrent = phase.FirstStep <= CurrentStep && CurrentStep <= phase.LastStep;
+            var isDone = CurrentStep > phase.LastStep && phase.LastStep <= 10;
+            <div class="ob-v3-side__phase @(isCurrent ? "is-current" : isDone ? "is-done" : null)">
+                <em aria-hidden="true">@phase.Index</em>
+                <span class="ob-v3-side__phase-title">@Culture[phase.LabelKey]</span>
+                <small class="ob-v3-side__phase-hint">@Culture[phase.HintKey]</small>
+            </div>
+        }
+    </div>
+    <div class="ob-v3-side__bot">
+        <div class="ob-v3-side__save-card" data-testid="onboarding-autosave-status">
+            <span class="ob-v3-side__save-card-mark" aria-hidden="true">✓</span>
+            <p class="ob-v3-side__save-card-text">@Culture["Onboarding.V3.AllSavedCard"]</p>
+        </div>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public int CurrentStep { get; set; } = 1;
+    [Parameter] public string? LaterHref { get; set; }
+}

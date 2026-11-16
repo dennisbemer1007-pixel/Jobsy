@@ -122,7 +122,7 @@ public class MobilePaspoortCircuitResumePlaywrightTests
     private static async Task<MobilePaspoortBrowserSession> OpenPaspoortMobilePageAsync(
         IllustratedPagesWebFactory factory)
     {
-        var baseUrl = factory.ServerAddress;
+        var baseUrl = factory.EnsureServerAddress();
         Assert.False(string.IsNullOrEmpty(baseUrl));
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);

@@ -202,14 +202,14 @@ public static class TeacherPortalOverviewEndpoints
         {
             var shellOff = await ScholenPortalShell.BuildAsync(http, culture, api, features, path);
             return Results.Content(
-                ScholenPortalSsrFrame.RenderDocument(defaultTitle, "", shellOff, culture, path),
+                ScholenPortalSsrFrame.RenderDocument(defaultTitle, "", shellOff, culture, http.User, path),
                 "text/html; charset=utf-8");
         }
 
         var (body, pageTitle) = await buildAsync();
         var shell = await ScholenPortalShell.BuildAsync(http, culture, api, features, path);
         return Results.Content(
-            ScholenPortalSsrFrame.RenderDocument(pageTitle, body, shell, culture, path),
+            ScholenPortalSsrFrame.RenderDocument(pageTitle, body, shell, culture, http.User, path),
             "text/html; charset=utf-8");
     }
 

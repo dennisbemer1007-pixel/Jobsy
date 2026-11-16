@@ -232,11 +232,16 @@ public class CandidateOnboardingWizardTests
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
-        Assert.Contains("@page \"/candidate/start\"", wizard, StringComparison.Ordinal);
+        Assert.Contains("@page \"/candidate/start/wizard\"", wizard, StringComparison.Ordinal);
+        var ssrStart = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingStartSsr.razor"));
+        Assert.Contains("@page \"/candidate/start\"", ssrStart, StringComparison.Ordinal);
         Assert.Contains("GratisDnaMerge.TryMergeAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("TryAutoAdvanceEmptyMiniStepAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("OnboardingMiniTest", wizard, StringComparison.Ordinal);
-        Assert.Contains("PersonalStep", wizard, StringComparison.Ordinal);
+        Assert.True(
+            wizard.Contains("PersonalStep", StringComparison.Ordinal)
+            || wizard.Contains("OnboardingRustigPersonalStepBody", StringComparison.Ordinal),
+            "Expected personal step component in onboarding wizard.");
         var personal = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Onboarding/PersonalStep.razor"));
         Assert.Contains("KbAddressField", personal, StringComparison.Ordinal);
         Assert.Contains("Discovery.AddressPlaceholder", personal, StringComparison.Ordinal);

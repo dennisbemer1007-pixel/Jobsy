@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "3b2da0a22ff8db2ad6e43126ae265a27f48efaccce90956030c3ab9f5f24f4e0",
+    "sha256": "f3a2855aa733cdf5580a41c66d25da9a37f0ef46fd31a81603cfa93745e1a88f",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -40,7 +40,7 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart-auth-chrome.css": {
-    "sha256": "f056133fb95c1562b5458e8df3ac945142e45e0fc1189cb7e28befb431baf1a4",
+    "sha256": "fe3ee4ccf3a24b4a051677870536168980183a71ff661bfc769940024f04131f",
     "v": "20261027-53"
   },
   "css/features/banenkaart-illustrated.css": {
@@ -136,7 +136,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "b60ab442bcee5ea7abb4fb1f8cdb084db71dea7e1462f14ef1ebef61efe873a1",
+    "sha256": "d8a494f75a9e4479b2b466d8ec31b53664ba44307d1ad2a5da1190ad1c0cf217",
     "v": "20261025-59"
   },
   "css/features/kandidaatinzichten.css": {
@@ -175,9 +175,21 @@
     "sha256": "84e9ab6cd8c87292891526e183e98f5ad3b1f2529f6a939cfedd68eaa8673dfd",
     "v": "20261026-08"
   },
+  "css/features/lobsy-coach-onboarding-v3.css": {
+    "sha256": "e184b4a9005e409a41817ea57007fcafc98d395cefdee517cb0c68d29018ccbd",
+    "v": "20261114-01"
+  },
   "css/features/lobsy-coach-pill.css": {
     "sha256": "30be64d804502a897e243fa5644001ae7da5b0d202260579b77cb20766f22b8a",
     "v": "20261026-08"
+  },
+  "css/features/lobsy-coach-ssr-chrome.css": {
+    "sha256": "443a65c20d78785cd94253f1df0d17ca9b991176c328d03f9d0ca25a06a84cd4",
+    "v": "20261113-01"
+  },
+  "css/features/lobsy-coach-variant-b.css": {
+    "sha256": "bda600e970538091f9d25ceb2b70f5313415319d8a487ddc384cf82940bcbb51",
+    "v": "20261114-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "46fae2596ab48130ab952c5b1d92e7f1afc0d0052180dcde879c5a5c4b47aa0a",
@@ -208,7 +220,7 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-client-nav.css": {
-    "sha256": "7d4d69517c5309f9357c16a5f1da21a242091293f1af43423623d9cb63584dbc",
+    "sha256": "16fd733110591a423b78806d72bffd40ce065ca8a93310a2063a69db953a32c7",
     "v": "20261025-87"
   },
   "css/features/onboarding-finale-v2.css": {
@@ -254,6 +266,10 @@
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
     "v": "20261018-07"
+  },
+  "css/features/onboarding-wizard-v3.css": {
+    "sha256": "14d5b213901d1262733a05dee931fa3b99c32a6b75c434f06bb746317ecd0d12",
+    "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
     "sha256": "c314b1f49152bd4af5e8e9d769ee6e8006aea2d0e187869ba1b724d721aa3dda",
@@ -504,7 +520,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "6d8ba04f4b1ac5f80c16a058c09d67e17a0e287ce622c42410b928539b4172a0",
+    "sha256": "1435014e88c162cdfac6528c5fbbac66e3c8363ab7af2dd6dec719b9548a5387",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {
@@ -568,16 +584,24 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "e9996e30a6c6c7d0962ec9dffc7c20a4b7c3ef833f45530d2eca33fbd013e98c",
+    "sha256": "f85a1ef98606a2c0dfab4201bb05dc337d3052b884bec3bd7fb59ee285f44de3",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
     "sha256": "a0576d5c44918fd9336c4ea495a5d476ab6f54a48e3bc3b6bb4a67831ec221a1",
     "v": "20261025-87"
   },
+  "js/onboarding-step1-ssr.js": {
+    "sha256": "89e2d4a1552614a020322e79ffd2ffb55807712108c56c6d6644c4293321c4c4",
+    "v": "20261115-01"
+  },
   "js/onboarding-step6-ssr.js": {
-    "sha256": "6ed308de3acb5a77a229b053fadb27696563f5d4a3f023013b760cb60908d59c",
+    "sha256": "9a1a18210c50bfa722277beefb01b728ea5dc6b5285fe49d63a6c1c2f0d98b00",
     "v": "20261025-87"
+  },
+  "js/onboarding-step7-consent-ssr.js": {
+    "sha256": "27f5f690a69f301c9f54a40a576d3cd1089ca47c831db5bfe1d755e793cf8638",
+    "v": "20261115-01"
   },
   "js/passport-availability-matrix.js": {
     "sha256": "aa1edd53d19803ce1fa291143d16b90e1647ac53528fc184dce0c57532a2cad4",
@@ -703,6 +727,10 @@
     "sha256": "bc7cee753e9d8df84cc044415b1860915b64764addb458659455f3e276202abe",
     "v": "20261115-catalog"
   },
+  "werkgever-apk/css/pakketten.css": {
+    "sha256": "d4fe14856c4217817a9e5b5b5973d767d8b5ee81c6f81f057489192b1c376d95",
+    "v": "20261116-01"
+  },
   "werkgever-apk/css/shared.css": {
     "sha256": "edb9065857811316c4d4b238fa38528b8140d8c33887c190cee074192e27483e",
     "v": "20261115-catalog"
@@ -714,5 +742,9 @@
   "werkgever-apk/img/lobsy-coach-b2.png": {
     "sha256": "9589875c4401aefdd3be5f2cf802ccaddc779b957441f32c9213b9b7482e3a34",
     "v": "20261115-catalog"
+  },
+  "werkgever-apk/js/wa-ab-scale.js": {
+    "sha256": "20dfe459f8ea1f9c6eb105db89138a28489b9a7de87f95d3f8eab2c8dbebf954",
+    "v": "20261116-01"
   }
 }

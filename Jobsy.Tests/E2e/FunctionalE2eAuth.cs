@@ -11,6 +11,37 @@ public static class FunctionalE2eAuth
     private static string? _storageStatePath;
     private static string? _storageBaseUrl;
 
+    public static async Task<bool> EnsureGateCandidatePageLoginAsync(IPage page, string baseUrl)
+    {
+        await WarmupStackAsync(baseUrl);
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            }
+            catch
+            {
+                // retry after warmup
+            }
+
+            if (await TryDemoLoginAsync(page, baseUrl, email)
+                || await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+            {
+                return true;
+            }
+
+            await WarmupStackAsync(baseUrl);
+            await Task.Delay(1000 * (attempt + 1));
+        }
+
+        return false;
+    }
+
     public static async Task WarmupStackAsync(string baseUrl)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
@@ -46,37 +77,75 @@ public static class FunctionalE2eAuth
                 return _storageStatePath;
             }
 
-            await WarmupStackAsync(baseUrl);
             var path = Path.Combine(Path.GetTempPath(), "jobsy-functional-e2e-candidate.json");
-            var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
-            var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
-
-            await using var ctx = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
-            await PlaywrightCookieConsent.AcceptAsync(ctx);
-            var page = await ctx.NewPageAsync();
-            page.SetDefaultTimeout(120_000);
-
-            if (!await TryDemoLoginAsync(page, baseUrl, email)
-                && !await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+            for (var attempt = 0; attempt < 3; attempt++)
             {
-                throw new InvalidOperationException($"Functional E2E: could not authenticate {email} at {baseUrl}.");
+                try
+                {
+                    await WarmupStackAsync(baseUrl);
+                    var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
+                    var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+
+                    await using var ctx = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
+                    await PlaywrightCookieConsent.AcceptAsync(ctx);
+                    var page = await ctx.NewPageAsync();
+                    page.SetDefaultTimeout(120_000);
+
+                    if (!await TryDemoLoginAsync(page, baseUrl, email)
+                        && !await KbE2e.TryLoginAsync(page, baseUrl, email, password))
+                    {
+                        throw new InvalidOperationException($"Functional E2E: could not authenticate {email} at {baseUrl}.");
+                    }
+
+                    await page.GotoAsync(baseUrl.TrimEnd('/') + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                    await KbE2e.WaitForStyledAppAsync(page);
+                    if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase)
+                        || !page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException($"Functional E2E: session not established for {email} (url={page.Url}).");
+                    }
+
+                    await page.WaitForSelectorAsync(
+                        ".jobsy-discovery",
+                        new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+                    await page.WaitForSelectorAsync(
+                        "[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]",
+                        new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+                    await page.Locator(".app-header .language-selector__toggle").WaitForAsync(new()
+                    {
+                        State = WaitForSelectorState.Visible,
+                        Timeout = 90_000,
+                    });
+                    await ctx.StorageStateAsync(new() { Path = path });
+                    _storageStatePath = path;
+                    _storageBaseUrl = baseUrl;
+                    return path;
+                }
+                catch (Exception ex) when (attempt < 2)
+                {
+                    InvalidateStorageStateCache();
+                    await Task.Delay(1500 * (attempt + 1));
+                    if (File.Exists(path))
+                    {
+                        File.Delete(path);
+                    }
+
+                    _ = ex;
+                }
             }
 
-            await page.GotoAsync(baseUrl.TrimEnd('/') + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            await KbE2e.WaitForStyledAppAsync(page);
-            if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException($"Functional E2E: session not established for {email}.");
-            }
-            await ctx.StorageStateAsync(new() { Path = path });
-            _storageStatePath = path;
-            _storageBaseUrl = baseUrl;
-            return path;
+            throw new InvalidOperationException($"Functional E2E: could not establish candidate session at {baseUrl} after retries.");
         }
         finally
         {
             StorageLock.Release();
         }
+    }
+
+    private static void InvalidateStorageStateCache()
+    {
+        _storageStatePath = null;
+        _storageBaseUrl = null;
     }
 
     public static async Task<IBrowserContext> NewCandidateContextAsync(

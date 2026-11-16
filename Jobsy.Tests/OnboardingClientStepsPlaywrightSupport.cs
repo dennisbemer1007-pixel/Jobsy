@@ -216,6 +216,7 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
     internal sealed class ClientStepsWebFactory : WebWebApplicationFactory
     {
+        private readonly object _startLock = new();
         private IHost? _kestrel;
         internal int SavedStep { get; set; } = 1;
         internal int ProfilePutCount;
@@ -246,12 +247,41 @@ internal static class OnboardingClientStepsPlaywrightSupport
 
         public string EnsureServerAddress()
         {
-            if (string.IsNullOrWhiteSpace(ServerAddress))
+            if (!string.IsNullOrWhiteSpace(ServerAddress))
             {
-                _ = CreateClient();
+                return ServerAddress;
             }
 
-            return ServerAddress;
+            lock (_startLock)
+            {
+                if (!string.IsNullOrWhiteSpace(ServerAddress))
+                {
+                    return ServerAddress;
+                }
+
+                InvalidOperationException? last = null;
+                for (var attempt = 0; attempt < 4; attempt++)
+                {
+                    try
+                    {
+                        _ = CreateClient();
+                        return ServerAddress;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        last = ex;
+                        Thread.Sleep(50 * (attempt + 1));
+                    }
+                }
+
+                if (last is not null)
+                {
+                    throw last;
+                }
+
+                _ = CreateClient();
+                return ServerAddress;
+            }
         }
 
         internal JobsyApiClient CreateStubApiClient()

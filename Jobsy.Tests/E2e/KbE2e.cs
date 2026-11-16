@@ -54,6 +54,17 @@ public static class KbE2e
         return baseUrl;
     }
 
+    /// <summary>Local gate stack (<c>JOBSY_E2E_CAPTURE=1</c>) exposes <c>/__test/sign-in</c>.</summary>
+    public static bool SupportsTestSignIn(string baseUrl)
+        => baseUrl.Contains("127.0.0.1", StringComparison.Ordinal)
+           || baseUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase);
+
+    public static Task GotoTestSignInAsync(IPage page, string baseUrl, string returnPath, string role = "candidate")
+    {
+        var url = $"{baseUrl.TrimEnd('/')}/__test/sign-in?role={Uri.EscapeDataString(role)}&return={Uri.EscapeDataString(returnPath)}";
+        return page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+    }
+
     public static async Task<IBrowser> LaunchChromiumAsync()
     {
         Microsoft.Playwright.Program.Main(["install", "chromium"]);

@@ -44,15 +44,16 @@ public sealed class FunctionalOnboardingPlaywrightTestsMobile
         await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, firstName, "firstname");
         await firstName.FillAsync("Func");
         Assert.Equal("Func", await firstName.InputValueAsync());
+        await page.Locator("input[autocomplete=family-name]").First.FillAsync("Test");
 
         await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, "2671GB");
         await FunctionalOnboardingInteractivityHelpers.AssertGeolocateButtonRespondsAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.FillBirthDateAsync(page);
+        await FunctionalOnboardingInteractivityHelpers.DismissAddressSuggestionsAsync(page);
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
 
-        var next = page.GetByTestId("onboarding-next");
-        await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 20_000 });
-        await next.ClickAsync(new() { Timeout = 15_000, Force = true });
-        await page.Locator("[data-testid=onboarding-step-2-illustrated], .ob-wizard__presets, .ob-illustrated-step").First
-            .WaitForAsync(new() { Timeout = 90_000 });
+        await FunctionalOnboardingInteractivityHelpers.AdvanceFromStep1ToStep2Async(page);
 
         await FunctionalE2eArtifacts.CaptureAsync(page, "kennismaken-after-next", Tag);
     }

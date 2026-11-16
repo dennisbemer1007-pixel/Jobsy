@@ -14,7 +14,8 @@ public class ChatAssistantRestyleGuardTests
 
         Assert.Contains("Lobsy-hulp", coach, StringComparison.Ordinal);
         Assert.Contains("lobsy-assistant--skin-warm", chat, StringComparison.Ordinal);
-        Assert.Contains("lobsy-assistant-launcher--business", chat, StringComparison.Ordinal);
+        Assert.Contains(CoachVariantBGuardSupport.DockComponent, chat, StringComparison.Ordinal);
+        Assert.Contains(CoachVariantBGuardSupport.LobsterBtnClass, coach, StringComparison.Ordinal);
         Assert.DoesNotContain("UseMascot", chat, StringComparison.Ordinal);
         Assert.Contains("ContextGreetingGate", chat, StringComparison.Ordinal);
         Assert.Contains("CandidateChatContextBuilder", chat, StringComparison.Ordinal);
@@ -29,7 +30,7 @@ public class ChatAssistantRestyleGuardTests
         var mock = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/MockInterviewModal.razor"));
         var vacancy = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
         Assert.Contains("mock-interview-modal--warm", mock, StringComparison.Ordinal);
-        Assert.Contains("BrandImages.MarkSvg", mock, StringComparison.Ordinal);
+        Assert.Contains(CoachVariantBGuardSupport.CoachAvatarAsset, mock, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyCoachAvatar", mock, StringComparison.Ordinal);
         Assert.Contains("VacancyMockInterviewCta", vacancy, StringComparison.Ordinal);
         Assert.Contains("lobsy-coach-cta--kb-rail", File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/kandidaat-banen.css")), StringComparison.Ordinal);

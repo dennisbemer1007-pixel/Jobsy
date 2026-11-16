@@ -116,9 +116,9 @@ internal static class BanenkaartSsrShells
             .Append("\" data-testid=\"kb-panel-head\"><div class=\"srow mobfirst kb-panel-head__filters-row\">");
         sb.Append("<div class=\"field grow\">")
             .Append(InlineIcon(NavIcons.Search))
-            .Append("<label class=\"visually-hidden\" for=\"discovery-keyword\">")
+            .Append("<label class=\"visually-hidden\" for=\"discovery-keyword-desktop\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Keyword"]))
-            .Append("</label><input id=\"discovery-keyword\" type=\"search\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search\" placeholder=\"")
+            .Append("</label><input id=\"discovery-keyword-desktop\" type=\"search\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search-desktop\" placeholder=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.Filter.KeywordPlaceholder"]))
             .Append("\" value=\"")
             .Append(WebUtility.HtmlEncode(q.SearchQuery ?? ""))

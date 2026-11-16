@@ -169,10 +169,28 @@ public static class OnboardingClientStepBridge
         }
 
         draft.Immediate = p.Immediate;
-        draft.AvailableFrom = TryParseIsoDate(p.AvailableFrom) ?? draft.AvailableFrom;
+        if (!string.IsNullOrWhiteSpace(p.AvailableFrom)
+            && JobsyDateInputRules.TryParseFlexibleDate(p.AvailableFrom.Trim(), out var fromDate))
+        {
+            draft.AvailableFrom = fromDate;
+        }
+        else
+        {
+            draft.AvailableFrom = TryParseIsoDate(p.AvailableFrom) ?? draft.AvailableFrom;
+        }
+
         if (p.Immediate)
         {
             draft.AvailableFrom = null;
+        }
+
+        if (draft.Availability.Count == 0 && draft.Presets.Count > 0)
+        {
+            var min = draft.MinHours;
+            var max = draft.MaxHours;
+            AvailabilityOnboardingPresets.ApplyComputed(draft.Presets, draft.Availability, ref min, ref max);
+            draft.MinHours = min;
+            draft.MaxHours = max;
         }
     }
 

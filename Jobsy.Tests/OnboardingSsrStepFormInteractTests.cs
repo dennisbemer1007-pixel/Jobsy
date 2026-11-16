@@ -15,6 +15,36 @@ public sealed class OnboardingSsrStepFormInteractTests
         return culture;
     }
     [Fact]
+    public void BuildStep1RequestFromForm_reads_named_fields()
+    {
+        var form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["firstName"] = "Ada",
+            ["lastName"] = "Lovelace",
+            ["addressQuery"] = "2611 PA Delft",
+            ["birthDateText"] = "10-12-1815",
+            ["workStatuses"] = "student,wish-to-work",
+            ["homeLat"] = "52.01",
+            ["homeLng"] = "4.36",
+        });
+
+        var req = OnboardingSsrStepFormInteract.BuildStep1RequestFromForm(form, advance: true);
+        Assert.Equal("Ada", req.FirstName);
+        Assert.Equal("Lovelace", req.LastName);
+        Assert.Equal(2, req.WorkStatuses!.Count);
+        Assert.True(req.Advance);
+    }
+
+    [Fact]
+    public void Step1_shell_includes_birth_date_and_address_geo_markers()
+    {
+        var html = OnboardingClientStepShells.Build(1, NlCulture(), new OnboardingProfileDraft());
+        Assert.Contains("data-testid=\"onboarding-birth-date\"", html, StringComparison.Ordinal);
+        Assert.Contains("jobsy-date-field__text", html, StringComparison.Ordinal);
+        Assert.Contains("kb-address__geo", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Step2_save_button_uses_mockup_inline_styles()
     {
         var html = OnboardingClientStepShells.Build(2, NlCulture(), new OnboardingProfileDraft());

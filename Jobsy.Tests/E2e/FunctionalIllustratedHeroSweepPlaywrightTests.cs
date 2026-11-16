@@ -67,8 +67,8 @@ public sealed class FunctionalIllustratedHeroSweepPlaywrightTests
                 await KbE2e.WaitForStyledAppAsync(page);
             }
 
-            var control = page.Locator(controlSelector).First;
-            if (await control.CountAsync() == 0)
+            var control = await FirstVisibleControlAsync(page, controlSelector);
+            if (control is null)
             {
                 continue;
             }
@@ -79,6 +79,22 @@ public sealed class FunctionalIllustratedHeroSweepPlaywrightTests
 
         var tag = mobile ? "mobile-390" : "desktop-1440";
         await FunctionalE2eArtifacts.CaptureAsync(page, "hero-sweep-final", tag);
+    }
+
+    private static async Task<ILocator?> FirstVisibleControlAsync(IPage page, string selector)
+    {
+        var all = page.Locator(selector);
+        var count = await all.CountAsync();
+        for (var i = 0; i < count; i++)
+        {
+            var item = all.Nth(i);
+            if (await item.IsVisibleAsync())
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 
     private static async Task<(bool Run, string BaseUrl)> TryBeginAsync()
