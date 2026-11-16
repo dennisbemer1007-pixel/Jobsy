@@ -51,6 +51,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AccountPrivacyLink"] = english ? "My data & account" : "Mijn gegevens & account";
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
+        map["Onboarding.Step1.LeadNoName"] = english
+            ? "Fill in your details so employers can reach you and we can calculate travel time."
+            : "Vul je gegevens in, zodat werkgevers je kunnen bereiken en we afstand kunnen berekenen.";
         map["Onboarding.UseMyLocation"] = english ? "Use my location" : "Gebruik mijn locatie";
         map["Onboarding.LocationDenied"] = english
             ? "Location access was denied. You can enter your postcode manually."

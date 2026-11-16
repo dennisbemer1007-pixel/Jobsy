@@ -109,7 +109,7 @@ internal static class SavedSsrShells
 
     private static void AppendJobListTabs(StringBuilder sb, CultureState culture, int savedCount)
     {
-        sb.Append("<nav class=\"candidate-job-list-tabs admin-sublinks\" aria-label=\"");
+        sb.Append("<nav class=\"candidate-job-list-tabs candidate-saved-subnav admin-sublinks\" aria-label=\"");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.Applications"]));
         sb.Append("\"><a class=\"admin-sublink\" href=\"/candidate/applications\" data-enhance-nav=\"false\">");
         sb.Append(WebUtility.HtmlEncode(culture["Nav.ApplicationsTab"]));

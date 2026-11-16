@@ -582,6 +582,7 @@ public static partial class PageAssetCatalog
         WwwrootAssetCatalog.Url("css/features/form-fields.css"),
         WwwrootAssetCatalog.Url("css/features/nav-feedback.css"),
         WwwrootAssetCatalog.Url("css/features/candidate-header-tablet.css"),
+        WwwrootAssetCatalog.Url("css/features/lobsy-coach-variant-b.css"),
     ];
 
     /// <summary>WgTopBar auth controls (NL/EN, bell, profile) on plain #878 banenkaart without full app.min.css.</summary>

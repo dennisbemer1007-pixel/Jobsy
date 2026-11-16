@@ -123,6 +123,11 @@ public sealed class WebFeatureFlags : IFeatureFlags
             flags = flags with { TestItemExamplesEnabled = true };
         }
 
+        if (_configuration.GetValue("JobsyFeatures:ActivityLogEnabled", false))
+        {
+            flags = flags with { ActivityLogEnabled = true };
+        }
+
         return flags;
     }
 

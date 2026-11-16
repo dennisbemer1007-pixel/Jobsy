@@ -114,9 +114,10 @@ internal static class BanenkaartSsrShells
         sb.Append("<div class=\"ph kb-panel-head discovery-toolbar--desktop\" role=\"toolbar\" aria-label=\"")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Filters"]))
             .Append("\" data-testid=\"kb-panel-head\"><div class=\"srow mobfirst kb-panel-head__filters-row\">");
-        sb.Append("<div class=\"field grow\">")
+        sb.Append("<div class=\"kb-chrome-search kb-filter-search kb-filter-search--bar kb-filter-search--single field grow\">")
+            .Append("<span class=\"kb-filter-search__icon\" aria-hidden=\"true\">")
             .Append(InlineIcon(NavIcons.Search))
-            .Append("<label class=\"visually-hidden\" for=\"discovery-keyword-desktop\">")
+            .Append("</span><label class=\"visually-hidden\" for=\"discovery-keyword-desktop\">")
             .Append(WebUtility.HtmlEncode(culture["Discovery.Keyword"]))
             .Append("</label><input id=\"discovery-keyword-desktop\" type=\"search\" inputmode=\"search\" autocomplete=\"off\" data-testid=\"kb-keyword-search-desktop\" placeholder=\"")
             .Append(WebUtility.HtmlEncode(culture["Kb.Filter.KeywordPlaceholder"]))

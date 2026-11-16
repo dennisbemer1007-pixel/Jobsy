@@ -2844,4 +2844,17 @@
     max-height: none;
     overflow: visible;
   }
+
+  .journey.journey--overview-route .journey-route__panel,
+  .journey.journey--overview-route .journey-route__panel-wrap {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+  }
+
+  .journey.journey--overview-route .journey-route__panel-head h3,
+  .journey.journey--overview-route .journey-route__sections p {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }

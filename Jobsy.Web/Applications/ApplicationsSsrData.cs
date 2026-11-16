@@ -332,6 +332,28 @@ internal static class ApplicationsSsrData
             activiteitenLoadErrorCode);
     }
 
+    internal static JobSearchActivityOverviewDto CreateEmptyActiviteitenOverview()
+    {
+        var today = DateOnly.FromDateTime(AfterMatchMailSsrTime.ToAmsterdam(DateTime.UtcNow).Date);
+        var periodStart = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+        if (today.DayOfWeek == DayOfWeek.Sunday)
+        {
+            periodStart = today.AddDays(-6);
+        }
+
+        var periodEnd = periodStart.AddDays(27);
+        var label = $"{periodStart:dd MMM} – {periodEnd:dd MMM yyyy}";
+        return new JobSearchActivityOverviewDto(
+            periodStart,
+            periodEnd,
+            label,
+            0,
+            4,
+            Math.Max(0, periodEnd.DayNumber - today.DayNumber + 1),
+            false,
+            Array.Empty<JobSearchActivityWeekDto>());
+    }
+
     private static bool IsAcceptatieDeployment(IConfiguration configuration, IHostEnvironment hostEnvironment)
     {
         var deployment = configuration["Lobsy:DeploymentEnvironment"];

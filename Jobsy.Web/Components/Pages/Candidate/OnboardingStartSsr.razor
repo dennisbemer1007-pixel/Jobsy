@@ -42,7 +42,11 @@ else if (_step is >= 1 and <= 10)
 {
     var step7Consent = _step == 7 && !_draft.HasConsent;
     var pageTitle = step7Consent ? Culture["Onboarding.Consent.Title"] : Culture[$"Onboarding.Step{_step}.Title"];
-    var pageLead = step7Consent ? Culture["Onboarding.Consent.Lead"] : Culture[$"Onboarding.Step{_step}.Lead"];
+    var pageLead = step7Consent
+        ? Culture["Onboarding.Consent.Lead"]
+        : _step == 1 && string.IsNullOrWhiteSpace(_draft.FirstName) && string.IsNullOrWhiteSpace(_draft.LastName)
+            ? Culture["Onboarding.Step1.LeadNoName"]
+            : Culture[$"Onboarding.Step{_step}.Lead"];
     var canvasClass = _step is >= 8 and <= 10 || (_step == 7 && _draft.HasConsent)
         ? "ob-rustig__canvas ob-rustig__canvas--mini-test"
         : step7Consent ? "ob-rustig__canvas ob-rustig__canvas--consent" : "ob-rustig__canvas";
@@ -210,6 +214,8 @@ else
             await Task.WhenAll(onboardingTask, profileTask, flagsTask);
             var state = await onboardingTask ?? new OnboardingState { CurrentStep = 1, ShouldShow = true };
             _draft = OnboardingProfileDraftHydrator.FromProfile(await profileTask);
+            var httpUser = HttpContextAccessor.HttpContext?.User;
+            OnboardingProfileDraftHydrator.ApplyIdentityClaims(_draft, httpUser);
             _ = await flagsTask;
 
             var hasStepQuery = TryParseStepQuery(out var requested);

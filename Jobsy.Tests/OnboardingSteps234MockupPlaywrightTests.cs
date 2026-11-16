@@ -156,6 +156,7 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
         if (await addJob.CountAsync() > 0)
         {
             await addJob.ClickAsync();
+            await Assertions.Expect(page.Locator(".ob-client-job")).ToHaveCountAsync(2);
         }
 
         await page.GetByTestId("onboarding-back").ClickAsync();
@@ -265,7 +266,7 @@ public sealed class OnboardingSteps234MockupPlaywrightTests : IAsyncLifetime
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
-        page.SetDefaultTimeout( 90_000);
+        page.SetDefaultTimeout(90_000);
 
         await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=2"));
         await WaitStepReadyAsync(page, 2);

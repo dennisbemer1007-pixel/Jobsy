@@ -517,3 +517,34 @@
     padding: 1rem 1.15rem 1.15rem;
   }
 }
+
+.passport-ssr-footer-nav,
+.saved-ssr-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-block: 1.25rem 0.5rem;
+  padding-block: 0.75rem;
+  border-block-start: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.passport-ssr-footer-nav a,
+.saved-ssr-footer-nav a {
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+@media (max-width: 1023px) {
+  .kompas-page-wrap,
+  .ob-v3-step-card--kompas-ready,
+  .panel-page--cand-ill {
+    padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
+  }
+
+  .cand-settings .cand-settings__nav,
+  .cand-settings .cand-settings__panel {
+    padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
+  }
+}

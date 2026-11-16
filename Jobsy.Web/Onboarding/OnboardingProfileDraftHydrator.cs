@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Discovery;
 using Jobsy.Web.Components.Candidate.Onboarding;
@@ -175,6 +176,40 @@ internal static class OnboardingProfileDraftHydrator
         if (!string.IsNullOrWhiteSpace(careerPath?.DreamTitle))
         {
             draft.Dream = careerPath.DreamTitle.Trim();
+        }
+    }
+
+    /// <summary>Fills step-1 name fields when the profile row is empty but identity claims carry a display name.</summary>
+    public static void ApplyIdentityClaims(OnboardingProfileDraft draft, ClaimsPrincipal? user)
+    {
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var email = user.FindFirst(ClaimTypes.Email)?.Value
+            ?? user.FindFirst("email")?.Value;
+        if (string.IsNullOrWhiteSpace(draft.FirstName) && string.IsNullOrWhiteSpace(draft.LastName))
+        {
+            var given = user.FindFirst(ClaimTypes.GivenName)?.Value
+                ?? user.FindFirst("given_name")?.Value;
+            var family = user.FindFirst(ClaimTypes.Surname)?.Value
+                ?? user.FindFirst("family_name")?.Value;
+            var display = user.FindFirst("name")?.Value
+                ?? user.Identity?.Name;
+            (draft.FirstName, draft.LastName) = CandidateNameRules.ResolveOnboardingPrefill(
+                given,
+                family,
+                display,
+                email);
+        }
+        else if (string.IsNullOrWhiteSpace(draft.FirstName) || string.IsNullOrWhiteSpace(draft.LastName))
+        {
+            (draft.FirstName, draft.LastName) = CandidateNameRules.ResolveOnboardingPrefill(
+                draft.FirstName,
+                draft.LastName,
+                user.FindFirst("name")?.Value ?? user.Identity?.Name,
+                email);
         }
     }
 }
