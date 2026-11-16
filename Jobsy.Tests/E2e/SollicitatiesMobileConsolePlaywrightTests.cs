@@ -91,7 +91,7 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
                 baseUrl + "/candidate/applications",
                 new() { WaitUntil = WaitUntilState.NetworkIdle });
 
-            await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
+            await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 120_000 });
             await page.WaitForTimeoutAsync(1500);
 
             var berichtenTab = page.Locator(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");

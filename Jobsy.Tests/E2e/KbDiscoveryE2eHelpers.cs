@@ -18,10 +18,12 @@ internal static class KbDiscoveryE2eHelpers
             """
             () => {
               const search = document.querySelector('[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]');
-              if (!search) return false;
-              const toggle = document.querySelector('.app-header .language-selector__toggle');
-              if (toggle && toggle.checkVisibility()) return true;
-              return search.checkVisibility();
+              if (!search || !search.checkVisibility()) return false;
+              if (window.innerWidth >= 900) {
+                const toggle = document.querySelector('.app-header .language-selector__toggle');
+                return !!toggle && toggle.checkVisibility();
+              }
+              return true;
             }
             """,
             null,

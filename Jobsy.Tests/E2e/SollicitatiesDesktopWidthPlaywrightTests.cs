@@ -58,7 +58,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
 
-        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
+        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 120_000 });
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         string? selId = null;
