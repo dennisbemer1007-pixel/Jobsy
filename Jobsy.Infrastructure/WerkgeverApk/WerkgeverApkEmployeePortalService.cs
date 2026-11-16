@@ -493,7 +493,8 @@ public sealed partial class WerkgeverApkEmployeePortalService : IWerkgeverApkEmp
         }
 
         var code = ctx.Code!;
-        if (!IsEmployeeCompleted(code, ctx.State!))
+        var catalog = WerkgeverApkEmployeeAbCatalog.ForPackage(code.Team!.Company!.LoopbaanApkPackage);
+        if (!IsEmployeeCompleted(code, ctx.State!, catalog))
         {
             return (null, new WerkgeverApkErrorDto("not_complete", "Maak eerst de tests af."), 400);
         }
