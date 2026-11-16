@@ -24,8 +24,7 @@
   cursor: pointer;
   border-radius: 0;
   box-shadow: none;
-  overflow: hidden;
-  contain: layout style paint;
+  overflow: visible;
 }
 
 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__lobster {
@@ -88,20 +87,27 @@
     max-width: 240px;
   }
 
+  .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b.lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b,
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__btn--lobster-b {
-    width: 56px;
-    height: 56px;
-    overflow: hidden;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .app-shell--onboarding-v3 .ob-v3-dfoot,
   .app-shell--onboarding-v3 .ob-v3-welcome__foot {
-    padding-inline-end: calc(56px + 40px);
+    padding-inline-end: calc(148px + 48px);
   }
 
+  .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b.lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster,
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__lobster {
-    height: 250px;
-    max-width: 165px;
+    width: 148px;
+    height: auto;
+    max-width: 148px;
+    max-height: none;
+    object-fit: contain;
     filter: drop-shadow(0 10px 28px color-mix(in srgb, #0a2044 22%, transparent));
   }
 
@@ -115,54 +121,38 @@
 }
 
 @media (max-width: 1023px) {
+  .app-shell--onboarding-v3.app-shell--onboarding-ssr:has(.ob-wizard--richting-a) .lobsy-coach-dock--onboarding-b,
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b {
-    inset-inline-end: 10px;
-    inset-inline-start: auto;
-    top: calc(6.75rem + env(safe-area-inset-top, 0px));
-    bottom: auto;
-    flex-direction: column-reverse;
-    align-items: flex-end;
-    gap: 4px;
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
   .app-shell--onboarding-v3 .ob-v3-chrome__row {
-    padding-inline-end: 4.5rem;
+    padding-inline-end: 0;
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__btn--lobster-b {
-    width: 44px;
-    height: 44px;
-    overflow: hidden;
+    width: auto;
+    height: auto;
+    overflow: visible;
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__lobster {
-    height: 128px;
+    width: 88px;
+    height: auto;
     max-width: 88px;
+    max-height: none;
     filter: drop-shadow(0 4px 12px color-mix(in srgb, #0a2044 18%, transparent));
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
-    font-size: 0.75rem;
-    padding: 8px 12px;
-    max-width: min(200px, calc(100vw - 110px));
+    display: none !important;
   }
 
   .app-shell--onboarding-v3 .ob-v3-dfoot,
   .app-shell--onboarding-v3 .ob-v3-welcome__foot {
-    padding-inline-end: calc(16px + 120px);
-  }
-
-  .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__lobster {
-    height: 96px;
-    max-width: 68px;
-  }
-
-  .app-shell--onboarding-v3 form.ob-wizard--v3[data-ob-active-step="1"] .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
-    display: block;
-  }
-
-  .app-shell--onboarding-v3 form.ob-wizard--v3:not([data-ob-active-step="1"]) .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
-    display: none;
+    padding-inline-end: 16px;
   }
 }
 

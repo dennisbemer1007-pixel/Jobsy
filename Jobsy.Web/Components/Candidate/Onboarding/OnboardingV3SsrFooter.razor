@@ -13,14 +13,14 @@
         </div>
         @if (Step7ConsentOnly)
         {
-            <input type="submit"
-                   class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                   formaction="/candidate/start/step-7/consent-volgende"
-                   name="obNav"
-                   value="next"
-                   formnovalidate
-                   data-testid="onboarding-next"
-                   data-ob-ssr-nav-next="1" />
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    formaction="/candidate/start/step-7/consent-volgende"
+                    name="obNav"
+                    value="next"
+                    formnovalidate
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
         }
         else if (Step == 6)
         {
@@ -68,14 +68,14 @@
         </div>
         @if (Step7ConsentOnly)
         {
-            <input type="submit"
-                   class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
-                   formaction="/candidate/start/step-7/consent-volgende"
-                   name="obNav"
-                   value="next"
-                   formnovalidate
-                   data-testid="onboarding-next"
-                   data-ob-ssr-nav-next="1" />
+            <button type="submit"
+                    class="ob-v3-dfoot__next ob-rustig__btn ob-rustig__btn--primary"
+                    formaction="/candidate/start/step-7/consent-volgende"
+                    name="obNav"
+                    value="next"
+                    formnovalidate
+                    data-testid="onboarding-next"
+                    data-ob-ssr-nav-next="1">@NextLabel</button>
         }
         else if (Step == 6)
         {
@@ -113,9 +113,7 @@
 
     private string? CssModifier => MiniFooterLayout ? "ob-v3-dfoot--mini" : null;
 
-    private string NextLabel => Step7ConsentOnly
-        ? Culture["Onboarding.Consent.Cta"]
-        : Culture["Onboarding.Next"];
+    private string NextLabel => Culture["Onboarding.Next"];
 
     private string? BackHref => OnboardingV3SsrNav.BackHref(Step, Step7ConsentOnly, MiniQuestionQ);
 

@@ -176,7 +176,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "79270713907ef71a01ea480b09f3b5358518c5611f0d21f9026c037048dd264e",
+    "sha256": "e184b4a9005e409a41817ea57007fcafc98d395cefdee517cb0c68d29018ccbd",
     "v": "20261114-01"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -184,7 +184,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-ssr-chrome.css": {
-    "sha256": "7e155bd5270a49470620f6722d49c90839683f5876c64f2b9fcebb61e0ee0841",
+    "sha256": "443a65c20d78785cd94253f1df0d17ca9b991176c328d03f9d0ca25a06a84cd4",
     "v": "20261113-01"
   },
   "css/features/lobsy-coach-variant-b.css": {
@@ -268,7 +268,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "4d6a0519ad5fccb7225da1286c43509c7c4d739876e7bb4ec49406f36c67a479",
+    "sha256": "14d5b213901d1262733a05dee931fa3b99c32a6b75c434f06bb746317ecd0d12",
     "v": "20261113-02"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {

@@ -785,15 +785,18 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   gap: 10px;
   margin: 16px 0 0;
   width: 100%;
+  min-width: 0;
 }
 
-.ob-wizard--v3 .ob-wizard__dream-grid button {
+.ob-wizard--v3 .ob-wizard__dream-grid.ob-v3-dream-grid button,
+.ob-wizard--v3 .ob-wizard__dream-grid.ob-v3-dream-grid button.ob-rustig__dream {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-height: 92px;
+  min-width: 0;
   padding: 8px 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -801,6 +804,27 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   font: inherit;
   cursor: pointer;
   box-sizing: border-box;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 1023px) {
+  .ob-wizard--v3 .ob-wizard__dream-grid.ob-v3-dream-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .ob-wizard--v3 .ob-wizard__dream-grid.ob-v3-dream-grid button,
+  .ob-wizard--v3 .ob-wizard__dream-grid.ob-v3-dream-grid button.ob-rustig__dream {
+    min-width: 140px;
+  }
+
+  .ob-wizard--v3 .ob-v3-dream-unknown-mobile {
+    order: 1;
+    margin-top: 14px;
+  }
 }
 
 .ob-wizard--v3 .ob-wizard__dream-grid button > span {
@@ -821,11 +845,17 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
 }
 
 .ob-wizard--v3 .ob-wizard__dream-grid small {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
   color: inherit;
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
 }
 
 .app-shell--onboarding-v3 .admin-topbar {
@@ -1114,7 +1144,7 @@ a.ob-v3-dfoot__back:hover {
     max-width: none;
     margin: 0;
     padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-    padding-inline-end: calc(16px + 128px);
+    padding-inline-end: 16px;
     background: var(--bg);
     border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
     box-shadow: 0 -6px 20px color-mix(in srgb, var(--bg) 55%, transparent);

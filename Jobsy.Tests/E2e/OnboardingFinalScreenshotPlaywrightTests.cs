@@ -45,6 +45,12 @@ public sealed class OnboardingFinalScreenshotPlaywrightTests
             await FunctionalOnboardingInteractivityHelpers.WaitForOnboardingStartStepAsync(page, step, 180_000);
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+            if (step == 1)
+            {
+                await FunctionalOnboardingInteractivityHelpers.DismissAddressSuggestionsAsync(page);
+                await page.WaitForTimeoutAsync(300);
+            }
+
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(outDir, $"step-{step:D2}-{tag}.png"),
