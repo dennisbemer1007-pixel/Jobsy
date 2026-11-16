@@ -22,7 +22,7 @@ public static class WerkgeverApkPakketMockupPages
         html = ReplaceBetweenMarkers(
             html,
             "<section class=\"card gold-top qcard\">",
-            "<div class=\"wa-ab-bipolar__row\"",
+            "<p class=\"ab-hint\"",
             BuildAbCardInner(q, blockLabel, progress, pct, antiforgery, postPath, error));
 
         html = html.Replace("Vraag 48 van ongeveer 200", progress, StringComparison.Ordinal);

@@ -63,5 +63,13 @@ public sealed class WerkgeverApkAbScaleLayoutPlaywrightTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(baseUrl + "/werkgever-apk/voorbeeld/13", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await WerkgeverApkAbScaleLayoutAssert.AssertDotsClearOfCardsAsync(page, width, $"{width}px");
+
+        var outDir = "/opt/cursor/artifacts/pakketten";
+        Directory.CreateDirectory(outDir);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(outDir, $"13-ab-vraag-{width}.png"),
+            FullPage = true,
+        });
     }
 }

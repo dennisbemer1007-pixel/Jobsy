@@ -7,17 +7,17 @@ namespace Jobsy.Web.Hosting;
 
 public static class WerkgeverApkAbAnswerScaleHtml
 {
-    /// <summary>Mockup 13d: A | dot scale | B (stacked op mobiel).</summary>
+    /// <summary>Mockup 13e: A en B naast elkaar; schaal met 5 dots eronder.</summary>
     public static string RenderBipolarRow(string optionA, string optionB, int? selected)
     {
         var sb = new StringBuilder();
         sb.Append("""<div class="wa-ab-bipolar" data-testid="wa-ab-bipolar" aria-labelledby="wa-ab-q-title">""");
-        sb.Append("<div class=\"wa-ab-bipolar__row\">");
+        sb.Append("<div class=\"wa-ab-bipolar__cards\" data-testid=\"wa-ab-contrast-cards\">");
         sb.Append(Card("a", optionA));
+        sb.Append(Card("b", optionB));
+        sb.Append("</div>");
         sb.Append("<div class=\"wa-ab-bipolar__scale\">");
         sb.Append(Scale(selected));
-        sb.Append("</div>");
-        sb.Append(Card("b", optionB));
         sb.Append("</div></div>");
         return sb.ToString();
     }
