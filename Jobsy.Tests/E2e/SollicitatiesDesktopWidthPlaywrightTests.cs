@@ -49,9 +49,9 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (KbE2e.SupportsTestSignIn(baseUrl))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+            await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
         }
         else
         {
@@ -252,9 +252,9 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (KbE2e.SupportsTestSignIn(baseUrl))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+            await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
         }
         else
         {
@@ -318,9 +318,9 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (KbE2e.SupportsTestSignIn(baseUrl))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+            await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
         }
         else
         {
@@ -402,9 +402,9 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (KbE2e.SupportsTestSignIn(baseUrl))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications?tab=berichten");
+            await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications?tab=berichten");
         }
         else
         {

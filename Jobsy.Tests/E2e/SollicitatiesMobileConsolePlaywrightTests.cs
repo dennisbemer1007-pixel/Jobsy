@@ -53,9 +53,9 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
         };
         page.PageError += (_, err) => errors.Add(err);
 
-        if (_localBaseUrl is not null && string.Equals(baseUrl, _localBaseUrl, StringComparison.Ordinal))
+        if (KbE2e.SupportsTestSignIn(baseUrl))
         {
-            await page.GotoAsync(baseUrl + "/__test/sign-in?return=/candidate/applications");
+            await KbE2e.GotoTestSignInAsync(page, baseUrl, "/candidate/applications");
         }
         else if (!await TryAcceptatieOrDefaultLoginAsync(page, baseUrl))
         {
