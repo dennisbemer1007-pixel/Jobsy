@@ -52,6 +52,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyAccessToken(request, user, httpContext);
         ApplyTrustedClientIp(request, httpContext, user);
         user = await ApplyPupilCookieAsync(request, httpContext, user, cancellationToken);
+        user = await ApplyWerkgeverApkCookieAsync(request, httpContext, user, cancellationToken);
         ApplyParentCookie(request, httpContext, user);
 
         try
@@ -89,6 +90,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
 
         var response = await base.SendAsync(request, cancellationToken);
         CaptureRenewedApiTicket(response, httpContext);
+        CaptureRenewedWerkgeverApkApiTicket(response, httpContext);
         CaptureRenewedParentApiTicket(response, httpContext, user);
         if (response.StatusCode != HttpStatusCode.Unauthorized
             || request.Options.TryGetValue(new HttpRequestOptionsKey<bool>("jobsy-retried"), out var retried)
@@ -119,10 +121,12 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         ApplyAccessToken(retry, user, httpContext);
         ApplyTrustedClientIp(retry, httpContext, user);
         user = await ApplyPupilCookieAsync(retry, httpContext, user, cancellationToken);
+        user = await ApplyWerkgeverApkCookieAsync(retry, httpContext, user, cancellationToken);
         ApplyParentCookie(retry, httpContext, user);
         ApplyDefaultAccept(retry);
         var retriedResponse = await base.SendAsync(retry, cancellationToken);
         CaptureRenewedApiTicket(retriedResponse, httpContext);
+        CaptureRenewedWerkgeverApkApiTicket(retriedResponse, httpContext);
         CaptureRenewedParentApiTicket(retriedResponse, httpContext, user);
         return retriedResponse;
     }
@@ -210,7 +214,9 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     /// sign out the Web cookie or send the browser to staff login.
     /// </summary>
     internal static bool ShouldNotifySessionExpiredOnApi401(ClaimsPrincipal user, string _)
-        => !IsPupilPrincipal(user) && !IsParentPassportPrincipal(user);
+        => !IsPupilPrincipal(user)
+           && !IsParentPassportPrincipal(user)
+           && !IsWerkgeverApkPrincipal(user);
 
     private void CaptureRenewedApiTicket(
         HttpResponseMessage response,
@@ -242,6 +248,99 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
     internal static bool ForwardsPupilCookie(string absolutePath)
         => absolutePath.Contains("/api/pupil", StringComparison.OrdinalIgnoreCase)
            || absolutePath.Contains("/leerling/", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool ForwardsWerkgeverApkCookie(string absolutePath)
+        => absolutePath.Contains("/api/werkgever-apk/employee/", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool NeedsStoredWerkgeverApkTicket(string absolutePath)
+        => ForwardsWerkgeverApkCookie(absolutePath)
+           && !absolutePath.Contains("/login", StringComparison.OrdinalIgnoreCase)
+           && !absolutePath.Contains("/login-options", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<ClaimsPrincipal> ApplyWerkgeverApkCookieAsync(
+        HttpRequestMessage request,
+        HttpContext? httpContext,
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
+    {
+        var path = request.RequestUri?.AbsolutePath ?? "";
+        if (!ForwardsWerkgeverApkCookie(path))
+        {
+            return user;
+        }
+
+        var cookie = ReadWerkgeverApkTicket(httpContext, user);
+        if (string.IsNullOrWhiteSpace(cookie) && NeedsStoredWerkgeverApkTicket(path))
+        {
+            for (var i = 0; i < 4 && string.IsNullOrWhiteSpace(cookie); i++)
+            {
+                await Task.Delay(80, cancellationToken);
+                user = await ResolveUserAsync();
+                cookie = ReadWerkgeverApkTicket(httpContext, user);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(cookie))
+        {
+            return user;
+        }
+
+        AppendCookie(request, $"{WerkgeverApkAuthDefaults.CookieName}={cookie}");
+        return user;
+    }
+
+    private static string? ReadWerkgeverApkTicket(HttpContext? httpContext, ClaimsPrincipal user)
+    {
+        if (!IsWerkgeverApkPrincipal(user))
+        {
+            return null;
+        }
+
+        return httpContext is null ? null : WerkgeverApkApiSessionCookie.Read(httpContext);
+    }
+
+    private static void CaptureRenewedWerkgeverApkApiTicket(HttpResponseMessage response, HttpContext? httpContext)
+    {
+        if (!TryReadSetCookieHeaders(response, out var values) || httpContext is null)
+        {
+            return;
+        }
+
+        foreach (var header in values)
+        {
+            if (!WerkgeverApkApiSessionCookie.TryReadTicket(header, out var value))
+            {
+                continue;
+            }
+
+            WerkgeverApkApiSessionCookie.Set(httpContext, value);
+            return;
+        }
+    }
+
+    public static bool IsWerkgeverApkPrincipal(ClaimsPrincipal? user)
+    {
+        if (user is null)
+        {
+            return false;
+        }
+
+        foreach (var identity in user.Identities)
+        {
+            if (!identity.IsAuthenticated)
+            {
+                continue;
+            }
+
+            if (string.Equals(identity.AuthenticationType, WerkgeverApkAuthDefaults.Scheme, StringComparison.Ordinal)
+                || identity.HasClaim(c => c.Type == WerkgeverApkClaimTypes.EmployeeCodeId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     internal static bool ForwardsParentPassportCookie(string absolutePath)
         => absolutePath.Contains("/api/parent/", StringComparison.OrdinalIgnoreCase)
@@ -569,7 +668,9 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         }
 
         // Pupil sessions use the code form. Never the staff login.
-        if (IsPupilPrincipal(httpContext.User) || IsParentPassportPrincipal(httpContext.User))
+        if (IsPupilPrincipal(httpContext.User)
+            || IsParentPassportPrincipal(httpContext.User)
+            || IsWerkgeverApkPrincipal(httpContext.User))
         {
             return false;
         }
@@ -659,6 +760,11 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
         {
             var state = await _authStateProvider.GetAuthenticationStateAsync();
             if (IsPupilPrincipal(state.User))
+            {
+                return state.User;
+            }
+
+            if (IsWerkgeverApkPrincipal(state.User))
             {
                 return state.User;
             }

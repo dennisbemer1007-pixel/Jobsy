@@ -54,7 +54,8 @@ public static class AdminCompaniesQuery
                 c.KvkLastVerificationAttemptAtUtc,
                 c.KvkVerifiedAtUtc,
                 c.FirstYearStartedAt,
-                c.LastCsvImportAtUtc))
+                c.LastCsvImportAtUtc,
+                c.LoopbaanApkEnabled))
             .ToListAsync(cancellationToken);
 
         if (companies.Count == 0)
@@ -244,7 +245,8 @@ public static class AdminCompaniesQuery
                 PendingTakeoverAtUtc: effectiveTakeover?.CreatedAt,
                 PendingTakeoverTargetCompanyId: effectiveTakeover?.TargetCompanyId,
                 KvkVerificationAttempts: c.KvkVerificationAttempts,
-                KvkLastVerificationAttemptAtUtc: c.KvkLastAttempt);
+                KvkLastVerificationAttemptAtUtc: c.KvkLastAttempt,
+                LoopbaanApkEnabled: c.ParentCompanyId is null && c.LoopbaanApkEnabled);
         }).ToList();
 
         // Filters
@@ -413,7 +415,8 @@ public static class AdminCompaniesQuery
         DateTime? KvkLastAttempt,
         DateTime? KvkVerifiedAtUtc,
         DateTime? FirstYearStartedAt,
-        DateTime? LastCsvImportAtUtc);
+        DateTime? LastCsvImportAtUtc,
+        bool LoopbaanApkEnabled);
 
     private sealed record TakeoverHit(Guid Id, Guid TargetCompanyId, string Applicant, DateTime CreatedAt);
 

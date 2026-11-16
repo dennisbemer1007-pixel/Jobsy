@@ -66,6 +66,7 @@ public class CompaniesController : ControllerBase
                     c.ParentCompanyId,
                     c.TokensManagedByEnterprise,
                     c.CsvBatchImportEnabled,
+                    c.LoopbaanApkEnabled,
                     c.DirectContactEnabled,
                     c.ContactPreferMail,
                     c.ContactPreferPhone,
@@ -108,6 +109,7 @@ public class CompaniesController : ControllerBase
                     c.ParentCompanyId,
                     c.TokensManagedByEnterprise,
                     c.CsvBatchImportEnabled,
+                    c.LoopbaanApkEnabled,
                     c.DirectContactEnabled,
                     c.ContactPreferMail,
                     c.ContactPreferPhone,
@@ -370,6 +372,35 @@ public class CompaniesController : ControllerBase
         company.CsvBatchImportEnabled = request.CsvBatchImportEnabled;
         await _db.SaveChangesAsync(cancellationToken);
 
+        return Ok(await ToSummaryAsync(company, cancellationToken));
+    }
+
+    /// <summary>
+    /// Enable/disable Loopbaan-APK for an organisation (parent company). Admin only.
+    /// </summary>
+    [HttpPut("{companyId:guid}/loopbaan-apk")]
+    [Authorize(Roles = JobsyRoles.Admin)]
+    public async Task<ActionResult<CompanySummaryDto>> UpdateLoopbaanApk(
+        Guid companyId,
+        [FromBody] UpdateLoopbaanApkCompanyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var company = await _db.Companies.FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken);
+        if (company is null)
+        {
+            return NotFound(new { message = "Bedrijf niet gevonden." });
+        }
+
+        if (company.ParentCompanyId is not null)
+        {
+            return BadRequest(new
+            {
+                message = "Loopbaan-APK schakel je in op organisatieniveau (niet op een vestiging)."
+            });
+        }
+
+        company.LoopbaanApkEnabled = request.LoopbaanApkEnabled;
+        await _db.SaveChangesAsync(cancellationToken);
         return Ok(await ToSummaryAsync(company, cancellationToken));
     }
 
@@ -658,6 +689,7 @@ public class CompaniesController : ControllerBase
             company.ParentCompanyId,
             company.TokensManagedByEnterprise,
             company.CsvBatchImportEnabled,
+            company.LoopbaanApkEnabled,
             company.DirectContactEnabled,
             company.ContactPreferMail,
             company.ContactPreferPhone,

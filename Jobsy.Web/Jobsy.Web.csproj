@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Content Update="Hosting\wwwroot-asset-versions.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="wwwroot\werkgever-apk\templates\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>

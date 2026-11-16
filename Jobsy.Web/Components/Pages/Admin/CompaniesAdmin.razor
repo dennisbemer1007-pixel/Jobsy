@@ -202,6 +202,10 @@
     private int _totalCount;
     private int _openRequests;
     private CancellationTokenSource? _searchCts;
+    private bool _apkBusy;
+    private string? _apkMessage;
+    private bool _apkMessageError;
+    private Guid? _apkMessageCompanyId;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -446,6 +450,43 @@
         await ReloadAsync();
     }
 
+    private async Task OnLoopbaanApkToggleAsync(AdminCompanyItem company, ChangeEventArgs e)
+    {
+        if (_apkBusy)
+        {
+            return;
+        }
+
+        var enabled = e.Value is bool b && b || e.Value?.ToString() == "on";
+        _apkBusy = true;
+        _apkMessage = null;
+        try
+        {
+            await Api.UpdateCompanyLoopbaanApkAsync(company.Id, enabled);
+            company.LoopbaanApkEnabled = enabled;
+            if (_selected?.Id == company.Id)
+            {
+                _selected.LoopbaanApkEnabled = enabled;
+            }
+
+            _apkMessageCompanyId = company.Id;
+            _apkMessageError = false;
+            _apkMessage = enabled
+                ? "Loopbaan-APK staat aan voor deze organisatie."
+                : "Loopbaan-APK staat uit.";
+        }
+        catch (Exception ex)
+        {
+            _apkMessageCompanyId = company.Id;
+            _apkMessageError = true;
+            _apkMessage = ex.Message;
+        }
+        finally
+        {
+            _apkBusy = false;
+        }
+    }
+
     private RenderFragment DetailBody(AdminCompanyItem c) => __builder =>
     {
         <div class="admin-org-detail">
@@ -514,6 +555,25 @@
                         @Culture["AdminOrgs.ReviewTakeover"]
                     </a>
                 </div>
+            }
+
+            @if (c.ParentCompanyId is null)
+            {
+                <section class="admin-org-detail__apk panel-section">
+                    <h3>@Culture["AdminSettings.Company.LoopbaanApk.Title"]</h3>
+                    <p class="muted">@Culture["AdminSettings.EmployerLoopbaanApk.Enabled.Desc"]</p>
+                    <label class="admin-toggle">
+                        <input type="checkbox"
+                               checked="@c.LoopbaanApkEnabled"
+                               disabled="@_apkBusy"
+                               @onchange="e => OnLoopbaanApkToggleAsync(c, e)" />
+                        <span>@Culture["AdminSettings.EmployerLoopbaanApk.Enabled.Title"]</span>
+                    </label>
+                    @if (_apkMessageCompanyId == c.Id && !string.IsNullOrEmpty(_apkMessage))
+                    {
+                        <p class="state-message @(_apkMessageError ? "error" : null)">@_apkMessage</p>
+                    }
+                </section>
             }
 
             <div class="admin-org-detail__actions">

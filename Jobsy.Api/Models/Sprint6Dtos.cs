@@ -32,7 +32,8 @@ public record AdminCompanyDetailDto(
     DateTime? PendingTakeoverAtUtc = null,
     Guid? PendingTakeoverTargetCompanyId = null,
     int KvkVerificationAttempts = 0,
-    DateTime? KvkLastVerificationAttemptAtUtc = null);
+    DateTime? KvkLastVerificationAttemptAtUtc = null,
+    bool LoopbaanApkEnabled = false);
 
 /// <summary>Paged admin companies response (only when page/pageSize query params are set).</summary>
 public record AdminCompaniesPageDto(
@@ -312,6 +313,7 @@ public record UpdatePlatformFeatureRequest(
     bool? ProactiveMatchingEnabled = null,
     bool? MatchCalibrationV1Enabled = null,
     bool? EmployerFitQuestionnairesEnabled = null,
+    bool? EmployerLoopbaanApkEnabled = null,
     bool? KandidatenkaartEnabled = null,
     bool? CompanyMapInitiativeEnabled = null,
     bool? AfterMatchEnabled = null,
@@ -371,6 +373,7 @@ public record PlatformFeatureDto(
     bool ProactiveMatchingEnabled = false,
     bool MatchCalibrationV1Enabled = false,
     bool EmployerFitQuestionnairesEnabled = false,
+    bool EmployerLoopbaanApkEnabled = false,
     bool KandidatenkaartEnabled = false,
     bool SensitiveExperienceEnabled = false,
     bool TrainingPartnersEnabled = false,

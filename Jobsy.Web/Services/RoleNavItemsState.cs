@@ -23,6 +23,7 @@ public sealed class RoleNavItemsState : IAsyncDisposable
     private bool _salesOnboardingComplete;
     private bool _ambassadeurOnboardingComplete;
     private bool _csvImportEnabled;
+    private bool _loopbaanApkEnabled;
     private bool _maqqieHoursNav;
     private bool _roleFlagsLoaded;
     private string? _lastRoleFingerprint;
@@ -202,6 +203,22 @@ public sealed class RoleNavItemsState : IAsyncDisposable
             }
         }
 
+        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
+            && _flags.IsEnabled(PlatformFeature.EmployerLoopbaanApk))
+        {
+            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
+            {
+                await RefreshLoopbaanApkFlagAsync();
+            }
+
+            if (_loopbaanApkEnabled)
+            {
+                catalog = catalog
+                    .Concat([RoleNavCatalog.LoopbaanApk])
+                    .ToList();
+            }
+        }
+
         if (RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate)
             && _flags.IsEnabled(PlatformFeature.EmployerPhase2))
         {
@@ -269,6 +286,19 @@ public sealed class RoleNavItemsState : IAsyncDisposable
         catch
         {
             _csvImportEnabled = false;
+        }
+    }
+
+    private async Task RefreshLoopbaanApkFlagAsync()
+    {
+        try
+        {
+            var companies = await _api.GetMyCompaniesAsync();
+            _loopbaanApkEnabled = companies.Any(c => c.ParentCompanyId is null && c.LoopbaanApkEnabled);
+        }
+        catch
+        {
+            _loopbaanApkEnabled = false;
         }
     }
 

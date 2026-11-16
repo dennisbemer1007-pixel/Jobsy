@@ -526,6 +526,7 @@ app.UseAuthorization();
 // After auth so the admin bypass can read the principal (errors 05).
 app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
 app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
+app.UseMiddleware<Jobsy.Api.Security.WerkgeverApkFeatureMiddleware>();
 app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(ApiHealthEndpoints.BuildPayload()))

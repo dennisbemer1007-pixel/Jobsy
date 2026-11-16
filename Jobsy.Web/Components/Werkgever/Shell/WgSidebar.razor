@@ -9,6 +9,7 @@
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
 @inject WerkgeverCountsState Counts
+@inject JobsyApiClient Api
 @inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
@@ -78,6 +79,7 @@
     private bool _bootstrapped;
     private bool _kandidatenkaartEnabled;
     private bool _companyMapInitiativeEnabled;
+    private bool _loopbaanApkEnabled;
 
     private EmployerRole Role => Scope.DisplayRole(HttpContextAccessor.HttpContext?.User);
     private WerkgeverNavContext Ctx => new(
@@ -87,6 +89,7 @@
         CompanyMapInitiativeEnabled: _companyMapInitiativeEnabled,
         InsightsLocked: Scope.InsightsLocked,
         HasMaqqieHours: Counts.MaqqieHoursNavVisible,
+        LoopbaanApkEnabled: _loopbaanApkEnabled,
         Counts: Counts.Counts);
     private IReadOnlyList<WerkgeverNavGroup> Groups => WerkgeverNav.For(Role, Ctx);
 
@@ -110,6 +113,19 @@
         var flags = await FeatureFlags.GetAsync();
         _kandidatenkaartEnabled = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
         _companyMapInitiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
+        _loopbaanApkEnabled = flags.IsEnabled(PlatformFeature.EmployerLoopbaanApk);
+        if (_loopbaanApkEnabled)
+        {
+            try
+            {
+                var companies = await Api.GetMyCompaniesAsync();
+                _loopbaanApkEnabled = companies.Any(c => c.ParentCompanyId is null && c.LoopbaanApkEnabled);
+            }
+            catch
+            {
+                _loopbaanApkEnabled = false;
+            }
+        }
     }
 
     private void OnLoc(object? s, LocationChangedEventArgs e)

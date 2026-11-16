@@ -99,6 +99,9 @@ public static class RoleNavCatalog
     public static readonly NavItem CsvImport =
         new("Nav.CsvImport", "/werkgever/koppelingen", NavIcons.Batch);
 
+    public static readonly NavItem LoopbaanApk =
+        new("Nav.LoopbaanApk", "/werkgever/loopbaan-apk", NavIcons.List);
+
     /// <summary>Legacy filter target for takeovers (href only).</summary>
     public static readonly NavItem Takeovers =
         new("Nav.Takeovers", "/werkgever/overnames", NavIcons.Branches);
@@ -208,6 +211,12 @@ public static class RoleNavCatalog
             if (RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
             {
                 return CandidateItems(flags);
+            }
+
+            if (RoleClaimMatching.HasRole(user, JobsyRoles.EnterpriseManager)
+                && flags.EmployerLoopbaanApkEnabled)
+            {
+                return [LoopbaanApk];
             }
 
             if (RoleClaimMatching.HasRole(user, JobsyRoles.SalesManager)

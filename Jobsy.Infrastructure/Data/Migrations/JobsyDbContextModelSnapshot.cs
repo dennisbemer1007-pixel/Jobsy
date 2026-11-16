@@ -2871,6 +2871,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
+                    b.Property<bool>("LoopbaanApkEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("ManualVerificationClosedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -6142,6 +6145,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("EmployerFitQuestionnairesEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("EmployerLoopbaanApkEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("EmployerPhase2Enabled")
                         .HasColumnType("boolean");
 
@@ -6162,6 +6168,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("G78ContrastQuestionsEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("HonestAdviceEnabled")
                         .ValueGeneratedOnAdd()
@@ -6269,9 +6278,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("TestDepthValueMockupEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("G78ContrastQuestionsEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("TestEditModeEnabled")
@@ -7672,9 +7678,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
-                    b.Property<string>("QuestionScoringVersion")
-                        .HasColumnType("text");
-
                     b.Property<string>("LikeOtherWord")
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)");
@@ -7688,6 +7691,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<string>("PuzzlesJson")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("QuestionScoringVersion")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("StartedAtUtc")
@@ -10286,6 +10292,135 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("WebPushSubscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodeLookupHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("CodeProtected")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("EscoOccupationId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
+
+                    b.Property<DateTime?>("LastSeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LinkedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SessionVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SharedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("SharedWithManager")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId", "CodeLookupHash")
+                        .IsUnique();
+
+                    b.ToTable("WerkgeverApkEmployeeCodes", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeProgress", b =>
+                {
+                    b.Property<Guid>("EmployeeCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProgressJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("WelcomeSeen")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("EmployeeCodeId");
+
+                    b.ToTable("WerkgeverApkEmployeeProgress", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkManagerSheet", b =>
+                {
+                    b.Property<Guid>("EmployeeCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnswersJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("EmployeeCodeId");
+
+                    b.ToTable("WerkgeverApkManagerSheets", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Name");
+
+                    b.ToTable("WerkgeverApkTeams", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.WorkExperienceReferenceRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -12825,6 +12960,50 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeCode", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", "Team")
+                        .WithMany("Codes")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeProgress", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeCode", "EmployeeCode")
+                        .WithOne("Progress")
+                        .HasForeignKey("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeProgress", "EmployeeCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EmployeeCode");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkManagerSheet", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeCode", "EmployeeCode")
+                        .WithOne("ManagerSheet")
+                        .HasForeignKey("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkManagerSheet", "EmployeeCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EmployeeCode");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.WorkExperienceReferenceRequest", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -13081,6 +13260,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("SelfBillingInvoices");
 
                     b.Navigation("TokenPurchaseInvoices");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkEmployeeCode", b =>
+                {
+                    b.Navigation("ManagerSheet");
+
+                    b.Navigation("Progress");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", b =>
+                {
+                    b.Navigation("Codes");
                 });
 #pragma warning restore 612, 618
         }

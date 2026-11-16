@@ -89,7 +89,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestDepthValueMockupEnabled ?? true,
                 dto?.UwvFeaturesEnabled ?? true,
                 dto?.ActivityLogEnabled ?? false,
-                dto?.CandidateCoachTonePreferencesEnabled ?? false);
+                dto?.CandidateCoachTonePreferencesEnabled ?? false,
+                dto?.EmployerLoopbaanApkEnabled ?? false);
             flags = ApplyAcceptatieConfigOverrides(flags);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
@@ -190,6 +191,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("employerFitQuestionnairesEnabled")]
         public bool EmployerFitQuestionnairesEnabled { get; set; }
+
+        [JsonPropertyName("employerLoopbaanApkEnabled")]
+        public bool EmployerLoopbaanApkEnabled { get; set; }
 
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
