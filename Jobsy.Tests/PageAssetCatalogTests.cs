@@ -100,22 +100,25 @@ public class PageAssetCatalogTests
     }
 
     [Theory]
-    [InlineData("/login", false, false, false, false)]
-    [InlineData("/banenkaart", false, false, false, false)]
-    [InlineData("/", true, false, false, false)]
-    [InlineData("/leerling", false, false, true, false)]
-    [InlineData("/leerling/vo-paspoort", false, false, true, false)]
-    [InlineData("/werkgever/vacatures/nieuw", false, false, false, true)]
-    [InlineData("/account-maken", false, true, false, false)]
+    [InlineData("/login", false, false, false, false, false)]
+    [InlineData("/banenkaart", false, false, false, false, false)]
+    [InlineData("/", true, false, false, false, false)]
+    [InlineData("/leerling", false, false, false, true, false)]
+    [InlineData("/leerling/vo-paspoort", false, false, false, true, false)]
+    [InlineData("/werkgever/vacatures/nieuw", false, false, false, false, true)]
+    [InlineData("/account-maken", false, false, true, false, false)]
+    [InlineData("/ontdek", false, true, false, false, false)]
     public void Page_scripts_are_gated(
         string path,
         bool landing,
         bool gratisDna,
+        bool accountMaken,
         bool leerling,
         bool vacancyWizard)
     {
         Assert.Equal(landing, Jobsy.Web.Hosting.PageAssetCatalog.IncludeLandingScript(path));
         Assert.Equal(gratisDna, Jobsy.Web.Hosting.PageAssetCatalog.IncludeGratisDnaScript(path));
+        Assert.Equal(accountMaken, Jobsy.Web.Hosting.PageAssetCatalog.IncludeAccountMakenScript(path));
         Assert.Equal(leerling, Jobsy.Web.Hosting.PageAssetCatalog.IncludeLeerlingLoginScript(path));
         Assert.Equal(vacancyWizard, Jobsy.Web.Hosting.PageAssetCatalog.IncludeVacancyWizardScript(path));
     }

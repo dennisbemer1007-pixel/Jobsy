@@ -74,9 +74,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
 
     public async Task<RoleFitCheckStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var competence = await _competencies.GetCompletedScoresAsync(userId, cancellationToken);
-        var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
-        var unlocked = competence is { IsComplete: true } && career is { IsComplete: true };
+        var (competence, career, competenceReady, careerReady) = await ResolveFitUnlockAsync(userId, cancellationToken);
+        var unlocked = competenceReady && careerReady;
         var deep = await HasCompletedDeepAsync(userId, cancellationToken);
         var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
         var last = await _db.CandidateRoleFitChecks.AsNoTracking()
@@ -87,7 +86,7 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         if (last is not null)
         {
             result = await ToStoredResultAsync(last, deep, cancellationToken);
-            if (unlocked && competence is { IsComplete: true } && career is { IsComplete: true })
+            if (unlocked && competenceReady && careerReady && competence is not null && career is not null)
             {
                 var cultureScores = await _culture.GetCompletedScoresAsync(userId, cancellationToken);
                 var prefs = await LoadPrefsAsync(userId, cancellationToken);
@@ -105,8 +104,8 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
 
         return new RoleFitCheckStateDto(
             unlocked,
-            competence is { IsComplete: true },
-            career is { IsComplete: true },
+            competenceReady,
+            careerReady,
             deep,
             price,
             unlocked ? "" : RoleFitCheckCopy.Locked,
@@ -142,10 +141,9 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
             throw new InvalidOperationException(RoleFitCheckCopy.TitleEmpty);
         }
 
-        var competence = await _competencies.GetCompletedScoresAsync(userId, cancellationToken);
-        var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
+        var (competence, career, competenceReady, careerReady) = await ResolveFitUnlockAsync(userId, cancellationToken);
         var cultureScores = await _culture.GetCompletedScoresAsync(userId, cancellationToken);
-        if (competence is not { IsComplete: true } || career is not { IsComplete: true })
+        if (!competenceReady || !careerReady || competence is null || career is null)
         {
             throw new RoleFitLockedException();
         }
@@ -698,8 +696,64 @@ public sealed class RoleFitCheckService : IRoleFitCheckService
         return cards;
     }
 
+    private async Task<(
+        CompetencyScores? Competence,
+        RiasecScores? Career,
+        bool CompetenceReady,
+        bool CareerReady)> ResolveFitUnlockAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var competence = await _competencies.GetCompletedScoresAsync(userId, cancellationToken);
+        var career = await _career.GetCompletedScoresAsync(userId, cancellationToken);
 
+        var compRow = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var careerRow = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
 
+        var competenceReady = competence is { IsComplete: true }
+            || (compRow is not null && QuickScanUnlockRules.IsCompetenceMiniComplete(
+                compRow.Status,
+                compRow.AnswersJson,
+                compRow.QuickScanVersion));
+        var careerReady = career is { IsComplete: true }
+            || (careerRow is not null && QuickScanUnlockRules.IsCareerMiniComplete(
+                careerRow.Status,
+                careerRow.AnswersJson,
+                careerRow.QuickScanVersion));
+
+        if (competence is not { IsComplete: true } && compRow is not null)
+        {
+            var resolved = ProvisionalAssessmentScores.ResolveCompetency(
+                compRow.Status,
+                compRow.AnswersJson,
+                compRow.SamenwerkenPercent,
+                compRow.ResultaatgerichtheidPercent,
+                compRow.StressbestendigheidPercent,
+                compRow.InnovatiePercent,
+                compRow.ExtraversiePercent,
+                compRow.QuickScanVersion);
+            competence = resolved.Scores ?? competence;
+        }
+
+        if (career is not { IsComplete: true } && careerRow is not null)
+        {
+            var resolved = ProvisionalAssessmentScores.ResolveCareer(
+                careerRow.Status,
+                careerRow.AnswersJson,
+                careerRow.RealisticPercent,
+                careerRow.InvestigativePercent,
+                careerRow.ArtisticPercent,
+                careerRow.SocialPercent,
+                careerRow.EnterprisingPercent,
+                careerRow.ConventionalPercent,
+                careerRow.QuickScanVersion);
+            career = resolved.Scores ?? career;
+        }
+
+        return (competence, career, competenceReady, careerReady);
+    }
 
     private sealed class ChatCompletionResponse
     {

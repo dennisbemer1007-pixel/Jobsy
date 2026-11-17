@@ -31,6 +31,28 @@ public sealed class PupilMboHboGroupInsightsTests
     }
 
     [Fact]
+    public void ScoreVakken_normalizes_bar_range_to_user_scores()
+    {
+        var cat = PupilMboHboCatalog.Default;
+        var progress = new PupilMboHboProgressState();
+        var questions = cat.QuestionsFor(PupilMboHboBlock.Vakken, SchoolLevel.Mbo2).Take(6).ToList();
+        for (var i = 0; i < questions.Count; i++)
+        {
+            var high = i < 4;
+            progress.VakScores[questions[i].Id] = new PupilMboHboVakScore
+            {
+                Leuk = high ? 5 : 2,
+                Goed = high ? 5 : 2,
+            };
+        }
+
+        var outcome = PupilMboHboScoring.BuildOutcome(PupilMboHboBlock.Vakken, progress, SchoolLevel.Mbo2);
+        Assert.NotEmpty(outcome.Bars);
+        Assert.Equal(100, outcome.Bars[0].Percent);
+        Assert.InRange(outcome.Bars.Min(b => b.Percent), 0, 99);
+    }
+
+    [Fact]
     public void Holland_code_helper_orders_interesse_bars()
     {
         var bars = new List<PupilMboHboScoring.NamedScore>

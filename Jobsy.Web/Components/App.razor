@@ -432,6 +432,10 @@
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/gratis-dna.js")}")" nonce="@Nonce" defer></script>
         }
+        @if (IncludeAccountMakenScript)
+        {
+            <script src="@($"/{PageAssetCatalog.AccountMakenScriptUrl}")" nonce="@Nonce" defer></script>
+        }
         @if (IncludeLeerlingLoginScript)
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/leerling-login.js")}")" nonce="@Nonce" defer></script>
@@ -555,6 +559,9 @@
 
     private bool IncludeGratisDnaScript =>
         PageAssetCatalog.IncludeGratisDnaScript(RequestPath);
+
+    private bool IncludeAccountMakenScript =>
+        PageAssetCatalog.IncludeAccountMakenScript(RequestPath);
 
     private bool IncludeSignupStaticCss =>
         PageAssetCatalog.IncludeSignupStaticCss(RequestPath);

@@ -408,14 +408,14 @@ internal static class CoachVariantBOverlapAuditSupport
             || dockSt.display === 'none' || dockSt.visibility === 'hidden' || dockSt.opacity === '0') {
           return { ok: true, skip: true, reason: 'no-coach', hits: [] };
         }
-        const dockRect = dock ? dock.getBoundingClientRect() : coachBtn.getBoundingClientRect();
+        const coachRect = coachBtn.getBoundingClientRect();
         const coachBox = {
-          left: dockRect.left,
-          top: dockRect.top,
-          right: dockRect.right,
-          bottom: dockRect.bottom
+          left: coachRect.left,
+          top: coachRect.top,
+          right: coachRect.right,
+          bottom: coachRect.bottom
         };
-        if (dockRect.width < 8 || dockRect.height < 8) {
+        if (coachRect.width < 8 || coachRect.height < 8) {
           return { ok: true, skip: true, reason: 'coach-tiny', hits: [] };
         }
         const coachRoots = new Set();
@@ -425,6 +425,9 @@ internal static class CoachVariantBOverlapAuditSupport
         const hits = [];
         const targets = document.querySelectorAll(
           '.ob-v3-info-banner, .ob-v3-info-banner__text, .ob-v3-chrome__meta, .ob-v3-chrome__saved, ' +
+          '.ob-v3-step__title, .ob-finale__lead, .ob-finale h1, ' +
+          '.ob-rustig__kompas-tests p, .ob-rustig__kompas-directions p, ' +
+          '[data-testid=onboarding-kompas-go-passport], [data-testid=onboarding-kompas-complete], ' +
           '.ob-v3-dfoot__next, [data-testid=onboarding-next], [data-testid=onboarding-skip], ' +
           '[data-testid=onboarding-back], .ob-v3-dream-unknown-mobile, [data-testid=onboarding-dream-unknown-mobile], ' +
           'button, a, input, select, textarea, [role=button], [role=link]');

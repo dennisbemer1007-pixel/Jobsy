@@ -71,7 +71,7 @@ public sealed class JobSearchActivityService(
         return new JobSearchActivityOverviewDto(
             periodStart,
             periodEnd,
-            FormatPeriodLabel(periodStart, periodEnd, culture),
+            JobSearchActivityPeriodRules.FormatPeriodLabel(periodStart, periodEnd, culture),
             done,
             target,
             daysLeft,
@@ -634,17 +634,6 @@ public sealed class JobSearchActivityService(
         var dow = (int)date.DayOfWeek;
         var diff = (dow + 6) % 7;
         return date.AddDays(-diff);
-    }
-
-    private static string FormatPeriodLabel(DateOnly start, DateOnly end, CultureInfo culture)
-    {
-        var isNl = culture.TwoLetterISOLanguageName.Equals("nl", StringComparison.OrdinalIgnoreCase);
-        if (isNl)
-        {
-            return $"{start.ToString("d MMMM", culture)} tot en met {end.ToString("d MMMM", culture)}";
-        }
-
-        return $"{start.ToString("d MMMM", culture)} through {end.ToString("d MMMM", culture)}";
     }
 
     private static string FormatWeekLabel(DateOnly weekStart, CultureInfo culture)

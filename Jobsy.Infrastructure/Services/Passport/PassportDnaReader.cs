@@ -24,13 +24,9 @@ public sealed class PassportDnaReader : IPassportDnaReader
         CancellationToken cancellationToken = default)
     {
         var competency = await _db.CandidateCompetencies.AsNoTracking()
-            .FirstOrDefaultAsync(
-                c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
-                cancellationToken);
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var career = await _db.CandidateCareerInterests.AsNoTracking()
-            .FirstOrDefaultAsync(
-                c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
-                cancellationToken);
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(
                 c => c.UserId == userId && c.Status == CandidateCompetencyStatuses.Completed,
@@ -60,19 +56,27 @@ public sealed class PassportDnaReader : IPassportDnaReader
             ? null
             : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
 
-        var competenceScores = deepCompetency ?? (competency is null ? null : new CompetencyScores(
-            competency.SamenwerkenPercent,
-            competency.ResultaatgerichtheidPercent,
-            competency.StressbestendigheidPercent,
-            competency.InnovatiePercent,
-            competency.ExtraversiePercent));
-        var careerForItems = careerScores ?? (career is null ? null : new RiasecScores(
-            career.RealisticPercent,
-            career.InvestigativePercent,
-            career.ArtisticPercent,
-            career.SocialPercent,
-            career.EnterprisingPercent,
-            career.ConventionalPercent));
+        var competenceResolved = ProvisionalAssessmentScores.ResolveCompetency(
+            competency?.Status,
+            competency?.AnswersJson,
+            competency?.SamenwerkenPercent,
+            competency?.ResultaatgerichtheidPercent,
+            competency?.StressbestendigheidPercent,
+            competency?.InnovatiePercent,
+            competency?.ExtraversiePercent,
+            competency?.QuickScanVersion ?? AssessmentTestVersions.V1);
+        var careerResolved = ProvisionalAssessmentScores.ResolveCareer(
+            career?.Status,
+            career?.AnswersJson,
+            career?.RealisticPercent,
+            career?.InvestigativePercent,
+            career?.ArtisticPercent,
+            career?.SocialPercent,
+            career?.EnterprisingPercent,
+            career?.ConventionalPercent,
+            career?.QuickScanVersion ?? AssessmentTestVersions.V1);
+        var competenceScores = deepCompetency ?? competenceResolved.Scores;
+        var careerForItems = careerScores ?? careerResolved.Scores;
         var cultureForItems = cultureScores ?? (culture is null ? null : new CulturePersonalityScores(
             culture.AutonomyPercent,
             culture.InformalPercent,
@@ -93,13 +97,21 @@ public sealed class PassportDnaReader : IPassportDnaReader
         var valueItems = PassportDnaWords.ValueItems(valuesForItems, language, take: 4);
 
         var competenceDone = PassportDnaCompletion.LayerCompleted(
-            competency?.Status,
-            competenceDeep,
-            AssessmentKind.Competence);
+                competency?.Status,
+                competenceDeep,
+                AssessmentKind.Competence)
+            || QuickScanUnlockRules.IsCompetenceMiniComplete(
+                competency?.Status,
+                competency?.AnswersJson,
+                competency?.QuickScanVersion);
         var careerDone = PassportDnaCompletion.LayerCompleted(
-            career?.Status,
-            careerDeep,
-            AssessmentKind.Career);
+                career?.Status,
+                careerDeep,
+                AssessmentKind.Career)
+            || QuickScanUnlockRules.IsCareerMiniComplete(
+                career?.Status,
+                career?.AnswersJson,
+                career?.QuickScanVersion);
         var cultureDone = PassportDnaCompletion.LayerCompleted(
             culture?.Status,
             cultureDeep,

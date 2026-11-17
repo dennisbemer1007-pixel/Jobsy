@@ -4,7 +4,8 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Mobile 390px layout: full-width content, no horizontal overflow, kompas coach bubble clearance.
+/// Candidate mobile/desktop viewport layout (#1476): 375/390/1440 — full-width Reis/Instellingen,
+/// kompas coach + help icon, paspoort coach clearance, banenkaart Kaart toggle.
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
@@ -30,20 +31,31 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
         _playwright?.Dispose();
     }
 
-    public static TheoryData<string, string, string> FullWidthRoutes => new()
+    public static TheoryData<string, string, string, int, bool> FullWidthViewportRoutes => new()
     {
-        { "/candidate/kompas", "kompas-hub", ".kompas-page-wrap .kompas-hub-layout__main, .kompas-page-wrap .kompas--ssr-hub" },
-        { "/candidate/ontdekkingsreis?stap=overview", "ontdekkingsreis", ".discovery-ssr-container, .journey-root--ssr" },
-        { "/candidate/settings", "settings", ".cand-settings, .panel-page--cand-ill.candidate-hub" },
+        { "/candidate/kompas", "kompas-hub", ".kompas-page-wrap .kompas-hub-layout__main, .kompas-page-wrap .kompas--ssr-hub", 375, true },
+        { "/candidate/kompas", "kompas-hub", ".kompas-page-wrap .kompas-hub-layout__main, .kompas-page-wrap .kompas--ssr-hub", 390, true },
+        { "/candidate/kompas", "kompas-hub", ".kompas-page-wrap .kompas-hub-layout__main, .kompas-page-wrap .kompas--ssr-hub", 1440, false },
+        { "/candidate/ontdekkingsreis?stap=overview", "ontdekkingsreis", ".discovery-ssr-container, .journey-root--ssr", 375, true },
+        { "/candidate/ontdekkingsreis?stap=overview", "ontdekkingsreis", ".discovery-ssr-container, .journey-root--ssr", 390, true },
+        { "/candidate/ontdekkingsreis?stap=overview", "ontdekkingsreis", ".discovery-ssr-container, .journey-root--ssr", 1440, false },
+        { "/candidate/settings", "settings", ".cand-settings, .panel-page--cand-ill.candidate-hub", 375, true },
+        { "/candidate/settings", "settings", ".cand-settings, .panel-page--cand-ill.candidate-hub", 390, true },
+        { "/candidate/settings", "settings", ".cand-settings, .panel-page--cand-ill.candidate-hub", 1440, false },
     };
 
     [Theory]
-    [MemberData(nameof(FullWidthRoutes))]
-    public async Task Mobile_390_content_is_full_width_without_horizontal_overflow(string path, string tag, string containerSelectors)
+    [MemberData(nameof(FullWidthViewportRoutes))]
+    public async Task Viewport_content_is_full_width_without_horizontal_overflow(
+        string path,
+        string tag,
+        string containerSelectors,
+        int width,
+        bool mobile)
     {
         await using var factory = CreateCompleteCandidateFactory();
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(width, mobile));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -70,8 +82,47 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
             """,
             containerSelectors);
 
-        Assert.True(overflow <= 1, $"{tag}: horizontal overflow {overflow}px");
-        Assert.True(contentWidth >= 340, $"{tag}: content width {contentWidth}px (expected >= 340)");
+        Assert.True(overflow <= 1, $"{tag}@{width}: horizontal overflow {overflow}px");
+        if (mobile)
+        {
+            var minContent = Math.Min(width, 390) - 48;
+            Assert.True(contentWidth >= minContent, $"{tag}@{width}: content width {contentWidth}px (expected >= {minContent})");
+        }
+        else
+        {
+            Assert.True(contentWidth >= 720, $"{tag}@{width}: content width {contentWidth}px (expected >= 720)");
+        }
+    }
+
+    [Theory]
+    [InlineData(375)]
+    [InlineData(390)]
+    public async Task Mobile_banenkaart_kaart_toggle_stays_in_viewport(int width)
+    {
+        await using var factory = CreateCompleteCandidateFactory();
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(width, mobile: true));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await SignInCompleteCandidateAsync(page, root, "/banenkaart");
+        await page.GotoAsync(root + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.Locator("[data-testid=kb-view-kaart]").First.WaitForAsync(new() { Timeout = 90_000 });
+
+        var toggleOk = await page.EvaluateAsync<bool>(
+            """
+            (vpW) => {
+              const btn = document.querySelector('[data-testid=kb-view-kaart]');
+              if (!btn) return false;
+              const r = btn.getBoundingClientRect();
+              return r.left >= -1 && r.right <= vpW + 1 && r.width >= 40;
+            }
+            """,
+            width);
+
+        Assert.True(toggleOk, $"Kaart toggle must stay on-screen at {width}px");
     }
 
     [Fact]
@@ -80,7 +131,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
         await using var factory = CreateCompleteCandidateFactory();
         factory.FinishReached = true;
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(390, mobile: true));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -99,8 +150,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
               return hr.top >= -1 && hr.left >= 0 && hr.right <= window.innerWidth + 1;
             }
             """);
-        await page.EvaluateAsync(
-            "() => { const card = document.querySelector('.ob-v3-step-card--kompas-ready'); if (card) card.scrollIntoView({ block: 'start' }); }");
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.WaitForTimeoutAsync(200);
         var overlap = await CoachVariantBOverlapAuditSupport.EvaluateOnboardingCoachOverlapAsync(page);
 
@@ -114,7 +164,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
         await using var factory = CreateCompleteCandidateFactory();
         factory.FinishReached = true;
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(390, mobile: true));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
 
@@ -135,7 +185,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
             SavedStep = 1,
         };
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(390, mobile: true));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -176,7 +226,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
             SavedStep = 4,
         };
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(390, mobile: true));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
 
@@ -223,7 +273,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
             SavedStep = 7,
         };
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(390, mobile: true));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
 
@@ -242,7 +292,7 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
     {
         await using var factory = CreateCompleteCandidateFactory();
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileContextOptions());
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(390, mobile: true));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
@@ -270,25 +320,33 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
         Assert.True(overlap, "Lobster must not overlap Top: highlight text on passport (mobile)");
     }
 
-    [Fact]
-    public async Task Desktop_1440_onboarding_help_icon_fully_visible()
+    [Theory]
+    [InlineData("/candidate/start/kompas", true)]
+    [InlineData("/candidate/start?step=1", false)]
+    public async Task Viewport_1440_onboarding_help_icon_fully_visible(string path, bool kompas)
     {
-        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory
-        {
-            WelcomeDismissed = true,
-            SavedStep = 1,
-        };
+        await using var factory = kompas
+            ? CreateCompleteCandidateFactory()
+            : new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory
+            {
+                WelcomeDismissed = true,
+                SavedStep = 1,
+            };
+
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
-        {
-            ViewportSize = new() { Width = 1440, Height = 900 },
-            Locale = "nl-NL",
-        });
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(1440, mobile: false));
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
 
-        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=1"));
-        await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString(path));
+        if (kompas)
+        {
+            await page.Locator("[data-ob-rustig-screen=\"kompas\"]").WaitForAsync(new() { Timeout = 90_000 });
+        }
+        else
+        {
+            await page.Locator("[data-ob-client-step=\"1\"]").WaitForAsync(new() { Timeout = 90_000 });
+        }
         var headerIconOk = await page.EvaluateAsync<bool>(
             """
             () => {
@@ -300,9 +358,24 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
               return hr.top >= bar.top - 1 && hr.bottom <= bar.bottom + 1 && hr.left >= 0;
             }
             """);
-        Assert.True(headerIconOk, "Help ? icon must be fully visible at 1440 desktop");
+        Assert.True(headerIconOk, $"Help ? icon must be fully visible at 1440 on {path}");
     }
 
+    [Fact]
+    public async Task Desktop_1440_paspoort_coach_does_not_overlap_top_highlight()
+    {
+        await using var factory = CreateCompleteCandidateFactory();
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(ViewportContextOptions(1440, mobile: false));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await SignInCompleteCandidateAsync(page, root, "/candidate/paspoort");
+        await page.GotoAsync(root + "/candidate/paspoort", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var overlap = await CoachVariantBOverlapAuditSupport.EvaluateOverlapAsync(page);
+        Assert.True(overlap.Ok || overlap.Skip, overlap.Reason);
+    }
 
     private static OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory CreateCompleteCandidateFactory()
     {
@@ -327,12 +400,12 @@ public sealed class CandidateMobileLayout390PlaywrightTests : IAsyncLifetime
         await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
     }
 
-    private static BrowserNewContextOptions MobileContextOptions()
+    private static BrowserNewContextOptions ViewportContextOptions(int width, bool mobile)
         => new()
         {
-            ViewportSize = new() { Width = 390, Height = 844 },
-            IsMobile = true,
-            HasTouch = true,
+            ViewportSize = new() { Width = width, Height = mobile ? 844 : 900 },
+            IsMobile = mobile,
+            HasTouch = mobile,
             IgnoreHTTPSErrors = true,
             Locale = "nl-NL",
         };

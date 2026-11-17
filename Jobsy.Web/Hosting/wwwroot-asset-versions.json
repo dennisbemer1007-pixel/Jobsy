@@ -48,7 +48,7 @@
     "v": "20261025-59"
   },
   "css/features/banenkaart-lagen.css": {
-    "sha256": "b79f0666f0e9f65a2127a1b20c559f7fe57031c8a2fe2d5971a82803da34a751",
+    "sha256": "45dd5b201e5aa6bdf39cf599d2a0ef58147c09c3a4e9aff4293347ad201eca48",
     "v": "20261026-26"
   },
   "css/features/banenkaart-page.css": {
@@ -152,7 +152,7 @@
     "v": "20261011-03"
   },
   "css/features/kompas-illustrated.css": {
-    "sha256": "d7513b5b4128389410243d396d6ae5d174af05766808aa323db89f47a36c4b00",
+    "sha256": "d0419d9b26ffcce7b35d25d34899cdbd5f672da6efc0c3f966e64d6382b74317",
     "v": "20261025-87"
   },
   "css/features/kreeft-reiskaart.css": {
@@ -180,7 +180,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "2b7ccb1c58b386e1f261fb2c98cdf7583b72a923f9178ddea4dd27b7b3446418",
+    "sha256": "1d70aaf944fba6d66c9a084e79dfd2fae74c88bb050e545971dbd54a85612362",
     "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -228,7 +228,7 @@
     "v": "20261025-87"
   },
   "css/features/onboarding-finale-v2.css": {
-    "sha256": "aaf49ede60c7b87d6140b779b9dfd71a8e7ce6889218cc3902958a6256c925e8",
+    "sha256": "44a4a85fe60cbc91562be85e4067d450813719eedb51ccec34002658ca2863da",
     "v": "20261018-15"
   },
   "css/features/onboarding-illustrated-step.css": {
@@ -240,7 +240,7 @@
     "v": "20261025-14"
   },
   "css/features/onboarding-rustig.css": {
-    "sha256": "59646fa58f6b518e0639a2d274c9bf40672a9222a100ec9e6a647ffe1baf4890",
+    "sha256": "bec682c358cfff6ae60149e6cc4ac113f4e53947a6dc5a2f0af8ad7cf7300365",
     "v": "20261025-87"
   },
   "css/features/onboarding-start-journey.css": {
@@ -272,7 +272,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "8020788782606957169ddd67bd4b068b20cb7759a4a49236439202e74e811cf1",
+    "sha256": "156a01db23b430ccc09fd952b0c9f6ce8471a560c80f14578cc914335c20b21b",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -288,7 +288,7 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "f3f81a706a7f88c3a57225f16abd54fbc8b59c038443b1f608a14f766e3600e8",
+    "sha256": "dd1e3fe2676a9ba7734e7b0497e65b49704a3b30c8e6149ffd769c06823af1d1",
     "v": "20261022-79"
   },
   "css/features/opleidingen.css": {
@@ -390,6 +390,10 @@
   "images/brand/mascot-128.png": {
     "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
     "v": "20261004-13"
+  },
+  "js/account-maken.js": {
+    "sha256": "5fa2c7dfc7e84c155ccf1d30a69f8791cc02eb64d9def1c575bc047519625748",
+    "v": "20261117-02"
   },
   "js/admin-shell.js": {
     "sha256": "1b05b82d4323e08f40c5b37c128e9edafc8df0cbc3d74e170253b4d0e7cf6f5c",
@@ -588,7 +592,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "0822d231475210637e828399cfcbcac999ce9682f54ae3ce979c025feb70bfa9",
+    "sha256": "13163a8c5c69290048a3a3002a3a2055235acee0d695667172690ba19f4417b5",
     "v": "20261117-88"
   },
   "js/onboarding-ssr-fetch-save.js": {
@@ -646,6 +650,10 @@
   "js/scholen-portal-ssr.js": {
     "sha256": "f2f023106589fb4fe4dbde8a138f590cad430d3a347b671d7ab74df6a709d45a",
     "v": "20261105-catalog"
+  },
+  "js/school-class-form.js": {
+    "sha256": "286bcbb3a51cee9d03b5f834c5479d7b8db1b17cadf7a04b4f0244e4f1e1162c",
+    "v": "20261117-01"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "c6daa7faa5213415966cd25b8c1b6e147ac3ea532cc9a3e0b1128c71f1c5318c",
