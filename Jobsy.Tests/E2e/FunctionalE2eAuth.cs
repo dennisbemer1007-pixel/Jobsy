@@ -105,17 +105,7 @@ public static class FunctionalE2eAuth
                         throw new InvalidOperationException($"Functional E2E: session not established for {email} (url={page.Url}).");
                     }
 
-                    await page.WaitForSelectorAsync(
-                        ".jobsy-discovery",
-                        new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
-                    await page.WaitForSelectorAsync(
-                        "[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]",
-                        new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
-                    await page.Locator(".app-header .language-selector__toggle").WaitForAsync(new()
-                    {
-                        State = WaitForSelectorState.Visible,
-                        Timeout = 90_000,
-                    });
+                    await FunctionalE2eCandidateSession.WaitForAuthenticatedBanenkaartAsync(page);
                     await ctx.StorageStateAsync(new() { Path = path });
                     _storageStatePath = path;
                     _storageBaseUrl = baseUrl;
@@ -197,7 +187,12 @@ public static class FunctionalE2eAuth
 
             await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             await KbE2e.WaitForStyledAppAsync(page);
-            return !page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase);
+            if (page.Url.Contains("/login", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return await FunctionalE2eCandidateSession.IsAuthenticatedBanenkaartAsync(page);
         }
         catch
         {

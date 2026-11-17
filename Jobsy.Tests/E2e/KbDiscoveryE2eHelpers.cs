@@ -13,22 +13,7 @@ internal static class KbDiscoveryE2eHelpers
             ".jobsy-discovery",
             new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
-        await DismissStartPromptIfPresentAsync(page);
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const search = document.querySelector('[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]');
-              if (!search || !search.checkVisibility()) return false;
-              if (window.innerWidth >= 900) {
-                const toggle = document.querySelector('.app-header .language-selector__toggle');
-                return !!toggle && toggle.checkVisibility();
-              }
-              return true;
-            }
-            """,
-            null,
-            new() { Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(400);
+        await FunctionalE2eCandidateSession.WaitForAuthenticatedBanenkaartAsync(page);
     }
 
     internal static async Task DismissStartPromptIfPresentAsync(IPage page)
