@@ -3346,6 +3346,8 @@
         double? homeLat = null;
         double? homeLng = null;
         string? homeLabel = null;
+        string? profileTransport = null;
+        int? profileMaxTravel = null;
         if (_isCandidate)
         {
             try
@@ -3358,6 +3360,8 @@
                     homeLabel = string.IsNullOrWhiteSpace(profile.Preferences.HomeAddress)
                         ? null
                         : profile.Preferences.HomeAddress.Trim();
+                    profileTransport = profile.Preferences.PreferredTransport;
+                    profileMaxTravel = profile.Preferences.MaxTravelMinutes;
                 }
             }
             catch { }
@@ -3370,7 +3374,9 @@
             HomeLongitude: homeLng,
             HomeAddressLabel: homeLabel,
             StoredOrigin: storedOrigin,
-            IsLoggedInCandidate: _isCandidate));
+            IsLoggedInCandidate: _isCandidate,
+            ProfilePreferredTransport: profileTransport,
+            ProfileMaxTravelMinutes: profileMaxTravel));
 
         if (resolved.Origin is { } origin)
         {

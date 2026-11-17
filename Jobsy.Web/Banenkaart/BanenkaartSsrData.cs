@@ -120,7 +120,9 @@ internal static class BanenkaartSsrData
                             HomeLongitude: hLng,
                             HomeAddressLabel: profile.Preferences.HomeAddress,
                             StoredOrigin: null,
-                            IsLoggedInCandidate: true));
+                            IsLoggedInCandidate: true,
+                            ProfilePreferredTransport: profile.Preferences.PreferredTransport,
+                            ProfileMaxTravelMinutes: profile.Preferences.MaxTravelMinutes));
                         if (resolved.Origin is { } origin)
                         {
                             originLat = origin.Latitude;

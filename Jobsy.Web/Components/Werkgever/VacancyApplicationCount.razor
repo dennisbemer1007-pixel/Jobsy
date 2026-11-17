@@ -1,17 +1,18 @@
 @namespace Jobsy.Web.Components.Werkgever
 @using System.Globalization
+@using Jobsy.Web.Localization
 @inject CultureState Culture
 
 <span class="wg-vac-apps" data-testid="wg-vac-apps">
     @if (NewCount > 0)
     {
-        <span class="wg-vac-apps__total">@Total</span>
+        <span class="wg-vac-apps__total">@CountPhrase.Applications(Culture, Total)</span>
         <span class="wg-vac-apps__sep" aria-hidden="true"> · </span>
         <span class="wg-vac__new" title="@Aria" aria-label="@Aria">@Badge</span>
     }
     else
     {
-        @Total
+        @CountPhrase.Applications(Culture, Total)
     }
 </span>
 

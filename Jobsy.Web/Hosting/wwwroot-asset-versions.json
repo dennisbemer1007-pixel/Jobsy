@@ -391,6 +391,10 @@
     "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
     "v": "20261004-13"
   },
+  "js/account-maken.js": {
+    "sha256": "5fa2c7dfc7e84c155ccf1d30a69f8791cc02eb64d9def1c575bc047519625748",
+    "v": "20261117-02"
+  },
   "js/admin-shell.js": {
     "sha256": "1b05b82d4323e08f40c5b37c128e9edafc8df0cbc3d74e170253b4d0e7cf6f5c",
     "v": "20261025-87"
@@ -646,6 +650,10 @@
   "js/scholen-portal-ssr.js": {
     "sha256": "f2f023106589fb4fe4dbde8a138f590cad430d3a347b671d7ab74df6a709d45a",
     "v": "20261105-catalog"
+  },
+  "js/school-class-form.js": {
+    "sha256": "286bcbb3a51cee9d03b5f834c5479d7b8db1b17cadf7a04b4f0244e4f1e1162c",
+    "v": "20261117-01"
   },
   "js/sollicitaties-actions.js": {
     "sha256": "c6daa7faa5213415966cd25b8c1b6e147ac3ea532cc9a3e0b1128c71f1c5318c",

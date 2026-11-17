@@ -54,7 +54,8 @@ public static class SchoolClassFormSsrHtml
             model.Kind = KindFromLevel(model.Level);
         }
 
-        if (Enum.TryParse<SchoolLevel>(query["level"].ToString(), ignoreCase: true, out var level))
+        if (model.Kind != KindPrimary
+            && Enum.TryParse<SchoolLevel>(query["level"].ToString(), ignoreCase: true, out var level))
         {
             model.Level = level;
             if (string.IsNullOrWhiteSpace(kind))
@@ -109,15 +110,19 @@ public static class SchoolClassFormSsrHtml
             model.Kind = NormalizeKind(form["kind"].ToString());
         }
 
-        if (Enum.TryParse<SchoolLevel>(form["level"].ToString(), ignoreCase: true, out var level))
+        var parsedYear = model.Year;
+        if (int.TryParse(form["year"].ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var year))
+        {
+            parsedYear = year;
+        }
+
+        if (model.Kind != KindPrimary
+            && Enum.TryParse<SchoolLevel>(form["level"].ToString(), ignoreCase: true, out var level))
         {
             model.Level = level;
         }
 
-        if (int.TryParse(form["year"].ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var year))
-        {
-            model.Year = year;
-        }
+        model.Year = parsedYear;
 
         if (int.TryParse(form["pupilCount"].ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var pupilCount))
         {
@@ -168,7 +173,7 @@ public static class SchoolClassFormSsrHtml
         sb.Append(antiforgery);
 
         sb.Append("<label>");
-            sb.Append(E(culture["School.Class.Field.Name"]));
+        sb.Append(E(culture["School.Class.Field.Name"]));
         sb.Append(" <input class=\"sch-field\" type=\"text\" name=\"className\" maxlength=\"12\" value=\"");
         sb.Append(E(model.ClassName));
         sb.Append("\" /></label>");

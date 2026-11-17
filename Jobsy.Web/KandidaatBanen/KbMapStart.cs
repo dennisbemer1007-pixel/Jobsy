@@ -1,8 +1,10 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Web.KandidaatBanen;
 
 /// <summary>
 /// Pure launch-origin precedence for the banenkaart (file 03 / D5).
-/// Transport/minutes preferences for match scoring are unrelated — map start is always Fiets · 20.
+/// Home/stored origins use candidate transport prefs when present; else Fiets · 20.
 /// </summary>
 public static class KbMapStart
 {
@@ -19,7 +21,9 @@ public static class KbMapStart
         double? HomeLongitude,
         string? HomeAddressLabel,
         OriginPoint? StoredOrigin,
-        bool IsLoggedInCandidate);
+        bool IsLoggedInCandidate,
+        string? ProfilePreferredTransport = null,
+        int? ProfileMaxTravelMinutes = null);
 
     public sealed record Result(
         OriginPoint? Origin,
@@ -32,12 +36,12 @@ public static class KbMapStart
     {
         if (IsUsable(input.UrlOrStateOrigin))
         {
-            return Apply(input.UrlOrStateOrigin!, "url");
+            return Apply(input.UrlOrStateOrigin!, "url", input);
         }
 
         if (IsUsable(input.SessionOrigin))
         {
-            return Apply(input.SessionOrigin!, "session");
+            return Apply(input.SessionOrigin!, "session", input);
         }
 
         if (input.IsLoggedInCandidate
@@ -49,12 +53,12 @@ public static class KbMapStart
             var label = string.IsNullOrWhiteSpace(input.HomeAddressLabel)
                 ? null
                 : input.HomeAddressLabel.Trim();
-            return Apply(new OriginPoint(lat, lng, label), "home");
+            return Apply(new OriginPoint(lat, lng, label), "home", input);
         }
 
         if (IsUsable(input.StoredOrigin))
         {
-            return Apply(input.StoredOrigin!, "stored");
+            return Apply(input.StoredOrigin!, "stored", input);
         }
 
         return new Result(
@@ -65,8 +69,19 @@ public static class KbMapStart
             Source: "prompt");
     }
 
-    private static Result Apply(OriginPoint origin, string source) =>
-        new(origin, DefaultTransport, DefaultMaxTravelMinutes, ShowLocationPrompt: false, source);
+    private static Result Apply(OriginPoint origin, string source, Input input)
+    {
+        var useProfilePrefs = source is "home" or "stored";
+        var transport = useProfilePrefs && !string.IsNullOrWhiteSpace(input.ProfilePreferredTransport)
+            ? TransportLabels.Normalize(input.ProfilePreferredTransport)
+            : DefaultTransport;
+        var minutes = useProfilePrefs
+                       && input.ProfileMaxTravelMinutes is int m
+                       && m is >= 5 and <= 90
+            ? m
+            : DefaultMaxTravelMinutes;
+        return new Result(origin, transport, minutes, ShowLocationPrompt: false, source);
+    }
 
     private static bool IsUsable(OriginPoint? origin) =>
         origin is not null

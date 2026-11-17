@@ -109,7 +109,7 @@ public static class PupilQuestionBankJeFormsG78V2
         [9025] = "Je wilt de klas liever meenemen in je plan.",
         [9026] = "Je zoekt liever rustig nog iets uit in een boek of filmpje.",
         [9027] = "Je verzint liever zelf hoe het eruit moet zien.",
-        [9028] = "Je vindt binnen samen een spel doen leuker.",
+        [9028] = "Je vindt het leuker om binnen samen een spel te doen.",
         [9029] = "Je houdt de spullen en stappen liever netjes en overzichtelijk.",
         [9030] = "Je knutselt of repareert liever iets alleen.",
         [9031] = "Je vindt het fijn als de leraar precies zegt hoe het moet.",

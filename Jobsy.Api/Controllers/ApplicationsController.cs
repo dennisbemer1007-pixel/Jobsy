@@ -48,6 +48,7 @@ public class ApplicationsController : ControllerBase
     private readonly ISupportAccessService _supportAccess;
     private readonly IApplicationStatusRecorder _statusRecorder;
     private readonly ApplicationStatusNotifier _statusNotifier;
+    private readonly IJobSearchActivityService _jobSearchActivities;
 
     public ApplicationsController(
         JobsyDbContext db,
@@ -65,7 +66,8 @@ public class ApplicationsController : ControllerBase
         IPersonalDataAccessLogger accessLog,
         ISupportAccessService supportAccess,
         IApplicationStatusRecorder statusRecorder,
-        ApplicationStatusNotifier statusNotifier)
+        ApplicationStatusNotifier statusNotifier,
+        IJobSearchActivityService jobSearchActivities)
     {
         _db = db;
         _companyAuth = companyAuth;
@@ -83,6 +85,7 @@ public class ApplicationsController : ControllerBase
         _supportAccess = supportAccess;
         _statusRecorder = statusRecorder;
         _statusNotifier = statusNotifier;
+        _jobSearchActivities = jobSearchActivities;
     }
 
     [HttpGet]
@@ -846,10 +849,17 @@ public class ApplicationsController : ControllerBase
             });
         }
 
+        var estimatedTravelMinutes = ResolveEstimatedTravelMinutes(
+            candidate,
+            vacancy,
+            preferences,
+            request.PreferredTransport,
+            request.EstimatedTravelMinutes);
+
         var matchInput = MatchingProfileMapper.BuildInput(
             vacancy,
             preferences,
-            request.EstimatedTravelMinutes,
+            estimatedTravelMinutes,
             ageYears);
         var match = MatchScoreCalculator.Calculate(matchInput);
         if (!match.LegalEligible)
@@ -874,7 +884,7 @@ public class ApplicationsController : ControllerBase
                 candidate.FullName,
                 candidate.Email,
                 request.PreferredTransport,
-                request.EstimatedTravelMinutes,
+                estimatedTravelMinutes,
                 existing?.CreatedAt ?? DateTime.UtcNow,
                 ApplicationStatus.Pending.ToString());
             return Ok(new ApplyResultDto(
@@ -944,7 +954,7 @@ public class ApplicationsController : ControllerBase
                                     ?? ExtractCityHint(candidate);
         application.CandidateAddress = Truncate(preferences.HomeAddress, 512);
         application.PreferredTransport = request.PreferredTransport;
-        application.EstimatedTravelMinutes = request.EstimatedTravelMinutes;
+        application.EstimatedTravelMinutes = estimatedTravelMinutes;
         application.DistanceKm = distanceKm;
         application.CandidateAgeYears = ageYears;
         application.SnapshotDateOfBirth = candidate.DateOfBirth;
@@ -1060,6 +1070,7 @@ public class ApplicationsController : ControllerBase
 
                 await _statusNotifier.NotifyApplicationSubmittedAsync(
                     application, vacancy, candidate.FullName, cancellationToken);
+                await TrySyncJobSearchActivitiesAsync(candidate.Id, cancellationToken);
 
                 var immediateDto = new ApplicationDto(
                     application.Id,
@@ -1217,6 +1228,7 @@ public class ApplicationsController : ControllerBase
 
         await _statusNotifier.NotifyApplicationSubmittedAsync(
             existing, vacancy, candidate.FullName, cancellationToken);
+        await TrySyncJobSearchActivitiesAsync(candidate.Id, cancellationToken);
 
         var dto = new ApplicationDto(
             existing.Id,
@@ -1996,5 +2008,46 @@ public class ApplicationsController : ControllerBase
         }
 
         await _statusNotifier.NotifyCvViewedAsync(application, actorUserId, cancellationToken);
+    }
+
+    private static int ResolveEstimatedTravelMinutes(
+        User candidate,
+        Vacancy vacancy,
+        CandidatePreferencesDto preferences,
+        string? preferredTransport,
+        int clientEstimatedMinutes)
+    {
+        if (candidate.HomeLocation is null || vacancy.Location is null)
+        {
+            return clientEstimatedMinutes;
+        }
+
+        var transportLabel = string.IsNullOrWhiteSpace(preferredTransport)
+            ? preferences.PreferredTransport
+            : preferredTransport;
+        var mode = TravelReach.Fastest(TransportLabels.ParseMany(transportLabel));
+        var (minutes, _) = TravelReach.Estimate(
+            candidate.HomeLocation.Latitude,
+            candidate.HomeLocation.Longitude,
+            vacancy.Location.Latitude,
+            vacancy.Location.Longitude,
+            mode);
+        return minutes;
+    }
+
+    private async Task TrySyncJobSearchActivitiesAsync(Guid candidateUserId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            await _jobSearchActivities.SyncAutomaticActivitiesAsync(
+                candidateUserId,
+                features.AfterMatchEnabled,
+                cancellationToken);
+        }
+        catch
+        {
+            // UWV tab should not block apply.
+        }
     }
 }

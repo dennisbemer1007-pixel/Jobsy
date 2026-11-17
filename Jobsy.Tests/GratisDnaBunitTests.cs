@@ -68,6 +68,7 @@ public class GratisDnaBunitTests : BunitContext
         var cut = Render<GratisDnaSignupCard>();
         var markup = cut.Markup;
         Assert.Contains("/account-maken?van=ontdek#email", markup, StringComparison.Ordinal);
+        Assert.Contains("data-enhance-nav=\"false\"", markup, StringComparison.Ordinal);
         Assert.Contains("/account/external/google?", markup, StringComparison.Ordinal);
         Assert.Contains("/account/external/entra?", markup, StringComparison.Ordinal);
         Assert.Contains("van=ontdek", markup, StringComparison.Ordinal);

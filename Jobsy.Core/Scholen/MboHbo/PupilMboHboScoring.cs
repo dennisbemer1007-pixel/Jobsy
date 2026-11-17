@@ -88,10 +88,18 @@ public static class PupilMboHboScoring
             .Take(8)
             .ToList();
 
+        var combinedScores = ranked.Select(x => (x.leuk + x.goed) / 2).ToList();
+        var min = combinedScores.Count > 0 ? combinedScores.Min() : 0;
+        var max = combinedScores.Count > 0 ? combinedScores.Max() : 0;
         var bars = ranked.Take(5)
-            .Select(x => new NamedScore(
-                x.label,
-                LikertAnswerJson.ToPercent([(x.leuk + x.goed) / 2])))
+            .Select(x =>
+            {
+                var avg = (x.leuk + x.goed) / 2;
+                var percent = max > min
+                    ? (int)Math.Round(100d * (avg - min) / (max - min))
+                    : LikertAnswerJson.ToPercent([avg]);
+                return new NamedScore(x.label, Math.Clamp(percent, 0, 100));
+            })
             .ToList();
 
         var top = ranked.Take(3).Select(x => x.label).ToList();

@@ -29,4 +29,17 @@ public sealed class JobSearchActivityPeriodRulesTests
         Assert.Equal(20, JobSearchActivityPeriodRules.ClampActivitiesPerPeriod(99));
         Assert.Equal(4, JobSearchActivityPeriodRules.ClampActivitiesPerPeriod(4));
     }
+
+    [Fact]
+    public void CreateEmptyOverview_matches_28_day_period_rules()
+    {
+        var anchor = new DateOnly(2026, 10, 5);
+        var today = new DateOnly(2026, 10, 20);
+        var empty = JobSearchActivityPeriodRules.CreateEmptyOverview(anchor, today);
+        var (start, end) = JobSearchActivityPeriodRules.CurrentPeriod(anchor, today);
+        Assert.Equal(start, empty.PeriodStart);
+        Assert.Equal(end, empty.PeriodEndInclusive);
+        Assert.Equal(4, empty.ActivitiesTarget);
+        Assert.Contains("tot en met", empty.PeriodLabel, StringComparison.Ordinal);
+    }
 }

@@ -63,6 +63,10 @@ else
 
         <ChildContent>
         <div class="wg-dash">
+            @if (_apkOffMessage is not null)
+            {
+                <p class="state-message" role="status">@_apkOffMessage</p>
+            }
             <PanelErrorBoundary Name="wg-kpis">
                 @if (_loadingDash)
                 {
@@ -291,6 +295,7 @@ else
     private WerkgeverDashboardDto? _dash;
     private List<WerkgeverTodoItemDto> _todos = [];
     private bool _started;
+    private string? _apkOffMessage;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool IsIntermediary => Role == EmployerRole.Intermediair;
@@ -333,6 +338,12 @@ else
         if (query.TryGetValue("period", out var p))
         {
             _period = WerkgeverDashboardRules.NormalizePeriod(p.ToString());
+        }
+
+        if (query.TryGetValue("apk", out var apk)
+            && string.Equals(apk.ToString(), "off", StringComparison.OrdinalIgnoreCase))
+        {
+            _apkOffMessage = Culture["WgDash.ApkDisabled"];
         }
     }
 

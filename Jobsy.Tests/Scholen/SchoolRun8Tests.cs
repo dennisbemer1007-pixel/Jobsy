@@ -260,6 +260,24 @@ public class SchoolRun8Groep8Tests : BunitContext
     }
 
     [Fact]
+    public void Parsed_primary_year_8_ignores_vo_level_from_form()
+    {
+        var form = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>
+        {
+            ["className"] = "8A",
+            ["kind"] = SchoolClassFormSsrHtml.KindPrimary,
+            ["level"] = SchoolLevel.Havo.ToString(),
+            ["year"] = "8",
+            ["pupilCount"] = "28",
+        };
+        var collection = new FormCollection(form!);
+        var seed = new SchoolClassFormSsrHtml.FormModel { ShowPupilCount = true };
+        Assert.True(SchoolClassFormSsrHtml.TryParseForm(collection, seed, out var model, out _));
+        Assert.Equal(8, model.Year);
+        Assert.Equal(SchoolLevel.Groep78, model.Level);
+    }
+
+    [Fact]
     public void Parsed_primary_year_8_maps_to_groep78_create_request()
     {
         var form = new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>

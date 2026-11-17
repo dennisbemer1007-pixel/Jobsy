@@ -41,12 +41,15 @@
                         <div><dt>Uren</dt><dd>@minH–@maxH per week</dd></div>
                     }
                     <div><dt>Rooster</dt><dd>@ScheduleSummaryLabel</dd></div>
-                    <div><dt>Status</dt><dd>Concept, nog niet zichtbaar</dd></div>
+                    <div><dt>Status</dt><dd data-testid="vacancy-saved-status">@SavedConfirmationStatusLabel</dd></div>
                 </dl>
                 <div class="vac-wizard-saved__actions">
+                    @if (!SavedConfirmationIsPublished)
+                    {
                     <button type="button" class="btn btn-primary vac-wizard-saved__publish" data-testid="vacancy-publish-now" @onclick="OpenPublishAsync">
                         Nu publiceren
                     </button>
+                    }
                     <button type="button" class="btn btn-secondary vac-wizard-saved__edit" @onclick="ContinueEditingFromSavedAsync">
                         Verder bewerken
                     </button>

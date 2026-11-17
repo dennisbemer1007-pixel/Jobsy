@@ -25,6 +25,13 @@ public class KbMapStartTests
         Assert.Equal("home", fromHome.Source);
         Assert.Equal(KbMapStart.DefaultTransport, fromHome.Transport);
         Assert.Equal(KbMapStart.DefaultMaxTravelMinutes, fromHome.MaxTravelMinutes);
+
+        var fromHomePrefs = KbMapStart.Resolve(new KbMapStart.Input(
+            null, null, 51.99, 4.22, "Home", stored, IsLoggedInCandidate: true,
+            ProfilePreferredTransport: "Fiets, OV",
+            ProfileMaxTravelMinutes: 45));
+        Assert.Equal("Fiets, OV", fromHomePrefs.Transport);
+        Assert.Equal(45, fromHomePrefs.MaxTravelMinutes);
         Assert.False(fromHome.ShowLocationPrompt);
         Assert.Equal("Herenstraat 20, Wateringen", fromHome.Origin!.Label);
 

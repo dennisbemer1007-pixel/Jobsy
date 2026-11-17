@@ -470,6 +470,11 @@ public sealed class PupilMboHboPortalService : IPupilMboHboPortalService
             .Where(s => s.IsBlockComplete(PupilMboHboBlock.Interesse))
             .ToList();
 
+        if (completed.Count < SchoolAnonymity.MinGroupSize)
+        {
+            return new TeacherMboHboGroupChartsDto([], []);
+        }
+
         var interesseBars = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
         foreach (var state in completed)
         {

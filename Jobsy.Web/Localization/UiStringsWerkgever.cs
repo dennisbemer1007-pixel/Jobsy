@@ -119,6 +119,7 @@ public static class UiStringsWerkgever
         Add("WgDash.Count.Regions", "{0} regio's", "{0} regions", "{0} regionów", "{0} regiuni", "{0} مناطق");
         Add("WgDash.Lead.Vm", "{0} · laatste {1}", "{0} · last {1}", "{0} · ostatnie {1}", "{0} · ultimele {1}", "{0} · آخر {1}");
         Add("WgDash.Lead.Intermediary", "KPI’s over alle opdrachtgevers. Detail per bedrijf staat in Bedrijvenoverzicht.", "KPIs across all clients. Per-company detail is in Clients.", "KPI dla wszystkich klientów. Szczegóły per firma w Klienci.", "KPI pentru toți clienții. Detaliile pe firmă sunt la Clienți.", "مؤشرات لكل العملاء. التفاصيل لكل شركة في العملاء.");
+        Add("WgDash.ApkDisabled", "Loopbaan-APK staat op dit moment uit. Neem contact op met support als je toegang nodig hebt.", "Career APK is currently turned off. Contact support if you need access.", "Career APK jest wyłączone. Skontaktuj się ze wsparciem, jeśli potrzebujesz dostępu.", "APK de carieră este dezactivat. Contactează suportul dacă ai nevoie de acces.", "مسار APK المعطل حالياً. تواصل مع الدعم إذا احتجت الوصول.");
         Add("WgDash.Export", "Exporteren", "Export", "Eksportuj", "Exportă", "تصدير");
         Add("WgDash.PostVacancy", "Vacature plaatsen", "Post vacancy", "Opublikuj ofertę", "Publică post", "نشر وظيفة");
         Add("WgDash.TodoTitle", "Te doen", "To do", "Do zrobienia", "De făcut", "للقيام به");
