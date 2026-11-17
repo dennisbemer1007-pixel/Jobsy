@@ -1,4 +1,6 @@
+using Jobsy.Web.Hosting;
 using Microsoft.AspNetCore.Antiforgery;
+
 namespace Jobsy.Web.Security;
 
 /// <summary>
@@ -63,10 +65,49 @@ public sealed class BffMutatingSecurityFilter : IEndpointFilter
                 && originUri.Scheme.Equals(http.Request.Scheme, StringComparison.OrdinalIgnoreCase);
         }
 
-        return string.Equals(
-            Jobsy.Core.JobsyPublicUrl.NormalizeOrigin(origin),
-            expected,
-            StringComparison.OrdinalIgnoreCase);
+        if (OriginsEquivalent(
+                Jobsy.Core.JobsyPublicUrl.NormalizeOrigin(origin),
+                expected))
+        {
+            return true;
+        }
+
+        return OriginsEquivalent(origin, $"{http.Request.Scheme}://{http.Request.Host.Value}");
+    }
+
+    internal static bool OriginsEquivalent(string? a, string? b)
+    {
+        var left = NormalizeComparableOrigin(a);
+        var right = NormalizeComparableOrigin(b);
+        if (string.Equals(left, right, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!Uri.TryCreate(left, UriKind.Absolute, out var leftUri)
+            || !Uri.TryCreate(right, UriKind.Absolute, out var rightUri))
+        {
+            return false;
+        }
+
+        if (!string.Equals(leftUri.Scheme, rightUri.Scheme, StringComparison.OrdinalIgnoreCase)
+            || leftUri.Port != rightUri.Port)
+        {
+            return false;
+        }
+
+        return CanonicalHost.IsLoopback(leftUri.Host)
+               && CanonicalHost.IsLoopback(rightUri.Host);
+    }
+
+    private static string NormalizeComparableOrigin(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return Jobsy.Core.JobsyPublicUrl.NormalizeOrigin(value).TrimEnd('/');
     }
 
     internal static string? ResolveExpectedOrigin(HttpContext http, IConfiguration configuration)

@@ -40,6 +40,21 @@ public class BundelASecurityTests
     }
 
     [Fact]
+    public void Bff_same_origin_allows_loopback_alias_localhost_vs_127()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["PublicWebBaseUrl"] = "http://localhost:5201" })
+            .Build();
+        var http = new DefaultHttpContext();
+        http.Request.Host = new HostString("127.0.0.1", 5201);
+        http.Request.Scheme = "http";
+        http.Request.Headers.Origin = "http://127.0.0.1:5201";
+        http.Request.Headers["Sec-Fetch-Site"] = "same-origin";
+
+        Assert.True(BffMutatingSecurityFilter.IsSameOrigin(http, config));
+    }
+
+    [Fact]
     public void Bff_same_origin_rejects_cross_origin_header()
     {
         var config = new ConfigurationBuilder()
