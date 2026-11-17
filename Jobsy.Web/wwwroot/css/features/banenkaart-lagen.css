@@ -213,11 +213,16 @@
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .rh {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
         padding: 10px 12px;
         min-width: 0;
+        width: 100%;
         max-width: 100%;
         gap: 8px;
-        overflow-x: clip;
+        overflow-x: visible;
+        box-sizing: border-box;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .srow {
@@ -242,8 +247,21 @@
         overflow: hidden;
     }
 
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .rh > div:first-child {
+        grid-column: 1;
+        min-width: 0;
+    }
+
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .seg {
+        grid-column: 2;
+        justify-self: end;
         flex-shrink: 0;
+        max-width: 100%;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery--lagen .rh .btn.match.mobonly {
+        grid-column: 2;
+        justify-self: end;
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery--lagen .kb-mockup-top.top {

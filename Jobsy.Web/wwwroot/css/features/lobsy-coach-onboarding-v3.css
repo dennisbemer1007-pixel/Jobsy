@@ -130,12 +130,12 @@
   .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .lobsy-coach-dock--onboarding-b {
     display: flex !important;
     visibility: visible !important;
-    inset-inline-end: auto;
-    inset-inline-start: max(10px, env(safe-area-inset-left, 0px));
+    inset-inline-start: auto;
+    inset-inline-end: max(10px, env(safe-area-inset-right, 0px));
     bottom: calc(var(--ob-v3-mobile-footer-h, 76px) + 10px + env(safe-area-inset-bottom, 0px));
     z-index: 34;
     flex-direction: column-reverse;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 6px;
     max-width: min(96px, calc(100vw - 20px));
     pointer-events: none;
@@ -177,14 +177,32 @@
   }
 
   .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card--kompas-ready {
-    padding-block-end: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+    padding-block-end: calc(11rem + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-finale__ctas--heroless {
+    position: relative;
+    z-index: 2;
+    margin-block-end: 0.5rem;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card--kompas-ready {
+    padding-inline-start: var(--space-4, 1rem);
+    padding-inline-end: max(var(--space-4, 1rem), calc(4.75rem + env(safe-area-inset-right, 0px)));
     box-sizing: border-box;
   }
 
   .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card--kompas-ready .ob-v3-step__fields {
-    margin-inline-start: calc(5.25rem + env(safe-area-inset-left, 0px));
-    margin-inline-end: 0;
+    margin-inline: 0;
     box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__lobster {
+    width: 56px;
+    max-width: 56px;
   }
 }
 

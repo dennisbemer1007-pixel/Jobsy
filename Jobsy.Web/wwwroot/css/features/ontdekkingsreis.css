@@ -2880,3 +2880,30 @@
     max-width: 100%;
   }
 }
+
+@media (max-width: 899px) {
+  .journey.journey-root--ssr.journey--overview-route .journey-stage,
+  .journey.journey-root--ssr.journey--overview-route .journey-stage__main,
+  .journey.journey-root--ssr.journey--overview-route .journey-card-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .journey.journey-root--ssr.journey--overview-route .journey-step,
+  .journey.journey-root--ssr.journey--overview-route .discovery-ssr-container {
+    padding-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px)) !important;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .app-shell--candidate:has([data-discovery-ssr="1"]) .cand-settings,
+  .app-shell--candidate:has([data-discovery-ssr="1"]) .panel-page--cand-ill {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px));
+  }
+}

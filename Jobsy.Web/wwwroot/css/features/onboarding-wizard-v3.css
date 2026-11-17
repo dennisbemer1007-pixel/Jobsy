@@ -61,6 +61,16 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   overflow: visible;
 }
 
+.admin-topbar--candidate-onboarding .page-help {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+}
+
+.admin-topbar--candidate-onboarding .admin-topbar__account {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .admin-topbar--candidate-onboarding .admin-topbar__start {
   flex: 0 0 auto;
   min-width: 0;

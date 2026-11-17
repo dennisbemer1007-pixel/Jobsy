@@ -1534,6 +1534,15 @@
   margin-block-end: 1.75rem;
 }
 
+@media (max-width: 1023px) {
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-rustig__kompas-tests,
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-rustig__kompas-directions,
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-finale__ctas--heroless {
+    margin-block-end: 2.25rem;
+    padding-block-end: 4.5rem;
+  }
+}
+
 .ob-rustig__kompas-tests h2,
 .ob-rustig__kompas-directions h2 {
   margin: 0 0 0.35rem;
