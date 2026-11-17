@@ -14,7 +14,7 @@
                 aria-expanded="@(_open ? "true" : "false")"
                 aria-controls="@(_open ? "page-help-panel" : null)"
                 @onclick="Toggle">
-            i
+            ?
         </button>
 
             <div class="header-dropdown-backdrop" hidden="@(!_open)" @onclick="Close" aria-hidden="@(_open ? null : "true")"></div>

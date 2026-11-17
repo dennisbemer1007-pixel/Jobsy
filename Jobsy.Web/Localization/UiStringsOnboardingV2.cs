@@ -498,6 +498,7 @@ internal static class UiStringsOnboardingV2
         Do("Onboarding.FinaleV2.Do.Match.Body", "We matchen op wie je bent en wat je wilt, niet alleen op je cv.", "We match on who you are and what you want, not just your CV.");
         Do("Onboarding.FinaleV2.Do.Map.Title", "Banenkaart met reistijd", "Job map with travel time");
         Do("Onboarding.FinaleV2.Do.Map.Body", "Zie per vacature hoe lang je onderweg bent vanaf {0}.", "See how long each job takes to reach from {0}.");
+        Do("Onboarding.FinaleV2.Do.Map.Body.NoHome", "Zie per vacature hoe lang je er onderweg bent.", "See how long travel takes for each job.");
         Do("Onboarding.FinaleV2.Do.Compass.Title", "Je Kompas, in woorden", "Your Compass, in words");
         Do("Onboarding.FinaleV2.Do.Compass.Body", "Je sterke punten, wat je leuk vindt en wat je nodig hebt, helder uitgelegd.", "Your strengths, what you enjoy and what you need, explained clearly.");
         Do("Onboarding.FinaleV2.Do.Route.Title", "Je route naar {0}", "Your route to {0}");

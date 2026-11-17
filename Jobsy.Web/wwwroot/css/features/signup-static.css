@@ -162,6 +162,22 @@
   display: grid;
 }
 
+.pub-theme .pub-signup label:has(#email),
+.pub-theme .pub-signup__form label:has(#email) {
+  scroll-margin-top: calc(var(--pub-header-h, 4.75rem) + 1.5rem);
+}
+
+.pub-theme .pub-signup--email-focus .pub-signup__form,
+.pub-theme .pub-signup--email-focus .login-form.pub-signup__form {
+  padding-top: 0.35rem;
+}
+
 .pub-theme .pub-signup--email-focus #email {
-  scroll-margin-top: 5rem;
+  scroll-margin-top: calc(var(--pub-header-h, 4.75rem) + 1.5rem);
+}
+
+@media (min-width: 1024px) {
+  .pub-theme .pub-signup--email-focus .au-card {
+    scroll-padding-top: calc(var(--pub-header-h, 4.75rem) + 1rem);
+  }
 }

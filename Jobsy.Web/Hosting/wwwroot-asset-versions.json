@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "f3a2855aa733cdf5580a41c66d25da9a37f0ef46fd31a81603cfa93745e1a88f",
+    "sha256": "45b812ca198fb2c64e66217395e086f3dc7563cd639b08a0074ea1b4812fbeaf",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -92,7 +92,7 @@
     "v": "20261018-02"
   },
   "css/features/candidate-kompas-hub-layout.css": {
-    "sha256": "d648ee516101a530b2d3df07774434555bc85cd793c5ea41f1f5f4d68324f741",
+    "sha256": "787f46f1f7daf8df22e08d1c2dba41632c33cb68cfdb32c9e94ae124bfa0e9a8",
     "v": "20261117-03"
   },
   "css/features/candidate-no-blazor-chrome.css": {
@@ -340,7 +340,7 @@
     "v": "20261030-01"
   },
   "css/features/signup-static.css": {
-    "sha256": "2c8127ee8487637bb7a8978a6ee6e81c53873be5ab6438b4abc7a5aa79addf3d",
+    "sha256": "d0989145b5915226b95d9ddfc63eb8366ab06e50636e51953cd2bb06f1f46069",
     "v": "20261017-02"
   },
   "css/features/sollicitaties-page.css": {
@@ -396,7 +396,7 @@
     "v": "20261004-13"
   },
   "js/account-maken.js": {
-    "sha256": "b07b35e322781bb32608e161ee41c4b356e8e44667bad6d6ee5a991dc2c19a44",
+    "sha256": "bdf6800c80788e449c7233000eb1fc78a1026fd0d698a0187bc0debe456aee4b",
     "v": "20261117-02"
   },
   "js/admin-shell.js": {

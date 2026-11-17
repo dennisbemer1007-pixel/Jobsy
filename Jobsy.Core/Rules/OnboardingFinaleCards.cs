@@ -30,6 +30,27 @@ public sealed record OnboardingFinaleCardsInput(
 
 public static class OnboardingFinaleCards
 {
+    public const string MapBodyKey = "Onboarding.FinaleV2.Do.Map.Body";
+
+    public const string MapBodyNoHomeKey = "Onboarding.FinaleV2.Do.Map.Body.NoHome";
+
+    /// <summary>Banenkaart / map card copy: formatted place name or fallback without <c>{0}</c> placeholders.</summary>
+    public static string FormatBody(
+        OnboardingFinaleCard card,
+        string? homeLabel,
+        string? dreamJob,
+        Func<string, string> localize,
+        Func<string, object[], string> format)
+        => card.Id switch
+        {
+            OnboardingFinaleCardId.Banenkaart when !string.IsNullOrWhiteSpace(homeLabel)
+                => format(card.BodyKey, [homeLabel.Trim()]),
+            OnboardingFinaleCardId.Banenkaart => localize(MapBodyNoHomeKey),
+            OnboardingFinaleCardId.DreamRoute when !string.IsNullOrWhiteSpace(dreamJob)
+                => format(card.BodyKey, [dreamJob]),
+            _ => localize(card.BodyKey),
+        };
+
     public static IReadOnlyList<OnboardingFinaleCard> BuildNow(OnboardingFinaleCardsInput input)
     {
         var list = new List<OnboardingFinaleCard>
