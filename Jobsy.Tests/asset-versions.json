@@ -589,11 +589,11 @@
   },
   "js/onboarding-client-form.js": {
     "sha256": "0822d231475210637e828399cfcbcac999ce9682f54ae3ce979c025feb70bfa9",
-    "v": "20261025-87"
+    "v": "20261117-88"
   },
   "js/onboarding-ssr-fetch-save.js": {
     "sha256": "95140f5723d0d934fda9299849cabd65e97fda0a7c0bb2e5d33bc1ca6be20585",
-    "v": "20261025-87"
+    "v": "20261117-88"
   },
   "js/onboarding-step1-ssr.js": {
     "sha256": "89e2d4a1552614a020322e79ffd2ffb55807712108c56c6d6644c4293321c4c4",
