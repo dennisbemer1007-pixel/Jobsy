@@ -85,6 +85,21 @@
 }
 
 @media (max-width: 1023px) {
+  .app-shell:has(.passport-page--illustrated) .lobsy-coach-dock--variant-b .lobsy-coach-dock__teaser {
+    display: none !important;
+  }
+
+  .app-shell:has(.passport-page--illustrated) .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 72px;
+    max-width: 54px;
+  }
+
+  .app-shell:has(.passport-page--illustrated) .lobsy-coach-dock--variant-b {
+    inset-inline-end: 8px;
+    bottom: calc(var(--bottom-nav-h, 64px) + 14px + env(safe-area-inset-bottom, 0px));
+    z-index: 44;
+  }
+
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b {
     width: 44px;
     height: 44px;

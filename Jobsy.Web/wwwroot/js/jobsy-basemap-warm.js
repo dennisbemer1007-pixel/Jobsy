@@ -7,23 +7,72 @@
     var memoryStyle = null;
     var inflight = null;
 
+    function isUsableBasemapStyle(style) {
+        if (!style || typeof style !== "object" || style.version !== 8) {
+            return false;
+        }
+        if (!style.sources || !style.sources.openmaptiles) {
+            return false;
+        }
+        var omt = style.sources.openmaptiles;
+        var hasTiles = !!(omt.tiles && omt.tiles.length);
+        var hasTileJson = !!(omt.url && String(omt.url).length);
+        if (!hasTiles && !hasTileJson) {
+            return false;
+        }
+        if (!Array.isArray(style.layers) || style.layers.length < 2) {
+            return false;
+        }
+        var drawable = 0;
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || !layer.type) {
+                continue;
+            }
+            if (layer.type === "background" || layer.type === "sky") {
+                continue;
+            }
+            drawable++;
+        }
+        return drawable >= 4;
+    }
+
+    function clearStoredStyle() {
+        memoryStyle = null;
+        try {
+            sessionStorage.removeItem(STORAGE_STYLE);
+        } catch (eClear) { }
+    }
+
     function readStoredStyle() {
-        if (memoryStyle) {
+        if (memoryStyle && isUsableBasemapStyle(memoryStyle)) {
             return memoryStyle;
+        }
+        if (memoryStyle && !isUsableBasemapStyle(memoryStyle)) {
+            clearStoredStyle();
         }
         try {
             var raw = sessionStorage.getItem(STORAGE_STYLE);
             if (!raw) {
                 return null;
             }
-            memoryStyle = JSON.parse(raw);
+            var parsed = JSON.parse(raw);
+            if (!isUsableBasemapStyle(parsed)) {
+                clearStoredStyle();
+                return null;
+            }
+            memoryStyle = parsed;
             return memoryStyle;
         } catch (e) {
+            clearStoredStyle();
             return null;
         }
     }
 
     function storeStyle(style) {
+        if (!isUsableBasemapStyle(style)) {
+            return;
+        }
         memoryStyle = style;
         try {
             sessionStorage.setItem(STORAGE_STYLE, JSON.stringify(style));
@@ -125,8 +174,11 @@
             return inflight;
         }
         var cached = readStoredStyle();
-        if (cached && cached.sources && cached.sources.openmaptiles && cached.sources.openmaptiles.tiles) {
+        if (cached && isUsableBasemapStyle(cached)) {
             return Promise.resolve(cached);
+        }
+        if (cached) {
+            clearStoredStyle();
         }
         inflight = fetch(STYLE_CDN, { credentials: "omit", cache: "force-cache" })
             .then(function (res) {
@@ -178,7 +230,9 @@
 
     window.jobsyBasemapWarm = {
         STYLE_CDN: STYLE_CDN,
+        isUsableBasemapStyle: isUsableBasemapStyle,
         getCachedStyle: readStoredStyle,
+        clearStoredStyle: clearStoredStyle,
         ensureStyle: fetchResolvedStyle,
         warm: warmView
     };

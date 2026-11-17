@@ -101,6 +101,7 @@ else if (_step is >= 1 and <= 10)
         @if (_step is >= 7 and <= 10)
         {
             <button type="button" hidden tabindex="-1" aria-hidden="true" data-ob-step7-save></button>
+            <script src="@($"/{WwwrootAssetCatalog.Url("js/onboarding-ssr-fetch-save.js")}")" defer></script>
         }
         @if (step7Consent)
         {

@@ -121,11 +121,22 @@
 }
 
 @media (max-width: 1023px) {
-  .app-shell--onboarding-v3.app-shell--onboarding-ssr:has(.ob-wizard--richting-a) .lobsy-coach-dock--onboarding-b,
-  .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b {
+  .app-shell--onboarding-v3:not(:has([data-ob-rustig-screen="kompas"])) .lobsy-coach-dock--onboarding-b {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .lobsy-coach-dock--onboarding-b {
+    display: flex !important;
+    visibility: visible !important;
+    inset-inline-end: 10px;
+    bottom: calc(var(--ob-v3-mobile-footer-h, 76px) + 10px + env(safe-area-inset-bottom, 0px));
+    z-index: 34;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 6px;
+    max-width: 88px;
   }
 
   .app-shell--onboarding-v3 .ob-v3-chrome__row {
@@ -159,9 +170,8 @@
     display: none !important;
   }
 
-  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-main-col,
-  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card {
-    padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card--kompas-ready {
+    padding-block-end: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
   }
 }

@@ -382,14 +382,114 @@ window.jobsyMapLibre = (function () {
         }
     }
 
+    function isUsableBasemapStyle(style) {
+        if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.isUsableBasemapStyle === "function") {
+            return window.jobsyBasemapWarm.isUsableBasemapStyle(style);
+        }
+        if (!style || typeof style !== "object" || style.version !== 8) {
+            return false;
+        }
+        if (!Array.isArray(style.layers) || style.layers.length < 2) {
+            return false;
+        }
+        var drawable = 0;
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || !layer.type || layer.type === "background" || layer.type === "sky") {
+                continue;
+            }
+            drawable++;
+        }
+        return drawable >= 4;
+    }
+
+    function basemapDrawableLayerIds(map) {
+        if (!map || typeof map.getStyle !== "function") {
+            return [];
+        }
+        var style;
+        try {
+            style = map.getStyle();
+        } catch (eStyle) {
+            return [];
+        }
+        if (!style || !Array.isArray(style.layers)) {
+            return [];
+        }
+        var ids = [];
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || !layer.id) {
+                continue;
+            }
+            if (String(layer.id).indexOf("jobsy-") === 0) {
+                continue;
+            }
+            if (layer.type === "background" || layer.type === "sky") {
+                continue;
+            }
+            ids.push(layer.id);
+        }
+        return ids;
+    }
+
+    function countRenderedBasemapFeatures(map) {
+        if (!map || typeof map.queryRenderedFeatures !== "function") {
+            return 0;
+        }
+        var layers = basemapDrawableLayerIds(map);
+        if (!layers.length) {
+            return 0;
+        }
+        try {
+            return map.queryRenderedFeatures({ layers: layers }).length;
+        } catch (eCount) {
+            return 0;
+        }
+    }
+
+    function recoverBlankBasemap(map, spec) {
+        if (!map || map._jobsyBasemapRecovering) {
+            return;
+        }
+        map._jobsyBasemapRecovering = true;
+        if (window.jobsyBasemapWarm) {
+            if (typeof window.jobsyBasemapWarm.clearStoredStyle === "function") {
+                window.jobsyBasemapWarm.clearStoredStyle();
+            }
+            if (typeof window.jobsyBasemapWarm.ensureStyle === "function") {
+                window.jobsyBasemapWarm.ensureStyle()
+                    .then(function (style) {
+                        if (style && isUsableBasemapStyle(style)) {
+                            map.setStyle(style);
+                        } else {
+                            map.setStyle(spec.url);
+                        }
+                    })
+                    .catch(function () {
+                        map.setStyle(spec.url);
+                    })
+                    .finally(function () {
+                        map._jobsyBasemapRecovering = false;
+                    });
+                return;
+            }
+        }
+        map.setStyle(spec.url);
+        map._jobsyBasemapRecovering = false;
+    }
+
     function resolveInitialStyle(spec) {
         if (window.jobsyBasemapWarm && typeof window.jobsyBasemapWarm.getCachedStyle === "function") {
             var cached = window.jobsyBasemapWarm.getCachedStyle();
-            if (cached && cached.version) {
+            if (cached && isUsableBasemapStyle(cached)) {
                 return cached;
             }
+            if (cached && window.jobsyBasemapWarm.clearStoredStyle) {
+                window.jobsyBasemapWarm.clearStoredStyle();
+            }
         }
-        return spec.url;
+        return LIBERTY_SAME_ORIGIN_URL;
     }
 
     function createMap(container, options) {
@@ -466,6 +566,11 @@ window.jobsyMapLibre = (function () {
                 ensureBuildingsLayer(map);
             }
         });
+        map.once("idle", function () {
+            if (countRenderedBasemapFeatures(map) < 3) {
+                recoverBlankBasemap(map, spec);
+            }
+        });
         map.on("styledata", function () {
             hideChrome(map);
             rewriteBasemapTextFonts(map);
@@ -499,6 +604,7 @@ window.jobsyMapLibre = (function () {
         setStyle: setStyle,
         hideChrome: hideChrome,
         lockTouch: lockTouch,
-        rewriteBasemapTextFonts: rewriteBasemapTextFonts
+        rewriteBasemapTextFonts: rewriteBasemapTextFonts,
+        countRenderedBasemapFeatures: countRenderedBasemapFeatures
     };
 })();
