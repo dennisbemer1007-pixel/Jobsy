@@ -415,6 +415,13 @@
         else
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/app-public.js")}")" nonce="@Nonce" defer></script>
+            @if (IncludeOnboardingClientScript
+                 || IncludeCandidateNoBlazorChromeCss
+                 || DiscoveryMapAuthenticatedShell
+                 || IncludeWerkgeverApplicationsListScript)
+            {
+                <script src="@($"/{WwwrootAssetCatalog.Url("js/bff-security.js")}")" nonce="@Nonce" defer></script>
+            }
             @if (IncludeCandidateNoBlazorChromeCss || DiscoveryMapAuthenticatedShell)
             {
                 <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>

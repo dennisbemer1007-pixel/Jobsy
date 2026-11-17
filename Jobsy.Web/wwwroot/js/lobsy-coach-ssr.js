@@ -299,11 +299,32 @@
     });
   }
 
+  function mergeBffHeaders(headers) {
+    var out = headers ? Object.assign({}, headers) : { "Content-Type": "application/json" };
+    if (!out["Content-Type"]) {
+      out["Content-Type"] = "application/json";
+    }
+    if (window.JobsyBffSecurity && typeof window.JobsyBffSecurity.mergeHeaders === "function") {
+      return window.JobsyBffSecurity.mergeHeaders(out);
+    }
+    var meta =
+      document.querySelector('meta[name="jobsy-request-verification-token"]') ||
+      document.querySelector('meta[name="request-verification-token"]');
+  if (meta && meta.getAttribute("content")) {
+      out.RequestVerificationToken = meta.getAttribute("content");
+    }
+    return out;
+  }
+
   function postChat(payload) {
-    return fetch(cfg("data-chat-url", "/api/assistant-client/chat"), {
+    var doFetch =
+      window.JobsyBffSecurity && typeof window.JobsyBffSecurity.fetch === "function"
+        ? window.JobsyBffSecurity.fetch
+        : fetch;
+    return doFetch(cfg("data-chat-url", "/api/assistant-client/chat"), {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
+      headers: mergeBffHeaders(null),
       body: JSON.stringify(payload)
     }).then(function (res) {
       if (!res.ok) throw new Error("chat failed");

@@ -3,7 +3,9 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
@@ -18,11 +20,8 @@ public static class JobsyTestAuth
     /// <summary>Unique ES256 pair for Production-environment integration tests (not the repo dev PEM).</summary>
     public static (string PrivatePem, string PublicPem) ProductionTestKeyPair => DedicatedProductionKeys.Value;
 
-    private static string _mintPrivatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
-
     public static void ApplyStandardAuthSettings(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
-        _mintPrivatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
         // Prefer Development fallback keys (UseSetting mangles multiline PEM).
         // Explicit issuer/audience keep mint + validate aligned.
         builder.UseSetting("JobsyAuth:Jwt:Issuer", JobsyAccessToken.DefaultIssuer);
@@ -36,7 +35,6 @@ public static class JobsyTestAuth
     public static void ApplyProductionJwtSettings(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         var (privatePem, publicPem) = DedicatedProductionKeys.Value;
-        _mintPrivatePem = privatePem;
         // Single-line PEM with escaped newlines survives IConfiguration UseSetting.
         builder.UseSetting(
             "JobsyAuth:Jwt:PublicKeyPem",
@@ -58,28 +56,55 @@ public static class JobsyTestAuth
         builder.UseSetting("Cloudflare:OriginSecret", OriginSecret);
     }
 
-    public static string Mint(Guid userId, int sessionVersion = 0, string? clientIp = null)
+    public static string Mint(
+        Guid userId,
+        int sessionVersion = 0,
+        string? clientIp = null,
+        string? privatePem = null)
         => JobsyAccessToken.Create(
             userId,
             sessionVersion,
-            _mintPrivatePem,
+            privatePem ?? JobsyAccessToken.DevelopmentPrivateKeyPem,
             clientIp: clientIp);
 
-    public static void Authorize(HttpClient client, Guid userId, int sessionVersion = 0)
+    public static string MintForFactory<TEntry>(
+        WebApplicationFactory<TEntry> factory,
+        Guid userId,
+        int sessionVersion = 0,
+        string? clientIp = null)
+        where TEntry : class
+        => JobsyAccessToken.Create(
+            userId,
+            sessionVersion,
+            ResolveMintPrivatePem(factory.Services),
+            clientIp: clientIp);
+
+    public static string ResolveMintPrivatePem(IServiceProvider services)
+        => JobsyJwtPemBootstrap.ResolvePrivatePem(
+            services.GetRequiredService<IConfiguration>(),
+            services.GetRequiredService<IHostEnvironment>());
+
+    public static void Authorize(
+        HttpClient client,
+        Guid userId,
+        int sessionVersion = 0,
+        string? privatePem = null)
     {
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", Mint(userId, sessionVersion));
+            new AuthenticationHeaderValue("Bearer", Mint(userId, sessionVersion, privatePem: privatePem));
     }
 
     public static HttpClient CreateAuthenticatedClient<TEntry>(
         WebApplicationFactory<TEntry> factory,
         Guid userId,
-        int sessionVersion = 0,
+        int? sessionVersion = null,
         bool includeOriginHeader = false)
         where TEntry : class
     {
+        sessionVersion ??= ResolveSessionVersion(factory.Services, userId);
         var client = factory.CreateClient();
-        Authorize(client, userId, sessionVersion);
+        var pem = ResolveMintPrivatePem(factory.Services);
+        Authorize(client, userId, sessionVersion.Value, pem);
         if (includeOriginHeader)
         {
             client.DefaultRequestHeaders.TryAddWithoutValidation(
@@ -88,6 +113,16 @@ public static class JobsyTestAuth
         }
 
         return client;
+    }
+
+    private static int ResolveSessionVersion(IServiceProvider services, Guid userId)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        return db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.SessionVersion)
+            .FirstOrDefault();
     }
 
     public static async Task<HttpClient> CreateAuthenticatedClientByEmailAsync<TEntry>(

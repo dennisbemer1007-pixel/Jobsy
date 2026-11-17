@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Security;
 using Jobsy.Tests.TestSupport;
@@ -32,16 +34,24 @@ public sealed class AssistantClientWarmBootTests : IClassFixture<RoleFunctionalW
         await using var web = new AssistantClientWebFactory(_api);
         var client = web.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
         client.DefaultRequestHeaders.TryAddWithoutValidation("X-Test-Sign-In", "candidate");
-        _ = await client.GetAsync("/login");
+        var page = await client.GetAsync("/candidate/kompas");
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        var html = await page.Content.ReadAsStringAsync();
+        var tokenMatch = Regex.Match(
+            html,
+            "name=\"jobsy-request-verification-token\"\\s+content=\"([^\"]+)\"",
+            RegexOptions.IgnoreCase);
+        Assert.True(tokenMatch.Success, "Expected jobsy antiforgery meta on kompas page.");
 
-        using var response = await client.PostAsJsonAsync(
-            "/api/assistant-client/chat",
-            new
-            {
-                messages = Array.Empty<object>(),
-                pagePath = "/candidate/kompas",
-                warm = true
-            });
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/assistant-client/chat");
+        request.Headers.TryAddWithoutValidation("RequestVerificationToken", System.Net.WebUtility.HtmlDecode(tokenMatch.Groups[1].Value));
+        request.Content = JsonContent.Create(new
+        {
+            messages = Array.Empty<object>(),
+            pagePath = "/candidate/kompas",
+            warm = true
+        });
+        using var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<WarmBootDto>();

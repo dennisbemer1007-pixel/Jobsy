@@ -1102,7 +1102,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     [Fact]
     public async Task Feedback_screenshot_is_stored_and_served_only_to_admin()
     {
-        const string jpegB64 = "AAD/2Q==";
+        var jpegB64 = Convert.ToBase64String(TestSupport.TestImageBytes.MinimalJpeg);
         var guest = _factory.CreateClient();
         var submit = await guest.PostAsJsonAsync("api/feedback", new
         {

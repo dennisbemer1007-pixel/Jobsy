@@ -105,10 +105,20 @@
         var host = (root && root.closest) ? root.closest("[data-ob-antiforgery-token]") : null;
         if (!host && root) host = root;
         if (!host) host = document.querySelector(".ob-wizard") || document.body;
-        return {
-            header: host.getAttribute("data-ob-antiforgery-header") || "RequestVerificationToken",
-            token: host.getAttribute("data-ob-antiforgery-token") || ""
-        };
+        var header = host.getAttribute("data-ob-antiforgery-header") || "RequestVerificationToken";
+        var token = host.getAttribute("data-ob-antiforgery-token") || "";
+        if (!token && window.JobsyBffSecurity && typeof window.JobsyBffSecurity.readAntiforgeryToken === "function") {
+            token = window.JobsyBffSecurity.readAntiforgeryToken();
+        }
+        if (!token) {
+            var meta =
+                document.querySelector('meta[name="jobsy-request-verification-token"]') ||
+                document.querySelector('meta[name="request-verification-token"]');
+            if (meta && meta.getAttribute("content")) {
+                token = meta.getAttribute("content");
+            }
+        }
+        return { header: header, token: token };
     }
 
     function putOnboardingStep(root, step, collectFn, advance, skipOptional, goBack) {

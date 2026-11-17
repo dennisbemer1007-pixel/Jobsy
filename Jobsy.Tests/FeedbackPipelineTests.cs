@@ -132,7 +132,7 @@ public class FeedbackPipelineTests
         });
         await db.SaveChangesAsync();
 
-        var png = Convert.ToBase64String(new byte[] { 0x89, 0x50, 0x4E, 0x47 });
+        var png = Convert.ToBase64String(TestSupport.TestImageBytes.MinimalPng);
         var sut = CreateService(db, new FakeCursor { IsConfigured = false });
         var row = await sut.SubmitAsync(new FeedbackSubmitRequest(
             FeedbackType.Error,
@@ -403,7 +403,7 @@ public class FeedbackPipelineTests
             "https://lobsy.nl/",
             null,
             null,
-            "data:image/png;base64," + Convert.ToBase64String([1, 2, 3, 4]),
+            "data:image/png;base64," + Convert.ToBase64String(TestSupport.TestImageBytes.MinimalPng),
             null,
             null,
             "Gast"));
