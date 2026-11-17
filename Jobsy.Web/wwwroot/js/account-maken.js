@@ -33,7 +33,7 @@
         }
 
         try {
-            input.scrollIntoView({ block: "center", behavior: "smooth" });
+            input.scrollIntoView({ block: "start", behavior: "smooth" });
         } catch (e) {
             try {
                 input.scrollIntoView(true);

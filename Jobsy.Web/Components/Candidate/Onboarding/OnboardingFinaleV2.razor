@@ -192,14 +192,12 @@
             : Culture[card.TitleKey];
 
     private string CardBody(OnboardingFinaleCard card)
-        => card.Id switch
-        {
-            OnboardingFinaleCardId.Banenkaart when !string.IsNullOrWhiteSpace(HomeLabel)
-                => Culture.Format(card.BodyKey, HomeLabel),
-            OnboardingFinaleCardId.DreamRoute when !string.IsNullOrWhiteSpace(DreamJob)
-                => Culture.Format(card.BodyKey, DreamJob),
-            _ => Culture[card.BodyKey]
-        };
+        => OnboardingFinaleCards.FormatBody(
+            card,
+            HomeLabel,
+            DreamJob,
+            key => Culture[key],
+            Culture.Format);
 
     private static string InsightClass(OnboardingFinaleInsightKind kind) => kind switch
     {

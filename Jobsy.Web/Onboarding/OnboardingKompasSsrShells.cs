@@ -239,12 +239,12 @@ internal static class OnboardingKompasSsrShells
     }
 
     private static string FormatCardBody(CultureState culture, OnboardingFinaleCard card, string? homeLabel)
-        => card.Id switch
-        {
-            OnboardingFinaleCardId.Banenkaart when !string.IsNullOrWhiteSpace(homeLabel)
-                => culture.Format(card.BodyKey, homeLabel),
-            _ => culture[card.BodyKey],
-        };
+        => OnboardingFinaleCards.FormatBody(
+            card,
+            homeLabel,
+            dreamJob: null,
+            key => culture[key],
+            culture.Format);
 
     private static string CardIconMarkup(OnboardingFinaleCardId id) => id switch
     {
