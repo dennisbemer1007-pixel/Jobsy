@@ -142,16 +142,6 @@
     </div>
 </section>
 
-<script>
-    (function () {
-        if (window.location.hash !== '#email') return;
-        var input = document.getElementById('email');
-        if (input) {
-            input.focus({ preventScroll: false });
-        }
-    })();
-</script>
-
 @code {
     private string _returnUrl = AuthRedirects.BanenkaartPath;
     private string? _van;

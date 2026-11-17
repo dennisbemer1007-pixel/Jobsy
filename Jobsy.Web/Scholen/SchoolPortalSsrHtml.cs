@@ -4,6 +4,7 @@ using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Scholen;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 
@@ -340,7 +341,9 @@ public static class SchoolPortalSsrHtml
             culture,
             error));
         sb.Append("</section>");
-        sb.Append("<script src=\"/js/school-class-form.js\" defer></script>");
+        sb.Append("<script src=\"")
+            .Append(PageAssetCatalog.SchoolClassFormScriptUrl)
+            .Append("\" defer></script>");
         return sb.ToString();
     }
 

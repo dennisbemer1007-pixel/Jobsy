@@ -515,9 +515,21 @@ public static partial class PageAssetCatalog
     {
         var path = PageSeoCatalog.Normalize(rawPath);
         return path is "/gratis-dna" or "/ontdek" or "/dna"
-            || path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal)
-            || path.StartsWith("/account-maken", StringComparison.Ordinal);
+            || path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal);
     }
+
+    public static bool IncludeAccountMakenScript(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/account-maken" or "/account-maken/code"
+            || path.StartsWith("/account-maken/", StringComparison.Ordinal);
+    }
+
+    /// <summary>Versioned in <see cref="SchoolPortalSsrHtml"/> new-class form.</summary>
+    public static string SchoolClassFormScriptUrl => WwwrootAssetCatalog.UrlLeadingSlash("js/school-class-form.js");
+
+    /// <summary>Signup shell enhancement (hash #email focus).</summary>
+    public static string AccountMakenScriptUrl => WwwrootAssetCatalog.Url("js/account-maken.js");
 
     /// <summary>Static signup shells skip app.min.css — ship login-form + provider-btn rules locally.</summary>
     public static bool IncludeSignupStaticCss(string? rawPath)
