@@ -12,9 +12,15 @@
         var af = readAntiforgery(form);
         var headers = { "Content-Type": "application/json" };
         if (af.token) headers[af.header] = af.token;
-        body.advance = false;
-        body.back = false;
-        body.skipOptional = false;
+        if (body.advance !== true) {
+            body.advance = false;
+        }
+        if (body.back !== true) {
+            body.back = false;
+        }
+        if (body.skipOptional !== true) {
+            body.skipOptional = false;
+        }
         var url = step === 1 ? "/api/onboarding-client/step1" : "/api/onboarding-client/steps/" + step;
         return fetch(url, {
             method: "PUT",
