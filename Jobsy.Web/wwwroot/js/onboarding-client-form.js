@@ -2136,6 +2136,42 @@
         input.value = String(score);
     }
 
+    function clearObErrorFromUrl() {
+        try {
+            var u = new URL(window.location.href);
+            if (!u.searchParams.has("obError")) {
+                return;
+            }
+            u.searchParams.delete("obError");
+            window.history.replaceState(null, "", u.pathname + u.search + u.hash);
+        } catch (e) {
+            /* ignore */
+        }
+    }
+
+    function dismissObNavErrorAlert() {
+        document.querySelectorAll(".ob-wizard__nav-error").forEach(function (node) {
+            if (node && node.parentNode) {
+                node.parentNode.removeChild(node);
+            }
+        });
+    }
+
+    function setChromeSavedState(chromeSaved, state) {
+        if (!chromeSaved) {
+            return;
+        }
+        if (state === "ok") {
+            chromeSaved.textContent = "✓ Alles is bewaard";
+            chromeSaved.classList.remove("is-error");
+            chromeSaved.removeAttribute("data-ob-saved-error");
+        } else if (state === "err") {
+            chromeSaved.textContent = "Niet bewaard · Opnieuw";
+            chromeSaved.classList.add("is-error");
+            chromeSaved.setAttribute("data-ob-saved-error", "1");
+        }
+    }
+
     function bindSsrMiniPickQueue(form) {
         var step = parseInt(form.getAttribute("data-ob-ssr-step") || "0", 10);
         if (step < 7 || step > 10) {
@@ -2146,16 +2182,36 @@
         }
         form.__obSsrMiniPickBound = true;
 
+        var chromeSaveEpoch = 0;
+        var pickInFlight = false;
+
+        function setMiniPickDisabled(disabled) {
+            form.querySelectorAll('button[name="obMiniPick"]').forEach(function (tile) {
+                tile.disabled = disabled;
+                tile.setAttribute("aria-disabled", disabled ? "true" : "false");
+            });
+        }
+
         form.querySelectorAll('button[name="obMiniPick"]').forEach(function (btn) {
             btn.addEventListener("click", function (ev) {
                 if (!window.jobsyOnboardingSsrSave) {
                     return;
                 }
+                if (pickInFlight) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    return;
+                }
                 ev.preventDefault();
                 ev.stopPropagation();
-                applyMiniPickUi(btn);
                 var qField = form.querySelector('input[name="obMiniQ"]');
                 var qNow = qField ? parseInt(qField.value, 10) || 1 : 1;
+                var pickVal = btn.value || btn.getAttribute("value") || "";
+                var savedKey = "data-ob-mini-saved-q" + qNow;
+                if (btn.classList.contains("is-selected") && form.getAttribute(savedKey) === pickVal) {
+                    return;
+                }
+                applyMiniPickUi(btn);
                 var bar = form.querySelector(".test-flow__bar");
                 var total = bar ? bar.querySelectorAll("span").length : 5;
                 var consentBox = form.querySelector('input[name="consentRequested"]');
@@ -2167,6 +2223,9 @@
                     payload.advance = true;
                 }
                 var chromeSaved = document.querySelector(".ob-v3-chrome__saved");
+                var epoch = ++chromeSaveEpoch;
+                pickInFlight = true;
+                setMiniPickDisabled(true);
                 enqueueSsrMiniSave(form, function () {
                     return window.jobsyOnboardingSsrSave.putStep(form, step, payload)
                         .then(function (res) {
@@ -2177,19 +2236,21 @@
                             });
                         })
                         .then(function (result) {
+                            if (epoch !== chromeSaveEpoch) {
+                                return;
+                            }
                             if (!result.ok) {
                                 if (form.getAttribute("data-ob-ssr-nav-pending") === "1"
                                     || form.getAttribute("data-ob-submitting") === "1") {
                                     return;
                                 }
-                                if (chromeSaved) {
-                                    chromeSaved.textContent = "Niet bewaard · Opnieuw";
-                                }
+                                setChromeSavedState(chromeSaved, "err");
                                 throw new Error("save-failed");
                             }
-                            if (chromeSaved) {
-                                chromeSaved.textContent = "✓ Alles is bewaard";
-                            }
+                            form.setAttribute(savedKey, pickVal);
+                            dismissObNavErrorAlert();
+                            clearObErrorFromUrl();
+                            setChromeSavedState(chromeSaved, "ok");
                             if (result.body && result.body.redirectUrl) {
                                 window.location.assign(result.body.redirectUrl);
                                 return;
@@ -2199,6 +2260,12 @@
                                 return;
                             }
                             window.location.reload();
+                        })
+                        .finally(function () {
+                            if (epoch === chromeSaveEpoch) {
+                                pickInFlight = false;
+                                setMiniPickDisabled(false);
+                            }
                         });
                 });
             }, true);

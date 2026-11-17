@@ -146,6 +146,20 @@
     inset-inline-end: auto;
     inset-inline-start: max(10px, env(safe-area-inset-left, 0px));
     align-items: flex-start;
+    bottom: calc(var(--bottom-nav-h, 64px) + 22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-shell:has(.passport-page--illustrated) .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    height: 64px;
+    max-width: 52px;
+  }
+
+  .passport-page--illustrated .passport-dna__highlights,
+  .passport-page--illustrated .passport-layout__main {
+    padding-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
   }
 }
 

@@ -441,7 +441,8 @@ public static partial class PageAssetCatalog
         }
 
         if (path == OnboardingRoutes.ClassicStartPath
-            || path.Equals(OnboardingRoutes.WizardStartPath, StringComparison.OrdinalIgnoreCase))
+            || path.Equals(OnboardingRoutes.WizardStartPath, StringComparison.OrdinalIgnoreCase)
+            || path.Equals(OnboardingRoutes.KompasReadyPath, StringComparison.OrdinalIgnoreCase))
         {
             return
             [
