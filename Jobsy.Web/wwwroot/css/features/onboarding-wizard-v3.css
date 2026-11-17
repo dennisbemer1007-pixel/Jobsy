@@ -51,6 +51,14 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
   align-items: center;
   width: 100%;
   flex-wrap: nowrap;
+  overflow: visible;
+  padding-block: 0.5rem;
+  box-sizing: border-box;
+}
+
+.admin-topbar--candidate-onboarding .admin-topbar__end,
+.admin-topbar--candidate-onboarding .page-help {
+  overflow: visible;
 }
 
 .admin-topbar--candidate-onboarding .admin-topbar__start {
@@ -1204,6 +1212,13 @@ a.ob-v3-dfoot__back:hover {
     margin: 0;
   }
 
+  .ob-v3-dfoot.ob-v3-dfoot--mini .ob-v3-dfoot__back {
+    min-width: 5.75rem;
+    padding-inline: 16px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .ob-v3-dfoot--mini .ob-v3-dfoot__start {
     display: flex;
     flex-direction: row;
@@ -1426,5 +1441,82 @@ a.ob-v3-dfoot__back:hover {
 
   .ob-v3-dfoot--mini .ob-v3-dfoot__start {
     gap: 0.75rem;
+  }
+}
+
+/* Step 1: anchor address suggestions under the field on mobile (no fixed overlay / layout shift). */
+.app-shell--onboarding-v3 {
+  scrollbar-gutter: stable;
+}
+
+.ob-wizard--v3 .kb-address__field {
+  position: relative;
+}
+
+.ob-wizard--v3 .kb-address__field > .ob-client-suggest,
+.ob-wizard--v3 .kb-address__field > .address-suggestions {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  width: 100%;
+  margin-block-start: 4px;
+  z-index: 50;
+  box-sizing: border-box;
+}
+
+/* Step 4: employer row + add-job at full card width. */
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-wizard__card--illustrated,
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] [data-ob-client="jobsList"],
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-client-job,
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-client-job label,
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-client-job input,
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] input[data-field="employer"],
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] [data-ob-client="addJob"],
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-wizard__add-job {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  inline-size: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-job-card label {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ob-wizard.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-client-job.ob-wizard__job,
+.ob-wizard.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-wizard__job,
+.ob-wizard.ob-wizard--v3 .ob-client-step[data-ob-client-step="4"] .ob-job-card {
+  padding: 0 !important;
+  padding-inline: 0 !important;
+  padding-inline-end: 0 !important;
+  margin-block: 0.5rem 0;
+  margin-inline: 0;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Steps 7–10 mini footer: Terug needs room for label padding. */
+.ob-v3-dfoot.ob-v3-dfoot--mini .ob-v3-dfoot__back {
+  flex-shrink: 0;
+  min-width: 5.75rem;
+  padding-inline: 16px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .admin-topbar--candidate-onboarding {
+    min-height: 56px;
+    padding-block: 0.65rem;
+  }
+
+  .admin-topbar--candidate-onboarding .page-help__btn {
+    margin-block: 2px;
   }
 }

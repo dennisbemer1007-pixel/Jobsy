@@ -116,4 +116,49 @@ public sealed class OnboardingMiniSsrOneQuestionPlaywrightTests : IAsyncLifetime
             }
         }
     }
+
+    [Fact]
+    public async Task Step7_pick_then_immediate_volgende_does_not_show_niet_bewaard()
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory
+        {
+            WelcomeDismissed = true,
+            SavedStep = 7,
+        };
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=7&q=1"));
+        await page.Locator("[data-ob-client-step=\"7\"]").WaitForAsync(new() { Timeout = 90_000 });
+        var consent = page.Locator("[data-testid=onboarding-consent]");
+        if (await consent.CountAsync() > 0 && await consent.IsVisibleAsync())
+        {
+            await consent.CheckAsync();
+            await page.GetByTestId("onboarding-next").ClickAsync();
+            await page.WaitForURLAsync("**/candidate/start?step=7&q=1**");
+        }
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              const pick = Array.from(document.querySelectorAll('button[name="obMiniPick"]'))
+                .find(b => (b.textContent || '').trim() === '4');
+              const next = document.querySelector('[data-testid="onboarding-next"]');
+              pick?.click();
+              next?.click();
+            }
+            """);
+        await page.WaitForTimeoutAsync(400);
+        var chrome = (await page.Locator(".ob-v3-chrome__saved").TextContentAsync())?.Trim() ?? "";
+        Assert.DoesNotContain("Niet bewaard", chrome, StringComparison.Ordinal);
+    }
 }

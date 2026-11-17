@@ -15,6 +15,9 @@ public sealed class OnboardingSsrMiniSaveQueueGuardTests
         Assert.Contains("enqueueSsrMiniSave", clientForm, StringComparison.Ordinal);
         Assert.Contains("ssrMiniSaveChains", clientForm, StringComparison.Ordinal);
         Assert.Contains("jobsyOnboardingSsrSave.putStep", clientForm, StringComparison.Ordinal);
+        Assert.Contains("data-ob-ssr-nav-pending", clientForm, StringComparison.Ordinal);
+        Assert.Contains("data-ob-ssr-mini-submit-ready", clientForm, StringComparison.Ordinal);
+        Assert.Contains("ssrMiniSaveChain(form)", clientForm, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

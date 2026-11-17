@@ -32,7 +32,7 @@
     "v": "20261018-11"
   },
   "css/features/applications.css": {
-    "sha256": "deaf85d774aad5c8fc4fa1fc1fa7998027bec58779618d34b13e789bf02a998f",
+    "sha256": "63a5303b7b4c21c92c5c2456328520e496f3f1163ae5dac7799670edb47a94fe",
     "v": "20261024-89"
   },
   "css/features/auth.css": {
@@ -152,7 +152,7 @@
     "v": "20261011-03"
   },
   "css/features/kompas-illustrated.css": {
-    "sha256": "22341719a98ef1ceb21f937aabb5f1512423fc1ab44444c37e2d818434273d2e",
+    "sha256": "d7513b5b4128389410243d396d6ae5d174af05766808aa323db89f47a36c4b00",
     "v": "20261025-87"
   },
   "css/features/kreeft-reiskaart.css": {
@@ -180,7 +180,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "a682be91325ee586d9e05964c5de2e9a796bbecf64481c23f3027b4f8acb5ef0",
+    "sha256": "be5ee82ac8d8a8d2eac526bc6b16c2d7db7025a2fa0f0f4f159af99923ff4d09",
     "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -204,7 +204,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "31391c900245f790236fb61958b26aaeb9bb1da48439aa1057161ba8e724a317",
+    "sha256": "d55199c713c4c8244205ccbba5e015c9973da79f3f9b9c2c521f98d80a37f5ad",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
@@ -272,7 +272,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "1bcecb283bcfe575d194b88e7898bf1acc3aac98944a794c4b03716fa816f8cb",
+    "sha256": "8020788782606957169ddd67bd4b068b20cb7759a4a49236439202e74e811cf1",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -288,7 +288,7 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "ed7128a53726b26cf4956de0154687465787b6a652221ceb441c81403fe95c4e",
+    "sha256": "f3f81a706a7f88c3a57225f16abd54fbc8b59c038443b1f608a14f766e3600e8",
     "v": "20261022-79"
   },
   "css/features/opleidingen.css": {
@@ -588,7 +588,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "fcc182e5cdabeda3bfa97cfc2ee5b934d2df3e1f9d4f4fcbe7b2bdbde92cb537",
+    "sha256": "bc570b66a9b7199c5e6419fc8686cdcf1836e5aa9fa32e8d72fa47f8581b6357",
     "v": "20261025-87"
   },
   "js/onboarding-ssr-fetch-save.js": {
