@@ -126,11 +126,7 @@ public class CandidateInsightsLockedJsonTests : IClassFixture<CandidateInsightsU
     }
 
     private HttpClient Authed(Guid userId)
-    {
-        var client = _factory.CreateClient();
-        JobsyTestAuth.Authorize(client, userId);
-        return client;
-    }
+        => JobsyTestAuth.CreateAuthenticatedClient(_factory, userId);
 }
 
 public class CandidateInsightsAccessTests
@@ -384,11 +380,7 @@ public class CandidateInsightsUnlockApiTests : IClassFixture<CandidateInsightsUn
     }
 
     private HttpClient Authed(Guid userId)
-    {
-        var client = _factory.CreateClient();
-        JobsyTestAuth.Authorize(client, userId);
-        return client;
-    }
+        => JobsyTestAuth.CreateAuthenticatedClient(_factory, userId);
 }
 
 public class CandidateInsightsUnlockRequestTests : IClassFixture<CandidateInsightsUnlockFactory>
@@ -414,11 +406,7 @@ public class CandidateInsightsUnlockRequestTests : IClassFixture<CandidateInsigh
     }
 
     private HttpClient Authed(Guid userId)
-    {
-        var client = _factory.CreateClient();
-        JobsyTestAuth.Authorize(client, userId);
-        return client;
-    }
+        => JobsyTestAuth.CreateAuthenticatedClient(_factory, userId);
 }
 
 public sealed class CandidateInsightsUnlockFactory : ApiWebApplicationFactory

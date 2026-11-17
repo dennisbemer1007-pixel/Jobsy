@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Web.Services;
@@ -12,7 +13,7 @@ public static class KbExtClientEndpoints
     {
         app.MapPost("/api/kb-ext-client/import", ImportAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

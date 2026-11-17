@@ -86,6 +86,17 @@ public static class FeedbackScreenshotCodec
             return false;
         }
 
+        if (!UploadFileMagicRules.TryValidateContent(contentType, bytes, out var magicError))
+        {
+            error = magicError switch
+            {
+                "file_type" => "Screenshot moet PNG, JPEG of WebP zijn.",
+                _ => "Ongeldige screenshot."
+            };
+            bytes = [];
+            return false;
+        }
+
         return true;
     }
 

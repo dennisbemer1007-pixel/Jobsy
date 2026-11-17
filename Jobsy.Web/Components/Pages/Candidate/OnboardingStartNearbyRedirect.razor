@@ -1,4 +1,5 @@
 @page "/candidate/start/nearby"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @inject NavigationManager Navigation
 
 @code {

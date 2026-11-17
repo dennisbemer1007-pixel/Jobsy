@@ -2,14 +2,22 @@
 @using Jobsy.Web.Applications
 @using Jobsy.Web.Werkgever
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Security
+@using Microsoft.AspNetCore.Antiforgery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IConfiguration Configuration
+@inject IAntiforgery Antiforgery
 <!DOCTYPE html>
 <html lang="@HtmlLang" dir="@HtmlDir" data-enhance-nav="@(DisableEnhancedNav ? "false" : null)">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @if (HttpContextAccessor.HttpContext is { } antiforgeryCtx
+         && antiforgeryCtx.User.Identity?.IsAuthenticated == true)
+    {
+        @((MarkupString)BffAntiforgeryMeta.RenderMetaTag(antiforgeryCtx, Antiforgery))
+    }
     <title>@DocumentTitle</title>
     @if (NoIndex)
     {
@@ -407,6 +415,13 @@
         else
         {
             <script src="@($"/{WwwrootAssetCatalog.Url("js/app-public.js")}")" nonce="@Nonce" defer></script>
+            @if (IncludeOnboardingClientScript
+                 || IncludeCandidateNoBlazorChromeCss
+                 || DiscoveryMapAuthenticatedShell
+                 || IncludeWerkgeverApplicationsListScript)
+            {
+                <script src="@($"/{WwwrootAssetCatalog.Url("js/bff-security.js")}")" nonce="@Nonce" defer></script>
+            }
             @if (IncludeCandidateNoBlazorChromeCss || DiscoveryMapAuthenticatedShell)
             {
                 <script src="@($"/{Jobsy.Web.Hosting.WwwrootAssetCatalog.Url("js/lobsy-coach-ssr.js")}")" nonce="@Nonce" defer></script>

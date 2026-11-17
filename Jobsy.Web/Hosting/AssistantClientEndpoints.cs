@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
@@ -15,7 +16,7 @@ public static class AssistantClientEndpoints
     {
         app.MapPost("/api/assistant-client/chat", ChatAsync)
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

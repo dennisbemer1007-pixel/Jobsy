@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Hosting;
 using Jobsy.Web.Banenkaart;
 using Jobsy.Web.KandidaatBanen;
@@ -18,11 +19,11 @@ public static class BanenkaartClientEndpoints
         app.MapGet(BanenkaartClientCatalog.AllPath, BanenkaartClientCatalog.GetAllAsync).AllowAnonymous();
         app.MapGet(BanenkaartClientPins.Path, BanenkaartClientPins.GetAsync).AllowAnonymous();
         app.MapGet("/api/banenkaart-client/address-suggest", AddressSuggestAsync).AllowAnonymous();
-        app.MapPost(BanenkaartSsrQuery.ApplyPath, ApplyFiltersAsync).AllowAnonymous();
-        app.MapPost(BanenkaartSsrQuery.ResetPath, ResetFiltersAsync).AllowAnonymous();
+        app.MapPost(BanenkaartSsrQuery.ApplyPath, ApplyFiltersAsync).AllowAnonymous().RequireBffMutatingSecurity();
+        app.MapPost(BanenkaartSsrQuery.ResetPath, ResetFiltersAsync).AllowAnonymous().RequireBffMutatingSecurity();
         app.MapPost(BanenkaartSsrQuery.SavePath, SaveVacancyAsync)
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

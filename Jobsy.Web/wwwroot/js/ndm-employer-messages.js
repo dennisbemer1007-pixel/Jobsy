@@ -5,6 +5,21 @@
   var MARK_READ_PATH = "/api/werkgever-client/berichten/mark-read";
   var PREVIEW_PATH = "/api/werkgever-client/berichten/preview";
   var SEND_PATH = "/api/werkgever-client/berichten/send";
+
+  function bffHeaders(extra) {
+    if (window.JobsyBffSecurity) {
+      return window.JobsyBffSecurity.mergeHeaders(extra);
+    }
+    var h = extra || { "X-Requested-With": "XMLHttpRequest" };
+    var meta =
+      document.querySelector('meta[name="jobsy-request-verification-token"]') ||
+      document.querySelector('meta[name="request-verification-token"]');
+    var tok = meta ? meta.getAttribute("content") : "";
+  if (tok) {
+      h.RequestVerificationToken = tok;
+    }
+    return h;
+  }
   var READ_ACK_KEY = "werkgever-threads-read-ack-v1";
 
   function root() {
@@ -187,10 +202,7 @@
       fetch(PREVIEW_PATH + "?applicationId=" + encodeURIComponent(appId), {
         method: "POST",
         credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-        },
+        headers: bffHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ body: body, confirmSensitive: false }),
       })
         .then(function (res) {
@@ -235,7 +247,7 @@
     fetch(MARK_READ_PATH + "?applicationId=" + encodeURIComponent(threadId), {
       method: "POST",
       credentials: "same-origin",
-      headers: { "X-Requested-With": "XMLHttpRequest" },
+      headers: bffHeaders(),
     }).catch(function () {
       /* ignore */
     });
@@ -309,10 +321,7 @@
     fetch(SEND_PATH + "?applicationId=" + encodeURIComponent(appId), {
       method: "POST",
       credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-      },
+      headers: bffHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ body: body, confirmSensitive: false }),
     })
       .then(function (res) {

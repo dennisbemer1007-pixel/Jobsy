@@ -3,12 +3,12 @@ namespace Jobsy.Tests;
 public sealed class BanenkaartClientSaveGuardTests
 {
     [Fact]
-    public void Save_endpoint_uses_json_result_and_disables_antiforgery()
+    public void Save_endpoint_uses_json_result_and_bff_mutating_security()
     {
         var root = TestRepo.FindRoot();
         var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "BanenkaartClientEndpoints.cs"));
         Assert.Contains("BanenkaartClientSaveResult.ExecuteAsync", endpoints, StringComparison.Ordinal);
-        Assert.Contains("DisableAntiforgery()", endpoints, StringComparison.Ordinal);
+        Assert.Contains("RequireBffMutatingSecurity()", endpoints, StringComparison.Ordinal);
 
         var result = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "BanenkaartClientSaveResult.cs"));
         Assert.Contains("ILogger", result, StringComparison.Ordinal);
@@ -17,12 +17,11 @@ public sealed class BanenkaartClientSaveGuardTests
     }
 
     [Fact]
-    public void Saved_unsave_endpoint_disables_antiforgery()
+    public void Saved_unsave_endpoint_uses_bff_mutating_security()
     {
         var root = TestRepo.FindRoot();
         var endpoints = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "SavedClientEndpoints.cs"));
-        Assert.Contains("DisableAntiforgery()", endpoints, StringComparison.Ordinal);
-        Assert.DoesNotContain("IsRequestValidAsync", endpoints, StringComparison.Ordinal);
+        Assert.Contains("RequireBffMutatingSecurity()", endpoints, StringComparison.Ordinal);
     }
 
     [Fact]

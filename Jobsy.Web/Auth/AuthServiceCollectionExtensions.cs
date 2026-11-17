@@ -455,6 +455,9 @@ public static class AuthServiceCollectionExtensions
                 && !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(ctx.User))
             .Build();
 
+        // No FallbackPolicy on Web: Blazor uses AuthorizeRouteView per page (all routes are annotated).
+        // A global fallback would challenge anonymous 404/status/static fall-through before Blazor runs.
+
         options.AddPolicy(JobsyPolicies.PupilSession, policy =>
         {
             policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);

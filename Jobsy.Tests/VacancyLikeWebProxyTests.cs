@@ -72,12 +72,12 @@ public sealed class VacancyLikeWebProxyTests : IClassFixture<RoleFunctionalWebAp
     }
 
     [Fact]
-    public void Web_like_proxy_disables_middleware_antiforgery_and_sets_acceptatie_diagnostics()
+    public void Web_like_proxy_uses_bff_security_and_sets_acceptatie_diagnostics()
     {
         var root = FindRepoRoot();
         var proxy = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "VacancyMapProxyEndpoints.cs"));
-        Assert.Contains("MapPost(\"/api/vacancies/{id:guid}/like\", PostLikeAsync).RequireAuthorization().DisableAntiforgery()", proxy);
-        Assert.Contains("MapDelete(\"/api/vacancies/{id:guid}/like\", DeleteLikeAsync).RequireAuthorization().DisableAntiforgery()", proxy);
+        Assert.Contains("MapPost(\"/api/vacancies/{id:guid}/like\", PostLikeAsync).RequireAuthorization().RequireBffMutatingSecurity()", proxy);
+        Assert.Contains("MapDelete(\"/api/vacancies/{id:guid}/like\", DeleteLikeAsync).RequireAuthorization().RequireBffMutatingSecurity()", proxy);
         Assert.Contains("AcceptatieDiagnosticHeaders.TrySet", proxy);
         Assert.Contains("TryValidateAntiforgeryAsync", proxy);
         Assert.Contains("HasAntiforgeryToken", proxy);

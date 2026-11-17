@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using Ganss.Xss;
 using Jobsy.Core.Media;
 
 namespace Jobsy.Core.Rules;
@@ -112,6 +113,34 @@ public static class HtmlSanitize
         return sb.ToString().Trim();
     }
 
+    private static readonly Lazy<HtmlSanitizer> VacancyDescriptionSanitizer =
+        new(CreateVacancyDescriptionSanitizer);
+
+    private static HtmlSanitizer CreateVacancyDescriptionSanitizer()
+    {
+        var sanitizer = new HtmlSanitizer();
+        sanitizer.AllowedTags.Clear();
+        foreach (var tag in VacancyDescriptionTags)
+        {
+            sanitizer.AllowedTags.Add(tag);
+        }
+
+        sanitizer.AllowedAttributes.Clear();
+        sanitizer.AllowedAttributes.Add("href");
+        sanitizer.AllowedAttributes.Add("style");
+        sanitizer.AllowedAttributes.Add("class");
+        sanitizer.AllowDataAttributes = false;
+        sanitizer.AllowedSchemes.Clear();
+        sanitizer.AllowedSchemes.Add("http");
+        sanitizer.AllowedSchemes.Add("https");
+        sanitizer.AllowedSchemes.Add("mailto");
+        sanitizer.AllowedCssProperties.Clear();
+        sanitizer.AllowedCssProperties.Add("text-align");
+        sanitizer.AllowedCssProperties.Add("color");
+
+        return sanitizer;
+    }
+
     /// <summary>Vacancy descriptions: headings, lists, links, text-align on p, brand palette colors on span.</summary>
     public static string ToVacancyDescriptionHtml(string? html, int maxLength = 20_000)
     {
@@ -121,19 +150,30 @@ public static class HtmlSanitize
         }
 
         var input = html.Length > maxLength ? html[..maxLength] : html;
-        input = DangerousBlockRegex.Replace(input, string.Empty);
-        input = Regex.Replace(input, @"\son\w+\s*=\s*(""[^""]*""|'[^']*'|[^\s>]+)", string.Empty, RegexOptions.IgnoreCase);
+        var paletteStyles = ExtractVacancyPaletteStyles(input);
+        var sanitized = VacancyDescriptionSanitizer.Value.Sanitize(input).Trim();
+        var merged = ApplyVacancyPaletteStyles(sanitized, paletteStyles);
+        return TightenVacancyDescriptionStyles(merged);
+    }
 
-        var sb = new StringBuilder(input.Length);
-        var last = 0;
-        foreach (Match match in TagTokenRegex.Matches(input))
+    private static string TightenVacancyDescriptionStyles(string html)
+    {
+        if (string.IsNullOrEmpty(html))
         {
-            sb.Append(input, last, match.Index - last);
+            return html;
+        }
+
+        var sb = new StringBuilder(html.Length);
+        var last = 0;
+        foreach (Match match in TagTokenRegex.Matches(html))
+        {
+            sb.Append(html, last, match.Index - last);
             last = match.Index + match.Length;
 
             var name = match.Groups[1].Value;
             if (!VacancyDescriptionTags.Contains(name))
             {
+                sb.Append(match.Value);
                 continue;
             }
 
@@ -141,42 +181,20 @@ public static class HtmlSanitize
             var isClosing = match.Value.StartsWith("</", StringComparison.Ordinal);
             if (isClosing)
             {
-                sb.Append("</").Append(name.ToLowerInvariant()).Append('>');
-                continue;
-            }
-
-            if (name.Equals("br", StringComparison.OrdinalIgnoreCase))
-            {
-                sb.Append("<br />");
-                continue;
-            }
-
-            if (name.Equals("a", StringComparison.OrdinalIgnoreCase))
-            {
-                var href = ExtractAttribute(attrs, "href");
-                if (!IsSafeLinkHref(href))
-                {
-                    continue;
-                }
-
-                sb.Append("<a class=\"auth-link\" href=\"")
-                    .Append(WebUtility.HtmlEncode(href!.Trim()))
-                    .Append("\">");
+                sb.Append(match.Value);
                 continue;
             }
 
             if (name.Equals("p", StringComparison.OrdinalIgnoreCase))
             {
                 var align = ExtractStyleTextAlign(attrs);
-                if (align is not null)
+                if (align is null)
                 {
-                    sb.Append("<p style=\"text-align:")
-                        .Append(align)
-                        .Append("\">");
+                    sb.Append("<p>");
                 }
                 else
                 {
-                    sb.Append("<p>");
+                    sb.Append("<p style=\"text-align:").Append(align).Append("\">");
                 }
 
                 continue;
@@ -185,25 +203,23 @@ public static class HtmlSanitize
             if (name.Equals("span", StringComparison.OrdinalIgnoreCase))
             {
                 var color = ExtractStyleColor(attrs);
-                if (color is not null)
+                if (color is null)
                 {
-                    sb.Append("<span style=\"color:")
-                        .Append(color)
-                        .Append("\">");
+                    sb.Append("<span>");
                 }
                 else
                 {
-                    sb.Append("<span>");
+                    sb.Append("<span style=\"color:").Append(color).Append("\">");
                 }
 
                 continue;
             }
 
-            sb.Append('<').Append(name.ToLowerInvariant()).Append('>');
+            sb.Append(match.Value);
         }
 
-        sb.Append(input, last, input.Length - last);
-        return sb.ToString().Trim();
+        sb.Append(html, last, html.Length - last);
+        return sb.ToString();
     }
 
     private static string? ExtractStyleTextAlign(string attributes)
@@ -222,6 +238,113 @@ public static class HtmlSanitize
 
         var align = match.Groups[1].Value.Trim().ToLowerInvariant();
         return AllowedTextAlign.Contains(align) ? align : null;
+    }
+
+    private sealed record VacancyStyleHint(int Index, bool IsParagraph, string? Align, string? Color);
+
+    /// <summary>Preserve palette-only inline styles Ganss may strip from span/p.</summary>
+    private static List<VacancyStyleHint> ExtractVacancyPaletteStyles(string html)
+    {
+        var hints = new List<VacancyStyleHint>();
+        var openIndex = 0;
+        foreach (Match match in TagTokenRegex.Matches(html))
+        {
+            if (match.Value.StartsWith("</", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var name = match.Groups[1].Value;
+            if (!name.Equals("p", StringComparison.OrdinalIgnoreCase)
+                && !name.Equals("span", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var attrs = match.Groups[2].Value;
+            string? align = null;
+            string? color = null;
+            if (name.Equals("p", StringComparison.OrdinalIgnoreCase))
+            {
+                align = ExtractStyleTextAlign(attrs);
+            }
+            else
+            {
+                color = ExtractStyleColor(attrs);
+            }
+
+            if (align is null && color is null)
+            {
+                continue;
+            }
+
+            hints.Add(new VacancyStyleHint(openIndex++, name.Equals("p", StringComparison.OrdinalIgnoreCase), align, color));
+        }
+
+        return hints;
+    }
+
+    private static string ApplyVacancyPaletteStyles(string html, IReadOnlyList<VacancyStyleHint> hints)
+    {
+        if (hints.Count == 0)
+        {
+            return html;
+        }
+
+        var hintIndex = 0;
+        var openIndex = 0;
+        var sb = new StringBuilder(html.Length);
+        var last = 0;
+        foreach (Match match in TagTokenRegex.Matches(html))
+        {
+            sb.Append(html, last, match.Index - last);
+            last = match.Index + match.Length;
+
+            if (match.Value.StartsWith("</", StringComparison.Ordinal))
+            {
+                sb.Append(match.Value);
+                continue;
+            }
+
+            var name = match.Groups[1].Value;
+            if (!name.Equals("p", StringComparison.OrdinalIgnoreCase)
+                && !name.Equals("span", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append(match.Value);
+                continue;
+            }
+
+            VacancyStyleHint? hint = null;
+            if (hintIndex < hints.Count && hints[hintIndex].Index == openIndex)
+            {
+                hint = hints[hintIndex];
+                hintIndex++;
+            }
+
+            openIndex++;
+
+            if (hint is null)
+            {
+                sb.Append(match.Value);
+                continue;
+            }
+
+            if (hint.IsParagraph && hint.Align is not null)
+            {
+                sb.Append("<p style=\"text-align:").Append(hint.Align).Append("\">");
+            }
+            else if (!hint.IsParagraph && hint.Color is not null)
+            {
+                sb.Append("<span style=\"color:").Append(hint.Color).Append("\">");
+            }
+            else
+            {
+                sb.Append(match.Value);
+            }
+        }
+
+        sb.Append(html, last, html.Length - last);
+        return sb.ToString();
     }
 
     private static string? ExtractStyleColor(string attributes)

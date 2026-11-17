@@ -451,6 +451,10 @@
     "sha256": "a79b1624037232a6f7afe11322fbf96ca5693eec7054af0eded2a2cb42fe2b27",
     "v": "20261027-02"
   },
+  "js/bff-security.js": {
+    "sha256": "d777847d8e779bdf688e857ba6df153773ef8d4a76ac5c27a128e61beeb3c30f",
+    "v": "20261117-04"
+  },
   "js/blazor-boot.js": {
     "sha256": "b077c3062507e48f103fc098bf1872668570adf501ddd79e7f358184508d0bbd",
     "v": "20261021-15"
@@ -532,7 +536,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "1435014e88c162cdfac6528c5fbbac66e3c8363ab7af2dd6dec719b9548a5387",
+    "sha256": "47332fc4176d3ac2e3c806ddb6d9c3e701d675e652f983c67a147a2f8ada52c0",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {
@@ -556,7 +560,7 @@
     "v": "20261025-87"
   },
   "js/ndm-employer-messages.js": {
-    "sha256": "28c46e72dca0219814ad44aef3a56baa4e89d0b90a11ddd24134301c71b8e472",
+    "sha256": "c9bc2c8dce3a8471565d70d5efae201f19321d3236d3b8f9bc0e6ff73b9fb1e5",
     "v": "20261026-01"
   },
   "js/ndm-employer-outcome.js": {
@@ -596,11 +600,11 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "13163a8c5c69290048a3a3002a3a2055235acee0d695667172690ba19f4417b5",
+    "sha256": "8816549357ad41e457e40c7308962c5e12e2ca739b850f6415c3075988d16497",
     "v": "20261117-88"
   },
   "js/onboarding-ssr-fetch-save.js": {
-    "sha256": "95140f5723d0d934fda9299849cabd65e97fda0a7c0bb2e5d33bc1ca6be20585",
+    "sha256": "60a4d9f6db66da965408dbe49947d347a9aae500c39e5bec6bd72d7d80844580",
     "v": "20261117-88"
   },
   "js/onboarding-step1-ssr.js": {
@@ -664,7 +668,7 @@
     "v": "20261024-70"
   },
   "js/sollicitaties-activiteiten.js": {
-    "sha256": "d419a76a2f4f83edb59f9055a0ac2789e3f71fffb6837f466272c0ea66b47d57",
+    "sha256": "044db286e40a86937450716cd5ccfa6f0b762bf851f345131b3a38c166bf04d0",
     "v": "20261026-63"
   },
   "js/sollicitaties-berichten.js": {

@@ -173,7 +173,7 @@ public class PupilPortalApiTests : IClassFixture<RoleFunctionalWebAppFactory>
             var protection = scope.ServiceProvider.GetRequiredService<IPupilLoginProtection>();
             for (var i = 0; i < PupilLoginProtection.ClassHourFailLimit; i++)
             {
-                protection.RecordClassHourFailure(seed.ClassId);
+                protection.RecordClassHourFailure(seed.ClassId, "partition-" + i);
             }
 
             var portal = scope.ServiceProvider.GetRequiredService<IPupilPortalService>();

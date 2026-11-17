@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Web.Services;
@@ -12,7 +13,7 @@ public static class AfterMatchEmployerProposeClientEndpoints
     {
         app.MapPost("/api/ndm-employer-propose-client/slots", ProposeSlotsAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.EmployerMutateRolesWithAdmin })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

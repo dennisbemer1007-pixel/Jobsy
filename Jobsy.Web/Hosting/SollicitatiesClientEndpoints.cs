@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,11 +13,11 @@ public static class SollicitatiesClientEndpoints
     {
         app.MapPost("/api/sollicitaties-client/activiteiten", AddActiviteitAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPut("/api/sollicitaties-client/activiteiten/agreement", UpdateAgreementAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapGet("/api/sollicitaties-client/activiteiten/period.pdf", DownloadActiviteitenPdfAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate });
@@ -26,12 +27,12 @@ public static class SollicitatiesClientEndpoints
 
         app.MapPost("/api/sollicitaties-client/berichten/mark-read", MarkBerichtenReadAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         // Stale cached sollicitaties-berichten.js may still POST here; same handler as the BFF above.
         app.MapPost("/api/me/applications/{applicationId:guid}/after-match/messages/read", MarkBerichtenReadAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

@@ -1,6 +1,7 @@
 using Jobsy.Web.Localization;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Passport;
+using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -13,16 +14,20 @@ public static class PassportClientEndpoints
     public static IEndpointRouteBuilder MapPassportClientEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/passport-client/save-data", SaveDataAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/passport-client/save-availability", SaveAvailabilityAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/passport-client/save-proof", SaveProofAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/passport-client/save-coach-tone", SaveCoachToneAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         return app;
     }

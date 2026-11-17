@@ -47,7 +47,7 @@ public class JobsyJwtAuthSecurityTests : IClassFixture<JobsyJwtAuthSecurityFacto
             CloudflareOriginMiddleware.HeaderName,
             JobsyTestAuth.OriginSecret);
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", JobsyTestAuth.Mint(_factory.UserId) + "x");
+            new AuthenticationHeaderValue("Bearer", JobsyTestAuth.MintForFactory(_factory, _factory.UserId) + "x");
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("api/me/profile")).StatusCode);
 

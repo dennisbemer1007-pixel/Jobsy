@@ -311,7 +311,7 @@ public static class PupilLeerlingSsrParts
             <div id="{E(panelId)}" class="ll-info g78-job-why-panel" hidden>
             <button type="button" class="ll-info__close" aria-label="Sluiten">×</button>
             <p class="g78-job-why-panel__title"><b>{E(jobTitle)}</b></p>
-            <div class="g78-job-why-panel__body">{bodyText}</div>
+            <div class="g78-job-why-panel__body">{E(bodyText)}</div>
             </div>
             </div>
             """;

@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -10,11 +11,11 @@ public static class AfterMatchMessagesClientEndpoints
     {
         app.MapPost("/api/applications/{applicationId:guid}/after-match/messages/preview", PreviewAsync)
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/applications/{applicationId:guid}/after-match/messages", SendAsync)
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

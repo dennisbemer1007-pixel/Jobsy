@@ -435,6 +435,20 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+var uploadScanOptions = app.Configuration.GetSection(Jobsy.Core.Options.UploadScanOptions.SectionName)
+    .Get<Jobsy.Core.Options.UploadScanOptions>();
+if (uploadScanOptions?.Enabled != true)
+{
+    app.Logger.LogWarning(
+        "UploadScan is disabled; uploads rely on magic-byte validation only. "
+        + "Set UploadScan__Enabled and UploadScan__Endpoint (and optional UploadScan__FailClosed) to enable ClamAV.");
+}
+else if (string.IsNullOrWhiteSpace(uploadScanOptions.Endpoint))
+{
+    app.Logger.LogWarning(
+        "UploadScan__Enabled is true but UploadScan__Endpoint is unset; the scanner will report unavailable.");
+}
+
 JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
 Jobsy.Core.Careers.OccupationCatalog.Configure(
     app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),

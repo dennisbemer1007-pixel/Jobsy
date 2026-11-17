@@ -209,21 +209,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     }
 
     private Task<HttpClient> Authed(string email)
-    {
-        var id = email switch
-        {
-            var e when e == _factory.CandidateEmail => _factory.CandidateId,
-            var e when e == _factory.EmployerEmail => _factory.EmployerId,
-            var e when e == _factory.AdminEmail => _factory.AdminId,
-            var e when e == _factory.RegionalEmail => _factory.RegionalId,
-            var e when e == _factory.EnterpriseEmail => _factory.EnterpriseId,
-            var e when e == _factory.IntermediaryEmail => _factory.IntermediaryId,
-            var e when e == _factory.SalesEmail => _factory.SalesId,
-            var e when e == _factory.AmbassadeurEmail => _factory.AmbassadeurId,
-            _ => throw new InvalidOperationException("Unknown UAT email: " + email)
-        };
-        return Task.FromResult(JobsyTestAuth.CreateAuthenticatedClient(_factory, id));
-    }
+        => JobsyTestAuth.CreateAuthenticatedClientByEmailAsync(_factory, email);
 
     private static bool HasEmail(JsonElement el)
     {

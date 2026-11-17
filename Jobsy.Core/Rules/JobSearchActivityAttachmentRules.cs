@@ -49,6 +49,12 @@ public static class JobSearchActivityAttachmentRules
             return false;
         }
 
+        if (!UploadFileMagicRules.TryValidateContent(type, content, out var magicError))
+        {
+            error = magicError ?? "file_type";
+            return false;
+        }
+
         safeName = name;
         normalizedType = type;
         return true;
