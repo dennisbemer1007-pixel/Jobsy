@@ -19,6 +19,8 @@ public sealed class ActivityLogClientDiagnosticsGuardTests
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Applications", "ApplicationsActiviteitenSsrShells.cs"));
         Assert.Contains("data-sollic-activ-adjust-toggle", shells, StringComparison.Ordinal);
         Assert.Contains("btn btn-secondary sollic-activiteiten-summary__adjust-btn", shells, StringComparison.Ordinal);
+        var applicationsCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "css", "features", "applications.css"));
+        Assert.Contains("sollic-activiteiten-summary__adjust-btn", applicationsCss, StringComparison.Ordinal);
     }
 
     [Fact]

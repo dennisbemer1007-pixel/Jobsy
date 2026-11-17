@@ -1597,23 +1597,6 @@
   font-size: 1.35rem;
 }
 
-.sollic-activiteiten-summary__adjust {
-  margin: 0.5rem 0 0.75rem;
-  font-size: 0.9rem;
-  line-height: 1.45;
-  color: var(--muted);
-}
-
-.sollic-activiteiten-summary__adjust-btn {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-  min-height: 2.25rem;
-  margin-inline-start: 0.35rem;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.875rem;
-}
-
 .sollic-activiteiten-badges {
   display: flex;
   flex-wrap: wrap;
