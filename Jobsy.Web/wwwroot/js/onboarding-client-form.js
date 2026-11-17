@@ -2063,6 +2063,7 @@
     }
 
     var ssrMiniSaveChains = new WeakMap();
+    var ssrMiniSaveInflight = new WeakMap();
 
     function ssrMiniSaveChain(form) {
         if (!ssrMiniSaveChains.has(form)) {
@@ -2071,8 +2072,32 @@
         return ssrMiniSaveChains.get(form);
     }
 
+    function waitSsrMiniSaveChain(form, timeoutMs) {
+        timeoutMs = timeoutMs || 4000;
+        var chain = ssrMiniSaveChain(form);
+        return new Promise(function (resolve) {
+            var done = false;
+            function finish() {
+                if (done) return;
+                done = true;
+                resolve();
+            }
+            chain.then(finish, finish);
+            setTimeout(finish, timeoutMs);
+        });
+    }
+
     function enqueueSsrMiniSave(form, task) {
-        var next = ssrMiniSaveChain(form).then(task).catch(function () { });
+        var inflight = (ssrMiniSaveInflight.get(form) || 0) + 1;
+        ssrMiniSaveInflight.set(form, inflight);
+        var next = ssrMiniSaveChain(form).then(task).catch(function () { }).finally(function () {
+            var left = (ssrMiniSaveInflight.get(form) || 1) - 1;
+            if (left <= 0) {
+                ssrMiniSaveInflight.delete(form);
+            } else {
+                ssrMiniSaveInflight.set(form, left);
+            }
+        });
         ssrMiniSaveChains.set(form, next);
         return next;
     }
@@ -2137,6 +2162,9 @@
                 var payload = { answers: readMiniAnswersFromForm(form) };
                 if (step === 7 && consentBox) {
                     payload.consentRequested = !!consentBox.checked;
+                }
+                if (qNow >= total) {
+                    payload.advance = true;
                 }
                 var chromeSaved = document.querySelector(".ob-v3-chrome__saved");
                 enqueueSsrMiniSave(form, function () {
@@ -2240,15 +2268,16 @@
                     // Do not disable submit buttons here (capture phase): that drops obNav from the POST.
                     return;
                 }
-                form.setAttribute("data-ob-submitting", "1");
-                // Defer disable: in capture phase, disabling the clicked submit drops obNav from POST.
-                requestAnimationFrame(function () {
-                    form.querySelectorAll("button[type=submit]").forEach(function (b) {
-                        b.disabled = true;
-                    });
-                });
                 var hidden = form.querySelector("[data-ob-ssr-payload]");
                 if (step === 6) {
+                    if (!allowMiniNavSubmit) {
+                        form.setAttribute("data-ob-submitting", "1");
+                        requestAnimationFrame(function () {
+                            form.querySelectorAll("button[type=submit]").forEach(function (b) {
+                                b.disabled = true;
+                            });
+                        });
+                    }
                     var dreamInput = form.querySelector('input[name="dream"]');
                     var dreamVal = dreamInput ? dreamInput.value.trim() : "";
                     if (hidden) {
@@ -2268,29 +2297,52 @@
                     if (allowMiniNavSubmit) {
                         return;
                     }
+                    var inflight = ssrMiniSaveInflight.get(form) || 0;
+                    if (inflight === 0) {
+                        return;
+                    }
                     ev.preventDefault();
                     form.setAttribute("data-ob-ssr-nav-pending", "1");
                     var navSubmitter = ev.submitter;
-                    ssrMiniSaveChain(form).then(function () {
-                        form.removeAttribute("data-ob-ssr-nav-pending");
-                        form.setAttribute("data-ob-ssr-mini-submit-ready", "1");
-                        form.setAttribute("data-ob-submitting", "1");
-                        if (navSubmitter && typeof form.requestSubmit === "function") {
-                            form.requestSubmit(navSubmitter);
-                        } else if (typeof form.submit === "function") {
-                            form.submit();
+                    var navVal = ensureSsrObNavField(form).value;
+                    if (navSubmitter) {
+                        var submitVal = navSubmitter.value || navSubmitter.getAttribute("value") || "";
+                        if (submitVal) {
+                            navVal = submitVal;
                         }
-                    }).catch(function () {
+                    }
+                    waitSsrMiniSaveChain(form, 4000).then(function () {
                         form.removeAttribute("data-ob-ssr-nav-pending");
                         form.setAttribute("data-ob-ssr-mini-submit-ready", "1");
-                        form.setAttribute("data-ob-submitting", "1");
-                        if (navSubmitter && typeof form.requestSubmit === "function") {
+                        ensureSsrObNavField(form).value = navVal || "next";
+                        if (navSubmitter && !navSubmitter.disabled
+                            && typeof form.requestSubmit === "function") {
                             form.requestSubmit(navSubmitter);
-                        } else if (typeof form.submit === "function") {
+                            return;
+                        }
+                        var fallback = form.querySelector(
+                            '[data-testid="onboarding-next"], button[type="submit"][value="next"]'
+                        );
+                        if (fallback && typeof form.requestSubmit === "function") {
+                            form.requestSubmit(fallback);
+                            return;
+                        }
+                        if (typeof form.submit === "function") {
                             form.submit();
                         }
                     });
                     return;
+                }
+                if (!allowMiniNavSubmit) {
+                    form.setAttribute("data-ob-submitting", "1");
+                    requestAnimationFrame(function () {
+                        if (form.getAttribute("data-ob-ssr-mini-submit-ready") === "1") {
+                            return;
+                        }
+                        form.querySelectorAll("button[type=submit]").forEach(function (b) {
+                            b.disabled = true;
+                        });
+                    });
                 }
                 var root = form.querySelector("[data-ob-client-step]");
                 if (!root || !step) return;
