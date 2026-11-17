@@ -440,6 +440,14 @@ public static partial class PageAssetCatalog
             return uwvCss;
         }
 
+        if (path.Equals(OnboardingRoutes.KompasHubPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                WwwrootAssetCatalog.Url("css/features/candidate-kompas-hub-layout.css"),
+            ];
+        }
+
         if (path == OnboardingRoutes.ClassicStartPath
             || path.Equals(OnboardingRoutes.WizardStartPath, StringComparison.OrdinalIgnoreCase)
             || path.Equals(OnboardingRoutes.KompasReadyPath, StringComparison.OrdinalIgnoreCase))

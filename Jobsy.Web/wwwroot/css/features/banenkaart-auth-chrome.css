@@ -541,4 +541,9 @@
     .app-header:has(.candidate-header-nav) .app-header__actions .notification-bell {
         display: none !important;
     }
+
+    .app-shell--candidate:has(.kompas-page-wrap) .app-header:has(.candidate-header-nav) .app-header__actions .page-help {
+        display: inline-flex !important;
+        flex-shrink: 0;
+    }
 }

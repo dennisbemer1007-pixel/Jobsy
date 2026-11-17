@@ -38,6 +38,11 @@
     display: none !important;
   }
 
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header:has(.candidate-header-nav) .app-header__actions .page-help {
+    display: inline-flex !important;
+    flex-shrink: 0;
+  }
+
   .app-header:has(.candidate-header-nav) .app-header__actions {
     gap: 0.35rem;
   }

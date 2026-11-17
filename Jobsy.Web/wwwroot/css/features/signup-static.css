@@ -152,3 +152,16 @@
 }.pub-theme .pub-signup__resend {
   margin: 0;
 }
+
+.pub-theme .pub-signup--email-focus .pub-signup__providers[hidden] {
+  display: none !important;
+}
+
+.pub-theme .pub-signup--email-focus .pub-signup__form,
+.pub-theme .pub-signup--email-focus .login-form.pub-signup__form {
+  display: grid;
+}
+
+.pub-theme .pub-signup--email-focus #email {
+  scroll-margin-top: 5rem;
+}

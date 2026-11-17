@@ -30,6 +30,22 @@ public sealed class JobSearchActivityPeriodRulesTests
         Assert.Equal(4, JobSearchActivityPeriodRules.ClampActivitiesPerPeriod(4));
     }
 
+    [Theory]
+    [InlineData(1, "1 activiteit")]
+    [InlineData(2, "2 activiteiten")]
+    [InlineData(5, "5 activiteiten")]
+    public void FormatActiviteitCountNl_uses_singular_only_for_one(int count, string expected)
+    {
+        Assert.Equal(expected, JobSearchActivityPeriodRules.FormatActiviteitCountNl(count));
+    }
+
+    [Fact]
+    public void FormatActiviteitenGedaanNl_uses_singular_only_for_one()
+    {
+        Assert.Equal("1 activiteit gedaan", JobSearchActivityPeriodRules.FormatActiviteitenGedaanNl(1));
+        Assert.Equal("3 activiteiten gedaan", JobSearchActivityPeriodRules.FormatActiviteitenGedaanNl(3));
+    }
+
     [Fact]
     public void CreateEmptyOverview_matches_28_day_period_rules()
     {

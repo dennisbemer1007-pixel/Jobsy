@@ -1273,6 +1273,41 @@ a.ob-v3-dfoot__back:hover {
   .admin-topbar--candidate-onboarding .account-menu__toggle {
     display: inline-flex !important;
   }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding,
+  .app-shell--onboarding-v3:has(.kompas-page-wrap) .admin-topbar--candidate-onboarding {
+    overflow: visible;
+    padding-inline-end: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding .page-help,
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding .admin-topbar__brand-text {
+    display: inline-flex !important;
+    flex-shrink: 0;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding .admin-topbar__end {
+    flex-shrink: 0;
+    overflow: visible;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding {
+    overflow: visible;
+    padding-inline-end: max(0.85rem, env(safe-area-inset-right, 0px));
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding .admin-topbar__end {
+    flex-shrink: 0;
+    overflow: visible;
+    gap: 0.35rem;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .admin-topbar--candidate-onboarding .page-help__btn {
+    overflow: visible;
+    margin-inline-end: 0.1rem;
+  }
 }
 
 /* Welcome */

@@ -59,6 +59,8 @@ public sealed class BanenkaartSsrUiBootGuardTests
         var data = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrData.cs"));
         Assert.Contains("vacancies.Count == 0", data, StringComparison.Ordinal);
         Assert.Contains("ShowEmptyTravelMessage", data, StringComparison.Ordinal);
+        Assert.Contains("hasListedVacancies", data, StringComparison.Ordinal);
+        Assert.Contains("!hasListedVacancies", data, StringComparison.Ordinal);
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Banenkaart", "BanenkaartSsrShells.cs"));
         Assert.Contains("else if (!model.ShowEmptyTravelMessage)", shells, StringComparison.Ordinal);
     }

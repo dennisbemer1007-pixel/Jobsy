@@ -877,6 +877,14 @@
         var root = document.querySelector("[data-banenkaart-ssr=\"1\"]");
         if (root) {
             root.classList.remove("kb-ssr-travel-empty");
+            if (travelCount > 0) {
+                var listRoot = root.querySelector("[data-testid=vacancy-list]");
+                if (listRoot) {
+                    listRoot.querySelectorAll("[data-testid=kb-empty-travel], [data-testid=kb-widen-filters]").forEach(function (el) {
+                        el.remove();
+                    });
+                }
+            }
             if (outsideTravel) {
                 root.classList.add("kb-ssr-travel-outside");
             } else {

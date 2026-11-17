@@ -304,9 +304,10 @@ internal static class BanenkaartSsrData
                 originLat is not null),
             defaults);
 
+        var hasListedVacancies = vacancies.Count > 0 || discoverTotal > 0;
         var showEmptyTravel = useOrigin
-            && vacancies.Count == 0
-            && (outsideTravelFallback || zoomOutsideTravel);
+            && !hasListedVacancies
+            && !outsideTravelFallback;
         var count = discoverTotal > 0 ? discoverTotal : vacancies.Count;
         var heading = showEmptyTravel
             ? culture["Kb.Map.NoVacanciesInTravel"]
