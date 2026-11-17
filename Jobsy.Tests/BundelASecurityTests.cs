@@ -108,6 +108,7 @@ public sealed class WebDevRouteFactory : TestSupport.WebWebApplicationFactory
         JobsyTestAuth.ApplyProductionJwtSettings(builder);
         JobsyTestAuth.ApplyProductionOriginSettings(builder);
         builder.UseSetting("Seed:Enabled", "false");
+        builder.UseSetting("JobsyAuth:AllowEphemeralDataProtection", "true");
     }
 }
 

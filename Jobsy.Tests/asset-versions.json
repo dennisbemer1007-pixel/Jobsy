@@ -556,7 +556,7 @@
     "v": "20261025-87"
   },
   "js/ndm-employer-messages.js": {
-    "sha256": "28c46e72dca0219814ad44aef3a56baa4e89d0b90a11ddd24134301c71b8e472",
+    "sha256": "c9bc2c8dce3a8471565d70d5efae201f19321d3236d3b8f9bc0e6ff73b9fb1e5",
     "v": "20261026-01"
   },
   "js/ndm-employer-outcome.js": {
@@ -664,7 +664,7 @@
     "v": "20261024-70"
   },
   "js/sollicitaties-activiteiten.js": {
-    "sha256": "d419a76a2f4f83edb59f9055a0ac2789e3f71fffb6837f466272c0ea66b47d57",
+    "sha256": "044db286e40a86937450716cd5ccfa6f0b762bf851f345131b3a38c166bf04d0",
     "v": "20261026-63"
   },
   "js/sollicitaties-berichten.js": {

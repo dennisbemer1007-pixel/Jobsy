@@ -38,30 +38,30 @@ public static class VacancyMapProxyEndpoints
     public static void MapVacancyMapProxyEndpoints(this WebApplication app)
     {
         app.MapGet("/api/vacancies/pins", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, "api/vacancies/pins", ct));
+            forwarder.ForwardAsync(http, "api/vacancies/pins", ct)).AllowAnonymous();
 
         app.MapGet("/api/vacancies/cards", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, "api/vacancies/cards", ct));
+            forwarder.ForwardAsync(http, "api/vacancies/cards", ct)).AllowAnonymous();
 
         app.MapGet("/api/vacancies/{id:guid}/card", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/card", ct));
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/card", ct)).AllowAnonymous();
 
         // Vacancy photo bytes (inline data-URI decode or redirect to /images/…).
         // Same-origin so CSP img-src 'self' covers map popup / list / carousel.
         app.MapGet("/api/vacancies/{id:guid}/image", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/image", ct));
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/image", ct)).AllowAnonymous();
 
         // Small WebP for lagen map popups (lazy-loaded when a card opens).
         app.MapGet("/api/vacancies/{id:guid}/map-popup-photo", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/map-popup-photo", ct));
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}/map-popup-photo", ct)).AllowAnonymous();
 
         // Legacy detail path still used by older cached jobMap bundles.
         app.MapGet("/api/vacancies/{id:guid}", (HttpContext http, Guid id, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct));
+            forwarder.ForwardAsync(http, $"api/vacancies/{id:D}", ct)).AllowAnonymous();
 
         // Travel-time polygons for banenkaart rings (Valhalla; client falls back to circles).
         app.MapGet("/api/travel/isochrones", (HttpContext http, IVacancyMapApiForwarder forwarder, CancellationToken ct) =>
-            forwarder.ForwardAsync(http, "api/travel/isochrones", ct));
+            forwarder.ForwardAsync(http, "api/travel/isochrones", ct)).AllowAnonymous();
 
         app.MapGet("/api/vacancies/{id:guid}/like", GetLikeAsync).RequireAuthorization().RequireBffMutatingSecurity();
         app.MapPost("/api/vacancies/{id:guid}/like", PostLikeAsync).RequireAuthorization().RequireBffMutatingSecurity();

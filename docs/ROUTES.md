@@ -134,8 +134,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/branch/vacancies` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/vacancies/new` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/bronnen` | `Pages/Legal/Bronnen.razor` | anonymous |
-| `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
-| `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
+| `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | Candidate |
+| `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | Candidate |
 | `/candidate/adviseur-werk` | `Pages/Candidate/AdviseurWerk.razor` | Candidate |
 | `/candidate/applications` | `Pages/Candidate/CandidateApplicationsSsr.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/candidate/applications/{ApplicationId:guid}/after-match/bevestiging` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
@@ -177,7 +177,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/paspoort` | `Pages/Candidate/CandidatePassportSsr.razor` | Candidate |
 | `/candidate/paspoort/referentie/vraag/{EntryId:guid}` | `Pages/Candidate/ReferenceVerificationRequestPage.razor` | Candidate |
 | `/candidate/paspoort/referenties/{RequestId:guid}` | `Pages/Candidate/ReferenceVerificationDetailPage.razor` | Candidate |
-| `/candidate/passport` | `Pages/Candidate/CandidatePassportRedirect.razor` | any (no Authorize attribute) |
+| `/candidate/passport` | `Pages/Candidate/CandidatePassportRedirect.razor` | Candidate |
 | `/candidate/privacy` | `Pages/Candidate/CandidatePrivacy.razor` | Candidate |
 | `/candidate/proactive-matching` | `Pages/Candidate/ProactiveMatching.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/CandidateProfileSsr.razor` | Candidate |
@@ -189,7 +189,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingStartSsr.razor` | Candidate |
 | `/candidate/start/kompas` | `Pages/Candidate/OnboardingKompasReadySsr.razor` | Candidate |
-| `/candidate/start/nearby` | `Pages/Candidate/OnboardingStartNearbyRedirect.razor` | any (no Authorize attribute) |
+| `/candidate/start/nearby` | `Pages/Candidate/OnboardingStartNearbyRedirect.razor` | Candidate |
 | `/candidate/start/preview-strand` | `Pages/Candidate/OnboardingStartStrandPreviewSsr.razor` | Candidate |
 | `/candidate/start/wizard` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
@@ -202,7 +202,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/carriere/leren` | `Pages/Candidate/CareerLearnGrow.razor` | Candidate |
 | `/contact` | `Pages/Legal/Contact.razor` | anonymous |
 | `/deel/uwv-adviseur/{Token}` | `Pages/Public/UwvAdviseurDeel.razor` | anonymous |
-| `/dev/na-de-match/{ScreenId}` | `Pages/Dev/NaDeMatchPreview.razor` | any (no Authorize attribute) |
+| `/dev/na-de-match/{ScreenId}` | `Pages/Dev/NaDeMatchPreview.razor` | anonymous |
 | `/dna` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/employer/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/employer/company` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -239,7 +239,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ontdek` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
-| `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
+| `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | anonymous |
 | `/preview/bedrijvenkaart/{Screen}` | `Pages/__Preview/BedrijvenkaartScreens.razor` | anonymous |
 | `/preview/na-de-match/{ScreenId}` | `Pages/__Preview/NaDeMatchAccPreviewScreens.razor` | anonymous |
 | `/preview/uwv-mockups` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
@@ -328,7 +328,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/westland` | `Pages/WestlandTeaser.razor` | anonymous |
 | `/wie-zijn-wij` | `Pages/Legal/WieZijnWij.razor` | anonymous |
 | `/__test/capture-test-block` | `Pages/__Test/CaptureTestBlockPreview.razor` | Candidate |
-| `/__test/pwa-vacancy-apply-success` | `Pages/__Test/PwaVacancyApplySuccessPreview.razor` | any (no Authorize attribute) |
+| `/__test/pwa-vacancy-apply-success` | `Pages/__Test/PwaVacancyApplySuccessPreview.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 | `/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}` | `Pages/CompanyPublicPage.razor` | anonymous |
 

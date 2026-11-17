@@ -72,7 +72,14 @@ public class OpenApiExternalDocumentTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment(environment);
-            JobsyTestAuth.ApplyStandardAuthSettings(builder);
+            if (string.Equals(environment, Environments.Development, StringComparison.OrdinalIgnoreCase))
+            {
+                JobsyTestAuth.ApplyStandardAuthSettings(builder);
+            }
+            else
+            {
+                JobsyTestAuth.ApplyProductionJwtSettings(builder);
+            }
             builder.UseSetting("Seed:Enabled", "false");
             // Non-Development host without a real key-store DB (CI only has JobsyCi): allow ephemeral keys
             // like the other Production-environment test hosts do.

@@ -150,8 +150,10 @@ public static class HtmlSanitize
         }
 
         var input = html.Length > maxLength ? html[..maxLength] : html;
+        var paletteStyles = ExtractVacancyPaletteStyles(input);
         var sanitized = VacancyDescriptionSanitizer.Value.Sanitize(input).Trim();
-        return TightenVacancyDescriptionStyles(sanitized);
+        var merged = ApplyVacancyPaletteStyles(sanitized, paletteStyles);
+        return TightenVacancyDescriptionStyles(merged);
     }
 
     private static string TightenVacancyDescriptionStyles(string html)
@@ -236,6 +238,113 @@ public static class HtmlSanitize
 
         var align = match.Groups[1].Value.Trim().ToLowerInvariant();
         return AllowedTextAlign.Contains(align) ? align : null;
+    }
+
+    private sealed record VacancyStyleHint(int Index, bool IsParagraph, string? Align, string? Color);
+
+    /// <summary>Preserve palette-only inline styles Ganss may strip from span/p.</summary>
+    private static List<VacancyStyleHint> ExtractVacancyPaletteStyles(string html)
+    {
+        var hints = new List<VacancyStyleHint>();
+        var openIndex = 0;
+        foreach (Match match in TagTokenRegex.Matches(html))
+        {
+            if (match.Value.StartsWith("</", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var name = match.Groups[1].Value;
+            if (!name.Equals("p", StringComparison.OrdinalIgnoreCase)
+                && !name.Equals("span", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var attrs = match.Groups[2].Value;
+            string? align = null;
+            string? color = null;
+            if (name.Equals("p", StringComparison.OrdinalIgnoreCase))
+            {
+                align = ExtractStyleTextAlign(attrs);
+            }
+            else
+            {
+                color = ExtractStyleColor(attrs);
+            }
+
+            if (align is null && color is null)
+            {
+                continue;
+            }
+
+            hints.Add(new VacancyStyleHint(openIndex++, name.Equals("p", StringComparison.OrdinalIgnoreCase), align, color));
+        }
+
+        return hints;
+    }
+
+    private static string ApplyVacancyPaletteStyles(string html, IReadOnlyList<VacancyStyleHint> hints)
+    {
+        if (hints.Count == 0)
+        {
+            return html;
+        }
+
+        var hintIndex = 0;
+        var openIndex = 0;
+        var sb = new StringBuilder(html.Length);
+        var last = 0;
+        foreach (Match match in TagTokenRegex.Matches(html))
+        {
+            sb.Append(html, last, match.Index - last);
+            last = match.Index + match.Length;
+
+            if (match.Value.StartsWith("</", StringComparison.Ordinal))
+            {
+                sb.Append(match.Value);
+                continue;
+            }
+
+            var name = match.Groups[1].Value;
+            if (!name.Equals("p", StringComparison.OrdinalIgnoreCase)
+                && !name.Equals("span", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.Append(match.Value);
+                continue;
+            }
+
+            VacancyStyleHint? hint = null;
+            if (hintIndex < hints.Count && hints[hintIndex].Index == openIndex)
+            {
+                hint = hints[hintIndex];
+                hintIndex++;
+            }
+
+            openIndex++;
+
+            if (hint is null)
+            {
+                sb.Append(match.Value);
+                continue;
+            }
+
+            if (hint.IsParagraph && hint.Align is not null)
+            {
+                sb.Append("<p style=\"text-align:").Append(hint.Align).Append("\">");
+            }
+            else if (!hint.IsParagraph && hint.Color is not null)
+            {
+                sb.Append("<span style=\"color:").Append(hint.Color).Append("\">");
+            }
+            else
+            {
+                sb.Append(match.Value);
+            }
+        }
+
+        sb.Append(html, last, html.Length - last);
+        return sb.ToString();
     }
 
     private static string? ExtractStyleColor(string attributes)

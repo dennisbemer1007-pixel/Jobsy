@@ -23,9 +23,10 @@ public static class DataProtectionSetup
             .SetApplicationName("Jobsy.Web");
 
         var connectionString = ResolveConnectionString(configuration);
+        var allowEphemeral = configuration.GetValue("JobsyAuth:AllowEphemeralDataProtection", false);
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            if (!environment.IsDevelopment())
+            if (!environment.IsDevelopment() && !allowEphemeral)
             {
                 throw new InvalidOperationException(
                     "Data Protection: ConnectionStrings:JobsyDb (or DATABASE_URL) is required in Production so auth cookies survive redeploys.");
@@ -40,7 +41,7 @@ public static class DataProtectionSetup
             var repository = new PostgresXmlRepository(normalized);
             if (!repository.TryEnsureTable())
             {
-                if (!environment.IsDevelopment())
+                if (!environment.IsDevelopment() && !allowEphemeral)
                 {
                     throw new InvalidOperationException(
                         "Data Protection: could not create or open Postgres table \"__DataProtectionKeys\". " +
@@ -62,7 +63,7 @@ public static class DataProtectionSetup
         {
             throw;
         }
-        catch (Exception ex) when (environment.IsDevelopment())
+        catch (Exception ex) when (environment.IsDevelopment() || allowEphemeral)
         {
             // Keep ephemeral keys so local DX still boots without Postgres.
             Console.Error.WriteLine(
