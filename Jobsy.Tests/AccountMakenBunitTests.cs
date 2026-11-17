@@ -86,6 +86,8 @@ public class AccountMakenBunitTests : BunitContext
         var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "account-maken.js"));
         Assert.Contains("getElementById(\"email\")", js, StringComparison.Ordinal);
         Assert.Contains("#email", js, StringComparison.Ordinal);
+        Assert.Contains("pub-signup--email-focus", js, StringComparison.Ordinal);
+        Assert.Contains("hashchange", js, StringComparison.Ordinal);
 
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("IncludeAccountMakenScript", app, StringComparison.Ordinal);

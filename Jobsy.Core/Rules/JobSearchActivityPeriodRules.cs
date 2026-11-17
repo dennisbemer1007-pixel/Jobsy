@@ -48,6 +48,12 @@ public static class JobSearchActivityPeriodRules
             Weeks: Array.Empty<JobSearchActivityWeekDto>());
     }
 
+    public static string FormatActiviteitCountNl(int count)
+        => count == 1 ? "1 activiteit" : $"{count} activiteiten";
+
+    public static string FormatActiviteitenGedaanNl(int count)
+        => count == 1 ? "1 activiteit gedaan" : $"{count} activiteiten gedaan";
+
     public static string FormatPeriodLabel(DateOnly start, DateOnly end, CultureInfo culture)
     {
         var isNl = culture.TwoLetterISOLanguageName.Equals("nl", StringComparison.OrdinalIgnoreCase);

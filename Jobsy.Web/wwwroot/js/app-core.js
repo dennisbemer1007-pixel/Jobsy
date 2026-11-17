@@ -1783,10 +1783,16 @@ window.jobsyDialog = (function () {
         tick();
     }
 
+    var lastSwVisibilityUpdate = 0;
     document.addEventListener("visibilitychange", function () {
         if (document.visibilityState !== "visible") {
             return;
         }
+        var now = Date.now();
+        if (now - lastSwVisibilityUpdate < 60000) {
+            return;
+        }
+        lastSwVisibilityUpdate = now;
         navigator.serviceWorker.getRegistration().then(function (reg) {
             if (reg) {
                 return reg.update().catch(function () { });

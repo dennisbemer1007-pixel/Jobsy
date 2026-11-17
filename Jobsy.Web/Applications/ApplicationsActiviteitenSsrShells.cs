@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Enums;
 using Jobsy.Web.Localization;
 
@@ -66,7 +67,7 @@ internal static class ApplicationsActiviteitenSsrShells
                 ? culture["Apps.Activiteiten.TargetMet"]
                 : culture["Apps.Activiteiten.TargetNotMet"]));
         sb.Append("</h2><div class=\"sollic-activiteiten-badges\">");
-        AppendBadge(sb, culture.Format("Apps.Activiteiten.DoneBadge", overview.ActivitiesDoneInPeriod), "done");
+        AppendBadge(sb, FormatDoneBadge(culture, overview.ActivitiesDoneInPeriod), "done");
         AppendBadge(sb, culture.Format("Apps.Activiteiten.AgreementBadge", overview.ActivitiesTarget), "goal");
         AppendBadge(sb, culture.Format("Apps.Activiteiten.DaysLeftBadge", overview.DaysRemainingInPeriod), "days");
         sb.Append("</div><p class=\"sollic-activiteiten-summary__adjust\">");
@@ -128,7 +129,7 @@ internal static class ApplicationsActiviteitenSsrShells
             sb.Append("<div class=\"sollic-activiteiten-week__head\"><h3>");
             sb.Append(WebUtility.HtmlEncode(week.WeekLabel));
             sb.Append("</h3><span class=\"sollic-activiteiten-week__count sollic-activiteiten-week__count--pill\">");
-            sb.Append(WebUtility.HtmlEncode(culture.Format("Apps.Activiteiten.WeekCount", week.Count)));
+            sb.Append(WebUtility.HtmlEncode(FormatWeekCount(culture, week.Count)));
             sb.Append("</span></div><ul class=\"sollic-activiteiten-list\">");
             foreach (var item in week.Items)
             {
@@ -325,4 +326,14 @@ internal static class ApplicationsActiviteitenSsrShells
         var ci = ApplicationsSsrData.FormatCulture(culture);
         return dt.ToString("dddd d MMMM", ci);
     }
+
+    private static string FormatDoneBadge(CultureState culture, int count)
+        => culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase)
+            ? JobSearchActivityPeriodRules.FormatActiviteitenGedaanNl(count)
+            : culture.Format("Apps.Activiteiten.DoneBadge", count);
+
+    private static string FormatWeekCount(CultureState culture, int count)
+        => culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase)
+            ? JobSearchActivityPeriodRules.FormatActiviteitCountNl(count)
+            : culture.Format("Apps.Activiteiten.WeekCount", count);
 }

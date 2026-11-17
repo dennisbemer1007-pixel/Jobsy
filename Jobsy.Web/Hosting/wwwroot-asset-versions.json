@@ -40,7 +40,7 @@
     "v": "20261018-01"
   },
   "css/features/banenkaart-auth-chrome.css": {
-    "sha256": "fe3ee4ccf3a24b4a051677870536168980183a71ff661bfc769940024f04131f",
+    "sha256": "d375b5f7f3387c6589ec173b2884e8ef3aacab52370f74b79bc5138e39c6be10",
     "v": "20261027-53"
   },
   "css/features/banenkaart-illustrated.css": {
@@ -68,7 +68,7 @@
     "v": "20261025-36"
   },
   "css/features/candidate-header-tablet.css": {
-    "sha256": "6c744fe548e736ce71c13c693ed22e601376b703c149502bca41aa685d7db81b",
+    "sha256": "704f66c576bd4e186641204293553f33d08a02c50f576d82a84d5275eef777cd",
     "v": "20261025-87"
   },
   "css/features/candidate-hero-compact-preview.css": {
@@ -90,6 +90,10 @@
   "css/features/candidate-illustrated-public.css": {
     "sha256": "80b4b799ed5efbcef0759e9ac1262eaa92d489d5b77a399c7628e05c702f25de",
     "v": "20261018-02"
+  },
+  "css/features/candidate-kompas-hub-layout.css": {
+    "sha256": "d648ee516101a530b2d3df07774434555bc85cd793c5ea41f1f5f4d68324f741",
+    "v": "20261117-03"
   },
   "css/features/candidate-no-blazor-chrome.css": {
     "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee",
@@ -272,7 +276,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "156a01db23b430ccc09fd952b0c9f6ce8471a560c80f14578cc914335c20b21b",
+    "sha256": "391cda847899e71cab53a45c54e8d0065dc9511039d3a4a9215aa34438ca7a3f",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -336,7 +340,7 @@
     "v": "20261030-01"
   },
   "css/features/signup-static.css": {
-    "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
+    "sha256": "2c8127ee8487637bb7a8978a6ee6e81c53873be5ab6438b4abc7a5aa79addf3d",
     "v": "20261017-02"
   },
   "css/features/sollicitaties-page.css": {
@@ -392,7 +396,7 @@
     "v": "20261004-13"
   },
   "js/account-maken.js": {
-    "sha256": "5fa2c7dfc7e84c155ccf1d30a69f8791cc02eb64d9def1c575bc047519625748",
+    "sha256": "b07b35e322781bb32608e161ee41c4b356e8e44667bad6d6ee5a991dc2c19a44",
     "v": "20261117-02"
   },
   "js/admin-shell.js": {
@@ -400,7 +404,7 @@
     "v": "20261025-87"
   },
   "js/app-core.js": {
-    "sha256": "44d22120494d15559ef3ef33029e9a8e5d181caae0f1e2a389d5f5ee7725a26c",
+    "sha256": "dcfaa397d46565b694c99964c411f34ab1fcd148bf410f115d60d65905e2a2ea",
     "v": "20261026-87"
   },
   "js/app-extras.js": {
@@ -412,7 +416,7 @@
     "v": "20261016-04"
   },
   "js/banenkaart-catalog.js": {
-    "sha256": "cc50e7e70a39a05cca2cbb5d0fc49eb77c1139bea1d4d6dab85318ce48c9bbb8",
+    "sha256": "2d27e8c545502a917aa62a7f1ec78b91c29e21f831514f336fc3a6bd94ecba4e",
     "v": "20261028-59"
   },
   "js/banenkaart-map-icons.js": {

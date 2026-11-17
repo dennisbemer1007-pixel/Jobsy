@@ -1,0 +1,106 @@
+/* /candidate/kompas hub — header chrome, CTA row, card text wrap (acceptatie retest). */
+
+@media (max-width: 900px) {
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header {
+    overflow: visible;
+    padding-inline: max(0.5rem, env(safe-area-inset-left, 0px))
+      max(0.5rem, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header__brand {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 38%;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header .brand__name {
+    display: inline !important;
+    font-size: 0.92rem;
+    font-weight: 700;
+    max-width: 4.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header__actions {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: visible;
+    justify-content: flex-end;
+    gap: 0.25rem;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header__actions .page-help {
+    display: inline-flex !important;
+    flex-shrink: 0;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header {
+    overflow: visible;
+    column-gap: 0.35rem;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .app-header__actions {
+    flex-shrink: 0;
+    overflow: visible;
+    padding-inline-end: 0.15rem;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .page-help__btn {
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .candidate-header-nav-slot {
+    --candidate-header-nav-slot-min: 22rem;
+  }
+}
+
+.kompas--ssr-hub > .kompas__ssr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  max-width: min(72rem, 100%);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .kompas--ssr-hub > .kompas__ssr-actions {
+    justify-content: center;
+  }
+
+  .kompas--ssr-hub > .kompas__ssr-actions .ob-rustig__btn {
+    width: auto;
+    min-width: 11rem;
+    flex: 0 1 auto;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .kompas-page-wrap .ob-rustig__kompas-test-grid,
+  .kompas-page-wrap .ob-rustig__kompas-dir-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .kompas-page-wrap .ob-rustig__kompas-test-card,
+  .kompas-page-wrap .ob-rustig__kompas-dir-card,
+  .kompas-page-wrap .ob-rustig__kompas-test-card h3,
+  .kompas-page-wrap .ob-rustig__kompas-dir-card h3,
+  .kompas-page-wrap .ob-rustig__kompas-test-card p,
+  .kompas-page-wrap .ob-rustig__kompas-dir-card p {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
