@@ -56,11 +56,11 @@
     "v": "20261025-59"
   },
   "css/features/banenkaart.css": {
-    "sha256": "d3642e83f38bd989bd49258c04e937d484e45edc90db732af8838904ab94209e",
+    "sha256": "3c3de9b8d7c58cc1150654ef2c4a13208160819790571c4bbde059bbb0f0e062",
     "v": "20261025-59"
   },
   "css/features/bedrijvenkaart.css": {
-    "sha256": "c71d2cb80e5dd8d443413f543aa23e601a70b4e0ef59e2115fcfdf74254fd759",
+    "sha256": "b12c568848d4abec7fed04946e95f252e0f0889c31faa9bbeb6066d60f5ba3f5",
     "v": "20261027-10"
   },
   "css/features/candidate-header-strip.css": {
@@ -152,7 +152,7 @@
     "v": "20261011-03"
   },
   "css/features/kompas-illustrated.css": {
-    "sha256": "146cc7bf86352a2d1c52e0438031842fcded51f453343e0d6c6ff1279bf3458e",
+    "sha256": "d7513b5b4128389410243d396d6ae5d174af05766808aa323db89f47a36c4b00",
     "v": "20261025-87"
   },
   "css/features/kreeft-reiskaart.css": {
@@ -180,7 +180,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "8314e394d4f24a14fa07b4c3ed4d2697fb9b37b56e3d42c6070f47c7ba5ad58a",
+    "sha256": "be5ee82ac8d8a8d2eac526bc6b16c2d7db7025a2fa0f0f4f159af99923ff4d09",
     "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {
@@ -192,7 +192,7 @@
     "v": "20261115-03"
   },
   "css/features/lobsy-coach-variant-b.css": {
-    "sha256": "220d9be46c62cbe5cb8aa702f4739c6cf792a0182ad28d928e87237ced903084",
+    "sha256": "594d9e20d0c48e4dbab4131cd43cdf47589b2d3394f6bfafff4bbcee855db09f",
     "v": "20261115-04"
   },
   "css/features/match-desktop.css": {
@@ -272,7 +272,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "b3d599ffdc5f6d1c689c7b0023feca63d7467c82449933360913e80df760af7b",
+    "sha256": "8020788782606957169ddd67bd4b068b20cb7759a4a49236439202e74e811cf1",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -288,7 +288,7 @@
     "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "3c8bbfbd1794218e529123c16d32dc7efbeb2769ae049307d039f6ed3cbdeded",
+    "sha256": "f3f81a706a7f88c3a57225f16abd54fbc8b59c038443b1f608a14f766e3600e8",
     "v": "20261022-79"
   },
   "css/features/opleidingen.css": {
@@ -396,7 +396,7 @@
     "v": "20261025-87"
   },
   "js/app-core.js": {
-    "sha256": "4eabf2f1176f3160c6215ef8c473ba25451ec5c316e6cef7eb509ed315503140",
+    "sha256": "44d22120494d15559ef3ef33029e9a8e5d181caae0f1e2a389d5f5ee7725a26c",
     "v": "20261026-87"
   },
   "js/app-extras.js": {
@@ -524,7 +524,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "7eb489befb614b527ab44a9fabae9abeda9e0735065742600156d2cb2298c580",
+    "sha256": "1435014e88c162cdfac6528c5fbbac66e3c8363ab7af2dd6dec719b9548a5387",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {
