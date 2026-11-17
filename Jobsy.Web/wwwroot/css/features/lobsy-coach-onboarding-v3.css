@@ -130,13 +130,15 @@
   .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .lobsy-coach-dock--onboarding-b {
     display: flex !important;
     visibility: visible !important;
-    inset-inline-end: 10px;
+    inset-inline-end: auto;
+    inset-inline-start: max(10px, env(safe-area-inset-left, 0px));
     bottom: calc(var(--ob-v3-mobile-footer-h, 76px) + 10px + env(safe-area-inset-bottom, 0px));
     z-index: 34;
     flex-direction: column-reverse;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 6px;
-    max-width: 88px;
+    max-width: min(96px, calc(100vw - 20px));
+    pointer-events: none;
   }
 
   .app-shell--onboarding-v3 .ob-v3-chrome__row {
@@ -170,8 +172,18 @@
     display: none !important;
   }
 
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-main {
+    padding-block-end: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card--kompas-ready {
-    padding-block-end: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    padding-block-end: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .app-shell--onboarding-v3:has([data-ob-rustig-screen="kompas"]) .ob-v3-step-card--kompas-ready .ob-v3-step__fields {
+    margin-inline-start: calc(5.25rem + env(safe-area-inset-left, 0px));
+    margin-inline-end: 0;
     box-sizing: border-box;
   }
 }

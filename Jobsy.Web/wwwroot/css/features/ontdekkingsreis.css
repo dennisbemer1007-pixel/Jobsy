@@ -2857,4 +2857,26 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  .app-shell--candidate:has([data-discovery-ssr="1"]) .app-main__content,
+  .journey.journey-root--ssr.journey--overview-route,
+  .journey.journey-root--ssr .discovery-ssr-container,
+  .journey.journey-root--ssr .journey-route-mobile__inline,
+  .journey.journey-root--ssr .discovery-mobile-route,
+  .journey.journey-root--ssr .discovery-phase-panel {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-inline-end: max(1rem, env(safe-area-inset-right, 0px));
+  }
+
+  .journey.journey-root--ssr:not(.journey--fit) .journey-step {
+    padding-inline-end: max(1rem, env(safe-area-inset-right, 0px));
+  }
+
+  .journey.journey-root--ssr .discovery-mobile-stop .journey-route-mobile__inline {
+    margin-inline: 0;
+    width: 100%;
+    max-width: 100%;
+  }
 }

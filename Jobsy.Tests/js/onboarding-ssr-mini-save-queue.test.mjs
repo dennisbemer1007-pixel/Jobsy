@@ -32,3 +32,31 @@ test("enqueueSsrMiniSave runs puts sequentially", async () => {
   await ssrMiniSaveChain(form);
   assert.deepEqual(order, [1, 2, 3]);
 });
+
+test("mini test Volgende waits for in-flight save chain", async () => {
+  const ssrMiniSaveChains = new WeakMap();
+  const form = { flags: {} };
+
+  function ssrMiniSaveChain(target) {
+    if (!ssrMiniSaveChains.has(target)) {
+      ssrMiniSaveChains.set(target, Promise.resolve());
+    }
+    return ssrMiniSaveChains.get(target);
+  }
+
+  function enqueueSsrMiniSave(target, task) {
+    const next = ssrMiniSaveChain(target).then(task).catch(() => {});
+    ssrMiniSaveChains.set(target, next);
+    return next;
+  }
+
+  let savedChrome = "ok";
+  const slowSave = enqueueSsrMiniSave(form, async () => {
+    await new Promise((r) => setTimeout(r, 40));
+  });
+  form.flags["data-ob-ssr-nav-pending"] = "1";
+  await ssrMiniSaveChain(form);
+  form.flags["data-ob-ssr-nav-pending"] = "";
+  await slowSave;
+  assert.equal(savedChrome, "ok");
+});

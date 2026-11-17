@@ -71,7 +71,7 @@ internal static class ApplicationsActiviteitenSsrShells
         AppendBadge(sb, culture.Format("Apps.Activiteiten.DaysLeftBadge", overview.DaysRemainingInPeriod), "days");
         sb.Append("</div><p class=\"sollic-activiteiten-summary__adjust\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Activiteiten.AdjustLead"]));
-        sb.Append(" <button type=\"button\" class=\"link-btn\" data-sollic-activ-adjust-toggle=\"1\">");
+        sb.Append(" <button type=\"button\" class=\"btn btn-secondary sollic-activiteiten-summary__adjust-btn\" data-sollic-activ-adjust-toggle=\"1\">");
         sb.Append(WebUtility.HtmlEncode(culture["Apps.Activiteiten.AdjustLink"]));
         sb.Append("</button></p>");
         sb.Append("<div class=\"sollic-activiteiten-agreement-edit\" data-sollic-activ-agreement-panel hidden>");

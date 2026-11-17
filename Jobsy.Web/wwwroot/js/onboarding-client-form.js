@@ -271,7 +271,11 @@
         var grid = root.querySelector("[data-ob-client=workStatusGrid]");
         var list = root.querySelector(".ob-client-suggest");
         var addressWrap = root.querySelector(".ob-fields__address");
+        var fieldWrap = root.querySelector(".kb-address__field");
         var form = root.closest("form[data-ob-ssr-form]");
+        if (fieldWrap && list && list.parentElement !== fieldWrap) {
+            fieldWrap.appendChild(list);
+        }
 
         function bindDirty(input, key) {
             if (!input || input.__obDirtyBound) return;
@@ -413,6 +417,30 @@
         }
 
         var suggestReposition = null;
+        var suggestScrollRoot = null;
+
+        function useAnchoredAddressSuggest() {
+            try {
+                return window.matchMedia("(max-width: 1023px)").matches;
+            } catch (eAnchored) {
+                return true;
+            }
+        }
+
+        function bindSuggestScrollRoot() {
+            if (suggestScrollRoot) {
+                return;
+            }
+            suggestScrollRoot = document.querySelector(".ob-v3-main") || document.querySelector(".app-main");
+            if (!suggestScrollRoot) {
+                return;
+            }
+            suggestScrollRoot.addEventListener("scroll", function () {
+                if (suggestReposition) {
+                    suggestReposition();
+                }
+            }, { passive: true });
+        }
 
         function hideSuggest() {
             if (!list) return;
@@ -430,6 +458,10 @@
 
         function positionSuggestList() {
             if (!list || !address || list.hidden) return;
+            if (useAnchoredAddressSuggest()) {
+                list.style.cssText = "";
+                return;
+            }
             var r = address.getBoundingClientRect();
             list.style.position = "fixed";
             list.style.left = r.left + "px";
@@ -442,14 +474,24 @@
             if (!list) return;
             list.innerHTML = html;
             list.hidden = false;
-            list.classList.add("ob-client-suggest--floating");
+            if (useAnchoredAddressSuggest()) {
+                list.classList.remove("ob-client-suggest--floating");
+                list.style.cssText = "";
+            } else {
+                list.classList.add("ob-client-suggest--floating");
+                positionSuggestList();
+            }
             if (addressWrap) addressWrap.classList.add("is-suggest-open");
             if (address) address.setAttribute("aria-expanded", "true");
-            positionSuggestList();
             if (!suggestReposition) {
-                suggestReposition = function () { positionSuggestList(); };
+                suggestReposition = function () {
+                    if (!useAnchoredAddressSuggest()) {
+                        positionSuggestList();
+                    }
+                };
                 window.addEventListener("scroll", suggestReposition, true);
                 window.addEventListener("resize", suggestReposition);
+                bindSuggestScrollRoot();
             }
         }
 
@@ -2108,6 +2150,10 @@
                         })
                         .then(function (result) {
                             if (!result.ok) {
+                                if (form.getAttribute("data-ob-ssr-nav-pending") === "1"
+                                    || form.getAttribute("data-ob-submitting") === "1") {
+                                    return;
+                                }
                                 if (chromeSaved) {
                                     chromeSaved.textContent = "Niet bewaard · Opnieuw";
                                 }
@@ -2163,7 +2209,10 @@
                 }
             }, true);
             form.addEventListener("submit", function (ev) {
-                if (form.getAttribute("data-ob-submitting") === "1") {
+                var allowMiniNavSubmit = form.getAttribute("data-ob-ssr-mini-submit-ready") === "1";
+                if (allowMiniNavSubmit) {
+                    form.removeAttribute("data-ob-ssr-mini-submit-ready");
+                } else if (form.getAttribute("data-ob-submitting") === "1") {
                     ev.preventDefault();
                     return;
                 }
@@ -2216,6 +2265,31 @@
                     if (hidden) {
                         hidden.value = JSON.stringify(payloadMini);
                     }
+                    if (allowMiniNavSubmit) {
+                        return;
+                    }
+                    ev.preventDefault();
+                    form.setAttribute("data-ob-ssr-nav-pending", "1");
+                    var navSubmitter = ev.submitter;
+                    ssrMiniSaveChain(form).then(function () {
+                        form.removeAttribute("data-ob-ssr-nav-pending");
+                        form.setAttribute("data-ob-ssr-mini-submit-ready", "1");
+                        form.setAttribute("data-ob-submitting", "1");
+                        if (navSubmitter && typeof form.requestSubmit === "function") {
+                            form.requestSubmit(navSubmitter);
+                        } else if (typeof form.submit === "function") {
+                            form.submit();
+                        }
+                    }).catch(function () {
+                        form.removeAttribute("data-ob-ssr-nav-pending");
+                        form.setAttribute("data-ob-ssr-mini-submit-ready", "1");
+                        form.setAttribute("data-ob-submitting", "1");
+                        if (navSubmitter && typeof form.requestSubmit === "function") {
+                            form.requestSubmit(navSubmitter);
+                        } else if (typeof form.submit === "function") {
+                            form.submit();
+                        }
+                    });
                     return;
                 }
                 var root = form.querySelector("[data-ob-client-step]");

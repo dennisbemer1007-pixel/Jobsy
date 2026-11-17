@@ -395,7 +395,7 @@
     .passport-page--illustrated .passport-tests__layout,
     .passport-page--illustrated .passport-proof__card,
     .passport-page--illustrated .passport-career__empty {
-        padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
+        padding-inline-end: max(0.75rem, env(safe-area-inset-right, 0px));
         box-sizing: border-box;
     }
 }.passport-ssr-back {

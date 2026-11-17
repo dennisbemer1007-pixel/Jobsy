@@ -134,6 +134,19 @@
   .app-shell--candidate.has-bottom-nav:has(.passport-page--illustrated) .app-main__content {
     padding-bottom: calc(var(--bottom-nav-h, 64px) + 72px + env(safe-area-inset-bottom, 0px));
   }
+
+  .passport-page--illustrated .passport-layout__sidebar,
+  .passport-page--illustrated .passport-dna__highlights,
+  .passport-page--illustrated .passport-card {
+    padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .app-shell:has(.passport-page--illustrated) .lobsy-coach-dock--variant-b {
+    inset-inline-end: auto;
+    inset-inline-start: max(10px, env(safe-area-inset-left, 0px));
+    align-items: flex-start;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -539,12 +552,20 @@
 @media (max-width: 1023px) {
   .kompas-page-wrap,
   .ob-v3-step-card--kompas-ready,
-  .panel-page--cand-ill {
-    padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
-  }
-
+  .panel-page--cand-ill,
+  .cand-settings,
   .cand-settings .cand-settings__nav,
   .cand-settings .cand-settings__panel {
-    padding-inline-end: max(0.75rem, var(--lobsy-coach-clear-inline, 5.5rem));
+    padding-inline-end: var(--space-4, 1rem);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .app-shell--candidate:has(.kompas-page-wrap) .app-main__content,
+  .app-shell--candidate:has(.cand-settings) .app-main__content {
+    padding-bottom: calc(
+      var(--bottom-nav-h, 64px) + 5rem + env(safe-area-inset-bottom, 0px)
+    );
   }
 }

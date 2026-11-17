@@ -13,6 +13,15 @@ public sealed class ActivityLogClientDiagnosticsGuardTests
     }
 
     [Fact]
+    public void Activiteiten_aanpassen_toggle_uses_secondary_button_class()
+    {
+        var root = TestRepo.FindRoot();
+        var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Applications", "ApplicationsActiviteitenSsrShells.cs"));
+        Assert.Contains("data-sollic-activ-adjust-toggle", shells, StringComparison.Ordinal);
+        Assert.Contains("btn btn-secondary sollic-activiteiten-summary__adjust-btn", shells, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Activity_log_uses_ilogger_not_trace_writeline()
     {
         var root = TestRepo.FindRoot();
