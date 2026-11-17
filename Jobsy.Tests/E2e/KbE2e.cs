@@ -14,6 +14,22 @@ public static class KbE2e
     public const string DefaultIncompleteEmail = "valentine@jobsy.local";
     public const string DefaultPassword = "Jobsy123!";
 
+    /// <summary>
+    /// GitHub Actions may set <c>JOBSY_E2E_CANDIDATE_*</c> to empty strings when secrets are unset;
+    /// treat whitespace as missing so CI falls back to seeded <c>kandidaat@jobsy.local</c>.
+    /// </summary>
+    public static string ResolveCandidateEmail()
+    {
+        var raw = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
+        return string.IsNullOrWhiteSpace(raw) ? DefaultCompleteEmail : raw.Trim();
+    }
+
+    public static string ResolveCandidatePassword()
+    {
+        var raw = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD");
+        return string.IsNullOrWhiteSpace(raw) ? DefaultPassword : raw.Trim();
+    }
+
     public static readonly (int Width, int Height) Desktop = (1440, 900);
     public static readonly (int Width, int Height) Mobile = (390, 844);
 
@@ -212,8 +228,8 @@ public static class KbE2e
 
     public static async Task<bool> TryLoginAsync(IPage page, string baseUrl, string? email = null, string? password = null)
     {
-        email ??= Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultCompleteEmail;
-        password ??= Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+        email ??= ResolveCandidateEmail();
+        password ??= ResolveCandidatePassword();
         try
         {
             await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });

@@ -94,11 +94,14 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
             await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 120_000 });
             await page.WaitForTimeoutAsync(1500);
 
-            var berichtenTab = page.Locator(".sollicitaties-segment__tab[data-sollic-tab=\"berichten\"]");
-            if (await berichtenTab.CountAsync() > 0)
+            var berichtenNav = page.Locator("[data-testid=\"sollicitaties-berichten-tab\"]");
+            if (await page.Locator("[data-sollic-tab=\"berichten\"]").CountAsync() > 0)
             {
-                await berichtenTab.ClickAsync();
-                await page.WaitForTimeoutAsync(1500);
+                await page.GotoAsync(
+                    baseUrl + "/candidate/applications?tab=berichten",
+                    new() { WaitUntil = WaitUntilState.NetworkIdle });
+                await berichtenNav.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                await page.WaitForTimeoutAsync(800);
 
                 var thread = page.Locator(".sollic-berichten-ti--mob.sollic-berichten-ti__select").First;
                 if (await thread.CountAsync() > 0)
@@ -112,12 +115,23 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
                         await page.WaitForTimeoutAsync(500);
                     }
                 }
+
+                await page.GotoAsync(
+                    baseUrl + "/candidate/applications?tab=sollicitaties",
+                    new() { WaitUntil = WaitUntilState.NetworkIdle });
+                await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
             }
 
-            var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
-            if (await card.CountAsync() > 0)
+            var rowId = await page.EvaluateAsync<string?>(@"() => {
+              const card = document.querySelector('.sollic-card.sollic-card--app:not([hidden])');
+              return card ? card.getAttribute('data-sollic-row-id') : null;
+            }");
+            if (!string.IsNullOrWhiteSpace(rowId))
             {
-                await card.ClickAsync();
+                await page.GotoAsync(
+                    baseUrl + "/candidate/applications?tab=sollicitaties&sel=" + rowId,
+                    new() { WaitUntil = WaitUntilState.NetworkIdle });
+                await page.WaitForSelectorAsync(".sollicitaties-detail .sollic-detail-panel", new() { Timeout = 60_000 });
                 await page.WaitForTimeoutAsync(1000);
             }
 
@@ -137,7 +151,7 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
 
     private static async Task<bool> TryAcceptatieOrDefaultLoginAsync(IPage page, string baseUrl)
     {
-        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+        var password = KbE2e.ResolveCandidatePassword();
         var preferred = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL");
         if (!string.IsNullOrWhiteSpace(preferred)
             && await KbE2e.TryLoginAsync(page, baseUrl, preferred.Trim(), password))

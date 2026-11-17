@@ -32,7 +32,7 @@
     "v": "20261018-11"
   },
   "css/features/applications.css": {
-    "sha256": "63a5303b7b4c21c92c5c2456328520e496f3f1163ae5dac7799670edb47a94fe",
+    "sha256": "2d862e4ae6725b6852fe3daf7b4385adedf03ac4844f6183a9ba7ad9af171745",
     "v": "20261024-89"
   },
   "css/features/auth.css": {
@@ -180,7 +180,7 @@
     "v": "20261026-08"
   },
   "css/features/lobsy-coach-onboarding-v3.css": {
-    "sha256": "eb7be10c1a64054ae6e4b93730b3efb766e86676ab374f5a1d7bc58d9f7d112c",
+    "sha256": "1d70aaf944fba6d66c9a084e79dfd2fae74c88bb050e545971dbd54a85612362",
     "v": "20261115-02"
   },
   "css/features/lobsy-coach-pill.css": {

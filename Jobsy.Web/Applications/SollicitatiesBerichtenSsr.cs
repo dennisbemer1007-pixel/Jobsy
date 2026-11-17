@@ -94,6 +94,11 @@ internal static class SollicitatiesBerichtenSsr
             ApplicationsSsrQuery.FilterAll,
             null,
             appId);
+        var berichtenReturn = ApplicationsSsrQuery.BuildUrl(
+            ApplicationsSsrQuery.TabBerichten,
+            ApplicationsSsrQuery.FilterAll,
+            null);
+        var mobHref = AfterMatchSollicitatiesUrls.Messages(appId, berichtenReturn);
         sb.Append("<a class=\"sollic-berichten ti sollic-berichten-ti--desk sollic-berichten-ti__select");
         if (active)
         {
@@ -131,7 +136,7 @@ internal static class SollicitatiesBerichtenSsr
         }
 
         sb.Append("\" href=\"");
-        sb.Append(WebUtility.HtmlEncode(deskHref));
+        sb.Append(WebUtility.HtmlEncode(mobHref));
         sb.Append("\" data-sollic-thread-id=\"");
         sb.Append(appId.ToString("D"));
         sb.Append("\" data-enhance-nav=\"false\"><span class=\"logo-sq\">");

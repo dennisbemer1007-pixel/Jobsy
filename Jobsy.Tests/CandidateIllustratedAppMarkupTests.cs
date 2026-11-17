@@ -32,7 +32,8 @@ public class CandidateIllustratedAppMarkupTests
     {
         var shells = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Applications/ApplicationsSsrShells.cs"));
         Assert.Contains("sollicitaties-page", shells, StringComparison.Ordinal);
-        Assert.Contains("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("sollicitaties-hero-strip", shells, StringComparison.Ordinal);
+        Assert.DoesNotContain("KreeftHeaderStripHtml", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-intro", shells, StringComparison.Ordinal);
         Assert.Contains("sollicitaties-detail", shells, StringComparison.Ordinal);
         Assert.Contains("AppendDetailPanel", shells, StringComparison.Ordinal);

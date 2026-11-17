@@ -77,13 +77,21 @@
     inset-inline-end: 28px;
     bottom: 24px;
     z-index: 28;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    max-width: min(260px, calc(100vw - 56px));
+  }
+
+  .app-shell--onboarding-v3 .ob-v3-main {
+    box-sizing: border-box;
+    padding-inline-end: calc(56px + 172px);
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser {
     display: block;
     pointer-events: none;
-    margin-inline-end: 4px;
-    margin-block-end: 8px;
+    margin-inline-end: 0;
+    margin-block-end: 6px;
     max-width: 240px;
   }
 
@@ -98,7 +106,7 @@
 
   .app-shell--onboarding-v3 .ob-v3-dfoot,
   .app-shell--onboarding-v3 .ob-v3-welcome__foot {
-    padding-inline-end: calc(148px + 48px);
+    padding-inline-end: calc(172px + 56px);
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b.lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster,
@@ -106,17 +114,19 @@
     width: 148px;
     height: auto;
     max-width: 148px;
-    max-height: none;
+    max-height: 148px;
     object-fit: contain;
+    object-position: bottom right;
     filter: drop-shadow(0 10px 28px color-mix(in srgb, #0a2044 22%, transparent));
   }
 
   .app-shell--onboarding-v3 .lobsy-coach-dock--onboarding-b .lobsy-coach-dock__teaser::after {
-    inset-inline-end: auto;
-    inset-inline-start: calc(100% - 6px);
-    bottom: 50%;
-    margin-bottom: -6px;
-    transform: rotate(135deg);
+    inset-inline-end: 28px;
+    inset-inline-start: auto;
+    bottom: -6px;
+    top: auto;
+    margin-bottom: 0;
+    transform: rotate(45deg);
   }
 }
 
