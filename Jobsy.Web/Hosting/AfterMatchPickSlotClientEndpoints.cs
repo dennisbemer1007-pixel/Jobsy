@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Applications;
 using Jobsy.Web.Localization;
@@ -13,11 +14,11 @@ public static class AfterMatchPickSlotClientEndpoints
     {
         app.MapPost("/api/ndm-pick-slot-client/select-slot", SelectSlotAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/ndm-pick-slot-client/propose-slot", ProposeSlotAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

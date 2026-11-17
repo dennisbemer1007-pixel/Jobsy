@@ -31,28 +31,10 @@ public static class AuthorizationExtensions
         var azureAdSection = configuration.GetSection("AzureAd");
         var hasEntra = !string.IsNullOrWhiteSpace(azureAdSection["ClientId"]);
 
-        var publicPem = JobsyAccessToken.NormalizePem(configuration["JobsyAuth:Jwt:PublicKeyPem"]);
-        var privatePem = JobsyAccessToken.NormalizePem(configuration["JobsyAuth:Jwt:PrivateKeyPem"]);
-        if (string.IsNullOrWhiteSpace(publicPem) || !publicPem.Contains("BEGIN", StringComparison.Ordinal))
-        {
-            // Render Blueprint leaves JobsyAuth__Jwt__*Pem as sync:false until set in the
-            // Dashboard. Fail-open with the well-known Development pair so Acceptatie/Production
-            // can boot; operators must replace with environment-unique PEMs ASAP.
-            if (environment.IsProduction())
-            {
-                Console.Error.WriteLine(
-                    "CRITICAL: JobsyAuth:Jwt:PublicKeyPem is unset in Production; " +
-                    "using Development bootstrap PEMs. Set JobsyAuth__Jwt__PublicKeyPem " +
-                    "(API) and JobsyAuth__Jwt__PrivateKeyPem (Web) to a matching ES256 pair.");
-            }
+        var publicPem = JobsyJwtPemBootstrap.ResolvePublicPem(configuration, environment);
+        var privatePem = JobsyJwtPemBootstrap.ResolvePrivatePem(configuration, environment);
 
-            publicPem = JobsyAccessToken.DevelopmentPublicKeyPem;
-            privatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
-        }
-
-        JobsyDevJwtKeys.PrivatePem = string.IsNullOrWhiteSpace(privatePem)
-            ? JobsyAccessToken.DevelopmentPrivateKeyPem
-            : privatePem;
+        JobsyDevJwtKeys.PrivatePem = privatePem;
         JobsyDevJwtKeys.PublicPem = publicPem;
 
         var issuer = configuration["JobsyAuth:Jwt:Issuer"] ?? JobsyAccessToken.DefaultIssuer;

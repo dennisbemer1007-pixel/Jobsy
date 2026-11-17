@@ -2,6 +2,7 @@ using System.Text.Json;
 using Jobsy.Core.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Onboarding;
+using Jobsy.Web.Security;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -17,16 +18,20 @@ public static class OnboardingClientEndpoints
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
 
         app.MapPost("/api/onboarding-client/begin", BeginAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         app.MapPut("/api/onboarding-client/step1", SaveStep1Async)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         app.MapPut("/api/onboarding-client/steps/{step:int}", SaveStepAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/onboarding-client/kompas/complete", CompleteKompasAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         return app;
     }

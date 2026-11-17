@@ -455,6 +455,8 @@ public static class AuthServiceCollectionExtensions
                 && !global::Jobsy.Web.Services.JobsyApiAuthHandler.IsParentPassportPrincipal(ctx.User))
             .Build();
 
+        options.FallbackPolicy = options.DefaultPolicy;
+
         options.AddPolicy(JobsyPolicies.PupilSession, policy =>
         {
             policy.AddAuthenticationSchemes(PupilAuthDefaults.Scheme);

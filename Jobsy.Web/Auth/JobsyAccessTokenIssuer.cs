@@ -14,23 +14,7 @@ public sealed class JobsyAccessTokenIssuer
 
     public JobsyAccessTokenIssuer(IConfiguration configuration, IHostEnvironment environment)
     {
-        var privatePem = JobsyAccessToken.NormalizePem(configuration["JobsyAuth:Jwt:PrivateKeyPem"]);
-        if (string.IsNullOrWhiteSpace(privatePem) || !privatePem.Contains("BEGIN", StringComparison.Ordinal))
-        {
-            // Mirror API bootstrap: Render sync:false PEMs are often unset on first Acc/Prod
-            // deploy. Prefer Dashboard keys; fall back so Web can mint tokens against the API.
-            if (environment.IsProduction())
-            {
-                Console.Error.WriteLine(
-                    "CRITICAL: JobsyAuth:Jwt:PrivateKeyPem is unset in Production; " +
-                    "using Development bootstrap PEM. Set JobsyAuth__Jwt__PrivateKeyPem " +
-                    "to the ES256 private key that matches the API public key.");
-            }
-
-            privatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
-        }
-
-        _privatePem = privatePem;
+        _privatePem = JobsyJwtPemBootstrap.ResolvePrivatePem(configuration, environment);
         _issuer = configuration["JobsyAuth:Jwt:Issuer"] ?? JobsyAccessToken.DefaultIssuer;
         _audience = configuration["JobsyAuth:Jwt:Audience"] ?? JobsyAccessToken.DefaultAudience;
     }

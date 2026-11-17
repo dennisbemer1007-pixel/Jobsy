@@ -2,24 +2,24 @@ using Jobsy.Api.Authorization;
 using Jobsy.Api.Security;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Jobsy.Tests;
 
 /// <summary>
-/// Render leaves JWT PEMs and CLOUDFLARE_ORIGIN_SECRET as sync:false. Production must
-/// boot with a logged bootstrap instead of exit 134.
+/// Render leaves JWT PEMs and CLOUDFLARE_ORIGIN_SECRET as sync:false.
+/// JWT keys are fail-closed outside Development/Testing; Cloudflare middleware still boots with a logged bootstrap.
 /// </summary>
 public class JwtPemBootstrapTests
 {
     [Fact]
-    public void Api_authorization_boots_in_Production_without_Jwt_PEMs()
+    public void Api_authorization_fails_in_Production_without_Jwt_PEMs()
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -30,23 +30,19 @@ public class JwtPemBootstrapTests
         }).Build();
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Production };
 
-        services.AddJobsyApiAuthorization(config, env);
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            services.AddJobsyApiAuthorization(config, env));
 
-        using var sp = services.BuildServiceProvider();
-        var parms = sp.GetRequiredService<TokenValidationParameters>();
-        Assert.NotNull(parms.IssuerSigningKey);
-        Assert.Equal(JobsyAccessToken.DevelopmentPublicKeyPem.Trim(), JobsyDevJwtKeys.PublicPem?.Trim());
+        Assert.Contains("PEM keys are required", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Web_issuer_boots_in_Production_without_PrivateKeyPem()
+    public void Web_issuer_fails_in_Production_without_PrivateKeyPem()
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Production };
 
-        var issuer = new JobsyAccessTokenIssuer(config, env);
-        var token = issuer.TryCreate(CreatePrincipal(Guid.NewGuid()));
-        Assert.False(string.IsNullOrWhiteSpace(token));
+        Assert.Throws<InvalidOperationException>(() => new JobsyAccessTokenIssuer(config, env));
     }
 
     [Fact]
@@ -56,7 +52,7 @@ public class JwtPemBootstrapTests
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Production };
         RequestDelegate next = _ => Task.CompletedTask;
 
-        var api = new CloudflareOriginMiddleware(next, config, env);
+        var api = new Jobsy.Api.Security.CloudflareOriginMiddleware(next, config, env);
         var web = new Jobsy.Web.Security.CloudflareOriginMiddleware(next, config, env);
         Assert.NotNull(api);
         Assert.NotNull(web);
@@ -83,19 +79,6 @@ public class JwtPemBootstrapTests
 
         Assert.Equal(Uri.UriSchemeHttps, scheme);
         Assert.Equal(Uri.UriSchemeHttps, http.Request.Scheme);
-    }
-
-    private static System.Security.Claims.ClaimsPrincipal CreatePrincipal(Guid userId)
-    {
-        var identity = new System.Security.Claims.ClaimsIdentity(
-            [
-                new System.Security.Claims.Claim(
-                    System.Security.Claims.ClaimTypes.NameIdentifier,
-                    userId.ToString("D")),
-                new System.Security.Claims.Claim(JobsyAccessToken.SessionVersionClaim, "1")
-            ],
-            authenticationType: "test");
-        return new System.Security.Claims.ClaimsPrincipal(identity);
     }
 
     private sealed class FakeHostEnvironment : IHostEnvironment, IWebHostEnvironment

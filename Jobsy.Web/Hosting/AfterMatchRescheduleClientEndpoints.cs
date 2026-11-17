@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Applications;
 using Jobsy.Web.KandidaatBanen;
@@ -13,11 +14,11 @@ public static class AfterMatchRescheduleClientEndpoints
     {
         app.MapPost("/api/ndm-reschedule-client/reschedule", RescheduleAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/ndm-reschedule-client/cancel", CancelAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

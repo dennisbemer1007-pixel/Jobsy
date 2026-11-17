@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Jobsy.Web.Security;
 using Jobsy.Core.Authorization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,11 +12,11 @@ public static class UwvClientEndpoints
     {
         app.MapPost("/api/uwv-client/ondernemer", SaveOndernemerAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/uwv-client/adviseur-share", CreateAdviseurShareAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

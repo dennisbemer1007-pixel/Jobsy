@@ -12,8 +12,17 @@ public static class JobsyTestAuth
 {
     public const string OriginSecret = "test-cloudflare-origin-secret";
 
+    private static readonly Lazy<(string PrivatePem, string PublicPem)> DedicatedProductionKeys =
+        new(() => JobsyAccessToken.GenerateDevelopmentKeyPair());
+
+    /// <summary>Unique ES256 pair for Production-environment integration tests (not the repo dev PEM).</summary>
+    public static (string PrivatePem, string PublicPem) ProductionTestKeyPair => DedicatedProductionKeys.Value;
+
+    private static string _mintPrivatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
+
     public static void ApplyStandardAuthSettings(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
+        _mintPrivatePem = JobsyAccessToken.DevelopmentPrivateKeyPem;
         // Prefer Development fallback keys (UseSetting mangles multiline PEM).
         // Explicit issuer/audience keep mint + validate aligned.
         builder.UseSetting("JobsyAuth:Jwt:Issuer", JobsyAccessToken.DefaultIssuer);
@@ -26,16 +35,21 @@ public static class JobsyTestAuth
 
     public static void ApplyProductionJwtSettings(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
+        var (privatePem, publicPem) = DedicatedProductionKeys.Value;
+        _mintPrivatePem = privatePem;
         // Single-line PEM with escaped newlines survives IConfiguration UseSetting.
         builder.UseSetting(
             "JobsyAuth:Jwt:PublicKeyPem",
-            JobsyAccessToken.DevelopmentPublicKeyPem.Replace("\r\n", "\n", StringComparison.Ordinal)
+            publicPem.Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Replace("\n", "\\n", StringComparison.Ordinal));
         builder.UseSetting(
             "JobsyAuth:Jwt:PrivateKeyPem",
-            JobsyAccessToken.DevelopmentPrivateKeyPem.Replace("\r\n", "\n", StringComparison.Ordinal)
+            privatePem.Replace("\r\n", "\n", StringComparison.Ordinal)
                 .Replace("\n", "\\n", StringComparison.Ordinal));
-        ApplyStandardAuthSettings(builder);
+        builder.UseSetting("JobsyAuth:Jwt:Issuer", JobsyAccessToken.DefaultIssuer);
+        builder.UseSetting("JobsyAuth:Jwt:Audience", JobsyAccessToken.DefaultAudience);
+        builder.UseSetting("Training:TrackingSecret", "test-training-tracking-secret");
+        builder.UseSetting("Jobsy:TestEmployersEnabled", "true");
     }
 
     public static void ApplyProductionOriginSettings(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
@@ -48,7 +62,7 @@ public static class JobsyTestAuth
         => JobsyAccessToken.Create(
             userId,
             sessionVersion,
-            JobsyAccessToken.DevelopmentPrivateKeyPem,
+            _mintPrivatePem,
             clientIp: clientIp);
 
     public static void Authorize(HttpClient client, Guid userId, int sessionVersion = 0)

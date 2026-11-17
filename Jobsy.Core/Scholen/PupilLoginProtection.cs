@@ -23,7 +23,11 @@ public interface IPupilLoginProtection
     bool IsClassPartitionCoolingDown(Guid classId, string partition, out TimeSpan remaining);
 
     /// <summary>Class-wide failure count in the rolling hour (process-local).</summary>
-    int RecordClassHourFailure(Guid classId);
+    int RecordClassHourFailure(Guid classId, string partition);
+
+    int GetClassHourFailureCount(Guid classId);
+
+    int GetClassHourDistinctPartitions(Guid classId);
 
     /// <summary>Successful logins on one code in the rolling hour (process-local).</summary>
     int RecordCodeSuccess(Guid pupilCodeId);
@@ -36,6 +40,9 @@ public sealed class PupilLoginProtection : IPupilLoginProtection
     public static readonly TimeSpan ClassPartitionCooldown = TimeSpan.FromMinutes(15);
 
     public const int ClassHourFailLimit = 50;
+
+    /// <summary>Pause a class only after failures from at least this many client partitions in one hour.</summary>
+    public const int ClassHourDistinctPartitionMinimum = 3;
     public static readonly TimeSpan ClassHourWindow = TimeSpan.FromHours(1);
     public static readonly TimeSpan ClassPauseDuration = TimeSpan.FromMinutes(30);
 
@@ -127,20 +134,62 @@ public sealed class PupilLoginProtection : IPupilLoginProtection
         return false;
     }
 
-    public int RecordClassHourFailure(Guid classId)
+    public int RecordClassHourFailure(Guid classId, string partition)
     {
         var now = _clock.GetUtcNow().UtcDateTime;
         var key = $"ch:{classId:D}";
-        var bucket = _buckets.GetOrAdd(key, _ => new Bucket());
+        var bucket = (ClassHourBucket)_buckets.GetOrAdd(key, _ => new ClassHourBucket());
         lock (bucket)
         {
             if (now - bucket.WindowStartUtc >= ClassHourWindow)
             {
                 bucket.WindowStartUtc = now;
                 bucket.Count = 0;
+                bucket.Partitions.Clear();
             }
 
+            bucket.Partitions.Add(partition);
             return ++bucket.Count;
+        }
+    }
+
+    public int GetClassHourFailureCount(Guid classId)
+    {
+        var key = $"ch:{classId:D}";
+        if (!_buckets.TryGetValue(key, out var bucket) || bucket is not ClassHourBucket hourBucket)
+        {
+            return 0;
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        lock (hourBucket)
+        {
+            if (now - hourBucket.WindowStartUtc >= ClassHourWindow)
+            {
+                return 0;
+            }
+
+            return hourBucket.Count;
+        }
+    }
+
+    public int GetClassHourDistinctPartitions(Guid classId)
+    {
+        var key = $"ch:{classId:D}";
+        if (!_buckets.TryGetValue(key, out var bucket) || bucket is not ClassHourBucket hourBucket)
+        {
+            return 0;
+        }
+
+        var now = _clock.GetUtcNow().UtcDateTime;
+        lock (hourBucket)
+        {
+            if (now - hourBucket.WindowStartUtc >= ClassHourWindow)
+            {
+                return 0;
+            }
+
+            return hourBucket.Partitions.Count;
         }
     }
 
@@ -192,10 +241,15 @@ public sealed class PupilLoginProtection : IPupilLoginProtection
         return "other";
     }
 
-    private sealed class Bucket
+    private class Bucket
     {
         public DateTime WindowStartUtc = DateTime.MinValue;
         public int Count;
         public DateTime? CooldownUntilUtc;
+    }
+
+    private sealed class ClassHourBucket : Bucket
+    {
+        public HashSet<string> Partitions { get; } = new(StringComparer.Ordinal);
     }
 }

@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ public static class AfterMatchEmployerCancelClientEndpoints
             {
                 Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}"
             })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

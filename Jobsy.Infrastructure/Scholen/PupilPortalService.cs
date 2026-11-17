@@ -293,7 +293,7 @@ public sealed class PupilPortalService : IPupilPortalService
             || schoolClass.School.ProcessorAgreementSignedOn is null)
         {
             _protection.RecordFailure(request.ClassId, partition);
-            await MaybePauseClassAsync(request.ClassId, cancellationToken);
+            await MaybePauseClassAsync(request.ClassId, partition, cancellationToken);
             return GenericFail(schoolClass?.QuestionSet ?? PupilQuestionSet.Groep78);
         }
 
@@ -306,7 +306,7 @@ public sealed class PupilPortalService : IPupilPortalService
         if (!PupilCodeFormat.TryNormalize(request.Code, out var normalized))
         {
             _protection.RecordFailure(request.ClassId, partition);
-            await MaybePauseClassAsync(request.ClassId, cancellationToken);
+            await MaybePauseClassAsync(request.ClassId, partition, cancellationToken);
             return GenericFail(schoolClass.QuestionSet);
         }
 
@@ -321,7 +321,7 @@ public sealed class PupilPortalService : IPupilPortalService
         if (code is null)
         {
             _protection.RecordFailure(request.ClassId, partition);
-            await MaybePauseClassAsync(request.ClassId, cancellationToken);
+            await MaybePauseClassAsync(request.ClassId, partition, cancellationToken);
             return GenericFail(schoolClass.QuestionSet);
         }
 
@@ -1560,9 +1560,15 @@ public sealed class PupilPortalService : IPupilPortalService
         return (true, null, 200);
     }
 
-    private async Task MaybePauseClassAsync(Guid classId, CancellationToken cancellationToken)
+    private async Task MaybePauseClassAsync(Guid classId, string partition, CancellationToken cancellationToken)
     {
-        var count = _protection.RecordClassHourFailure(classId);
+        _protection.RecordClassHourFailure(classId, partition);
+        if (_protection.GetClassHourDistinctPartitions(classId) < PupilLoginProtection.ClassHourDistinctPartitionMinimum)
+        {
+            return;
+        }
+
+        var count = _protection.GetClassHourFailureCount(classId);
         if (count < PupilLoginProtection.ClassHourFailLimit)
         {
             return;

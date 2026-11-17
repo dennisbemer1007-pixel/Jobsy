@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -14,28 +15,28 @@ public static class WerkgeverClientEndpoints
             {
                 Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}"
             })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/werkgever-client/berichten/preview", PreviewMessageAsync)
             .RequireAuthorization(new AuthorizeAttribute
             {
                 Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}"
             })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/werkgever-client/berichten/send", SendMessageAsync)
             .RequireAuthorization(new AuthorizeAttribute
             {
                 Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}"
             })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/werkgever-client/after-match-demo-ensure", EnsureAfterMatchDemoAsync)
             .RequireAuthorization(new AuthorizeAttribute
             {
                 Roles = $"{JobsyRoles.BranchManager},{JobsyRoles.RegionalManager},{JobsyRoles.EnterpriseManager},{JobsyRoles.Intermediary},{JobsyRoles.Admin}"
             })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

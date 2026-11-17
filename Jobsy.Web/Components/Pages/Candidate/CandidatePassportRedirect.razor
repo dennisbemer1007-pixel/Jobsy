@@ -1,4 +1,5 @@
 @page "/candidate/passport"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [NoBlazorRuntime]
 @inject IHttpContextAccessor HttpContextAccessor

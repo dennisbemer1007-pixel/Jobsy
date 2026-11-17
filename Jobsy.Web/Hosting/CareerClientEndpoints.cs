@@ -1,4 +1,5 @@
 using Jobsy.Web.Career;
+using Jobsy.Web.Security;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Antiforgery;
@@ -11,7 +12,8 @@ public static class CareerClientEndpoints
     public static IEndpointRouteBuilder MapCareerClientEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/career-client/save-dream", SaveDreamAsync)
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
+            .RequireBffMutatingSecurity();
 
         return app;
     }

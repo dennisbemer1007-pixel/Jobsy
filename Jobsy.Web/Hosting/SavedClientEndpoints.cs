@@ -1,4 +1,5 @@
 using Jobsy.Web.Localization;
+using Jobsy.Web.Security;
 using Jobsy.Web.Saved;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ public static class SavedClientEndpoints
     {
         app.MapPost("/api/saved-client/unsave", UnsaveAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

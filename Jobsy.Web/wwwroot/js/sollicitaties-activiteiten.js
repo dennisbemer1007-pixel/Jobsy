@@ -95,10 +95,13 @@
         showAgreementError(msg("data-msg-agreement-invalid", "Choose a number between 1 and 20."));
         return;
       }
+      var afHeaders = window.JobsyBffSecurity
+        ? window.JobsyBffSecurity.mergeHeaders({ "Content-Type": "application/json" })
+        : { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" };
       fetch("/api/sollicitaties-client/activiteiten/agreement", {
         method: "PUT",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+        headers: afHeaders,
         body: JSON.stringify({ activitiesPerPeriod: n })
       }).then(function (res) {
         if (!res.ok) {
@@ -127,10 +130,15 @@
         showFormError(msg("data-msg-form-required", "Fill in date, employer and role."));
         return;
       }
+      var formToken =
+        (form.querySelector('input[name="__RequestVerificationToken"]') || {}).value || "";
+      if (formToken) {
+        fd.set("__RequestVerificationToken", formToken);
+      }
       fetch("/api/sollicitaties-client/activiteiten", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
+        headers: window.JobsyBffSecurity ? window.JobsyBffSecurity.mergeHeaders() : { "X-Requested-With": "XMLHttpRequest" },
         body: fd
       }).then(function (res) {
         if (!res.ok) {

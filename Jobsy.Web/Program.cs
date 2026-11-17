@@ -443,7 +443,8 @@ builder.Services.AddRateLimiter(options =>
             }));
     options.AddPolicy("pupil-login", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            Jobsy.Web.Security.TrustedClientIp.PartitionKey(
+                Jobsy.Web.Security.TrustedClientIp.Resolve(httpContext)),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 200,
@@ -556,6 +557,7 @@ if (string.IsNullOrWhiteSpace(builder.Configuration[Jobsy.Core.Security.Internal
 
 // Rewrite HEAD→GET before routing so MapRazorComponents (GET-only) does not 405.
 app.UseMiddleware<Jobsy.Web.Seo.SeoNoIndexMiddleware>();
+app.UseDevOnlyRouteGate();
 app.UseMiddleware<HeadAsGetMiddleware>();
 app.UseForwardedHeaders();
 // Render probes the web service directly (not via Cloudflare). Answer before origin enforcement.

@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Web.Security;
 using Jobsy.Core.Contracts;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,15 +12,15 @@ public static class AfterMatchConfirmedClientEndpoints
     {
         app.MapGet("/api/ndm-confirmed-client/calendar.ics", DownloadCalendarAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/ndm-confirmed-client/reminders", UpdateRemindersAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         app.MapPost("/api/ndm-confirmed-client/cancel", CancelInterviewAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = JobsyRoles.Candidate })
-            .DisableAntiforgery();
+            .RequireBffMutatingSecurity();
 
         return app;
     }

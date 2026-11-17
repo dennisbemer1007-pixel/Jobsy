@@ -1,4 +1,5 @@
 @page "/candidate/actions/withdraw-others"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @rendermode InteractiveServer
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
