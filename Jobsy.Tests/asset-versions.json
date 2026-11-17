@@ -228,7 +228,7 @@
     "v": "20261025-87"
   },
   "css/features/onboarding-finale-v2.css": {
-    "sha256": "aaf49ede60c7b87d6140b779b9dfd71a8e7ce6889218cc3902958a6256c925e8",
+    "sha256": "44a4a85fe60cbc91562be85e4067d450813719eedb51ccec34002658ca2863da",
     "v": "20261018-15"
   },
   "css/features/onboarding-illustrated-step.css": {
@@ -240,7 +240,7 @@
     "v": "20261025-14"
   },
   "css/features/onboarding-rustig.css": {
-    "sha256": "59646fa58f6b518e0639a2d274c9bf40672a9222a100ec9e6a647ffe1baf4890",
+    "sha256": "d18ca16bf34c3b9d0046c71654e1293a626fbca3fa4e3e03005b4e7d9c3d3250",
     "v": "20261025-87"
   },
   "css/features/onboarding-start-journey.css": {
@@ -272,7 +272,7 @@
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-v3.css": {
-    "sha256": "8020788782606957169ddd67bd4b068b20cb7759a4a49236439202e74e811cf1",
+    "sha256": "ab19066ce1d82a864286a2ad33e801d9215420ca977dc568754b77754f63be75",
     "v": "20261116-01"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
@@ -588,7 +588,7 @@
     "v": "20261026-79"
   },
   "js/onboarding-client-form.js": {
-    "sha256": "0822d231475210637e828399cfcbcac999ce9682f54ae3ce979c025feb70bfa9",
+    "sha256": "13163a8c5c69290048a3a3002a3a2055235acee0d695667172690ba19f4417b5",
     "v": "20261117-88"
   },
   "js/onboarding-ssr-fetch-save.js": {

@@ -127,12 +127,25 @@ html[data-header-menu="help"] .page-help > .header-dropdown-backdrop,
     font-size: var(--text-md);
   }
 
+  .admin-topbar--candidate-onboarding .admin-topbar__brand-text {
+    display: inline-flex !important;
+  }
+
+  .admin-topbar--candidate-onboarding .auth-user,
   .admin-topbar--candidate-onboarding .auth-user__name {
     display: block;
     max-width: 11rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .admin-topbar--candidate-onboarding .admin-topbar__meta {
+    display: block;
+  }
+
+  .app-shell--onboarding-v3 .admin-topbar--candidate-onboarding .account-menu__toggle .account-menu__icon {
+    display: none !important;
   }
 }
 

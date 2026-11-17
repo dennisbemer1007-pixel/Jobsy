@@ -28,4 +28,13 @@ public sealed class OnboardingSharedTopBarTests
         Assert.Contains(sheets, s => s.Contains("admin.css", StringComparison.Ordinal));
         Assert.Contains(sheets, s => s.Contains("onboarding-wizard-v3.css", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void Candidate_start_kompas_route_includes_admin_rustig_and_v3_stylesheets()
+    {
+        var sheets = PageAssetCatalog.RouteStylesheets("/candidate/start/kompas");
+        Assert.Contains(sheets, s => s.Contains("admin.css", StringComparison.Ordinal));
+        Assert.Contains(sheets, s => s.Contains("onboarding-rustig.css", StringComparison.Ordinal));
+        Assert.Contains(sheets, s => s.Contains("onboarding-wizard-v3.css", StringComparison.Ordinal));
+    }
 }

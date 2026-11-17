@@ -161,4 +161,50 @@ public sealed class OnboardingMiniSsrOneQuestionPlaywrightTests : IAsyncLifetime
         var chrome = (await page.Locator(".ob-v3-chrome__saved").TextContentAsync())?.Trim() ?? "";
         Assert.DoesNotContain("Niet bewaard", chrome, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task Step8_double_mini_pick_does_not_show_niet_bewaard_with_saved_chrome()
+    {
+        await using var factory = new OnboardingClientStepsPlaywrightSupport.ClientStepsWebFactory
+        {
+            WelcomeDismissed = true,
+            SavedStep = 8,
+        };
+        var root = factory.EnsureServerAddress();
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+
+        await page.GotoAsync(root + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/start?step=8&q=2"));
+        await page.Locator("[data-ob-client-step=\"8\"]").WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator(".ob-client-mini-q").WaitForAsync();
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              const pick = Array.from(document.querySelectorAll('button[name="obMiniPick"]'))
+                .find(b => (b.textContent || '').trim() === '3');
+              if (!pick) return;
+              pick.click();
+              pick.click();
+            }
+            """);
+        await page.WaitForTimeoutAsync(600);
+
+        var chrome = (await page.Locator(".ob-v3-chrome__saved").TextContentAsync())?.Trim() ?? "";
+        Assert.DoesNotContain("Niet bewaard", chrome, StringComparison.Ordinal);
+        Assert.Contains("bewaard", chrome, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("obError=", page.Url, StringComparison.OrdinalIgnoreCase);
+        var visibleNavError = await page.Locator(".ob-wizard__nav-error:not([hidden])").CountAsync();
+        Assert.Equal(0, visibleNavError);
+        var chromeHasError = chrome.Contains("Niet bewaard", StringComparison.Ordinal);
+        Assert.False(chromeHasError && visibleNavError > 0, "Success and error chrome must not show together");
+    }
 }
