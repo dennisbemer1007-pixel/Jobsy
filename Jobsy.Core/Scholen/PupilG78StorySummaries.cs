@@ -315,7 +315,7 @@ public static class PupilG78StorySummaries
         "Collaboration" => "Je voelt je thuis als iedereen samenwerkt en elkaar steunt.",
         "Informal" => "Je voelt je op je plek als de sfeer open en gezellig is.",
         "Autonomy" => "Je voelt je thuis als je zelf ruimte krijgt om te werken.",
-        "Flexibility" => "Je voelt je je op je gemak als er ruimte is om dingen anders te doen.",
+        "Flexibility" => "Je voelt je op je gemak als er ruimte is om dingen anders te doen.",
         "Innovation" => "Je voelt je thuis waar nieuwe ideeën welkom zijn.",
         "PeopleFirst" => "Je voelt je op je plek als mensen centraal staan.",
         _ => ""

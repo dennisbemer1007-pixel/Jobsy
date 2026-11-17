@@ -340,6 +340,7 @@ public static class SchoolPortalSsrHtml
             culture,
             error));
         sb.Append("</section>");
+        sb.Append("<script src=\"/js/school-class-form.js\" defer></script>");
         return sb.ToString();
     }
 

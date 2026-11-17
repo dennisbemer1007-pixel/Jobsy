@@ -1,3 +1,6 @@
+using System.Globalization;
+using Jobsy.Core.Contracts;
+
 namespace Jobsy.Core.Rules;
 
 public static class JobSearchActivityPeriodRules
@@ -29,4 +32,30 @@ public static class JobSearchActivityPeriodRules
 
     public static bool IsInPeriod(DateOnly activityDate, DateOnly periodStart, DateOnly periodEndInclusive)
         => activityDate >= periodStart && activityDate <= periodEndInclusive;
+
+    public static JobSearchActivityOverviewDto CreateEmptyOverview(DateOnly periodAnchor, DateOnly today)
+    {
+        var (periodStart, periodEnd) = CurrentPeriod(periodAnchor, today);
+        var culture = CultureInfo.GetCultureInfo("nl-NL");
+        return new JobSearchActivityOverviewDto(
+            periodStart,
+            periodEnd,
+            FormatPeriodLabel(periodStart, periodEnd, culture),
+            ActivitiesDoneInPeriod: 0,
+            ActivitiesTarget: DefaultActivitiesPerPeriod,
+            DaysRemainingInPeriod: DaysRemainingInclusive(periodEnd, today),
+            TargetMet: false,
+            Weeks: Array.Empty<JobSearchActivityWeekDto>());
+    }
+
+    public static string FormatPeriodLabel(DateOnly start, DateOnly end, CultureInfo culture)
+    {
+        var isNl = culture.TwoLetterISOLanguageName.Equals("nl", StringComparison.OrdinalIgnoreCase);
+        if (isNl)
+        {
+            return $"{start.ToString("d MMMM", culture)} tot en met {end.ToString("d MMMM", culture)}";
+        }
+
+        return $"{start.ToString("d MMMM", culture)} through {end.ToString("d MMMM", culture)}";
+    }
 }

@@ -58,6 +58,7 @@ public partial class VacancyCreateWizard : IDisposable
     private bool _publishOpen;
     private VacancyListItem? _publishVacancy;
     private bool _wizardJsInit;
+    private string? _previewStatusOverride;
 
     private string CurrentStepTitle => WizardSteps.First(s => s.Id == _step).Title;
 
@@ -82,21 +83,32 @@ public partial class VacancyCreateWizard : IDisposable
         _ => "Opslaan als concept"
     };
 
-    private VacancyListItem? PreviewVacancy =>
-        VacancyPreviewMapper.FromForm(
-            SelectedCompany,
-            SelectedCategory,
-            SelectedSalaryTable,
-            _title,
-            _description,
-            _imageUrl,
-            _videoUrl,
-            _minHours,
-            _maxHours,
-            _flexibleTimes,
-            _scheduleSlots,
-            _selectedWorkTypes,
-            _editVacancyId);
+    private VacancyListItem? PreviewVacancy
+    {
+        get
+        {
+            var item = VacancyPreviewMapper.FromForm(
+                SelectedCompany,
+                SelectedCategory,
+                SelectedSalaryTable,
+                _title,
+                _description,
+                _imageUrl,
+                _videoUrl,
+                _minHours,
+                _maxHours,
+                _flexibleTimes,
+                _scheduleSlots,
+                _selectedWorkTypes,
+                _editVacancyId);
+            if (!string.IsNullOrWhiteSpace(_previewStatusOverride))
+            {
+                item.Status = _previewStatusOverride;
+            }
+
+            return item;
+        }
+    }
 
     [SupplyParameterFromQuery(Name = "from")]
     public Guid? From { get; set; }
@@ -1405,6 +1417,11 @@ public partial class VacancyCreateWizard : IDisposable
 
     private async Task SaveAsync()
     {
+        if (_saving)
+        {
+            return;
+        }
+
         if (_isIntermediary
             && (SelectedCompany is null
                 || string.IsNullOrWhiteSpace(SelectedCompany.KvkNumber)
@@ -1733,6 +1750,10 @@ public partial class VacancyCreateWizard : IDisposable
         _message = result?.PendingApproval == true
             ? (result.Message ?? "Wacht op goedkeuring.")
             : "Vacature gepubliceerd.";
+        _previewStatusOverride = result?.PendingApproval == true
+            ? nameof(VacancyStatus.PendingApproval)
+            : nameof(VacancyStatus.Active);
+        _publishVacancy = PreviewVacancy;
         _publishOpen = false;
         return Task.CompletedTask;
     }

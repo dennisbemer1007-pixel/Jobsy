@@ -39,6 +39,7 @@ public class AccountMakenBunitTests : BunitContext
     public void Hides_providers_when_unconfigured_and_shows_email_form()
     {
         var cut = Render<AccountMaken>();
+        Assert.Contains("getElementById('email')", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Doorgaan met Google", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Doorgaan met Microsoft", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Stuur mijn code", cut.Markup, StringComparison.Ordinal);
