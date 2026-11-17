@@ -47,7 +47,7 @@ public sealed class RoleFitCheckController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
         }
 
         try

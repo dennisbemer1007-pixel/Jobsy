@@ -106,6 +106,10 @@ public static class LegalRetention
                 nameof(PrivacyConstants.ContentReportEmailRetentionDays)
             ]),
         new(
+            "Legal.Retention.SchoolPupil",
+            () => "aan het einde van het schooljaar (klascodes en uitslagen)",
+            []),
+        new(
             "Legal.Retention.Account",
             () => UntilAccountDeleted,
             [])

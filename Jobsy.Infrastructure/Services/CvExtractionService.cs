@@ -17,12 +17,9 @@ public sealed class CvExtractionService : ICvExtractionService
         Je extraheert kandidaatgegevens uit een CV voor het Nederlandse Lobsy-platform.
         Vul ALLEEN velden die echt duidelijk in de tekst staan. Verzin niets, leid niets af.
         Onduidelijk, vaag of tegenstrijdig → null of lege lijst.
+        Schrijf GEEN samenvatting over de persoon. Geen naam, telefoon of contactgegevens.
         Antwoord ALLEEN als JSON-object met exact deze velden:
         {
-          "firstName": "string of null",
-          "lastName": "string of null",
-          "phoneNumber": "string of null",
-          "aboutMe": "korte NL samenvatting in 1-3 zinnen of null",
           "drivingLicenses": ["B","AM", "..."],
           "educations": ["MBO","Havo", "..."],
           "roles": ["horeca","retail", "..."],
@@ -54,7 +51,11 @@ public sealed class CvExtractionService : ICvExtractionService
         _logger = logger;
     }
 
-    public async Task<CvExtractedProfile> ExtractAsync(string cvText, CancellationToken cancellationToken = default)
+    public async Task<CvExtractedProfile> ExtractAsync(
+        string cvText,
+        string? knownFirstName = null,
+        string? knownLastName = null,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(cvText))
         {
@@ -72,7 +73,8 @@ public sealed class CvExtractionService : ICvExtractionService
         {
             var model = endpoint.Model;
             var baseUrl = endpoint.BaseUrl;
-            var parsed = await ExtractWithOpenAiAsync(cvText, apiKey, model, baseUrl, cancellationToken);
+            var redacted = CvExtractionRedaction.Redact(cvText, knownFirstName, knownLastName);
+            var parsed = await ExtractWithOpenAiAsync(redacted, cvText, apiKey, model, baseUrl, cancellationToken);
             return parsed ?? new CvExtractedProfile();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -83,7 +85,8 @@ public sealed class CvExtractionService : ICvExtractionService
     }
 
     private async Task<CvExtractedProfile?> ExtractWithOpenAiAsync(
-        string cvText,
+        string redactedCvText,
+        string originalCvText,
         string apiKey,
         string model,
         string baseUrl,
@@ -102,7 +105,7 @@ public sealed class CvExtractionService : ICvExtractionService
             messages = new object[]
             {
                 new { role = "system", content = SystemPrompt },
-                new { role = "user", content = cvText }
+                new { role = "user", content = redactedCvText }
             }
         });
 
@@ -128,11 +131,7 @@ public sealed class CvExtractionService : ICvExtractionService
             return null;
         }
 
-        return new CvExtractedProfile(
-            FirstName: EmptyToNull(parsed.FirstName),
-            LastName: EmptyToNull(parsed.LastName),
-            PhoneNumber: EmptyToNull(parsed.PhoneNumber),
-            AboutMe: EmptyToNull(parsed.AboutMe),
+        var profile = new CvExtractedProfile(
             DrivingLicenses: CleanList(parsed.DrivingLicenses),
             Educations: CleanList(parsed.Educations),
             Roles: CleanList(parsed.Roles),
@@ -158,6 +157,8 @@ public sealed class CvExtractionService : ICvExtractionService
                     c.Year is >= 1950 and <= 2100 ? c.Year : null))
                 .Take(20)
                 .ToList());
+
+        return CvExtractionGrounding.Filter(profile, originalCvText);
     }
 
 

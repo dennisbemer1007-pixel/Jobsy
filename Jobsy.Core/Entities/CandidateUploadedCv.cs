@@ -15,4 +15,10 @@ public class CandidateUploadedCv
 
     /// <summary>JSON array of Dutch field labels filled from the CV (no PII values).</summary>
     public string? FilledFieldsJson { get; set; }
+
+    /// <summary>Grounded <see cref="Jobsy.Core.Contracts.CvExtractedProfile"/> JSON awaiting candidate confirmation.</summary>
+    public string? SuggestedFieldsJson { get; set; }
+
+    /// <summary>JSON array of Dutch field labels the candidate confirmed from <see cref="SuggestedFieldsJson"/>.</summary>
+    public string? ConfirmedFieldsJson { get; set; }
 }

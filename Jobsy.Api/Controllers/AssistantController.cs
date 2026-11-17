@@ -61,7 +61,7 @@ public sealed class AssistantController : ControllerBase
         if (user.Role == Jobsy.Core.Enums.UserRole.Candidate
             && !CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
         }
 
         var role = user.Role.ToString();

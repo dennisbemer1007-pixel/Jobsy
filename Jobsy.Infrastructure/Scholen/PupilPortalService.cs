@@ -124,9 +124,6 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IPupilReportPdfService _pdf;
     private readonly IPupilPassportPdfService _passportV2;
     private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
-#pragma warning disable IDE0052
-    private readonly IPupilG78MirrorRenderer _g78Mirror;
-#pragma warning restore IDE0052
     private readonly IPlatformFeatureService _features;
     private readonly IG78ContrastQuestionsGate _g78Contrast;
     private readonly IOccupationDayInLifeReader _occupationDays;
@@ -146,7 +143,6 @@ public sealed class PupilPortalService : IPupilPortalService
         IPupilReportPdfService pdf,
         IPupilPassportPdfService passportV2,
         PupilPassportPdfModelBuilder passportModelBuilder,
-        IPupilG78MirrorRenderer g78Mirror,
         IPlatformFeatureService features,
         IG78ContrastQuestionsGate g78Contrast,
         IOccupationDayInLifeReader occupationDays,
@@ -165,7 +161,6 @@ public sealed class PupilPortalService : IPupilPortalService
         _pdf = pdf;
         _passportV2 = passportV2;
         _passportModelBuilder = passportModelBuilder;
-        _g78Mirror = g78Mirror;
         _features = features;
         _g78Contrast = g78Contrast;
         _occupationDays = occupationDays;

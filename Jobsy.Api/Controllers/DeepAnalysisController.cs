@@ -308,8 +308,8 @@ public sealed class DeepAnalysisController : ControllerBase
     {
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            message = CandidateConsentRules.ParentalConsentRequiredMessage;
-            code = "parental_consent_required";
+            message = CandidateConsentRules.CandidateFeatureBlockMessage(user);
+            code = user.DateOfBirth is null ? "date_of_birth_required" : "parental_consent_required";
             return false;
         }
 

@@ -201,6 +201,9 @@ public sealed class CandidateUploadedCvInfo
     public DateTime UploadedAtUtc { get; set; }
     public DateTime? ExtractedAtUtc { get; set; }
     public List<string> FilledFields { get; set; } = [];
+    public List<string> PendingProposalFields { get; set; } = [];
+    public Jobsy.Core.Contracts.CvExtractedProfile? SuggestedProfile { get; set; }
+    public List<string> ConfirmedFields { get; set; } = [];
 }
 
 public sealed class CandidateReferenceItem

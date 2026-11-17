@@ -2346,6 +2346,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ConfirmedFieldsJson")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<byte[]>("Content")
                         .IsRequired()
                         .HasColumnType("bytea");
@@ -2369,6 +2373,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("SizeBytes")
                         .HasColumnType("integer");
+
+                    b.Property<string>("SuggestedFieldsJson")
+                        .HasMaxLength(16000)
+                        .HasColumnType("character varying(16000)");
 
                     b.Property<DateTime>("UploadedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -6151,15 +6159,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("EmployerLoopbaanApkEnabled")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("LoopbaanApkBasisPrice")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LoopbaanApkPriceUnit")
-                        .HasColumnType("text");
-
-                    b.Property<string>("LoopbaanApkUitgebreidPrice")
-                        .HasColumnType("text");
-
                     b.Property<bool>("EmployerPhase2Enabled")
                         .HasColumnType("boolean");
 
@@ -6194,6 +6193,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("KandidatenkaartEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LoopbaanApkBasisPrice")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoopbaanApkPriceUnit")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LoopbaanApkUitgebreidPrice")
+                        .HasColumnType("text");
 
                     b.Property<bool>("MaintenanceEnabled")
                         .HasColumnType("boolean");
@@ -10323,13 +10331,13 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Label")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
                     b.Property<string>("EscoOccupationId")
                         .HasMaxLength(36)
                         .HasColumnType("character varying(36)");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.Property<DateTime?>("LastSeenAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -10406,6 +10414,33 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("WerkgeverApkManagerSheets", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Name");
+
+                    b.ToTable("WerkgeverApkTeams", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkUitgebreidRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -10432,33 +10467,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CompanyId", "Handled");
 
                     b.ToTable("WerkgeverApkUitgebreidRequests", (string)null);
-                });
-
-            modelBuilder.Entity("Jobsy.Core.Entities.WerkgeverApk.WerkgeverApkTeam", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId", "Name");
-
-                    b.ToTable("WerkgeverApkTeams", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.WorkExperienceReferenceRequest", b =>

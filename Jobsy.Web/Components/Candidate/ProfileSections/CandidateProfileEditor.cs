@@ -114,6 +114,9 @@ public sealed class CandidateProfileEditor : IDisposable
     public List<CandidateReferenceItem> References { get; } = [];
     public CandidateUploadedCvInfo? UploadedCv { get; set; }
     public bool CvBusy { get; private set; }
+    private readonly HashSet<string> _cvProposalSelection = new(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyList<string> CvProposalFields => UploadedCv?.PendingProposalFields ?? [];
+    public bool HasCvProposalSelection => _cvProposalSelection.Count > 0;
     public List<string> BranchOptions { get; set; } = WorkTypeLabels.All.ToList();
     public List<string> LicenseOptions { get; set; } = DrivingLicenseLabels.All.ToList();
     public List<string> EducationOptions { get; set; } = EducationLevelLabels.ProfileAll.ToList();
@@ -799,8 +802,56 @@ public sealed class CandidateProfileEditor : IDisposable
     public void ApplyCvAndReferences(MeProfile profile)
     {
         UploadedCv = profile.UploadedCv;
+        _cvProposalSelection.Clear();
         References.Clear();
         References.AddRange(profile.References ?? []);
+    }
+
+    public bool IsCvProposalSelected(string field) => _cvProposalSelection.Contains(field);
+
+    public void ToggleCvProposal(string field, bool selected)
+    {
+        if (selected)
+        {
+            _cvProposalSelection.Add(field);
+        }
+        else
+        {
+            _cvProposalSelection.Remove(field);
+        }
+
+        Notify();
+    }
+
+    public async Task ConfirmCvProposalsAsync()
+    {
+        if (_cvProposalSelection.Count == 0)
+        {
+            return;
+        }
+
+        CvBusy = true;
+        Message = null;
+        Notify();
+        try
+        {
+            var updated = await _api.ConfirmMyCvExtractionAsync(_cvProposalSelection.ToList());
+            if (updated is not null)
+            {
+                ApplyExtractedProfile(updated);
+                ApplyCvAndReferences(updated);
+                Message = _culture["Profile.CvProposalConfirm"];
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = Describe(ex);
+        }
+        finally
+        {
+            CvBusy = false;
+            Notify();
+        }
     }
 
     public void ToggleEducation(string level, bool selected)
@@ -1379,15 +1430,10 @@ public sealed class CandidateProfileEditor : IDisposable
             var updated = await _api.UploadMyCvAsync(file);
             if (updated is not null)
             {
-                ApplyExtractedProfile(updated);
-                if (updated.UploadedCv?.FilledFields is { Count: > 0 } filled)
-                {
-                    Message = _culture.Format("Profile.OwnCvFilled", string.Join(", ", filled));
-                }
-                else
-                {
-                    Message = _culture.Format("Profile.OwnCvPresent", updated.UploadedCv?.FileName ?? file.Name);
-                }
+                ApplyCvAndReferences(updated);
+                Message = updated.UploadedCv?.PendingProposalFields is { Count: > 0 }
+                    ? _culture["Profile.CvProposalTitle"]
+                    : _culture.Format("Profile.OwnCvPresent", updated.UploadedCv?.FileName ?? file.Name);
             }
         }
         catch (Exception ex)

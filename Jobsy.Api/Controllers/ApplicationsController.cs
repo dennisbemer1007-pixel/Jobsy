@@ -780,7 +780,7 @@ public class ApplicationsController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(candidate))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(candidate) });
         }
 
         if (!candidate.OpenForWork)

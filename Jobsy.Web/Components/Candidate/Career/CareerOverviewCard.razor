@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
@@ -207,7 +208,7 @@
             <circle cx="12" cy="12" r="9" />
             <path d="m15.5 8.5-2 5-5 2 2-5z" />
         </svg>
-        <span>@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</span>
+        <AiGeneratedLabel Visible="Plan.FromAi" />
     </p>
 
     @if (Plan.LanguageDiffers)

@@ -101,18 +101,24 @@ public class CandidateCvAndReferenceRulesTests
             Employers: [new CandidateEmployerHistoryDto("Café Bestaan"), new CandidateEmployerHistoryDto("Supermarkt Nieuw")],
             Certificates: [new CandidateCertificateDto("BHV", 2024)]);
 
-        var merged = CvProfileMerge.Apply(null, null, null, existing, extracted);
+        var merged = CvProfileMerge.ApplyConfirmed(
+            null,
+            null,
+            null,
+            existing,
+            extracted,
+            ["werkervaring", "rijbewijs", "opleiding", "gewenste rollen", "certificaten"]);
 
-        Assert.Equal("Ada", merged.FirstName);
-        Assert.Equal("Kandidaat", merged.LastName);
-        Assert.Equal("0611111111", merged.PhoneNumber);
+        Assert.Null(merged.FirstName);
+        Assert.Null(merged.LastName);
+        Assert.Null(merged.PhoneNumber);
         Assert.Equal("Al ingevuld", merged.Preferences.AboutMe);
         Assert.Contains("B", merged.Preferences.DrivingLicenses!);
         Assert.Contains("MBO", merged.Preferences.Educations!);
         Assert.Contains("retail", merged.Preferences.Roles);
         Assert.Contains("horeca", merged.Preferences.Roles);
         Assert.Equal(2, merged.Preferences.Employers!.Count);
-        Assert.Contains(merged.FilledFields, f => f == "voornaam");
+        Assert.DoesNotContain(merged.FilledFields, f => f == "voornaam");
         Assert.DoesNotContain(merged.FilledFields, f => f == "over mij");
         Assert.Contains(merged.FilledFields, f => f == "werkervaring");
     }

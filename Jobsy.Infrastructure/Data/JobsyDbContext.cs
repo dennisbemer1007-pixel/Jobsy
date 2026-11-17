@@ -832,6 +832,8 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ContentType).HasMaxLength(128).IsRequired();
             entity.Property(e => e.Content).IsRequired();
             entity.Property(e => e.FilledFieldsJson).HasMaxLength(1000);
+            entity.Property(e => e.SuggestedFieldsJson).HasMaxLength(16000);
+            entity.Property(e => e.ConfirmedFieldsJson).HasMaxLength(1000);
             entity.HasIndex(e => e.UserId).IsUnique();
             entity.HasOne(e => e.User)
                 .WithMany()

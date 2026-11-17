@@ -6,6 +6,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Dna
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -64,6 +65,8 @@
                         @onclick="ToggleStory">
                     @(_storyExpanded ? Culture["Dna.StoryLess"] : Culture["Dna.StoryMore"])
                 </button>
+
+                <AiGeneratedLabel Visible="_storyFromOpenAi" />
 
                 @if (_keywords.Count > 0)
                 {
@@ -310,6 +313,7 @@
     private bool _loadFailed;
     private bool _storyExpanded;
     private bool _storyUpdating;
+    private bool _storyFromOpenAi;
     private string? _story;
     private DateTime? _storyGeneratedAt;
     private readonly List<string> _keywords = [];
@@ -422,6 +426,7 @@
             ? null
             : WhoAmIStoryBuilder.ForDisplay(who!.Story, _employersOn);
         _storyGeneratedAt = who?.GeneratedAtUtc;
+        _storyFromOpenAi = who?.FromOpenAi ?? false;
         _storyUpdating = string.Equals(who?.Status, WhoAmIStoryStatuses.Updating, StringComparison.OrdinalIgnoreCase);
         _keywords.Clear();
         if (who?.Keywords is { Count: > 0 })

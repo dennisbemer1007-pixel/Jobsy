@@ -99,6 +99,7 @@
                                 @if (!string.IsNullOrWhiteSpace(result.CultureFitWhy))
                                 {
                                     <p>@result.CultureFitWhy</p>
+                                    <AiGeneratedLabel Visible="result.FromOpenAi" />
                                 }
                             }
                             else

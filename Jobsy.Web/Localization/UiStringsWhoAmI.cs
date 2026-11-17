@@ -50,9 +50,15 @@ internal static class UiStringsWhoAmI
         ["WhoAmI.WorkExperience"] = "Werkervaring",
         ["WhoAmI.Courses"] = "Opleiding & cursussen",
         ["WhoAmI.OpenCareerResults"] = "Bekijk mijn Beroepen-kompas",
-        ["WhoAmI.AttachCv"] = "Voeg dit persoonsprofiel toe als officiële bijlage bij mijn Lobsy-cv.",
-        ["WhoAmI.AttachHint"] = "Als je solliciteert of meedoet aan batch-hiring in Den Haag / het Westland, gaat dit verhaal als PDF-bijlage mee met je Lobsy-CV. Werkgevers zien het pas na acceptatie.",
         ["WhoAmI.Saved"] = "Keuze opgeslagen.",
+        ["Profile.CvProposalTitle"] = "Klopt dit uit je CV?",
+        ["Profile.CvProposalLead"] = "We vullen niets automatisch in. Jij kiest wat in je profiel komt.",
+        ["Profile.CvProposalConfirm"] = "Gekozen velden overnemen",
+        ["Profile.CvProposalField.rijbewijs"] = "Rijbewijs",
+        ["Profile.CvProposalField.opleiding"] = "Opleiding",
+        ["Profile.CvProposalField.gewenste rollen"] = "Gewenste rollen",
+        ["Profile.CvProposalField.werkervaring"] = "Werkervaring",
+        ["Profile.CvProposalField.certificaten"] = "Certificaten",
         ["WhoAmI.Progress"] = "{0} van 4 stappen klaar"
     };
 
@@ -80,9 +86,15 @@ internal static class UiStringsWhoAmI
         ["WhoAmI.WorkExperience"] = "Work experience",
         ["WhoAmI.Courses"] = "Education & courses",
         ["WhoAmI.OpenCareerResults"] = "Open my career compass",
-        ["WhoAmI.AttachCv"] = "Add this personal profile as an official attachment to my Lobsy CV.",
-        ["WhoAmI.AttachHint"] = "When you apply or join batch hiring in The Hague / Westland, this story goes with your Lobsy CV as a PDF attachment. Employers see it only after they accept.",
         ["WhoAmI.Saved"] = "Saved.",
+        ["Profile.CvProposalTitle"] = "Does this match your CV?",
+        ["Profile.CvProposalLead"] = "We never fill your profile automatically. You choose what to keep.",
+        ["Profile.CvProposalConfirm"] = "Copy selected fields",
+        ["Profile.CvProposalField.rijbewijs"] = "Driving licence",
+        ["Profile.CvProposalField.opleiding"] = "Education",
+        ["Profile.CvProposalField.gewenste rollen"] = "Preferred roles",
+        ["Profile.CvProposalField.werkervaring"] = "Work experience",
+        ["Profile.CvProposalField.certificaten"] = "Certificates",
         ["WhoAmI.Progress"] = "{0} of 4 steps done"
     };
 }

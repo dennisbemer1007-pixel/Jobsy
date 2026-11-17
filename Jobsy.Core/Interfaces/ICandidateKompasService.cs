@@ -71,7 +71,8 @@ public sealed record WhoAmIStorySummaryDto(
     string? Story,
     IReadOnlyList<string> Keywords,
     DateTime? GeneratedAtUtc,
-    string Status);
+    string Status,
+    bool FromOpenAi = false);
 
 /// <summary>Profile fields needed by Kompas/Profile without a second profile GET.</summary>
 public sealed record MeProfileSummaryDto(

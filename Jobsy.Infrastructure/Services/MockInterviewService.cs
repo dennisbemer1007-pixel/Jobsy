@@ -122,7 +122,19 @@ public sealed class MockInterviewService : IMockInterviewService
                     vacancy, candidate, sanitized, labels, apiKey, model, baseUrl, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(reply))
                 {
-                    return new MockInterviewTurnResult(reply.Trim(), UsedAi: true);
+                    var trimmed = reply.Trim();
+                    if (candidate is not null)
+                    {
+                        var sheet = BuildCandidateFactSheet(candidate);
+                        if (CandidateFactGuard.RejectionReason(trimmed, sheet) is not null)
+                        {
+                            return new MockInterviewTurnResult(
+                                ScriptedFallback.NextReply(vacancy, sanitized, labels, candidate),
+                                UsedAi: false);
+                        }
+                    }
+
+                    return new MockInterviewTurnResult(trimmed, UsedAi: true);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -275,11 +287,9 @@ public sealed class MockInterviewService : IMockInterviewService
         using var response = await client.SendAsync(request, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogWarning(
-                "OpenAI mock interview gaf {StatusCode}: {Body}",
-                (int)response.StatusCode,
-                body.Length > 400 ? body[..400] : body);
+                "OpenAI mock interview gaf {StatusCode} (response body not logged).",
+                (int)response.StatusCode);
             return null;
         }
 
@@ -967,4 +977,10 @@ public sealed class MockInterviewService : IMockInterviewService
             return char.ToUpperInvariant(trimmed[0]) + trimmed[1..];
         }
     }
+
+    private static CandidateFactSheet BuildCandidateFactSheet(MockInterviewCandidateContext candidate)
+        => CandidateFactSheet.Personal(
+            candidate.EmployerSummaries,
+            candidate.Educations,
+            []);
 }

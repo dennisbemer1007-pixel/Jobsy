@@ -1,4 +1,5 @@
 using Jobsy.Core.Diagnostics;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Privacy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,8 +9,11 @@ namespace Jobsy.Api.Controllers;
 /// <summary>Shared { code, message } ProblemDetails-style payloads for candidate test saves.</summary>
 internal static class TestSaveErrors
 {
-    public static BadRequestObjectResult ParentalConsent()
-        => new(new { code = "parental_consent_required", message = CandidateConsentRules.ParentalConsentRequiredMessage });
+    public static BadRequestObjectResult ParentalConsent(User user)
+    {
+        var code = user.DateOfBirth is null ? "date_of_birth_required" : "parental_consent_required";
+        return new(new { code, message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
+    }
 
     public static BadRequestObjectResult TestConsent()
         => new(new { code = "consent_required", message = CandidateConsentRules.TestConsentRequiredMessage });

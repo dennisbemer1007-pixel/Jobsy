@@ -8,7 +8,12 @@ public static class GratisDnaMergeProfileRules
     public static bool CanUseCandidateFeatures(MeProfile profile, DateOnly? today = null)
     {
         var age = CandidateConsentRules.AgeYears(profile.DateOfBirth, today);
-        if (age is int value && value < CandidateConsentRules.ParentalConsentAge)
+        if (age is null)
+        {
+            return false;
+        }
+
+        if (age < CandidateConsentRules.ParentalConsentAge)
         {
             return profile.ParentalConsentAt is not null;
         }
