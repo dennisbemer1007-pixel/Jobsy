@@ -102,10 +102,14 @@ else if (_bodyHtml is not null)
                 berichtenThreadId = parsedThread;
             }
 
-            var userAgent = HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "";
-            var mobileDetailShell = userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase)
-                || userAgent.Contains("Android", StringComparison.OrdinalIgnoreCase)
-                || userAgent.Contains("iPhone", StringComparison.OrdinalIgnoreCase);
+            var httpRequest = http.Request;
+            var userAgent = httpRequest.Headers.UserAgent.ToString();
+            var clientHintsMobile = httpRequest.Headers.TryGetValue("Sec-CH-UA-Mobile", out var chMobile)
+                                    && chMobile.ToString().Contains('1', StringComparison.Ordinal);
+            var mobileDetailShell = clientHintsMobile
+                                    || userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase)
+                                    || userAgent.Contains("Android", StringComparison.OrdinalIgnoreCase)
+                                    || userAgent.Contains("iPhone", StringComparison.OrdinalIgnoreCase);
 
             var data = await ApplicationsSsrData.LoadAsync(
                 Api,
