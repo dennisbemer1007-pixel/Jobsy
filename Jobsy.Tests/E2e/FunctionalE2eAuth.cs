@@ -14,8 +14,8 @@ public static class FunctionalE2eAuth
     public static async Task<bool> EnsureGateCandidatePageLoginAsync(IPage page, string baseUrl)
     {
         await WarmupStackAsync(baseUrl);
-        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
-        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+        var email = KbE2e.ResolveCandidateEmail();
+        var password = KbE2e.ResolveCandidatePassword();
 
         for (var attempt = 0; attempt < 3; attempt++)
         {
@@ -83,8 +83,8 @@ public static class FunctionalE2eAuth
                 try
                 {
                     await WarmupStackAsync(baseUrl);
-                    var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? KbE2e.DefaultCompleteEmail;
-                    var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? KbE2e.DefaultPassword;
+                    var email = KbE2e.ResolveCandidateEmail();
+                    var password = KbE2e.ResolveCandidatePassword();
 
                     await using var ctx = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
                     await PlaywrightCookieConsent.AcceptAsync(ctx);
