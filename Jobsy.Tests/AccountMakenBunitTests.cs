@@ -39,7 +39,9 @@ public class AccountMakenBunitTests : BunitContext
     public void Hides_providers_when_unconfigured_and_shows_email_form()
     {
         var cut = Render<AccountMaken>();
-        Assert.Contains("getElementById('email')", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("id=\"email\"", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("<script>", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        AssertAccountMakenEmailFocusShellContract();
         Assert.DoesNotContain("Doorgaan met Google", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Doorgaan met Microsoft", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Stuur mijn code", cut.Markup, StringComparison.Ordinal);
@@ -72,6 +74,26 @@ public class AccountMakenBunitTests : BunitContext
         Assert.Contains("Login.CreateAccountCta", text, StringComparison.Ordinal);
         Assert.Contains("PublicRoutes.CreateAccount", text, StringComparison.Ordinal);
         Assert.Contains("Nieuw bij Lobsy", UiStrings.Get("Login.CreateAccountLead", "nl"), StringComparison.Ordinal);
+    }
+
+    private static void AssertAccountMakenEmailFocusShellContract()
+    {
+        var root = FindRepoRoot();
+        Assert.True(
+            Jobsy.Web.Hosting.PageAssetCatalog.IncludeAccountMakenScript("/account-maken"),
+            "account-maken route must load the signup shell script.");
+
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "account-maken.js"));
+        Assert.Contains("getElementById(\"email\")", js, StringComparison.Ordinal);
+        Assert.Contains("#email", js, StringComparison.Ordinal);
+
+        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
+        Assert.Contains("IncludeAccountMakenScript", app, StringComparison.Ordinal);
+        Assert.Contains("AccountMakenScriptUrl", app, StringComparison.Ordinal);
+        Assert.Contains("nonce=\"@Nonce\"", app, StringComparison.Ordinal);
+
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "PageAssetCatalog.cs"));
+        Assert.Contains("js/account-maken.js", catalog, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()
