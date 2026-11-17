@@ -122,10 +122,16 @@ public sealed class SollicitatiesMobileConsolePlaywrightTests(ITestOutputHelper 
                 await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
             }
 
-            var card = page.Locator(".sollic-card.sollic-card--app:not([hidden])").First;
-            if (await card.CountAsync() > 0)
+            var rowId = await page.EvaluateAsync<string?>(@"() => {
+              const card = document.querySelector('.sollic-card.sollic-card--app:not([hidden])');
+              return card ? card.getAttribute('data-sollic-row-id') : null;
+            }");
+            if (!string.IsNullOrWhiteSpace(rowId))
             {
-                await card.ClickAsync();
+                await page.GotoAsync(
+                    baseUrl + "/candidate/applications?tab=sollicitaties&sel=" + rowId,
+                    new() { WaitUntil = WaitUntilState.NetworkIdle });
+                await page.WaitForSelectorAsync(".sollicitaties-detail .sollic-detail-panel", new() { Timeout = 60_000 });
                 await page.WaitForTimeoutAsync(1000);
             }
 
