@@ -321,6 +321,7 @@ public class DeepTestStubGuardTests
         FullName = "Stub",
         Role = UserRole.Candidate,
         IsActive = true,
+        DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-25),
         ConsentVersion = Jobsy.Core.Privacy.PrivacyConstants.CurrentConsentVersion,
         TestAiConsentAt = DateTime.UtcNow,
         TestAiConsentVersion = Jobsy.Core.Privacy.PrivacyConstants.CandidateProfilingConsentVersion
