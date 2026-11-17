@@ -73,7 +73,13 @@ public sealed class OnboardingStep7ConsentVolgendePlaywrightTests : IAsyncLifeti
             SavedStep = 7,
         };
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileViewportLayoutAssertSupport.MobileContext(390));
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            Locale = "nl-NL",
+        });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
@@ -94,7 +100,13 @@ public sealed class OnboardingStep7ConsentVolgendePlaywrightTests : IAsyncLifeti
             SavedStep = 7,
         };
         var root = factory.EnsureServerAddress();
-        await using var context = await _browser!.NewContextAsync(MobileViewportLayoutAssertSupport.MobileContext(390));
+        await using var context = await _browser!.NewContextAsync(new BrowserNewContextOptions
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+            Locale = "nl-NL",
+        });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
