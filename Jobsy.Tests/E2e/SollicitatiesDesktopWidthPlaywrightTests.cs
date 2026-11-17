@@ -180,10 +180,11 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         Assert.True(metrics.HasSsr, "Expected SSR sollicitaties page markup.");
         Assert.False(metrics.HasLegacyKbApps, "Legacy kb-apps layout must not be used on /candidate/applications.");
         Assert.NotNull(metrics.PageRoot);
-        Assert.NotNull(metrics.Hero);
-        Assert.True(
-            metrics.Hero!.W >= 1200,
-            $"hero strip width {metrics.Hero.W} at 1280 (x={metrics.Hero.X}..{metrics.Hero.Right})");
+        var hasKreeftStrip = await page.EvaluateAsync<bool>(@"() => {
+            const wrap = document.querySelector('.sollicitaties-page-wrap');
+            return !!wrap?.querySelector('.sollicitaties-hero-strip, [data-testid=""kreeft-header-strip""]');
+        }");
+        Assert.False(hasKreeftStrip, "Kreeft header strip was removed on candidate pages (#1339).");
         Assert.True(
             metrics.PageRoot!.W >= 1000,
             $"page root width {metrics.PageRoot.W} at 1280 (x={metrics.PageRoot.X}..{metrics.PageRoot.Right}, maxWidth={metrics.PageRoot.MaxWidth})");
@@ -206,6 +207,13 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
                 $"layout width {metrics.Layout.W} (x={metrics.Layout.X:F0}..{metrics.Layout.Right:F0}, cols={metrics.Layout.GridCols})");
         }
 
+        if (metrics.List is not null && metrics.Layout is not null)
+        {
+            Assert.True(
+                metrics.List.W >= 600,
+                $"list column width {metrics.List.W} at 1280 (x={metrics.List.X:F0}..{metrics.List.Right:F0}, cols={metrics.Layout.GridCols})");
+        }
+
         var hasDetailRail = await page.EvaluateAsync<bool>(
             @"() => !!document.querySelector('.sollicitaties-detail .sollic-detail-panel')");
         if (!hasDetailRail)
@@ -225,7 +233,7 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
     }
 
     [Fact]
-    public async Task Mobile_hero_strip_is_105px_on_applications_and_berichten()
+    public async Task Mobile_applications_and_berichten_have_no_kreeft_strip_and_consistent_header_at_390()
     {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync() ?? _localBaseUrl;
         if (baseUrl is null)
@@ -243,36 +251,48 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
             throw new InvalidOperationException($"Could not log in at {baseUrl}.");
         }
 
-        await page.WaitForSelectorAsync(".sollicitaties-hero-strip", new() { Timeout = 60_000 });
-        var listHero = await MeasureHeroStripAsync(page);
+        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
+        var appsHeader = await MeasureSollicMobileHeaderAsync(page);
         _output.WriteLine(
-            $"390 applications hero: strip={listHero.StripH:F1}, mobImg={listHero.MobImgH:F1}, cssH={listHero.StripCssHeight}");
-        Assert.InRange(listHero.StripH, 95, 115);
-        if (listHero.MobImgH > 0)
-        {
-            Assert.InRange(listHero.MobImgH, 95, 115);
-        }
+            $"390 applications header: contentOffset={appsHeader.ContentOffset:F1}, pageTop={appsHeader.PageTop:F1}, kreeftStrip={appsHeader.HasKreeftStrip}");
+        Assert.False(appsHeader.HasKreeftStrip, "Sollicitaties must not render a Kreeft hero strip (#1339).");
+        Assert.True(appsHeader.PageTop >= 0, $"panel-page visible (top={appsHeader.PageTop:F0}).");
+        Assert.InRange(appsHeader.ContentOffset, 0, 140);
 
         await page.GotoAsync(
             baseUrl + "/candidate/applications?tab=berichten",
             new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await page.WaitForSelectorAsync(".sollicitaties-hero-strip", new() { Timeout = 60_000 });
-        var berichtenHero = await MeasureHeroStripAsync(page);
+        await page.WaitForSelectorAsync("[data-testid=\"applications-page-ssr\"]", new() { Timeout = 60_000 });
+
+        var tab = await page.QuerySelectorAsync("[data-testid=\"sollicitaties-berichten-tab\"]");
+        if (tab is null)
+        {
+            _output.WriteLine("Skip berichten header parity: tab not rendered (AfterMatch off or no demo).");
+            return;
+        }
+
+        var berichtenHeader = await MeasureSollicMobileHeaderAsync(page);
         _output.WriteLine(
-            $"390 berichten hero: strip={berichtenHero.StripH:F1}, mobImg={berichtenHero.MobImgH:F1}, cssH={berichtenHero.StripCssHeight}");
-        Assert.InRange(berichtenHero.StripH, 95, 115);
+            $"390 berichten header: contentOffset={berichtenHeader.ContentOffset:F1}, pageTop={berichtenHeader.PageTop:F1}, kreeftStrip={berichtenHeader.HasKreeftStrip}");
+        Assert.False(berichtenHeader.HasKreeftStrip);
+        Assert.True(Math.Abs(appsHeader.ContentOffset - berichtenHeader.ContentOffset) <= 8,
+            $"intro offset should match between tabs (apps={appsHeader.ContentOffset:F1}, berichten={berichtenHeader.ContentOffset:F1}).");
+        Assert.True(Math.Abs(appsHeader.PageTop - berichtenHeader.PageTop) <= 4,
+            $"panel top should match between tabs (apps={appsHeader.PageTop:F1}, berichten={berichtenHeader.PageTop:F1}).");
     }
 
-    private static Task<HeroStripMetrics> MeasureHeroStripAsync(IPage page) =>
-        page.EvaluateAsync<HeroStripMetrics>(@"() => {
-            const strip = document.querySelector('.sollicitaties-hero-strip');
-            const mobImg = document.querySelector('.sollicitaties-hero-strip__img.mob');
-            const sr = strip ? strip.getBoundingClientRect() : null;
-            const mr = mobImg ? mobImg.getBoundingClientRect() : null;
+    private static Task<SollicMobileHeaderMetrics> MeasureSollicMobileHeaderAsync(IPage page) =>
+        page.EvaluateAsync<SollicMobileHeaderMetrics>(@"() => {
+            const wrap = document.querySelector('.sollicitaties-page-wrap');
+            const pageRoot = document.querySelector('[data-testid=""applications-page-ssr""]');
+            const intro = pageRoot?.querySelector('.sollicitaties-intro');
+            const hasKreeftStrip = !!wrap?.querySelector('.sollicitaties-hero-strip, [data-testid=""kreeft-header-strip""]');
+            const pr = pageRoot ? pageRoot.getBoundingClientRect() : null;
+            const contentOffset = intro && pageRoot ? intro.offsetTop : 0;
             return {
-                stripH: sr ? sr.height : 0,
-                mobImgH: mr ? mr.height : 0,
-                stripCssHeight: strip ? getComputedStyle(strip).height : null,
+                hasKreeftStrip,
+                contentOffset,
+                pageTop: pr ? pr.top : 0,
             };
         }");
 
@@ -415,11 +435,11 @@ public sealed class SollicitatiesDesktopWidthPlaywrightTests(ITestOutputHelper o
         public string? Visibility { get; set; }
     }
 
-    private sealed class HeroStripMetrics
+    private sealed class SollicMobileHeaderMetrics
     {
-        public double StripH { get; set; }
-        public double MobImgH { get; set; }
-        public string? StripCssHeight { get; set; }
+        public bool HasKreeftStrip { get; set; }
+        public double ContentOffset { get; set; }
+        public double PageTop { get; set; }
     }
 
     private sealed class LayoutMetrics
