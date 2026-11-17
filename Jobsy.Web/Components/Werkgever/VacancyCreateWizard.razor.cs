@@ -73,6 +73,10 @@ public partial class VacancyCreateWizard : IDisposable
         _ => string.Empty
     };
 
+    private string SavedConfirmationStatusLabel => VacancyWizardSavedStatusLabels.ForStatusName(_previewStatusOverride);
+
+    private bool SavedConfirmationIsPublished => VacancyWizardSavedStatusLabels.IsPublishedStatus(_previewStatusOverride);
+
     private string NextStepButtonLabel => _step switch
     {
         1 => "Volgende: Omschrijving",
