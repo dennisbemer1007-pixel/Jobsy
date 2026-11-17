@@ -30,7 +30,6 @@ public sealed class JobSearchActivityPeriodRulesTests
         Assert.Equal(4, JobSearchActivityPeriodRules.ClampActivitiesPerPeriod(4));
     }
 
-    [Fact]
     [Theory]
     [InlineData(1, "1 activiteit")]
     [InlineData(2, "2 activiteiten")]

@@ -188,10 +188,12 @@ public sealed class AcceptatieRetestPost1476PlaywrightTests : IAsyncLifetime
         Assert.True(visible);
 
         var providersHidden = await page.EvaluateAsync<bool>(
-            "() => {
+            """
+            () => {
               const p = document.querySelector('.pub-signup__providers');
               return !p || p.hasAttribute('hidden') || getComputedStyle(p).display === 'none';
-            }");
+            }
+            """);
         Assert.True(providersHidden, "OAuth provider row should be hidden when #email is active");
     }
 
