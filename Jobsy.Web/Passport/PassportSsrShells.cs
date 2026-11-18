@@ -414,6 +414,12 @@ internal static class PassportSsrShells
         sb.Append("</span><input name=\"phoneNumber\" type=\"tel\" autocomplete=\"tel\" value=\"");
         sb.Append(WebUtility.HtmlEncode(profile.PhoneNumber ?? ""));
         sb.Append("\" data-testid=\"passport-data-phone\" data-passport-static-field=\"1\" autocomplete=\"tel\" inputmode=\"tel\" /></label>");
+        var birthText = profile.DateOfBirth is DateOnly dob ? dob.ToString("d-M-yyyy", System.Globalization.CultureInfo.InvariantCulture) : "";
+        sb.Append("<label><span>");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.DateOfBirth"]));
+        sb.Append("</span><input name=\"birthDateText\" type=\"text\" inputmode=\"numeric\" autocomplete=\"bday\" class=\"jobsy-date-field__text\" data-testid=\"passport-data-birth\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(birthText));
+        sb.Append("\" /></label>");
         sb.Append("<label><span>");
         sb.Append(WebUtility.HtmlEncode(culture["Profile.AboutMe"]));
         sb.Append("</span><textarea name=\"aboutMe\" rows=\"4\" data-testid=\"passport-data-about\">");

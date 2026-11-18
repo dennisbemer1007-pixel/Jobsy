@@ -65,6 +65,7 @@
                 <button type="button" class="btn btn-ghost" @onclick="ToggleStory">
                     @(_storyExpanded ? Culture["Dna.StoryLess"] : Culture["Dna.StoryMore"])
                 </button>
+                <AiGeneratedLabel Visible="StoryFromOpenAi" />
                 @if (Keywords.Count > 0)
                 {
                     <ul class="passport-dna__chips">
@@ -156,6 +157,7 @@
     [Parameter] public IReadOnlyList<CandidateDnaViewBuilder.DnaHighlight> Highlights { get; set; } = [];
     [Parameter] public bool TestsComplete { get; set; }
     [Parameter] public string? Story { get; set; }
+    [Parameter] public bool StoryFromOpenAi { get; set; }
     [Parameter] public DateTime? StoryGeneratedAt { get; set; }
     [Parameter] public IReadOnlyList<string> Keywords { get; set; } = [];
     [Parameter] public IReadOnlyList<string> Hobbies { get; set; } = [];

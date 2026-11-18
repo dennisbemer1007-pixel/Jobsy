@@ -33,7 +33,14 @@ public static class CandidateConsentRules
     }
 
     public static bool CanUseCandidateFeatures(User user, DateOnly? today = null)
-        => !RequiresParentalConsent(user, today) || user.ParentalConsentAt is not null;
+    {
+        if (user.DateOfBirth is null)
+        {
+            return false;
+        }
+
+        return !RequiresParentalConsent(user, today) || user.ParentalConsentAt is not null;
+    }
 
     public static string CandidateFeatureBlockMessage(User user, DateOnly? today = null)
     {

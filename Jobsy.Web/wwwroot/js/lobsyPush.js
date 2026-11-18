@@ -25,8 +25,26 @@ window.lobsyPush = (function () {
         return supported() ? Notification.permission : "unsupported";
     }
 
+    function hasBlockingOverlay() {
+        try {
+            if (document.body && document.body.getAttribute("data-jobsy-dialog-open") === "1") {
+                return true;
+            }
+        } catch (e) { }
+        try {
+            var modal = document.querySelector(".mock-interview-modal, .lobsy-dialog[aria-modal='true']");
+            if (modal && modal.offsetParent !== null) {
+                return true;
+            }
+        } catch (e2) { }
+        return false;
+    }
+
     function shouldShowPrompt() {
         if (!supported() || Notification.permission !== "default") {
+            return false;
+        }
+        if (hasBlockingOverlay()) {
             return false;
         }
         try {
@@ -34,6 +52,20 @@ window.lobsyPush = (function () {
         } catch (e) {
             return true;
         }
+    }
+
+    function whenPromptAllowed(callback) {
+        if (typeof callback !== "function") {
+            return;
+        }
+        function tick() {
+            if (shouldShowPrompt()) {
+                callback();
+                return;
+            }
+            window.setTimeout(tick, 500);
+        }
+        tick();
     }
 
     function dismissPrompt() {
@@ -125,6 +157,8 @@ window.lobsyPush = (function () {
         supported: supported,
         permission: permission,
         shouldShowPrompt: shouldShowPrompt,
+        whenPromptAllowed: whenPromptAllowed,
+        hasBlockingOverlay: hasBlockingOverlay,
         dismissPrompt: dismissPrompt,
         createSubscription: createSubscription,
         dropSubscription: dropSubscription,

@@ -3,11 +3,13 @@
 @using Jobsy.Web.Media
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
+@inject IJSRuntime Js
+@using Jobsy.Web.Components.Candidate
 
 @if (IsOpen && Vacancy is not null)
 {
     <div class="share-modal-backdrop lobsy-dialog-backdrop" @onclick="Close"></div>
-    <div class="mock-interview-modal mock-interview-modal--warm lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
+    <div @ref="_dialog" class="mock-interview-modal mock-interview-modal--warm lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
         <header class="mock-interview-modal__header">
             <div class="mock-interview-modal__brand">
                 <img class="mock-interview-modal__avatar mock-interview-modal__avatar--coach-b"
@@ -30,6 +32,7 @@
             <span class="mock-interview-modal__disclaimer-lead">@Culture["MockInterview.Disclaimer"]</span>
             <a class="auth-link mock-interview-modal__disclaimer-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["MockInterview.DisclaimerLink"]</a>
         </p>
+        <AiGeneratedLabel Visible="_usesAiCoach" />
 
         @if (_started && !_busy)
         {
@@ -143,6 +146,9 @@
     private string _sessionLanguage = "";
 
     private bool _restartWhenIdle;
+    private bool _usesAiCoach;
+    private bool _trapped;
+    private ElementReference _dialog;
 
     private int UserAnswerCount => _messages.Count(m => m.Role == "user");
 
@@ -212,6 +218,34 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_trapped)
+        {
+            _trapped = true;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.trap", _dialog);
+            }
+            catch
+            {
+                // Optional in tests.
+            }
+        }
+        else if (!IsOpen && _trapped)
+        {
+            _trapped = false;
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyDialog.release");
+            }
+            catch
+            {
+                // Optional in tests.
+            }
+        }
+    }
+
     private async Task Close()
     {
         await OnClose.InvokeAsync();
@@ -234,6 +268,7 @@
         try
         {
             var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, []);
+            _usesAiCoach = reply.UsedAi;
             var opening = string.IsNullOrWhiteSpace(reply.Reply) ? Culture["MockInterview.Empty"] : reply.Reply.Trim();
             _messages.Add(new MockInterviewChatMessage("assistant", opening));
             _started = true;
@@ -278,6 +313,7 @@
                 .Select(m => new MockInterviewChatMessage(m.Role, m.Content))
                 .ToList();
             var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, history);
+            _usesAiCoach = _usesAiCoach || reply.UsedAi;
             _messages.Add(new MockInterviewChatMessage("assistant", reply.Reply));
         }
         catch (Exception ex)

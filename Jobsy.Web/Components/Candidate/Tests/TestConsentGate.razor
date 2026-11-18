@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Core.Enums
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Privacy
 @using Jobsy.Web.Services
 @inject CultureState Culture
 @inject JobsyApiClient Api
@@ -11,6 +12,17 @@
         <div class="test-skeleton" aria-busy="true">
             <span class="skeleton-line skeleton-line--title"></span>
             <span class="skeleton-line skeleton-line--row"></span>
+        </div>
+    </div>
+}
+else if (_dobMissing)
+{
+    <div class="test-page journey-page">
+        <div class="test-consent card" data-consent="dob">
+            <h2>@Culture["Profile.DateOfBirth"]</h2>
+            <p>@Culture["Apply.Gap.BirthDate"]</p>
+            <p class="muted">@CandidateConsentRules.DateOfBirthRequiredMessage</p>
+            <a class="btn btn-primary" href="/candidate/geboortedatum">@Culture["Vacancy.EnterDob"]</a>
         </div>
     </div>
 }
@@ -60,12 +72,13 @@ else
 
     private bool _loading = true;
     private bool _loadFailed;
+    private bool _dobMissing;
     private bool _parentalMissing;
     private bool _testConsentMissing;
     private bool _busy;
     private string? _error;
     private int _loadGeneration;
-    public bool IsOpen => !_loading && !_loadFailed && !_parentalMissing && !_testConsentMissing;
+    public bool IsOpen => !_loading && !_loadFailed && !_dobMissing && !_parentalMissing && !_testConsentMissing;
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,23 +103,28 @@ else
             if (result.TemporarilyUnavailable)
             {
                 _loadFailed = true;
+                _dobMissing = false;
                 _parentalMissing = false;
                 _testConsentMissing = false;
             }
             else if (result.Value is null)
             {
+                _dobMissing = false;
                 _parentalMissing = false;
                 _testConsentMissing = true;
             }
             else
             {
-                _parentalMissing = !GratisDnaMergeProfileRules.CanUseCandidateFeatures(result.Value);
-                _testConsentMissing = !_parentalMissing && !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(result.Value);
+                _dobMissing = !result.Value.HasDateOfBirth;
+                _parentalMissing = !_dobMissing && !GratisDnaMergeProfileRules.CanUseCandidateFeatures(result.Value);
+                _testConsentMissing = !_dobMissing && !_parentalMissing
+                    && !GratisDnaMergeProfileRules.HasCurrentTestAiConsent(result.Value);
             }
         }
         catch (Exception) when (generation == _loadGeneration)
         {
             _loadFailed = true;
+            _dobMissing = false;
             _parentalMissing = false;
             _testConsentMissing = false;
         }

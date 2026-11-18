@@ -94,11 +94,19 @@ public class CandidateConsentRulesTests
         Assert.Equal(ageYears is null || ageYears < 16, CandidateConsentRules.RequiresParentalConsent(user, today));
         Assert.Equal(expectedWithoutParentalConsent, CandidateConsentRules.CanUseCandidateFeatures(user, today));
 
-        if (!expectedWithoutParentalConsent)
+        if (!expectedWithoutParentalConsent && ageYears is not null)
         {
             user.ParentalConsentAt = DateTime.UtcNow;
             Assert.True(CandidateConsentRules.CanUseCandidateFeatures(user, today));
         }
+    }
+
+    [Fact]
+    public void Missing_date_of_birth_never_allows_features_even_with_parental_consent()
+    {
+        var user = User(null);
+        user.ParentalConsentAt = DateTime.UtcNow;
+        Assert.False(CandidateConsentRules.CanUseCandidateFeatures(user));
     }
 
     [Fact]

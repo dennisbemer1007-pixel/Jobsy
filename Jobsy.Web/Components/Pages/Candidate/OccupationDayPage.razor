@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Careers
 @using Jobsy.Core.Localization
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
@@ -113,6 +114,7 @@
                     </section>
                 }
             </div>
+            <AiGeneratedLabel Visible="true" />
             @if (!string.IsNullOrWhiteSpace(_day.VariesNote))
             {
                 <p class="day-life__varies">@_day.VariesNote</p>

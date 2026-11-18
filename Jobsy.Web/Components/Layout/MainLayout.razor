@@ -49,7 +49,16 @@
                         </Authorized>
                     </AuthorizeView>
                 }
-                @Body
+                <AuthorizeView Roles="@JobsyRoles.Candidate">
+                    <Authorized>
+                        <Jobsy.Web.Components.Candidate.CandidateDateOfBirthGate RelativePath="@_layoutRelativePath">
+                            @Body
+                        </Jobsy.Web.Components.Candidate.CandidateDateOfBirthGate>
+                    </Authorized>
+                    <NotAuthorized>
+                        @Body
+                    </NotAuthorized>
+                </AuthorizeView>
             </CircuitErrorBoundary>
         </div>
         @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
@@ -125,6 +134,7 @@
     private bool _hideCoachDock;
     private bool _hideFloatingChrome;
     private bool _isCandidate;
+    private string _layoutRelativePath = "";
     private bool _suppressInstallBanner;
     private bool _suppressPwaInstallEntry;
     private bool _pwaSheetOpen;
@@ -429,6 +439,7 @@
     {
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var path = relative.Split('?', '#')[0].TrimStart('/');
+        _layoutRelativePath = path;
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
         var banenkaart = IsBanenkaartPath(path);
         var questionnaire = IsQuestionnairePath(path, relative);

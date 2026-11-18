@@ -649,6 +649,7 @@ app.UseMiddleware<WerkgeverApkFeatureMiddleware>();
 // Authentication has already run, so the pupil principal is available.
 app.UseMiddleware<LeerlingNoStoreMiddleware>();
 app.UseAuthorization();
+app.UseCandidateDateOfBirthGate();
 app.UseMiddleware<PupilGroep78ThemeGuardMiddleware>();
 app.UseDiscoverySsrRedirect();
 // After auth so the admin bypass reads the cookie principal (errors 05).
@@ -707,6 +708,7 @@ app.MapLanguageEndpoints();
 app.MapCookieConsentEndpoints();
 app.MapOnboardingClientEndpoints();
 app.MapPassportClientEndpoints();
+app.MapCandidateDateOfBirthEndpoints();
 app.MapCareerClientEndpoints();
 app.MapSavedClientEndpoints();
 app.MapKbExtClientEndpoints();
