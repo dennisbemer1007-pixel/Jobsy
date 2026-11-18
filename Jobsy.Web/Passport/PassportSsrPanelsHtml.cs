@@ -181,6 +181,13 @@ internal static class PassportSsrPanelsHtml
                 sb.Append("</ul>");
             }
 
+            if (dna.StoryFromOpenAi)
+            {
+                sb.Append("<p class=\"ai-generated-label\" role=\"note\">");
+                sb.Append(WebUtility.HtmlEncode(culture["Ai.GeneratedLabel"]));
+                sb.Append("</p>");
+            }
+
             if (dna.StoryGeneratedAt is DateTime generated)
             {
                 sb.Append("<p class=\"passport-dna__meta\">");

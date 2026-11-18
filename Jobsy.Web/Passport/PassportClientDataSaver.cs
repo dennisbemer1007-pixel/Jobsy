@@ -1,3 +1,4 @@
+using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
@@ -22,6 +23,7 @@ internal static class PassportClientDataSaver
         var phone = (form["phoneNumber"].ToString() ?? "").Trim();
         var aboutMe = (form["aboutMe"].ToString() ?? "").Trim();
         var returnTab = PassportTabs.Normalize(form["returnTab"].ToString());
+        var birthDateText = (form["birthDateText"].ToString() ?? "").Trim();
 
         if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
         {
@@ -43,6 +45,14 @@ internal static class PassportClientDataSaver
                 lastName: lastName,
                 phoneNumber: string.IsNullOrWhiteSpace(phone) ? null : phone,
                 ct: cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(birthDateText)
+                && JobsyDateInputRules.TryParseFlexibleDate(birthDateText, out var dob)
+                && !CandidateConsentRules.IsBelowMinimumAge(dob)
+                && (profile.DateOfBirth is null || profile.DateOfBirth != dob))
+            {
+                _ = await api.UpdateDateOfBirthAsync(dob, cancellationToken);
+            }
         }
         catch (ApiErrorException ex)
         {

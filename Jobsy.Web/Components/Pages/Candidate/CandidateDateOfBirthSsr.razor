@@ -1,0 +1,101 @@
+@page "/candidate/geboortedatum"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [NoBlazorRuntime]
+@using Jobsy.Core.Privacy
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>@Culture["Profile.DateOfBirth"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+}
+else if (_bodyHtml is not null)
+{
+    @((MarkupString)_bodyHtml)
+}
+
+@code {
+    private bool _loading = true;
+    private string? _bodyHtml;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var profile = await Api.GetMyProfileAsync();
+            var http = HttpContextAccessor.HttpContext;
+            if (http is null)
+            {
+                return;
+            }
+
+            if (profile?.HasDateOfBirth == true)
+            {
+                var back = AuthRedirects.TrySafeLocalUrl(http.Request.Query["returnUrl"]);
+                http.Response.Redirect(string.IsNullOrWhiteSpace(back) ? "/candidate/kompas" : back!);
+                return;
+            }
+
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            var returnUrl = AuthRedirects.TrySafeLocalUrl(http.Request.Query["returnUrl"]) ?? "";
+            var message = CandidateConsentRules.DateOfBirthRequiredMessage;
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<div class=\"panel-page profile-page profile-page--candidate candidate-dob-gate\" data-testid=\"candidate-dob-gate\">");
+            sb.Append("<div class=\"detail-card competency-profile-card\"><h1 class=\"login-title\">");
+            sb.Append(System.Net.WebUtility.HtmlEncode(Culture["Profile.DateOfBirth"]));
+            sb.Append("</h1><p class=\"login-lead\" role=\"alert\">");
+            sb.Append(System.Net.WebUtility.HtmlEncode(message));
+            sb.Append("</p><form method=\"post\" action=\"/api/candidate-client/save-date-of-birth\" data-enhance=\"false\">");
+            sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
+            sb.Append(System.Net.WebUtility.HtmlEncode(tokens.RequestToken ?? ""));
+            sb.Append("\" />");
+            if (!string.IsNullOrWhiteSpace(returnUrl))
+            {
+                sb.Append("<input type=\"hidden\" name=\"returnUrl\" value=\"");
+                sb.Append(System.Net.WebUtility.HtmlEncode(returnUrl));
+                sb.Append("\" />");
+            }
+
+            sb.Append("<label><span>");
+            sb.Append(System.Net.WebUtility.HtmlEncode(Culture["Profile.DateOfBirth"]));
+            sb.Append("</span><input name=\"birthDateText\" type=\"text\" inputmode=\"numeric\" autocomplete=\"bday\" class=\"jobsy-date-field__text\" data-testid=\"candidate-dob-input\" placeholder=\"dd-mm-jjjj\" required /></label>");
+            if (!string.IsNullOrWhiteSpace(_error))
+            {
+                sb.Append("<p class=\"form-error\" role=\"alert\">");
+                sb.Append(System.Net.WebUtility.HtmlEncode(_error));
+                sb.Append("</p>");
+            }
+
+            sb.Append("<div class=\"profile-save-bar\"><button type=\"submit\" class=\"btn btn-primary login-submit\" data-testid=\"candidate-dob-save\">");
+            sb.Append(System.Net.WebUtility.HtmlEncode(Culture["Common.Save"]));
+            sb.Append("</button></div></form></div></div>");
+            _bodyHtml = sb.ToString();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string? _error;
+
+    protected override void OnParametersSet()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        _error = http?.Request.Query["error"].ToString();
+        if (string.IsNullOrWhiteSpace(_error))
+        {
+            _error = null;
+        }
+    }
+}

@@ -19,6 +19,8 @@ public static class OnboardingE2eProfileEnsurer
 
     public static readonly GeoPoint HomeLocation = new(51.9930, 4.2150);
 
+    public static readonly DateOnly DefaultAdultDateOfBirth = new(2000, 3, 1);
+
     public static readonly string PreferencesJson =
         """{"roles":["horeca","retail","logistiek"],"maxTravelMinutes":20,"preferredTransport":"Fiets","homeAddress":"Kasweg 12, 2671 AB Naaldwijk"}""";
 
@@ -104,6 +106,12 @@ public static class OnboardingE2eProfileEnsurer
         if (!string.Equals(user.PreferencesJson, PreferencesJson, StringComparison.Ordinal))
         {
             user.PreferencesJson = PreferencesJson;
+            changed = true;
+        }
+
+        if (user.DateOfBirth is null)
+        {
+            user.DateOfBirth = DefaultAdultDateOfBirth;
             changed = true;
         }
 

@@ -1,0 +1,135 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Core.Privacy
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+@if (_loading)
+{
+    <p class="state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+}
+else if (_needsDob)
+{
+    <div class="panel-page profile-page profile-page--candidate candidate-dob-gate" data-testid="candidate-dob-gate">
+        <div class="detail-card competency-profile-card">
+            <h1 class="login-title">@Culture["Profile.DateOfBirth"]</h1>
+            <p class="login-lead" role="alert">@_blockMessage</p>
+            <label>
+                <span>@Culture["Profile.DateOfBirth"]</span>
+                <JobsyDateField Constraint="JobsyDateConstraint.CandidateBirthDate"
+                                Value="_dobInput"
+                                ValueChanged="OnDobPickedAsync" />
+            </label>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="form-error" role="alert">@_error</p>
+            }
+            <div class="profile-save-bar">
+                <button type="button" class="btn btn-primary login-submit" disabled="@_busy" data-testid="candidate-dob-save" @onclick="SaveAsync">
+                    @Culture["Common.Save"]
+                </button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string RelativePath { get; set; } = "";
+
+    private bool _loading = true;
+    private bool _needsDob;
+    private bool _busy;
+    private string? _error;
+    private string _blockMessage = CandidateConsentRules.DateOfBirthRequiredMessage;
+    private DateOnly? _dobInput;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var path = "/" + (RelativePath ?? "").TrimStart('/');
+            var tab = "";
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("tab", out var tabVals))
+            {
+                tab = tabVals.ToString();
+            }
+
+            if (CandidateDateOfBirthPathRules.IsExempt(path, tab))
+            {
+                _needsDob = false;
+                return;
+            }
+
+            var profile = await Api.GetMyProfileAsync();
+            _needsDob = profile is { HasDateOfBirth: false }
+                        && CandidateDateOfBirthPathRules.ShouldRedirect(path, tab, hasDateOfBirth: false);
+            if (_needsDob)
+            {
+                _blockMessage = CandidateConsentRules.DateOfBirthRequiredMessage;
+            }
+        }
+        catch
+        {
+            _needsDob = false;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task OnDobPickedAsync(DateOnly? value)
+    {
+        _dobInput = value;
+        return Task.CompletedTask;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_dobInput is not DateOnly dob)
+        {
+            _error = Culture["Onboarding.Validation.BirthDate"];
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var updated = await Api.UpdateDateOfBirthAsync(dob);
+            if (updated is null || !updated.HasDateOfBirth)
+            {
+                _error = Culture["Common.Error.TryAgain"];
+                return;
+            }
+
+            _needsDob = false;
+            Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+        }
+        catch (Exception)
+        {
+            _error = Culture["Common.Error.TryAgain"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

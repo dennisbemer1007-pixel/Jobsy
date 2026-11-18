@@ -216,15 +216,22 @@ public class LegalAiProcessorSelectionTests
         Assert.NotEqual("Legal.Change.Privacy.2026-10-07", earlier);
         var lead = UiStrings.Get("Profile.OwnCvLead.Mistral", language);
         Assert.NotEqual("Profile.OwnCvLead.Mistral", lead);
-        Assert.Contains(regionWord, lead, StringComparison.Ordinal);
         var globalLead = UiStrings.Get("Profile.OwnCvLead.Mistral.Global", language);
         Assert.NotEqual("Profile.OwnCvLead.Mistral.Global", globalLead);
-        Assert.DoesNotContain("VS", globalLead, StringComparison.Ordinal);
-        Assert.DoesNotContain("US", globalLead, StringComparison.Ordinal);
         if (language is "nl")
         {
-            Assert.Contains("geen plek", globalLead, StringComparison.Ordinal);
-            Assert.DoesNotContain("verwerking in de EU", globalLead, StringComparison.Ordinal);
+            Assert.Contains("Upload je CV", lead, StringComparison.Ordinal);
+            Assert.DoesNotContain("Mistral", lead, StringComparison.Ordinal);
+            Assert.DoesNotContain("OpenAI", lead, StringComparison.Ordinal);
+            Assert.DoesNotContain("Mistral", globalLead, StringComparison.Ordinal);
+            Assert.DoesNotContain("VS", globalLead, StringComparison.Ordinal);
+            Assert.DoesNotContain("US", globalLead, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.Contains(regionWord, lead, StringComparison.Ordinal);
+            Assert.DoesNotContain("VS", globalLead, StringComparison.Ordinal);
+            Assert.DoesNotContain("US", globalLead, StringComparison.Ordinal);
         }
     }
 }

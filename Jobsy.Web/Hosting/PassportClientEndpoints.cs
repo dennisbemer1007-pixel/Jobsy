@@ -24,7 +24,33 @@ public static class PassportClientEndpoints
         app.MapPost("/api/passport-client/save-coach-tone", SaveCoachToneAsync)
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
 
+        app.MapPost("/api/passport-client/confirm-cv", ConfirmCvAsync)
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Candidate" });
+
         return app;
+    }
+
+    private static async Task<IResult> ConfirmCvAsync(
+        HttpContext http,
+        IAntiforgery antiforgery,
+        JobsyApiClient api,
+        CultureState culture,
+        CancellationToken cancellationToken)
+    {
+        if (!http.Request.HasFormContentType)
+        {
+            return Results.BadRequest();
+        }
+
+        if (!await antiforgery.IsRequestValidAsync(http))
+        {
+            return PassportClientDataSaver.RedirectWithError(
+                PassportTabs.Proof,
+                culture["Common.Error.TryAgain"]);
+        }
+
+        var form = await http.Request.ReadFormAsync(cancellationToken);
+        return await PassportClientCvConfirmSaver.ConfirmAsync(form, api, culture, cancellationToken);
     }
 
     private static async Task<IResult> SaveProofAsync(

@@ -186,7 +186,8 @@ public class CareerPageBunitTests : BunitContext
 
         var ai = Build(PlanJson(fromAi: true));
         var cut2 = Render<CareerOverviewCard>(p => p.Add(x => x.Plan, ai));
-        Assert.Contains("met hulp van AI", cut2.Markup, StringComparison.Ordinal);
+        Assert.Contains("Gemaakt met AI", cut2.Markup, StringComparison.Ordinal);
+        Assert.Contains("ai-generated-label", cut2.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

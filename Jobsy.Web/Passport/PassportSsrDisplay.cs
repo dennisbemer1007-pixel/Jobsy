@@ -50,7 +50,8 @@ internal static class PassportSsrDisplay
         IReadOnlyList<string> Hobbies,
         int CompletedTests,
         bool ShowEncourageBanner,
-        PassportShellRules.ShellProgress Shells);
+        PassportShellRules.ShellProgress Shells,
+        bool StoryFromOpenAi);
 
     internal static CardModel BuildCard(
         CultureState culture,
@@ -227,7 +228,8 @@ internal static class PassportSsrDisplay
             employersEnabled,
             remaining);
 
-        return new DnaPanelModel(view, story, storyAt, hobbies, completed, showEncourage, shells);
+        var storyFromOpenAi = who?.FromOpenAi ?? false;
+        return new DnaPanelModel(view, story, storyAt, hobbies, completed, showEncourage, shells, storyFromOpenAi);
     }
 
     private static int CountExtendedReports(CandidateKompasState? kompas)

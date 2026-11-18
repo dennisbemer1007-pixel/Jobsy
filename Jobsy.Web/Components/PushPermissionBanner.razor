@@ -50,12 +50,7 @@
             // Re-link an existing browser push subscription to the current user/device.
             await RelinkExistingSubscriptionAsync();
 
-            var show = await Js.InvokeAsync<bool>("lobsyPush.shouldShowPrompt");
-            if (show)
-            {
-                _visible = true;
-                await InvokeAsync(StateHasChanged);
-            }
+            await TryShowPromptWithDeferralAsync();
         }
         catch
         {
@@ -145,6 +140,22 @@
         }
 
         _visible = false;
+    }
+
+    private async Task TryShowPromptWithDeferralAsync()
+    {
+        for (var attempt = 0; attempt < 120 && !_visible; attempt++)
+        {
+            var show = await Js.InvokeAsync<bool>("lobsyPush.shouldShowPrompt");
+            if (show)
+            {
+                _visible = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            await Task.Delay(500);
+        }
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

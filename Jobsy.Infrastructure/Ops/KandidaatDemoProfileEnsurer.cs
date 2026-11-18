@@ -18,6 +18,8 @@ public static class KandidaatDemoProfileEnsurer
     public const string DemoLastName = "de Wit";
     public const string DemoLoginEmail = "kandidaat@jobsy.local";
 
+    public static readonly DateOnly DemoDateOfBirth = new(1998, 4, 12);
+
     public static async Task EnsureAsync(JobsyDbContext db, ILogger logger, CancellationToken cancellationToken = default)
     {
         var user = await ResolveUserAsync(db, cancellationToken);
@@ -42,6 +44,12 @@ public static class KandidaatDemoProfileEnsurer
         if (!string.Equals(user.LastName, DemoLastName, StringComparison.Ordinal))
         {
             user.LastName = DemoLastName;
+            changed = true;
+        }
+
+        if (user.DateOfBirth is null)
+        {
+            user.DateOfBirth = DemoDateOfBirth;
             changed = true;
         }
 
