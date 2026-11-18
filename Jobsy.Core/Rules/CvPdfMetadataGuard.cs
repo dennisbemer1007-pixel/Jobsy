@@ -6,6 +6,8 @@ public static class CvPdfMetadataGuard
     private static readonly string[] DeniedSubstrings =
     [
         "reportlab pdf library",
+        "pdf library",
+        "opensource",
         "reportlab",
         "adobe pdf library",
         "adobe illustrator",

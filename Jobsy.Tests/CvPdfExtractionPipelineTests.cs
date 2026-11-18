@@ -10,7 +10,7 @@ public sealed class CvPdfExtractionPipelineTests
     [Fact]
     public void Realistic_reportlab_pdf_yields_body_fields_not_producer_metadata()
     {
-        var pdf = BuildReportLabStyleCvPdf();
+        var pdf = LoadReportLabFixture();
         var extractor = new CvTextExtractor();
         var text = extractor.Extract(pdf, "application/pdf", "cv-test.pdf");
 
@@ -37,6 +37,13 @@ public sealed class CvPdfExtractionPipelineTests
         Assert.Contains(CvExtractionFieldKeys.Certificates, keys);
         Assert.DoesNotContain(filtered.Certificates!, c => c.Name.Contains("ReportLab", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(filtered.Certificates!, c => c.Name.Equals("BHV", StringComparison.OrdinalIgnoreCase));
+
+        var harvestedOnly = CvExtractionFactsGuard.Apply(
+            new CvExtractedProfile(Roles: ["opensource"]),
+            text);
+        var harvestedKeys = CvExtractionFieldKeys.ListProposalKeys(harvestedOnly);
+        Assert.Contains(CvExtractionFieldKeys.Employers, harvestedKeys);
+        Assert.Contains(harvestedOnly.Employers!, e => e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -58,24 +65,10 @@ public sealed class CvPdfExtractionPipelineTests
         Assert.True(CvPdfMetadataGuard.IsPdfMetadataNoise("ReportLab PDF Library"));
     }
 
-    private static byte[] BuildReportLabStyleCvPdf()
+    private static byte[] LoadReportLabFixture()
     {
-        var pdf = """
-            %PDF-1.4
-            1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
-            2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
-            3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Contents 4 0 R>>endobj
-            4 0 obj<</Length 220>>stream
-            (Werkervaring De Linde, Dierenasiel)
-            (Opleiding MBO ROC Mondriaan 2018)
-            (Rijbewijs B)
-            (Certificaat BHV 2022)
-            endstream
-            endobj
-            5 0 obj<</Producer (ReportLab PDF Library)/Creator (ReportLab PDF Library)>>endobj
-            trailer<</Root 1 0 R/Info 5 0 R>>
-            %%EOF
-            """;
-        return Encoding.ASCII.GetBytes(pdf);
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Cv", "ReportLabDeLindeCv.pdf");
+        Assert.True(File.Exists(path), path);
+        return File.ReadAllBytes(path);
     }
 }
