@@ -66,7 +66,7 @@ public sealed class CvExtractionService : ICvExtractionService
         var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            return new CvExtractedProfile();
+            return CvExtractionFactsGuard.Apply(new CvExtractedProfile(), cvText);
         }
 
         try
@@ -80,7 +80,7 @@ public sealed class CvExtractionService : ICvExtractionService
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogWarning(ex, "OpenAI CV-extractie mislukt; profiel blijft ongewijzigd.");
-            return new CvExtractedProfile();
+            return CvExtractionFactsGuard.Apply(new CvExtractedProfile(), cvText);
         }
     }
 
@@ -158,7 +158,7 @@ public sealed class CvExtractionService : ICvExtractionService
                 .Take(20)
                 .ToList());
 
-        return CvExtractionGrounding.Filter(profile, originalCvText);
+        return CvExtractionFactsGuard.Apply(profile, originalCvText);
     }
 
 

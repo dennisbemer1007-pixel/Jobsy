@@ -1252,6 +1252,9 @@ public partial class MeController : ControllerBase
             return BadRequest(new { message = "CV-voorstel is leeg." });
         }
 
+        var cvText = _cvText.Extract(cv.Content, cv.ContentType, cv.FileName);
+        extracted = CvExtractionFactsGuard.Apply(extracted, cvText);
+
         var allowed = CvExtractionFieldKeys.ListProposalKeys(extracted)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var accepted = request.AcceptedFields

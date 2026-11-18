@@ -6,13 +6,19 @@ namespace Jobsy.Core.Rules;
 public static partial class CvPdfTextSanitizer
 {
     public static string StripInfoDictionaryFromRawPdf(string rawPdfLatin1)
+        => StripMetadataObjectsFromRawPdf(rawPdfLatin1);
+
+    public static string StripMetadataObjectsFromRawPdf(string rawPdfLatin1)
     {
         if (string.IsNullOrEmpty(rawPdfLatin1))
         {
             return string.Empty;
         }
 
-        return InfoDictionaryLiteralRegex().Replace(rawPdfLatin1, " ");
+        var text = InfoDictionaryLiteralRegex().Replace(rawPdfLatin1, " ");
+        text = InfoDictionaryNestedRegex().Replace(text, " ");
+        text = MetadataStreamRegex().Replace(text, " ");
+        return text;
     }
 
     public static string CleanExtractedBodyText(string extracted)
@@ -48,4 +54,14 @@ public static partial class CvPdfTextSanitizer
         @"/(?:Producer|Creator|Title|Author|Subject|Keywords|CreationDate|ModDate)\s*\((?:\\.|[^\\)])*\)",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex InfoDictionaryLiteralRegex();
+
+    [GeneratedRegex(
+        @"/(?:Producer|Creator|Title|Author|Subject|Keywords|CreationDate|ModDate)\s*\(((?:\\.|[^\\)])|\([^\\)]*\))*\)",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex InfoDictionaryNestedRegex();
+
+    [GeneratedRegex(
+        @"/Type\s*/Metadata\b.*?(?:stream\s*[\r\n]+.*?[\r\n]+endstream|<<[^>]*>>)",
+        RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex MetadataStreamRegex();
 }

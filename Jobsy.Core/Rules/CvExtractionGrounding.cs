@@ -242,7 +242,10 @@ public static class CvExtractionGrounding
                        RegexOptions.CultureInvariant);
         }
 
-        return ContainsPhrase(haystack, normalized);
+        return Regex.IsMatch(
+            haystack,
+            $@"(?:^|[^a-z]){Regex.Escape(normalized.ToLowerInvariant())}(?:[^a-z]|$)",
+            RegexOptions.CultureInvariant);
     }
 
     private static string CanonicalEducationLabel(string value)
@@ -266,7 +269,13 @@ public static class CvExtractionGrounding
             return null;
         }
 
-        var list = items.Where(i => ContainsPhrase(haystack, i)).Distinct(StringComparer.OrdinalIgnoreCase).Take(12).ToList();
+        var list = items
+            .Where(i => !CvPdfMetadataGuard.IsPdfMetadataNoise(i))
+            .Where(i => !CvExtractionFactsGuard.ContainsForbiddenProposalFragment(i))
+            .Where(i => ContainsPhrase(haystack, i))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(12)
+            .ToList();
         return list.Count == 0 ? null : list;
     }
 
