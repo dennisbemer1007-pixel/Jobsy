@@ -130,7 +130,7 @@ public sealed class MockInterviewController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
         }
         var preferences = MeController.ParsePreferences(user.PreferencesJson);
         var ageYears = AgeRules.AgeYearsFromDateOfBirth(user.DateOfBirth)

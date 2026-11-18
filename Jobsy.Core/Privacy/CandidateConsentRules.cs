@@ -13,6 +13,8 @@ public static class CandidateConsentRules
         "Geef eerst toestemming voor de tests en AI-analyse in je profiel.";
     public const string ParentalConsentRequiredMessage =
         "Vraag eerst toestemming aan je ouder of voogd. Daarna kun je deze functie gebruiken.";
+    public const string DateOfBirthRequiredMessage =
+        "Vul eerst je geboortedatum in. Dan weten we of je ouder toestemming moet geven.";
     public const string TalentPoolAdultOnlyMessage =
         "De talentpool is alleen beschikbaar vanaf 18 jaar.";
 
@@ -20,10 +22,30 @@ public static class CandidateConsentRules
         => AgeYears(dateOfBirth, today) is int age && age < MinimumCandidateAge;
 
     public static bool RequiresParentalConsent(User user, DateOnly? today = null)
-        => AgeYears(user.DateOfBirth, today) is int age && age < ParentalConsentAge;
+    {
+        var age = AgeYears(user.DateOfBirth, today);
+        if (age is null)
+        {
+            return true;
+        }
+
+        return age < ParentalConsentAge;
+    }
 
     public static bool CanUseCandidateFeatures(User user, DateOnly? today = null)
         => !RequiresParentalConsent(user, today) || user.ParentalConsentAt is not null;
+
+    public static string CandidateFeatureBlockMessage(User user, DateOnly? today = null)
+    {
+        if (user.DateOfBirth is null)
+        {
+            return DateOfBirthRequiredMessage;
+        }
+
+        return RequiresParentalConsent(user, today)
+            ? ParentalConsentRequiredMessage
+            : ParentalConsentRequiredMessage;
+    }
 
     public static bool HasCurrentTestAiConsent(User user)
         => user.TestAiConsentAt is not null

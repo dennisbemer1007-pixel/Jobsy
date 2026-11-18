@@ -207,7 +207,14 @@
             <circle cx="12" cy="12" r="9" />
             <path d="m15.5 8.5-2 5-5 2 2-5z" />
         </svg>
-        <span>@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</span>
+        @if (Plan.FromAi)
+        {
+            <span role="note" class="ai-generated-label">@Culture["Career.Source.Ai"]</span>
+        }
+        else
+        {
+            <span>@Culture["Career.Source.Local"]</span>
+        }
     </p>
 
     @if (Plan.LanguageDiffers)

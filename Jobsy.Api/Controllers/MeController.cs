@@ -1120,7 +1120,7 @@ public partial class MeController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
         }
 
         await using var buffer = new MemoryStream();
@@ -1163,41 +1163,16 @@ public partial class MeController : ControllerBase
         existing.UploadedAtUtc = DateTime.UtcNow;
         existing.ExtractedAtUtc = null;
         existing.FilledFieldsJson = null;
+        existing.SuggestedFieldsJson = null;
+        existing.ConfirmedFieldsJson = null;
 
         var text = _cvText.Extract(bytes, contentType, safeName);
-        var extracted = await _cvExtraction.ExtractAsync(text, cancellationToken);
-        var prefs = ParsePreferences(user.PreferencesJson);
-        var merged = CvProfileMerge.Apply(user.FirstName, user.LastName, user.PhoneNumber, prefs, extracted);
-        if (merged.FilledFields.Count > 0)
+        var extracted = await _cvExtraction.ExtractAsync(text, user.FirstName, user.LastName, cancellationToken);
+        var proposalKeys = CvExtractionFieldKeys.ListProposalKeys(extracted);
+        if (proposalKeys.Count > 0)
         {
-            user.FirstName = merged.FirstName;
-            user.LastName = merged.LastName;
-            var composed = CandidateNameRules.ComposeFullName(user.FirstName, user.LastName, user.FullName);
-            if (!string.IsNullOrWhiteSpace(composed))
-            {
-                user.FullName = composed.Length > 256 ? composed[..256] : composed;
-            }
-
-            if (!string.IsNullOrWhiteSpace(merged.PhoneNumber) && CandidatePhoneRules.IsValid(merged.PhoneNumber))
-            {
-                ContactVerification.ApplyPhone(user, merged.PhoneNumber);
-            }
-
-            user.PreferencesJson = SerializePreferences(merged.Preferences with
-            {
-                NoWorkExperience = merged.Preferences.NoWorkExperience ?? prefs.NoWorkExperience,
-                EducationDirection = merged.Preferences.EducationDirection ?? prefs.EducationDirection,
-                AvailabilityPresets = merged.Preferences.AvailabilityPresets ?? prefs.AvailabilityPresets,
-                AvailabilityPresetsOverridden =
-                    merged.Preferences.AvailabilityPresetsOverridden ?? prefs.AvailabilityPresetsOverridden,
-                SpokenLanguages = merged.Preferences.SpokenLanguages ?? prefs.SpokenLanguages,
-                DutchLevel = merged.Preferences.DutchLevel ?? prefs.DutchLevel,
-                EmployerPreferences = merged.Preferences.EmployerPreferences ?? prefs.EmployerPreferences,
-                LearningGoals = merged.Preferences.LearningGoals ?? prefs.LearningGoals,
-                Hobbies = merged.Preferences.Hobbies ?? prefs.Hobbies
-            });
+            existing.SuggestedFieldsJson = JsonSerializer.Serialize(extracted, JsonOptions);
             existing.ExtractedAtUtc = DateTime.UtcNow;
-            existing.FilledFieldsJson = JsonSerializer.Serialize(merged.FilledFields, JsonOptions);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -1225,6 +1200,118 @@ public partial class MeController : ControllerBase
         }
 
         return File(cv.Content, cv.ContentType, cv.FileName);
+    }
+
+    [HttpPost("cv/confirm")]
+    [Authorize(Policy = JobsyPolicies.RequireCandidate)]
+    [EnableRateLimiting("ai")]
+    public async Task<ActionResult<MeProfileDto>> ConfirmCvExtraction(
+        ConfirmCvExtractionRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.AcceptedFields is not { Count: > 0 })
+        {
+            return BadRequest(new { message = "Kies minstens één veld dat klopt." });
+        }
+
+        var lookup = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (lookup is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == lookup.Id, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        if (!CandidateConsentRules.CanUseCandidateFeatures(user))
+        {
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
+        }
+
+        var cv = await _db.CandidateUploadedCvs.FirstOrDefaultAsync(c => c.UserId == user.Id, cancellationToken);
+        if (cv is null || string.IsNullOrWhiteSpace(cv.SuggestedFieldsJson))
+        {
+            return BadRequest(new { message = "Er is geen CV-voorstel om te bevestigen." });
+        }
+
+        CvExtractedProfile? extracted;
+        try
+        {
+            extracted = JsonSerializer.Deserialize<CvExtractedProfile>(cv.SuggestedFieldsJson, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return BadRequest(new { message = "CV-voorstel kon niet gelezen worden. Upload je CV opnieuw." });
+        }
+
+        if (extracted is null)
+        {
+            return BadRequest(new { message = "CV-voorstel is leeg." });
+        }
+
+        var allowed = CvExtractionFieldKeys.ListProposalKeys(extracted)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var accepted = request.AcceptedFields
+            .Where(k => allowed.Contains(k))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (accepted.Count == 0)
+        {
+            return BadRequest(new { message = "Geen van de gekozen velden hoort bij dit voorstel." });
+        }
+
+        var prefs = ParsePreferences(user.PreferencesJson);
+        var merged = CvProfileMerge.ApplyConfirmed(
+            user.FirstName,
+            user.LastName,
+            user.PhoneNumber,
+            prefs,
+            extracted,
+            accepted);
+
+        user.PreferencesJson = SerializePreferences(merged.Preferences with
+        {
+            NoWorkExperience = merged.Preferences.NoWorkExperience ?? prefs.NoWorkExperience,
+            EducationDirection = merged.Preferences.EducationDirection ?? prefs.EducationDirection,
+            AvailabilityPresets = merged.Preferences.AvailabilityPresets ?? prefs.AvailabilityPresets,
+            AvailabilityPresetsOverridden =
+                merged.Preferences.AvailabilityPresetsOverridden ?? prefs.AvailabilityPresetsOverridden,
+            SpokenLanguages = merged.Preferences.SpokenLanguages ?? prefs.SpokenLanguages,
+            DutchLevel = merged.Preferences.DutchLevel ?? prefs.DutchLevel,
+            EmployerPreferences = merged.Preferences.EmployerPreferences ?? prefs.EmployerPreferences,
+            LearningGoals = merged.Preferences.LearningGoals ?? prefs.LearningGoals,
+            Hobbies = merged.Preferences.Hobbies ?? prefs.Hobbies
+        });
+
+        var confirmed = ParseStringList(cv.ConfirmedFieldsJson);
+        foreach (var key in accepted)
+        {
+            if (!confirmed.Contains(key, StringComparer.OrdinalIgnoreCase))
+            {
+                confirmed.Add(key);
+            }
+        }
+
+        var filled = ParseStringList(cv.FilledFieldsJson);
+        foreach (var key in merged.FilledFields)
+        {
+            if (!filled.Contains(key, StringComparer.OrdinalIgnoreCase))
+            {
+                filled.Add(key);
+            }
+        }
+
+        cv.ConfirmedFieldsJson = JsonSerializer.Serialize(confirmed, JsonOptions);
+        cv.FilledFieldsJson = filled.Count > 0 ? JsonSerializer.Serialize(filled, JsonOptions) : null;
+        cv.SuggestedFieldsJson = null;
+
+        await _db.SaveChangesAsync(cancellationToken);
+        _insightsQueue.TryEnqueue(user.Id);
+        var features = await _features.GetAsync(cancellationToken);
+        return Ok(await BuildProfileDtoAsync(user, features.AuthenticatorEnabled, cancellationToken));
     }
 
     [HttpDelete("cv")]
@@ -1295,7 +1382,7 @@ public partial class MeController : ControllerBase
 
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new { message = CandidateConsentRules.CandidateFeatureBlockMessage(user) });
         }
 
         user.TestAiConsentAt = DateTime.UtcNow;
@@ -1489,23 +1576,31 @@ public partial class MeController : ControllerBase
                 c.SizeBytes,
                 c.UploadedAtUtc,
                 c.ExtractedAtUtc,
-                c.FilledFieldsJson
+                c.FilledFieldsJson,
+                c.SuggestedFieldsJson,
+                c.ConfirmedFieldsJson
             })
             .FirstOrDefaultAsync(cancellationToken);
 
         CandidateUploadedCvInfoDto? cv = null;
         if (cvRow is not null)
         {
-            IReadOnlyList<string>? filled = null;
-            if (!string.IsNullOrWhiteSpace(cvRow.FilledFieldsJson))
+            var filled = DeserializeStringList(cvRow.FilledFieldsJson);
+            var confirmed = DeserializeStringList(cvRow.ConfirmedFieldsJson);
+            CvExtractedProfile? suggested = null;
+            IReadOnlyList<string>? pending = null;
+            if (!string.IsNullOrWhiteSpace(cvRow.SuggestedFieldsJson))
             {
                 try
                 {
-                    filled = JsonSerializer.Deserialize<List<string>>(cvRow.FilledFieldsJson, JsonOptions);
+                    suggested = JsonSerializer.Deserialize<CvExtractedProfile>(cvRow.SuggestedFieldsJson, JsonOptions);
+                    pending = suggested is null
+                        ? null
+                        : CvExtractionFieldKeys.ListProposalKeys(suggested);
                 }
                 catch (JsonException)
                 {
-                    filled = null;
+                    suggested = null;
                 }
             }
 
@@ -1515,7 +1610,10 @@ public partial class MeController : ControllerBase
                 cvRow.SizeBytes,
                 cvRow.UploadedAtUtc,
                 cvRow.ExtractedAtUtc,
-                filled);
+                filled,
+                pending,
+                suggested,
+                confirmed);
         }
 
         var references = await _db.CandidateReferences.AsNoTracking()
@@ -2600,4 +2698,27 @@ public partial class MeController : ControllerBase
             employerPreferences?.ToList(),
             learningGoals?.ToList(),
             hobbies?.ToList()));
+
+    private static List<string> ParseStringList(string? json)
+    {
+        var list = DeserializeStringList(json);
+        return list is null ? [] : list.ToList();
+    }
+
+    private static List<string>? DeserializeStringList(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 }

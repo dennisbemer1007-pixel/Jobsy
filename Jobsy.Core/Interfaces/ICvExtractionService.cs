@@ -12,5 +12,9 @@ public interface ICvExtractionService
     /// <summary>
     /// Asks OpenAI for clearly present profile fields. Returns empty extraction when no key or on failure.
     /// </summary>
-    Task<CvExtractedProfile> ExtractAsync(string cvText, CancellationToken cancellationToken = default);
+    Task<CvExtractedProfile> ExtractAsync(
+        string cvText,
+        string? knownFirstName = null,
+        string? knownLastName = null,
+        CancellationToken cancellationToken = default);
 }

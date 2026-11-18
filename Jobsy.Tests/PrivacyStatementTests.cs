@@ -247,7 +247,7 @@ public class PrivacyRetentionTests : PrivacyRenderTestBase
     {
         var table = RenderPrivacy().Find("#bewaren .pp-table__grid").TextContent;
 
-        Assert.Equal(13, LegalRetention.Rows.Count);
+        Assert.Equal(14, LegalRetention.Rows.Count);
         foreach (var row in LegalRetention.Rows)
         {
             Assert.Contains(UiStrings.Get(row.LabelKey, "nl"), table, StringComparison.Ordinal);

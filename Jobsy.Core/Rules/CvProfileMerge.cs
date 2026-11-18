@@ -17,40 +17,11 @@ public static class CvProfileMerge
         var filled = new List<string>();
 
         var first = existingFirstName;
-        if (string.IsNullOrWhiteSpace(first) && !string.IsNullOrWhiteSpace(extracted.FirstName))
-        {
-            first = extracted.FirstName.Trim();
-            filled.Add("voornaam");
-        }
-
         var last = existingLastName;
-        if (string.IsNullOrWhiteSpace(last) && !string.IsNullOrWhiteSpace(extracted.LastName))
-        {
-            last = extracted.LastName.Trim();
-            filled.Add("achternaam");
-        }
-
         var phone = existingPhone;
-        var extractedPhone = CandidatePhoneRules.Normalize(extracted.PhoneNumber);
-        if (string.IsNullOrWhiteSpace(phone)
-            && !string.IsNullOrWhiteSpace(extractedPhone)
-            && CandidatePhoneRules.IsValid(extractedPhone))
-        {
-            phone = extractedPhone;
-            filled.Add("telefoon");
-        }
 
+        // AI never writes AboutMe; the candidate writes that field themselves.
         var about = existing.AboutMe;
-        if (string.IsNullOrWhiteSpace(about) && !string.IsNullOrWhiteSpace(extracted.AboutMe))
-        {
-            about = extracted.AboutMe.Trim();
-            if (about.Length > 2000)
-            {
-                about = about[..2000];
-            }
-
-            filled.Add("over mij");
-        }
 
         var licenses = MergeDistinct(existing.DrivingLicenses, extracted.DrivingLicenses);
         if (licenses.Count > (existing.DrivingLicenses?.Count ?? 0))
@@ -93,6 +64,25 @@ public static class CvProfileMerge
         };
 
         return new CvProfileMergeResult(first, last, phone, prefs, filled);
+    }
+
+    /// <summary>Apply only confirmed CV-suggestion field keys (see <see cref="CvExtractionFieldKeys"/>).</summary>
+    public static CvProfileMergeResult ApplyConfirmed(
+        string? existingFirstName,
+        string? existingLastName,
+        string? existingPhone,
+        CandidatePreferencesDto existing,
+        CvExtractedProfile extracted,
+        IReadOnlyCollection<string> confirmedKeys)
+    {
+        var keys = new HashSet<string>(confirmedKeys, StringComparer.OrdinalIgnoreCase);
+        var slice = new CvExtractedProfile(
+            DrivingLicenses: keys.Contains(CvExtractionFieldKeys.DrivingLicenses) ? extracted.DrivingLicenses : null,
+            Educations: keys.Contains(CvExtractionFieldKeys.Educations) ? extracted.Educations : null,
+            Roles: keys.Contains(CvExtractionFieldKeys.Roles) ? extracted.Roles : null,
+            Employers: keys.Contains(CvExtractionFieldKeys.Employers) ? extracted.Employers : null,
+            Certificates: keys.Contains(CvExtractionFieldKeys.Certificates) ? extracted.Certificates : null);
+        return Apply(existingFirstName, existingLastName, existingPhone, existing, slice);
     }
 
     private static List<string> MergeDistinct(IReadOnlyList<string>? existing, IReadOnlyList<string>? incoming)

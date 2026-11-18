@@ -236,7 +236,12 @@ public record CandidateUploadedCvInfoDto(
     int SizeBytes,
     DateTime UploadedAtUtc,
     DateTime? ExtractedAtUtc = null,
-    IReadOnlyList<string>? FilledFields = null);
+    IReadOnlyList<string>? FilledFields = null,
+    IReadOnlyList<string>? PendingProposalFields = null,
+    CvExtractedProfile? SuggestedProfile = null,
+    IReadOnlyList<string>? ConfirmedFields = null);
+
+public record ConfirmCvExtractionRequest(IReadOnlyList<string> AcceptedFields);
 
 public record CandidateReferenceDto(
     Guid Id,

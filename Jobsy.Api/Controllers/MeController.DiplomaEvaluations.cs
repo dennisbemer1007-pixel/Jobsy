@@ -40,7 +40,11 @@ public partial class MeController
 
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { code = "parental_consent_required", message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new
+            {
+                code = user.DateOfBirth is null ? "date_of_birth_required" : "parental_consent_required",
+                message = CandidateConsentRules.CandidateFeatureBlockMessage(user)
+            });
         }
 
         var count = await _db.CandidateDiplomaEvaluations.CountAsync(e => e.UserId == user.Id, cancellationToken);
@@ -83,7 +87,11 @@ public partial class MeController
 
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { code = "parental_consent_required", message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new
+            {
+                code = user.DateOfBirth is null ? "date_of_birth_required" : "parental_consent_required",
+                message = CandidateConsentRules.CandidateFeatureBlockMessage(user)
+            });
         }
 
         var row = await _db.CandidateDiplomaEvaluations
@@ -143,7 +151,11 @@ public partial class MeController
 
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { code = "parental_consent_required", message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return BadRequest(new
+            {
+                code = user.DateOfBirth is null ? "date_of_birth_required" : "parental_consent_required",
+                message = CandidateConsentRules.CandidateFeatureBlockMessage(user)
+            });
         }
 
         var row = await _db.CandidateDiplomaEvaluations

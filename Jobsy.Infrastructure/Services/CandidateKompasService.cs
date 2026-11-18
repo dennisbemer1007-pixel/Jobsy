@@ -503,13 +503,18 @@ public sealed class CandidateKompasService : ICandidateKompasService
             keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values, language);
             if (string.IsNullOrWhiteSpace(storyText))
             {
-                return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc ?? DateTime.UtcNow, WhoAmIStoryStatuses.Ready);
+                return new WhoAmIStorySummaryDto(
+                    story,
+                    keywords,
+                    generatedAtUtc ?? DateTime.UtcNow,
+                    WhoAmIStoryStatuses.Ready,
+                    FromOpenAi: false);
             }
         }
 
         if (story is null)
         {
-            return new WhoAmIStorySummaryDto(null, keywords, generatedAtUtc, WhoAmIStoryStatuses.Empty);
+            return new WhoAmIStorySummaryDto(null, keywords, generatedAtUtc, WhoAmIStoryStatuses.Empty, FromOpenAi: false);
         }
 
         if (!unlocked
@@ -517,7 +522,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             || career is not { IsComplete: true }
             || culture is not { IsComplete: true })
         {
-            return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, WhoAmIStoryStatuses.Ready);
+            return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, WhoAmIStoryStatuses.Ready, fromOpenAi);
         }
 
         highlights ??= WhoAmIProfileHighlights.Empty;
@@ -528,7 +533,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             generatedAtUtc,
             DateTime.UtcNow);
         var status = stale || retryFallback ? WhoAmIStoryStatuses.Updating : WhoAmIStoryStatuses.Ready;
-        return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, status);
+        return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, status, fromOpenAi);
     }
 
     private static IReadOnlyList<string> ParseKeywords(string? json)

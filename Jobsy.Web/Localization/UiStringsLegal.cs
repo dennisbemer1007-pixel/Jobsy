@@ -358,6 +358,12 @@ public static class UiStringsLegal
             "Zgłoszenia o ofercie lub stronie firmy (e-mail krócej)",
             "Raportări despre un job sau o pagină de firmă (e-mailul mai scurt)",
             "التبليغات عن وظيفة أو صفحة شركة (البريد لفترة أقصر)");
+        Add("Legal.Retention.SchoolPupil",
+            "School: leerlingcodes en uitslagen per klas",
+            "School: pupil codes and class results",
+            "Szkoła: kody uczniów i wyniki klasy",
+            "Școală: coduri de elevi și rezultate pe clasă",
+            "المدرسة: رموز التلاميذ ونتائج الصف");
         Add("Legal.Retention.Account",
             "Account, tests en uitslagen",
             "Account, tests and results",

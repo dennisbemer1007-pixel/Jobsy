@@ -180,6 +180,7 @@ public class DeepAnalysisPrivacySecurityTests
         FullName = name,
         Role = UserRole.Candidate,
         IsActive = true,
+        DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-25),
         ConsentVersion = PrivacyConstants.CurrentConsentVersion,
         TestAiConsentAt = DateTime.UtcNow,
         TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion

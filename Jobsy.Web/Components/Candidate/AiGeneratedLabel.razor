@@ -1,0 +1,12 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Visible)
+{
+    <p class="ai-generated-label" role="note">@Culture["Ai.GeneratedLabel"]</p>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+}

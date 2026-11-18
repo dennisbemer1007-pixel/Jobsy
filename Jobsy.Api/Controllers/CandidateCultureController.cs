@@ -47,7 +47,7 @@ public sealed class CandidateCultureController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return TestSaveErrors.ParentalConsent();
+            return TestSaveErrors.ParentalConsent(user);
         }
         if (!CandidateConsentRules.HasCurrentTestAiConsent(user))
         {

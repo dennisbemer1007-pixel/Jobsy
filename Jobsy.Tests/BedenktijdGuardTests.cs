@@ -125,6 +125,29 @@ public class BedenktijdGuardTests
         Assert.Empty(db.DeepAnalysisCheckouts);
     }
 
+    [Fact]
+    public async Task Controller_returns_date_of_birth_required_when_dob_missing()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        var user = ConsentedUser(userId);
+        user.DateOfBirth = null;
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var controller = CreateController(db, new CountingMollie(), userId);
+
+        var response = await controller.Checkout("competence", new DeepTestCheckoutRequest(true, "nl"), CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(response.Result);
+        var code = badRequest.Value!.GetType().GetProperty("code")!.GetValue(badRequest.Value);
+        Assert.Equal("date_of_birth_required", code);
+        Assert.Empty(db.DeepAnalysisCheckouts);
+    }
+
+    private static DateOnly AdultDateOfBirth()
+        => DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-25);
+
     private static User ConsentedUser(Guid id) => new()
     {
         Id = id,
@@ -132,6 +155,7 @@ public class BedenktijdGuardTests
         FullName = "Waiver Test",
         Role = UserRole.Candidate,
         IsActive = true,
+        DateOfBirth = AdultDateOfBirth(),
         ConsentVersion = PrivacyConstants.CurrentConsentVersion,
         TestAiConsentAt = DateTime.UtcNow,
         TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion

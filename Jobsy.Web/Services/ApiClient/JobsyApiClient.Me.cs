@@ -79,6 +79,23 @@ public sealed partial class JobsyApiClient
         await DownloadNamedFileAsync("api/me/cv", js, "CV.pdf", ct);
     }
 
+    public async Task<MeProfile?> ConfirmMyCvExtractionAsync(
+        IReadOnlyList<string> acceptedFields,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync(
+            "api/me/cv/confirm",
+            new { acceptedFields },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "CV-voorstel bevestigen mislukt.");
+        }
+
+        return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);
+    }
+
     public async Task<MeProfile?> DeleteMyCvAsync(CancellationToken ct = default)
     {
         var response = await _http.DeleteAsync("api/me/cv", ct);

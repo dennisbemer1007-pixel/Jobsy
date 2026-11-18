@@ -34,6 +34,33 @@
                                         </button>
                                     }
                                 </div>
+                                @if (Editor.CvProposalFields.Count > 0)
+                                {
+                                    <section class="profile-cv__proposal" aria-labelledby="profile-cv-proposal-title">
+                                        <h3 id="profile-cv-proposal-title" class="profile-cv__proposal-title">@Culture["Profile.CvProposalTitle"]</h3>
+                                        <p class="profile-cv__proposal-lead">@Culture["Profile.CvProposalLead"]</p>
+                                        <ul class="profile-cv__proposal-list">
+                                            @foreach (var field in Editor.CvProposalFields)
+                                            {
+                                                <li>
+                                                    <label class="form-check-label">
+                                                        <input type="checkbox"
+                                                               checked="@Editor.IsCvProposalSelected(field)"
+                                                               @onchange="e => Editor.ToggleCvProposal(field, e.Value is true)"
+                                                               disabled="@Editor.CvBusy" />
+                                                        @Culture[$"Profile.CvProposalField.{field}"]
+                                                    </label>
+                                                </li>
+                                            }
+                                        </ul>
+                                        <button type="button"
+                                                class="btn btn-primary"
+                                                disabled="@(Editor.CvBusy || !Editor.HasCvProposalSelection)"
+                                                @onclick="Editor.ConfirmCvProposalsAsync">
+                                            @Culture["Profile.CvProposalConfirm"]
+                                        </button>
+                                    </section>
+                                }
                             </fieldset>
 
                             @if (Editor.AuthenticatorEnabled)

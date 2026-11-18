@@ -418,6 +418,7 @@ public sealed class WhoAmIStorySummary
     public List<string> Keywords { get; set; } = [];
     public DateTime? GeneratedAtUtc { get; set; }
     public string Status { get; set; } = "Empty";
+    public bool FromOpenAi { get; set; }
 }
 
 public sealed class RoleFitCheckResult
