@@ -20,7 +20,7 @@ internal static class PassportClientCvConfirmSaver
             .ToList();
         if (fields.Count == 0)
         {
-            return RedirectWithError(culture["Profile.CvProposalConfirm"]);
+            return RedirectWithError(culture["Profile.CvProposalPickOne"]);
         }
 
         try

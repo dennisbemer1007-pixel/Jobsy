@@ -157,6 +157,13 @@ public class ProfileSectionsExtractionTests
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
         Assert.Contains("AppendDataPanel", shells);
         Assert.Contains("passport-data-save", shells);
+        var passportCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/mijn-paspoort.css"));
+        Assert.Contains(".passport-data .profile-save-bar", passportCss, StringComparison.Ordinal);
+        Assert.Contains("position: static", passportCss, StringComparison.Ordinal);
+        var proofHtml = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrProofHtml.cs"));
+        Assert.Contains("data-passport-cv-proposal-submit", proofHtml, StringComparison.Ordinal);
+        var proofJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/passport-ssr-proof.js"));
+        Assert.Contains("bindCvProposal", proofJs, StringComparison.Ordinal);
         Assert.DoesNotContain("Passport.Transitional.OpenData", shells);
         Assert.DoesNotContain("ClassicTabsUntilPhase4", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/PassportRedirects.cs")));
     }

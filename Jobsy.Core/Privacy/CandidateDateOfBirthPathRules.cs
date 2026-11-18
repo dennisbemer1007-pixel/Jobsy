@@ -5,6 +5,13 @@ public static class CandidateDateOfBirthPathRules
 {
     public const string DobCapturePath = "/candidate/geboortedatum";
 
+    /// <summary>Candidate shell routes outside <c>/candidate/*</c> that still need a stored DOB.</summary>
+    private static readonly HashSet<string> CandidateLandingPaths = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/home",
+        "/profiel",
+    };
+
     public static bool IsExempt(string? path, string? tabQueryValue)
     {
         var p = Normalize(path);
@@ -50,12 +57,17 @@ public static class CandidateDateOfBirthPathRules
         }
 
         var p = Normalize(path);
-        if (string.IsNullOrEmpty(p) || !p.StartsWith("/candidate", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(p) || IsExempt(path, tabQueryValue))
         {
             return false;
         }
 
-        return !IsExempt(path, tabQueryValue);
+        if (p.StartsWith("/candidate", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return CandidateLandingPaths.Contains(p);
     }
 
     private static string Normalize(string? path)

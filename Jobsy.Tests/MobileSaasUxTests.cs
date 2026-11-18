@@ -281,6 +281,7 @@ public class MobileSaasUxTests
         Assert.Contains("--profile-save-bar-h: 4.25rem;", css);
         Assert.Contains("4.75rem + var(--profile-save-bar-h)", css);
         Assert.Contains(".profile-save-bar .login-submit {\n    width: 100%;", css);
+        Assert.Contains("body[data-jobsy-dialog-open=\"1\"] .push-prompt:not(.push-prompt--onboarding)", css);
         Assert.Contains(".profile-page--candidate .profile-contact__names {\n    grid-template-columns: repeat(2, minmax(0, 1fr));", css);
         Assert.Contains(".profile-page--candidate .profile-page__header {\n        display: none;", css);
         // page-in must not leave a transform (fill-mode:both) or fixed Opslaan sticks near the top

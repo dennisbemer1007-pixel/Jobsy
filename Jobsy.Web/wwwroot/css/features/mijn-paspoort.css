@@ -1295,7 +1295,21 @@
         max-height: min(85dvh, 42rem);
         border-radius:var(--r-md);
         padding-bottom: 0;
-    }}.passport-data {
+    }}@media (max-width: 1024px) {
+    .app-shell.has-bottom-nav .passport-data .profile-save-bar,
+    .app-shell:has(.bottom-nav) .passport-data .profile-save-bar {
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        z-index: auto;
+        margin-top: 0.85rem;
+        padding: 0;
+        background: transparent;
+        border-top: none;
+        box-shadow: none;
+    }
+}.passport-data {
     display: flex;
     flex-direction: column;
     gap: var(--space-3, 0.75rem);

@@ -478,7 +478,7 @@ internal static class PassportSsrProofHtml
             sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalTitle"]));
             sb.Append("</h4><p class=\"profile-cv__proposal-lead\">");
             sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalLead"]));
-            sb.Append("</p><form method=\"post\" action=\"/api/passport-client/confirm-cv\" data-enhance=\"false\" data-enhance-nav=\"false\">");
+            sb.Append("</p><form method=\"post\" action=\"/api/passport-client/confirm-cv\" data-enhance=\"false\" data-enhance-nav=\"false\" data-passport-cv-proposal-form=\"1\">");
             sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
             sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
             sb.Append("\" /><ul class=\"profile-cv__proposal-list\">");
@@ -491,7 +491,7 @@ internal static class PassportSsrProofHtml
                 sb.Append("</label></li>");
             }
 
-            sb.Append("</ul><button type=\"submit\" class=\"btn btn-primary\" data-testid=\"passport-cv-proposal-confirm\">");
+            sb.Append("</ul><button type=\"submit\" class=\"btn btn-primary\" data-testid=\"passport-cv-proposal-confirm\" disabled data-passport-cv-proposal-submit=\"1\">");
             sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalConfirm"]));
             sb.Append("</button></form></section>");
         }
