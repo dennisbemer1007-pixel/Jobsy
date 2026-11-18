@@ -157,6 +157,7 @@ internal static class DemoUsersSeeder
             FirstName = "Sanne",
             FullName = "Sanne de Vries",
             Role = UserRole.Candidate,
+            DateOfBirth = new DateOnly(1998, 6, 15),
             OpenForWork = true,
             IsActive = true
         });

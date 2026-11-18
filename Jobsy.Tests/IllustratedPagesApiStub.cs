@@ -30,6 +30,13 @@ public static class IllustratedPagesApiStub
     /// <summary>When true, kompas payloads use a minimal paspoort profile (many empty fields).</summary>
     public static bool PassportMinimalProfileCapture { get; set; }
 
+    internal static readonly DateOnly StubAdultDateOfBirth = new(1998, 4, 12);
+
+    private const string StubAdultDateOfBirthJson = """
+        "dateOfBirth": "1998-04-12",
+        "hasDateOfBirth": true,
+        """;
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -338,6 +345,7 @@ public static class IllustratedPagesApiStub
                       "firstName": "Onboarding",
                       "lastName": "E2E",
                       "role": "Candidate",
+                    """ + StubAdultDateOfBirthJson + """
                       "openForWork": true,
                       "preferences": {}
                     }
@@ -353,6 +361,7 @@ public static class IllustratedPagesApiStub
                   "firstName": "Sam",
                   "lastName": "de Wit",{{testConsentLine}}
                   "role": "Candidate",
+                  {{StubAdultDateOfBirthJson}}
                   "openForWork": true,
                   "homeLatitude": 51.9935,
                   "homeLongitude": 4.2085,
@@ -758,6 +767,8 @@ public static class IllustratedPagesApiStub
                 FullName = "Sanne de Vries",
                 FirstName = "Sanne",
                 Role = "Candidate",
+                DateOfBirth = StubAdultDateOfBirth,
+                HasDateOfBirth = true,
                 Preferences = new CandidatePreferences()
             },
             WhoAmI = null
@@ -768,6 +779,8 @@ public static class IllustratedPagesApiStub
         kompas.Profile!.FullName = "Sanne de Vries";
         kompas.Profile.FirstName = "Sanne";
         kompas.Profile.Role = "Candidate";
+        kompas.Profile.DateOfBirth = StubAdultDateOfBirth;
+        kompas.Profile.HasDateOfBirth = true;
         kompas.Profile.Preferences = new CandidatePreferences();
         kompas.WhoAmI = null;
         return kompas;

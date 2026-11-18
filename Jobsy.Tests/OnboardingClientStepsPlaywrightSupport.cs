@@ -221,7 +221,14 @@ internal static class OnboardingClientStepsPlaywrightSupport
         internal int SavedStep { get; set; } = 1;
         internal int ProfilePutCount;
         internal bool WelcomeDismissed;
-        internal MeProfile StoredProfile = new() { FirstName = "Onboarding", LastName = "Tester" };
+        internal MeProfile StoredProfile = new()
+        {
+            FirstName = "Onboarding",
+            LastName = "Tester",
+            Role = "Candidate",
+            DateOfBirth = new DateOnly(2000, 6, 15),
+            HasDateOfBirth = true,
+        };
         internal string? StoredDreamTitle { get; set; }
         internal Dictionary<string, int> CompetencyAnswers { get; } = new(StringComparer.Ordinal);
         internal Dictionary<string, int> CareerAnswers { get; } = new(StringComparer.Ordinal);
