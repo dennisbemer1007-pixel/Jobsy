@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "45b812ca198fb2c64e66217395e086f3dc7563cd639b08a0074ea1b4812fbeaf",
+    "sha256": "23f113a702f41b917fb72a9946dd58116a90e423fb7f15d97563af8497133cca",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -208,7 +208,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "d55199c713c4c8244205ccbba5e015c9973da79f3f9b9c2c521f98d80a37f5ad",
+    "sha256": "f03523c418b277aa69c9994e85afe6d1f770a217116cdabda3170fd451d64c46",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
@@ -628,7 +628,7 @@
     "v": "20261026-04"
   },
   "js/passport-ssr-proof.js": {
-    "sha256": "398007640d5dde9d7cb33d068694c5543253b3e679d7ad9a5b8107eb24a00943",
+    "sha256": "9d0fb12ef9224eca462e4329247acb8115c21244183860fbdfc35f0646e8013d",
     "v": "20261026-61"
   },
   "js/passport-ssr-tabs.js": {

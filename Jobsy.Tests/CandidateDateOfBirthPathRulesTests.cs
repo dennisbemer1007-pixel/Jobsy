@@ -12,6 +12,9 @@ public sealed class CandidateDateOfBirthPathRulesTests
     [InlineData("/candidate/settings", null, false)]
     [InlineData("/candidate/geboortedatum", null, false)]
     [InlineData("/candidate/privacy", null, false)]
+    [InlineData("/home", null, true)]
+    [InlineData("/profiel", null, true)]
+    [InlineData("/login", null, false)]
     public void Redirect_rules(string path, string? tab, bool expectRedirect)
     {
         Assert.Equal(expectRedirect, CandidateDateOfBirthPathRules.ShouldRedirect(path, tab, hasDateOfBirth: false));

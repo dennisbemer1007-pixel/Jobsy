@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts;
 
 namespace Jobsy.Core.Rules;
@@ -9,6 +10,14 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class CvExtractionGrounding
 {
+    private static readonly string[] EducationTokens = ["vmbo", "mbo", "havo", "vwo", "hbo", "wo"];
+
+    private static readonly Regex DrivingLicenseHarvestRegex = new(
+        @"(?:rijbewijs|rij\s*bewijs|driving\s*licen[cs]e)[^a-z0-9]{0,24}([a-z0-9,\s+/]+)",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly string[] DrivingLicenseCodes = ["AM", "A1", "A2", "A", "B", "BE", "C", "CE", "D", "DE"];
+
     public static CvExtractedProfile Filter(CvExtractedProfile extracted, string cvText)
     {
         var haystack = Normalize(cvText);
@@ -30,7 +39,6 @@ public static class CvExtractionGrounding
 
         var employers = extracted.Employers?
             .Where(e => ContainsPhrase(haystack, e.EmployerName))
-            .Where(e => string.IsNullOrWhiteSpace(e.Role) || ContainsPhrase(haystack, e.Role))
             .Take(12)
             .ToList();
 
@@ -39,9 +47,9 @@ public static class CvExtractionGrounding
             .Take(20)
             .ToList();
 
-        var educations = FilterList(extracted.Educations, haystack);
+        var educations = MergeEducations(extracted.Educations, haystack);
         var roles = FilterList(extracted.Roles, haystack);
-        var licenses = FilterList(extracted.DrivingLicenses, haystack);
+        var licenses = MergeDrivingLicenses(extracted.DrivingLicenses, haystack);
 
         return extracted with
         {
@@ -55,6 +63,91 @@ public static class CvExtractionGrounding
             Roles = roles,
             DrivingLicenses = licenses
         };
+    }
+
+    private static List<string>? MergeEducations(IReadOnlyList<string>? fromAi, string haystack)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in fromAi ?? [])
+        {
+            if (ContainsPhrase(haystack, item))
+            {
+                _ = set.Add(CanonicalEducationLabel(item));
+            }
+        }
+
+        foreach (var token in EducationTokens)
+        {
+            if (haystack.Contains(token, StringComparison.Ordinal))
+            {
+                _ = set.Add(CanonicalEducationLabel(token));
+            }
+        }
+
+        var list = set.Take(12).ToList();
+        return list.Count == 0 ? null : list;
+    }
+
+    private static List<string>? MergeDrivingLicenses(IReadOnlyList<string>? fromAi, string haystack)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var code in fromAi ?? [])
+        {
+            if (DrivingLicensePresent(haystack, code))
+            {
+                _ = set.Add(code.Trim().ToUpperInvariant());
+            }
+        }
+
+        foreach (Match match in DrivingLicenseHarvestRegex.Matches(haystack))
+        {
+            var chunk = match.Groups[1].Value;
+            foreach (var code in DrivingLicenseCodes)
+            {
+                if (DrivingLicensePresent(chunk, code))
+                {
+                    _ = set.Add(code);
+                }
+            }
+        }
+
+        var list = set.OrderBy(c => c, StringComparer.Ordinal).Take(12).ToList();
+        return list.Count == 0 ? null : list;
+    }
+
+    private static bool DrivingLicensePresent(string haystack, string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return false;
+        }
+
+        var normalized = code.Trim().ToUpperInvariant();
+        if (normalized.Length == 1)
+        {
+            return haystack.Contains("rijbewijs " + normalized.ToLowerInvariant(), StringComparison.Ordinal)
+                   || haystack.Contains("categorie " + normalized.ToLowerInvariant(), StringComparison.Ordinal)
+                   || Regex.IsMatch(
+                       haystack,
+                       $@"(?:^|[^a-z]){normalized.ToLowerInvariant()}(?:[^a-z]|$)",
+                       RegexOptions.CultureInvariant);
+        }
+
+        return ContainsPhrase(haystack, normalized);
+    }
+
+    private static string CanonicalEducationLabel(string value)
+    {
+        var token = Normalize(value);
+        foreach (var known in EducationTokens)
+        {
+            if (token.Contains(known, StringComparison.Ordinal))
+            {
+                return known.ToUpperInvariant();
+            }
+        }
+
+        return value.Trim();
     }
 
     private static List<string>? FilterList(IReadOnlyList<string>? items, string haystack)

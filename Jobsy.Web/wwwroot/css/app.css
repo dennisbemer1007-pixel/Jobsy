@@ -19865,6 +19865,13 @@ body {
     pointer-events: none;
 }
 
+/* Do not cover mock-interview / dialog chrome while the banner stays mounted (Later = not dismissed). */
+body[data-jobsy-dialog-open="1"] .push-prompt:not(.push-prompt--onboarding),
+body:has(.mock-interview-modal.lobsy-dialog[aria-modal="true"]) .push-prompt:not(.push-prompt--onboarding) {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .push-prompt__card {
     pointer-events: auto;
     max-width: 28rem;
