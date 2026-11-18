@@ -48,6 +48,34 @@
     } catch (e) {}
   }
 
+  function syncCvProposalSubmit(form) {
+    if (!form) return;
+    var submit = form.querySelector("[data-passport-cv-proposal-submit]");
+    if (!submit) return;
+    var any = form.querySelectorAll('input[name="cvField"]:checked').length > 0;
+    submit.disabled = !any;
+    submit.setAttribute("aria-disabled", any ? "false" : "true");
+  }
+
+  function bindCvProposal(r) {
+    var form = r.querySelector("[data-passport-cv-proposal-form]");
+    if (!form || form.getAttribute("data-passport-cv-proposal-bound") === "1") {
+      return;
+    }
+    form.setAttribute("data-passport-cv-proposal-bound", "1");
+    syncCvProposalSubmit(form);
+    form.querySelectorAll('input[name="cvField"]').forEach(function (box) {
+      box.addEventListener("change", function () {
+        syncCvProposalSubmit(form);
+      });
+    });
+    form.addEventListener("submit", function (e) {
+      if (form.querySelectorAll('input[name="cvField"]:checked').length === 0) {
+        e.preventDefault();
+      }
+    });
+  }
+
   function bind(r) {
     r.querySelectorAll("[data-passport-proof-open]").forEach(function (btn) {
       if (btn.getAttribute("data-passport-proof-bound") === "1") return;
@@ -84,6 +112,7 @@
       else if (kind === "references" || kind === "referenties") openSheet(r, "references");
       else if (kind === "cv") openSheet(r, "cv");
     }
+    bindCvProposal(r);
   }
 
   function init() {

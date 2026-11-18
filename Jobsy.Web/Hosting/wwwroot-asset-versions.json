@@ -628,8 +628,8 @@
     "v": "20261026-04"
   },
   "js/passport-ssr-proof.js": {
-    "sha256": "9d0fb12ef9224eca462e4329247acb8115c21244183860fbdfc35f0646e8013d",
-    "v": "20261026-61"
+    "sha256": "71b357d609965a72f57d465ba1601825002668af99867eb5ee57cd2c6e3a89c6",
+    "v": "20261118-62"
   },
   "js/passport-ssr-tabs.js": {
     "sha256": "ad43e6d4f99e0678cd763192f47bdb250400dbce8f562a89a76411646092b971",
