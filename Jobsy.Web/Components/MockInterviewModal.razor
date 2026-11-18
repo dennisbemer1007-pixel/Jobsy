@@ -22,6 +22,10 @@
                     <h2 id="mock-interview-title">@Culture["MockInterview.Title"]</h2>
                     <p class="mock-interview-modal__lead">@Culture["Assistant.SubtitleWarm"]</p>
                     <p class="mock-interview-modal__vacancy">@Vacancy.Title · @Vacancy.CompanyName</p>
+                    @if (_started)
+                    {
+                        <AiGeneratedLabel Visible="true" />
+                    }
                 </div>
             </div>
             <button type="button" class="mock-interview-modal__close" @onclick="Close" aria-label="@Culture["MockInterview.Close"]">×</button>
@@ -32,8 +36,6 @@
             <span class="mock-interview-modal__disclaimer-lead">@Culture["MockInterview.Disclaimer"]</span>
             <a class="auth-link mock-interview-modal__disclaimer-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["MockInterview.DisclaimerLink"]</a>
         </p>
-        <AiGeneratedLabel Visible="_started" />
-
         @if (_started && !_busy)
         {
             <p class="mock-interview-progress">@ProgressLabel</p>

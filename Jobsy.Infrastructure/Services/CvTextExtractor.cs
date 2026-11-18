@@ -38,6 +38,7 @@ public sealed class CvTextExtractor : ICvTextExtractor
         try
         {
             var raw = Encoding.Latin1.GetString(content);
+            raw = CvPdfTextSanitizer.StripInfoDictionaryFromRawPdf(raw);
             var sb = new StringBuilder();
             foreach (Match match in PdfLiteral.Matches(raw))
             {
@@ -99,7 +100,7 @@ public sealed class CvTextExtractor : ICvTextExtractor
                 }
             }
 
-            return Truncate(sb.ToString());
+            return Truncate(CvPdfTextSanitizer.CleanExtractedBodyText(sb.ToString()));
         }
         catch
         {

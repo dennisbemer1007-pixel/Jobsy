@@ -18,6 +18,14 @@ public static class CvExtractionGrounding
 
     private static readonly string[] DrivingLicenseCodes = ["AM", "A1", "A2", "A", "B", "BE", "C", "CE", "D", "DE"];
 
+    private static readonly Regex WorkExperienceSectionRegex = new(
+        @"werkervaring\s+(.+?)\s+opleiding",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex CertificateTokenRegex = new(
+        @"\b(bhv|vca(?:\s*basis)?|haccp|vvo|ehbo)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static CvExtractedProfile Filter(CvExtractedProfile extracted, string cvText)
     {
         var haystack = Normalize(cvText);
@@ -37,15 +45,9 @@ public static class CvExtractionGrounding
             };
         }
 
-        var employers = extracted.Employers?
-            .Where(e => ContainsPhrase(haystack, e.EmployerName))
-            .Take(12)
-            .ToList();
+        var employers = MergeEmployers(extracted.Employers, cvText, haystack);
 
-        var certificates = extracted.Certificates?
-            .Where(c => ContainsPhrase(haystack, c.Name))
-            .Take(20)
-            .ToList();
+        var certificates = MergeCertificates(extracted.Certificates, haystack);
 
         var educations = MergeEducations(extracted.Educations, haystack);
         var roles = FilterList(extracted.Roles, haystack);
@@ -63,6 +65,113 @@ public static class CvExtractionGrounding
             Roles = roles,
             DrivingLicenses = licenses
         };
+    }
+
+    private static List<CandidateEmployerHistoryDto>? MergeEmployers(
+        IReadOnlyList<CandidateEmployerHistoryDto>? fromAi,
+        string cvText,
+        string haystack)
+    {
+        var merged = new List<CandidateEmployerHistoryDto>();
+        foreach (var employer in fromAi ?? [])
+        {
+            if (CvPdfMetadataGuard.IsPdfMetadataNoise(employer.EmployerName))
+            {
+                continue;
+            }
+
+            if (ContainsPhrase(haystack, employer.EmployerName))
+            {
+                merged.Add(employer);
+            }
+        }
+
+        var harvestHaystack = Normalize(cvText);
+        var section = WorkExperienceSectionRegex.Match(harvestHaystack);
+        if (section.Success)
+        {
+            foreach (var fragment in section.Groups[1].Value.Split([',', '–', '-', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (fragment.Length < 3 || CvPdfMetadataGuard.IsPdfMetadataNoise(fragment))
+                {
+                    continue;
+                }
+
+                if (!ContainsPhrase(haystack, fragment))
+                {
+                    continue;
+                }
+
+                if (merged.Any(e => ContainsPhrase(haystack, e.EmployerName) && ContainsPhrase(haystack, fragment)))
+                {
+                    continue;
+                }
+
+                merged.Add(new CandidateEmployerHistoryDto(ToDisplayPhrase(fragment)));
+            }
+        }
+
+        return merged.Count == 0 ? null : merged.Take(12).ToList();
+    }
+
+    private static List<CandidateCertificateDto>? MergeCertificates(
+        IReadOnlyList<CandidateCertificateDto>? fromAi,
+        string haystack)
+    {
+        var merged = new List<CandidateCertificateDto>();
+        foreach (var cert in fromAi ?? [])
+        {
+            if (CvPdfMetadataGuard.IsPdfMetadataNoise(cert.Name))
+            {
+                continue;
+            }
+
+            if (ContainsPhrase(haystack, cert.Name))
+            {
+                merged.Add(cert);
+            }
+        }
+
+        foreach (Match match in CertificateTokenRegex.Matches(haystack))
+        {
+            var token = match.Groups[1].Value;
+            if (CvPdfMetadataGuard.IsPdfMetadataNoise(token))
+            {
+                continue;
+            }
+
+            var label = CertificateDisplayLabel(token);
+            if (merged.Any(c => string.Equals(c.Name, label, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            if (ContainsPhrase(haystack, token))
+            {
+                merged.Add(new CandidateCertificateDto(label, null));
+            }
+        }
+
+        return merged.Count == 0 ? null : merged.Take(20).ToList();
+    }
+
+    private static string CertificateDisplayLabel(string token)
+        => token.ToUpperInvariant() switch
+        {
+            "VCA" or "VCA BASIS" => "VCA",
+            _ => token.ToUpperInvariant()
+        };
+
+    private static string ToDisplayPhrase(string normalizedFragment)
+    {
+        var words = normalizedFragment.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(' ', words.Select(static w =>
+            w.Length switch
+            {
+                0 => w,
+                1 => w.ToUpperInvariant(),
+                _ => char.ToUpperInvariant(w[0]) + w[1..]
+            }));
     }
 
     private static List<string>? MergeEducations(IReadOnlyList<string>? fromAi, string haystack)
