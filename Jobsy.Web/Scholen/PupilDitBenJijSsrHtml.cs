@@ -218,8 +218,7 @@ public static class PupilDitBenJijSsrHtml
         sb.Append("""<section class="ll-card"><p class="ll-question__meta"><span class="ll-pill">""");
         sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.DonePill"])).Append("</span></p><h1>");
         sb.Append(PupilLeerlingSsrParts.E(culture["LeerlingStory.Title"])).Append("</h1>");
-        sb.Append(PupilLeerlingSsrParts.SpeakButton( // data-read-aloud-text
-            result.Story.Body, "ll-story", culture));
+        sb.Append(PupilLeerlingSsrParts.SpeakButton(result.Story.Body, "ll-story", culture));
         sb.Append("<p class=\"ll-result__story\">").Append(PupilLeerlingSsrParts.E(result.Story.Body)).Append("</p>");
         sb.Append("<div class=\"ll-tile-grid\">");
         foreach (var tile in result.Story.Tiles)

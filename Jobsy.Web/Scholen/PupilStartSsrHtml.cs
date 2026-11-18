@@ -28,7 +28,7 @@ public static class PupilStartSsrHtml
         sb.Append("<h1>");
         sb.Append(PupilLeerlingSsrParts.E(culture["Leerling.Start.Title"]));
         sb.Append("</h1>");
-        sb.Append(PupilLeerlingSsrParts.SpeakButton( // data-read-aloud-text
+        sb.Append(PupilLeerlingSsrParts.SpeakButton(
             SpokenText.Join(
                 culture["Leerling.Start.Title"],
                 culture["Leerling.Start.Lead"],

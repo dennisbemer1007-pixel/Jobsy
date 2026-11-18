@@ -132,8 +132,7 @@ public static class PupilReisSsrHtml
         }
         else
         {
-            sb.Append(PupilLeerlingSsrParts.SpeakButton( // data-read-aloud-text
-                qLabel, $"ll-q-{item.Id}", culture));
+            sb.Append(PupilLeerlingSsrParts.SpeakButton(qLabel, $"ll-q-{item.Id}", culture));
             if (hasImagine)
             {
                 sb.Append(PupilLeerlingSsrParts.QuestionImaginePanelBody(

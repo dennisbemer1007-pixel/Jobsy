@@ -10,8 +10,6 @@ namespace Jobsy.Web.Scholen;
 
 public static class PupilEilandSsrHtml
 {
-    // SpeakButton / Groep78SpeakRow expose data-read-aloud-text on read-aloud controls.
-
     public static string PartBreak(CultureState culture, string antiforgery)
     {
         var sb = new StringBuilder();
