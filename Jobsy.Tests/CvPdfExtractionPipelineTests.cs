@@ -39,16 +39,33 @@ public sealed class CvPdfExtractionPipelineTests
         Assert.Contains(filtered.Certificates!, c => c.Name.Equals("BHV", StringComparison.OrdinalIgnoreCase));
 
         var harvestedOnly = CvExtractionFactsGuard.Apply(
-            new CvExtractedProfile(Roles: ["opensource"]),
+            new CvExtractedProfile(
+                Roles: ["opensource"],
+                Employers:
+                [
+                    new("Huisartsenpraktijk De Linde", "2019 - 2024 Verpleegkundige"),
+                    new("De Linde", "Verpleegkundige"),
+                    new("Dierenasiel Scheveningen", "Vrijwilliger")
+                ]),
             text);
         var harvestedKeys = CvExtractionFieldKeys.ListProposalKeys(harvestedOnly);
         Assert.Contains(CvExtractionFieldKeys.Employers, harvestedKeys);
-        Assert.Contains(harvestedOnly.Employers!, e => e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(2, harvestedOnly.Employers!.Count);
 
-        var deLinde = harvestedOnly.Employers!.First(e =>
+        var deLinde = harvestedOnly.Employers!.Single(e =>
             e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("Verpleegkundige", deLinde.Role);
+        Assert.Equal("Huisartsenpraktijk De Linde", deLinde.EmployerName);
         Assert.Equal("2024-12", deLinde.EndMonth);
         Assert.Equal("2019-01", deLinde.StartMonth);
+        Assert.DoesNotContain("2019", deLinde.Role ?? string.Empty, StringComparison.Ordinal);
+
+        var dieren = harvestedOnly.Employers!.Single(e =>
+            e.EmployerName.Contains("Dierenasiel", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("Vrijwilliger", dieren.Role);
+        Assert.Equal("2022-01", dieren.StartMonth);
+        Assert.DoesNotContain("2014", $"{dieren.StartMonth}{dieren.EndMonth}", StringComparison.Ordinal);
+        Assert.DoesNotContain("2018", $"{dieren.StartMonth}{dieren.EndMonth}", StringComparison.Ordinal);
         Assert.False(deLinde.IsCurrent == true);
     }
 
@@ -60,9 +77,10 @@ public sealed class CvPdfExtractionPipelineTests
         var text = extractor.Extract(pdf, "application/pdf", "cv-test.pdf");
         var harvestedOnly = CvExtractionFactsGuard.Apply(new CvExtractedProfile(), text);
 
-        Assert.Contains(
-            harvestedOnly.Educations!,
-            e => e.Contains("Verpleegkunde", StringComparison.OrdinalIgnoreCase));
+        var education = harvestedOnly.Educations!.Single(e => e.Contains("Verpleegkunde", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("MBO Verpleegkunde niveau 4", education);
+        Assert.DoesNotContain("2014", education, StringComparison.Ordinal);
+        Assert.DoesNotContain("2018", education, StringComparison.Ordinal);
         Assert.Equal("ROC Mondriaan", harvestedOnly.EducationSchool);
         Assert.Equal(1, harvestedOnly.Certificates!.Count(c =>
             c.Name.Contains("BHV", StringComparison.OrdinalIgnoreCase)));

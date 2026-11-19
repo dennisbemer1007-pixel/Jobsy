@@ -18,9 +18,9 @@ public static class CvExtractionGrounding
 
     private static readonly string[] DrivingLicenseCodes = ["AM", "A1", "A2", "A", "B", "BE", "C", "CE", "D", "DE"];
 
-    private static readonly Regex WorkExperienceSectionRegex = new(
-        @"werkervaring\s+(.+?)\s+opleiding",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    private static readonly Regex EducationYearLinePrefix = new(
+        @"^\s*\d{4}\s*[-–]\s*\d{4}\s+",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly Regex EducationSectionRegex = new(
         @"opleiding\s+(.+?)\s+(?:rijbewijs|certificaten)\b",
@@ -81,110 +81,71 @@ public static class CvExtractionGrounding
         string cvText,
         string haystack)
     {
-        var merged = new List<CandidateEmployerHistoryDto>();
+        var merged = CvWorkExperienceHarvest.Parse(cvText, haystack);
+
         foreach (var employer in fromAi ?? [])
         {
-            if (CvPdfMetadataGuard.IsPdfMetadataNoise(employer.EmployerName))
+            if (CvPdfMetadataGuard.IsPdfMetadataNoise(employer.EmployerName)
+                || !ContainsPhrase(haystack, employer.EmployerName))
             {
                 continue;
             }
 
-            if (ContainsPhrase(haystack, employer.EmployerName))
+            var line = CvWorkExperienceHarvest.FindWorkLineContaining(cvText, employer.EmployerName);
+            if (line is null)
             {
-                merged.Add(CvEmployerDateRules.Apply(employer, haystack, cvText));
+                continue;
             }
+
+            var idx = FindEmployerIndex(merged, employer);
+            if (idx < 0)
+            {
+                continue;
+            }
+
+            var existing = merged[idx];
+            var role = employer.Role;
+            if (RoleContainsYear(role)
+                || (!string.IsNullOrWhiteSpace(role) && !ContainsPhrase(haystack, role)))
+            {
+                role = existing.Role;
+            }
+
+            merged[idx] = existing with
+            {
+                Role = role ?? existing.Role,
+                EmployerName = existing.EmployerName.Length >= employer.EmployerName.Trim().Length
+                    ? existing.EmployerName
+                    : employer.EmployerName.Trim(),
+            };
         }
 
-        var harvestHaystack = Normalize(cvText);
-        HarvestStructuredEmployerLines(cvText, haystack, merged);
-
-        var section = WorkExperienceSectionRegex.Match(harvestHaystack);
-        if (section.Success)
-        {
-            foreach (var fragment in section.Groups[1].Value.Split([',', '–', '-', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (fragment.Length < 3 || CvPdfMetadataGuard.IsPdfMetadataNoise(fragment))
-                {
-                    continue;
-                }
-
-                if (!ContainsPhrase(haystack, fragment))
-                {
-                    continue;
-                }
-
-                if (merged.Any(e => ContainsPhrase(haystack, e.EmployerName) && ContainsPhrase(haystack, fragment)))
-                {
-                    continue;
-                }
-
-                var harvested = CvEmployerDateRules.Apply(
-                    new CandidateEmployerHistoryDto(ToDisplayPhrase(fragment)),
-                    haystack,
-                    cvText);
-                merged.Add(harvested);
-            }
-        }
-
+        merged = CvWorkExperienceHarvest.DedupeEmployers(merged);
         return merged.Count == 0 ? null : merged.Take(12).ToList();
     }
 
-    private static void HarvestStructuredEmployerLines(
-        string cvText,
-        string haystack,
-        List<CandidateEmployerHistoryDto> merged)
+    private static bool RoleContainsYear(string? role)
+        => !string.IsNullOrWhiteSpace(role) && Regex.IsMatch(role, @"\d{4}", RegexOptions.CultureInvariant);
+
+    private static int FindEmployerIndex(List<CandidateEmployerHistoryDto> list, CandidateEmployerHistoryDto candidate)
     {
-        var body = ExtractRawSection(cvText, "Werkervaring", "Opleiding");
-        if (string.IsNullOrWhiteSpace(body))
+        for (var i = 0; i < list.Count; i++)
         {
-            return;
+            if (CvWorkExperienceHarvest.EmployerRoleKey(list[i]) == CvWorkExperienceHarvest.EmployerRoleKey(candidate))
+            {
+                return i;
+            }
+
+            var left = list[i];
+            var empA = Normalize(left.EmployerName);
+            var empB = Normalize(candidate.EmployerName);
+            if (empA.Contains(empB, StringComparison.Ordinal) || empB.Contains(empA, StringComparison.Ordinal))
+            {
+                return i;
+            }
         }
 
-        foreach (var rawLine in body.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (rawLine.Length < 3 || CvPdfMetadataGuard.IsPdfMetadataNoise(rawLine))
-            {
-                continue;
-            }
-
-            var parts = rawLine.Split(',', StringSplitOptions.TrimEntries);
-            if (parts.Length < 2)
-            {
-                continue;
-            }
-
-            var employerName = parts[0].Trim();
-            if (!ContainsPhrase(haystack, employerName))
-            {
-                continue;
-            }
-
-            var role = parts.Length >= 3 ? parts[1].Trim() : parts[1].Trim();
-            if (merged.Any(e => string.Equals(e.EmployerName, employerName, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
-
-            var dto = CvEmployerDateRules.Apply(
-                new CandidateEmployerHistoryDto(employerName, string.IsNullOrWhiteSpace(role) ? null : role),
-                haystack,
-                cvText);
-            merged.Add(dto);
-        }
-    }
-
-    private static string ExtractRawSection(string cvText, string startMarker, string endMarker)
-    {
-        var start = cvText.IndexOf(startMarker, StringComparison.OrdinalIgnoreCase);
-        if (start < 0)
-        {
-            return string.Empty;
-        }
-
-        start += startMarker.Length;
-        var end = cvText.IndexOf(endMarker, start, StringComparison.OrdinalIgnoreCase);
-        var slice = end > start ? cvText[start..end] : cvText[start..];
-        return slice.Trim();
+        return -1;
     }
 
     private static List<CandidateCertificateDto>? MergeCertificates(
@@ -290,13 +251,14 @@ public static class CvExtractionGrounding
         if (section.Success)
         {
             var rawLine = section.Groups[1].Value.Trim();
-            var line = CollapseSpaces(Normalize(rawLine));
-            if (line.Length > 2)
+            var titleRaw = EducationYearLinePrefix.Replace(rawLine, string.Empty).Trim();
+            var lineNorm = CollapseSpaces(Normalize(titleRaw));
+            if (lineNorm.Length > 2)
             {
-                var (title, institute) = SplitEducationLine(line);
+                var (title, institute) = SplitEducationLine(lineNorm);
                 if (!string.IsNullOrWhiteSpace(title) && ContainsPhrase(haystack, title))
                 {
-                    _ = set.Add(ExtractEducationTitleFromRaw(rawLine, title));
+                    _ = set.Add(ExtractEducationTitleFromRaw(titleRaw, title));
                 }
 
                 if (!string.IsNullOrWhiteSpace(institute) && ContainsPhrase(haystack, institute))
@@ -331,8 +293,15 @@ public static class CvExtractionGrounding
 
     private static string ExtractEducationTitleFromRaw(string rawLine, string normalizedTitle)
     {
-        var idx = rawLine.IndexOf("ROC", StringComparison.OrdinalIgnoreCase);
-        var slice = idx > 0 ? rawLine[..idx].Trim().TrimEnd(',') : rawLine.Trim();
+        var withoutYears = EducationYearLinePrefix.Replace(rawLine, string.Empty).Trim();
+        var comma = withoutYears.IndexOf(',', StringComparison.Ordinal);
+        var slice = comma > 0 ? withoutYears[..comma].Trim() : withoutYears;
+        var idx = slice.IndexOf("ROC", StringComparison.OrdinalIgnoreCase);
+        if (idx > 0)
+        {
+            slice = slice[..idx].Trim().TrimEnd(',');
+        }
+
         return slice.Length > 0 ? slice : ToDisplayPhrase(normalizedTitle);
     }
 
@@ -341,7 +310,9 @@ public static class CvExtractionGrounding
         var idx = rawLine.IndexOf("ROC", StringComparison.OrdinalIgnoreCase);
         if (idx >= 0)
         {
-            return rawLine[idx..].Trim();
+            var school = rawLine[idx..].Trim();
+            var comma = school.IndexOf(',', StringComparison.Ordinal);
+            return comma > 0 ? school[..comma].Trim() : school;
         }
 
         return ToDisplayPhrase(normalizedSchool);

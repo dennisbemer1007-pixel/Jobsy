@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts;
 
 namespace Jobsy.Core.Rules;
@@ -93,12 +94,12 @@ public static class CvExtractionFactsGuard
             return null;
         }
 
-        var list = employers
+        var list = CvWorkExperienceHarvest.DedupeEmployers(employers
             .Where(e => !ContainsForbiddenProposalFragment(e.EmployerName))
             .Where(e => CvExtractionGrounding.ContainsPhrase(haystack, e.EmployerName))
             .Select(e => SanitizeEmployer(e, haystack, rawCvText))
             .Take(12)
-            .ToList();
+            .ToList());
         return list.Count == 0 ? null : list;
     }
 
@@ -107,31 +108,38 @@ public static class CvExtractionFactsGuard
         string haystack,
         string rawCvText)
     {
-        var withDates = CvEmployerDateRules.Apply(employer, haystack, rawCvText);
-        if (!string.IsNullOrWhiteSpace(withDates.StartMonth)
-            && !CvEmployerDateRules.YearAllowedInHaystack(haystack, withDates.StartMonth))
+        var line = CvWorkExperienceHarvest.FindWorkLineContaining(rawCvText, employer.EmployerName);
+        if (line is not null)
         {
-            withDates = withDates with { StartMonth = null };
+            var fromLine = CvWorkExperienceHarvest.TryParseExperienceLine(line);
+            if (fromLine is not null)
+            {
+                var role = employer.Role;
+                if (RoleContainsYear(role)
+                    || (!string.IsNullOrWhiteSpace(role)
+                        && !CvExtractionGrounding.ContainsPhrase(haystack, role)))
+                {
+                    role = fromLine.Role;
+                }
+
+                return fromLine with
+                {
+                    Role = role ?? fromLine.Role,
+                    IsCurrent = false,
+                };
+            }
         }
 
-        if (!string.IsNullOrWhiteSpace(withDates.EndMonth)
-            && !CvEmployerDateRules.YearAllowedInHaystack(haystack, withDates.EndMonth))
+        return employer with
         {
-            withDates = withDates with { EndMonth = null, IsCurrent = false };
-        }
-
-        if (withDates.IsCurrent == true && !CvEmployerDateRules.MayShowAsCurrent(haystack, withDates))
-        {
-            withDates = withDates with { IsCurrent = false };
-        }
-
-        if (withDates.EndMonth is null && withDates.IsCurrent is not true)
-        {
-            withDates = withDates with { IsCurrent = false };
-        }
-
-        return withDates;
+            StartMonth = null,
+            EndMonth = null,
+            IsCurrent = false,
+        };
     }
+
+    private static bool RoleContainsYear(string? role)
+        => !string.IsNullOrWhiteSpace(role) && Regex.IsMatch(role, @"\d{4}", RegexOptions.CultureInvariant);
 
     private static List<CandidateCertificateDto>? PruneCertificates(
         IReadOnlyList<CandidateCertificateDto>? certificates,

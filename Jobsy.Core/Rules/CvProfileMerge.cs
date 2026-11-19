@@ -128,18 +128,21 @@ public static class CvProfileMerge
         var list = (existing ?? [])
             .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
             .ToList();
-        var seen = list
-            .Select(e => e.EmployerName.Trim())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var item in incoming ?? [])
         {
-            if (string.IsNullOrWhiteSpace(item.EmployerName) || !seen.Add(item.EmployerName.Trim()))
+            if (string.IsNullOrWhiteSpace(item.EmployerName))
             {
                 continue;
             }
 
             var trimmed = item with { EmployerName = item.EmployerName.Trim() };
+            var dupIdx = FindIncomingDuplicateIndex(list, trimmed);
+            if (dupIdx >= 0)
+            {
+                list[dupIdx] = CvWorkExperienceHarvest.PreferRicher(list[dupIdx], trimmed);
+                continue;
+            }
             if (!string.IsNullOrWhiteSpace(trimmed.EndMonth))
             {
                 trimmed = trimmed with { IsCurrent = false };
@@ -152,7 +155,32 @@ public static class CvProfileMerge
             list.Add(trimmed);
         }
 
-        return list;
+        return CvWorkExperienceHarvest.DedupeEmployers(list);
+    }
+
+    private static int FindIncomingDuplicateIndex(
+        List<CandidateEmployerHistoryDto> list,
+        CandidateEmployerHistoryDto candidate)
+    {
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (CvWorkExperienceHarvest.EmployerRoleKey(list[i]) == CvWorkExperienceHarvest.EmployerRoleKey(candidate))
+            {
+                return i;
+            }
+
+            var empA = CvExtractionGrounding.Normalize(list[i].EmployerName);
+            var empB = CvExtractionGrounding.Normalize(candidate.EmployerName);
+            var roleA = CvExtractionGrounding.Normalize(list[i].Role);
+            var roleB = CvExtractionGrounding.Normalize(candidate.Role);
+            if ((roleA.Length == 0 || roleB.Length == 0 || string.Equals(roleA, roleB, StringComparison.Ordinal))
+                && (empA.Contains(empB, StringComparison.Ordinal) || empB.Contains(empA, StringComparison.Ordinal)))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private static List<CandidateCertificateDto> MergeCertificates(
