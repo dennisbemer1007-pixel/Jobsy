@@ -10,7 +10,7 @@ public class CvExtractionGroundingTests
     {
         var cv = """
             Werkervaring
-            Bakkerij De Westhoek, medewerker, 2022-2024
+            2022 - 2024 medewerker, Bakkerij De Westhoek
             """;
         var extracted = new CvExtractedProfile(
             Employers: [new CandidateEmployerHistoryDto("Shell BV"), new CandidateEmployerHistoryDto("Bakkerij De Westhoek")],
@@ -40,7 +40,8 @@ public class CvExtractionGroundingTests
     public void Employer_is_kept_when_name_is_grounded_even_if_role_is_not()
     {
         var cv = """
-            Werkervaring bij Jumbo Supermarkt als kassamedewerker.
+            Werkervaring
+            2019 - 2021 kassamedewerker, Jumbo Supermarkt
             """;
         var extracted = new CvExtractedProfile(
             Employers: [new CandidateEmployerHistoryDto("Jumbo Supermarkt", Role: "Shift manager")]);
@@ -49,6 +50,7 @@ public class CvExtractionGroundingTests
 
         Assert.Single(filtered.Employers!);
         Assert.Equal("Jumbo Supermarkt", filtered.Employers![0].EmployerName);
+        Assert.Equal("kassamedewerker", filtered.Employers![0].Role);
     }
 
     [Fact]
@@ -56,8 +58,9 @@ public class CvExtractionGroundingTests
     {
         var cv = """
             Werkervaring
-            Jumbo Supermarkt – kassamedewerker (2019-2021)
-            Opleiding: MBO Retail niveau 3, 2018
+            2019 - 2021 kassamedewerker, Jumbo Supermarkt
+            Opleiding
+            2016 - 2018 MBO Retail niveau 3
             Rijbewijs B
             Certificaat BHV, 2022
             """;

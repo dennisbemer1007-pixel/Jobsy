@@ -51,7 +51,13 @@ public sealed class CvUploadProposalIntegrationTests
         var openAiJson = JsonSerializer.Serialize(new
         {
             roles = new[] { "opensource" },
-            employers = new[] { new { employerName = "ReportLab PDF Library" } },
+            employers = new[]
+            {
+                new { employerName = "ReportLab PDF Library", role = (string?)null },
+                new { employerName = "De Linde", role = (string?)"Verpleegkundige" },
+                new { employerName = "Huisartsenpraktijk De Linde", role = (string?)"2019 - 2024 Verpleegkundige" },
+                new { employerName = "Dierenasiel Scheveningen", role = (string?)"Vrijwilliger" }
+            },
             educations = new[] { "MBO" },
             drivingLicenses = new[] { "B" },
             certificates = new[]
@@ -81,12 +87,19 @@ public sealed class CvUploadProposalIntegrationTests
         Assert.Contains(CvExtractionFieldKeys.Certificates, keys);
         Assert.DoesNotContain(CvExtractionFieldKeys.Roles, keys);
 
-        Assert.Contains(extracted.Employers!, e => e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
-        var deLinde = extracted.Employers!.First(e =>
+        Assert.Equal(2, extracted.Employers!.Count);
+        var deLinde = extracted.Employers!.Single(e =>
             e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("Huisartsenpraktijk De Linde", deLinde.EmployerName);
+        Assert.Equal("Verpleegkundige", deLinde.Role);
         Assert.NotNull(deLinde.EndMonth);
         Assert.Equal("2024", deLinde.EndMonth![..4]);
-        Assert.Contains(extracted.Educations!, e => e.Contains("MBO", StringComparison.OrdinalIgnoreCase));
+        var dieren = extracted.Employers!.Single(e =>
+            e.EmployerName.Contains("Dierenasiel", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("2022-01", dieren.StartMonth);
+        Assert.DoesNotContain("2014", $"{dieren.StartMonth}{dieren.EndMonth}", StringComparison.Ordinal);
+        Assert.Contains(extracted.Educations!, e =>
+            e.Equals("MBO Verpleegkunde niveau 4", StringComparison.OrdinalIgnoreCase));
         Assert.Contains("B", extracted.DrivingLicenses!);
         Assert.Contains(extracted.Certificates!, c => c.Name.Contains("BHV", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(extracted.Certificates!, c => c.Name.Contains("VCA", StringComparison.OrdinalIgnoreCase));
@@ -239,7 +252,13 @@ public sealed class CvProposalUploadApiFactory : ApiWebApplicationFactory
         var openAiJson = JsonSerializer.Serialize(new
         {
             roles = new[] { "opensource" },
-            employers = new[] { new { employerName = "ReportLab PDF Library" } },
+            employers = new[]
+            {
+                new { employerName = "ReportLab PDF Library", role = (string?)null },
+                new { employerName = "De Linde", role = (string?)"Verpleegkundige" },
+                new { employerName = "Huisartsenpraktijk De Linde", role = (string?)"2019 - 2024 Verpleegkundige" },
+                new { employerName = "Dierenasiel Scheveningen", role = (string?)"Vrijwilliger" }
+            },
             educations = new[] { "MBO" },
             drivingLicenses = new[] { "B" },
             certificates = new[]
