@@ -142,6 +142,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3);
+}.passport-card__facts--stacked {
+    grid-template-columns: 1fr;
+    margin-block-start: var(--space-2);
 }.passport-card__fact {
     display: flex;
     flex-direction: column;

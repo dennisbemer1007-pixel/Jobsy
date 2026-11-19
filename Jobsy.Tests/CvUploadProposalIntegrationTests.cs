@@ -82,6 +82,10 @@ public sealed class CvUploadProposalIntegrationTests
         Assert.DoesNotContain(CvExtractionFieldKeys.Roles, keys);
 
         Assert.Contains(extracted.Employers!, e => e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+        var deLinde = extracted.Employers!.First(e =>
+            e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+        Assert.NotNull(deLinde.EndMonth);
+        Assert.Equal("2024", deLinde.EndMonth![..4]);
         Assert.Contains(extracted.Educations!, e => e.Contains("MBO", StringComparison.OrdinalIgnoreCase));
         Assert.Contains("B", extracted.DrivingLicenses!);
         Assert.Contains(extracted.Certificates!, c => c.Name.Contains("BHV", StringComparison.OrdinalIgnoreCase));

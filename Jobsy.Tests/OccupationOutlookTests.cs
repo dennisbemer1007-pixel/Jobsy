@@ -327,8 +327,7 @@ public class OccupationOutlookTests
             [
                 new CandidateEmployerHistoryDto("Bestaand", "Kantoor", EscoId: ClerkId)
             ]),
-            new CvExtractedProfile(null, null, null, null, null, null, null,
-                [new CandidateEmployerHistoryDto("Nieuw", "Schoonmaker")]));
+            new CvExtractedProfile(Employers: [new CandidateEmployerHistoryDto("Nieuw", "Schoonmaker")]));
         Assert.Equal(ClerkId, merged.Preferences.Employers!.Single(e => e.EmployerName == "Bestaand").EscoId);
         Assert.Null(merged.Preferences.Employers!.Single(e => e.EmployerName == "Nieuw").EscoId);
     }

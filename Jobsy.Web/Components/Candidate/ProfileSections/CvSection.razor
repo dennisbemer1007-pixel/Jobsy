@@ -48,7 +48,7 @@
                                                                checked="@Editor.IsCvProposalSelected(field)"
                                                                @onchange="e => Editor.ToggleCvProposal(field, e.Value is true)"
                                                                disabled="@Editor.CvBusy" />
-                                                        @Culture[$"Profile.CvProposalField.{field}"]
+                                                        @Editor.CvProposalCheckboxLabel(field)
                                                     </label>
                                                 </li>
                                             }

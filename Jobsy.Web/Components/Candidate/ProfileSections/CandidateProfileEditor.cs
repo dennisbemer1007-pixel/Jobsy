@@ -117,6 +117,9 @@ public sealed class CandidateProfileEditor : IDisposable
     private readonly HashSet<string> _cvProposalSelection = new(StringComparer.OrdinalIgnoreCase);
     public IReadOnlyList<string> CvProposalFields => UploadedCv?.PendingProposalFields ?? [];
     public bool HasCvProposalSelection => _cvProposalSelection.Count > 0;
+
+    public string CvProposalCheckboxLabel(string field)
+        => CvProposalFieldDisplay.Format(field, UploadedCv?.SuggestedProfile);
     public List<string> BranchOptions { get; set; } = WorkTypeLabels.All.ToList();
     public List<string> LicenseOptions { get; set; } = DrivingLicenseLabels.All.ToList();
     public List<string> EducationOptions { get; set; } = EducationLevelLabels.ProfileAll.ToList();
