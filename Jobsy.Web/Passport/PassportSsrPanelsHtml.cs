@@ -329,6 +329,12 @@ internal static class PassportSsrPanelsHtml
     {
         if (compact)
         {
+            sb.Append("<div class=\"passport-card__facts passport-card__facts--stacked\">");
+            AppendLookingFor(sb, culture, card.LookingFor);
+            AppendFact(sb, culture, "Passport.Facts.License", card.LicenseLabel, PassportTabs.Data);
+            AppendFact(sb, culture, "Passport.Facts.Travel", card.Travel, PassportTabs.Data);
+            AppendFact(sb, culture, "Passport.Facts.Hours", card.Hours, PassportTabs.Data);
+            sb.Append("</div>");
             return;
         }
 

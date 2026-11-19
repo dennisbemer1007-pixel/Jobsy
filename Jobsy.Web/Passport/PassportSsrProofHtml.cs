@@ -72,17 +72,19 @@ internal static class PassportSsrProofHtml
             r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase));
         var firstEntry = prefs.Employers
             .FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.EmployerName))?.EntryId;
-        var roleLabels = (prefs.Roles ?? [])
-            .Where(r => !string.IsNullOrWhiteSpace(r))
-            .Select(r => r.Trim())
+        var profileCompetenceHints = prefs.Employers
+            .SelectMany(e => e.Skills ?? [])
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
             .ToList();
 
         return new Panel(
             strength,
             HintText: null,
             verified,
-            roleLabels,
+            profileCompetenceHints,
             refRows,
             refEnabled,
             eligible,
@@ -482,12 +484,13 @@ internal static class PassportSsrProofHtml
             sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
             sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
             sb.Append("\" /><ul class=\"profile-cv__proposal-list\">");
+            var suggested = uploadedCv.SuggestedProfile;
             foreach (var field in pending)
             {
                 sb.Append("<li><label class=\"form-check-label\"><input type=\"checkbox\" name=\"cvField\" value=\"");
                 sb.Append(WebUtility.HtmlEncode(field));
                 sb.Append("\" /> ");
-                sb.Append(WebUtility.HtmlEncode(culture[$"Profile.CvProposalField.{field}"]));
+                sb.Append(WebUtility.HtmlEncode(CvProposalFieldDisplay.Format(field, suggested)));
                 sb.Append("</label></li>");
             }
 

@@ -8,6 +8,8 @@ public sealed record CvExtractedProfile(
     string? AboutMe = null,
     IReadOnlyList<string>? DrivingLicenses = null,
     IReadOnlyList<string>? Educations = null,
+    /// <summary>School or institute line from the CV when clearly present (e.g. ROC Mondriaan).</summary>
+    string? EducationSchool = null,
     IReadOnlyList<string>? Roles = null,
     IReadOnlyList<CandidateEmployerHistoryDto>? Employers = null,
     IReadOnlyList<CandidateCertificateDto>? Certificates = null);

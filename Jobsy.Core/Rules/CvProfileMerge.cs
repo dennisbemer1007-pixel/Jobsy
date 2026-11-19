@@ -53,11 +53,19 @@ public static class CvProfileMerge
             filled.Add("certificaten");
         }
 
+        var educationDirection = existing.EducationDirection;
+        if (string.IsNullOrWhiteSpace(educationDirection)
+            && !string.IsNullOrWhiteSpace(extracted.EducationSchool))
+        {
+            educationDirection = extracted.EducationSchool.Trim();
+        }
+
         var prefs = existing with
         {
             AboutMe = about,
             DrivingLicenses = licenses,
             Educations = educations,
+            EducationDirection = educationDirection,
             Roles = roles,
             Employers = employers,
             Certificates = certificates
@@ -79,6 +87,7 @@ public static class CvProfileMerge
         var slice = new CvExtractedProfile(
             DrivingLicenses: keys.Contains(CvExtractionFieldKeys.DrivingLicenses) ? extracted.DrivingLicenses : null,
             Educations: keys.Contains(CvExtractionFieldKeys.Educations) ? extracted.Educations : null,
+            EducationSchool: keys.Contains(CvExtractionFieldKeys.Educations) ? extracted.EducationSchool : null,
             Roles: keys.Contains(CvExtractionFieldKeys.Roles) ? extracted.Roles : null,
             Employers: keys.Contains(CvExtractionFieldKeys.Employers) ? extracted.Employers : null,
             Certificates: keys.Contains(CvExtractionFieldKeys.Certificates) ? extracted.Certificates : null);
@@ -130,7 +139,17 @@ public static class CvProfileMerge
                 continue;
             }
 
-            list.Add(item with { EmployerName = item.EmployerName.Trim() });
+            var trimmed = item with { EmployerName = item.EmployerName.Trim() };
+            if (!string.IsNullOrWhiteSpace(trimmed.EndMonth))
+            {
+                trimmed = trimmed with { IsCurrent = false };
+            }
+            else if (trimmed.IsCurrent is not true)
+            {
+                trimmed = trimmed with { IsCurrent = false };
+            }
+
+            list.Add(trimmed);
         }
 
         return list;
@@ -143,20 +162,16 @@ public static class CvProfileMerge
         var list = (existing ?? [])
             .Where(c => !string.IsNullOrWhiteSpace(c.Name))
             .ToList();
-        var seen = list
-            .Select(c => c.Name.Trim())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
         foreach (var item in incoming ?? [])
         {
-            if (string.IsNullOrWhiteSpace(item.Name) || !seen.Add(item.Name.Trim()))
+            if (string.IsNullOrWhiteSpace(item.Name))
             {
                 continue;
             }
 
-            list.Add(item with { Name = item.Name.Trim() });
+            list.Add(item with { Name = CvCertificateNormalize.DisplayName(item.Name) });
         }
 
-        return list;
+        return CvCertificateNormalize.Dedupe(list);
     }
 }

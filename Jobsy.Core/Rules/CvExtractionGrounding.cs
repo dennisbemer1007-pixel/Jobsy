@@ -22,6 +22,14 @@ public static class CvExtractionGrounding
         @"werkervaring\s+(.+?)\s+opleiding",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex EducationSectionRegex = new(
+        @"opleiding\s+(.+?)\s+(?:rijbewijs|certificaten)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    private static readonly Regex CertificateYearRegex = new(
+        @"\b(bhv|vca(?:\s*basis)?|haccp|vvo|ehbo)[\s\-]*(certificaat)?[^0-9]{0,12}(\d{4})\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     private static readonly Regex CertificateTokenRegex = new(
         @"\b(bhv|vca(?:\s*basis)?|haccp|vvo|ehbo)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
@@ -49,7 +57,7 @@ public static class CvExtractionGrounding
 
         var certificates = MergeCertificates(extracted.Certificates, haystack);
 
-        var educations = MergeEducations(extracted.Educations, haystack);
+        var (educations, educationSchool) = MergeEducations(extracted.Educations, extracted.EducationSchool, cvText, haystack);
         var roles = FilterList(extracted.Roles, haystack);
         var licenses = MergeDrivingLicenses(extracted.DrivingLicenses, haystack);
 
@@ -62,6 +70,7 @@ public static class CvExtractionGrounding
             Employers = employers,
             Certificates = certificates,
             Educations = educations,
+            EducationSchool = educationSchool,
             Roles = roles,
             DrivingLicenses = licenses
         };
@@ -82,11 +91,13 @@ public static class CvExtractionGrounding
 
             if (ContainsPhrase(haystack, employer.EmployerName))
             {
-                merged.Add(employer);
+                merged.Add(CvEmployerDateRules.Apply(employer, haystack, cvText));
             }
         }
 
         var harvestHaystack = Normalize(cvText);
+        HarvestStructuredEmployerLines(cvText, haystack, merged);
+
         var section = WorkExperienceSectionRegex.Match(harvestHaystack);
         if (section.Success)
         {
@@ -107,11 +118,73 @@ public static class CvExtractionGrounding
                     continue;
                 }
 
-                merged.Add(new CandidateEmployerHistoryDto(ToDisplayPhrase(fragment)));
+                var harvested = CvEmployerDateRules.Apply(
+                    new CandidateEmployerHistoryDto(ToDisplayPhrase(fragment)),
+                    haystack,
+                    cvText);
+                merged.Add(harvested);
             }
         }
 
         return merged.Count == 0 ? null : merged.Take(12).ToList();
+    }
+
+    private static void HarvestStructuredEmployerLines(
+        string cvText,
+        string haystack,
+        List<CandidateEmployerHistoryDto> merged)
+    {
+        var body = ExtractRawSection(cvText, "Werkervaring", "Opleiding");
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return;
+        }
+
+        foreach (var rawLine in body.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (rawLine.Length < 3 || CvPdfMetadataGuard.IsPdfMetadataNoise(rawLine))
+            {
+                continue;
+            }
+
+            var parts = rawLine.Split(',', StringSplitOptions.TrimEntries);
+            if (parts.Length < 2)
+            {
+                continue;
+            }
+
+            var employerName = parts[0].Trim();
+            if (!ContainsPhrase(haystack, employerName))
+            {
+                continue;
+            }
+
+            var role = parts.Length >= 3 ? parts[1].Trim() : parts[1].Trim();
+            if (merged.Any(e => string.Equals(e.EmployerName, employerName, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var dto = CvEmployerDateRules.Apply(
+                new CandidateEmployerHistoryDto(employerName, string.IsNullOrWhiteSpace(role) ? null : role),
+                haystack,
+                cvText);
+            merged.Add(dto);
+        }
+    }
+
+    private static string ExtractRawSection(string cvText, string startMarker, string endMarker)
+    {
+        var start = cvText.IndexOf(startMarker, StringComparison.OrdinalIgnoreCase);
+        if (start < 0)
+        {
+            return string.Empty;
+        }
+
+        start += startMarker.Length;
+        var end = cvText.IndexOf(endMarker, start, StringComparison.OrdinalIgnoreCase);
+        var slice = end > start ? cvText[start..end] : cvText[start..];
+        return slice.Trim();
     }
 
     private static List<CandidateCertificateDto>? MergeCertificates(
@@ -128,7 +201,11 @@ public static class CvExtractionGrounding
 
             if (ContainsPhrase(haystack, cert.Name))
             {
-                merged.Add(cert);
+                merged.Add(cert with
+                {
+                    Name = CvCertificateNormalize.DisplayName(cert.Name),
+                    Year = cert.Year is >= 1950 and <= 2100 ? cert.Year : TryCertificateYear(haystack, cert.Name)
+                });
             }
         }
 
@@ -140,27 +217,45 @@ public static class CvExtractionGrounding
                 continue;
             }
 
-            var label = CertificateDisplayLabel(token);
-            if (merged.Any(c => string.Equals(c.Name, label, StringComparison.OrdinalIgnoreCase)))
+            var label = CvCertificateNormalize.DisplayName(token);
+            if (merged.Any(c => CvCertificateNormalize.DedupKey(c.Name) == CvCertificateNormalize.DedupKey(label)))
             {
                 continue;
             }
 
             if (ContainsPhrase(haystack, token))
             {
-                merged.Add(new CandidateCertificateDto(label, null));
+                merged.Add(new CandidateCertificateDto(label, TryCertificateYear(haystack, token)));
             }
         }
 
-        return merged.Count == 0 ? null : merged.Take(20).ToList();
+        var deduped = CvCertificateNormalize.Dedupe(merged);
+        return deduped.Count == 0 ? null : deduped.Take(20).ToList();
     }
 
-    private static string CertificateDisplayLabel(string token)
-        => token.ToUpperInvariant() switch
+    private static int? TryCertificateYear(string haystack, string name)
+    {
+        foreach (Match match in CertificateYearRegex.Matches(haystack))
         {
-            "VCA" or "VCA BASIS" => "VCA",
-            _ => token.ToUpperInvariant()
-        };
+            var token = match.Groups[1].Value;
+            if (!ContainsPhrase(haystack, token) && !ContainsPhrase(haystack, name))
+            {
+                continue;
+            }
+
+            if (int.TryParse(match.Groups[3].Value, out var year) && year is >= 1950 and <= 2100)
+            {
+                var label = CvCertificateNormalize.DisplayName(token);
+                if (CvCertificateNormalize.DedupKey(label) == CvCertificateNormalize.DedupKey(name)
+                    || ContainsPhrase(haystack, name))
+                {
+                    return year;
+                }
+            }
+        }
+
+        return null;
+    }
 
     private static string ToDisplayPhrase(string normalizedFragment)
     {
@@ -174,27 +269,82 @@ public static class CvExtractionGrounding
             }));
     }
 
-    private static List<string>? MergeEducations(IReadOnlyList<string>? fromAi, string haystack)
+    private static (List<string>? Educations, string? School) MergeEducations(
+        IReadOnlyList<string>? fromAi,
+        string? schoolFromAi,
+        string cvText,
+        string haystack)
     {
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        string? school = string.IsNullOrWhiteSpace(schoolFromAi) ? null : schoolFromAi.Trim();
+
         foreach (var item in fromAi ?? [])
         {
             if (ContainsPhrase(haystack, item))
             {
-                _ = set.Add(CanonicalEducationLabel(item));
+                _ = set.Add(item.Trim());
+            }
+        }
+
+        var section = EducationSectionRegex.Match(cvText);
+        if (section.Success)
+        {
+            var rawLine = section.Groups[1].Value.Trim();
+            var line = CollapseSpaces(Normalize(rawLine));
+            if (line.Length > 2)
+            {
+                var (title, institute) = SplitEducationLine(line);
+                if (!string.IsNullOrWhiteSpace(title) && ContainsPhrase(haystack, title))
+                {
+                    _ = set.Add(ExtractEducationTitleFromRaw(rawLine, title));
+                }
+
+                if (!string.IsNullOrWhiteSpace(institute) && ContainsPhrase(haystack, institute))
+                {
+                    school ??= ExtractSchoolFromRaw(rawLine, institute);
+                }
             }
         }
 
         foreach (var token in EducationTokens)
         {
-            if (haystack.Contains(token, StringComparison.Ordinal))
+            if (haystack.Contains(token, StringComparison.Ordinal) && set.Count == 0)
             {
                 _ = set.Add(CanonicalEducationLabel(token));
             }
         }
 
         var list = set.Take(12).ToList();
-        return list.Count == 0 ? null : list;
+        return list.Count == 0 ? (null, school) : (list, school);
+    }
+
+    private static (string Title, string? School) SplitEducationLine(string normalizedLine)
+    {
+        var rocIdx = normalizedLine.IndexOf(" roc ", StringComparison.Ordinal);
+        if (rocIdx > 0)
+        {
+            return (normalizedLine[..rocIdx].Trim(), normalizedLine[rocIdx..].Trim());
+        }
+
+        return (normalizedLine.Trim(), null);
+    }
+
+    private static string ExtractEducationTitleFromRaw(string rawLine, string normalizedTitle)
+    {
+        var idx = rawLine.IndexOf("ROC", StringComparison.OrdinalIgnoreCase);
+        var slice = idx > 0 ? rawLine[..idx].Trim().TrimEnd(',') : rawLine.Trim();
+        return slice.Length > 0 ? slice : ToDisplayPhrase(normalizedTitle);
+    }
+
+    private static string ExtractSchoolFromRaw(string rawLine, string normalizedSchool)
+    {
+        var idx = rawLine.IndexOf("ROC", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+        {
+            return rawLine[idx..].Trim();
+        }
+
+        return ToDisplayPhrase(normalizedSchool);
     }
 
     private static List<string>? MergeDrivingLicenses(IReadOnlyList<string>? fromAi, string haystack)

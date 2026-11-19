@@ -32,9 +32,20 @@ public static class CvExtractionFactsGuard
             Roles = PruneStringList(grounded.Roles, haystack),
             Educations = PruneStringList(grounded.Educations, haystack),
             DrivingLicenses = PruneStringList(grounded.DrivingLicenses, haystack),
-            Employers = PruneEmployers(grounded.Employers, haystack),
+            Employers = PruneEmployers(grounded.Employers, haystack, visibleCvText),
             Certificates = PruneCertificates(grounded.Certificates, haystack),
+            EducationSchool = GroundEducationSchool(grounded.EducationSchool, haystack),
         };
+    }
+
+    private static string? GroundEducationSchool(string? school, string haystack)
+    {
+        if (string.IsNullOrWhiteSpace(school) || ContainsForbiddenProposalFragment(school))
+        {
+            return null;
+        }
+
+        return CvExtractionGrounding.ContainsPhrase(haystack, school) ? school.Trim() : null;
     }
 
     public static bool ContainsForbiddenProposalFragment(string? value)
@@ -74,7 +85,8 @@ public static class CvExtractionFactsGuard
 
     private static List<CandidateEmployerHistoryDto>? PruneEmployers(
         IReadOnlyList<CandidateEmployerHistoryDto>? employers,
-        string haystack)
+        string haystack,
+        string rawCvText)
     {
         if (employers is null || employers.Count == 0)
         {
@@ -84,9 +96,41 @@ public static class CvExtractionFactsGuard
         var list = employers
             .Where(e => !ContainsForbiddenProposalFragment(e.EmployerName))
             .Where(e => CvExtractionGrounding.ContainsPhrase(haystack, e.EmployerName))
+            .Select(e => SanitizeEmployer(e, haystack, rawCvText))
             .Take(12)
             .ToList();
         return list.Count == 0 ? null : list;
+    }
+
+    private static CandidateEmployerHistoryDto SanitizeEmployer(
+        CandidateEmployerHistoryDto employer,
+        string haystack,
+        string rawCvText)
+    {
+        var withDates = CvEmployerDateRules.Apply(employer, haystack, rawCvText);
+        if (!string.IsNullOrWhiteSpace(withDates.StartMonth)
+            && !CvEmployerDateRules.YearAllowedInHaystack(haystack, withDates.StartMonth))
+        {
+            withDates = withDates with { StartMonth = null };
+        }
+
+        if (!string.IsNullOrWhiteSpace(withDates.EndMonth)
+            && !CvEmployerDateRules.YearAllowedInHaystack(haystack, withDates.EndMonth))
+        {
+            withDates = withDates with { EndMonth = null, IsCurrent = false };
+        }
+
+        if (withDates.IsCurrent == true && !CvEmployerDateRules.MayShowAsCurrent(haystack, withDates))
+        {
+            withDates = withDates with { IsCurrent = false };
+        }
+
+        if (withDates.EndMonth is null && withDates.IsCurrent is not true)
+        {
+            withDates = withDates with { IsCurrent = false };
+        }
+
+        return withDates;
     }
 
     private static List<CandidateCertificateDto>? PruneCertificates(
@@ -101,8 +145,9 @@ public static class CvExtractionFactsGuard
         var list = certificates
             .Where(c => !ContainsForbiddenProposalFragment(c.Name))
             .Where(c => CvExtractionGrounding.ContainsPhrase(haystack, c.Name))
-            .Take(20)
+            .Select(c => c with { Name = CvCertificateNormalize.DisplayName(c.Name) })
             .ToList();
-        return list.Count == 0 ? null : list;
+        var deduped = CvCertificateNormalize.Dedupe(list);
+        return deduped.Count == 0 ? null : deduped.Take(20).ToList();
     }
 }

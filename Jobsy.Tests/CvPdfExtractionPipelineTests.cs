@@ -44,6 +44,28 @@ public sealed class CvPdfExtractionPipelineTests
         var harvestedKeys = CvExtractionFieldKeys.ListProposalKeys(harvestedOnly);
         Assert.Contains(CvExtractionFieldKeys.Employers, harvestedKeys);
         Assert.Contains(harvestedOnly.Employers!, e => e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+
+        var deLinde = harvestedOnly.Employers!.First(e =>
+            e.EmployerName.Contains("De Linde", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("2024-12", deLinde.EndMonth);
+        Assert.Equal("2019-01", deLinde.StartMonth);
+        Assert.False(deLinde.IsCurrent == true);
+    }
+
+    [Fact]
+    public void ReportLab_fixture_education_certificates_deduped_and_grounded()
+    {
+        var pdf = LoadReportLabFixture();
+        var extractor = new CvTextExtractor();
+        var text = extractor.Extract(pdf, "application/pdf", "cv-test.pdf");
+        var harvestedOnly = CvExtractionFactsGuard.Apply(new CvExtractedProfile(), text);
+
+        Assert.Contains(
+            harvestedOnly.Educations!,
+            e => e.Contains("Verpleegkunde", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("ROC Mondriaan", harvestedOnly.EducationSchool);
+        Assert.Equal(1, harvestedOnly.Certificates!.Count(c =>
+            c.Name.Contains("BHV", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]

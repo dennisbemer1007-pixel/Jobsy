@@ -2,12 +2,12 @@ using System.Net;
 using System.Text;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Components.Candidate.Dna;
+using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Media;
-using Jobsy.Web.Auth;
 using Jobsy.Web.Navigation;
-using Jobsy.Web.Hosting;
 using Jobsy.Web.Onboarding;
 
 namespace Jobsy.Web.Passport;
@@ -174,9 +174,9 @@ internal static class PassportSsrShells
         sb.Append("</div><p class=\"passport-card__layers-text\">");
         sb.Append(WebUtility.HtmlEncode(culture.Format("Passport.Layers", card.FilledLayers, card.LayerTotal)));
         sb.Append("</p></div>");
+        PassportSsrPanelsHtml.AppendCardFacts(sb, culture, card, compact);
         if (!compact)
         {
-            PassportSsrPanelsHtml.AppendCardFacts(sb, culture, card, compact: false);
             PassportSsrEmployerPreviewHtml.Append(sb, culture, data.Profile, data.ProofPanel);
         }
 
