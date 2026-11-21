@@ -1,8 +1,8 @@
 /* Logged-in candidate nav on [NoBlazorRuntime] pages (no app.min.css). */
 
 :root {
-    --bottom-nav-clearance: 4.25rem;
-    --bottom-nav-h: 4.25rem;
+    --bottom-nav-clearance: 4.75rem;
+    --bottom-nav-h: 4.75rem;
 }
 
 .app-shell.has-bottom-nav .app-main {

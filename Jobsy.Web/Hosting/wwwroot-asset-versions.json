@@ -96,7 +96,7 @@
     "v": "20261117-03"
   },
   "css/features/candidate-no-blazor-chrome.css": {
-    "sha256": "a16cea6f64ddf3dd4da4eb2c17fb74aa2e9616d0a1860b657dd27f7398fb76ee",
+    "sha256": "6e720c658fd80ef4db052aca73e644bc7dc514135b9d0d3a769a145d2a3a306a",
     "v": "20261025-68"
   },
   "css/features/carriere.css": {
@@ -156,7 +156,7 @@
     "v": "20261011-03"
   },
   "css/features/kompas-illustrated.css": {
-    "sha256": "9ebe8a824a30645d5de36445acbd8f1ce3d3c271f7b8f49dd68520be0ce1f19a",
+    "sha256": "bc33649d19b254b2a4d7f65660fa5c11319cd17ab419bd909a82c729434c071d",
     "v": "20261025-87"
   },
   "css/features/kreeft-reiskaart.css": {
@@ -208,7 +208,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "8badf1724243e33a1893eb578b41579902df5c14130626677989eb9b4c0c6ef0",
+    "sha256": "ac26552234545b0069fb679d1c8e40ff8ab0e2e710d33cb8265bb314f7fe319b",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
@@ -532,7 +532,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "1435014e88c162cdfac6528c5fbbac66e3c8363ab7af2dd6dec719b9548a5387",
+    "sha256": "6c4924b301f679d9ac5043bd38ee25c62ecda01fd086a7b62c26fbccb1fe17e6",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {

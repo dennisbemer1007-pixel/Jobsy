@@ -28,7 +28,21 @@
     return cfg("data-warm", "1") !== "0";
   }
 
+  function syncBottomNavHeight() {
+    var nav = document.querySelector(
+      '.bottom-nav[data-testid="candidate-bottom-nav-ssr"], nav.bottom-nav, .bottom-nav'
+    );
+    if (!nav || !nav.isConnected) return;
+    var style = window.getComputedStyle(nav);
+    if (style.display === "none" || style.visibility === "hidden") return;
+    var h = Math.ceil(nav.getBoundingClientRect().height);
+    if (h > 0) {
+      document.documentElement.style.setProperty("--bottom-nav-h", h + "px");
+    }
+  }
+
   function syncClearance() {
+    syncBottomNavHeight();
     var dock = document.querySelector(".lobsy-coach-dock[data-ssr-coach]");
     if (!dock) return;
     var btn = dock.querySelector("#lobsy-coach-btn") || dock.querySelector("[data-ssr-coach-open]") || dock;
@@ -467,6 +481,13 @@
 
     syncClearance();
     window.addEventListener("resize", syncClearance);
+    var nav = document.querySelector(
+      '.bottom-nav[data-testid="candidate-bottom-nav-ssr"], nav.bottom-nav, .bottom-nav'
+    );
+    if (nav && typeof ResizeObserver === "function") {
+      var ro = new ResizeObserver(syncClearance);
+      ro.observe(nav);
+    }
   }
 
   function bindOnboardingBubble() {
