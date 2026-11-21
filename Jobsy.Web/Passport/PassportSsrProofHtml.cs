@@ -126,8 +126,10 @@ internal static class PassportSsrProofHtml
         sb.Append("<div class=\"passport-proof__grid\">");
         AppendExperienceCard(sb, culture, prefs, panel);
         AppendEducationCard(sb, culture, profile, prefs);
-        AppendReviewsCard(sb, culture, refs, profile.UploadedCv, antiforgeryToken);
+        AppendReviewsCard(sb, culture, refs, profile.UploadedCv);
         sb.Append("</div>");
+
+        AppendCvProposalFullWidth(sb, culture, profile.UploadedCv, antiforgeryToken);
 
         AppendCompetenceBlocks(sb, culture, panel);
         AppendRefVerificationTip(sb, culture, panel);
@@ -208,10 +210,7 @@ internal static class PassportSsrProofHtml
             .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
             .ToList();
 
-        sb.Append("<article class=\"detail-card passport-proof__card kompas-card--illustrated\">");
-        sb.Append("<div class=\"kompas-card-spot\" style=\"background-image:url('");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SpotOpleiding));
-        sb.Append("');--kompas-spot-pos:80% 25%;\" aria-hidden=\"true\"></div>");
+        sb.Append("<article class=\"detail-card passport-proof__card\">");
         sb.Append("<h3 class=\"passport-proof__card-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Proof.Experience"]));
         sb.Append("</h3>");
@@ -412,8 +411,7 @@ internal static class PassportSsrProofHtml
         StringBuilder sb,
         CultureState culture,
         IReadOnlyList<CandidateReferenceItem> refs,
-        CandidateUploadedCvInfo? uploadedCv,
-        string antiforgeryToken)
+        CandidateUploadedCvInfo? uploadedCv)
     {
         sb.Append("<article class=\"detail-card passport-proof__card\"><h3 class=\"passport-proof__card-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Proof.Reviews"]));
@@ -473,33 +471,45 @@ internal static class PassportSsrProofHtml
             sb.Append("</button>");
         }
 
-        if (uploadedCv?.PendingProposalFields is { Count: > 0 } pending)
-        {
-            sb.Append("<section class=\"profile-cv__proposal\" aria-labelledby=\"passport-cv-proposal-title\" data-testid=\"passport-cv-proposal\">");
-            sb.Append("<h4 id=\"passport-cv-proposal-title\" class=\"profile-cv__proposal-title\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalTitle"]));
-            sb.Append("</h4><p class=\"profile-cv__proposal-lead\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalLead"]));
-            sb.Append("</p><form method=\"post\" action=\"/api/passport-client/confirm-cv\" data-enhance=\"false\" data-enhance-nav=\"false\" data-passport-cv-proposal-form=\"1\">");
-            sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
-            sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
-            sb.Append("\" /><ul class=\"profile-cv__proposal-list\">");
-            var suggested = uploadedCv.SuggestedProfile;
-            foreach (var field in pending)
-            {
-                sb.Append("<li><label class=\"form-check-label\"><input type=\"checkbox\" name=\"cvField\" value=\"");
-                sb.Append(WebUtility.HtmlEncode(field));
-                sb.Append("\" /> ");
-                sb.Append(WebUtility.HtmlEncode(CvProposalFieldDisplay.Format(field, suggested)));
-                sb.Append("</label></li>");
-            }
+        sb.Append("</div></article>");
+    }
 
-            sb.Append("</ul><button type=\"submit\" class=\"btn btn-primary\" data-testid=\"passport-cv-proposal-confirm\" disabled data-passport-cv-proposal-submit=\"1\">");
-            sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalConfirm"]));
-            sb.Append("</button></form></section>");
+    private static void AppendCvProposalFullWidth(
+        StringBuilder sb,
+        CultureState culture,
+        CandidateUploadedCvInfo? uploadedCv,
+        string antiforgeryToken)
+    {
+        if (uploadedCv?.PendingProposalFields is not { Count: > 0 } pending)
+        {
+            return;
         }
 
-        sb.Append("</div></article>");
+        var suggested = uploadedCv.SuggestedProfile;
+        sb.Append("<section class=\"detail-card profile-cv__proposal profile-cv__proposal--full-width passport-proof__cv-proposal\" aria-labelledby=\"passport-cv-proposal-title\" data-testid=\"passport-cv-proposal\">");
+        sb.Append("<h3 id=\"passport-cv-proposal-title\" class=\"profile-cv__proposal-title\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalTitle"]));
+        sb.Append("</h3><p class=\"profile-cv__proposal-lead\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalLead"]));
+        sb.Append("</p><form method=\"post\" action=\"/api/passport-client/confirm-cv\" data-enhance=\"false\" data-enhance-nav=\"false\" data-passport-cv-proposal-form=\"1\">");
+        sb.Append("<input type=\"hidden\" name=\"__RequestVerificationToken\" value=\"");
+        sb.Append(WebUtility.HtmlEncode(antiforgeryToken));
+        sb.Append("\" /><ul class=\"profile-cv__proposal-list\">");
+        foreach (var field in pending)
+        {
+            foreach (var line in CvProposalFieldDisplay.ListDisplayLines(field, suggested))
+            {
+                sb.Append("<li class=\"profile-cv__proposal-item\"><label class=\"form-check-label profile-cv__proposal-label\"><input type=\"checkbox\" class=\"form-check-input\" name=\"cvField\" value=\"");
+                sb.Append(WebUtility.HtmlEncode(line.FieldKey));
+                sb.Append("\" /> <span class=\"profile-cv__proposal-text\">");
+                sb.Append(WebUtility.HtmlEncode(line.Label));
+                sb.Append("</span></label></li>");
+            }
+        }
+
+        sb.Append("</ul><div class=\"profile-cv__proposal-actions\"><button type=\"submit\" class=\"btn btn-primary\" data-testid=\"passport-cv-proposal-confirm\" disabled data-passport-cv-proposal-submit=\"1\">");
+        sb.Append(WebUtility.HtmlEncode(culture["Profile.CvProposalConfirm"]));
+        sb.Append("</button></div></form></section>");
     }
 
     private static void AppendCompetenceBlocks(StringBuilder sb, CultureState culture, Panel panel)
@@ -926,16 +936,11 @@ internal static class PassportSsrProofHtml
         string? start,
         string? end,
         bool isCurrent = false)
-    {
-        static string Year(string? m)
-            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
-
-        var s = Year(start);
-        var e = isCurrent
-            ? culture["Profile.EmployerPresent"]
-            : string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
-        return string.IsNullOrEmpty(s) ? e : $"{s} - {e}";
-    }
+        => CandidateEmployerYearRangeFormat.Format(
+            start,
+            end,
+            isCurrent,
+            culture["Profile.EmployerPresent"]);
 
     private static void EnsureEmployerEntryIds(List<CandidateEmployerHistory> employers)
     {

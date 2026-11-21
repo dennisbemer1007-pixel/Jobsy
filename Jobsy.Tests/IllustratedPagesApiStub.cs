@@ -30,6 +30,13 @@ public static class IllustratedPagesApiStub
     /// <summary>When true, kompas payloads use a minimal paspoort profile (many empty fields).</summary>
     public static bool PassportMinimalProfileCapture { get; set; }
 
+    /// <summary>When true (via <c>JOBSY_PR1488_CAPTURE=1</c>), stub CV-like paspoort profile for evidence screenshots.</summary>
+    public static bool Pr1488PaspoortCapture =>
+        string.Equals(Environment.GetEnvironmentVariable("JOBSY_PR1488_CAPTURE"), "1", StringComparison.Ordinal);
+
+    public static bool Pr1488GeboortedatumCapture =>
+        string.Equals(Environment.GetEnvironmentVariable("JOBSY_PR1488_CAPTURE_DOB"), "1", StringComparison.Ordinal);
+
     internal static readonly DateOnly StubAdultDateOfBirth = new(1998, 4, 12);
 
     private const string StubAdultDateOfBirthJson = """
@@ -47,7 +54,9 @@ public static class IllustratedPagesApiStub
     {
         if (path.Contains("/kompas/dna", StringComparison.OrdinalIgnoreCase))
         {
-            var k = minimalPassportProfile || PassportMinimalProfileCapture
+            var k = Pr1488PaspoortCapture
+                ? BuildPr1488Kompas()
+                : minimalPassportProfile || PassportMinimalProfileCapture
                 ? BuildMinimalKompas()
 #if ILLUSTRATED_CAPTURE_HOST
                 : BuildMinimalKompas();
@@ -93,6 +102,11 @@ public static class IllustratedPagesApiStub
 
         if (path.Contains("/kompas", StringComparison.OrdinalIgnoreCase))
         {
+            if (Pr1488PaspoortCapture)
+            {
+                return Serialize(BuildPr1488Kompas());
+            }
+
             if (minimalPassportProfile || PassportMinimalProfileCapture)
             {
                 return Serialize(BuildMinimalKompas());
@@ -337,6 +351,11 @@ public static class IllustratedPagesApiStub
 
         if (path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase))
         {
+            if (Pr1488PaspoortCapture || Pr1488GeboortedatumCapture)
+            {
+                return Pr1488ProfileJson(Pr1488GeboortedatumCapture && !Pr1488PaspoortCapture);
+            }
+
             if (emptyAppsAndLikes)
             {
                 return """
@@ -755,6 +774,179 @@ public static class IllustratedPagesApiStub
               "companyLogoUrl": null
             }]
             """;
+
+    private static string Pr1488ProfileJson(bool geboortedatumOnly)
+    {
+        var dobBlock = geboortedatumOnly
+            ? """
+              "dateOfBirth": null,
+              "hasDateOfBirth": false,
+              """
+            : StubAdultDateOfBirthJson;
+        var extraRootBlock = geboortedatumOnly
+            ? ""
+            : """
+              ,
+              "testAiConsentAt": "2026-10-01T12:00:00Z",
+              "uploadedCv": {
+                "fileName": "ReportLabDeLindeCv.pdf",
+                "contentType": "application/pdf",
+                "sizeBytes": 1737,
+                "uploadedAtUtc": "2026-11-19T10:00:00Z",
+                "extractedAtUtc": "2026-11-19T10:01:00Z",
+                "filledFields": [],
+                "pendingProposalFields": ["werkervaring", "opleiding", "certificaten", "rijbewijs"],
+                "confirmedFields": [],
+                "suggestedProfile": {
+                  "employers": [
+                    { "employerName": "Huisartsenpraktijk De Linde", "role": "Verpleegkundige", "startMonth": "2019-01", "endMonth": "2024-12" },
+                    { "employerName": "Dierenasiel Scheveningen", "role": "Vrijwilliger", "startMonth": "2022-01", "endMonth": null }
+                  ],
+                  "educations": ["MBO Verpleegkunde niveau 4"],
+                  "educationSchool": "ROC Mondriaan",
+                  "drivingLicenses": ["B"],
+                  "certificates": [
+                    { "name": "BHV", "year": 2023 },
+                    { "name": "VCA-basis", "year": 2022 }
+                  ]
+                }
+              }
+              """;
+        var employersBlock = geboortedatumOnly
+            ? "{}"
+            : """
+              {
+                "homeAddress": "Kasweg 12, 2671 AB Naaldwijk",
+                "maxTravelMinutes": 25,
+                "preferredTransport": "OV",
+                "aboutMe": "Verpleegkundige met ervaring in de eerste lijn.",
+                "employers": [
+                  {
+                    "employerName": "Huisartsenpraktijk De Linde",
+                    "role": "Verpleegkundige",
+                    "startMonth": "2019-01",
+                    "endMonth": "2024-12",
+                    "isCurrent": false,
+                    "showsAsCurrent": false
+                  },
+                  {
+                    "employerName": "Dierenasiel Scheveningen",
+                    "role": "Vrijwilliger",
+                    "startMonth": "2022-01",
+                    "endMonth": null,
+                    "isCurrent": false,
+                    "showsAsCurrent": false
+                  }
+                ],
+                "educations": ["MBO Verpleegkunde niveau 4"],
+                "educationSchool": "ROC Mondriaan",
+                "drivingLicenses": ["B"],
+                "certificates": [
+                  { "name": "BHV", "year": 2023 },
+                  { "name": "VCA-basis", "year": 2022 }
+                ]
+              }
+              """;
+        return $$"""
+            {
+              "fullName": "Sanne de Vries",
+              "firstName": "Sanne",
+              "lastName": "de Vries",
+              "role": "Candidate",
+              {{dobBlock}}
+              "openForWork": true,
+              "emailVerified": true,
+              "phoneVerified": true,
+              "preferences": {{employersBlock}}{{extraRootBlock}}
+            }
+            """;
+    }
+
+    private static CandidateKompasState BuildPr1488Kompas()
+    {
+        var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
+        kompas.Profile!.FullName = "Sanne de Vries";
+        kompas.Profile.FirstName = "Sanne";
+        kompas.Profile.LastName = "de Vries";
+        kompas.Profile.Role = "Candidate";
+        kompas.Profile.DateOfBirth = StubAdultDateOfBirth;
+        kompas.Profile.HasDateOfBirth = true;
+        kompas.Profile.OpenForWork = true;
+        kompas.Profile.EmailVerified = true;
+        kompas.Profile.PhoneVerified = true;
+        kompas.Profile.TestAiConsentAt = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        kompas.Profile.Preferences = new CandidatePreferences
+        {
+            HomeAddress = "Kasweg 12, 2671 AB Naaldwijk",
+            MaxTravelMinutes = 25,
+            PreferredTransport = "OV",
+            AboutMe = "Verpleegkundige met ervaring in de eerste lijn.",
+            Employers =
+            [
+                new CandidateEmployerHistory
+                {
+                    EmployerName = "Huisartsenpraktijk De Linde",
+                    Role = "Verpleegkundige",
+                    StartMonth = "2019-01",
+                    EndMonth = "2024-12",
+                    IsCurrent = false
+                },
+                new CandidateEmployerHistory
+                {
+                    EmployerName = "Dierenasiel Scheveningen",
+                    Role = "Vrijwilliger",
+                    StartMonth = "2022-01",
+                    EndMonth = null,
+                    IsCurrent = false
+                }
+            ],
+            Educations = ["MBO Verpleegkunde niveau 4"],
+            DrivingLicenses = ["B"],
+            Certificates =
+            [
+                new CandidateCertificate { Name = "BHV", Year = 2023 },
+                new CandidateCertificate { Name = "VCA-basis", Year = 2022 }
+            ]
+        };
+        kompas.Profile.UploadedCv = new CandidateUploadedCvInfo
+        {
+            FileName = "ReportLabDeLindeCv.pdf",
+            ContentType = "application/pdf",
+            SizeBytes = 1737,
+            UploadedAtUtc = new DateTime(2026, 11, 19, 10, 0, 0, DateTimeKind.Utc),
+            ExtractedAtUtc = new DateTime(2026, 11, 19, 10, 1, 0, DateTimeKind.Utc),
+            PendingProposalFields = ["werkervaring", "opleiding", "certificaten", "rijbewijs"],
+            SuggestedProfile = new CvExtractedProfile(
+                Educations: ["MBO Verpleegkunde niveau 4"],
+                EducationSchool: "ROC Mondriaan",
+                DrivingLicenses: ["B"],
+                Employers:
+                [
+                    new CandidateEmployerHistoryDto(
+                        "Huisartsenpraktijk De Linde",
+                        Role: "Verpleegkundige",
+                        StartMonth: "2019-01",
+                        EndMonth: "2024-12"),
+                    new CandidateEmployerHistoryDto(
+                        "Dierenasiel Scheveningen",
+                        Role: "Vrijwilliger",
+                        StartMonth: "2022-01",
+                        EndMonth: null)
+                ],
+                Certificates:
+                [
+                    new CandidateCertificateDto("BHV", 2023),
+                    new CandidateCertificateDto("VCA-basis", 2022)
+                ])
+        };
+        if (kompas.WhoAmI is not null)
+        {
+            kompas.WhoAmI.Story =
+                "Sanne pakt taken concreet op en houdt het overzicht, ook als het druk wordt.";
+        }
+
+        return kompas;
+    }
 
     private static CandidateKompasState BuildMinimalKompas()
     {

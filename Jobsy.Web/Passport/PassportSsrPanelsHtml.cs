@@ -4,7 +4,6 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Dna;
 using Jobsy.Web.Localization;
-using Jobsy.Web.Media;
 using Jobsy.Web.Navigation;
 
 namespace Jobsy.Web.Passport;
@@ -13,9 +12,7 @@ internal static class PassportSsrPanelsHtml
 {
     internal static void AppendLobsyTipCard(StringBuilder sb, CultureState culture)
     {
-        sb.Append("<aside class=\"kompas-tip\" aria-labelledby=\"kompas-tip-title\" data-testid=\"passport-lobsy-tip\"><div class=\"kompas-tip__art\" style=\"background-image:url('");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.TipVragen));
-        sb.Append("')\" aria-hidden=\"true\"></div><div class=\"kompas-tip__body\"><p class=\"kompas-tip__eyebrow\" id=\"kompas-tip-title\">");
+        sb.Append("<aside class=\"kompas-tip kompas-tip--plain\" aria-labelledby=\"kompas-tip-title\" data-testid=\"passport-lobsy-tip\"><div class=\"kompas-tip__body\"><p class=\"kompas-tip__eyebrow\" id=\"kompas-tip-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Eyebrow"]));
         sb.Append("</p><p class=\"kompas-tip__text\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Tip.Body"]));
