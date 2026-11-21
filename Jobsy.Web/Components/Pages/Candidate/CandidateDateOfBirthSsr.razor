@@ -50,7 +50,7 @@ else if (_bodyHtml is not null)
             var returnUrl = AuthRedirects.TrySafeLocalUrl(http.Request.Query["returnUrl"]) ?? "";
             var message = CandidateConsentRules.DateOfBirthRequiredMessage;
             var sb = new System.Text.StringBuilder();
-            sb.Append("<div class=\"panel-page profile-page profile-page--candidate candidate-dob-gate\" data-testid=\"candidate-dob-gate\">");
+            sb.Append("<div class=\"panel-page profile-page profile-page--candidate candidate-dob-gate candidate-dob-gate--plain\" data-testid=\"candidate-dob-gate\">");
             sb.Append("<div class=\"detail-card competency-profile-card\"><h1 class=\"login-title\">");
             sb.Append(System.Net.WebUtility.HtmlEncode(Culture["Profile.DateOfBirth"]));
             sb.Append("</h1><p class=\"login-lead\" role=\"alert\">");

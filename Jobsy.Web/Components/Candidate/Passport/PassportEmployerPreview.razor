@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
@@ -83,13 +84,6 @@
         _recognitionLine = VerifiedCompetences.FirstOrDefault()?.RecognitionLine;
     }
 
-    private static string FormatRange(string? start, string? end)
-    {
-        static string Year(string? m)
-            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
-
-        var s = Year(start);
-        var e = string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
-        return string.IsNullOrEmpty(s) ? e : $"{s}-{e}";
-    }
+    private string FormatRange(string? start, string? end)
+        => CandidateEmployerYearRangeFormat.Format(start, end, false, Culture["Profile.EmployerPresent"]);
 }
