@@ -272,6 +272,12 @@ public static class UiStringsGratisDna
         ro["GratisDna.Under16.Lead"] = "De la 13 ani poți participa. Sub 16 ani ai nevoie de acordul părintelui sau tutorelui. Sub 13 ani nu se poate. Creează un cont și cerem acordul. Apoi poți face testul.";
         ar["GratisDna.Under16.Lead"] = "من عمر 13 يمكنك المشاركة. تحت 16 تحتاج موافقة والدك أو وليّك. تحت 13 لا يمكن. أنشئ حساباً وسنطلب الموافقة. بعدها يمكنك إجراء الاختبار.";
 
+        nl["GratisDna.Under16.Back"] = "← Terug naar de start";
+        en["GratisDna.Under16.Back"] = "← Back to the start";
+        pl["GratisDna.Under16.Back"] = "← Wróć na start";
+        ro["GratisDna.Under16.Back"] = "← Înapoi la început";
+        ar["GratisDna.Under16.Back"] = "← العودة إلى البداية";
+
         nl["GratisDna.Under16.Cta"] = "Account maken";
         en["GratisDna.Under16.Cta"] = "Create account";
         pl["GratisDna.Under16.Cta"] = "Utwórz konto";

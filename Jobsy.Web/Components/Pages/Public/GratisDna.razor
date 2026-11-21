@@ -38,7 +38,7 @@
         }
         else if (_state == FlowState.Under16)
         {
-            <GratisDnaUnder16View />
+            <GratisDnaUnder16View OnBack="BackFromUnder16Async" />
         }
         else if (_state == FlowState.Landing)
         {
@@ -91,7 +91,7 @@
                         <span>@Culture["GratisDna.Landing.Age16"]</span>
                     </label>
                     <p class="gd-note gd-note--privacy" data-testid="gd-storage-note">
-                        @LandingText.For("GratisDna.Landing.Consent", _variant)
+                        @LandingText.For("GratisDna.Landing.Consent", _variant, Culture.Language)
                         <a href="@PublicRoutes.Privacy">@Culture["GratisDna.Landing.PrivacyLink"]</a>
                     </p>
                     @if (_age16Plus != true)
@@ -207,7 +207,7 @@
 
                 <p class="gd-qfoot">
                     <PubEmoji Glyph="🔒" />
-                    @LandingText.For("GratisDna.Questions.Privacy", _variant)
+                    @LandingText.For("GratisDna.Questions.Privacy", _variant, Culture.Language)
                 </p>
             </div>
         }
@@ -285,6 +285,7 @@
     private string? _shareMessage;
     private ElementReference _questionRoot;
     private bool _chromeBound;
+    private bool _landingChromeBound;
 
     private OnboardingImpressionCoreItem? _strengthTile;
     private OnboardingImpressionCoreItem? _riasecTile;
@@ -366,6 +367,22 @@
             }
         }
 
+        if ((_state is FlowState.Landing or FlowState.Under16) && !_landingChromeBound)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyEnsureGratisDna");
+                await Js.InvokeVoidAsync("jobsyGratisDna.bindQuestionChrome");
+                _landingChromeBound = true;
+            }
+            catch (JSException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
         if (_state == FlowState.Questions && !_chromeBound)
         {
             try
@@ -373,6 +390,7 @@
                 await Js.InvokeVoidAsync("jobsyEnsureGratisDna");
                 await Js.InvokeVoidAsync("jobsyGratisDna.bindQuestionChrome");
                 _chromeBound = true;
+                _landingChromeBound = true;
             }
             catch (JSException)
             {
@@ -489,6 +507,13 @@
 
         _age16Plus = false;
         _state = FlowState.Under16;
+    }
+
+    private Task BackFromUnder16Async()
+    {
+        _state = FlowState.Landing;
+        _age16Plus = null;
+        return Task.CompletedTask;
     }
 
     private async Task StartAsync()
