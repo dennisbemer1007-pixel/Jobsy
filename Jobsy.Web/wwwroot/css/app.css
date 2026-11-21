@@ -8439,8 +8439,8 @@ a.engagement-btn {
     scrollbar-width: thin;
 }
 
-.app-shell.has-bottom-nav .app-main,
-.app-shell:has(.bottom-nav) .app-main {
+.app-shell.has-bottom-nav:not(:has(.passport-page--cv-plain)) .app-main,
+.app-shell:has(.bottom-nav):not(:has(.passport-page--cv-plain)) .app-main {
     padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
 }
 
@@ -8510,8 +8510,8 @@ button.bottom-nav__item {
         padding: 0.4rem 0.15rem;
     }
 
-    .app-shell.has-bottom-nav:not(:has(.jobsy-discovery)) .app-main,
-    .app-shell:has(.bottom-nav):not(:has(.jobsy-discovery)) .app-main {
+    .app-shell.has-bottom-nav:not(:has(.jobsy-discovery)):not(:has(.passport-page--cv-plain)) .app-main,
+    .app-shell:has(.bottom-nav):not(:has(.jobsy-discovery)):not(:has(.passport-page--cv-plain)) .app-main {
         padding-bottom: calc(var(--bottom-nav-h, 4.75rem) + 48px + env(safe-area-inset-bottom, 0px));
     }
 
@@ -8579,8 +8579,8 @@ button.bottom-nav__item {
         display: block !important;
     }
 
-    .app-shell--candidate.has-bottom-nav .app-main,
-    .app-shell--candidate:has(.bottom-nav) .app-main {
+    .app-shell--candidate.has-bottom-nav:not(:has(.passport-page--cv-plain)) .app-main,
+    .app-shell--candidate:has(.bottom-nav):not(:has(.passport-page--cv-plain)) .app-main {
         padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
@@ -21683,7 +21683,7 @@ html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
 }
 
 /* Candidate coach: reserve space in the scrollable content column, not under the in-flow footer. */
-.app-shell:has([data-lobsy-coach]) .app-main__content {
+.app-shell:has([data-lobsy-coach]):not(:has(.passport-page--cv-plain)) .app-main__content {
     padding-bottom: calc(64px + 24px + 16px);
 }
 
@@ -21952,7 +21952,7 @@ html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
 }
 
 @media (max-width: 639px) {
-    .app-shell:has([data-lobsy-coach]) .app-main {
+    .app-shell:has([data-lobsy-coach]):not(:has(.passport-page--cv-plain)) .app-main {
         padding-bottom: calc(
             var(--bottom-nav-h, 0px)
             + 48px
@@ -21998,7 +21998,7 @@ html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
         );
     }
 
-    .app-shell:has(.passport-page--illustrated) .app-main,
+    .app-shell:has(.passport-page--illustrated:not(.passport-page--cv-plain)) .app-main,
     .app-shell:has(.panel-page--cand-ill) .app-main {
         padding-bottom: calc(
             var(--bottom-nav-h, 0px)
