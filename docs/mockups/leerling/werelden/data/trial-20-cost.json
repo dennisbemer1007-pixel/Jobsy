@@ -1,24 +1,21 @@
 {
   "trialOccupations": 20,
-  "acceptatieDeployCommit": "1b11779ce079c55e2166a3e27577d33809b098fc",
-  "occupationDayMerge3011cf22Deployed": true,
-  "regenRunStartedUtc": "2026-10-31T04:37:30.487Z",
+  "acceptatieDeployCommit": "d06ba8275",
+  "regenRunStartedUtc": "2026-10-31T11:35:44.651Z",
   "actualOpenAiUsageThisRun": {
     "model": "gpt-4o",
     "openAiCalls": 0,
     "promptTokens": 0,
     "completionTokens": 0,
     "usd": 0.0,
-    "note": "No OpenAI usage on Acceptatie: regenerate endpoint was never called (Blazor _pick empty / 401 without Acc JWT PEM). Real cost remains USD 0.00 until a successful server-side regen."
+    "note": "Acceptatie OpenAI regen did not complete from automation (no confirmed POST/start batch; trial generatedAtUtc unchanged vs 2026-10-30/31 export). Product fixes for timeout + background replace regen are on acceptatie."
   },
-  "dataPipeline": "Downloaded Acceptatie export after deploy 3011cf22; applied OccupationDayExportRepair locally (same Core repair as merged PR #1357); regen HTML + 60 PNG renders.",
   "estimatedUsdIfFreshGpt4oRegenAll20": {
     "model": "gpt-4o",
     "occupations": 20,
     "openAiCalls": 105,
     "promptTokens": 147000,
     "completionTokens": 50400,
-    "estimatedUsd": 0.8715,
-    "note": "OccupationDayBatchPlan average; use after a successful Acceptatie replace regen."
+    "estimatedUsd": 0.8715
   }
 }

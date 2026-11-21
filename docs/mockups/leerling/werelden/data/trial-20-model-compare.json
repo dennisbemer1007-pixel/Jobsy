@@ -1,0 +1,43 @@
+{
+  "catalogOccupations": 3039,
+  "pricingNote": "List prices in OccupationDayBatchPlan (gpt-4o $2.50/$10 per M input/output; gpt-4o-mini $0.15/$0.60). Catalog projection uses typical tokens per occupation, not measured batch usage.",
+  "gpt4o": {
+    "OpenAiCalls": 15955,
+    "InputTokens": 22337000,
+    "OutputTokens": 7658400,
+    "EstimatedUsdCatalog3039": 132.4265,
+    "Trial20EstimatedUsd": 0.8715,
+    "Trial20ActualUsd": 0.0,
+    "Trial20ActualNote": "Acceptatie gpt-4o regen not confirmed from automation; see trial-20-cost.json."
+  },
+  "gpt4oMini": {
+    "OpenAiCalls": 15955,
+    "InputTokens": 22337000,
+    "OutputTokens": 7658400,
+    "EstimatedUsdCatalog3039": 7.94559,
+    "Trial20EstimatedUsd": 0.0523,
+    "Trial20ActualUsd": null,
+    "Trial20ActualNote": "Not run in cloud agent (no OPENAI_API_KEY). Run scripts/run-trial-20-cheap-models.sh with key."
+  },
+  "grok": {
+    "status": "skipped",
+    "reason": "No xAI/Grok IntegrationKey or Acceptatie integrations tile; only OpenAI is wired for occupation-day generation."
+  },
+  "compareSlugs": [
+    "bioloog",
+    "accumonteur",
+    "advertentiemanager",
+    "docent-alfabetisering"
+  ],
+  "compareRenders": [
+    "docs/mockups/leerling/werelden/renders/desktop/compare-zee-bioloog.png",
+    "docs/mockups/leerling/werelden/renders/desktop/compare-zee-accumonteur.png",
+    "docs/mockups/leerling/werelden/renders/desktop/compare-zee-advertentiemanager.png",
+    "docs/mockups/leerling/werelden/renders/desktop/compare-zee-docent-alfabetisering.png"
+  ],
+  "compareRendersStatus": "pending mini export (OPENAI_API_KEY required)",
+  "qualityAssessment": {
+    "status": "pending mini export",
+    "expectation": "gpt-4o-mini usually passes the same validators but reads simpler and can feel more generic; gpt-4o is stronger on concrete workplace detail and varied skill-chip wording. For ~16× lower projected catalog cost, mini is plausible for a first fill with spot-check/regen on gpt-4o for flagged occupations — to be validated on real trial-20 output."
+  }
+}
