@@ -273,6 +273,8 @@ else
     private bool _loading = true;
     private bool _mapReady;
     private bool _mapInitScheduled;
+    private bool _mapObserveAttached;
+    private bool _disposed;
     private Guid? _hoveredId;
     private readonly uint _highlightShuffleSeed = (uint)Random.Shared.NextInt64();
     private DotNetObjectReference<CompanyPublicPage>? _dotNetRef;
@@ -289,6 +291,7 @@ else
         _engagementCompanyId = Guid.Empty;
         _mapReady = false;
         _mapInitScheduled = false;
+        _mapObserveAttached = false;
 
         try
         {
@@ -452,8 +455,58 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // The list is in the prerendered HTML; the map is initialised afterwards (09.3).
-        if (_loading || _page is null || _mapReady || _mapInitScheduled)
+        if (_loading || _page is null || _disposed)
+        {
+            return;
+        }
+
+        if (!RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        try
+        {
+            await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
+        }
+        catch
+        {
+            // Analytics must not block the map.
+        }
+
+        await ObserveCompanyMapAsync();
+    }
+
+    private async Task ObserveCompanyMapAsync()
+    {
+        if (_mapObserveAttached || _mapReady || _mapInitScheduled)
+        {
+            return;
+        }
+
+        try
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync(
+                "jobsyList.observeMore",
+                _mapElement,
+                _dotNetRef,
+                nameof(OnCompanyMapVisibleAsync));
+            _mapObserveAttached = true;
+        }
+        catch
+        {
+            await EnsureCompanyMapAsync();
+        }
+    }
+
+    [JSInvokable]
+    public Task OnCompanyMapVisibleAsync()
+        => _disposed ? Task.CompletedTask : EnsureCompanyMapAsync();
+
+    private async Task EnsureCompanyMapAsync()
+    {
+        if (_mapReady || _mapInitScheduled || _loading || _page is null || _disposed)
         {
             return;
         }
@@ -461,21 +514,6 @@ else
         _mapInitScheduled = true;
         try
         {
-            if (!RendererInfo.IsInteractive)
-            {
-                _mapInitScheduled = false;
-                return;
-            }
-
-            try
-            {
-                await Api.RecordImpressionsAsync(Js, _vacancies.Select(v => v.Id));
-            }
-            catch
-            {
-                // Analytics must not block the map.
-            }
-
             _dotNetRef ??= DotNetObjectReference.Create(this);
             var markers = BuildMarkers();
             var options = new Dictionary<string, object?>
@@ -630,7 +668,18 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyList.disconnect");
+        }
+        catch
+        {
+            // circuit may already be gone
+        }
+
         _dotNetRef?.Dispose();
+        _dotNetRef = null;
         if (_mapReady)
         {
             await CircuitInterop.InvokeVoidIgnoredAsync(Js, "jobMap.dispose");
