@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using Jobsy.Web.Localization;
-using Jobsy.Web.Media;
 
 namespace Jobsy.Web.Passport;
 
@@ -10,24 +9,12 @@ internal static class PassportSsrHeroHtml
     internal static void Append(StringBuilder sb, CultureState culture, string? firstName)
     {
         var greeting = BuildGreeting(culture, firstName);
-        var band = CompactHeroPreviewCream.PaspoortKompasWide;
-        var artDesktop = CandidateIllustratedImages.KompasHeroWide;
-        var artMobile = CandidateIllustratedImages.MobileFigureUrl(artDesktop) ?? artDesktop;
 
-        sb.Append("<header class=\"cand-hero cand-compact-hero cand-hero--compact-preview-c cand-compact-hero--onboarding\" data-testid=\"passport-greeting\" style=\"--cand-compact-hero-band:");
-        sb.Append(band);
-        sb.Append("\"><div class=\"cand-compact-hero__copy cand-hero__copy\"><h1 tabindex=\"-1\">");
+        sb.Append("<header class=\"cand-hero cand-hero--passport-plain\" data-testid=\"passport-greeting\"><div class=\"cand-hero__copy\"><h1 tabindex=\"-1\">");
         sb.Append(WebUtility.HtmlEncode(greeting));
         sb.Append("</h1><p class=\"cand-hero__lead\">");
         sb.Append(WebUtility.HtmlEncode(culture["Kompas.Greeting.Lead"]));
-        sb.Append("</p></div><div class=\"cand-compact-hero__art cand-hero__compact-c-art\" aria-hidden=\"true\">");
-        sb.Append("<img class=\"cand-compact-hero__art-img cand-compact-hero__art-img--desktop\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(artDesktop));
-        sb.Append("\" alt=\"\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" data-testid=\"passport-hero-art-desktop\" />");
-        sb.Append("<img class=\"cand-compact-hero__art-img cand-compact-hero__art-img--mobile\" src=\"");
-        sb.Append(WebUtility.HtmlEncode(artMobile));
-        sb.Append("\" alt=\"\" loading=\"eager\" fetchpriority=\"high\" decoding=\"async\" data-testid=\"cand-compact-hero-mobile-art\" />");
-        sb.Append("</div></header>");
+        sb.Append("</p></div></header>");
     }
 
     private static string BuildGreeting(CultureState culture, string? firstName)

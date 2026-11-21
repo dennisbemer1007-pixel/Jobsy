@@ -7,7 +7,7 @@ public sealed class PassportSsrR3GuardTests
     {
         var root = FindRepoRoot();
         var shells = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrShells.cs"));
-        Assert.Contains("cand-compact-hero--onboarding", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrHeroHtml.cs")), StringComparison.Ordinal);
+        Assert.Contains("cand-hero--passport-plain", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrHeroHtml.cs")), StringComparison.Ordinal);
         Assert.Contains("passport-lobsy-tip", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrPanelsHtml.cs")), StringComparison.Ordinal);
         Assert.Contains("passport-dna-ring", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Passport/PassportSsrRingHtml.cs")), StringComparison.Ordinal);
         Assert.Contains("data-passport-tab", shells, StringComparison.Ordinal);

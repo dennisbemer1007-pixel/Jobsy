@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
@@ -102,19 +103,9 @@ internal static class PassportSsrEmployerPreviewHtml
     }
 
     private static string FormatRange(CultureState culture, string? start, string? end, bool isCurrent)
-    {
-        static string Year(string? m)
-            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
-
-        var s = Year(start);
-        var e = isCurrent
-            ? culture["Profile.EmployerPresent"]
-            : string.IsNullOrWhiteSpace(end) ? "" : Year(end);
-        if (string.IsNullOrEmpty(s))
-        {
-            return e;
-        }
-
-        return string.IsNullOrEmpty(e) ? s : s + " - " + e;
-    }
+        => CandidateEmployerYearRangeFormat.Format(
+            start,
+            end,
+            isCurrent,
+            culture["Profile.EmployerPresent"]);
 }

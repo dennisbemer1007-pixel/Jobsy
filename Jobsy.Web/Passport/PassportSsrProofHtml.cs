@@ -208,10 +208,7 @@ internal static class PassportSsrProofHtml
             .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
             .ToList();
 
-        sb.Append("<article class=\"detail-card passport-proof__card kompas-card--illustrated\">");
-        sb.Append("<div class=\"kompas-card-spot\" style=\"background-image:url('");
-        sb.Append(WebUtility.HtmlEncode(CandidateIllustratedImages.SpotOpleiding));
-        sb.Append("');--kompas-spot-pos:80% 25%;\" aria-hidden=\"true\"></div>");
+        sb.Append("<article class=\"detail-card passport-proof__card\">");
         sb.Append("<h3 class=\"passport-proof__card-title\">");
         sb.Append(WebUtility.HtmlEncode(culture["Passport.Proof.Experience"]));
         sb.Append("</h3>");
@@ -926,16 +923,11 @@ internal static class PassportSsrProofHtml
         string? start,
         string? end,
         bool isCurrent = false)
-    {
-        static string Year(string? m)
-            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
-
-        var s = Year(start);
-        var e = isCurrent
-            ? culture["Profile.EmployerPresent"]
-            : string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
-        return string.IsNullOrEmpty(s) ? e : $"{s} - {e}";
-    }
+        => CandidateEmployerYearRangeFormat.Format(
+            start,
+            end,
+            isCurrent,
+            culture["Profile.EmployerPresent"]);
 
     private static void EnsureEmployerEntryIds(List<CandidateEmployerHistory> employers)
     {
