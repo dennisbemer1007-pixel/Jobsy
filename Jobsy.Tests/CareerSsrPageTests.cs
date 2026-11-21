@@ -30,4 +30,18 @@ public sealed class CareerSsrPageTests
             TestRepo.FindRoot(),
             "Jobsy.Web", "Career", "CareerSsrKansAsideHtml.cs")), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Kansberoepen_has_dedicated_ssr_route()
+    {
+        var page = File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "Components", "Pages", "Candidate", "CandidateCareerKansberoepenSsr.razor"));
+        Assert.Contains("@page \"/carriere/kansberoepen\"", page, StringComparison.Ordinal);
+        Assert.Contains("[NoBlazorRuntime]", page, StringComparison.Ordinal);
+        var js = File.ReadAllText(Path.Combine(
+            TestRepo.FindRoot(),
+            "Jobsy.Web", "wwwroot", "js", "career-ssr.js"));
+        Assert.Contains("/carriere/kansberoepen", js, StringComparison.Ordinal);
+    }
 }
