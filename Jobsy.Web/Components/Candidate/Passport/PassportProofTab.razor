@@ -236,36 +236,42 @@
                         </button>
                     }
                 </div>
-                @if (Editor.CvProposalFields.Count > 0)
-                {
-                    <section class="profile-cv__proposal" aria-labelledby="passport-cv-proposal-title" data-testid="passport-cv-proposal">
-                        <h4 id="passport-cv-proposal-title" class="profile-cv__proposal-title">@Culture["Profile.CvProposalTitle"]</h4>
-                        <p class="profile-cv__proposal-lead">@Culture["Profile.CvProposalLead"]</p>
-                        <ul class="profile-cv__proposal-list">
-                            @foreach (var field in Editor.CvProposalFields)
-                            {
-                                <li>
-                                    <label class="form-check-label">
-                                        <input type="checkbox"
-                                               checked="@Editor.IsCvProposalSelected(field)"
-                                               @onchange="e => Editor.ToggleCvProposal(field, e.Value is true)"
-                                               disabled="@Editor.CvBusy" />
-                                        @Editor.CvProposalCheckboxLabel(field)
-                                    </label>
-                                </li>
-                            }
-                        </ul>
-                        <button type="button"
-                                class="btn btn-primary"
-                                disabled="@(Editor.CvBusy || !Editor.HasCvProposalSelection)"
-                                data-testid="passport-cv-proposal-confirm"
-                                @onclick="Editor.ConfirmCvProposalsAsync">
-                            @Culture["Profile.CvProposalConfirm"]
-                        </button>
-                    </section>
-                }
             </article>
         </div>
+
+        @if (Editor.CvProposalFields.Count > 0)
+        {
+            <section class="detail-card profile-cv__proposal profile-cv__proposal--full-width passport-proof__cv-proposal" aria-labelledby="passport-cv-proposal-title" data-testid="passport-cv-proposal">
+                <h3 id="passport-cv-proposal-title" class="profile-cv__proposal-title">@Culture["Profile.CvProposalTitle"]</h3>
+                <p class="profile-cv__proposal-lead">@Culture["Profile.CvProposalLead"]</p>
+                <ul class="profile-cv__proposal-list">
+                    @foreach (var field in Editor.CvProposalFields)
+                    {
+                        foreach (var line in CvProposalFieldDisplay.ListDisplayLines(field, Editor.UploadedCv?.SuggestedProfile))
+                        {
+                            <li class="profile-cv__proposal-item">
+                                <label class="form-check-label profile-cv__proposal-label">
+                                    <input type="checkbox"
+                                           checked="@Editor.IsCvProposalSelected(line.FieldKey)"
+                                           @onchange="e => Editor.ToggleCvProposal(line.FieldKey, e.Value is true)"
+                                           disabled="@Editor.CvBusy" />
+                                    <span class="profile-cv__proposal-text">@line.Label</span>
+                                </label>
+                            </li>
+                        }
+                    }
+                </ul>
+                <div class="profile-cv__proposal-actions">
+                    <button type="button"
+                            class="btn btn-primary"
+                            disabled="@(Editor.CvBusy || !Editor.HasCvProposalSelection)"
+                            data-testid="passport-cv-proposal-confirm"
+                            @onclick="Editor.ConfirmCvProposalsAsync">
+                        @Culture["Profile.CvProposalConfirm"]
+                    </button>
+                </div>
+            </section>
+        }
 
         <p class="passport-proof__note muted">@Culture["Passport.Proof.LobsyCvNote"]</p>
         <button class="btn btn-secondary" type="button" data-testid="passport-proof-download-pdf" disabled="@(Editor.Saving || Editor.PdfBusy)" @onclick="Editor.DownloadLobsyCvAsync">

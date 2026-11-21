@@ -6,6 +6,51 @@ namespace Jobsy.Core.Rules;
 /// <summary>Plain B1 Dutch labels for CV confirm checkboxes (field name + values that will be saved).</summary>
 public static class CvProposalFieldDisplay
 {
+    public readonly record struct DisplayLine(string FieldKey, string Label);
+
+    public static IReadOnlyList<DisplayLine> ListDisplayLines(string fieldKey, CvExtractedProfile? suggested)
+    {
+        if (suggested is null)
+        {
+            return [new(fieldKey, fieldKey)];
+        }
+
+        return fieldKey switch
+        {
+            CvExtractionFieldKeys.Employers => ListEmployerLines(suggested),
+            CvExtractionFieldKeys.Certificates => ListCertificateLines(suggested),
+            _ => [new(fieldKey, Format(fieldKey, suggested))]
+        };
+    }
+
+    private static IReadOnlyList<DisplayLine> ListEmployerLines(CvExtractedProfile profile)
+    {
+        var items = profile.Employers?
+            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+            .Select(e => new DisplayLine(
+                CvExtractionFieldKeys.Employers,
+                $"Werkervaring: {FormatEmployerLine(e)}"))
+            .ToList();
+        return items is { Count: > 0 }
+            ? items
+            : [new(CvExtractionFieldKeys.Employers, "Werkervaring")];
+    }
+
+    private static IReadOnlyList<DisplayLine> ListCertificateLines(CvExtractedProfile profile)
+    {
+        var items = profile.Certificates?
+            .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+            .Select(c => new DisplayLine(
+                CvExtractionFieldKeys.Certificates,
+                c.Year is int y
+                    ? $"Certificaat: {c.Name.Trim()} ({y})"
+                    : $"Certificaat: {c.Name.Trim()}"))
+            .ToList();
+        return items is { Count: > 0 }
+            ? items
+            : [new(CvExtractionFieldKeys.Certificates, "Certificaten")];
+    }
+
     public static string Format(string fieldKey, CvExtractedProfile? suggested)
     {
         if (suggested is null)
@@ -101,41 +146,11 @@ public static class CvProposalFieldDisplay
     }
 
     private static string FormatYearRange(CandidateEmployerHistoryDto emp)
-    {
-        var startYear = YearFromMonth(emp.StartMonth);
-        var endYear = YearFromMonth(emp.EndMonth);
-        if (startYear is not null && endYear is not null)
-        {
-            return $"{startYear}–{endYear}";
-        }
-
-        if (startYear is not null && emp.IsCurrent == true)
-        {
-            return $"{startYear}–heden";
-        }
-
-        if (startYear is not null)
-        {
-            return startYear;
-        }
-
-        if (endYear is not null)
-        {
-            return endYear;
-        }
-
-        return string.Empty;
-    }
-
-    private static string? YearFromMonth(string? yyyyMm)
-    {
-        if (string.IsNullOrWhiteSpace(yyyyMm) || yyyyMm.Length < 4)
-        {
-            return null;
-        }
-
-        return yyyyMm[..4];
-    }
+        => CandidateEmployerYearRangeFormat.Format(
+            emp.StartMonth,
+            emp.EndMonth,
+            emp.IsCurrent == true,
+            "heden").Replace(" - ", "–", StringComparison.Ordinal);
 
     private static string FormatCertificates(CvExtractedProfile profile)
     {
