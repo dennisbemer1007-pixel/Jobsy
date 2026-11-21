@@ -1980,19 +1980,26 @@
         justify-content: flex-end;
     }
 
+    .app-shell--candidate.has-bottom-nav:has(.passport-page--cv-plain) .app-main,
+    .app-shell.has-bottom-nav:has(.passport-page--cv-plain) .app-main,
     .app-shell:has(.passport-page--cv-plain) .app-main {
         padding-bottom: 0;
     }
 
-    .app-shell:has(.passport-page--cv-plain) .app-main__content {
+    /* Coach clearance only (tab bar is fixed overlay — do not stack --bottom-nav-h here). */
+    .app-shell:has(.passport-page--cv-plain):has([data-lobsy-coach]) .app-main__content {
         padding-bottom: calc(
-            var(--bottom-nav-h, 4.75rem) + var(--cv-plain-coach-size, 88px) + var(--cv-plain-coach-gap, 0.5rem) + 0.75rem
-                + env(safe-area-inset-bottom, 0px)
+            var(--cv-plain-coach-size, 88px) + var(--cv-plain-coach-gap, 0.5rem) + env(safe-area-inset-bottom, 0px)
         );
     }
 
+    .passport-page--cv-plain .passport-ssr-footer-nav {
+        margin-block-end: 0;
+        padding-block-end: 0.35rem;
+    }
+
     .app-shell:has(.passport-page--cv-plain) .passport-page .passport-layout__main {
-        padding-bottom: 0.5rem;
+        padding-bottom: 0;
         padding-inline-end: max(0.75rem, env(safe-area-inset-inline-end, 0px));
     }
 
@@ -2008,6 +2015,18 @@
         justify-content: center;
         text-align: center;
         white-space: nowrap;
+    }
+}
+
+@media (max-width: 639px) {
+    .app-shell:has(.passport-page--cv-plain) .app-main {
+        padding-bottom: 0;
+    }
+
+    .app-shell:has(.passport-page--cv-plain):has([data-lobsy-coach]) .app-main__content {
+        padding-bottom: calc(
+            var(--cv-plain-coach-size, 88px) + var(--cv-plain-coach-gap, 0.5rem) + env(safe-area-inset-bottom, 0px)
+        );
     }
 }
 

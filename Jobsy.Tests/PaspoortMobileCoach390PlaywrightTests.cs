@@ -76,9 +76,12 @@ public sealed class PaspoortMobileCoach390PlaywrightTests : IAsyncLifetime
 
             if (w < 1024)
             {
+                await page.Locator("[data-testid=passport-footer-nav]").WaitForAsync(
+                    new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
                 await page.EvaluateAsync("window.scrollTo(0, document.body.scrollHeight)");
                 await page.WaitForTimeoutAsync(350);
                 await AssertCoachAboveNavAsync(page);
+                await AssertLastContentToTabBarGapAsync(page, maxGapPx: 140);
                 await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"paspoort-bottom-{tag}.png"), FullPage = false });
             }
 
@@ -102,7 +105,17 @@ public sealed class PaspoortMobileCoach390PlaywrightTests : IAsyncLifetime
                 await AssertCoachAboveNavAsync(page);
             }
 
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"paspoort-gegevens-{tag}.png"), FullPage = false });
+            if (w < 1024)
+            {
+                await page.EvaluateAsync("window.scrollTo(0, document.body.scrollHeight)");
+                await page.WaitForTimeoutAsync(350);
+                await AssertLastContentToTabBarGapAsync(page, maxGapPx: 140);
+                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"paspoort-gegevens-bottom-{tag}.png"), FullPage = false });
+            }
+            else
+            {
+                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"paspoort-gegevens-{tag}.png"), FullPage = false });
+            }
         }
     }
 
@@ -128,5 +141,36 @@ public sealed class PaspoortMobileCoach390PlaywrightTests : IAsyncLifetime
             }
             """);
         Assert.True(ok, "Coach must sit bottom-right within 16px and above the tab bar");
+    }
+
+    private static async Task AssertLastContentToTabBarGapAsync(IPage page, double maxGapPx)
+    {
+        var gap = await page.EvaluateAsync<double>(
+            """
+            () => {
+              const nav =
+                document.querySelector('.bottom-nav')
+                ?? document.querySelector('[data-testid="candidate-bottom-nav-ssr"]');
+              if (!nav) return 9999;
+              const nr = nav.getBoundingClientRect();
+              const visibleBottom = (el) => {
+                const r = el.getBoundingClientRect();
+                if (r.height < 1) return 0;
+                const s = getComputedStyle(el);
+                if (s.display === 'none' || s.visibility === 'hidden') return 0;
+                return r.bottom;
+              };
+              let contentBottom = 0;
+              for (const el of document.querySelectorAll(
+                '.passport-ssr-footer-nav, .passport-ssr-nav-links')) {
+                contentBottom = Math.max(contentBottom, visibleBottom(el));
+              }
+              if (contentBottom <= 0) return 9999;
+              return nr.top - contentBottom;
+            }
+            """);
+        Assert.True(
+            gap <= maxGapPx,
+            $"Gap from last content to tab bar top must be <= {maxGapPx}px (was {gap:F1}px)");
     }
 }

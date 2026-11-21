@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "c3b4288dbd674a970a6a92eee09cca15d443b13f7c97ca9f4eae755266f3e067",
+    "sha256": "701e2aee5402a72217c54c03f9fbec97c19683c3dcfa908a4ade20bf03fa716f",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -208,7 +208,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "ac26552234545b0069fb679d1c8e40ff8ab0e2e710d33cb8265bb314f7fe319b",
+    "sha256": "d56b7602af6b5c781c0f9e7ff311490a582a0e3fbba45ad8b8a9677610d3a837",
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
