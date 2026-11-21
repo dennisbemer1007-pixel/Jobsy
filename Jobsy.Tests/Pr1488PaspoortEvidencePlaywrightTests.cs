@@ -12,7 +12,8 @@ public sealed class Pr1488PaspoortEvidencePlaywrightTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        if (!ShouldRunAfter() && !ShouldRunBefore() && !ShouldRun1488b() && !ShouldRun1488c())
+        if (!ShouldRunAfter() && !ShouldRunBefore() && !ShouldRun1488b() && !ShouldRun1488c()
+            && !ShouldRun1488d())
         {
             return;
         }
@@ -44,6 +45,44 @@ public sealed class Pr1488PaspoortEvidencePlaywrightTests : IAsyncLifetime
 
     private static bool ShouldRun1488c()
         => string.Equals(Environment.GetEnvironmentVariable("JOBSY_PR1488C_CAPTURE"), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRun1488d()
+        => string.Equals(Environment.GetEnvironmentVariable("JOBSY_PR1488D_CAPTURE"), "1", StringComparison.Ordinal);
+
+    [Fact(Timeout = 300_000)]
+    public async Task Capture_pr1488d_mobile_coach_bottom_right()
+    {
+        _ = TestContext.Current.CancellationToken;
+        if (!ShouldRun1488d())
+        {
+            return;
+        }
+
+        Environment.SetEnvironmentVariable("JOBSY_PR1488_CAPTURE", "1");
+        var outDir = Environment.GetEnvironmentVariable("JOBSY_PR1488_EVIDENCE_DIR")
+                     ?? "/opt/cursor/artifacts/pr1488d";
+        Directory.CreateDirectory(outDir);
+
+        await using var factory = new IllustratedPagesWebFactory();
+        var root = factory.EnsureServerAddress();
+
+        await using var context = await NewContextAsync(390, 844);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await SignInAsync(page, root, "/candidate/paspoort?tab=dna");
+        await page.GotoAsync($"{root}/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await AssertCoachDockRightAlignedAsync(page, 390);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(outDir, "paspoort-wie-ik-ben-390.png"), FullPage = false });
+
+        await page.GotoAsync($"{root}/candidate/paspoort?tab=proof", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        var checklist = page.Locator("[data-testid=passport-cv-proposal]").First;
+        await checklist.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await checklist.ScrollIntoViewIfNeededAsync();
+        await page.WaitForTimeoutAsync(300);
+        await AssertCoachDockRightAlignedAsync(page, 390);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(outDir, "paspoort-bewijzen-cv-checklist-390.png"), FullPage = false });
+    }
 
     [Fact(Timeout = 300_000)]
     public async Task Capture_pr1488c_viewport_paspoort_coach()
@@ -297,6 +336,21 @@ public sealed class Pr1488PaspoortEvidencePlaywrightTests : IAsyncLifetime
             Path = Path.Combine(outDir, fileName),
             FullPage = false
         });
+    }
+
+    private static async Task AssertCoachDockRightAlignedAsync(IPage page, int viewportWidth)
+    {
+        var gap = await page.EvaluateAsync<double>(
+            """
+            () => {
+              const dock = document.querySelector('.lobsy-coach-dock--variant-b[data-lobsy-coach]')
+                || document.querySelector('.lobsy-coach-dock--variant-b');
+              if (!dock) return 9999;
+              const r = dock.getBoundingClientRect();
+              return window.innerWidth - r.right;
+            }
+            """);
+        Assert.True(gap >= 0 && gap <= 16.5, $"Coach dock right edge must be within 16px of viewport (gap={gap:F1}px at {viewportWidth}px)");
     }
 
     private static async Task ViewportShotScrollToAsync(

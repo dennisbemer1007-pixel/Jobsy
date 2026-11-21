@@ -1975,9 +1975,15 @@
         justify-content: flex-end;
     }
 
+    .app-shell:has(.passport-page--cv-plain) .app-main__content {
+        padding-bottom: calc(
+            var(--bottom-nav-h, 64px) + var(--cv-plain-coach-clearance) + 1.25rem + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
     .app-shell:has(.passport-page--cv-plain) .passport-page .passport-layout__main {
-        padding-bottom: calc(var(--cv-plain-coach-clearance) + var(--bottom-nav-h, 4.75rem));
-        padding-inline-end: max(0.75rem, env(safe-area-inset-inline-end, 0px));
+        padding-bottom: calc(var(--cv-plain-coach-clearance) + var(--bottom-nav-h, 4.75rem) + 0.75rem);
+        padding-inline-end: max(3.75rem, env(safe-area-inset-inline-end, 0px));
     }
 }
 
