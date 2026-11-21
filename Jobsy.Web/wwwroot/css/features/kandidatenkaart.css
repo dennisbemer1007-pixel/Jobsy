@@ -227,6 +227,26 @@
     color: var(--text);
 }.kk-below-min .kk-note {
     margin-top: var(--space-2);
+}.kk-empty-vacancy {
+    padding: var(--space-4);
+    border-radius: var(--r-sm);
+    background: var(--surface-2, var(--surface));
+    border: 1px solid var(--border);
+}.kk-empty-vacancy h2 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-lg);
+}.kk-empty-vacancy p {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-muted, var(--text));
+    line-height: 1.45;
+}.kk-empty-vacancy--mobile {
+    margin-bottom: var(--space-2);
+}.kk-map-pane--placeholder {
+    min-height: 320px;
+    border-radius: var(--r-sm);
+    background: color-mix(in srgb, var(--border) 35%, var(--surface));
+    border: 1px dashed var(--border);
 }.kk-map-toast {
     position: absolute;
     left: 50%;
