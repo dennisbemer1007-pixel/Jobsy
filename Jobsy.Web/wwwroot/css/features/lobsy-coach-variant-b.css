@@ -133,6 +133,29 @@
     );
   }
 
+  /* Full 88px B2 sprite (same framing as paspoort cv-plain) — sticky save bar raises the dock. */
+  .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b,
+  .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b {
+    width: 88px;
+    height: 88px;
+    min-width: 88px;
+    min-height: 88px;
+    overflow: visible;
+    contain: none;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+
+  .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster,
+  .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
+    display: block;
+    height: 88px;
+    max-width: 58px;
+    width: auto;
+    object-fit: contain;
+    object-position: 100% 100%;
+  }
+
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {
     height: 88px;
     max-width: 62px;

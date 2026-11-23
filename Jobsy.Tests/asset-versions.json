@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "bd7731254ccf430be4061d9e15f89d08528832da0901fb0fef133b64a88e4199",
+    "sha256": "dc9e3b0d40ab70ca962dbb8a36c3f6b6846b4af9c92b309b1cec81859c87f283",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -196,7 +196,7 @@
     "v": "20261115-03"
   },
   "css/features/lobsy-coach-variant-b.css": {
-    "sha256": "64a73fcd4ddd324f840db65c61aa99a3e2d1126a327cb42a6d25f44875f50b66",
+    "sha256": "f4a793250d9e4fa6ea8ec7780c1a85d9f73e825855e52db5c5114f397eca61e7",
     "v": "20261115-04"
   },
   "css/features/match-desktop.css": {

@@ -48,6 +48,7 @@ public sealed class CoachStickySaveBarPlaywrightTests : IAsyncLifetime
 
         await CaptureGeboortedatumAsync();
         await CapturePaspoortGegevensAsync();
+        await CapturePaspoortBottom390Async();
     }
 
     private async Task CaptureGeboortedatumAsync()
@@ -71,6 +72,7 @@ public sealed class CoachStickySaveBarPlaywrightTests : IAsyncLifetime
             await page.WaitForTimeoutAsync(600);
             if (w < 1024)
             {
+                await AssertLobsterFullyVisibleAsync(page);
                 await AssertCoachDoesNotIntersectStickyBarAsync(page);
             }
 
@@ -101,6 +103,29 @@ public sealed class CoachStickySaveBarPlaywrightTests : IAsyncLifetime
             await page.WaitForTimeoutAsync(400);
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"paspoort-gegevens-{tag}.png"), FullPage = false });
         }
+    }
+
+    private async Task CapturePaspoortBottom390Async()
+    {
+        Environment.SetEnvironmentVariable("JOBSY_PR1488_CAPTURE", "1");
+        await using var factory = new IllustratedPagesWebFactory();
+        var root = factory.EnsureServerAddress();
+
+        await using var context = await NewContextAsync(390, 844);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await SignInAsync(page, root, "/candidate/paspoort?tab=dna");
+        await page.GotoAsync($"{root}/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.Locator(".lobsy-coach-dock__lobster").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator("[data-testid=passport-footer-nav]").WaitForAsync(
+            new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await page.EvaluateAsync("window.scrollTo(0, document.body.scrollHeight)");
+        await page.WaitForTimeoutAsync(350);
+        var lobsterOk = await page.EvaluateAsync<bool>(
+            "() => { const img = document.querySelector('.lobsy-coach-dock__lobster'); return img && img.getBoundingClientRect().height >= 72; }");
+        Assert.True(lobsterOk, "Paspoort bottom: coach lobster should remain at mobile sprite height (regression)");
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "paspoort-bottom-390.png"), FullPage = false });
     }
 
     private async Task<IBrowserContext> NewContextAsync(int w, int h)
@@ -160,5 +185,43 @@ public sealed class CoachStickySaveBarPlaywrightTests : IAsyncLifetime
             }
             """);
         Assert.True(ok, "B2 coach must not intersect the sticky save bar or its primary button at 390");
+    }
+
+    private static async Task AssertLobsterFullyVisibleAsync(IPage page)
+    {
+        var ok = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const img = document.querySelector('.lobsy-coach-dock__lobster');
+              if (!img) return false;
+              const ir = img.getBoundingClientRect();
+              if (ir.height < 80 || ir.width < 24) return false;
+              let el = img;
+              while (el && el !== document.documentElement) {
+                const st = getComputedStyle(el);
+                const clips =
+                  st.overflow === 'hidden'
+                  || st.overflowX === 'hidden'
+                  || st.overflowY === 'hidden'
+                  || st.overflow === 'clip'
+                  || st.overflowX === 'clip'
+                  || st.overflowY === 'clip';
+                if (clips && el !== img) {
+                  const pr = el.getBoundingClientRect();
+                  const contained =
+                    ir.top >= pr.top - 0.5
+                    && ir.bottom <= pr.bottom + 0.5
+                    && ir.left >= pr.left - 0.5
+                    && ir.right <= pr.right + 0.5;
+                  if (!contained) {
+                    return false;
+                  }
+                }
+                el = el.parentElement;
+              }
+              return true;
+            }
+            """);
+        Assert.True(ok, "B2 lobster image must render at full mobile height without ancestor overflow clipping");
     }
 }

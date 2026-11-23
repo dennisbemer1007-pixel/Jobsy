@@ -11,6 +11,12 @@ public sealed class CoachStickySaveBarGuardTests
             ":has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b",
             variantB,
             StringComparison.Ordinal);
+        Assert.Contains(
+            ":has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b",
+            variantB,
+            StringComparison.Ordinal);
+        Assert.Contains("width: 88px;", variantB, StringComparison.Ordinal);
+        Assert.Contains("overflow: visible;", variantB, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(
