@@ -2320,12 +2320,19 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
 
     function measure() {
       var max = 0;
-      document.querySelectorAll("[data-sticky-footer]").forEach(function (el) {
+      function consider(el) {
         if (!el || !el.isConnected) return;
         var style = window.getComputedStyle(el);
         if (style.display === "none" || style.visibility === "hidden") return;
         var h = Math.ceil(el.getBoundingClientRect().height);
         if (h > max) max = h;
+      }
+      document.querySelectorAll("[data-sticky-footer]").forEach(consider);
+      document.querySelectorAll(".profile-save-bar").forEach(function (el) {
+        if (!el || !el.isConnected) return;
+        var style = window.getComputedStyle(el);
+        if (style.position !== "fixed") return;
+        consider(el);
       });
       root.style.setProperty(cssVar, max + "px");
     }

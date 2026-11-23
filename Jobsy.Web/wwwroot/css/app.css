@@ -16743,9 +16743,21 @@ html.cookie-consent-known .cookie-consent {
         z-index: 45;
         margin: 0;
         padding: 0.65rem 1rem 0.55rem;
+        padding-inline-end: max(1rem, calc(1rem + env(safe-area-inset-inline-end, 0px)));
         background: var(--surface);
         border-top: 1px solid var(--border);
         box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.12);
+        box-sizing: border-box;
+    }
+
+    .app-shell.has-bottom-nav .profile-page--candidate .profile-save-bar .login-submit,
+    .app-shell:has(.bottom-nav) .profile-page--candidate .profile-save-bar .login-submit,
+    .app-shell.has-bottom-nav .profile-page--candidate .profile-save-bar .btn-primary,
+    .app-shell:has(.bottom-nav) .profile-page--candidate .profile-save-bar .btn-primary {
+        box-sizing: border-box;
+        width: calc(100% - 5.5rem);
+        max-width: calc(100% - 5.5rem);
+        margin-inline: 0 auto 0;
     }
 
     /* Clearance for sticky Opslaan + bottom nav so the last field stays visible. */
@@ -21723,6 +21735,20 @@ html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
 .app-shell.has-bottom-nav .lobsy-coach-dock,
 .app-shell:has(.bottom-nav) .lobsy-coach-dock {
     bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 1024px) {
+    .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock,
+    .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock,
+    .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b,
+    .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b {
+        bottom: calc(
+            var(--bottom-nav-h, 4.75rem)
+            + max(var(--sticky-footer-h, 0px), var(--profile-save-bar-h, 4.25rem))
+            + 12px
+            + env(safe-area-inset-bottom, 0px)
+        );
+    }
 }
 
 @media (max-width: 639px) {

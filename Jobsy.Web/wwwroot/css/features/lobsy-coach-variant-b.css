@@ -16,7 +16,9 @@
 
 .app-shell.has-bottom-nav .lobsy-coach-dock--variant-b,
 .app-shell:has(.bottom-nav) .lobsy-coach-dock--variant-b {
-  bottom: calc(var(--bottom-nav-h, 64px) + 16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(
+    var(--bottom-nav-h, 64px) + max(var(--sticky-footer-h, 0px), 0px) + 16px + env(safe-area-inset-bottom, 0px)
+  );
   z-index: 48;
 }
 
@@ -116,7 +118,19 @@
 
   .app-shell.has-bottom-nav .lobsy-coach-dock--variant-b,
   .app-shell:has(.bottom-nav) .lobsy-coach-dock--variant-b {
-    bottom: calc(var(--bottom-nav-h, 64px) + 18px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(
+      var(--bottom-nav-h, 64px) + max(var(--sticky-footer-h, 0px), 0px) + 18px + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b,
+  .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b {
+    bottom: calc(
+      var(--bottom-nav-h, 4.75rem)
+      + max(var(--sticky-footer-h, 0px), var(--profile-save-bar-h, 4.25rem))
+      + 18px
+      + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .lobsy-coach-dock--variant-b .lobsy-coach-dock__lobster {

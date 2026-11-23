@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "701e2aee5402a72217c54c03f9fbec97c19683c3dcfa908a4ade20bf03fa716f",
+    "sha256": "bd7731254ccf430be4061d9e15f89d08528832da0901fb0fef133b64a88e4199",
     "v": "20261028-02"
   },
   "css/critical.css": {
@@ -196,7 +196,7 @@
     "v": "20261115-03"
   },
   "css/features/lobsy-coach-variant-b.css": {
-    "sha256": "594d9e20d0c48e4dbab4131cd43cdf47589b2d3394f6bfafff4bbcee855db09f",
+    "sha256": "64a73fcd4ddd324f840db65c61aa99a3e2d1126a327cb42a6d25f44875f50b66",
     "v": "20261115-04"
   },
   "css/features/match-desktop.css": {
@@ -404,7 +404,7 @@
     "v": "20261025-87"
   },
   "js/app-core.js": {
-    "sha256": "dcfaa397d46565b694c99964c411f34ab1fcd148bf410f115d60d65905e2a2ea",
+    "sha256": "6c078d6af68d8a68c173e8466253f69d582ab0fe3f2c1ee98935d8cfd590f9b4",
     "v": "20261026-87"
   },
   "js/app-extras.js": {
@@ -532,7 +532,7 @@
     "v": "20261004-13"
   },
   "js/lobsy-coach-ssr.js": {
-    "sha256": "6c4924b301f679d9ac5043bd38ee25c62ecda01fd086a7b62c26fbccb1fe17e6",
+    "sha256": "c4a17332974fa58d6128af302023d56cfe38435c218bfc206fc924bce06b44b1",
     "v": "20261027-77"
   },
   "js/lobsyPush.js": {

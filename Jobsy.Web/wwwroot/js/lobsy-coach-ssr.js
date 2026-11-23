@@ -41,8 +41,28 @@
     }
   }
 
+  function syncStickyFooterHeights() {
+    var root = document.documentElement;
+    var max = 0;
+    function consider(el) {
+      if (!el || !el.isConnected) return;
+      var style = window.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") return;
+      var h = Math.ceil(el.getBoundingClientRect().height);
+      if (h > max) max = h;
+    }
+    document.querySelectorAll("[data-sticky-footer]").forEach(consider);
+    document.querySelectorAll(".profile-save-bar").forEach(function (el) {
+      if (!el || !el.isConnected) return;
+      if (window.getComputedStyle(el).position !== "fixed") return;
+      consider(el);
+    });
+    root.style.setProperty("--sticky-footer-h", max + "px");
+  }
+
   function syncClearance() {
     syncBottomNavHeight();
+    syncStickyFooterHeights();
     var dock = document.querySelector(".lobsy-coach-dock[data-ssr-coach]");
     if (!dock) return;
     var btn = dock.querySelector("#lobsy-coach-btn") || dock.querySelector("[data-ssr-coach-open]") || dock;
@@ -481,14 +501,23 @@
 
     syncClearance();
     window.addEventListener("resize", syncClearance);
+  function observeStickySizing() {
+    if (typeof ResizeObserver !== "function") return;
+    var ro = new ResizeObserver(syncClearance);
     var nav = document.querySelector(
       '.bottom-nav[data-testid="candidate-bottom-nav-ssr"], nav.bottom-nav, .bottom-nav'
     );
-    if (nav && typeof ResizeObserver === "function") {
-      var ro = new ResizeObserver(syncClearance);
-      ro.observe(nav);
-    }
+    if (nav) ro.observe(nav);
+    document.querySelectorAll(".profile-save-bar").forEach(function (el) {
+      ro.observe(el);
+    });
   }
+    observeStickySizing();
+  }
+
+  window.jobsyCoachDock = window.jobsyCoachDock || {};
+  window.jobsyCoachDock.syncStickyFooters = syncStickyFooterHeights;
+  window.jobsyCoachDock.syncClearance = syncClearance;
 
   function bindOnboardingBubble() {
     var dock = document.querySelector(".lobsy-coach-dock--onboarding-b");

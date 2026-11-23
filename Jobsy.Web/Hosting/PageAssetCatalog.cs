@@ -618,6 +618,7 @@ public static partial class PageAssetCatalog
     [
         WwwrootAssetCatalog.Url("css/features/candidate-no-blazor-chrome.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css"),
+        WwwrootAssetCatalog.Url("css/features/lobsy-coach-variant-b.css"),
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)
