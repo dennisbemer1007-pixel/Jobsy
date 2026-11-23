@@ -85,6 +85,7 @@ public static partial class PageAssetCatalog
         WwwrootAssetCatalog.Url("css/features/proactive-matching.css"),
         WwwrootAssetCatalog.Url("css/features/candidate-hub.css"),
         WwwrootAssetCatalog.Url("css/features/na-de-match.css"),
+        WwwrootAssetCatalog.Url("css/features/lobsy-coach-variant-b.css"),
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -618,7 +619,6 @@ public static partial class PageAssetCatalog
     [
         WwwrootAssetCatalog.Url("css/features/candidate-no-blazor-chrome.css"),
         WwwrootAssetCatalog.Url("css/features/lobsy-coach-pill.css"),
-        WwwrootAssetCatalog.Url("css/features/lobsy-coach-variant-b.css"),
     ];
 
     public static bool IncludeVacancyWizardScript(string? rawPath)
