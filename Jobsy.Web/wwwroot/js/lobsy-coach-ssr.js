@@ -44,20 +44,26 @@
   function syncStickyFooterHeights() {
     var root = document.documentElement;
     var max = 0;
+    var profileSaveH = 0;
     function consider(el) {
       if (!el || !el.isConnected) return;
       var style = window.getComputedStyle(el);
       if (style.display === "none" || style.visibility === "hidden") return;
       var h = Math.ceil(el.getBoundingClientRect().height);
       if (h > max) max = h;
+      return h;
     }
     document.querySelectorAll("[data-sticky-footer]").forEach(consider);
     document.querySelectorAll(".profile-save-bar").forEach(function (el) {
       if (!el || !el.isConnected) return;
       if (window.getComputedStyle(el).position !== "fixed") return;
-      consider(el);
+      var h = consider(el);
+      if (h > profileSaveH) profileSaveH = h;
     });
     root.style.setProperty("--sticky-footer-h", max + "px");
+    if (profileSaveH > 0) {
+      root.style.setProperty("--profile-save-bar-h", profileSaveH + "px");
+    }
   }
 
   function syncClearance() {

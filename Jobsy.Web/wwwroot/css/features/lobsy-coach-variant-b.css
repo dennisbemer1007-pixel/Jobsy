@@ -124,13 +124,16 @@
   }
 
   .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b,
-  .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b {
+  .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b,
+  .app-shell.has-bottom-nav:has(.profile-save-bar) .lobsy-coach-dock--variant-b,
+  .app-shell:has(.bottom-nav):has(.profile-save-bar) .lobsy-coach-dock--variant-b {
     bottom: calc(
       var(--bottom-nav-h, 4.75rem)
       + max(var(--sticky-footer-h, 0px), var(--profile-save-bar-h, 4.25rem))
-      + 18px
+      + 88px
+      + 16px
       + env(safe-area-inset-bottom, 0px)
-    );
+    ) !important;
   }
 
   /* Full 88px B2 sprite (same framing as paspoort cv-plain) — sticky save bar raises the dock. */
@@ -170,6 +173,13 @@
     font-size: 0.75rem;
     padding: 8px 12px;
     max-width: min(200px, calc(100vw - 100px));
+  }
+
+  /* Fixed 88px B2: critical.css uses overflow-x:clip on .app-shell — allow the sprite to paint outside the flex box. */
+  html:has(.app-shell--candidate .profile-page--candidate .profile-save-bar),
+  body:has(.app-shell--candidate .profile-page--candidate .profile-save-bar),
+  .app-shell.app-shell--candidate:has(.profile-page--candidate .profile-save-bar) {
+    overflow: visible;
   }
 }
 
