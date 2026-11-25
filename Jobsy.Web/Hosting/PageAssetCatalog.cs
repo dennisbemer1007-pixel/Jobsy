@@ -1,3 +1,4 @@
+using Jobsy.Core.Privacy;
 using Jobsy.Web.Navigation;
 using Jobsy.Web.Seo;
 
@@ -346,9 +347,42 @@ public static partial class PageAssetCatalog
         return false;
     }
 
+    private static string CoachVariantBStylesheet =>
+        WwwrootAssetCatalog.Url("css/features/lobsy-coach-variant-b.css");
+
+    private static bool RouteIncludesSsrCoachVariantB(string path)
+    {
+        if (path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/banen", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (path.Equals(CandidateDateOfBirthPathRules.DobCapturePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (path.Equals(PassportRedirects.PassportPath, StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith(PassportRedirects.PassportPath + "/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.StartsWith("/candidate/", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/profiel", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static IReadOnlyList<string> RouteStylesheets(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
+        if (path.Equals(CandidateDateOfBirthPathRules.DobCapturePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return [CoachVariantBStylesheet];
+        }
+
         if (path.StartsWith("/admin/scholen", StringComparison.OrdinalIgnoreCase))
         {
             return [WwwrootAssetCatalog.Url("css/features/scholen.css")];
@@ -474,7 +508,14 @@ public static partial class PageAssetCatalog
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return [WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css")];
+            var compactHero =
+                new List<string> { WwwrootAssetCatalog.Url("css/features/candidate-hero-compact-preview.css") };
+            if (RouteIncludesSsrCoachVariantB(path))
+            {
+                compactHero.Add(CoachVariantBStylesheet);
+            }
+
+            return compactHero;
         }
 
         if (IncludesLeerlingMboHboStyles(path))
