@@ -8,19 +8,28 @@ public sealed class CoachStickySaveBarGuardTests
         var root = FindRepoRoot();
         var variantB = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/lobsy-coach-variant-b.css"));
         Assert.Contains(
-            ":has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b",
+            ":has(.profile-page--candidate .profile-save-bar):not(:has(.passport-page--illustrated))",
             variantB,
             StringComparison.Ordinal);
         Assert.Contains(
-            ":has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b .lobsy-coach-dock__btn--lobster-b",
+            ":has(.candidate-dob-gate--plain)",
+            variantB,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "passport-page--illustrated) .lobsy-coach-dock--variant-b",
             variantB,
             StringComparison.Ordinal);
         Assert.Contains("width: 88px;", variantB, StringComparison.Ordinal);
         Assert.Contains("overflow: visible;", variantB, StringComparison.Ordinal);
+        Assert.Contains("!important;", variantB, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(
-            ".app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock",
+            ":not(:has(.passport-page--illustrated))",
+            css,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            ":has(.candidate-dob-gate--plain)",
             css,
             StringComparison.Ordinal);
         Assert.Contains("max(var(--sticky-footer-h, 0px), var(--profile-save-bar-h, 4.25rem))", css, StringComparison.Ordinal);
