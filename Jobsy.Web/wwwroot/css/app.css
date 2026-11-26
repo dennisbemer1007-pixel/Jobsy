@@ -21727,24 +21727,18 @@ html[data-header-menu="account"] .account-menu > .header-dropdown-backdrop,
 }
 
 @media (max-width: 1024px) {
-    .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock,
-    .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock,
-    .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b,
-    .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar) .lobsy-coach-dock--variant-b,
-    .app-shell.has-bottom-nav:has(.profile-save-bar) .lobsy-coach-dock--variant-b,
-    .app-shell:has(.bottom-nav):has(.profile-save-bar) .lobsy-coach-dock--variant-b {
-        bottom: calc(
-            var(--bottom-nav-h, 4.75rem)
-            + max(var(--sticky-footer-h, 0px), var(--profile-save-bar-h, 4.25rem))
-            + 28px
-            + env(safe-area-inset-bottom, 0px)
-        );
-    }
-
+    .app-shell.has-bottom-nav:has(.candidate-dob-gate--plain) .lobsy-coach-dock,
+    .app-shell:has(.bottom-nav):has(.candidate-dob-gate--plain) .lobsy-coach-dock,
     .app-shell.has-bottom-nav:has(.candidate-dob-gate--plain) .lobsy-coach-dock--variant-b,
     .app-shell:has(.bottom-nav):has(.candidate-dob-gate--plain) .lobsy-coach-dock--variant-b,
-    .app-shell.has-bottom-nav:has(.candidate-dob-gate) .lobsy-coach-dock--variant-b,
-    .app-shell:has(.bottom-nav):has(.candidate-dob-gate) .lobsy-coach-dock--variant-b {
+    .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar):not(:has(.passport-page--illustrated))
+        .lobsy-coach-dock,
+    .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar):not(:has(.passport-page--illustrated))
+        .lobsy-coach-dock,
+    .app-shell.has-bottom-nav:has(.profile-page--candidate .profile-save-bar):not(:has(.passport-page--illustrated))
+        .lobsy-coach-dock--variant-b,
+    .app-shell:has(.bottom-nav):has(.profile-page--candidate .profile-save-bar):not(:has(.passport-page--illustrated))
+        .lobsy-coach-dock--variant-b {
         bottom: calc(
             var(--bottom-nav-h, 4.75rem)
             + max(var(--sticky-footer-h, 0px), var(--profile-save-bar-h, 4.25rem))
